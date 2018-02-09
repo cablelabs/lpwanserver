@@ -63,7 +63,7 @@ describe( "NetworkProtocols", function() {
             .post('/api/passwordPolicies')
             .set('Authorization', 'Bearer ' + userToken )
             .set('Content-Type', 'application/json')
-            .send( { "name": "LoRa Open Source", "networkTypeId": 1, "protocolHandler": "LoraOpenSource.js" } )
+            .send( { "name": "LoRa Open Source", "networkTypeId": 1, "protocolHandler": "LoRaOpenSource.js" } )
             .end(function(err, res){
                 res.should.have.status(403);
                 done();
@@ -75,7 +75,7 @@ describe( "NetworkProtocols", function() {
             .post('/api/networkProtocols')
             .set('Authorization', 'Bearer ' + coAdminToken )
             .set('Content-Type', 'application/json')
-            .send( { "name": "LoRa Open Source", "networkTypeId": 1, "protocolHandler": "LoraOpenSource.js" }  )
+            .send( { "name": "LoRa Open Source", "networkTypeId": 1, "protocolHandler": "LoRaOpenSource.js" }  )
             .end(function(err, res){
                 res.should.have.status(403);
                 done();
@@ -87,7 +87,7 @@ describe( "NetworkProtocols", function() {
             .post('/api/networkProtocols')
             .set('Authorization', 'Bearer ' + adminToken )
             .set('Content-Type', 'application/json')
-            .send( { "name": "LoRa Open Source", "networkTypeId": 1, "protocolHandler": "LoraOpenSource.js" } )
+            .send( { "name": "LoRa Open Source", "networkTypeId": 1, "protocolHandler": "LoRaOpenSource.js" } )
             .end(function(err, res){
                 res.should.have.status(200);
                 var ret = JSON.parse( res.text );
