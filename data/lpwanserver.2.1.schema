@@ -157,8 +157,8 @@ create table if not exists deviceNetworkTypeLinks (
 create table if not exists protocolData (
     id INTEGER PRIMARY KEY,
     networkId INTEGER REFERENCES networks( id ) ON DELETE CASCADE NOT NULL,
-    networkProtocolId INTEGER REFERENCES networkProtocolss( id ) ON DELETE CASCADE NOT NULL,
+    networkProtocolId INTEGER REFERENCES networkProtocols( id ) ON DELETE CASCADE NOT NULL,
     dataIdentifier TEXT,
     dataValue TEXT
 );
-create index protocolData_dataIdentifier_index on protocolData( dataIdentifier );
+create index if not exists protocolData_dataIdentifier_index on protocolData( dataIdentifier );
