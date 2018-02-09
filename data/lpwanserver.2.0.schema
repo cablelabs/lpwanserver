@@ -1,0 +1,140 @@
+-- Version 2.0 LPWAN Server database
+--
+CREATE TABLE IF NOT EXISTS companyTypes (
+    type INTEGER PRIMARY KEY, /* 1 = admin, 2 = vendor, 3 = operator, 4 = devicemfg */
+    name TEXT UNIQUE COLLATE NOCASE
+);
+
+-- insert into companyTypes (name, type)
+--    values ('admin', 1), ('vendor', 2), ('operator', 3), ('devicemfg', 4);
+
+CREATE TABLE IF NOT EXISTS companies (
+    id INTEGER PRIMARY KEY,
+    name TEXT UNIQUE COLLATE NOCASE,
+    type INT REFERENCES companyTypes( type )
+);
+
+create table if not exists passwordPolicies (
+    id INTEGER PRIMARY KEY,
+    ruleText TEXT,
+    ruleRegExp TEXT,
+    companyId INTEGER NOT NULL,
+    FOREIGN KEY (companyId) REFERENCES companies(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS userRoles (
+    roleId INTEGER PRIMARY KEY, /* 1 = user, 2 = admin */
+    name TEXT UNIQUE COLLATE NOCASE
+);
+
+-- insert into userRoles (roleId, name)
+--    values (1, 'user'), (2, 'admin');
+
+CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY,
+    username TEXT UNIQUE  COLLATE NOCASE,
+    email TEXT  COLLATE NOCASE,
+    lastVerifiedEmail TEXT  COLLATE NOCASE,
+    emailVerified BOOLEAN DEFAULT 0,
+    companyId INTEGER NOT NULL,
+    passwordHash TEXT,
+    role INTEGER DEFAULT 0,
+    FOREIGN KEY(companyId) REFERENCES companies(id) ON DELETE CASCADE,
+    FOREIGN KEY(role) REFERENCES userRoles(roleId)
+);
+
+CREATE TABLE IF NOT EXISTS emailVerifications (
+    id INTEGER PRIMARY KEY,
+    userId INTEGER NOT NULL,
+    uuid TEXT UNIQUE  COLLATE NOCASE,
+    email TEXT  COLLATE NOCASE,
+    changeRequested TEXT COLLATE NOCASE,
+    FOREIGN KEY(userId) REFERENCES users(id) ON DELETE CASCADE
+);
+
+create table if not exists networkProtocols (
+    id INTEGER PRIMARY KEY,
+    name TEXT,
+    protocolType TEXT,
+    protocolHandler TEXT
+);
+
+create table if not exists provisioningTables (
+    id INTEGER PRIMARY KEY,
+    type TEXT
+);
+-- insert into provisioningTables ( id, type )
+--    values ( 1, 'companies' ), ( 2, 'applications' ), ( 3, 'devices' );
+
+create table if not exists networkProvisioningFields (
+    id INTEGER PRIMARY KEY,
+    networkProtocolId INTEGER REFERENCES networkProtocols( id ) ON DELETE CASCADE NOT NULL,
+    fieldOrder INTEGER,
+    fieldName TEXT,
+    fieldLabel TEXT,
+    fieldType TEXT,
+    fieldSize INTEGER,
+    requiredField BOOLEAN,
+    provisioningTableId INTEGER REFERENCES provisioningTables( id ) NOT NULL
+);
+
+create table if not exists networks (
+    id INTEGER PRIMARY KEY,
+    name TEXT,
+    networkProtocolId INTEGER REFERENCES networkProtocols( id ) NOT NULL,
+    baseUrl TEXT,
+    securityData TEXT
+);
+
+create table if not exists companyNetworkLinks (
+    id INTEGER PRIMARY KEY,
+    companyId INTEGER REFERENCES companies( id ) ON DELETE CASCADE NOT NULL,
+    networkId INTEGER REFERENCES networks( id ) ON DELETE CASCADE NOT NULL,
+    networkSettings TEXT,
+    networkCompanyId TEXT,
+    lastPush TEXT,
+    UNIQUE( companyId, networkId )
+);
+
+create table if not exists reportingProtocols (
+    id INTEGER PRIMARY KEY,
+    name TEXT,
+    protocolHandler TEXT
+);
+
+create table if not exists applications (
+    id INTEGER PRIMARY KEY,
+    companyId INTEGER,
+    name TEXT,
+    baseUrl TEXT,
+    reportingProtocolId INTEGER,
+    FOREIGN KEY(companyId) REFERENCES companies(id) ON DELETE CASCADE,
+    FOREIGN KEY(reportingProtocolId) REFERENCES reportingProtocols(id)
+);
+
+create table if not exists applicationNetworkLinks (
+    id INTEGER PRIMARY KEY,
+    applicationId INTEGER REFERENCES applications( id ) ON DELETE CASCADE NOT NULL,
+    networkId INTEGER REFERENCES networks( id ) ON DELETE CASCADE NOT NULL,
+    networkSettings TEXT,
+    networkApplicationId TEXT,
+    lastPush TEXT,
+    UNIQUE( applicationId, networkId )
+);
+
+create table if not exists devices (
+    id INTEGER PRIMARY KEY,
+    applicationId INTEGER references applications( id ) ON DELETE CASCADE NOT NULL,
+    name TEXT,
+    deviceModel TEXT
+);
+
+create table if not exists deviceNetworkLinks (
+    id INTEGER PRIMARY KEY,
+    deviceId INTEGER REFERENCES devices( id ) ON DELETE CASCADE NOT NULL,
+    networkId INTEGER REFERENCES networks( id ) ON DELETE CASCADE NOT NULL,
+    networkSettings TEXT,
+    networkDeviceId TEXT,
+    lastPush TEXT,
+    UNIQUE( deviceId, networkId )
+);

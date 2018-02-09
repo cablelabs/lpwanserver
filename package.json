@@ -1,0 +1,41 @@
+{
+  "name": "lpwanserver-rest",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node ./bin/rest",
+    "test": "mocha"
+  },
+  "dependencies": {
+    "async": "~2.0.1",
+    "body-parser": "~1.15.1",
+    "chai": "^4.1.2",
+    "chai-http": "^3.0.0",
+    "connect-ensure-login": "~0.1.1",
+    "cookie-parser": "~1.4.3",
+    "cors": "^2.8.4",
+    "crypto": "~0.0.3",
+    "db-migrate": "^0.10.2",
+    "debug": "~2.2.0",
+    "express": "~4.13.4",
+    "express-busboy": "~4.0.0",
+    "express-session": "^1.15.6",
+    "hjson": "^3.1.0",
+    "jsmin": "~1.0.1",
+    "jsonwebtoken": "^7.4.3",
+    "mkdirp": "~0.5.1",
+    "mocha": "^3.5.3",
+    "morgan": "~1.7.0",
+    "nconf": "^0.8.5",
+    "nodemailer": "^4.1.2",
+    "object-sizeof": "^1.1.1",
+    "passport": "^0.2.2",
+    "passport-local": "^1.0.0",
+    "pug": "^2.0.0-rc.4",
+    "request": "~2.74.0",
+    "serve-favicon": "~2.3.0",
+    "session-file-store": "^0.2.1",
+    "sqlite3": "^3.1.13",
+    "ws": "^1.1.5"
+  }
+}

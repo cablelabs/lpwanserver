@@ -1,0 +1,96 @@
+-- Version 2.1 LPWAN Server database upgrade from 2.0
+--
+create table if not exists networkTypes (
+    id INTEGER PRIMARY KEY,
+    name TEXT
+);
+insert into networkTypes ( name ) values( "LoRa 1.0.2");
+
+create table if not exists networkProviders (
+    id INTEGER PRIMARY KEY,
+    name TEXT
+);
+insert into networkProviders ( name ) values( "Kyrio");
+
+create table if not exists networkProtocolsNew (
+    id INTEGER PRIMARY KEY,
+    name TEXT,
+    protocolHandler TEXT,
+    networkTypeId INTEGER REFERENCES networkTypes( id ) NOT NULL
+);
+
+insert into networkProtocolsNew (id, name, protocolHandler, networkTypeId)
+    select id, name, protocolHandler, 1 as networkTypeId from networkProtocols;
+
+alter table networkProtocols rename to networkProtocolsOld;
+alter table networkProtocolsNew rename to networkProtocols;
+
+
+
+create table if not exists networksNew (
+    id INTEGER PRIMARY KEY,
+    name TEXT,
+    networkProviderId INTEGER REFERENCES networkProviders( id ) NOT NULL,
+    networkTypeId INTEGER REFERENCES networkTypes( id ) NOT NULL,
+    networkProtocolId INTEGER REFERENCES networkProtocols( id ) NOT NULL,
+    baseUrl TEXT,
+    securityData TEXT
+);
+
+insert into networksNew (id, name, networkProviderId, networkTypeId, networkProtocolId, baseUrl, securityData)
+    select id, name, 1 as networkProviderId, 1 as networkTypeId, networkProtocolId, baseUrl, securityData from networks;
+alter table networks rename to networksOld;
+alter table networksNew rename to networks;
+
+create table if not exists companyNetworkTypeLinks (
+    id INTEGER PRIMARY KEY,
+    companyId INTEGER REFERENCES companies( id ) ON DELETE CASCADE NOT NULL,
+    networkTypeId INTEGER REFERENCES networkTypes( id ) ON DELETE CASCADE NOT NULL,
+    networkSettings TEXT,
+    UNIQUE( companyId, networkTypeId )
+);
+insert into companyNetworkTypeLinks (id, companyId, networkTypeId, networkSettings)
+    select id, companyId, 1 as networkTypeId, networkSettings from companyNetworkLinks;
+
+create table if not exists applicationNetworkTypeLinks (
+    id INTEGER PRIMARY KEY,
+    applicationId INTEGER REFERENCES applications( id ) ON DELETE CASCADE NOT NULL,
+    networkTypeId INTEGER REFERENCES networkTypes( id ) ON DELETE CASCADE NOT NULL,
+    networkSettings TEXT,
+    UNIQUE( applicationId, networkTypeId )
+);
+insert into applicationNetworkTypeLinks (id, applicationId, networkTypeId, networkSettings)
+    select id, applicationId, 1 as networkTypeId, networkSettings from applicationNetworkLinks;
+
+create table if not exists deviceProfiles (
+    id INTEGER PRIMARY KEY,
+    networkTypeId INTEGER REFERENCES networkTypes( id ) ON DELETE CASCADE NOT NULL,
+    companyId INTEGER REFERENCES companies( id ) ON DELETE CASCADE NOT NULL,
+    name TEXT,
+    networkSettings TEXT
+);
+
+create table if not exists deviceNetworkTypeLinks (
+    id INTEGER PRIMARY KEY,
+    deviceId INTEGER REFERENCES devices( id ) ON DELETE CASCADE NOT NULL,
+    networkTypeId INTEGER REFERENCES networkTypes( id ) ON DELETE CASCADE NOT NULL,
+    networkSettings TEXT,
+    UNIQUE( deviceId, networkTypeId )
+);
+insert into deviceNetworkTypeLinks (id, deviceId, networkTypeId, networkSettings)
+    select id, deviceId, 1 as networkTypeId, networkSettings from deviceNetworkLinks;
+
+create table if not exists protocolData (
+    id INTEGER PRIMARY KEY,
+    networkId INTEGER REFERENCES networks( id ) ON DELETE CASCADE NOT NULL,
+    networkProtocolId INTEGER REFERENCES networkProtocolss( id ) ON DELETE CASCADE NOT NULL,
+    dataIdentifier TEXT,
+    dataValue TEXT
+);
+create index protocolData_dataIdentifier_index on protocolData( dataIdentifier );
+-- insert into protocolData (networkId, networkProtocolId, dataIdentifier, dataValue)
+--     select networkId, 1 as networkProtocolId, 'C=' || companyId || ':' || "CID" as dataIdentifier, networkCompanyId as dataValue from companyNetworkLinks where networkCompanyId is not null;
+-- insert into protocolData (networkId, networkProtocolId, dataIdentifier, dataValue)
+--     select networkId, 1 as networkProtocolId, 'A=' || applicationId || ':' || "AID" as dataIdentifier, networkApplicationId as dataValue from applicationNetworkLinks where networkApplicationId is not null;
+-- insert into protocolData (networkId, networkProtocolId, dataIdentifier, dataValue)
+--     select networkId, 1 as networkProtocolId, 'D=' || deviceId || ':' || "DID" as dataIdentifier, networkDeviceId as dataValue from deviceNetworkLinks where networkDeviceId is not null;
