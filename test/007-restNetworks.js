@@ -43,7 +43,7 @@ describe( "Networks", function() {
                 .post('/api/networkProtocols')
                 .set('Authorization', 'Bearer ' + adminToken )
                 .set('Content-Type', 'application/json')
-                .send( { "name": "LoRa Open Source", "networkTypeId": 1, "protocolHandler": "LoraOpenSource.js" } )
+                .send( { "name": "LoRa Open Source", "networkTypeId": 1, "protocolHandler": "LoRaOpenSource.js" } )
                 .end(function(err, res){
                     if( err ) {
                         return done();
@@ -122,7 +122,7 @@ describe( "Networks", function() {
             .post('/api/networks')
             .set('Authorization', 'Bearer ' + adminToken )
             .set('Content-Type', 'application/json')
-            .send( { "name": "MachQLora",
+            .send( { "name": "MachQLoRa",
                      "networkProviderId": 1,
                      "networkTypeId": 1,
                      "baseUrl": "https://localhost:9999/api",
@@ -308,7 +308,7 @@ describe( "Networks", function() {
             .put('/api/networks/' + netId1 )
             .set('Authorization', 'Bearer ' + coAdminToken )
             .set('Content-Type', 'application/json')
-            .send( "{ \"id\": " + netId1 +", \"name\": \"KyrioLora\" }" )
+            .send( "{ \"id\": " + netId1 +", \"name\": \"KyrioLoRa\" }" )
             .end(function(err, res){
                 res.should.have.status(403);
                 done();
@@ -320,7 +320,7 @@ describe( "Networks", function() {
             .put('/api/networks/' + netId1 )
             .set('Authorization', 'Bearer ' + userToken )
             .set('Content-Type', 'application/json')
-            .send( "{\"name\": \"KyrioLora\" }" )
+            .send( "{\"name\": \"KyrioLoRa\" }" )
             .end(function(err, res){
                 res.should.have.status(403);
                 done();
@@ -332,7 +332,7 @@ describe( "Networks", function() {
             .put('/api/networks/' + netId1 )
             .set('Authorization', 'Bearer ' + adminToken )
             .set('Content-Type', 'application/json')
-            .send( "{\"name\": \"KyrioLora\" }" )
+            .send( "{\"name\": \"KyrioLoRa\" }" )
             .end(function(err, res){
                 res.should.have.status(204);
                 done();
@@ -348,7 +348,7 @@ describe( "Networks", function() {
             .end(function(err, res){
                 res.should.have.status(200);
                 var netObj = JSON.parse( res.text );
-                netObj.name.should.equal( "KyrioLora" );
+                netObj.name.should.equal( "KyrioLoRa" );
                 done();
             });
         });

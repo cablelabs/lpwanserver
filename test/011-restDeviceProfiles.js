@@ -64,7 +64,7 @@ describe( "DeviceProfiles", function() {
             .set('Content-Type', 'application/json')
             .send( { "networkTypeId": 1,
                      "companyId": 2,
-                     "name": "LoraGPSNode",
+                     "name": "LoRaGPSNode",
                      "networkSettings": { "foo": "bar" } } )
             .end(function(err, res){
                 res.should.have.status(403);
@@ -79,7 +79,7 @@ describe( "DeviceProfiles", function() {
             .set('Content-Type', 'application/json')
             .send( { "networkTypeId": 1,
                      "companyId": 2,
-                     "name": "LoraGPSNode",
+                     "name": "LoRaGPSNode",
                      "networkSettings": { "foo": "bar" } } )
             .end(function(err, res){
                 res.should.have.status(200);
@@ -97,7 +97,7 @@ describe( "DeviceProfiles", function() {
             .set('Content-Type', 'application/json')
             .send({ "networkTypeId": 1,
                      "companyId": 2,
-                     "name": "LoraWeatherNode",
+                     "name": "LoRaWeatherNode",
                      "networkSettings": { "tempType": "C" } } )
             .end(function(err, res){
                 res.should.have.status(200);
@@ -116,7 +116,7 @@ describe( "DeviceProfiles", function() {
             .end(function(err, res){
                 res.should.have.status(200);
                 var dpObj = JSON.parse( res.text );
-                dpObj.name.should.equal( "LoraGPSNode" );
+                dpObj.name.should.equal( "LoRaGPSNode" );
                 dpObj.networkTypeId.should.equal( 1 );
                 dpObj.companyId.should.equal( 2 );
                 done();
@@ -187,12 +187,12 @@ describe( "DeviceProfiles", function() {
             });
         });
 
-        it('should return 200 with 2 deviceProfiles on admin, search Lora%', function( done ) {
+        it('should return 200 with 2 deviceProfiles on admin, search LoRa%', function( done ) {
             server
             .get('/api/deviceProfiles' )
             .set('Authorization', 'Bearer ' + adminToken )
             .set('Content-Type', 'application/json')
-            .query( { "search": "Lora%" } )
+            .query( { "search": "LoRa%" } )
             .end(function(err, res){
                 res.should.have.status(200);
                 var result = JSON.parse( res.text );
@@ -203,12 +203,12 @@ describe( "DeviceProfiles", function() {
             });
         });
 
-        it('should return 200 with 1 deviceProfiles on admin, search LoraGPS%', function( done ) {
+        it('should return 200 with 1 deviceProfiles on admin, search LoRaGPS%', function( done ) {
             server
             .get('/api/deviceProfiles' )
             .set('Authorization', 'Bearer ' + adminToken )
             .set('Content-Type', 'application/json')
-            .query( { "search": "LoraGPS%" } )
+            .query( { "search": "LoRaGPS%" } )
             .end(function(err, res){
                 res.should.have.status(200);
                 var result = JSON.parse( res.text );
