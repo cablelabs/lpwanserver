@@ -16,6 +16,8 @@ exports.initialize = function( app, server ) {
      *   the networkTypeId are returned.
      * - If the request includes a deviceId query parameter, the links
      *   matching the deviceId are returned.
+     * - If the request includes a applicationId query parameter, the links
+     *   matching the applicationId are returned.
      */
     app.get('/api/deviceNetworkTypeLinks', [restServer.isLoggedIn,
                                         restServer.fetchCompany], function(req, res, next) {
@@ -34,6 +36,12 @@ exports.initialize = function( app, server ) {
             var deviceIdInt = parseInt( req.query.deviceId );
             if ( !isNaN( deviceIdInt ) ) {
                 options.deviceId = deviceIdInt;
+            }
+        }
+        if ( req.query.applicationId ) {
+            var applicationIdInt = parseInt( req.query.applicationId );
+            if ( !isNaN( applicationIdInt ) ) {
+                options.applicationId = applicationIdInt;
             }
         }
         if ( req.query.limit ) {

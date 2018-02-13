@@ -167,6 +167,15 @@ exports.retrieveDeviceNetworkTypeLinks = function( options ) {
                     sqlTotalCount += " dnl.networkTypeId = " + db.sqlValue( options.networkTypeId );
                     needsAnd = true;
                 }
+                if ( options.applicationId ) {
+                    if ( needsAnd ) {
+                        sql += " and";
+                        sqlTotalCount += " and";
+                    }
+                    sql += " dnl.deviceId = d.id and d.applicationId = " + db.sqlValue( options.applicationId );
+                    sqlTotalCount += " dnl.deviceId = d.id and d.applicationId = " + db.sqlValue( options.applicationId );
+                    needsAnd = true;
+                }
                 if ( options.companyId ) {
                     if ( needsAnd ) {
                         sql += " and";
