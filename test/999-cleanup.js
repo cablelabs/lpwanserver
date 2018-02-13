@@ -27,6 +27,39 @@ describe( "Cleanup", function() {
     });
 
     var recs = [];
+    describe( "CLEAN /api/devices", function() {
+        it('GET ALL DEVICES', function( done ) {
+            server
+            .get('/api/devices')
+            .set('Authorization', 'Bearer ' + adminToken )
+            .set('Content-Type', 'application/json')
+            .end(function(err, res){
+                res.should.have.status(200);
+                var result = JSON.parse( res.text );
+                result.records.should.be.instanceof( Array );
+                console.log( "Got " + result.records.length + " devices to DELETE" );
+                recs = result.records;
+                done();
+            });
+        });
+        var recsDeleted = 0;
+        it( 'DELETE ALL DEVICES', function( done ) {
+            recs.map( function( rec ) {
+                console.log( "Deleting device " + rec.id );
+                server
+                .delete('/api/devices/' + rec.id )
+                .set('Authorization', 'Bearer ' + adminToken )
+                .end(function(err, res){
+                    res.should.have.status(204);
+                    ++recsDeleted;
+                    if ( recsDeleted == recs.length ) {
+                        done();
+                    }
+                });
+            });
+        });
+    });
+
     describe( "CLEAN /api/deviceProfiles", function() {
         it('GET ALL DEVICE PROFILES', function( done ) {
             server

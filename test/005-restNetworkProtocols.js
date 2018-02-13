@@ -177,7 +177,6 @@ describe( "NetworkProtocols", function() {
             .set('Content-Type', 'application/json')
             .end(function(err, res){
                 res.should.have.status(200);
-                console.log( res.text );
                 var result = JSON.parse( res.text );
                 result.records.should.be.instanceof( Array );
                 result.records.should.have.length( 1 );

@@ -65,7 +65,8 @@ describe( "DeviceNetworkTypeLinks", function() {
             .send( { "deviceId": 1,
                      "networkTypeId": 1,
                      "deviceProfileId": 1,
-                     "networkSettings": { } } )
+                     "networkSettings": { "devEUI": "0080000000000102",
+                                          "appKey": "11223344556677889900112233445566", } } )
             .end(function(err, res){
                 res.should.have.status(403);
                 done();
@@ -80,7 +81,9 @@ describe( "DeviceNetworkTypeLinks", function() {
             .send( { "deviceId": 1,
                      "networkTypeId": 1,
                      "deviceProfileId": 1,
-                     "networkSettings": { "devEUI": "0080000000000102" } } )
+                     "networkSettings": { "devEUI": "0080000000000102",
+                                          "appKey": "11223344556677889900112233445566", }
+                  } )
             .end(function(err, res){
                 res.should.have.status(200);
                 var dnlObj = JSON.parse( res.text );
@@ -97,7 +100,8 @@ describe( "DeviceNetworkTypeLinks", function() {
             .send( { "deviceId": 1,
                      "networkTypeId": 2,
                      "deviceProfileId": 1,
-                     "networkSettings": { "devEUI": "0080000000000102" } } )
+                     "networkSettings": { "devEUI": "0080000000000103",
+                                          "appKey": "11223344556677889900112233445567", } } )
             .end(function(err, res){
                 res.should.have.status(200);
                 var dnlObj = JSON.parse( res.text );
@@ -284,7 +288,8 @@ describe( "DeviceNetworkTypeLinks", function() {
             .put('/api/deviceNetworkTypeLinks/' + dnlId1 )
             .set('Authorization', 'Bearer ' + coAdminToken )
             .set('Content-Type', 'application/json')
-            .send( { "networkSettings": { "devEUI": "0080000000000102", "description": "Demo device 1 - take 2" } } )
+            .send( { "networkSettings": { "devEUI": "0080000000000102",
+                                          "appKey": "11223344556677889900112233445568", } } )
             .end(function(err, res){
                 res.should.have.status(204);
                 done();
@@ -296,7 +301,8 @@ describe( "DeviceNetworkTypeLinks", function() {
             .put('/api/deviceNetworkTypeLinks/' + dnlId1 )
             .set('Authorization', 'Bearer ' + userToken )
             .set('Content-Type', 'application/json')
-            .send( { "networkSettings": { "devEUI": "0080000000000102", "description": "Demo device 1" } } )
+            .send( { "networkSettings": { "devEUI": "0080000000000102",
+                                          "appKey": "11223344556677889900112233445569",  } } )
             .end(function(err, res){
                 res.should.have.status(403);
                 done();
@@ -308,7 +314,8 @@ describe( "DeviceNetworkTypeLinks", function() {
             .put('/api/deviceNetworkTypeLinks/' + dnlId1 )
             .set('Authorization', 'Bearer ' + adminToken )
             .set('Content-Type', 'application/json')
-            .send( { "networkSettings": { "devEUI": "0080000000000102", "description": "Demo device 1 - take 3" } } )
+            .send( { "networkSettings": { "devEUI": "0080000000000102",
+                                          "appKey": "1122334455667788990011223344556a", } } )
             .end(function(err, res){
                 res.should.have.status(204);
                 done();
@@ -324,14 +331,14 @@ describe( "DeviceNetworkTypeLinks", function() {
             .end(function(err, res){
                 res.should.have.status(200);
                 var appObj = JSON.parse( res.text );
-                appObj.networkSettings.description.should.equal( "Demo device 1 - take 3" );
+                appObj.networkSettings.appKey.should.equal( "1122334455667788990011223344556a" );
                 done();
             });
         });
 
     });
 
-    describe( "DELETE /api/applicationNetworkTypes", function() {
+    describe( "DELETE /api/deviceNetworkTypes", function() {
         it('should return 403 (forbidden) on user', function( done ) {
             server
             .delete('/api/deviceNetworkTypeLinks/' + dnlId2)
