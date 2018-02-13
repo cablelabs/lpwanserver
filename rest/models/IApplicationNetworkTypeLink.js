@@ -118,6 +118,13 @@ ApplicationNetworkTypeLink.prototype.deleteApplicationNetworkTypeLink = function
                     return;
                 }
             }
+            // Delete devicenetworkTypeLinks
+            let dntls = await modelAPI.deviceNetworkTypeLinks.retrieveDeviceNetworkTypeLinks( { applicationId: id } );
+            let recs = dntls.records;
+            for ( let i = 0; i < recs.length; ++i ) {
+                await modelAPI.deviceNetworkTypeLinks.deleteDeviceNetworkTypeLink( recs[ i ].id );
+            }
+
             // Don't delete the local record until the remote operations complete.
             var logs = await modelAPI.networkTypeAPI.deleteApplication( rec.networkTypeId, rec.applicationId );
             await me.impl.deleteApplicationNetworkTypeLink( id );

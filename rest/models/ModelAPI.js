@@ -88,7 +88,7 @@ function ModelAPI( app ) {
     this.networkProtocolAPI = new NetworkProtocolAPI( this );
 
     // The companyNetworkTypeLink model.
-    this.companyNetworkTypeLinks = new CompanyNetworkTypeLinkModel( this.networkTypeAPI );
+    this.companyNetworkTypeLinks = new CompanyNetworkTypeLinkModel( this );
 
     this.reportingProtocolAPIs = new ReportingProtocols( this.reportingProtocols  );
 

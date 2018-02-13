@@ -3,7 +3,7 @@ var appLogger = require( "../lib/appLogger.js" );
 // Configuration access.
 var nconf = require('nconf');
 
-var networkTypeApi;
+var modelAPI;
 
 //******************************************************************************
 // The CompanyNetworkTypeLink interface.
@@ -15,12 +15,12 @@ var networkTypeApi;
 // is to be found in that subdirectory of the models/dao directory (Data Access
 // Object).
 //
-function CompanyNetworkTypeLink( networkTypeApiImpl ) {
+function CompanyNetworkTypeLink( server ) {
     this.impl = new require( './dao/' +
                              nconf.get( "impl_directory" ) +
                              '/companyNetworkTypeLinks.js' );
 
-    networkTypeApi = networkTypeApiImpl;
+    modelAPI = server;
 }
 
 
@@ -37,7 +37,7 @@ CompanyNetworkTypeLink.prototype.createCompanyNetworkTypeLink = function( compan
     return new Promise( async function( resolve, reject ) {
         try {
             var rec = await me.impl.createCompanyNetworkTypeLink( companyId, networkTypeId, networkSettings );
-            var logs = await networkTypeApi.addCompany( networkTypeId, companyId, networkSettings );
+            var logs = await modelAPI.networkTypeAPI.addCompany( networkTypeId, companyId, networkSettings );
             rec.remoteAccessLogs = logs;
             resolve( rec );
         }
@@ -68,7 +68,7 @@ CompanyNetworkTypeLink.prototype.updateCompanyNetworkTypeLink = function( compan
     return new Promise( async function( resolve, reject ) {
         try {
             var rec = await me.impl.updateCompanyNetworkTypeLink( companyNetworkTypeLink );
-            var logs = await networkTypeApi.pushCompany( rec.networkTypeId, rec.companyId, rec.networkSettings );
+            var logs = await modelAPI.networkTypeAPI.pushCompany( rec.networkTypeId, rec.companyId, rec.networkSettings );
             rec.remoteAccessLogs = logs;
             resolve( rec );
         }
@@ -89,8 +89,14 @@ CompanyNetworkTypeLink.prototype.deleteCompanyNetworkTypeLink = function( id ) {
     return new Promise( async function( resolve, reject ) {
         try {
             var rec = await me.impl.retrieveCompanyNetworkTypeLink( id );
+            // Delete applicationNetworkTypeLinks
+            let antls = await modelAPI.applicationNetworkTypeLinks.retrieveApplicationNetworkTypeLinks( { companyId: id } );
+            let recs = antls.records;
+            for ( let i = 0; i < recs.length; ++i ) {
+                await modelAPI.applicationNetworkTypeLinks.deleteApplicationNetworkTypeLink( recs[ i ].id );
+            }
             // Don't delete the local record until the remote operations complete.
-            var logs = await networkTypeApi.deleteCompany( rec.networkTypeId, rec.companyId );
+            var logs = await modelAPI.networkTypeAPI.deleteCompany( rec.networkTypeId, rec.companyId );
             await me.impl.deleteCompanyNetworkTypeLink( id );
             resolve( logs );
         }
