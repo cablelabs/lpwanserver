@@ -17,18 +17,18 @@ var httpError = require( 'http-errors' );
 // name                - the name of the application
 // companyId           - the id of the Company this application belongs to
 // reportingProtocolId - The protocol used to report data to the application
-// baseURL             - The base URL to use for reporting the data to the
+// baseUrl             - The base URL to use for reporting the data to the
 //                       application using the reporting protocol
 //
 // Returns the promise that will execute the create.
-exports.createApplication = function( name, companyId, reportingProtocolId, baseURL ) {
+exports.createApplication = function( name, companyId, reportingProtocolId, baseUrl ) {
     return new Promise( function( resolve, reject ) {
         // Create the user record.
         var application = {};
         application.name = name;
         application.companyId = companyId;
         application.reportingProtocolId = reportingProtocolId;
-        application.baseURL = baseURL;
+        application.baseUrl = baseUrl;
 
         // OK, save it!
         db.insertRecord("applications", application, function( err, record ) {

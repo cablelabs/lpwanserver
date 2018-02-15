@@ -11,8 +11,15 @@ class DefaultNetworkSettings extends Component {
     constructor( props ) {
         super( props );
 
+        let data = props.securityData;
+        if ( "string" === typeof data ) {
+            data = JSON.parse( data );
+        }
+        if ( !data.data ) {
+            data.data = "";
+        }
         this.state = {
-            securityData: props.securityData
+            securityData: data
         };
 
         this.onChange = this.onChange.bind(this);

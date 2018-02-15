@@ -49,3 +49,8 @@ onto the form that the user sees.  This has a side-effect that if a field is
 invalid on a hidden form, the form will appear to become unresponsive to the
 "Submit" button.  Therefore, all UI fields must be initialized with valid
 default data.
+
+Also note: The fields created by these UI elements are expected to be used by
+the networkProtocol code for the remote networks.  Therefore, changes and
+additions here should be matched in the networkProtocols code in the REST
+server.

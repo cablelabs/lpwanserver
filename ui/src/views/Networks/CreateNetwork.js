@@ -33,7 +33,8 @@ class CreateNetwork extends Component {
     networkTypeStore.getNetworkTypes()
     .then( ( response ) => {
         // Default to first type so the UI matches the default selection.
-        this.setState( { networkTypes: response, networkTypeId: response[ 0 ].id } );
+        this.setState( { networkTypes: response,
+                         networkTypeId: response[ 0 ].id } );
 
         // Set up the network secuity to match.
         this.netsecui = {};
@@ -41,9 +42,13 @@ class CreateNetwork extends Component {
         this.netSecUIComponent = null;
     });
     networkProtocolStore.getNetworkProtocols()
-    .then( response => this.setState( { networkProtocols: response.records } ) );
+    .then( response => this.setState(
+                    { networkProtocols: response.records,
+                      networkProtocolId: response.records[ 0 ].id} ) );
     networkProviderStore.getNetworkProviders()
-    .then( response => this.setState( { networkProviders: response.records } ) );
+    .then( response => this.setState(
+                    { networkProviders: response.records,
+                      networkProviderId: response.records[ 0 ].id } ) );
 
 
     this.onSubmit = this.onSubmit.bind(this);
@@ -54,9 +59,9 @@ class CreateNetwork extends Component {
 
   onSubmit(e) {
     e.preventDefault();
-    let securityData = "{}";
-    if ( this.state.netSecUI ) {
-        securityData = this.state.netSecUI.getSecurityData();
+    let securityData = {};
+    if ( this.netSecUIComponent ) {
+        securityData = this.netSecUIComponent.getSecurityData();
     }
     networkStore.createNetwork( this.state.name,
                                 this.state.networkProviderId,

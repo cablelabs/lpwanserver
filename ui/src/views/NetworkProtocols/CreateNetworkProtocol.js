@@ -14,12 +14,23 @@ class CreateNetworkProtocol extends Component {
   constructor() {
     super();
     this.state = {
-      networkProtocol: {},
+      networkProtocol: {
+          name: "",
+          protocolHandler: "",
+          networkTypeId: 0,
+      },
       networkTypes: [],
     };
 
     networkTypeStore.getNetworkTypes()
-    .then( response => this.setState( { networkTypes: response } ) );
+    .then( ( response ) => {
+        var np = this.state.networkProtocol;
+        np.networkTypeId = response[ 0 ].id;
+        this.setState( {
+                            networkProtocol: np,
+                            networkTypes: response,
+                       } );
+     });
 
     this.onChange = this.onChange.bind(this);
     this.onSubmit = this.onSubmit.bind(this);

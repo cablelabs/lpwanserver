@@ -328,11 +328,11 @@ exports.connect = function( network, loginData ) {
 
         request( options, function( error, response, body ) {
             if ( error ) {
-                dataAPI.addLog( "Error on signin: " + error );
+                appLogger.log( "Error on signin: " + error );
                 reject( error );
             }
             else if ( response.statusCode >= 400 ) {
-                dataAPI.addLog( "Error on signin: " + response.statusCode + ", " + response.body.error );
+                appLogger.log( "Error on signin: " + response.statusCode + ", " + response.body.error );
                 reject( response.statusCode );
             }
             else {
@@ -780,6 +780,13 @@ exports.deleteCompany = function( sessionData, network, companyId, dataAPI ) {
                                                     network.id,
                                                     network.networkProtocolId,
                                                     makeCompanyDataKey( companyId, "coSPId" ) );
+                        // TODO: Remove this HACK.  Should not store the
+                        // service profile locally in case it gets changed on
+                        // the remote server.
+                        await dataAPI.deleteProtocolDataForKey(
+                                        network.id,
+                                        network.networkProtocolId,
+                                        makeCompanyDataKey( companyId, "coSPNwkId" ) );
                         resolve();
                     }
                 });
@@ -1276,35 +1283,6 @@ exports.stopApplication = function( sessionData, network, applicationId, dataAPI
     });
 };
 
-exports.passDataToApplication = function( applicationId, networkId, data ) {
-    return new Promise( async function( resolve, reject ) {
-        var body;
-        try {
-            body = JSON.parse( data );
-        }
-        catch( err ) {
-            // Assume parse error - pass raw.
-            body = data;
-        }
-        var reportingAPI = activeApplicationNetworkProtocols[ "" + applicationId + ":" + network.id ];
-        if ( reportingAPI ) {
-            try {
-                var response = await reportingAPI.report( body, application.baseURL, application.name );
-                dataAPI.addLog( "Successful send of application data to " + application.baseURL + " for application " + applicationId  + " for network " +  networkId );
-                resolve( 204 );
-            }
-            catch( err ) {
-                dataAPI.addLog( "Failed send application data to " + application.baseURL + " for application " + applicationId  + " for network " +  networkId + ": " + err );
-                reject( err );
-            }
-        }
-        else {
-            // Reporting path not set.  Oh, well, 404.
-            dataAPI.addLog( "Application forwarding not enabled for application " + applicationId + " for network " +  networkId );
-            reject( 404 );
-        }
-    });
-}
 
 //******************************************************************************
 // CRUD deviceProfiles.

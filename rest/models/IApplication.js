@@ -80,12 +80,12 @@ Application.prototype.retrieveApplication = function( id ) {
 // name                - the name of the application
 // companyId           - the id of the Company this application belongs to
 // reportingProtocolId - The protocol used to report data to the application
-// baseURL             - The base URL to use for reporting the data to the
+// baseUrl             - The base URL to use for reporting the data to the
 //                       application using the reporting protocol
 //
 // Returns the promise that will execute the create.
-Application.prototype.createApplication = function( name, companyId, reportingProtocolId, baseURL ) {
-    return this.impl.createApplication( name, companyId, reportingProtocolId, baseURL );
+Application.prototype.createApplication = function( name, companyId, reportingProtocolId, baseUrl ) {
+    return this.impl.createApplication( name, companyId, reportingProtocolId, baseUrl );
 }
 
 // Update the application record.

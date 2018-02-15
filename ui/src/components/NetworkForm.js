@@ -69,7 +69,7 @@ class NetworkForm extends Component {
         this.generateSecurityDataUI( true );
       }
 
-      this.setState( network: network );
+      this.setState( { network: network } );
   }
 
   onDelete(e) {

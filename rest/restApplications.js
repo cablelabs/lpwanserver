@@ -114,7 +114,7 @@ exports.initialize = function( app, server ) {
      *   - name
      *   - companyId
      *   - reportProtocolId
-     *   - baseURL (for the reporting Protocol)
+     *   - baseUrl (for the reporting Protocol)
      */
     app.post('/api/applications', [restServer.isLoggedIn,
                                    restServer.fetchCompany,
@@ -202,9 +202,9 @@ exports.initialize = function( app, server ) {
                 data.reportingrotocolId = req.body.reportingrotocolId;
                 ++changed;
             }
-            if ( ( req.body.baseURL ) &&
-                 ( req.body.baseURL != app.baseURL ) ) {
-                data.baseURL = req.body.baseURL;
+            if ( ( req.body.baseUrl ) &&
+                 ( req.body.baseUrl != app.baseUrl ) ) {
+                data.baseUrl = req.body.baseUrl;
                 ++changed;
             }
             if ( 0 == changed ) {
