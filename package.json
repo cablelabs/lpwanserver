@@ -35,6 +35,7 @@
     "request": "~2.74.0",
     "serve-favicon": "~2.3.0",
     "session-file-store": "^0.2.1",
+    "sqlite": "^2.9.1",
     "sqlite3": "^3.1.13",
     "ws": "^1.1.5"
   }

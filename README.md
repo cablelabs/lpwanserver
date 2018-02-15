@@ -12,6 +12,15 @@ Add additional dependencies in **package.json** and **ui/package.json**.
 `npm install`
 
 
+### Data Storage
+Copy the starting DB to correct directory. 
+
+`cp ./data/test.sqlite3.testSuiteStartingDB /tmp/test.sqlite3`
+
+### Testing
+To test the system
+`npm test`
+
 ### Usage
 To start the REST server:
 `node bin/rest`
