@@ -1132,7 +1132,7 @@ exports.pushApplication = function( sessionData, network, applicationId, dataAPI
                 // Need to create, then.
                 var appid;
                 try {
-                    appid = await exports.createApplication( sessionData, network, applicationId, dataAPI );
+                    appid = await exports.addApplication( sessionData, network, applicationId, dataAPI );
                     resolve( appid );
                 }
                 catch ( err ) {

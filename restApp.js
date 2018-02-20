@@ -15,7 +15,7 @@ var appLogger = require( './rest/lib/appLogger.js' );
 
 // Catch unhandled promise rejections.
 process.on( 'unhandledRejection', (reason, p) => {
-    console.log( 'Unhandled Promise Rejection at: Promise', p, 'reason:', reason );
+    console.log( 'Unhandled Promise Rejection at: Promise ', p, ' reason: ', reason );
     console.log( 'Stack:', reason.stack );
   // application specific logging, throwing an error, or other logic here
 });
@@ -28,6 +28,14 @@ nconf.argv().env().file( { file: 'config.hjson', format: require('hjson') } );
 
 // Create the REST application.
 var app = express();
+
+// Load the port binding info.
+var ipBindAddress = nconf.get( "bind_address" );
+var ipPort = nconf.get( "port" );
+
+// Load the ssl config
+var sslkey = nconf.get( "ssl_key_file" );
+var sslcert = nconf.get( "ssl_cert_file" );
 
 // Add a logger if enabled.
 appLogger.initRESTCallLogger( app );

@@ -159,7 +159,8 @@ class LoRaApplicationNetworkSettings extends Component {
     // Not an onSubmit for the framework, but called from the parent component
     // when the submit happens.  Do what need to be done for this networkType.
     onSubmit = async function( e ) {
-        var ret = this.props.name + " is unchanged.";
+console.log( "Submitting: state = ", this.state );
+        var ret = this.props.parentRec.name + " is unchanged.";
 
         // If we aren't submitting custom code, get rid of the fields.
         if ( this.state.value.payloadCodec !== "CUSTOM_JS" ) {
@@ -182,7 +183,7 @@ class LoRaApplicationNetworkSettings extends Component {
                 // ...and we had an old record with a data change: UPDATE
                 else if ( JSON.stringify( this.state.value ) !== this.state.original ) {
                     var updRec = {
-                        id: this.state.rec.id,
+                        id: this.state.value.id,
                         networkSettings: this.state.value
                     };
                     await applicationStore.updateApplicationNetworkType( updRec );
@@ -190,7 +191,7 @@ class LoRaApplicationNetworkSettings extends Component {
                 }
             }
             // Type is NOT enabled AND we had a record: DELETE
-            else if ( null != this.state.rec ) {
+            else if ( this.state.wasEnabled ) {
                 await applicationStore.deleteApplicationNetworkType( this.state.rec.id );
                 ret = this.props.name + " is deleted.";
             }

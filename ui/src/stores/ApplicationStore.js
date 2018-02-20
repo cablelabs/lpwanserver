@@ -1,7 +1,7 @@
 import {EventEmitter} from "events";
 import "whatwg-fetch";
 import sessionStore, {rest_url} from "./SessionStore";
-import {checkStatus, errorHandler} from "./helpers";
+import {checkStatus, errorHandler, remoteErrorDisplay} from "./helpers";
 
 //import networkTypeStore from "./NetworkTypeStore";
 
@@ -157,7 +157,9 @@ class ApplicationStore extends EventEmitter {
                          headers: header,
               })
               .then(checkStatus)
-              .then(() => {
+              .then(( responseData ) => {
+                  // Handle potential for remote errors
+                  remoteErrorDisplay( responseData );
                   resolve( );
               })
               .catch( function ( err ) {
@@ -178,7 +180,9 @@ class ApplicationStore extends EventEmitter {
                          headers: header,
               })
               .then(checkStatus)
-              .then(() => {
+              .then((responseData) => {
+                  // Handle potential for remote errors
+                  remoteErrorDisplay( responseData );
                   resolve( );
               })
               .catch( function ( err ) {
@@ -207,7 +211,9 @@ class ApplicationStore extends EventEmitter {
               .then(checkStatus)
               .then((response) => response.json())
               .then((responseData) => {
-                  // Should just be an id
+                  // Handle potential for remote errors
+                  remoteErrorDisplay( responseData );
+                  // Return the ID
                   resolve( responseData.id );
               })
               .catch( function( err ) {
@@ -231,6 +237,8 @@ class ApplicationStore extends EventEmitter {
                   // Must be no more than one record - netid and appid are a compound key.
                   if ( responseData && responseData.records &&
                        ( 1 === responseData.records.length ) ) {
+                       // Handle potential for remote errors
+                       remoteErrorDisplay( responseData );
                       resolve( responseData.records[ 0 ] );
                   }
                   else {
@@ -257,8 +265,10 @@ class ApplicationStore extends EventEmitter {
                   }
               )
               .then(checkStatus)
-              .then(() => {
+              .then((responseData) => {
                   // Should just return 204
+                  // Handle potential for remote errors
+                  remoteErrorDisplay( responseData );
                   resolve();
               })
               .catch( function( err ) {
@@ -280,7 +290,9 @@ class ApplicationStore extends EventEmitter {
                   }
               )
               .then(checkStatus)
-              .then(() => {
+              .then((responseData) => {
+                  // Handle potential for remote errors
+                  remoteErrorDisplay( responseData );
                   // Should just return 204
                   resolve();
               })

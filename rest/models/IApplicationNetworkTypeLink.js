@@ -112,7 +112,7 @@ ApplicationNetworkTypeLink.prototype.deleteApplicationNetworkTypeLink = function
             // Since we clear the remote networks before we delete the local
             // record, validate the company now, if required.
             if ( validateCompanyId ) {
-                var app = await modelAPI.application.retrieveApplication( rec.applicationId );
+                var app = await modelAPI.applications.retrieveApplication( rec.applicationId );
                 if ( validateCompanyId != app.companyId ) {
                     reject( new httpError.Unauthorized );
                     return;

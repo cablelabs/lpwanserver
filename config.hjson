@@ -33,8 +33,16 @@
     ////////////////////////////////////////////////////////////
     // URL settings
     ////////////////////////////////////////////////////////////
+    // The numeric IP address to bind the server's listener to.
+    bind_address: "127.0.0.1"
+
+    // The port to bind the listener to.
+    port: 3200
+
     // The base URL to use for links back to this site for emails sent
     // to verify user email addresses or pointers back to us for data delivery.
+    // Note that this could differ from the binding port above due to
+    // redirection through apache, etc.
     base_url: http://localhost:3200/
 
     /////////////////////////////////////////////////////////////

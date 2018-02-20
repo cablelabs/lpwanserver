@@ -21,3 +21,14 @@ export function errorHandler(error) {
   });
 
 }
+
+
+export function remoteErrorDisplay( returnedRec ) {
+    if ( returnedRec.remoteAccessLogs &&
+         ( returnedRec.remoteAccessLogs.length > 0 ) ) {
+        dispatcher.dispatch( {
+          type: "CREATE_ERROR",
+          error: returnedRec.remoteAccessLogs,
+        });
+    }
+}
