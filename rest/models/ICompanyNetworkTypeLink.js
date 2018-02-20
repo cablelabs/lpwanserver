@@ -90,7 +90,7 @@ CompanyNetworkTypeLink.prototype.deleteCompanyNetworkTypeLink = function( id ) {
         try {
             var rec = await me.impl.retrieveCompanyNetworkTypeLink( id );
             // Delete applicationNetworkTypeLinks
-            let antls = await modelAPI.applicationNetworkTypeLinks.retrieveApplicationNetworkTypeLinks( { companyId: id } );
+            let antls = await modelAPI.applicationNetworkTypeLinks.retrieveApplicationNetworkTypeLinks( { companyId: rec.companyId } );
             let recs = antls.records;
             for ( let i = 0; i < recs.length; ++i ) {
                 await modelAPI.applicationNetworkTypeLinks.deleteApplicationNetworkTypeLink( recs[ i ].id );

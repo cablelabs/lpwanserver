@@ -37,6 +37,12 @@ exports.initialize = function( app, server ) {
                 options.applicationId = applicationIdInt;
             }
         }
+        if ( req.query.companyId ) {
+            var companyIdInt = parseInt( req.query.companyId );
+            if ( !isNaN( companyIdInt ) ) {
+                options.companyId = companyIdInt;
+            }
+        }
         if ( req.query.limit ) {
             var limitInt = parseInt( req.query.limit );
             if ( !isNaN( limitInt ) ) {
