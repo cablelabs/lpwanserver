@@ -28,7 +28,7 @@ class CompanyStore extends EventEmitter {
                   isAdmin: true,
                   email: company.email
               };
-              userStore.createUserforCompany( user, function ( responseData ) {
+              userStore.createUser( user, function ( responseData ) {
                   resolve( coresData );
               });
           })

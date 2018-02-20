@@ -83,6 +83,8 @@ class UserStore extends EventEmitter {
 
   createUser(user, callbackFunc) {
     let header = sessionStore.getHeader();
+
+    // Convert isAdmin to a role.
     if (user.isAdmin) {
       user.role = "admin";
     } else {
@@ -90,6 +92,12 @@ class UserStore extends EventEmitter {
     }
 
     delete user['isAdmin'];
+
+    // Add in the company if not specified.  Same as current user.
+    if ( !user.companyId ) {
+        var u = sessionStore.getUser();
+        user.companyId = u.companyId;
+    }
 
     console.log("Create User", JSON.stringify(user));
     fetch(rest_url + "/api/users/", {
@@ -101,30 +109,6 @@ class UserStore extends EventEmitter {
          callbackFunc(responseData);
      })
      .catch(errorHandler);
-  }
-
-  createUserforCompany(user, callbackFunc) {
-    let header = sessionStore.getHeader();
-    if (user.isAdmin) {
-      user.role = "admin";
-    } else {
-      user.role = "user";
-    }
-
-    delete user['isAdmin'];
-
-
-    console.log("Create User", JSON.stringify(user));
-    fetch(rest_url + "/api/users/", {
-      method: "POST", body: JSON.stringify(user), headers: header,
-    })
-      .then(checkStatus)
-      .then((response) => response.json())
-      .then((responseData) => {
-        callbackFunc(responseData);
-      })
-      .catch(errorHandler)
-
   }
 
   updateUser(userID, user, callbackFunc) {
