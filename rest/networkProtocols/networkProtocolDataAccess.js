@@ -143,7 +143,6 @@ NetworkProtocolDataAccess.prototype.getReportingAPIByApplicationId = function( i
             // So just use the general interface.
             var application = await me.getApplicationById( id );
             var reportingAPI = await modelAPI.reportingProtocolAPIs.getProtocol( application );
-
             resolve( reportingAPI );
         }
         catch( err ) {

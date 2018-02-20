@@ -33,7 +33,7 @@ ReportingProtocolAccess.prototype.clearProtocol = function( reportingProtocol ) 
 ReportingProtocolAccess.prototype.getProtocol = function( application ) {
     var me = this;
     return new Promise( async function( resolve, reject ) {
-        var id = application.id;
+        var id = application.reportingProtocolId;
         if ( ! reportingProtocolMap[ id ] ) {
             // We'll need the protocol for the network.
             try {
@@ -42,6 +42,7 @@ ReportingProtocolAccess.prototype.getProtocol = function( application ) {
                 resolve( reportingProtocolMap[ id ] );
             }
             catch ( err ) {
+                console.log( "Error loading reportingProtocol: " + err );
                 reject( err );
             }
         }
