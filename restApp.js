@@ -5,11 +5,14 @@
 // permissions required to execute the various operations.
 
 var express = require('express');
+var http = require( 'http' );
+var https = require('https');
 var cors = require('cors');
 var path = require('path');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var session = require('express-session');
+var fs = require( 'fs' );
 var server = require( './rest/restServer.js' );
 var appLogger = require( './rest/lib/appLogger.js' );
 
@@ -34,8 +37,81 @@ var ipBindAddress = nconf.get( "bind_address" );
 var ipPort = nconf.get( "port" );
 
 // Load the ssl config
-var sslkey = nconf.get( "ssl_key_file" );
-var sslcert = nconf.get( "ssl_cert_file" );
+var sslkeyName = nconf.get( "ssl_key_file" );
+var sslcertName = nconf.get( "ssl_cert_file" );
+
+if ( sslkeyName && sslcertName ){
+    // Load the files
+    var sslcert = fs.readFileSync( sslcertName );
+    var sslkey = fs.readFileSync( sslkeyName );
+    // Set up an SSL connection
+    var sslOpts = {
+        key: sslkey,
+        cert: sslcert,
+    };
+    https.createServer( sslOpts, app ).listen({
+        host: ipBindAddress,
+        port: ipPort,
+        exclusive: true,
+    });
+    console.log( "REST https server starting on port " + ipPort );
+}
+else {
+    http.createServer( app ).listen({
+        host: ipBindAddress,
+        port: ipPort,
+        exclusive: true,
+    });
+    console.log( "REST http server starting on port " + ipPort );
+    console.log( "WARNING: INSECURE CONNECTION" );
+
+}
+
+
+app.on('error', onError);
+app.on('listening', onListening);
+
+/**
+ * Event listener for HTTP server "error" event.
+ */
+
+function onError(error) {
+  if (error.syscall !== 'listen') {
+    throw error;
+  }
+
+  var bind = typeof port === 'string'
+    ? 'Pipe ' + port
+    : 'Port ' + port;
+
+  // handle specific listen errors with friendly messages
+  switch (error.code) {
+    case 'EACCES':
+      console.error(bind + ' requires elevated privileges');
+      process.exit(1);
+      break;
+    case 'EADDRINUSE':
+      console.error(bind + ' is already in use');
+      process.exit(1);
+      break;
+    default:
+      throw error;
+  }
+}
+
+/**
+ * Event listener for HTTP server "listening" event.
+ */
+
+function onListening() {
+  var addr = server.address();
+  var bind = typeof addr === 'string'
+    ? 'pipe ' + addr
+    : 'port ' + addr.port;
+  debug('Listening on ' + bind);
+}
+
+// NOTE: if we didn't set up ssl endpoint above,
 
 // Add a logger if enabled.
 appLogger.initRESTCallLogger( app );
