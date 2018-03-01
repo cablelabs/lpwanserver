@@ -23,6 +23,42 @@ function NetworkTypeApi( dataModel  ) {
     protos = new NetworkProtocols( dataModel.networkProtocols );
 }
 
+// Functions for createPromiseOperationForNetworksOfType() to track the
+// promises to be executed in a pass, and to resolve on the last one.  We
+// will track counters using an id in case we are accessing this from more
+// than one caller at a time.
+var doneTracker = {};
+function allDoneInit( count ) {
+    // Set up an id for this operation.  Unix timestamp should be sufficient.
+    let id = Math.floor( new Date() );
+    // But just in case we're running really tight operations...
+    while ( doneTracker[ id ] ) {
+        ++id;
+    }
+    // Set up tracking for the id.
+    doneTracker[ id ] = {};
+    doneTracker[ id ].targetCount = count;
+    doneTracker[ id ].soFar = 0;
+
+    // Caller uses the id to specify each call has completed.
+    return id;
+}
+
+function done( id, logs, resolve ) {
+    // Get the tracker and make sure it exists.
+    let tracker = doneTracker[ id ];
+    if ( tracker ) {
+        // Increment the soFar, add the logs to the global logs.
+        ++tracker.soFar;
+        if ( tracker.targetCount === tracker.soFar ) {
+            resolve( logs );
+        }
+    }
+    else {
+        appLogger.log( "Call to done() with invalid id!" );
+    }
+}
+
 // Most of the operations here have the same format:
 //
 // 1) Create a Promise that:
@@ -52,6 +88,10 @@ function createPromiseOperationForNetworksOfType( operationName,
         // company, admin account credetials for the company).
         var npda = new NetworkProtocolDataAccess( modelAPI, operationName );
 
+        // Init the logs for this module.
+        let networkType = await modelAPI.networkTypes.retrieveNetworkType( networkTypeId );
+        npda.initLog( networkType, null );
+
         var networks;
         try {
             // Get the networks we'll be operating on that support the
@@ -59,35 +99,33 @@ function createPromiseOperationForNetworksOfType( operationName,
             var networks = await npda.getNetworksOfType( networkTypeId );
         }
         catch ( err ) {
-            npda.addLog( "Error retrieving networks for type ID " + networkTypeId );
+            npda.addLog( null, "Error retrieving networks for type ID " + networkTypeId );
             resolve( npda.getLogs() );
             return;
         }
 
-        // Set up the promises that will do the creates for each network - we'll
-        // do an 'all' operation on these so they can run simultaneously.
-        var netOperations = [];
-        networks.records.forEach( function( network ) {
-            // Push the promise to execute the operation.
-            netOperations.push( operationFunction( npda, network ) );
-        });
-        // Run, and wait for it...
-        await Promise.all( netOperations ).then( function( rets ) {
-            // Retrieve the logging for the operations, intended for
-            // presentation for the user.
-            var logs = npda.getLogs();
-            if ( logs && ( logs.length > 0 ) ) {
-                // Also put the log messages into our logging.
-                appLogger.log( logs );
-            }
-            resolve( logs );
-        })
-        .catch( function( err ) {
-            // Error in trying to run the global promise (as opposed to errors
-            // in accessing each network).
-            npda.addLog( "Error on " + operationName + " propogation to networks: " + err );
+        if ( 0 == networks.records.length ) {
+            // Just resolve.
             resolve( npda.getLogs() );
-        });
+        }
+        // Start the promises that will do the operation for each network.
+        // Last one will resolve via done() function.
+        let id = allDoneInit( networks.records.length );
+        for ( var i = 0; i < networks.records.length; ++i ) {
+            let network = networks.records[ i ];
+
+            // Initialize the logging for this network.
+            npda.initLog( networkType, network );
+
+            // Run the promise for the operation.
+            operationFunction( npda, network ).then( function () {
+                done( id, npda.getLogs(), resolve );
+            })
+            .catch( function( err ) {
+                npda.addLog( network, err );
+                done( id, npda.getLogs(), resolve );
+            });
+        }
     });
 
 }

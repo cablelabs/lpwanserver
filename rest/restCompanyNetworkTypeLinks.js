@@ -196,7 +196,7 @@ exports.initialize = function( app, server ) {
             else {
                 // Do the update.
                 modelAPI.companyNetworkTypeLinks.updateCompanyNetworkTypeLink( data ).then( function ( rec ) {
-                    restServer.respond( res, 200, rec.remoteAccessLogs );
+                    restServer.respondJson( res, 200, { remoteAccessLogs: rec.remoteAccessLogs } );
                 })
                 .catch( function( err ) {
                     restServer.respond( res, err );
@@ -222,7 +222,7 @@ exports.initialize = function( app, server ) {
         // If the caller is a global admin, we can just delete.
         if ( req.company.type === modelAPI.companies.COMPANY_ADMIN ) {
             modelAPI.companyNetworkTypeLinks.deleteCompanyNetworkTypeLink( id ).then( function( ret ) {
-                restServer.respond( res, 200, ret.remoteAccessLogs );
+                restServer.respondJson( res, 200,  { remoteAccessLogs: ret } );
              })
              .catch( function( err ) {
                 appLogger.log( "Error deleting companyNetworkTypeLink " + id + ": " + err );
@@ -239,7 +239,7 @@ exports.initialize = function( app, server ) {
                 else {
                     // OK to do the  delete.
                     modelAPI.companyNetworkTypeLinks.deleteCompanyNetworkTypeLink( id ).then( function( ret ) {
-                        restServer.respond( res, 200, ret.remoteAccessLogs );
+                        restServer.respondJson( res, 200, { remoteAccessLogs: ret } );
                      })
                      .catch( function( err ) {
                         appLogger.log( "Error deleting companyNetworkTypeLink " + id + ": " + err );

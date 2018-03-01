@@ -8,8 +8,6 @@ let rest_url = process.env.REACT_APP_REST_SERVER_URL;
 
 
 var loginErrorHandler = (error) => {
-    console.log("error", error);
-
     dispatcher.dispatch({
         type: "CREATE_ERROR",
         error: error
@@ -82,7 +80,6 @@ class SessionStore extends EventEmitter {
         }
     }
 
-    //Response { type: "cors", url: "http://localhost:3200/api/sessions", redirected: false, status: 200, ok: true, statusText: "OK", headers: Headers, bodyUsed: true }
 
     login(login, callbackFunc) {
         var me = this;
@@ -93,7 +90,7 @@ class SessionStore extends EventEmitter {
                     'Accept': 'application/json',
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify( login )
+                body: JSON.stringify( login ),
         })
         .then(checkStatus)
         .then((response) => response.text())

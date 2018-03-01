@@ -1,6 +1,6 @@
 import sessionStore, {rest_url} from "./SessionStore";
 import {EventEmitter} from "events";
-import {checkStatus, errorHandler} from "./helpers";
+import {checkStatus, errorHandler, remoteErrorDisplay} from "./helpers";
 import userStore from "./UserStore";
 
 
@@ -191,6 +191,8 @@ class CompanyStore extends EventEmitter {
           .then(checkStatus)
           .then((response) => response.json())
           .then((responseData) => {
+              // Handle potential for remote errors
+              remoteErrorDisplay( responseData );
               // Should just be an id
               resolve( responseData.id );
           })
@@ -212,6 +214,8 @@ class CompanyStore extends EventEmitter {
           .then(checkStatus)
           .then((response) => response.json())
           .then((responseData) => {
+              // Handle potential for remote errors
+              remoteErrorDisplay( responseData );
               // Must be no more than one record - netid and coid are a compound key.
               if ( responseData && responseData.records &&
                    ( 1 === responseData.records.length ) ) {
@@ -241,7 +245,9 @@ class CompanyStore extends EventEmitter {
               }
           )
           .then(checkStatus)
-          .then(() => {
+          .then((responseData) => {
+              // Handle potential for remote errors
+              remoteErrorDisplay( responseData );
               // Should just return 204
               resolve();
           })
@@ -264,7 +270,10 @@ class CompanyStore extends EventEmitter {
               }
           )
           .then(checkStatus)
-          .then(() => {
+          .then( (response) => response.json() )
+          .then((responseData) => {
+              // Handle potential for remote errors
+              remoteErrorDisplay( responseData );
               // Should just return 204
               resolve();
           })

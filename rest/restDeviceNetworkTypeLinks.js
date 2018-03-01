@@ -130,6 +130,7 @@ exports.initialize = function( app, server ) {
                                     companyId ).then( function ( rec ) {
             var send = {};
             send.id = rec.id;
+            send.remoteAccessLogs = rec.remoteAccessLogs;
             restServer.respondJson( res, 200, send );
         })
         .catch( function( err ) {
@@ -187,7 +188,7 @@ exports.initialize = function( app, server ) {
 
                 // Do the update.
                 modelAPI.deviceNetworkTypeLinks.updateDeviceNetworkTypeLink( data, companyId ).then( function ( rec ) {
-                    restServer.respond( res, 204 );
+                    restServer.respondJson( res, 204,  { remoteAccessLogs: rec.remoteAccessLogs } );
                 })
                 .catch( function( err ) {
                     restServer.respond( res, err );
@@ -217,8 +218,8 @@ exports.initialize = function( app, server ) {
              companyId = req.user.companyId;
         }
 
-        modelAPI.deviceNetworkTypeLinks.deleteDeviceNetworkTypeLink( id, companyId ).then( function( ) {
-            restServer.respond( res, 204 );
+        modelAPI.deviceNetworkTypeLinks.deleteDeviceNetworkTypeLink( id, companyId ).then( function( rec ) {
+            restServer.respond( res, 204,  { remoteAccessLogs: rec.remoteAccessLogs } );
         })
         .catch( function( err ) {
             appLogger.log( "Error deleting deviceNetworkTypeLink " + id + ": " + err );

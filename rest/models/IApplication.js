@@ -197,17 +197,31 @@ Application.prototype.stopApplication = function( id ) {
     var me = this;
     return new Promise( async function( resolve, reject ) {
         var appLinks = await modelAPI.applicationNetworkTypeLinks.retrieveApplicationNetworkTypeLinks( { "applicationId": id } );
-        var allLogs = [];
+        var allLogs = {};
         var allPromises = [];
         appLinks.records.forEach( async function( appLink ) {
             allPromises.push( modelAPI.networkTypeAPI.stopApplication( appLink.networkTypeId, id ) );
         });
         try {
-            // Generates an array of arrays of logs.
+            // Generates an array of logs.
             var logs = await Promise.all( allPromises );
-            logs.forEach( ( onePromiseLogs ) => {
-                onePromiseLogs.forEach( ( log ) => { allLogs.push( log ); } )
-            });
+            for ( var logSet = 0; logSet < logs.length; ++logSet ) {
+                for ( var networkId in logs[ logSet ] ) {
+                    var networkLogs = logs[ logSet ][ networkId ];
+                    if ( !allLogs[ networkId ] ) {
+                        // Not there yet.  OK to assign.  And yeah, this
+                        // is a reference, but we won't be using the entries
+                        // after this.
+                        allLogs[ networkId ] = networkLogs;
+                    }
+                    else {
+                        // Add in the logs from this network.
+                        for ( var j = 0; j < networkLogs[ networkId ].logs.length; ++j ) {
+                            allLogs[ networkId ].logs.push( networkLogs[ networkId ].logs[ j ] );
+                        }
+                    }
+                }
+            }
         }
         catch( err ) {
             allLogs.push( "Failed to stop application on at least one network" );

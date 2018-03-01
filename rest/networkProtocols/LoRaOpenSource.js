@@ -19,7 +19,7 @@ exports.getCompanyAccessAccount = async function( dataAPI, network ) {
     let secData = network.securityData;
     if ( !secData || !secData.username || !secData.password ) {
         appLogger.log( "Network security data is incomplete for " + network.name );
-        dataAPI.addLog( "Network security data is incomplete for " + network.name );
+        dataAPI.addLog( network, "Network security data is incomplete for " + network.name );
         return null;
     }
     return { username: secData.username,
@@ -128,10 +128,9 @@ async function getCompanyAccount( dataAPI, network, companyId, generateIfMissing
             return secData;
         }
         else {
-            dataAPI.addLog( "Company security data is missing for network " +
-                              network.name +
-                              ", company id " +
-                              companyId );
+            dataAPI.addLog( network,
+                            "Company security data is missing for company id " +
+                            companyId );
             return null;
         }
     }
@@ -144,10 +143,9 @@ async function getCompanyAccount( dataAPI, network, companyId, generateIfMissing
     }
 
     if ( !secData.username || !secData.password ) {
-        dataAPI.addLog( "Company security data is incomplete for network " +
-                          network.name +
-                          ", company id " +
-                          companyId );
+        dataAPI.addLog( network,
+                        "Company security data is incomplete for company id " +
+                        companyId );
         return null;
     }
 
@@ -192,16 +190,16 @@ function getANetworkServerID( network, connection ) {
         request( options, async function( error, response, body ) {
             if ( error || response.statusCode >= 400 ) {
                 if ( error ) {
-                    dataAPI.addLog( "Error on get Network Server: " + error );
+                    dataAPI.addLog( network, "Error on get Network Server: " + error );
                     reject( error );
                     return;
                 }
                 else {
                     var bodyObj = JSON.parse( response.body );
-                    dataAPI.addLog( "Error on get Network Server: " +
+                    dataAPI.addLog( network, "Error on get Network Server: " +
                                   bodyObj.error +
                                    " (" + response.statusCode + ")" );
-                    dataAPI.addLog( "Request data = " + JSON.stringify( options ) );
+                    dataAPI.addLog( network, "Request data = " + JSON.stringify( options ) );
                     reject( response.statusCode );
                     return;
                 }
@@ -211,7 +209,7 @@ function getANetworkServerID( network, connection ) {
                 var res = JSON.parse( body );
                 var nsList = res.result;
                 if ( 0 == nsList.length ) {
-                    dataAPI.addLog( "Empty list of Network Servers returned" );
+                    dataAPI.addLog( network, "Empty list of Network Servers returned" );
                     reject( 404 );
                     return;
                 }
@@ -235,7 +233,7 @@ function getANetworkServerIDFromServiceProfile( network, connection, coId, dataA
 
         }
         catch ( err ) {
-            dataAPI.addLog( "Error on getting Service Profile Id: " + err );
+            dataAPI.addLog( network, "Error on getting Service Profile Id: " + err );
             reject( err );
             return;
         }
@@ -251,7 +249,7 @@ function getANetworkServerIDFromServiceProfile( network, connection, coId, dataA
             resolve( coSPNwkId );
         }
         catch ( err ) {
-            dataAPI.addLog( "Error on getting Service Profile's Network's Id: " + err );
+            dataAPI.addLog( network, "Error on getting Service Profile's Network's Id: " + err );
             reject( err );
             return;
         }
@@ -280,12 +278,12 @@ function getANetworkServerIDFromServiceProfile( network, connection, coId, dataA
             }
             if ( error || response.statusCode >= 400 ) {
                 if ( error ) {
-                    dataAPI.addLog( "Error on get Service Profile: " + error );
+                    dataAPI.addLog( network, "Error on get Service Profile: " + error );
                     reject( error );
                     return;
                 }
                 else {
-                    dataAPI.addLog( "Error on get Service Profile: " +
+                    dataAPI.addLog( network, "Error on get Service Profile: " +
                                   bodyObj.error +
                                    " (" + response.statusCode + ")" );
                     reject( response.statusCode );
@@ -411,15 +409,12 @@ exports.addCompany = function( sessionData, network, companyId, dataAPI ) {
         request( options, async function( error, response, body ) {
             if ( error || response.statusCode >= 400 ) {
                 if ( error ) {
-                    dataAPI.addLog( "Error on create company " + company.name +
-                                    " on network " + network.name +
-                                    ": " + error );
+                    dataAPI.addLog( network, "Error on create company " + company.name + ": " + error );
                     reject( error );
                 }
                 else {
 
-                    dataAPI.addLog( "Error on create company " + company.name +
-                                    " on network " + network.name +
+                    dataAPI.addLog( network, "Error on create company " + company.name +
                                     ": " + response.statusCode );
                     reject( response.statusCode );
                 }
@@ -467,18 +462,16 @@ exports.addCompany = function( sessionData, network, companyId, dataAPI ) {
                     request( userOptions, async function( error, response, body ) {
                         if ( error || response.statusCode >= 400 ) {
                             if ( error ) {
-                                 dataAPI.addLog( "Error creating " + company.name +
+                                 dataAPI.addLog( network, "Error creating " + company.name +
                                                  "'s admin user " + userOptions.json.username +
-                                                 " on network " + network.name +
                                                  ": " + error );
                                  reject( error );
                                  return;
                             }
                             else {
 
-                                 dataAPI.addLog( "Error creating " + company.name +
+                                 dataAPI.addLog( network, "Error creating " + company.name +
                                                  "'s admin user " + userOptions.json.username +
-                                                 " on network " + network.name +
                                                  ": " + response.statusCode +
                                                  " (Server message: " + response.body.error + ")" );
                                  reject( response.statusCode );
@@ -491,9 +484,6 @@ exports.addCompany = function( sessionData, network, companyId, dataAPI ) {
                                                                  network.networkProtocolId,
                                                                  makeCompanyDataKey( company.id, "coUsrId" ),
                                                                  body.id );
-                             dataAPI.addLog( "Created company " + company.name +
-                                             " and the admin user " + userOptions.json.username +
-                                             " on network " + network.name );
                         }
 
                         // Set up a default Service Profile.
@@ -530,22 +520,19 @@ exports.addCompany = function( sessionData, network, companyId, dataAPI ) {
                         request( spOptions, async function( error, response, body ) {
                             if ( error || response.statusCode >= 400 ) {
                                 if ( error ) {
-                                     dataAPI.addLog( "Error creating default Service Profile on network " + network.name +
-                                                     ": " + error );
+                                     dataAPI.addLog( network, "Error creating default Service Profile: " + error );
                                      reject( error );
                                      return;
                                 }
                                 else {
 
-                                     dataAPI.addLog( "Error creating default Service Profile on network " + network.name +
-                                                     ": " + response.statusCode +
+                                     dataAPI.addLog( network, "Error creating default Service Profile: " + response.statusCode +
                                                      " (Server message: " + response.body.error + ")" );
                                      reject( response.statusCode );
                                      return;
                                 }
                             }
                             else {
-                                dataAPI.addLog( "Created default Service Profile on network " + network.name );
                                 // Save the ServiceProfile ID from the remote
                                 // network.
                                 await dataAPI.putProtocolDataForKey(
@@ -566,7 +553,7 @@ exports.addCompany = function( sessionData, network, companyId, dataAPI ) {
                     }); // End of user create request.
                 }
                 catch ( err ) {
-                    dataAPI.addLog( "Failed to add ancillary data to remote host: " + err );
+                    dataAPI.addLog( network, "Failed to add ancillary data to remote host: " + err );
                     reject( err );
                 }
             }
@@ -599,10 +586,8 @@ exports.getCompany = function( sessionData, network, companyId, dataAPI ) {
         }
         catch( err ) {
             // No data.
-            dataAPI.addLog( "Company " + company.name +
-                            " does not have a key for the remote network "  +
-                             network.name +
-                            ".  Company has not yet been created." );
+            dataAPI.addLog( network,"Company " + company.name +
+                            " does not have a key for the remote network.  Company has not yet been created." );
             reject( err );
         }
 
@@ -618,7 +603,7 @@ exports.getCompany = function( sessionData, network, companyId, dataAPI ) {
 
         request( options, function( error, response, body ) {
             if ( error ) {
-                dataAPI.addLog( "Error getting company " + company.name + " from network " + network.name + ": " + error );
+                dataAPI.addLog( network,"Error getting company " + company.name + ": " + error );
                 reject( error );
             }
             else {
@@ -653,10 +638,8 @@ exports.updateCompany = function( sessionData, network, companyId, dataAPI ) {
         }
         catch( err ) {
             // No data.
-            dataAPI.addLog( "Company " + company.name +
-                            " does not have a key for the remote network "  +
-                             network.name +
-                            ".  Company has not yet been created." );
+            dataAPI.addLog( network,"Company " + company.name +
+                            " does not have a key for the remote network.  Company has not yet been created." );
             reject( err );
         }
 
@@ -676,8 +659,8 @@ exports.updateCompany = function( sessionData, network, companyId, dataAPI ) {
 
         request( options, function( error, response, body ) {
             if ( error ) {
-                dataAPI.addLog( "Error updating company " + company.name +
-                                " to network " + network.name + ": " + error );
+                dataAPI.addLog( network, "Error updating company " + company.name +
+                                ": " + error );
                 reject( error );
             }
             else {
@@ -718,10 +701,8 @@ exports.deleteCompany = function( sessionData, network, companyId, dataAPI ) {
         }
         catch( err ) {
             // No data.
-            dataAPI.addLog( "Company " + companyId +
-                            " does not have a key for the remote network "  +
-                             network.name +
-                            ".  Company has not yet been created." );
+            dataAPI.addLog( network, "Company " + companyId +
+                            " does not have a key for the remote network.  Company has not yet been created." );
             reject( err );
             return;
         }
@@ -737,7 +718,7 @@ exports.deleteCompany = function( sessionData, network, companyId, dataAPI ) {
             "rejectUnauthorized": false };
         request( userOptions, function( error, response, body ) {
             if ( error ) {
-                dataAPI.addLog( "Error on delete company's admin user: " + error );
+                dataAPI.addLog( network, "Error on delete company's admin user: " + error );
                 reject( error );
             }
             else {
@@ -753,7 +734,7 @@ exports.deleteCompany = function( sessionData, network, companyId, dataAPI ) {
 
                 request( options, async function( error, response, body ) {
                     if ( error ) {
-                        dataAPI.addLog( "Error on delete company: " + error );
+                        dataAPI.addLog( network, "Error on delete company: " + error );
                         reject( error );
                     }
                     else {
@@ -821,6 +802,7 @@ exports.pushCompany = function( sessionData, network, companyId, dataAPI ) {
                     resolve( coid );
                 }
                 catch ( err ) {
+                    dataAPI.addLog( network, "Error on push company (create): " + err );
                     reject( err );
                 }
                 return;
@@ -832,7 +814,9 @@ exports.pushCompany = function( sessionData, network, companyId, dataAPI ) {
             await exports.updateCompany( sessionData, network, companyId, dataAPI );
         }
         catch( err ) {
+            dataAPI.addLog( network, "Error on push company (update): " + err );
             reject( err );
+            return;
         }
         resolve();
     });
@@ -879,7 +863,7 @@ exports.addApplication = function( sessionData, network, applicationId, dataAPI 
 
         }
         catch ( err ) {
-            dataAPI.addLog( "Failed to get required data for addApplication: " + err );
+            dataAPI.addLog( network,"Failed to get required data for addApplication: " + err );
             reject( err );
             return;
         }
@@ -913,11 +897,11 @@ exports.addApplication = function( sessionData, network, applicationId, dataAPI 
         request( options, async function( error, response, body ) {
             if ( error || response.statusCode >= 400 ) {
                 if ( error ) {
-                    dataAPI.addLog( "Error on create application: " + error );
+                    dataAPI.addLog( network,"Error on create application: " + error );
                     reject( error );
                 }
                 else {
-                    dataAPI.addLog( "Error on create application: " + JSON.stringify( body ) + "(" + response.statusCode + ")" );
+                    dataAPI.addLog( network,"Error on create application: " + JSON.stringify( body ) + "(" + response.statusCode + ")" );
                     reject( response.statusCode );
                 }
             }
@@ -969,7 +953,7 @@ exports.getApplication = function( sessionData, network, applicationId, dataAPI 
 
         request( options, function( error, response, body ) {
             if ( error ) {
-                dataAPI.addLog( "Error on get application: " + error );
+                dataAPI.addLog( network,"Error on get application: " + error );
                 reject( error );
             }
             else {
@@ -1052,7 +1036,7 @@ exports.updateApplication = function( sessionData, network, applicationId, dataA
 
         request( options, function( error, response, body ) {
             if ( error ) {
-                dataAPI.addLog( "Error on update application: " + error );
+                dataAPI.addLog( network,"Error on update application: " + error );
                 reject( error );
             }
             else {
@@ -1095,7 +1079,7 @@ exports.deleteApplication = function( sessionData, network, applicationId, dataA
 
         request( options, async function( error, response, body ) {
             if ( error ) {
-                dataAPI.addLog( "Error on delete application: " + error );
+                dataAPI.addLog( network,"Error on delete application: " + error );
                 reject( error );
             }
             else {
@@ -1205,7 +1189,7 @@ exports.startApplication = function( sessionData, network, applicationId, dataAP
 
             request( options, function( error, response, body ) {
                 if ( error ) {
-                    dataAPI.addLog( "Error on add application data reporting: " + error );
+                    dataAPI.addLog( network,"Error on add application data reporting: " + error );
                     reject( error );
                 }
                 else {
@@ -1215,7 +1199,7 @@ exports.startApplication = function( sessionData, network, applicationId, dataAP
 
         }
         catch( err ) {
-            dataAPI.addLog( "Error on add application data reporting: " + err );
+            dataAPI.addLog( network, "Error on add application data reporting: " + err );
             reject( err );
         };
     });
@@ -1236,7 +1220,7 @@ exports.stopApplication = function( sessionData, network, applicationId, dataAPI
         // Can't delete if not running on the network.
         if ( activeApplicationNetworkProtocols[ "" + applicationId + ":" + network.id ] === undefined ) {
             // We don't think the app is running on this network.
-            dataAPI.addLog( "Application " + applicationId +
+            dataAPI.addLog( network,"Application " + applicationId +
                             " is not running on network " + network.id );
             reject( 404 );
             return;
@@ -1249,7 +1233,7 @@ exports.stopApplication = function( sessionData, network, applicationId, dataAPI
                                     makeApplicationDataKey( applicationId, "appNwkId" ) );
         }
         catch( err ) {
-            dataAPI.addLog( "Cannot delete application data forwarding for application " +
+            dataAPI.addLog( network,"Cannot delete application data forwarding for application " +
                             applicationId +
                             " and network " +
                             network.name +
@@ -1269,7 +1253,7 @@ exports.stopApplication = function( sessionData, network, applicationId, dataAPI
             "rejectUnauthorized": false };
         request( options, function( error, response, body ) {
             if ( error ) {
-                dataAPI.addLog( "Error on delete application notification: " + error );
+                dataAPI.addLog( network,"Error on delete application notification: " + error );
                 reject( error );
             }
             else {
@@ -1409,11 +1393,11 @@ exports.addDeviceProfile = function( sessionData, network, deviceProfileId, data
             request( options, async function( error, response, body ) {
                 if ( error || response.statusCode >= 400 ) {
                     if ( error ) {
-                        dataAPI.addLog( "Error on create deviceProfile: " + error );
+                        dataAPI.addLog( network,"Error on create deviceProfile: " + error );
                         reject( error );
                     }
                     else {
-                        dataAPI.addLog( "Error on create deviceProfile: " + body + "(" + response.statusCode + ")" );
+                        dataAPI.addLog( network,"Error on create deviceProfile: " + body + "(" + response.statusCode + ")" );
                         reject( response.statusCode );
                     }
                 }
@@ -1458,7 +1442,7 @@ exports.getDeviceProfile = function( sessionData, network, deviceProfileId, data
                                                 makeDeviceProfileDataKey( deviceProfileId, "dpNwkId" ) );
         }
         catch ( err ) {
-            dataAPI.addLog( "Error on get deviceProfile network ID: " + err );
+            dataAPI.addLog( network,"Error on get deviceProfile network ID: " + err );
             reject( err );
         }
         // Set up the request options.
@@ -1473,11 +1457,11 @@ exports.getDeviceProfile = function( sessionData, network, deviceProfileId, data
         request( options, function( error, response, body ) {
             if ( error || response.statusCode >= 400 ) {
                 if ( error ) {
-                    dataAPI.addLog( "Error on get deviceProfile: " + error );
+                    dataAPI.addLog( network,"Error on get deviceProfile: " + error );
                     reject( error );
                 }
                 else {
-                    dataAPI.addLog( "Error on get deviceProfile: " + body + "(" + response.statusCode + ")" );
+                    dataAPI.addLog( network,"Error on get deviceProfile: " + body + "(" + response.statusCode + ")" );
                     reject( response.statusCode );
                 }
             }
@@ -1519,7 +1503,7 @@ exports.updateDeviceProfile = function( sessionData, network, deviceProfileId, d
                                                 makeCompanyDataKey( deviceProfile.companyId, "coNwkId" ) );
         }
         catch( err ) {
-            dataAPI.addLog( "Error getting supporting data for update device Profile: " + err );
+            dataAPI.addLog( network,"Error getting supporting data for update device Profile: " + err );
             reject( err );
             return;
         }
@@ -1606,11 +1590,11 @@ exports.updateDeviceProfile = function( sessionData, network, deviceProfileId, d
         request( options, function( error, response, body ) {
             if ( error || response.statusCode >= 400 ) {
                 if ( error ) {
-                    dataAPI.addLog( "Error on put deviceProfile: " + error );
+                    dataAPI.addLog( network,"Error on put deviceProfile: " + error );
                     reject( error );
                 }
                 else {
-                    dataAPI.addLog( "Error on put deviceProfile: " + body + "(" + response.statusCode + ")" );
+                    dataAPI.addLog( network,"Error on put deviceProfile: " + body + "(" + response.statusCode + ")" );
                     reject( response.statusCode );
                 }
             }
@@ -1649,7 +1633,7 @@ exports.deleteDeviceProfile = function( sessionData, network, deviceProfileId, d
                                         makeDeviceProfileDataKey( deviceProfileId, "dpNwkId" ) );
         }
         catch( err ) {
-            dataAPI.addLog( "Error getting supporting data for delete deviceProfile: " + err );
+            dataAPI.addLog( network,"Error getting supporting data for delete deviceProfile: " + err );
             reject( err );
             return;
         }
@@ -1667,11 +1651,11 @@ exports.deleteDeviceProfile = function( sessionData, network, deviceProfileId, d
         request( options, function( error, response, body ) {
             if ( error || response.statusCode >= 400 ) {
                 if ( error ) {
-                    dataAPI.addLog( "Error on delete deviceProfile: " + error );
+                    dataAPI.addLog( network,"Error on delete deviceProfile: " + error );
                     reject( error );
                 }
                 else {
-                    dataAPI.addLog( "Error on delete deviceProfile: " + body + "(" + response.statusCode + ")" );
+                    dataAPI.addLog( network,"Error on delete deviceProfile: " + body + "(" + response.statusCode + ")" );
                     reject( response.statusCode );
                 }
             }
@@ -1760,8 +1744,7 @@ exports.addDevice = function( sessionData, network, deviceId, dataAPI ) {
             device = await dataAPI.getDeviceById( deviceId );
             dntl = await dataAPI.getDeviceNetworkType( deviceId, network.networkTypeId );
             if ( !dntl.networkSettings || !dntl.networkSettings.devEUI ) {
-                dataAPI.addLog( "deviceNetworkTypeLink MUST have networkSettings which MUST have devEUI" );
-                dataAPI.addLog( "dntl = " + JSON.stringify( dntl ) );
+                dataAPI.addLog( network,"deviceNetworkTypeLink MUST have networkSettings which MUST have devEUI" );
                 reject( 400 );
                 return;
             }
@@ -1775,7 +1758,7 @@ exports.addDevice = function( sessionData, network, deviceId, dataAPI ) {
                                         makeDeviceProfileDataKey( dntl.deviceProfileId, "dpNwkId" ) );
         }
         catch( err ) {
-            dataAPI.addLog( "Error getting data for remote network: " + err );
+            dataAPI.addLog( network,"Error getting data for remote network: " + err );
             reject( err );
             return;
         }
@@ -1804,11 +1787,11 @@ exports.addDevice = function( sessionData, network, deviceId, dataAPI ) {
         request( options, function( error, response, body ) {
             if ( error || response.statusCode >= 400 ) {
                 if ( error ) {
-                    dataAPI.addLog( "Error on create device: " + error );
+                    dataAPI.addLog( network,"Error on create device: " + error );
                     reject( error );
                 }
                 else {
-                    dataAPI.addLog( "Error on create device (" + response.statusCode + "): " + body.error );
+                    dataAPI.addLog( network,"Error on create device (" + response.statusCode + "): " + body.error );
                     reject( response.statusCode );
                 }
             }
@@ -1830,10 +1813,10 @@ exports.addDevice = function( sessionData, network, deviceId, dataAPI ) {
                 request( options, function( error, response, body ) {
                     if ( error || response.statusCode >= 400 ) {
                         if ( error ) {
-                            dataAPI.addLog( "Error on create device keys: " + error );
+                            dataAPI.addLog( network,"Error on create device keys: " + error );
                         }
                         else {
-                            dataAPI.addLog( "Error on create device keys (" + response.statusCode + "): " + body.error );
+                            dataAPI.addLog( network,"Error on create device keys (" + response.statusCode + "): " + body.error );
                         }
                         resolve( dntl.networkSettings.devEUI );
                     }
@@ -1885,11 +1868,11 @@ exports.getDevice = function( sessionData, network, deviceId, dataAPI ) {
         request( options, function( error, response, body ) {
             if ( error || response.statusCode >= 400 ) {
                  if ( error ) {
-                     dataAPI.addLog( "Error on get device: " + error );
+                     dataAPI.addLog( network,"Error on get device: " + error );
                      reject( error );
                  }
                  else {
-                     dataAPI.addLog( "Error on get device (" + response.statusCode + "): " + body.error );
+                     dataAPI.addLog( network,"Error on get device (" + response.statusCode + "): " + body.error );
                      reject( response.statusCode );
                  }
             }
@@ -1938,7 +1921,7 @@ exports.updateDevice = function( sessionData, network, deviceId, dataAPI ) {
                                     makeDeviceProfileDataKey( dp.id, "dpNwkId" ) );
         }
         catch( err ) {
-            dataAPI.addLog( "Failed to get supporting data for updateDevice: " + err );
+            dataAPI.addLog( network,"Failed to get supporting data for updateDevice: " + err );
             reject( err );
             return;
         }
@@ -1966,12 +1949,12 @@ exports.updateDevice = function( sessionData, network, deviceId, dataAPI ) {
             if ( error || response.statusCode >= 400 ) {
                  if ( error ) {
                      appLogger.log("Error on update device: " + error);
-                     dataAPI.addLog( "Error on update device: " + error );
+                     dataAPI.addLog( network,"Error on update device: " + error );
                      reject( error );
                  }
                  else {
                      appLogger.log( "Error on update device (" + response.statusCode + "): " + body.error );
-                     dataAPI.addLog( "Error on update device (" + response.statusCode + "): " + body.error );
+                     dataAPI.addLog( network,"Error on update device (" + response.statusCode + "): " + body.error );
                      reject( response.statusCode );
                  }
             }
@@ -1987,10 +1970,10 @@ exports.updateDevice = function( sessionData, network, deviceId, dataAPI ) {
                 request( options, function( error, response, body ) {
                     if ( error || response.statusCode >= 400 ) {
                         if ( error ) {
-                            dataAPI.addLog( "Error on update device keys: " + error );
+                            dataAPI.addLog( network,"Error on update device keys: " + error );
                         }
                         else {
-                            dataAPI.addLog( "Error on update device keys (" + response.statusCode + "): " + body.error );
+                            dataAPI.addLog( network,"Error on update device keys (" + response.statusCode + "): " + body.error );
                         }
                         resolve();
                     }
@@ -2028,7 +2011,7 @@ exports.deleteDevice = function( sessionData, network, deviceId, dataAPI ) {
         }
         catch( err ) {
             // Can't delete without the remote ID.
-            dataAPI.addLog( "Failed to get remote network's device ID: " + err );
+            dataAPI.addLog( network,"Failed to get remote network's device ID: " + err );
             reject( err );
             return;
         }
@@ -2046,11 +2029,11 @@ exports.deleteDevice = function( sessionData, network, deviceId, dataAPI ) {
         request( options, async function( error, response, body ) {
             if ( error || response.statusCode >= 400 ) {
                  if ( error ) {
-                     dataAPI.addLog( "Error on delete device: " + error );
+                     dataAPI.addLog( network, "Error on delete device: " + error );
                      reject( error );
                  }
                  else {
-                     dataAPI.addLog( "Error on delete device (" + response.statusCode + "): " + body.error );
+                     dataAPI.addLog( network, "Error on delete device (" + response.statusCode + "): " + body.error );
                      reject( response.statusCode );
                  }
             }
@@ -2063,7 +2046,7 @@ exports.deleteDevice = function( sessionData, network, deviceId, dataAPI ) {
                                             makeDeviceDataKey( deviceId, "devNwkId" ) );
                 }
                 catch( err ) {
-                    dataAPI.addLog( "Failed to delete remote network's device ID: " + err );
+                    dataAPI.addLog( network, "Failed to delete remote network's device ID: " + err );
                 }
 
                 // Devices have a separate API for appkeys...
@@ -2071,10 +2054,10 @@ exports.deleteDevice = function( sessionData, network, deviceId, dataAPI ) {
                 request( options, function( error, response, body ) {
                     if ( error || response.statusCode >= 400 ) {
                         if ( error ) {
-                            dataAPI.addLog( "Error on delete device keys: " + error );
+                            dataAPI.addLog( network, "Error on delete device keys: " + error );
                         }
                         else {
-                            dataAPI.addLog( "Error on delete device keys (" + response.statusCode + "): " + body.error );
+                            dataAPI.addLog( network, "Error on delete device keys (" + response.statusCode + "): " + body.error );
                         }
                         resolve();
                     }

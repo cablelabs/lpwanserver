@@ -68,7 +68,7 @@ function NetworkProtocolDataAccess( server, fdesc ) {
     this.devicesInProfileCache = {};
 
     // Errors seen while processing data for the network.
-    this.logs = [];
+    this.logs = {};
 }
 
 // One of the few non-caching methods in this object, gets the networks for the
@@ -87,7 +87,7 @@ NetworkProtocolDataAccess.prototype.getNetworksOfType = function( networkTypeId 
             reject( err );
         });
     });
-};
+}
 
 // Returns a promise that retrieves company data for the companyId.
 NetworkProtocolDataAccess.prototype.getCompanyById = function( id ) {
@@ -109,7 +109,7 @@ NetworkProtocolDataAccess.prototype.getCompanyById = function( id ) {
             });
         }
     });
-};
+}
 
 // Returns a promise that retrieves application data for the applicationId.
 NetworkProtocolDataAccess.prototype.getApplicationById = function( id ) {
@@ -131,7 +131,7 @@ NetworkProtocolDataAccess.prototype.getApplicationById = function( id ) {
             });
         }
     });
-};
+}
 
 // Returns a promise that returns the reporting API for the application.
 NetworkProtocolDataAccess.prototype.getReportingAPIByApplicationId = function( id ) {
@@ -173,7 +173,7 @@ NetworkProtocolDataAccess.prototype.getDeviceById = function( id ) {
             });
         }
     });
-};
+}
 
 // Returns a promise that retrieves company data for the companyId.
 NetworkProtocolDataAccess.prototype.getDeviceProfileById = function( id ) {
@@ -195,7 +195,7 @@ NetworkProtocolDataAccess.prototype.getDeviceProfileById = function( id ) {
             });
         }
     });
-};
+}
 
 // Returns a promise that retrieves company data for the applicationId.
 NetworkProtocolDataAccess.prototype.getCompanyByApplicationId = function( appId ) {
@@ -210,7 +210,7 @@ NetworkProtocolDataAccess.prototype.getCompanyByApplicationId = function( appId 
             reject( err );
         }
     });
-};
+}
 
 // Returns a promise that retrieves company data for the deviceId.
 NetworkProtocolDataAccess.prototype.getCompanyByDeviceId = function( devId ) {
@@ -225,7 +225,7 @@ NetworkProtocolDataAccess.prototype.getCompanyByDeviceId = function( devId ) {
             reject( err );
         }
     });
-};
+}
 
 // Returns a promise that retrieves company data for the deviceProfileId.
 NetworkProtocolDataAccess.prototype.getCompanyByDeviceProfileId = function( devProId ) {
@@ -240,7 +240,7 @@ NetworkProtocolDataAccess.prototype.getCompanyByDeviceProfileId = function( devP
             reject( err );
         }
     });
-};
+}
 
 // Returns a promise that retrieves application data for the deviceId.
 NetworkProtocolDataAccess.prototype.getApplicationByDeviceId = function( devId ) {
@@ -255,7 +255,7 @@ NetworkProtocolDataAccess.prototype.getApplicationByDeviceId = function( devId )
             reject( err );
         }
     });
-};
+}
 
 // Returns a promise that retrieves device profile data for the deviceId and
 NetworkProtocolDataAccess.prototype.getDeviceProfileByDeviceIdNetworkTypeId = function( devId, ntId ) {
@@ -270,7 +270,7 @@ NetworkProtocolDataAccess.prototype.getDeviceProfileByDeviceIdNetworkTypeId = fu
             reject( err );
         }
     });
-};
+}
 
 // Returns a promise that retrieves company network data for the companyID and
 // networkTypeId.
@@ -292,7 +292,7 @@ NetworkProtocolDataAccess.prototype.getCompanyNetworkType = function( companyId,
             reject( err );
         }
     });
-};
+}
 
 // Returns a promise that retrieves application network data for the
 // applicationId and networkTypeId.
@@ -314,7 +314,7 @@ NetworkProtocolDataAccess.prototype.getApplicationNetworkType = function( applic
             reject( err );
         }
     });
-};
+}
 
 // Returns a promise that retrieves device network data for the
 // deviceId and networkTypeId.
@@ -338,7 +338,7 @@ NetworkProtocolDataAccess.prototype.getDeviceNetworkType = function( deviceId, n
             reject( err );
         }
     });
-};
+}
 
 // Returns a promise that retrieves devices associated with the deviceProfileId.
 NetworkProtocolDataAccess.prototype.getDevicesForDeviceProfile = function( deviceProfileId ) {
@@ -374,20 +374,67 @@ NetworkProtocolDataAccess.prototype.getDevicesForDeviceProfile = function( devic
             reject( err );
         }
     });
-};
+}
 
-NetworkProtocolDataAccess.prototype.addLog = function( message ) {
-    var frame = stackTrace.get()[1];
-    this.logs.push( message );
-};
+NetworkProtocolDataAccess.prototype.initLog = function( networkType, network ) {
+    if ( null == network ) {
+        this.logs[ 0 ] = {};
+        this.logs[ 0 ].logs = [];
+        this.logs[ 0 ].networkTypeName = networkType.name;
+        this.logs[ 0 ].networkName = "All networks of type " + networkType.name;
+    }
+    else {
+        this.logs[ network.id ] = {};
+        this.logs[ network.id ].logs = [];
+        this.logs[ network.id ].networkTypeName = networkType.name;
+        this.logs[ network.id ].networkName = network.name;
+    }
+}
 
-NetworkProtocolDataAccess.prototype.getLogs = function( message ) {
-    return this.logs;
-};
+NetworkProtocolDataAccess.prototype.addLog = function( network, message ) {
+    // Message objects are not a good thing.  Try a couple of common ones, then
+    // resort to stringify
+    if ( typeof message === "object" ) {
+        if ( message.syscall ) {
+            switch ( message.code ) {
+                case "ECONNREFUSED":
+                    message = "Cannot connect to remote network server";
+                    break;
+                case "ETIMEDOUT":
+                    message = "Remote server timed out on request";
+                    break;
+                default:
+                    message = message.syscall + " returned " + message.code;
+                    break;
+            }
+        }
+        else {
+            message = JSON.stringify( message );
+        }
+    }
+
+    if ( null == network ) {
+        this.logs[ 0 ].logs.push( message );
+    }
+    else {
+        this.logs[ network.id ].logs.push( message );
+    }
+}
+
+NetworkProtocolDataAccess.prototype.getLogs = function() {
+    // Deep copy, then drop networks that have no messages.
+    let logs = JSON.parse( JSON.stringify( this.logs ) );
+    for ( var id in logs ) {
+        if ( logs[ id ].logs.length === 0 ) {
+            delete logs[ id ];
+        }
+    }
+    return logs;
+}
 
 NetworkProtocolDataAccess.prototype.getProtocolDataForKey = function( networkId, networkProtocolId, key ) {
     return modelAPI.protocolData.retrieveProtocolData( networkId, networkProtocolId, key );
-};
+}
 
 NetworkProtocolDataAccess.prototype.putProtocolDataForKey = function( networkId, networkProtocolId, key, data ) {
     var me = this;
@@ -404,7 +451,7 @@ NetworkProtocolDataAccess.prototype.putProtocolDataForKey = function( networkId,
         }
         resolve( );
     });
-};
+}
 
 NetworkProtocolDataAccess.prototype.deleteProtocolDataForKey = function(
                                networkId,
@@ -420,7 +467,7 @@ NetworkProtocolDataAccess.prototype.access = function( network, data, k ) {
     var res = dec.update( parts[ 1 ], 'base64', 'utf8' );
     res += dec.final( 'utf8' );
     return JSON.parse( res );
-};
+}
 
 NetworkProtocolDataAccess.prototype.hide = function( network, dataObject, k ) {
     var vec = cry.randomBytes( 16 );
@@ -428,7 +475,7 @@ NetworkProtocolDataAccess.prototype.hide = function( network, dataObject, k ) {
     var en = cfr.update( JSON.stringify( dataObject ), 'utf8', 'base64' );
     en += cfr.final( 'base64' );
     return vec.toString( 'base64' ) + delimiter + en;
-};
+}
 
 NetworkProtocolDataAccess.prototype.genKey = function( ) {
         var k = cry.randomBytes( 32 );

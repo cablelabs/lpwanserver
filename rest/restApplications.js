@@ -354,7 +354,7 @@ exports.initialize = function( app, server ) {
                      restServer.respond( res, 200, logs.remoteAccessLogs );
                 })
                 .catch( function( err ) {
-                    appLogger.log( "Error starting application " + id + ": " + err );
+                    appLogger.log( "Error stopping application " + id + ": " + err );
                     restServer.respond( res, err );
                 });
             })

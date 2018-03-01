@@ -160,6 +160,7 @@ exports.initialize = function( app, server ) {
                                             rec.networkSettings ).then( function ( rec ) {
                 var send = {};
                 send.id = rec.id;
+                send.remoteAccessLogs = rec.remoteAccessLogs;
                 restServer.respondJson( res, 200, send );
             })
             .catch( function( err ) {
@@ -226,7 +227,7 @@ exports.initialize = function( app, server ) {
             else {
                 // Do the update.
                 modelAPI.deviceProfiles.updateDeviceProfile( data ).then( function ( rec ) {
-                     restServer.respond( res, 204 );
+                     restServer.respondJson( res, 204,  { remoteAccessLogs: rec.remoteAccessLogs } );
                 })
                 .catch( function( err ) {
                     appLogger.log( "Failed to update deviceProfile " + data.id + " with " + JSON.stringify( data ) + ": " + err );
@@ -258,7 +259,7 @@ exports.initialize = function( app, server ) {
         }
 
         modelAPI.deviceProfiles.deleteDeviceProfile( id, companyId ).then( function( ret ) {
-            restServer.respond( res, 200, ret.remoteAccessLogs );
+            restServer.respondJson( res, 200,  { remoteAccessLogs: ret.remoteAccessLogs } );
         })
         .catch( function( err ) {
             appLogger.log( "Error deleting deviceProfile " + id + ": " + err );

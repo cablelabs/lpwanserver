@@ -116,7 +116,6 @@ DeviceProfile.prototype.deleteDeviceProfile = function( id, validateCompanyId ) 
             // complete.
             var logs = await modelAPI.networkTypeAPI.deleteDeviceProfile( rec.networkTypeId, id );
             await me.impl.deleteDeviceProfile( id );
-console.log( logs );
             resolve( logs );
         }
         catch ( err ) {

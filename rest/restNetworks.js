@@ -128,7 +128,7 @@ exports.initialize = function( app, server ) {
             restServer.respondJson( res, 200, send );
         })
         .catch( function( err ) {
-            console.log( err );
+            appLogger.log( "Error creating network" + err );
             restServer.respond( res, err );
         });
     });

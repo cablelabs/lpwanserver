@@ -2,7 +2,7 @@ import {EventEmitter} from "events";
 import "whatwg-fetch";
 import sessionStore, {rest_url} from "./SessionStore";
 import applicationStore from "./ApplicationStore";
-import {checkStatus, errorHandler} from "./helpers";
+import {checkStatus, errorHandler, remoteErrorDisplay} from "./helpers";
 
 //import networkTypeStore from "./NetworkTypeStore";
 
@@ -168,6 +168,8 @@ class DeviceStore extends EventEmitter {
               .then(checkStatus)
               .then((response) => response.json())
               .then((responseData) => {
+                  // Handle potential for remote errors
+                  remoteErrorDisplay( responseData );
                   // Should just be an id
                   resolve( responseData.id );
               })
@@ -189,6 +191,8 @@ class DeviceStore extends EventEmitter {
               .then(checkStatus)
               .then((response) => response.json())
               .then((responseData) => {
+                  // Handle potential for remote errors
+                  remoteErrorDisplay( responseData );
                   resolve( responseData );
               })
               .catch( function( err ) {
@@ -211,7 +215,9 @@ class DeviceStore extends EventEmitter {
                   }
               )
               .then(checkStatus)
-              .then(() => {
+              .then((responseData) => {
+                  // Handle potential for remote errors
+                  remoteErrorDisplay( responseData );
                   // Should just return 204
                   resolve();
               })
@@ -234,7 +240,9 @@ class DeviceStore extends EventEmitter {
                   }
               )
               .then(checkStatus)
-              .then(() => {
+              .then((responseData) => {
+                  // Handle potential for remote errors
+                  remoteErrorDisplay( responseData );
                   // Should just return 204
                   resolve();
               })
@@ -281,6 +289,8 @@ class DeviceStore extends EventEmitter {
               .then(checkStatus)
               .then((response) => response.json())
               .then((responseData) => {
+                  // Handle potential for remote errors
+                  remoteErrorDisplay( responseData );
                   resolve( responseData );
               })
               .catch( function ( err ) {
@@ -305,6 +315,8 @@ class DeviceStore extends EventEmitter {
               .then(checkStatus)
               .then((response) => response.json())
               .then((responseData) => {
+                  // Handle potential for remote errors
+                  remoteErrorDisplay( responseData );
                   resolve( responseData );
               })
               .catch( function ( err ) {
@@ -334,6 +346,8 @@ class DeviceStore extends EventEmitter {
               .then(checkStatus)
               .then((response) => response.json())
               .then((responseData) => {
+                  // Handle potential for remote errors
+                  remoteErrorDisplay( responseData );
                   // Should just be an id
                   resolve( responseData.id );
               })
@@ -355,6 +369,8 @@ class DeviceStore extends EventEmitter {
               .then(checkStatus)
               .then((response) => response.json())
               .then((responseData) => {
+                  // Handle potential for remote errors
+                  remoteErrorDisplay( responseData );
                   // Must be no more than one record - netid and appid are a compound key.
                   if ( responseData && responseData.records &&
                        ( 1 === responseData.records.length ) ) {
@@ -385,7 +401,9 @@ class DeviceStore extends EventEmitter {
                   }
               )
               .then(checkStatus)
-              .then(() => {
+              .then((responseData) => {
+                  // Handle potential for remote errors
+                  remoteErrorDisplay( responseData );
                   // Should just return 204
                   resolve();
               })
@@ -408,7 +426,9 @@ class DeviceStore extends EventEmitter {
                   }
               )
               .then(checkStatus)
-              .then(() => {
+              .then((responseData) => {
+                  // Handle potential for remote errors
+                  remoteErrorDisplay( responseData );
                   // Should just return 204
                   resolve();
               })

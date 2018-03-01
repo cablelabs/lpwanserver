@@ -130,15 +130,8 @@ describe( "Launch Applications", function() {
             .send()
             .end(function(err, res){
                 res.should.have.status(200);
-                var logs = res.body;
-                var found404 = false;
-                console.log( logs );
-                logs.forEach( ( log ) => {
-                    if ( log.indexOf( "404" ) !== -1 ) {
-                            found404 = true;
-                    }
-                });
-                found404.should.equal( true );
+                var logs = JSON.stringify( res.body );
+                logs.indexOf( "404" ).should.not.equal( -1 );
                 done();
             });
         });

@@ -386,7 +386,7 @@ NetworkProtocolAccess.prototype.startApplication = function( dataAPI, network, a
             var loginData = await netProto.api.getApplicationAccessAccount( dataAPI, network, applicationId );
         }
         catch( err ) {
-            dataAPI.addLog( "Could not get start app supporting data:" + err );
+            dataAPI.addLog( network, "Could not get start app supporting data:" + err );
             reject( err );
             return;
         }
@@ -424,7 +424,7 @@ NetworkProtocolAccess.prototype.stopApplication = function( dataAPI, network, ap
             var loginData = await netProto.api.getApplicationAccessAccount( dataAPI, network, applicationId );
         }
         catch( err ) {
-            dataAPI.addLog( "Could not get stop app supporting data:" + err );
+            dataAPI.addLog( network, "Could not get stop app supporting data:" + err );
             reject( err );
             return;
         }
@@ -468,7 +468,7 @@ NetworkProtocolAccess.prototype.addDevice = function( dataAPI, network, deviceId
             loginData = await netProto.api.getDeviceAccessAccount( dataAPI, network, deviceId );
         }
         catch ( err ) {
-            dataAPI.addLog( "Failed to get suuport data for addDevice: " + err );
+            dataAPI.addLog( network, "Failed to get suuport data for addDevice: " + err );
             reject( err );
             return;
         }
@@ -507,13 +507,13 @@ NetworkProtocolAccess.prototype.pushDevice = function( dataAPI, network, deviceI
 
             loginData = await netProto.api.getDeviceAccessAccount( dataAPI, network, deviceId );
             if ( !loginData ) {
-                dataAPI.addLog( "Failed to get support login for pushDevice");
+                dataAPI.addLog( network, "Failed to get support login for pushDevice");
                 reject( 404 );
                 return;
             }
         }
         catch ( err ) {
-            dataAPI.addLog( "Failed to get support data for pushDevice: " + err );
+            dataAPI.addLog( network, "Failed to get support data for pushDevice: " + err );
             reject( err );
             return;
         }
@@ -553,7 +553,7 @@ NetworkProtocolAccess.prototype.deleteDevice = function( dataAPI, network, devic
             loginData = await netProto.api.getDeviceAccessAccount( dataAPI, network, deviceId );
         }
         catch ( err ) {
-            dataAPI.addLog( "Failed to get suuport data for deleteDevice: " + err );
+            dataAPI.addLog( network, "Failed to get suuport data for deleteDevice: " + err );
             reject( err );
             return;
         }

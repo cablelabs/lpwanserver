@@ -183,7 +183,7 @@ exports.initialize = function( app, server ) {
 
                 // Do the update.
                 modelAPI.applicationNetworkTypeLinks.updateApplicationNetworkTypeLink( data, companyId ).then( function ( rec ) {
-                    restServer.respond( res, 200, rec.remoteAccessLogs );
+                    restServer.respondJson( res, 200,  { remoteAccessLogs: rec.remoteAccessLogs } );
                 })
                 .catch( function( err ) {
                     restServer.respond( res, err );
@@ -214,7 +214,7 @@ exports.initialize = function( app, server ) {
         }
 
         modelAPI.applicationNetworkTypeLinks.deleteApplicationNetworkTypeLink( id, companyId ).then( function( ret ) {
-            restServer.respond( res, 200, ret.remoteAccessLogs );
+            restServer.respondJson( res, 200,  { remoteAccessLogs: ret.remoteAccessLogs } );
         })
         .catch( function( err ) {
             appLogger.log( "Error deleting applicationNetworkTypeLink " + id + ": " + err );
