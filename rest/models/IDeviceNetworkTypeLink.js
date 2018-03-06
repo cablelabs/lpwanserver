@@ -92,6 +92,34 @@ DeviceNetworkTypeLink.prototype.updateDeviceNetworkTypeLink = function( deviceNe
     });
 }
 
+// Update the deviceNetworkTypeLinks record.
+//
+// deviceNetworkTypeLinks - the updated record.  Note that the id must be
+//                      unchanged from retrieval to guarantee the same
+//                      record is updated.
+// validateCompanyId  - The id of the company this device SHOULD be
+//                      part of.  Usually this is tied to the user
+//                      creating the link, though a global admin could
+//                      supply null here (no need to validate).
+//
+// Returns a promise that executes the update.
+DeviceNetworkTypeLink.prototype.pushDeviceNetworkTypeLink = function( deviceNetworkTypeLink, validateCompanyId ) {
+    var me = this;
+    return new Promise( async function( resolve, reject ) {
+        try {
+
+            var rec = await me.impl.retrieveDeviceNetworkTypeLink( deviceNetworkTypeLink );
+            var logs = await modelAPI.networkTypeAPI.pushDevice( rec.networkTypeId, rec.deviceId, rec.networkSettings );
+            rec.remoteAccessLogs = logs;
+            resolve( rec );
+        }
+        catch ( err ) {
+            appLogger.log( "Error updating deviceNetworkTypeLink: " + err );
+            reject( err );
+        }
+    });
+}
+
 // Delete the deviceNetworkTypeLinks record.
 //
 // id                - the id of the deviceNetworkTypeLinks record to delete.
