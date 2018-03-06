@@ -84,6 +84,7 @@ class ListApplications extends Component {
   constructor(props) {
       super(props);
       var isGlobalAdmin = sessionStore.isGlobalAdmin();
+      var isAdmin = sessionStore.isAdmin();
 
       this.state = {
           pageSize: 20,
@@ -96,6 +97,7 @@ class ListApplications extends Component {
           companies: {},
           organization: {},
           isGlobalAdmin: isGlobalAdmin,
+          isAdmin: isAdmin,
           appPageNumber: 1,
           appPages: 1,
           userPageNumber: 1,
@@ -149,10 +151,10 @@ class ListApplications extends Component {
 
       sessionStore.on("change", this.sessionWatch );
 
-      // GlobalAdmin?  Needs company list.
+      // Admin?  Needs company list.
       var companies = {};
       var filterList = [];
-      if ( this.state.isGlobalAdmin ) {
+      if ( this.state.isAdmin ) {
           let recs;
           try {
               let cos = await companyStore.getAll();
@@ -162,10 +164,11 @@ class ListApplications extends Component {
               console.log( "Error getting company selection list:" + err );
               recs = [];
           }
-          recs.forEach( rec => {
+          for( let i = 0; i < recs.length; ++i ) {
+              let rec = recs[ i ];
               companies[ rec.id ] = rec;
               filterList.push( { label: rec.name, value: rec.id } );
-          });
+          }
       }
       this.setState( { companies: companies,
                        filterList: filterList } );
@@ -194,7 +197,7 @@ class ListApplications extends Component {
           console.log( "Error getting reporting protocols: " + err );
       }
 
-      this.reloadBasedOnFilter();
+      this.reloadBasedOnFilter( );
   }
 
   reloadBasedOnFilter = async function( ) {
@@ -219,21 +222,22 @@ class ListApplications extends Component {
     window.scrollTo(0, 0);
 
     try {
-        let userret = await userStore.getAll(
-                            this.state.pageSize,
-                            (this.state.userPage - 1) * this.state.pageSize,
-                            this.state.filterCompany )
-        let users = userret.records;
-        if ( this.state.isGlobalAdmin ) {
-            users.forEach( u => {
+        if ( this.state.isAdmin ) {
+            let userret = await userStore.getAll(
+                                this.state.pageSize,
+                                (this.state.userPage - 1) * this.state.pageSize,
+                                this.state.filterCompany )
+            let users = userret.records;
+            for ( let i = 0; i < users.length; ++i ) {
+                let u = users[ i ];
                 u.companyName = this.state.companies[ u.companyId ].name;
+            }
+            this.setState({
+                users: users,
+                userPages: Math.ceil( userret.totalCount / this.state.pageSize),
             });
+            window.scrollTo(0, 0);
         }
-        this.setState({
-            users: users,
-            userPages: Math.ceil( userret.totalCount / this.state.pageSize),
-        });
-        window.scrollTo(0, 0);
     }
     catch( err ) {
          console.log( "Error getting users: " + err );
@@ -277,7 +281,6 @@ class ListApplications extends Component {
   }
 
   reload(i) {
-      console.log( "trying...");
       let apps = this.state.applications;
       apps[i].running = !apps[i].running;
 
@@ -333,7 +336,7 @@ class ListApplications extends Component {
             <ul className="nav nav-tabs">
               <li role="presentation" className={(this.state.activeTab === "application" ? 'active' : '')}><a
                 onClick={this.changeTab} href="#application" aria-controls="application">Applications</a></li>
-              <li role="presentation" className={(this.state.activeTab === "users" ? 'active' : '')}><a
+              <li role="presentation" className={(this.state.activeTab === "users" ? 'active' : '') + ((sessionStore.isAdmin()) ? '' : ' hidden' ) }><a
                 onClick={this.changeTab} href="#users" aria-controls="users">Users</a></li>
               <li role="presentation" className={(this.state.activeTab === "deviceProfiles" ? 'active' : '')}><a
                 onClick={this.changeTab} href="#deviceProfiles" aria-controls="deviceProfiles">Device Profiles</a></li>

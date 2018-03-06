@@ -52,94 +52,136 @@ class UserStore extends EventEmitter {
         });
     }
 
-  getUser(userID, callbackFunc) {
-    let header = sessionStore.getHeader();
-    fetch(rest_url + "/api/users/" + userID, {
-      method: "GET", credentials: 'same-origin', headers: header,
-      'Accept': 'application/json', 'Content-Type': 'application/json'
-    })
-      .then(checkStatus)
-      .then((response) => response.json())
-      .then((responseData) => {
-        //console.log(responseData);
-        callbackFunc(responseData);
-      })
-      .catch(errorHandler);
+  getUser( userID ) {
+      return new Promise( function( resolve, reject ) {
+          let header = sessionStore.getHeader();
+          fetch(rest_url + "/api/users/" + userID,
+                {
+                    method: "GET",
+                    credentials: 'same-origin',
+                    headers: header,
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                })
+          .then(checkStatus)
+          .then((response) => response.json())
+          .then((responseData) => {
+              resolve( responseData );
+           })
+           .catch( (err) => {
+               errorHandler( err );
+               reject( err );
+           });
+      });
   }
 
-  getUserMe(callbackFunc) {
-    let header = sessionStore.getHeader();
-    fetch(rest_url + "/api/users/me", {
-      method: "GET", credentials: 'same-origin', headers: header,
-      'Accept': 'application/json', 'Content-Type': 'application/json'
-    })
-      .then(checkStatus)
-      .then((response) => response.json())
-      .then((responseData) => {
-        callbackFunc(responseData);
-      })
-      .catch(errorHandler);
+  getUserMe() {
+      return new Promise( function( resolve, reject ) {
+          let header = sessionStore.getHeader();
+          fetch(rest_url + "/api/users/me",
+                {
+                    method: "GET",
+                    credentials: 'same-origin',
+                    headers: header,
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                })
+          .then(checkStatus)
+          .then((response) => response.json())
+          .then((responseData) => {
+              resolve( responseData );
+          })
+          .catch( ( err ) => {
+              errorHandler( err );
+              reject( err );
+          });
+      });
   }
 
-  createUser(user, callbackFunc) {
-    let header = sessionStore.getHeader();
+  createUser( user ) {
+      return new Promise( function( resolve, reject ) {
+          let header = sessionStore.getHeader();
 
-    // Convert isAdmin to a role.
-    if (user.isAdmin) {
-      user.role = "admin";
-    } else {
-      user.role = "user";
-    }
+          // Convert isAdmin to a role.
+          if (user.isAdmin) {
+              user.role = "admin";
+          }
+          else {
+              user.role = "user";
+          }
+          delete user['isAdmin'];
 
-    delete user['isAdmin'];
+          // Add in the company if not specified.  Same as current user.
+          if ( !user.companyId ) {
+              var u = sessionStore.getUser();
+              user.companyId = u.companyId;
+          }
 
-    // Add in the company if not specified.  Same as current user.
-    if ( !user.companyId ) {
-        var u = sessionStore.getUser();
-        user.companyId = u.companyId;
-    }
-
-    console.log("Create User", JSON.stringify(user));
-    fetch(rest_url + "/api/users/", {
-        method: "POST", body: JSON.stringify(user), headers: header,
-     })
-     .then(checkStatus)
-     .then((response) => response.json())
-     .then((responseData) => {
-         callbackFunc(responseData);
-     })
-     .catch(errorHandler);
+          console.log("Create User", JSON.stringify(user));
+          fetch(rest_url + "/api/users/",
+                {
+                    method: "POST",
+                    body: JSON.stringify(user),
+                    headers: header,
+                }
+          )
+          .then(checkStatus)
+          .then((response) => response.json())
+          .then((responseData) => {
+              resolve( responseData );
+          })
+          .catch( ( err ) => {
+              errorHandler( err );
+              reject( err );
+          });
+      });
   }
 
-  updateUser(userID, user, callbackFunc) {
-    console.log("update user");
-    let header = sessionStore.getHeader();
-    fetch(rest_url + "/api/users/" + userID, {
-      method: "PUT",
-      body: JSON.stringify(user),
-      credentials: 'same-origin',
-      headers: header,
-    })
-      .then(checkStatus)
-      .then((responseData) => {
-        console.log("something");
-        callbackFunc(responseData);
-      })
-      .catch(errorHandler);
+  updateUser( user ) {
+      return new Promise( function( resolve, reject ) {
+          console.log( "Running request", user );
+          console.log( "URL base", rest_url );
+          let header = sessionStore.getHeader();
+          console.log( "Header:", header );
+          fetch(rest_url + "/api/users/" + user.id,
+                {
+                    method: "PUT",
+                    body: JSON.stringify(user),
+                    credentials: 'same-origin',
+                    headers: header,
+                }
+          )
+          .then(checkStatus)
+          .then((responseData) => {
+              console.log( "Callback calling", responseData);
+              resolve( responseData );
+          })
+          .catch( (err) => {
+              console.log( "Error Updating User", err );
+              errorHandler(err);
+              reject(err);
+          });
+      });
   }
 
-    deleteUser(userID, callbackFunc) {
-    let header = sessionStore.getHeader();
-    fetch(rest_url + "/api/users/" + userID, {
-      method: "DELETE", credentials: 'same-origin', headers: header,
-      'Accept': 'application/json', 'Content-Type': 'application/json'
-    })
-      .then(checkStatus)
-      .then((responseData) => {
-        callbackFunc(responseData);
-      })
-      .catch(errorHandler);
-
+  deleteUser(userID) {
+      return new Promise( function( resolve, reject ) {
+          let header = sessionStore.getHeader();
+          fetch(rest_url + "/api/users/" + userID,
+                {
+                    method: "DELETE",
+                    credentials: 'same-origin',
+                    headers: header,
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                }
+          )
+          .then(checkStatus)
+          .then((responseData) => {
+              resolve(responseData);
+          })
+          .catch(errorHandler);
+      });
   }
 
   deleteUsersForCompany( companyId ) {

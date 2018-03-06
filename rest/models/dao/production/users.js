@@ -193,7 +193,6 @@ exports.updateUser = function( user ) {
 
         // Post-update may need access to the updated record.  Save it here.
         var originalUserNeeded = false;
-
         if ( user.email && ( "" != user.email ) ) {
             originalUserNeeded = true;
             // Set up the user record to properly handle the new email.
@@ -222,7 +221,7 @@ exports.updateUser = function( user ) {
             emailPost = function( ) {
                 return new Promise( function ( resolve, reject ) {
                     // Verify that email, if there was one.
-                    if ( !updatedUser.email ) {
+                    if ( !updatedUser || !updatedUser.email ) {
                         resolve();
                         return;
                     }

@@ -28,8 +28,11 @@ class CompanyStore extends EventEmitter {
                   isAdmin: true,
                   email: company.email
               };
-              userStore.createUser( user, function ( responseData ) {
+              userStore.createUser( user ).then( function ( responseData ) {
                   resolve( coresData );
+              })
+              .catch( ( err ) => {
+                 console.log( "Error creating user for company: ", err );
               });
           })
           .catch( function ( err ) {

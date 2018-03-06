@@ -6,7 +6,6 @@ import Redirect from "react-router-dom/es/Redirect";
 
 class NetworkErrorRow extends Component {
   render() {
-      console.log( this.props.log );
     return (
       <tr>
         <td>
@@ -40,6 +39,7 @@ class NetworkErrors extends Component {
 class NetworkErrorSets extends Component {
   render() {
       var NetworkErrorRows = [];
+      console.log( this.props.logs );
       for ( var networkId in this.props.logs ) {
           NetworkErrorRows.push(
                       <NetworkErrors key={networkId}
@@ -69,6 +69,7 @@ class ErrorLine extends Component {
 
   render() {
     // Redirect to /login when not already there and entering bad user/pass.
+    let message = "Unknown error";
     if ( (this.props.error) &&
          (this.props.error.status === 401) &&
          (!window.location.href.endsWith("/login")) ) {
@@ -79,8 +80,25 @@ class ErrorLine extends Component {
           <Redirect to={{pathname: '/login', state: {from: this.props.location}}}/>
         </div>
       );
-    } else {
-      var message;
+    }
+    else if ( this.props.error.status ) {
+        if ( this.props.error.statusText ) {
+            message = "" + this.props.error.statusText +
+                      " (code: " + this.props.error.status + ") ";
+        }
+        else if ( this.props.error.toString ) {
+            message = this.props.error.toString();
+        }
+
+        if ( this.props.error.moreInfo ) {
+          message += " " + this.props.error.moreInfo;
+        }
+    }
+    else if ( ( this.props.error ) &&
+              ( this.props.error.message ) ) {
+        message = this.props.error.message;
+    }
+    else {
       if ( typeof this.props.error === "object" ) {
           return (
             <div className="alert alert-danger">
@@ -89,25 +107,16 @@ class ErrorLine extends Component {
             </div>
           );
       }
-      else if ( this.props.error.statusText ) {
-          message = "" + this.props.error.statusText +
-                    " (code: " + this.props.error.status + ")";
-      }
-      else if ( this.props.error.toString ) {
-          message = this.props.error.toString();
-      }
       else {
           message = JSON.stringify( this.props.error );
       }
-      return (
+    }
+    return (
         <div className="alert alert-danger">
           <button type="button" className="close" onClick={this.handleDelete}><span>&times;</span></button>
           <strong>Error</strong> {message}
         </div>
       );
-    }
-
-
   }
 }
 

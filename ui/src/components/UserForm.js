@@ -1,5 +1,6 @@
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
+import sessionStore from "../stores/SessionStore";
 import userStore from "../stores/UserStore";
 import {withRouter} from "react-router-dom";
 
@@ -46,16 +47,17 @@ class UserForm extends Component {
   }
 
   handleSubmit(e) {
-    e.preventDefault();
+      e.preventDefault();
 
-    userStore.createUser(this.state.user, (responseData) => {
-      console.log(responseData);
-      this.props.history.push('/users');
-    });
+      userStore.createUser( this.state.user ).then( (responseData) => {
+          this.props.history.push('/users');
+      })
+      .catch( ( err ) => {
+          console.log( "Error creating user: ", err );
+      });
   }
 
   render() {
-    //let isAdmin = ((this.state.user.role === "Admin"));
     return (
       <form onSubmit={this.handleSubmit}>
         <div className="form-group">
@@ -76,8 +78,7 @@ class UserForm extends Component {
                  value={this.state.user.password || ''} onChange={this.onChange.bind(this, 'password')}/>
         </div>
 
-
-        <div className="form-group">
+        <div className={"form-group" + (sessionStore.getUser().isAdmin ? "" : " hidden" ) }>
           <label className="checkbox-inline">
             <input type="checkbox" name="isAdmin" id="isAdmin" checked={this.state.user.isAdmin}
                    onChange={this.onChange.bind(this, 'isAdmin')}/> Is admin &nbsp;

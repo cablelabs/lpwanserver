@@ -98,7 +98,7 @@ class SessionStore extends EventEmitter {
             this.setToken(responseData);
             me.saveMeToStore();
 
-            userStore.getUserMe( ( u ) => {
+            userStore.getUserMe().then( ( u ) => {
                 me.user = u;
                 me.saveMeToStore();
                 companyStore.getCompany( u.companyId ).then( function( c ) {
@@ -110,6 +110,9 @@ class SessionStore extends EventEmitter {
                 .catch( function( err ) {
                     console.log( "Failed to get user's company: " + err );
                 });
+            })
+            .catch( function( err ) {
+                console.log( "Failed to get user: " + err );
             });
         })
         .catch(loginErrorHandler);

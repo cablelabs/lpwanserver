@@ -64,7 +64,6 @@ class LoRaCompanyNetworkSettings extends Component {
             }
         })
         .catch( (err) => {
-            console.log( "Failed to get LoRa companyNetworkTypeLink:" + err );
             this.setState( { enabled: false, wasEnabled: false } );
         });
     }
@@ -100,7 +99,6 @@ class LoRaCompanyNetworkSettings extends Component {
                                 this.props.parentRec.id,
                                 this.props.netRec.id,
                                 { serviceProfile: this.state.value } );
-                console.log( "CREATE: ", ret );
             }
             // ...and we had an old record with a data change: UPDATE
             else if ( this.state.value !== this.state.original ) {
@@ -109,13 +107,11 @@ class LoRaCompanyNetworkSettings extends Component {
                     networkSettings: { serviceProfile: this.state.value }
                 };
                 ret = await CompanyStore.updateCompanyNetworkType( updRec );
-                console.log( "UPDATE: ", ret );
             }
         }
         // Type is NOT enabled AND we had a record: DELETE
         else if ( null != this.state.rec ) {
             ret = await CompanyStore.deleteCompanyNetworkType( this.state.rec.id );
-            console.log( "DELETE: ", ret );
         }
 
         return ret;

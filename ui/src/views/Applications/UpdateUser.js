@@ -1,6 +1,7 @@
 import React, {Component} from 'react';
 import {Link, withRouter} from 'react-router-dom';
 
+import sessionStore from "../../stores/SessionStore";
 import UserStore from "../../stores/UserStore";
 import PropTypes from 'prop-types';
 
@@ -37,36 +38,40 @@ class UpdateUser extends Component {
   }
 
   componentWillMount() {
-    UserStore.getUser(this.props.match.params.userID, (user) => {
-      user.isAdmin = ((user.role === "admin"));
-      console.log(user);
-      this.setState({
-        user: user,
-      });
+    UserStore.getUser(this.props.match.params.userID).then( ( user ) => {
+        user.isAdmin = ((user.role === "admin"));
+        this.setState( { user: user });
+    })
+    .catch( ( err ) => {
+        console.log( "Error getting user: ", err );
     });
   }
 
-  onSubmit() {
-    console.log("submit");
-    UserStore.updateUser(this.props.match.params.userID, this.state.user, (responseData) => {
-      console.log(responseData);
-      //this.props.history.push('/users');
-    });
+  onSubmit(e) {
+      e.preventDefault();
+      var me = this;
+      UserStore.updateUser( this.state.user ).then( function( responseData ) {
+          me.props.history.push('/users');
+      })
+      .catch( ( err ) => {
+          console.log( "Error on UpdateUser:", err );
+      });
   }
 
   onDelete() {
 
     //eslint-disable-next-line
     if (confirm("Are you sure you want to delete this user?")) {
-      UserStore.deleteUser(this.props.match.params.userID, (responseData) => {
-        //console.log(responseData);
-        this.props.history.push('/users');
-      });
+        UserStore.deleteUser(this.props.match.params.userID ).then( (responseData) => {
+            this.props.history.push('/users');
+        })
+        .catch( ( err ) => {
+            console.log( "Error on DeleteUser: ", err );
+        });
     }
   }
 
   onPress() {
-    console.log("press");
     this.setState({
       showPasswordField: true,
     });
@@ -91,7 +96,7 @@ class UpdateUser extends Component {
             &nbsp;
           </div>
 
-          <div className="btn-group pull-right" role="group" aria-label="...">
+          <div className={ "btn-group pull-right" + ( ( sessionStore.getUser().id !== this.state.user.id ) ? "" : " hidden" ) } role="group" aria-label="...">
             <button type="button" className="btn btn-danger" onClick={this.onDelete}>Delete user</button>
           </div>
 
@@ -123,7 +128,7 @@ class UpdateUser extends Component {
 
 
 
-              <div className="form-group">
+              <div className={"form-group" + (sessionStore.getUser().isAdmin ? "" : " hidden" )}>
                 <label className="checkbox-inline">
                   <input type="checkbox" name="isAdmin" id="isAdmin" checked={this.state.user.isAdmin}
                          onChange={this.onChange.bind(this, 'isAdmin')}/> Is admin &nbsp;

@@ -90,7 +90,7 @@ class Navbar extends Component {
                 <li className={"dropdown " + (typeof(this.state.user.username) === "undefined" ? "hidden" : "") + (this.state.userDropdownOpen ? "open" : "")}>
                   <a onClick={this.userToggleDropdown} className="dropdown-toggle">{this.state.user.username} <span className="caret" /></a>
                   <ul className="dropdown-menu" onClick={this.userToggleDropdown}>
-                    <li><a href={`users/${this.state.user.id}/password`}>Change password</a></li>
+                    <li><a href={`users/${this.state.user.id}`}>Change Profile</a></li>
                     <li><a href="/login">Logout</a></li>
                   </ul>
                 </li>

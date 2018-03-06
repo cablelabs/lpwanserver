@@ -9,16 +9,38 @@ export function checkStatus(response) {
 }
 
 export function errorHandler(error) {
-  console.log("error", error);
-
-  if (error.status === 404) {
+  if ( error.status && error.status === 404) {
     return;
   }
 
-  dispatcher.dispatch({
-    type: "CREATE_ERROR",
-    error: error
-  });
+  if ( error.text ) {
+      error.text().then( (text) => {
+          error.moreInfo = text;
+
+          dispatcher.dispatch({
+              type: "CREATE_ERROR",
+              error: error
+          });
+      })
+      .catch( (err) => {
+          dispatcher.dispatch({
+              type: "CREATE_ERROR",
+              error: error
+          });
+      });
+  }
+  else if ( error.toString ) {
+      dispatcher.dispatch({
+          type: "CREATE_ERROR",
+          error: error.toString()
+      });
+  }
+  else {
+      dispatcher.dispatch({
+          type: "CREATE_ERROR",
+          error: error
+      });
+  }
 
 }
 

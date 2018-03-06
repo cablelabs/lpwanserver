@@ -210,8 +210,10 @@ exports.initialize = function( app, server ) {
                 data.username = req.body.username;
                 ++changed;
             }
-            if ( ( req.body.password ) &&
-                 ( req.body.password != user.password ) ) {
+
+            // Note: can't check for a change in the password without hashing
+            // the one passed in.  If we get one, just pass it through.
+            if ( req.body.password ) {
                 data.password = req.body.password;
                 ++changed;
             }
@@ -295,7 +297,7 @@ exports.initialize = function( app, server ) {
             }
          })
          .catch( function( err ) {
-             appLogger.log( "Error getting users for company " + req.company.name + ": " + err );
+             appLogger.log( "Error getting user " + req.params.id + " for company " + req.company.name + ": " + err );
              restServer.respond( res, err );
          });
     });
