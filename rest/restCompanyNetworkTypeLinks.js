@@ -265,16 +265,12 @@ exports.initialize = function( app, server ) {
             var id = parseInt( req.params.id );
             // If the caller is a global admin, or the device is part of the company
             // admin's company, we can push.
-            if ( req.company.type === modelAPI.companies.COMPANY_ADMIN ) {
-                modelAPI.companyNetworkTypeLinks.pushCompanyNetworkTypeLink( id, companyId ).then( function( ) {
-                    restServer.respond( res, 204 );
-                })
-            }
-            // Device is owned by another company.
-            else {
-                appLogger.log( "Someone else's device" );
-                restServer.respond( res, 403, "Cannot push another company.");
-            }
+            modelAPI.companyNetworkTypeLinks.pushCompanyNetworkTypeLink( id, req.company.id ).then( function( ) {
+                restServer.respond( res, 204 );
+            }).catch( function( err ) {
+                appLogger.log( "Error pushing companyNetworkTypeLinks " + id + ": " + err );
+                restServer.respond( res, err );
+            });
         });
 
 }

@@ -241,7 +241,7 @@ exports.initialize = function( app, server ) {
             // admin's company, we can delete.
             if ( ( req.company.type === modelAPI.companies.COMPANY_ADMIN ) ||
                 ( req.application.companyId === req.user.companyId ) ) {
-                modelAPI.deviceNetworkTypeLinks.pushDeviceNetworkTypeLink( id, companyId ).then( function( ) {
+                modelAPI.deviceNetworkTypeLinks.pushDeviceNetworkTypeLink( id, req.application.companyId ).then( function( ) {
                     restServer.respond( res, 204 );
                 })
             }
