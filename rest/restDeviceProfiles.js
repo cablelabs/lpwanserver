@@ -266,4 +266,30 @@ exports.initialize = function( app, server ) {
             restServer.respond( res, err );
         });
     });
+
+    /**
+     * Pushes the device profile record with the specified id.
+     * - Only a user with the admin company or the admin of the device's
+     *   company can delete an device. TODO: Is this true?
+     */
+    app.post('/api/deviceProfiles/:id/push', [restServer.isLoggedIn,
+            restServer.fetchCompany,
+            restServer.isAdmin],
+        function(req, res, next) {
+            var id = parseInt( req.params.id );
+            // If not an admin company, the deviceProfile better be associated
+            // with the user's company.  We check that in the push method.
+            var companyId = null;
+            if( req.company.type !== modelAPI.companies.COMPANY_ADMIN ) {
+                companyId = req.user.companyId;
+            }
+
+            modelAPI.deviceProfiles.pushDeviceProfile( id, companyId ).then( function( ret ) {
+                restServer.respond( res, 204 );
+            })
+                .catch( function( err ) {
+                    appLogger.log( "Error pushing deviceProfile " + id + ": " + err );
+                    restServer.respond( res, err );
+                });
+        });
 }

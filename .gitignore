@@ -45,3 +45,8 @@ b146add.json
 
 .idea/
 lpwanserver.iml
+
+key.pem
+privkey.pem
+server.crt
+server.pem
