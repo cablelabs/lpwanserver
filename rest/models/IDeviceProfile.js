@@ -137,7 +137,7 @@ DeviceProfile.prototype.pushDeviceProfile = function( deviceProfile ) {
     return new Promise( async function( resolve, reject ) {
         try {
             var rec = await me.impl.retrieveDeviceProfile( deviceProfile );
-            var logs = await modelAPI.networkTypeAPI.pushDeviceProfile( rec.networkTypeId, id  );
+            var logs = await modelAPI.networkTypeAPI.pushDeviceProfile( rec.networkTypeId, deviceProfile  );
             rec.remoteAccessLogs = logs;
             resolve( rec );
         }
