@@ -1683,6 +1683,11 @@ exports.pushDeviceProfile = function( sessionData, network, deviceProfileId, dat
         // Try a "get" to see if the application is already there.
         var dp;
         try {
+            console.log(sessionData);
+            console.log(network);
+            console.log(deviceProfileId);
+            console.log(dataAPI);
+
             dp = await exports.getDeviceProfile( sessionData, network, deviceProfileId, dataAPI );
         }
         catch ( err ) {
