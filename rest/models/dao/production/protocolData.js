@@ -85,6 +85,7 @@ exports.retrieveProtocolData = function( networkId, networkProtocolId, key ) {
                   db.sqlValue( networkProtocolId ) +
                   " and dataIdentifier = " +
                   db.sqlValue( key );
+        console.log(sql);
         db.select(sql, function ( err, rows ) {
             if ( err ) {
                 reject( err );
