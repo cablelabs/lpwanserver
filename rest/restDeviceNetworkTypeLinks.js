@@ -242,8 +242,8 @@ exports.initialize = function( app, server ) {
             // admin's company, we can delete.
             if ( ( req.company.type === modelAPI.companies.COMPANY_ADMIN ) ||
                 ( req.application.companyId === req.user.companyId ) ) {
-                modelAPI.deviceNetworkTypeLinks.pushDeviceNetworkTypeLink( id, req.application.companyId ).then( function( ) {
-                    restServer.respond( res, 204 );
+                modelAPI.deviceNetworkTypeLinks.pushDeviceNetworkTypeLink( id, req.application.companyId ).then( function( ret ) {
+                    restServer.respond( res, 204, ret );
                 })
             }
             // Device is owned by another company.
