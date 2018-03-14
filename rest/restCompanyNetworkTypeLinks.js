@@ -265,8 +265,8 @@ exports.initialize = function( app, server ) {
             var id = parseInt( req.params.id );
             // If the caller is a global admin, or the device is part of the company
             // admin's company, we can push.
-            modelAPI.companyNetworkTypeLinks.pushCompanyNetworkTypeLink( id, req.company.id ).then( function( ) {
-                restServer.respond( res, 204 );
+            modelAPI.companyNetworkTypeLinks.pushCompanyNetworkTypeLink( id, req.company.id ).then( function( ret ) {
+                restServer.respond( res, 200, ret );
             }).catch( function( err ) {
                 appLogger.log( "Error pushing companyNetworkTypeLinks " + id + ": " + err );
                 restServer.respond( res, err );

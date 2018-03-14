@@ -798,7 +798,7 @@ exports.pushCompany = function( sessionData, network, companyId, dataAPI ) {
                 // Need to create, then.
                 var coid;
                 try {
-                    coid = await exports.createCompany( sessionData, network, companyId, dataAPI );
+                    coid = await exports.addCompany( sessionData, network, companyId, dataAPI );
                     resolve( coid );
                 }
                 catch ( err ) {

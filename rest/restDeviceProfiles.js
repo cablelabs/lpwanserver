@@ -285,7 +285,7 @@ exports.initialize = function( app, server ) {
             }
 
             modelAPI.deviceProfiles.pushDeviceProfile( id, companyId ).then( function( ret ) {
-                restServer.respond( res, 204 );
+                restServer.respond( res, 200, ret );
             })
                 .catch( function( err ) {
                     appLogger.log( "Error pushing deviceProfile " + id + ": " + err );
