@@ -10,25 +10,46 @@ exports.initialize = function( app, server ) {
     * DeviceProfiles API
     ********************************************************************/
     /**
-     * Gets the deviceProfiles available for access by the calling account.
-     * - If the caller is with the admin company, they can get all
-     *   deviceProfiles from all companies.  Otherwise they get their own
-     *   company's deviceProfiles only.
-     * - If the request includes a limit query parameter, only that number of
-     *   entries are returned.
-     * - If the request includes an offset query parameter, the first offset
-     *   records are skipped in the returned data.
-     * - If the request includes a search query parameter, the deviceProfiles
-     *   will be limited to matches of the passed string to the name.  In the
-     *   string, use "%" to match 0 or more characters and "_" to match
-     *   exactly one.  So to match names starting with "D", use the string
-     *   "D%".
-     * - If the request has a companyId parameter, only deviceProfiles from
-     *   that company will be returned.  This MUST be the user's company if
-     *   the user is not part of an ADMIN company.
-     * - If the request has a networkTypeId parameter, only deviceProfiles for
-     *   that networkType will be returned.
-     * - Any combination of search terms are AND'd together.
+     * Gets the deviceProfiles available for access by the calling account..
+     *
+     * @api {get} /api/deviceProfiles Get Device Profiles
+     * @apiGroup Device Profiles
+     * @apiDescription Returns an array of the Device Profiles that match the
+     *      options.
+     * @apiPermission System Admin accesses all Device Profiles, others access
+     *       only their own Company's Device Profiles.
+     * @apiHeader {String} Authorization The Create Session's returned token
+     *      prepended with "Bearer "
+     * @apiParam (Query Parameters) {Number} [limit] The maximum number of
+     *      records to return.  Use with offset to manage paging.  0 is the
+     *      same as unspecified, returning all users that match other query
+     *      parameters.
+     * @apiParam (Query Parameters) {Number} [offset] The offset into the
+     *      returned database query set.  Use with limit to manage paging.  0 is
+     *      the same as unspecified, returning the list from the beginning.
+     * @apiParam (Query Parameters) {String} [search] Search the Device Profiles
+     *      based on name matches to the passed string.  In the string, use "%"
+     *      to match 0 or more characters and "_" to match exactly one.  For
+     *      example, to match names starting with "D", use the string "D%".
+     * @apiParam (Query Parameters) {Number} [companyId] Limit the Device
+     *      Profiles to those belonging to the Company.
+     * @apiParam (Query Parameters) {Number} [networkTypeId] Limit the
+     *      Device Profiles to those that are for the Network Type.
+     * @apiSuccess {Object} object
+     * @apiSuccess {Number} object.totalCount The total number of records that
+     *      would have been returned if offset and limit were not specified.
+     *      This allows for calculation of number of "pages" of data.
+     * @apiSuccess {Object[]} object.records An array of Device Profile records.
+     * @apiSuccess {Number} object.records.id The Device Profile's Id
+     * @apiSuccess {String} object.records.name The Device Profile's name
+     * @apiSuccess {Number} object.records.companyId The Id of the Company that
+     *      the Device Profile belongs to.
+     * @apiSuccess {Number} object.records.networkTypeId The Network Type that
+     *      this Device Profile works with.
+     * @apiSuccess {Object} object.records.networkSettings The JSON data
+     *      structure that has the settings for the Network Type.  This is
+     *      expected to match the Network Protocol's expected data used to
+     *      set up the device on the remote Network(s).
      */
     app.get('/api/deviceProfiles', [ restServer.isLoggedIn,
                                      restServer.fetchCompany ],
@@ -89,9 +110,26 @@ exports.initialize = function( app, server ) {
 
     /**
      * Gets the deviceProfile record with the specified id.
-     * - A company user can get their own company's deviceProfiles only
-     * - If the caller is with the admin company, they can get any
-     * - deviceProfile
+     *
+     * @api {get} /api/deviceProfile/:id Get Device Profile
+     * @apiGroup Device Profiles
+     * @apiPermission Any, but only System Admin can retrieve a Device Profile
+     *      that is not owned by their Company.
+     * @apiHeader {String} Authorization The Create Session's returned token
+     *      prepended with "Bearer "
+     * @apiParam (URL Parameters) {Number} id The Device Profile's id
+     * @apiSuccess {Object} object
+     * @apiSuccess {Number} object.id The Device Profile's Id
+     * @apiSuccess {String} object.name The Device Profile's name
+     * @apiSuccess {Number} object.companyId The Id of the Company that
+     *      the Device Profile belongs to.
+     * @apiSuccess {Number} object.networkTypeId The Network Type that
+     *      this Device Profile works with.
+     * @apiSuccess {Object} object.networkSettings The JSON data
+     *      structure that has the settings for the Network Type.  This is
+     *      expected to match the Network Protocol's expected data used to
+     *      set up the device on the remote Network(s).
+     * @apiVersion 0.1.0
      */
     app.get('/api/deviceProfiles/:id', [ restServer.isLoggedIn,
                                          restServer.fetchCompany ],
@@ -115,15 +153,31 @@ exports.initialize = function( app, server ) {
 
     /**
      * Creates a new deviceProfile record.
-     * - A user with an admin company can create a deviceProfile for any
-     *   company.
-     * - A company admin can create a deviceProfile for their own company.
-     * - Requires in the json body:
-     *   - name
-     *   - companyId
-     *   - networkTypeId
-     *   - networkSettings - a json string for the custom settings that are
-     *                       needed/useful for the networkType.
+     *
+     * @api {post} /api/deviceProfiles Create Device Profile
+     * @apiGroup Device Profiles
+     * @apiPermission System Admin, or Company Admin that can only create a
+     *         Device Profile for their own company.
+     * @apiHeader {String} Authorization The Create Session's returned token
+     *      prepended with "Bearer "
+     * @apiParam (Request Body) {String} object.name The Device Profile's name
+     * @apiParam (Request Body) {Number} object.companyId The Id of the Company
+     *      that the Device Profile belongs to.
+     * @apiParam (Request Body) {Number} object.networkTypeId The Network Type
+     *      that this Device Profile works with.
+     * @apiParam (Request Body) {Object} object.networkSettings The JSON data
+     *      structure that has the settings for the Network Type.  This is
+     *      expected to match the Network Protocol's expected data used to
+     *      set up the device on the remote Network(s).
+     * @apiExample {json} Example body:
+     *      {
+     *          "name": "GPS Tracker",
+     *          "companyId": 1,
+     *          "networkTypeId": 1,
+     *          "networkSettings": {...}
+     *      }
+     * @apiSuccess {Number} id The new Device Profile's id.
+     * @apiVersion 0.1.0
      */
     app.post('/api/deviceProfiles', [ restServer.isLoggedIn,
                                       restServer.fetchCompany,
@@ -172,9 +226,29 @@ exports.initialize = function( app, server ) {
 
     /**
      * Updates the deviceProfile record with the specified id.
-     * - The company Admin can update the deviceProfile.
-     * - If the caller is with the admin company, they can update any company.
-     * - Only the name,
+     *
+     * @api {put} /api/deviceProfiles/:id Update Device Profile
+     * @apiGroup Device Profiles
+     * @apiPermission System Admin, or Company Admin for this Company.
+     * @apiHeader {String} Authorization The Create Session's returned token
+     *      prepended with "Bearer "
+     * @apiParam (Request Body) {String} [name] The Device Profile's name
+     * @apiParam (Request Body) {Number} [companyId] The Id of the Company
+     *      that the Device Profile belongs to.
+     * @apiParam (Request Body) {Number} [networkTypeId] The Network Type
+     *      that this Device Profile works with.
+     * @apiParam (Request Body) {Object} [networkSettings] The JSON data
+     *      structure that has the settings for the Network Type.  This is
+     *      expected to match the Network Protocol's expected data used to
+     *      set up the device on the remote Network(s).
+     * @apiExample {json} Example body:
+     *      {
+     *          "name": "GPS Tracker",
+     *          "companyId": 1,
+     *          "networkTypeId": 1,
+     *          "networkSettings": {...}
+     *      }
+     * @apiVersion 0.1.0
      */
     app.put('/api/deviceProfiles/:id', [restServer.isLoggedIn,
                                         restServer.fetchCompany,
@@ -243,8 +317,14 @@ exports.initialize = function( app, server ) {
 
     /**
      * Deletes the deviceProfile record with the specified id.
-     * - Only a user with the admin company or the admin of the deviceProfile's
-     *   company can delete an deviceProfile.
+     *
+     * @api {delete} /api/deviceProfiles/:id Delete Device Profile
+     * @apiGroup Device Profiles
+     * @apiPermission System Admin, or Company Admin for this company.
+     * @apiHeader {String} Authorization The Create Session's returned token
+     *      prepended with "Bearer "
+     * @apiParam (URL Parameters) {Number} id The Device Profile's id
+     * @apiVersion 0.1.0
      */
     app.delete('/api/deviceProfiles/:id', [ restServer.isLoggedIn,
                                             restServer.fetchCompany,

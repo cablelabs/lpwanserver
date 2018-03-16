@@ -11,24 +11,46 @@ exports.initialize = function( app, server ) {
     ********************************************************************/
     /**
      * Gets the applications available for access by the calling account.
-     * - If the caller is with the admin company, they can get all
-     *   applications from all companies.  Otherwise they get their own
-     *   company's applications only.
-     * - If the request includes a limit query parameter, only that number of
-     *   entries are returned.
-     * - If the request includes an offset query parameter, the first offset
-     *   records are skipped in the returned data.
-     * - If the request includes a search query parameter, the applications
-     *   will be limited to matches of the passed string to the name.  In the
-     *   string, use "%" to match 0 or more characters and "_" to match
-     *   exactly one.  So to match names starting with "D", use the string
-     *   "D%".
-     * - If the request has a companyId parameter, only applications from that
-     *   company will be returned.  This MUST be the user's company if the user
-     *   is not part of an ADMIN company.
-     * - If the request has a reportingProtocolId, then the applications using
-     *   the specified protocol will be returned.
-     * - Any combination of search terms are AND'd together.
+     *
+     * @api {get} /api/applications Get Applications
+     * @apiGroup Applications
+     * @apiDescription Returns an array of the Applications that match the
+     *      options.
+     * @apiPermission System Admin accesses all Applications, others access
+     *       only their own Company's Applications.
+     * @apiHeader {String} Authorization The Create Session's returned token
+     *      prepended with "Bearer "
+     * @apiParam (Query Parameters) {Number} [limit] The maximum number of
+     *      records to return.  Use with offset to manage paging.  0 is the
+     *      same as unspecified, returning all users that match other query
+     *      parameters.
+     * @apiParam (Query Parameters) {Number} [offset] The offset into the
+     *      returned database query set.  Use with limit to manage paging.  0 is
+     *      the same as unspecified, returning the list from the beginning.
+     * @apiParam (Query Parameters) {String} [search] Search the Applications
+     *      based on name matches to the passed string.  In the string, use "%"
+     *      to match 0 or more characters and "_" to match exactly one.  For
+     *      example, to match names starting with "D", use the string "D%".
+     * @apiParam (Query Parameters) {Number} [companyId] Limit the Applications
+     *      to those belonging to the Company.
+     * @apiParam (Query Parameters) {Number} [reportingProtocolId] Limit the
+     *      Applications to those that use the Reporting Protocol.
+     * @apiSuccess {Object} object
+     * @apiSuccess {Number} object.totalCount The total number of records that
+     *      would have been returned if offset and limit were not specified.
+     *      This allows for calculation of number of "pages" of data.
+     * @apiSuccess {Object[]} object.records An array of Application records.
+     * @apiSuccess {Number} object.records.id The Application's Id
+     * @apiSuccess {String} object.records.name The Application's name
+     * @apiSuccess {Number} object.records.companyId The Id of the Company
+     *      that the Application belongs to.
+     * @apiSuccess {String} object.records.baseUrl The base URL used by the
+     *      Reporting Protocol
+     * @apiSuccess {Number} object.records.reportingProtocolId The
+     *      Id of the Reporting Protocol used by the Application.
+     * @apiSuccess {Boolean} object.records.running If the Application is
+     *      currently sending data received from the Networks to the baseUrl via
+     *      the Reporting Protocol.
      */
     app.get('/api/applications', [restServer.isLoggedIn,
                                   restServer.fetchCompany],
@@ -82,10 +104,27 @@ exports.initialize = function( app, server ) {
 
     /**
      * Gets the application record with the specified id.
-     * - A company user can get their own company's applications only
-     * - If the caller is with the admin company, they can get any application
-     * - Returned data will include an array of networks that is a list of
-     *   networkIds for networks this application is associated with.
+     *
+     * @api {get} /api/applications/:id Get Application
+     * @apiGroup Applications
+     * @apiPermission Any, but only System Admin can retrieve an Application
+     *      that is not owned by their Company.
+     * @apiHeader {String} Authorization The Create Session's returned token
+     *      prepended with "Bearer "
+     * @apiParam (URL Parameters) {Number} id The Application's id
+     * @apiSuccess {Object} object
+     * @apiSuccess {Number} object.id The Application's Id
+     * @apiSuccess {String} object.name The Application's name
+     * @apiSuccess {Number} object.companyId The Id of the Company
+     *      that the Application belongs to.
+     * @apiSuccess {String} object.baseUrl The base URL used by the
+     *      Reporting Protocol
+     * @apiSuccess {Number} object.reportingProtocolId The
+     *      Id of the Reporting Protocol used by the Application.
+     * @apiSuccess {Boolean} object.running If the Application is
+     *      currently sending data received from the Networks to the baseUrl via
+     *      the Reporting Protocol.
+     * @apiVersion 0.1.0
      */
     app.get('/api/applications/:id', [restServer.isLoggedIn,
                                       restServer.fetchCompany],
@@ -108,13 +147,31 @@ exports.initialize = function( app, server ) {
 
     /**
      * Creates a new application record.
-     * - A user with an admin company can create an application for any company.
-     * - A company admin can create an application for their own company.
-     * - Requires in the json body:
-     *   - name
-     *   - companyId
-     *   - reportProtocolId
-     *   - baseUrl (for the reporting Protocol)
+     *
+     * @api {post} /api/applications Create Application
+     * @apiGroup Applications
+     * @apiPermission System Admin or Company Admin
+     * @apiHeader {String} Authorization The Create Session's returned token
+     *      prepended with "Bearer "
+     * @apiParam (Request Body) {String} name The Application's name
+     * @apiParam (Request Body) {Number} companyId The Id of the Company that
+     *      the Application blongs to.  For a Company Admin user, this can
+     *      only be the Id of their own Company.
+     * @apiParam (Request Body) {String} baseURL The URL that the Reporting
+     *      Protocol sends the data to.  This may have additional paths added,
+     *      depending on the Reporting Protocol.
+     * @apiParam (Request Body) {Number} reportingProtocolId The Id of the
+     *      Reporting Protocol the Application will use to pass Device data
+     *      back to the Application Vendor.
+     * @apiExample {json} Example body:
+     *      {
+     *          "name": "GPS Pet Tracker",
+     *          "companyId": 1,
+     *          "baseUrl": "https://IoTStuff.com/incomingData/GPSPetTracker"
+     *          "reportingProtocolId": 1
+     *      }
+     * @apiSuccess {Number} id The new Application's id.
+     * @apiVersion 0.1.0
      */
     app.post('/api/applications', [restServer.isLoggedIn,
                                    restServer.fetchCompany,
@@ -156,9 +213,31 @@ exports.initialize = function( app, server ) {
 
     /**
      * Updates the application record with the specified id.
-     * - The company Admin can update the application.
-     * - If the caller is with the admin company, they can update any company.
-     * - Only the name,
+     *
+     * @api {put} /api/applications/:id Update Application
+     * @apiGroup Applications
+     * @apiPermission System Admin, or Company Admin for this Company.
+     * @apiHeader {String} Authorization The Create Session's returned token
+     *      prepended with "Bearer "
+     * @apiParam (URL Parameters) {Number} id The Application's id
+     * @apiParam (Request Body) {String} [name] The Application's name
+     * @apiParam (Request Body) {Number} [companyId] The Id of the Company that
+     *      the Application blongs to.  For a Company Admin user, this can
+     *      only be the Id of their own Company.
+     * @apiParam (Request Body) {String} [baseURL] The URL that the Reporting
+     *      Protocol sends the data to.  This may have additional paths added,
+     *      depending on the Reporting Protocol.
+     * @apiParam (Request Body) {Number} [reportingProtocolId] The Id of the
+     *      Reporting Protocol the Application will use to pass Device data
+     *      back to the Application Vendor.
+     * @apiExample {json} Example body:
+     *      {
+     *          "name": "GPS Pet Tracker",
+     *          "companyId": 1,
+     *          "baseUrl": "https://IoTStuff.com/incomingData/GPSPetTracker"
+     *          "reportingProtocolId": 1
+     *      }
+     * @apiVersion 0.1.0
      */
     app.put('/api/applications/:id', [restServer.isLoggedIn,
                                       restServer.fetchCompany,
@@ -232,8 +311,14 @@ exports.initialize = function( app, server ) {
 
     /**
      * Deletes the application record with the specified id.
-     * - Only a user with the admin company or the admin of the application's
-     *   company can delete an application.
+     *
+     * @api {delete} /api/applications/:id Delete Application
+     * @apiGroup Applications
+     * @apiPermission System Admin, or Company Admin for this company.
+     * @apiHeader {String} Authorization The Create Session's returned token
+     *      prepended with "Bearer "
+     * @apiParam (URL Parameters) {Number} id The Application's id
+     * @apiVersion 0.1.0
      */
     app.delete('/api/applications/:id', [restServer.isLoggedIn,
                                          restServer.fetchCompany,

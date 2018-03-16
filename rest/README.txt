@@ -31,3 +31,7 @@ the application.  The RestServer defines the endpoints and the code that
 implements their functionality, using the data model interfaces to provide that
 functionality.  And finally, the data model interfaces are linked to DAOs that
 provide the access to the required data.
+
+Documentation for the REST API is written using apiDoc ( http://apidoc.js ).
+When generating new docs, output to the lpwanserver-site repository, under
+static/rest/

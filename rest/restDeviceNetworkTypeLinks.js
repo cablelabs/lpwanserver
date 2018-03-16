@@ -11,13 +11,42 @@ exports.initialize = function( app, server ) {
      ********************************************************************
     /**
      * Gets the deviceNetworkTypeLinks that are defined
-     * - Can be called by any user.
-     * - If the request includes a networkTypeId query parameter, the links matching
-     *   the networkTypeId are returned.
-     * - If the request includes a deviceId query parameter, the links
-     *   matching the deviceId are returned.
-     * - If the request includes a applicationId query parameter, the links
-     *   matching the applicationId are returned.
+     *
+     * @api {get} /api/deviceNetworkTypeLinks Get Device Network Type Links
+     * @apiGroup Device Network Type Links
+     * @apiDescription Returns an array of the Device Network Type Links that
+     *      match the options.
+     * @apiPermission All, but only System Admins can see entries from other
+     *      companies.
+     * @apiHeader {String} Authorization The Create Session's returned token
+     *      prepended with "Bearer "
+     * @apiParam (Query Parameters) {Number} [limit] The maximum number of
+     *      records to return.  Use with offset to manage paging.  0 is the
+     *      same as unspecified, returning all users that match other query
+     *      parameters.
+     * @apiParam (Query Parameters) {Number} [offset] The offset into the
+     *      returned database query set.  Use with limit to manage paging.  0 is
+     *      the same as unspecified, returning the list from the beginning.
+     * @apiParam (Query Parameters) {Number} [deviceId] Limit the records
+     *      to those that have the deviceId specified.
+     * @apiParam (Query Parameters) {Number} [applicationId] Limit the records
+     *      to those that have the applicationId specified.
+     * @apiParam (Query Parameters) {Number} [networkTypeId] Limit the records
+     *      to those that have the networkTypeId specified.
+     * @apiSuccess {Object} object
+     * @apiSuccess {Number} object.totalCount The total number of records that
+     *      would have been returned if offset and limit were not specified.
+     *      This allows for calculation of number of "pages" of data.
+     * @apiSuccess {Object[]} object.records An array of Device Network Type
+     *      Links records.
+     * @apiSuccess {Number} object.records.id The Device Network Type Link's Id
+     * @apiSuccess {Number} object.records.deviceId The Device the record is
+     *      linking to the Network Type.
+     * @apiSuccess {Number} object.records.networkTypeId The Network Type
+     *      that the Device is being linked to.
+     * @apiSuccess {String} object.records.networkSettings The settings in a
+     *      JSON string that correspond to the Network Type.
+     * @apiVersion 0.1.0
      */
     app.get('/api/deviceNetworkTypeLinks', [restServer.isLoggedIn,
                                         restServer.fetchCompany], function(req, res, next) {
@@ -67,7 +96,23 @@ exports.initialize = function( app, server ) {
 
     /**
      * Gets the deviceNetworkTypeLink record with the specified id.
-     * - Can be called by any user
+     *
+     * @api {get} /api/deviceNetworkTypeLinks/:id Get Device Network Type Link
+     * @apiGroup Device Network Type Links
+     * @apiPermission Any, but only System Admin can retrieve a Device Network
+     *      Type Link other than one belonging to their own company.
+     * @apiHeader {String} Authorization The Create Session's returned token
+     *      prepended with "Bearer "
+     * @apiParam (URL Parameters) {Number} id The Device Network Type Link's id
+     * @apiSuccess {Object} object
+     * @apiSuccess {Number} object.id The Device Network Type Link's Id
+     * @apiSuccess {Number} object.deviceId The Device the record is
+     *      linking to the Network Type.
+     * @apiSuccess {Number} object.networkTypeId The Network Type
+     *      that the Device is being linked to.
+     * @apiSuccess {String} object.networkSettings The settings in a
+     *      JSON string that correspond to the Network Type.
+     * @apiVersion 0.1.0
      */
     app.get('/api/deviceNetworkTypeLinks/:id', [restServer.isLoggedIn], function(req, res, next) {
         var id = parseInt( req.params.id );
@@ -82,16 +127,26 @@ exports.initialize = function( app, server ) {
 
     /**
      * Creates a new deviceNetworkTypeLink record.
-     * - A user with an admin company can create any deviceNetworkTypeLink
-     * - An admin user for the company may create an deviceNetworkTypeLink for
-     *   an device for their own company.
-     * - Requires a networkTypeId, deviceId, and networkSettings
-     *   in the JSON body.
-     * - {
-     *     "deviceId": 2,
-     *     "networkTypeId": 4,
-     *     "networkSettings": "{ \"DevEUI\":\"0800003443fe0002\" }",
-     *   }
+     *
+     * @api {post} /api/deviceNetworkTypeLinks Create Device Network Type Link
+     * @apiGroup Device Network Type Links
+     * @apiPermission System Admin
+     * @apiHeader {String} Authorization The Create Session's returned token
+     *      prepended with "Bearer "
+     * @apiParam (Request Body) {Number} deviceId The Device the record is
+     *      linking to the Network Type.
+     * @apiParam (Request Body) {Number} networkTypeId The Network Type
+     *      that the Device is being linked to.
+     * @apiParam (Request Body) {String} networkSettings The settings in a
+     *      JSON string that correspond to the Network Type.
+     * @apiExample {json} Example body:
+     *      {
+     *          "deviceId": 2,
+     *          "networkTypeId": 4,
+     *          "networkSettings": "{ ... }",
+     *      }
+     * @apiSuccess {Number} id The new Device Network Type Link's id.
+     * @apiVersion 0.1.0
      */
     app.post('/api/deviceNetworkTypeLinks', [restServer.isLoggedIn,
                                          restServer.fetchCompany,
@@ -140,9 +195,21 @@ exports.initialize = function( app, server ) {
 
     /**
      * Updates the deviceNetworkTypeLink record with the specified id.
-     * - Can only be called by a user who is part of an admin company or admin
-     *   of the company for the device linked.
-     * - Can only update networkSettings
+     *
+     * @api {put} /api/deviceNetworkTypeLinks/:id
+     *      Update Device Network Type Link
+     * @apiGroup Device Network Type Links
+     * @apiPermission System Admin
+     * @apiHeader {String} Authorization The Create Session's returned token
+     *      prepended with "Bearer "
+     * @apiParam (URL Parameters) {Number} id The Device Network Type Link's id
+     * @apiParam (Request Body) {String} [networkSettings] The settings in a
+     *      JSON string that correspond to the Network Type.
+     * @apiExample {json} Example body:
+     *      {
+     *          "networkSettings": "{ ... }",
+     *      }
+     * @apiVersion 0.1.0
      */
     app.put('/api/deviceNetworkTypeLinks/:id', [restServer.isLoggedIn,
                                             restServer.fetchCompany,
@@ -203,8 +270,15 @@ exports.initialize = function( app, server ) {
 
     /**
      * Deletes the deviceNetworkTypeLinks record with the specified id.
-     * - A user with the admin company or an admin user for the same company can
-     *   delete a link.
+     *
+     * @api {delete} /api/deviceNetworkTypeLinks/:id
+     *      Delete Device Network Type Link
+     * @apiGroup Device Network Type Links
+     * @apiPermission System Admin
+     * @apiHeader {String} Authorization The Create Session's returned token
+     *      prepended with "Bearer "
+     * @apiParam (URL Parameters) {Number} id The Device Network Type Link's id
+     * @apiVersion 0.1.0
      */
     app.delete('/api/deviceNetworkTypeLinks/:id', [restServer.isLoggedIn,
                                                restServer.fetchCompany,

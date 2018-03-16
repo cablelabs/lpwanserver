@@ -12,11 +12,40 @@ exports.initialize = function( app, server ) {
      ********************************************************************
     /**
      * Gets the companyNetworkTypeLinks that are defined
-     * - Can be called by any user.
-     * - If the request includes a networkTypeId query parameter, the links matching
-     *   the networkTypeId are returned.
-     * - If the request includes a companyId query parameter, the links matching
-     *   the companyId are returned.
+     *
+     * @api {get} /api/companyNetworkTypeLinks Get Company Network Type Links
+     * @apiGroup Company Network Type Links
+     * @apiDescription Returns an array of the Company Network Type Links that
+     *      match the options.
+     * @apiPermission All, but only System Admins can see entries from other
+     *      companies.
+     * @apiHeader {String} Authorization The Create Session's returned token
+     *      prepended with "Bearer "
+     * @apiParam (Query Parameters) {Number} [limit] The maximum number of
+     *      records to return.  Use with offset to manage paging.  0 is the
+     *      same as unspecified, returning all users that match other query
+     *      parameters.
+     * @apiParam (Query Parameters) {Number} [offset] The offset into the
+     *      returned database query set.  Use with limit to manage paging.  0 is
+     *      the same as unspecified, returning the list from the beginning.
+     * @apiParam (Query Parameters) {Number} [companyId] Limit the records
+     *      to those that have the companyId specified.
+     * @apiParam (Query Parameters) {Number} [networkTypeId] Limit the records
+     *      to those that have the networkTypeId specified.
+     * @apiSuccess {Object} object
+     * @apiSuccess {Number} object.totalCount The total number of records that
+     *      would have been returned if offset and limit were not specified.
+     *      This allows for calculation of number of "pages" of data.
+     * @apiSuccess {Object[]} object.records An array of Company Network Type
+     *      Links records.
+     * @apiSuccess {Number} object.records.id The Company Network Type Link's Id
+     * @apiSuccess {Number} object.records.companyId The Company the record is
+     *      linking to the Network Type.
+     * @apiSuccess {Number} object.records.networkTypeId The Network Type
+     *      that the Company is being linked to.
+     * @apiSuccess {String} object.records.networkSettings The settings in a
+     *      JSON string that correspond to the Network Type.
+     * @apiVersion 0.1.0
      */
     app.get('/api/companyNetworkTypeLinks', [ restServer.isLoggedIn,
                                               restServer.fetchCompany ],
@@ -63,7 +92,23 @@ exports.initialize = function( app, server ) {
 
     /**
      * Gets the companyNetworkTypeLink record with the specified id.
-     * - Can be called by any user
+     *
+     * @api {get} /api/companyNetworkTypeLinks/:id Get Company Network Type Link
+     * @apiGroup Company Network Type Links
+     * @apiPermission Any, but only System Admin can retrieve a Company Network
+     *      Type Link other than one belonging to their own company.
+     * @apiHeader {String} Authorization The Create Session's returned token
+     *      prepended with "Bearer "
+     * @apiParam (URL Parameters) {Number} id The Company Network Type Link's id
+     * @apiSuccess {Object} object
+     * @apiSuccess {Number} object.id The Company Network Type Link's Id
+     * @apiSuccess {Number} object.companyId The Company the record is
+     *      linking to the Network Type.
+     * @apiSuccess {Number} object.networkTypeId The Network Type
+     *      that the Company is being linked to.
+     * @apiSuccess {String} object.networkSettings The settings in a
+     *      JSON string that correspond to the Network Type.
+     * @apiVersion 0.1.0
      */
     app.get('/api/companyNetworkTypeLinks/:id', [restServer.isLoggedIn],
                                             function(req, res, next) {
@@ -79,18 +124,26 @@ exports.initialize = function( app, server ) {
 
     /**
      * Creates a new companyNetworkTypeLink record.
-     * - A user with an admin company can create a companyNetworkTypeLink, but must
-     *   specify the companyId in the body.
-     * - An admin user for the company may create a companyNetworkTypeLink for their
-     *   own company.  No companyId is required, but if supplied, it must be the
-     *   id of their own company.
-     * - Requires a networkTypeId, and networkSettings
-     *   in the JSON body.
-     * - {
-     *     "companyId": 2,
-     *     "networkTypeId": 4,
-     *     "networkSettings": "{ \"user\":\"fred\", \"password\":\"farkle\" }",
-     *   }
+     *
+     * @api {post} /api/companies Create Company Network Type Link
+     * @apiGroup Company Network Type Links
+     * @apiPermission System Admin
+     * @apiHeader {String} Authorization The Create Session's returned token
+     *      prepended with "Bearer "
+     * @apiParam (Request Body) {Number} companyId The Company the record is
+     *      linking to the Network Type.
+     * @apiParam (Request Body) {Number} networkTypeId The Network Type
+     *      that the Company is being linked to.
+     * @apiParam (Request Body) {String} networkSettings The settings in a
+     *      JSON string that correspond to the Network Type.
+     * @apiExample {json} Example body:
+     *      {
+     *          "companyId": 2,
+     *          "networkTypeId": 4,
+     *          "networkSettings": "{ ... }",
+     *      }
+     * @apiSuccess {Number} id The new Company Network Type Link's id.
+     * @apiVersion 0.1.0
      */
     app.post('/api/companyNetworkTypeLinks', [restServer.isLoggedIn,
                                           restServer.fetchCompany,
@@ -148,8 +201,21 @@ exports.initialize = function( app, server ) {
 
     /**
      * Updates the companyNetworkTypeLink record with the specified id.
-     * - Can only be called by a user who is part of an admin company or admin
-     *   of the company linked.
+     *
+     * @api {put} /api/companyNetworkTypeLinks/:id
+     *      Update Company Network Type Link
+     * @apiGroup Company Network Type Links
+     * @apiPermission System Admin
+     * @apiHeader {String} Authorization The Create Session's returned token
+     *      prepended with "Bearer "
+     * @apiParam (URL Parameters) {Number} id The Company Network Type Link's id
+     * @apiParam (Request Body) {String} [networkSettings] The settings in a
+     *      JSON string that correspond to the Network Type.
+     * @apiExample {json} Example body:
+     *      {
+     *          "networkSettings": "{ ... }",
+     *      }
+     * @apiVersion 0.1.0
      */
     app.put('/api/companyNetworkTypeLinks/:id', [restServer.isLoggedIn,
                                                  restServer.fetchCompany,
@@ -211,8 +277,15 @@ exports.initialize = function( app, server ) {
 
     /**
      * Deletes the companyNetworkTypeLinks record with the specified id.
-     * - A user with the admin company or an admin user for the same company can
-     *   delete a link.
+     *
+     * @api {delete} /api/companyNetworkTypeLinks/:id
+     *      Delete Company Network Type Link
+     * @apiGroup Company Network Type Links
+     * @apiPermission System Admin
+     * @apiHeader {String} Authorization The Create Session's returned token
+     *      prepended with "Bearer "
+     * @apiParam (URL Parameters) {Number} id The Company Network Type Link's id
+     * @apiVersion 0.1.0
      */
     app.delete('/api/companyNetworkTypeLinks/:id', [restServer.isLoggedIn,
                                                 restServer.fetchCompany,

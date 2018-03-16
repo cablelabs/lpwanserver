@@ -13,17 +13,35 @@ exports.initialize = function( app, server ) {
     ********************************************************************/
     /**
      * Gets the companies available for access by the calling admin account.
-     * - If the caller is not an Admin, they get a forbidden error.
-     * - If the caller is with the admin company, the get all companies.
-     * - If the user is a company Admin, they get their own company only.
-     * - If the request includes a limit query parameter, only that number of
-     *   entries are returned.
-     * - If the request includes an offset query parameter, the first offset records
-     *   are skipped in the returned data.
-     * - If the request includes a search query parameter, the companies will be
-     *   limited to matches of the passed string.  In the string, use "%" to match
-     *   0 or more characters and "_" to match exactly one.  So to match names
-     *   starting with "D", use the string "D%".
+     *
+     * @api {get} /api/companies Get Companies
+     * @apiGroup Companies
+     * @apiDescription Returns an array of the Companies that match the options.
+     *      Note that Company Admin users can only access their own Company.
+     * @apiPermission System Admin, or Company Admin (limits returned data to
+     *       user's own company)
+     * @apiHeader {String} Authorization The Create Session's returned token
+     *      prepended with "Bearer "
+     * @apiParam (Query Parameters) {Number} [limit] The maximum number of
+     *      records to return.  Use with offset to manage paging.  0 is the
+     *      same as unspecified, returning all users that match other query
+     *      parameters.
+     * @apiParam (Query Parameters) {Number} [offset] The offset into the
+     *      returned database query set.  Use with limit to manage paging.  0 is
+     *      the same as unspecified, returning the list from the beginning.
+     * @apiParam (Query Parameters) {String} [search] Search the Companies based
+     *      on name matches to the passed string.  In the string, use "%" to
+     *      match 0 or more characters and "_" to match exactly one.  For
+     *      example, to match names starting with "D", use the string "D%".
+     * @apiSuccess {Object} object
+     * @apiSuccess {Number} object.totalCount The total number of records that
+     *      would have been returned if offset and limit were not specified.
+     *      This allows for calculation of number of "pages" of data.
+     * @apiSuccess {Object[]} object.records An array of Company records.
+     * @apiSuccess {Number} object.records.id The Company's Id
+     * @apiSuccess {String} object.records.name The Company's name
+     * @apiSuccess {String} object.records.type "admin" or "vendor"
+     * @apiVersion 0.1.0
      */
     app.get('/api/companies', [restServer.isLoggedIn,
                                restServer.fetchCompany,
@@ -80,11 +98,19 @@ exports.initialize = function( app, server ) {
 
     /**
      * Gets the company record with the specified id.
-     * - A company user can get their own company
-     * - If the caller is with the admin company, they can get any company
-     * - Returned data will include an array of networks that is a list of
-     *   networkIds for networks this company is associated with (via
-     *   companyNetworkTypeLinks table)
+     *
+     * @api {get} /api/companies/:id Get Company
+     * @apiGroup Companies
+     * @apiPermission Any, but only System Admin can retrieve a Company other
+     *      than their own.
+     * @apiHeader {String} Authorization The Create Session's returned token
+     *      prepended with "Bearer "
+     * @apiParam (URL Parameters) {Number} id The Company's id
+     * @apiSuccess {Object} object
+     * @apiSuccess {Number} object.id The Company's Id
+     * @apiSuccess {String} object.name The Company's name
+     * @apiSuccess {String} object.type "admin" or "vendor"
+     * @apiVersion 0.1.0
      */
     app.get('/api/companies/:id', [restServer.isLoggedIn,
                                    restServer.fetchCompany],
@@ -107,10 +133,21 @@ exports.initialize = function( app, server ) {
 
     /**
      * Creates a new company record.
-     * - A user with an admin company can create a company.
-     * - Requires a name and type (one of "admin","vendor", "operator",
-     *   "devicemfg")
-     *   in the JSON body. { "name": "Joe's Devices", "type": "devicemfg" }
+     *
+     * @api {post} /api/companies Create Company
+     * @apiGroup Companies
+     * @apiPermission System Admin
+     * @apiHeader {String} Authorization The Create Session's returned token
+     *      prepended with "Bearer "
+     * @apiParam (Request Body) {String} name The Company's name
+     * @apiParam (Request Body) {String="Admin","Vendor"} type The Company's type
+     * @apiExample {json} Example body:
+     *      {
+     *          "name": "IoT Stuff, Inc.",
+     *          "type": "vendor"
+     *      }
+     * @apiSuccess {Number} id The new Company's id.
+     * @apiVersion 0.1.0
      */
     app.post('/api/companies', [restServer.isLoggedIn,
                                 restServer.fetchCompany,
@@ -153,9 +190,21 @@ exports.initialize = function( app, server ) {
 
     /**
      * Updates the company record with the specified id.
-     * - The company Admin can update the company.
-     * - If the caller is with the admin company, they can update any company.
-     * - Only the name and/or type can be updated
+     *
+     * @api {put} /api/companies/:id Update Company
+     * @apiGroup Companies
+     * @apiPermission System Admin, or Company Admin for this company.
+     * @apiHeader {String} Authorization The Create Session's returned token
+     *      prepended with "Bearer "
+     * @apiParam (URL Parameters) {Number} id The Company's id
+     * @apiParam (Request Body) {String} [name] The Company's name
+     * @apiParam (Request Body) {String="Admin","Vendor"} [type] The Company's type
+     * @apiExample {json} Example body:
+     *      {
+     *          "name": "IoT Stuff, Inc.",
+     *          "type": "vendor"
+     *      }
+     * @apiVersion 0.1.0
      */
     app.put('/api/companies/:id', [restServer.isLoggedIn,
                                    restServer.fetchCompany,
@@ -175,7 +224,7 @@ exports.initialize = function( app, server ) {
                 data.name = req.body.name;
                 ++changed;
             }
-            ;
+
             if ( req.body.type ) {
                 var type = modelAPI.companies.types[ req.body.type ];
                 if ( type != company.type ) {
@@ -220,7 +269,14 @@ exports.initialize = function( app, server ) {
 
     /**
      * Deletes the company record with the specified id.
-     * - Only a user with the admin company can delete a company.
+     *
+     * @api {delete} /api/companies/:id Delete Company
+     * @apiGroup Companies
+     * @apiPermission System Admin
+     * @apiHeader {String} Authorization The Create Session's returned token
+     *      prepended with "Bearer "
+     * @apiParam (URL Parameters) {Number} id The Company's id
+     * @apiVersion 0.1.0
      */
     app.delete('/api/companies/:id', [restServer.isLoggedIn,
                                       restServer.fetchCompany,
