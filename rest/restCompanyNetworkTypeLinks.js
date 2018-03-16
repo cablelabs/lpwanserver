@@ -125,7 +125,7 @@ exports.initialize = function( app, server ) {
     /**
      * Creates a new companyNetworkTypeLink record.
      *
-     * @api {post} /api/companies Create Company Network Type Link
+     * @api {post} /api/companyNetworkTypeLinks Create Company Network Type Link
      * @apiGroup Company Network Type Links
      * @apiPermission System Admin
      * @apiHeader {String} Authorization The Create Session's returned token

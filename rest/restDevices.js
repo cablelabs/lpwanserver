@@ -73,7 +73,7 @@ exports.initialize = function( app, server ) {
             // company.
             if ( req.query.companyId ) {
                 if ( req.query.companyId != req.user.companyId ) {
-                    respond( res, 403, "Cannot request devices for another company" );
+                    restServer.respond( res, 403, "Cannot request devices for another company" );
                     return;
                 }
             }
@@ -206,11 +206,11 @@ exports.initialize = function( app, server ) {
                                            rec.deviceModel ).then( function ( rec ) {
                 var send = {};
                 send.id = rec.id;
-                restServer.respondJson( res, 200, send );
+                restServer.respondJson( res, 200, send ); //TODO: Shouldn't this id be in the header per POST convention?
             })
             .catch( function( err ) {
                 appLogger.log( "Failed to create device " + JSON.stringify( rec ) + ": " + err );
-                restServer.respondJson( res, err );
+                restServer.respondJson( res, err ); //TODO:  So some errors are JSON and some are text. Is there a rule?
             });
         }
     });
@@ -304,6 +304,26 @@ exports.initialize = function( app, server ) {
             // CORS info, causing the browser to throw a fit.  So just say,
             // "Yeah, we did that.  Really.  Trust us."
             restServer.respond( res, 204 );
+            //TODO:  This is because 304 are for Conditional Gets and HEADERs and "A 304 response cannot contain a message-body; it is always terminated by the first empty line after the header fields."
+            /*
+            Per the RFC, HTTP Not Modified should not include entity headers "Section 10.3.5: the response SHOULD NOT include other entity-headers"
+
+                However, the Cross-Origin-Resource-Sharing spec (http://www.w3.org/TR/cors/) defines a few headers that are not entity headers and should therefore be allowed in the 304 response:
+                "Access-Control-Allow-Origin",
+                "Access-Control-Allow-Credentials",
+                "Access-Control-Allow-Methods",
+                "Access-Control-Allow-Headers",
+                "Access-Control-Max-Age"
+
+                I understand that CORS is currently only a draft but it currently prevents any web application from properly adopting this new standard. Indeed, a client making a CORS request will not see the response if it is an Http Not Modified 304. The browser will block it due to the missing CORS headers.
+
+                Comment 1 Mark Nottingham 2014-11-19 04:45:16 UTC
+                CORS doesn't require those headers on a 304, and indeed browsers work without them present on it. This is because many 304s are generated from intermediary caches that can't be updated to know about CORS.
+
+                Recommend INVALID.
+                Comment 2
+             */
+
         }
         else {
             // Do the update.
@@ -353,4 +373,6 @@ exports.initialize = function( app, server ) {
             restServer.respond( res, 403, "Cannot delete another company's device.");
         }
     });
+
+
 }

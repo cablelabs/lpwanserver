@@ -125,6 +125,30 @@ DeviceProfile.prototype.deleteDeviceProfile = function( id, validateCompanyId ) 
     });
 }
 
+// Update the deviceProfiles record.
+//
+// deviceProfile - the updated record.  Note that the id must be
+//                 unchanged from retrieval to guarantee the same
+//                 record is updated.
+//
+// Returns a promise that executes the update.
+DeviceProfile.prototype.pushDeviceProfile = function( deviceProfile ) {
+    var me = this;
+    return new Promise( async function( resolve, reject ) {
+        try {
+            var rec = await me.impl.retrieveDeviceProfile( deviceProfile );
+            var logs = await modelAPI.networkTypeAPI.pushDeviceProfile( rec.networkTypeId, deviceProfile  );
+            rec.remoteAccessLogs = logs;
+            resolve( rec );
+        }
+        catch( err ) {
+            appLogger.log( "Error pushing deviceProfile:" + err );
+            reject( err );
+        };
+    });
+}
+
+
 //******************************************************************************
 // Custom retrieval functions.
 //******************************************************************************

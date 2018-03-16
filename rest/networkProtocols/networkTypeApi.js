@@ -265,7 +265,7 @@ NetworkTypeApi.prototype.startApplication = function( networkTypeId, application
 
 // Stop the application.
 //
-// network         - The networks record for the network that uses this
+// network         - The networks recofrd for the network that uses this
 //                   protocol.
 // companyData     - The companyNetworkTypeLinks record for this company and
 //                   network.

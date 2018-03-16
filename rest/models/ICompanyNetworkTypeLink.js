@@ -107,6 +107,44 @@ CompanyNetworkTypeLink.prototype.deleteCompanyNetworkTypeLink = function( id ) {
     });
 }
 
+
+
+// Push the applicationNetworkTypeLinks record.
+//
+// applicationNetworkTypeLinks - the record to be pushed.  Note that the id must be
+//                           unchanged from retrieval to guarantee the same
+//                           record is updated.
+// validateCompanyId       - The id of the company this application SHOULD be
+//                           part of.  Usually this is tied to the user
+//                           creating the link, though a global admin could
+//                           supply null here (no need to validate).
+//
+// Returns a promise that executes the update.
+CompanyNetworkTypeLink.prototype.pushCompanyNetworkTypeLink = function( companyNetworkTypeLink, validateCompanyId ) {
+    var me = this;
+    return new Promise( async function( resolve, reject ) {
+        try {
+            var rec = await me.impl.retrieveCompanyNetworkTypeLink( companyNetworkTypeLink );
+
+            //push applicationNetworkTypeLinks
+            let antls = await modelAPI.applicationNetworkTypeLinks.retrieveApplicationNetworkTypeLinks( { companyId: rec.companyId } );
+            let recs = antls.records;
+            for ( let i = 0; i < recs.length; ++i ) {
+                await modelAPI.applicationNetworkTypeLinks.pushApplicationNetworkTypeLink(recs[i].id);
+            }
+            var logs = await modelAPI.networkTypeAPI.pushCompany( rec.networkTypeId, rec.companyId, rec.networkSettings );
+            rec.remoteAccessLogs = logs;
+            resolve( rec );
+        }
+        catch ( err ) {
+            appLogger.log( "Error updating companyNetworkTypeLink: " + err );
+            reject( err );
+        }
+    });
+}
+
+
+
 //******************************************************************************
 // Custom retrieval functions.
 //******************************************************************************

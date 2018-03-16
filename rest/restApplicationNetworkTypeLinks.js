@@ -307,4 +307,25 @@ exports.initialize = function( app, server ) {
             restServer.respond( res, err );
         });
     });
+
+    /**
+     * Pushes the applicationNetworkTypeLinks record with the specified id.
+     * - Only a user with the admin company or the admin of the device's
+     *   company can delete an device. TODO: Is this true?
+     */
+    app.post('/api/applicationNetworkTypeLinks/:id/push', [restServer.isLoggedIn,
+            restServer.fetchCompany,
+            restServer.isAdmin],
+        function(req, res, next) {
+            var id = parseInt( req.params.id );
+            // If the caller is a global admin, or the device is part of the company
+            // admin's company, we can push.
+            modelAPI.applicationNetworkTypeLinks.pushApplicationNetworkTypeLink( id, req.company.id ).then( function( ret ) {
+                restServer.respond( res, 200, ret );
+            }).catch( function( err ) {
+                    appLogger.log( "Error pushing applicationNetworkTypeLink " + id + ": " + err );
+                    restServer.respond( res, err );
+                });
+
+        });
 }

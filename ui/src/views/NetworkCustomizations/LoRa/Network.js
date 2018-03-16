@@ -26,7 +26,10 @@ console.log( "LoRa security data entry", props.securityData );
         } else if (e.target.type === "checkbox") {
           securityData[field] = e.target.checked;
         } else {
-          securityData[field] = e.target.value;
+            if (securityData === "{}") {
+                securityData = {};
+            }
+            securityData[field] = e.target.value;
         }
         this.setState( { securityData: securityData } );
     }
