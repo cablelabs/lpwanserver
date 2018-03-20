@@ -180,7 +180,8 @@ function getANetworkServerID( network, connection ) {
         // Set up the request options.
         var options = {};
         options.method = 'GET';
-        options.url = network.baseUrl + "/network-servers?limit=1&offset=0";
+        // options.url = network.baseUrl + "/network-servers?limit=1&offset=0";
+        options.url = network.baseUrl + "/network-servers?offset=0";
         options.headers = { "Content-Type": "application/json",
                             "Authorization": "Bearer " + connection };
         options.agentOptions = {
@@ -213,6 +214,7 @@ function getANetworkServerID( network, connection ) {
                     reject( 404 );
                     return;
                 }
+                appLogger(nsList);
                 resolve( nsList[ 0 ].id );
             }
         });
