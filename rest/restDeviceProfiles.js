@@ -109,7 +109,7 @@ exports.initialize = function( app, server ) {
     });
 
     /**
-     * Gets the deviceProfile record with the specified id.
+     * @apiDescription Gets the Device Profile record with the specified id.
      *
      * @api {get} /api/deviceProfile/:id Get Device Profile
      * @apiGroup Device Profiles
@@ -152,7 +152,9 @@ exports.initialize = function( app, server ) {
     });
 
     /**
-     * Creates a new deviceProfile record.
+     * @apiDescription Creates a new Device Profile record.  Also creates a
+     *      Device Profile on remote Networks of the Network Type, where
+     *      supported.
      *
      * @api {post} /api/deviceProfiles Create Device Profile
      * @apiGroup Device Profiles
@@ -225,7 +227,9 @@ exports.initialize = function( app, server ) {
     });
 
     /**
-     * Updates the deviceProfile record with the specified id.
+     * @apiDescription Updates the Device Profile record with the specified id.
+     *      Also pushes updates to remote Networks of the Network Type that
+     *      support the concept of Device Profiles.
      *
      * @api {put} /api/deviceProfiles/:id Update Device Profile
      * @apiGroup Device Profiles
@@ -316,7 +320,9 @@ exports.initialize = function( app, server ) {
     });
 
     /**
-     * Deletes the deviceProfile record with the specified id.
+     * @apiDescription Deletes the Device Profile record with the specified id.
+     *      Also deletes the Device Profile from remote Networks of the Network
+     *      Type, where the concept of a Device Profile is supported.
      *
      * @api {delete} /api/deviceProfiles/:id Delete Device Profile
      * @apiGroup Device Profiles
@@ -348,9 +354,15 @@ exports.initialize = function( app, server ) {
     });
 
     /**
-     * Pushes the device profile record with the specified id.
-     * - Only a user with the admin company or the admin of the device's
-     *   company can delete an device. TODO: Is this true?
+     * @apiDescription Pushes the Device Profile record with the specified id.
+     *
+     * @api {post} /api/deviceProfiles/:id/push Push Device Profile
+     * @apiGroup Device Profiles
+     * @apiPermission System Admin, or Company Admin for this company.
+     * @apiHeader {String} Authorization The Create Session's returned token
+     *      prepended with "Bearer "
+     * @apiParam (URL Parameters) {Number} id The Device Profile's id
+     * @apiVersion 0.1.0
      */
     app.post('/api/deviceProfiles/:id/push', [restServer.isLoggedIn,
             restServer.fetchCompany,

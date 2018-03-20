@@ -11,24 +11,6 @@ exports.initialize = function( app, server ) {
     ********************************************************************/
     /**
      * Gets the devices available for access by the calling account.
-     * - If the caller is with the admin company, they can get all
-     *   devices from all companies.  Otherwise they get their own
-     *   company's devices only.
-     * - If the request includes a limit query parameter, only that number of
-     *   entries are returned.
-     * - If the request includes an offset query parameter, the first offset
-     *   records are skipped in the returned data.
-     * - If the request includes a search query parameter, the devices
-     *   will be limited to matches of the passed string to the name.  In the
-     *   string, use "%" to match 0 or more characters and "_" to match
-     *   exactly one.  So to match names starting with "D", use the string
-     *   "D%".
-     * - If the request has a companyId parameter, only applications from that
-     *   company will be returned.  This MUST be the user's company if the user
-     *   is not part of an ADMIN company.
-     * - If the request has a applicationId parameter, only devices for that
-     *   application will be returned.
-     * - Any combination of search terms are AND'd together.
      *
      * @api {get} /api/devices Get Devices
      * @apiGroup Devices
@@ -116,11 +98,7 @@ exports.initialize = function( app, server ) {
     });
 
     /**
-     * Gets the device record with the specified id.
-     * - A company user can get their own company's devices only
-     * - If the caller is with the admin company, they can get any device
-     * - Returned data will include an array of networks that is a list of
-     *   networkIds for networks this device is associated with.
+     * @apiDescription Gets the device record with the specified id.
      *
      * @api {get} /api/devices/:id Get Device
      * @apiGroup Devices
@@ -154,7 +132,7 @@ exports.initialize = function( app, server ) {
     });
 
     /**
-     * Creates a new device record.
+     * @apiDescription Creates a new device record.
      *
      * @api {post} /api/companies Create Device
      * @apiGroup Devices
@@ -216,7 +194,7 @@ exports.initialize = function( app, server ) {
     });
 
     /**
-     * Updates the device record with the specified id.
+     * @apiDescription Updates the device record with the specified id.
      *
      * @api {put} /api/devices/:id Update Device
      * @apiGroup Devices
@@ -337,9 +315,7 @@ exports.initialize = function( app, server ) {
     });
 
     /**
-     * Deletes the device record with the specified id.
-     * - Only a user with the admin company or the admin of the device's
-     *   company can delete an device.
+     * @apiDescription Deletes the device record with the specified id.
      *
      * @api {delete} /api/devices/:id Delete Devices
      * @apiGroup Devices

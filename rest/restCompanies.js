@@ -97,7 +97,7 @@ exports.initialize = function( app, server ) {
     });
 
     /**
-     * Gets the company record with the specified id.
+     * @apiDescription Gets the company record with the specified id.
      *
      * @api {get} /api/companies/:id Get Company
      * @apiGroup Companies
@@ -132,7 +132,7 @@ exports.initialize = function( app, server ) {
     });
 
     /**
-     * Creates a new company record.
+     * @apiDescription Creates a new company record.
      *
      * @api {post} /api/companies Create Company
      * @apiGroup Companies
@@ -189,7 +189,7 @@ exports.initialize = function( app, server ) {
     });
 
     /**
-     * Updates the company record with the specified id.
+     * @apiDescription Updates the company record with the specified id.
      *
      * @api {put} /api/companies/:id Update Company
      * @apiGroup Companies
@@ -268,7 +268,7 @@ exports.initialize = function( app, server ) {
     });
 
     /**
-     * Deletes the company record with the specified id.
+     * @apiDescription Deletes the company record with the specified id.
      *
      * @api {delete} /api/companies/:id Delete Company
      * @apiGroup Companies

@@ -91,7 +91,8 @@ exports.initialize = function( app, server ) {
     });
 
     /**
-     * Gets the companyNetworkTypeLink record with the specified id.
+     * @apiDescription Gets the companyNetworkTypeLink record with the
+     *      specified id.
      *
      * @api {get} /api/companyNetworkTypeLinks/:id Get Company Network Type Link
      * @apiGroup Company Network Type Links
@@ -123,7 +124,8 @@ exports.initialize = function( app, server ) {
     });
 
     /**
-     * Creates a new companyNetworkTypeLink record.
+     * @apiDescription Creates a new companyNetworkTypeLink record.  Also
+     *      creates the Company on the remote Networks of the Network Type.
      *
      * @api {post} /api/companyNetworkTypeLinks Create Company Network Type Link
      * @apiGroup Company Network Type Links
@@ -200,7 +202,9 @@ exports.initialize = function( app, server ) {
     });
 
     /**
-     * Updates the companyNetworkTypeLink record with the specified id.
+     * @apiDescription Updates the companyNetworkTypeLink record with the
+     *      specified id.  Also pushes the updates to the remote Networks of
+     *      the Network Type.
      *
      * @api {put} /api/companyNetworkTypeLinks/:id
      *      Update Company Network Type Link
@@ -276,7 +280,9 @@ exports.initialize = function( app, server ) {
     });
 
     /**
-     * Deletes the companyNetworkTypeLinks record with the specified id.
+     * @apiDescription Deletes the companyNetworkTypeLinks record with the
+     *      specified id.  Also deletes the Company on the remote Networks of
+     *      the Network Type.
      *
      * @api {delete} /api/companyNetworkTypeLinks/:id
      *      Delete Company Network Type Link

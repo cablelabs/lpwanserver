@@ -51,6 +51,7 @@ exports.initialize = function( app, server ) {
      * @apiSuccess {Boolean} object.records.running If the Application is
      *      currently sending data received from the Networks to the baseUrl via
      *      the Reporting Protocol.
+     * @apiVersion 0.1.0
      */
     app.get('/api/applications', [restServer.isLoggedIn,
                                   restServer.fetchCompany],
@@ -103,7 +104,7 @@ exports.initialize = function( app, server ) {
     });
 
     /**
-     * Gets the application record with the specified id.
+     * @apiDescription Gets the Application record with the specified id.
      *
      * @api {get} /api/applications/:id Get Application
      * @apiGroup Applications
@@ -146,7 +147,7 @@ exports.initialize = function( app, server ) {
     });
 
     /**
-     * Creates a new application record.
+     * @apiDescription Creates a new application record.
      *
      * @api {post} /api/applications Create Application
      * @apiGroup Applications
@@ -212,7 +213,7 @@ exports.initialize = function( app, server ) {
     });
 
     /**
-     * Updates the application record with the specified id.
+     * @apiDescription Updates the application record with the specified id.
      *
      * @api {put} /api/applications/:id Update Application
      * @apiGroup Applications
@@ -310,7 +311,7 @@ exports.initialize = function( app, server ) {
     });
 
     /**
-     * Deletes the application record with the specified id.
+     * @apiDescription Deletes the application record with the specified id.
      *
      * @api {delete} /api/applications/:id Delete Application
      * @apiGroup Applications
@@ -359,12 +360,18 @@ exports.initialize = function( app, server ) {
     });
 
     /**
-     * Starts serving the data from the networks to the application server
-     * listed in the reportingProtocol record for the application.
-     * - Only a user with the admin company or the admin of the application's
-     *   company can start an application.
-     * Yeah, yeah, this isn't a pure REST call.  So sue me.  Gets the job done.
+     * @apiDescription Starts serving the data from the Networks to the
+     *      Application server (baseUrl) using the Reporting Protocol for
+     *      the Application.
+     * @api {post} /api/applications/:id/start Start Application
+     * @apiGroup Applications
+     * @apiPermission System Admin, or Company Admin for this company.
+     * @apiHeader {String} Authorization The Create Session's returned token
+     *      prepended with "Bearer "
+     * @apiParam (URL Parameters) {Number} id The Application's id
+     * @apiVersion 0.1.0
      */
+    // Yeah, yeah, this isn't a pure REST call.  So sue me.  Gets the job done.
     app.post('/api/applications/:id/start', [restServer.isLoggedIn,
                                              restServer.fetchCompany,
                                              restServer.isAdmin],
@@ -405,12 +412,17 @@ exports.initialize = function( app, server ) {
 
 
     /**
-     * Stops serving the data from the networks to the application server
-     * listed in the reportingProtocol record for the application.
-     * - Only a user with the admin company or the admin of the application's
-     *   company can stop an application.
-     * Yeah, yeah, this isn't a pure REST call.  So sue me.  Gets the job done.
+     * @apiDescription Stops serving the data from the Networks to the
+     *      Application server (baseUrl).
+     * @api {post} /api/applications/:id/stop Stop Application
+     * @apiGroup Applications
+     * @apiPermission System Admin, or Company Admin for this company.
+     * @apiHeader {String} Authorization The Create Session's returned token
+     *      prepended with "Bearer "
+     * @apiParam (URL Parameters) {Number} id The Application's id
+     * @apiVersion 0.1.0
      */
+    // Yeah, yeah, this isn't a pure REST call.  So sue me.  Gets the job done.
     app.post('/api/applications/:id/stop', [restServer.isLoggedIn,
                                             restServer.fetchCompany,
                                             restServer.isAdmin],

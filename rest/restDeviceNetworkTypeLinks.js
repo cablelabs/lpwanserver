@@ -95,7 +95,8 @@ exports.initialize = function( app, server ) {
     });
 
     /**
-     * Gets the deviceNetworkTypeLink record with the specified id.
+     * @apiDescription Gets the Devic Network Type Link record with the
+     *      specified id.
      *
      * @api {get} /api/deviceNetworkTypeLinks/:id Get Device Network Type Link
      * @apiGroup Device Network Type Links
@@ -126,7 +127,8 @@ exports.initialize = function( app, server ) {
     });
 
     /**
-     * Creates a new deviceNetworkTypeLink record.
+     * @apiDescription Creates a new Device Network Type Link record.  Also
+     *      creates the device on remote Networks of the Network Type.
      *
      * @api {post} /api/deviceNetworkTypeLinks Create Device Network Type Link
      * @apiGroup Device Network Type Links
@@ -194,7 +196,9 @@ exports.initialize = function( app, server ) {
     });
 
     /**
-     * Updates the deviceNetworkTypeLink record with the specified id.
+     * @apiDescription Updates the Device Network Type Link record with the
+     *      specified id.  Also pushes changes to remote Networks of the Network
+     *      Type.
      *
      * @api {put} /api/deviceNetworkTypeLinks/:id
      *      Update Device Network Type Link
@@ -269,7 +273,9 @@ exports.initialize = function( app, server ) {
     });
 
     /**
-     * Deletes the deviceNetworkTypeLinks record with the specified id.
+     * @apiDescription Deletes the Device Network Type Links record with the
+     *      specified id.  Also deletes the Device from remote Networks of the
+     *      Network Type.
      *
      * @api {delete} /api/deviceNetworkTypeLinks/:id
      *      Delete Device Network Type Link
@@ -302,9 +308,16 @@ exports.initialize = function( app, server ) {
     });
 
     /**
-     * Pushes the deviceNetworkTypeLinks record with the specified id.
-     * - Only a user with the admin company or the admin of the device's
-     *   company can delete an device. TODO: Is this true?
+     * @apiDescription Pushes the Device Network Type Links record with the
+     *      specified id.
+     * @api {post} /api/deviceNetworkTypeLinks/:id/push
+     *      Push Device Network Type Link
+     * @apiGroup Device Network Type Links
+     * @apiPermission System Admin or Company Admin for the Device's Company.
+     * @apiHeader {String} Authorization The Create Session's returned token
+     *      prepended with "Bearer "
+     * @apiParam (URL Parameters) {Number} id The Device Network Type Link's id
+     * @apiVersion 0.1.0
      */
     app.post('/api/deviceNetworkTypeLinks/:id/push', [restServer.isLoggedIn,
             restServer.fetchCompany,

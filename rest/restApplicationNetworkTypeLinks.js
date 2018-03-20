@@ -98,7 +98,8 @@ exports.initialize = function( app, server ) {
     });
 
     /**
-     * Gets the applicationNetworkTypeLink record with the specified id.
+     * @apiDescription Gets the applicationNetworkTypeLink record with the
+     * specified id.
      *
      * @api {get} /api/applicationNetworkTypeLinks/:id
      *      Get Application Network Type Link
@@ -131,7 +132,8 @@ exports.initialize = function( app, server ) {
     });
 
     /**
-     * Creates a new applicationNetworkTypeLink record.
+     * @apiDescription Creates a new applicationNetworkTypeLink record.  Also
+     *      creates the Application on the remote Networks of the Network Type.
      *
      * @api {post} /api/applicationNetworktypeLinks
      *      Create Application Network Type Link
@@ -197,7 +199,9 @@ exports.initialize = function( app, server ) {
     });
 
     /**
-     * Updates the applicationNetworkTypeLink record with the specified id.
+     * @apiDescription Updates the applicationNetworkTypeLink record with the
+     * specified id.  Also pushes changes to the remote Networks of the Network
+     * Type.
      *
      * @api {put} /api/applicationNetworkTypeLinks/:id
      *      Update Application Network Type Link
@@ -274,7 +278,9 @@ exports.initialize = function( app, server ) {
     });
 
     /**
-     * Deletes the applicationNetworkTypeLinks record with the specified id.
+     * @apiDescription Deletes the applicationNetworkTypeLinks record with the
+     *      specified id.  Also deletes the Application on the remote Networks
+     *      of the Network Type.
      *
      * @api {delete} /api/applicationNetworkTypeLinks/:id
      *      Delete Application Network Type Link

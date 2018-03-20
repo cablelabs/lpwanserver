@@ -11,7 +11,21 @@ exports.initialize = function( app, server ) {
      ********************************************************************
     /**
      * Gets the reportingProtocols available
-     * - Can be called by any user.
+     *
+     * @api {get} /api/reportingProtocols Get Reporting Protocols
+     * @apiGroup Reporting Protocols
+     * @apiDescription Returns an array of the Reporting Protocols that
+     *      match the options.
+     * @apiPermission All logged-in users.
+     * @apiHeader {String} Authorization The Create Session's returned token
+     *      prepended with "Bearer "
+     * @apiSuccess {Object[]} object An array of Reporting Protocol
+     *      records.
+     * @apiSuccess {Number} object.id The Reporting Protocol's Id
+     * @apiSuccess {String} object.name The name of the Reporting Protocol
+     * @apiSuccess {String} object.protocolHandler The Reporting
+     *      Protocol code that communicates with an Application vendor's server.
+     * @apiVersion 0.1.0
      */
     app.get('/api/reportingProtocols', [restServer.isLoggedIn], function(req, res, next) {
         modelAPI.reportingProtocols.retrieveReportingProtocols().then( function( rps ) {
@@ -24,8 +38,20 @@ exports.initialize = function( app, server ) {
     });
 
     /**
-     * Gets the reportingProtocol record with the specified id.
-     * - Can be called by any user
+     * @apiDescription Gets the Reporting Protocol record with the specified id.
+     *
+     * @api {get} /api/reportingProtocols/:id Get Reporting Protocol
+     * @apiGroup Reporting Protocols
+     * @apiPermission Any logged-in user.
+     * @apiHeader {String} Authorization The Create Session's returned token
+     *      prepended with "Bearer "
+     * @apiParam (URL Parameters) {Number} id The Reporting Protocol's id
+     * @apiSuccess {Object} object
+     * @apiSuccess {Number} object.id The Reporting Protocol's Id
+     * @apiSuccess {String} object.name The name of the Reporting Protocol
+     * @apiSuccess {String} object.protocolHandler The Reporting Protocol
+     *      code that communicates with an Application vendor's server.
+     * @apiVersion 0.1.0
      */
     app.get('/api/reportingProtocols/:id', [restServer.isLoggedIn], function(req, res, next) {
         var id = req.params.id;
@@ -39,17 +65,23 @@ exports.initialize = function( app, server ) {
     });
 
     /**
-     * Creates a new reportingProtocols record.
-     * - A user with an admin company can create a reportingProtocol.
-     * - Requires a name, and a protocolHandler.  The name is the name
-     *   of the protocol type, such as "POST".  The protocolHandler is the name
-     *   of the file in the reportingHandlers directory that supports the
-     *   handler interface.
-     *   in the JSON body.
-     * - {
-     *     "name": "POST",
-     *     "protocolHandler": "httpPostHandler.js"
-     *   }
+     * @apiDescription Creates a new Reporting Protocols record.
+     *
+     * @api {post} /api/reportingProtocols Create Reporting Protocol
+     * @apiGroup Reporting Protocols
+     * @apiPermission System Admin
+     * @apiHeader {String} Authorization The Create Session's returned token
+     *      prepended with "Bearer "
+     * @apiParam (Request Body) {String} name The Reporting Protocol's name
+     * @apiParam (Request Body) {String} protocolHandler The Reporting Protocol
+     *      code that communicates with an Application vendor's server.
+     * @apiExample {json} Example body:
+     *      {
+     *          "name": "POST",
+     *          "protocolHandler": "Post.js"
+     *      }
+     * @apiSuccess {Number} id The new Network Protocol's id.
+     * @apiVersion 0.1.0
      */
     app.post('/api/reportingProtocols', [restServer.isLoggedIn,
                                        restServer.fetchCompany,
@@ -82,8 +114,24 @@ exports.initialize = function( app, server ) {
     });
 
     /**
-     * Updates the reportingProtocol record with the specified id.
-     * - Can only be called by a user who is part of an admin company.
+     * @apiDescription Updates the Reporting Protocol record with the specified
+     *      id.
+     *
+     * @api {put} /api/reportingProtocols/:id Update Reporting Protocol
+     * @apiGroup Reporting Protocols
+     * @apiPermission System Admin
+     * @apiHeader {String} Authorization The Create Session's returned token
+     *      prepended with "Bearer "
+     * @apiParam (URL Parameters) {Number} id The Reporting Protocol's id
+     * @apiParam (Request Body) {String} [name] The Reporting Protocol's name
+     * @apiParam (Request Body) {String} [protocolHandler] The Reporting
+     *      Protocol code that communicates with an Application vendor's server.
+     * @apiExample {json} Example body:
+     *      {
+     *          "name": "POST",
+     *          "protocolHandler": "Post.js"
+     *      }
+     * @apiVersion 0.1.0
      */
     app.put('/api/reportingProtocols/:id', [restServer.isLoggedIn,
                                             restServer.fetchCompany,
@@ -134,8 +182,16 @@ exports.initialize = function( app, server ) {
     });
 
     /**
-     * Deletes the reportingProtocol record with the specified id.
-     * - Only a user with the admin company can delete a reportingProtocol.
+     * @apiDescription Deletes the Reporting Protocol record with the specified
+     *      id.
+     *
+     * @api {delete} /api/reportingProtocols/:id Delete Reporting Protocol
+     * @apiGroup Reporting Protocols
+     * @apiPermission System Admin
+     * @apiHeader {String} Authorization The Create Session's returned token
+     *      prepended with "Bearer "
+     * @apiParam (URL Parameters) {Number} id The Reporting Protocol's id
+     * @apiVersion 0.1.0
      */
     app.delete('/api/reportingProtocols/:id', [restServer.isLoggedIn,
                                                restServer.fetchCompany,
