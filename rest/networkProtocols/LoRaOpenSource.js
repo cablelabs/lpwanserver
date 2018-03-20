@@ -176,12 +176,13 @@ function makeDeviceProfileDataKey( deviceProfileId, dataName ) {
 // esoteric concept for general application management, so we provide this
 // method that will get a network server id from the LoRa system.
 function getANetworkServerID( network, connection ) {
+    appLogger.log('LoRaOpenSource: getANetworkServerID');
     return new Promise( async function( resolve, reject ) {
         // Set up the request options.
         var options = {};
         options.method = 'GET';
         // options.url = network.baseUrl + "/network-servers?limit=1&offset=0";
-        options.url = network.baseUrl + "/network-servers?offset=0";
+        options.url = network.baseUrl + "/network-servers?limit=20&offset=0";
         options.headers = { "Content-Type": "application/json",
                             "Authorization": "Bearer " + connection };
         options.agentOptions = {
@@ -214,7 +215,7 @@ function getANetworkServerID( network, connection ) {
                     reject( 404 );
                     return;
                 }
-                appLogger(nsList);
+                appLogger.log(nsList);
                 resolve( nsList[ 0 ].id );
             }
         });
