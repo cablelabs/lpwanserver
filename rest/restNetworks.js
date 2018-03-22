@@ -84,7 +84,7 @@ exports.initialize = function( app, server ) {
      * - Requires a name, networkProtocolId (how to talk to the network),
      *   baseUrl (to the network's API protocol interface), and optional
      *   securityData (used by the protocol to gain access to the server).
-     *   in the JSON body.
+     *   in the JSON body.  DJS:  Added Service Profile to contain the Region
      * - {
      *     "name": "CableLabs Open Source LoRa",
      *     "networkProviderId": 3,
