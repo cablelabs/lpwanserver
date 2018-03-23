@@ -15,8 +15,8 @@ class LoRaCompanyNetworkSettings extends Component {
         this.state = {
             enabled: false,
             wasEnabled: false,
-            value: "",
-            original: "",
+            value: {},
+            original: {},
             rec: null,
         };
 
@@ -133,19 +133,8 @@ class LoRaCompanyNetworkSettings extends Component {
     }
 
     onSelectChange(fieldLookup, val) {
-        let lookup = fieldLookup.split(".");
-        const fieldName = lookup[lookup.length-1];
-        lookup.pop(); // remove last item
-
-        let value = this.state.value;
-        let obj = value;
-
-        for (const f of lookup) {
-            obj = obj[f];
-        }
-
-        obj[fieldName] = val.value;
-
+        let obj = {};
+        obj[fieldLookup] = val.value;
         this.setState({
             value: value,
         });
