@@ -136,7 +136,7 @@ class LoRaCompanyNetworkSettings extends Component {
         let obj = {};
         obj[fieldLookup] = val.value;
         this.setState({
-            value: value,
+            value: obj,
         });
     }
 
