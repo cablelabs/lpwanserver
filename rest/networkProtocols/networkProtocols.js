@@ -227,6 +227,36 @@ NetworkProtocolAccess.prototype.pushCompany = function( dataAPI, network, compan
     });
 };
 
+// Pull company.  If the company exists on the remote system, update it to match
+// the local data.  Otherwise, create it.
+//
+// dataAPI   - Access to the data we may need to execute this operation.
+// network   - The network data.
+//
+// Returns a Promise that ostensibly connects to the remote system and updates
+// or creates the remote company.  This may or may not do as promised (haha) -
+// the implementation is completely up to the developers of the protocols.
+NetworkProtocolAccess.prototype.pullCompany = function( dataAPI, network ) {
+    var me = this;
+    return new Promise( async function( resolve, reject ) {
+        // Get the protocol for the network.
+        var netProto = await me.getProtocol( network );
+
+        var loginData = await netProto.api.getCompanyAccessAccount( dataAPI, network );
+
+        // Use a session wrapper to call the function. (Session
+        // wrapper manages logging in if session was not already set
+        // up or is expired)
+        me.sessionWrapper( network, loginData, function( proto, sessionData ) {
+            return proto.api.pullCompany( sessionData,
+                network,
+                dataAPI );
+        })
+            .then( function( ret ) { resolve( ret ); } )
+            .catch( function( err ) { reject( err ); } );
+    });
+};
+
 
 // Delete the company.
 //

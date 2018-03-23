@@ -36,7 +36,6 @@ exports.createNetwork = function( name, networkProviderId, networkTypeId, networ
         nwk.networkProtocolId = networkProtocolId;
         nwk.baseUrl = baseUrl;
         nwk.securityData = securityData;
-        nwk.serviceId = 1;
 
         // OK, save it!
         db.insertRecord("networks", nwk, function( err, record ) {

@@ -194,6 +194,18 @@ exports.pushCompany = function( sessionData, network, companyId, dataAPI ) {
     //});
 }
 
+// Pull all company data from the remote network.
+//
+// networkTypeId - The networkTypes record id  identifying the networks to push
+//                 to.
+//
+// Returns a Promise that pushes changes to the remote network of type.
+exports.pullCompany = function( networkTypeId ) {
+    // Hint:
+    //return new Promise( async function( resolve, reject ) {
+    //});
+}
+
 
 //******************************************************************************
 // CRUD applications.

@@ -166,6 +166,21 @@ NetworkTypeApi.prototype.pushCompany = function( networkTypeId, companyId ) {
                 });
 }
 
+// Pull all company data from the remote network.
+//
+// networkTypeId - The networkTypes record id  identifying the networks to push
+//                 to.
+//
+// Returns a Promise that pushes changes to the remote network of type.
+NetworkTypeApi.prototype.pullCompany = function( networkTypeId ) {
+    return createPromiseOperationForNetworksOfType(
+        "Pull Company",
+        networkTypeId,
+        function( npda, network ) {
+            return protos.pullCompany( npda, network );
+        });
+}
+
 // Delete the company.
 //
 // networkTypeId - The networkTypes record id identifying the networks to delete

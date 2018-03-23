@@ -109,9 +109,9 @@ CompanyNetworkTypeLink.prototype.deleteCompanyNetworkTypeLink = function( id ) {
 
 
 
-// Push the applicationNetworkTypeLinks record.
+// Push the CompanyNetworkTypeLink record.
 //
-// applicationNetworkTypeLinks - the record to be pushed.  Note that the id must be
+// CompanyNetworkTypeLink - the record to be pushed.  Note that the id must be
 //                           unchanged from retrieval to guarantee the same
 //                           record is updated.
 // validateCompanyId       - The id of the company this application SHOULD be
@@ -138,6 +138,42 @@ CompanyNetworkTypeLink.prototype.pushCompanyNetworkTypeLink = function( companyN
         }
         catch ( err ) {
             appLogger.log( "Error updating companyNetworkTypeLink: " + err );
+            reject( err );
+        }
+    });
+}
+
+
+
+// Pull the companyNetworkTypeLinks record.
+//
+// companyNetworkTypeLinks - the record to be pushed.  Note that the id must be
+//                           unchanged from retrieval to guarantee the same
+//                           record is updated.
+//
+// Returns a promise that executes the update.
+CompanyNetworkTypeLink.prototype.pullCompanyNetworkTypeLink = function( networkTypeId  ) {
+    var me = this;
+    return new Promise( async function( resolve, reject ) {
+        try {
+            var logs = await modelAPI.networkTypeAPI.pullCompany( networkTypeId );
+            let companies = JSON.parse(logs[Object.keys(logs)[0]].logs);
+            for (var index in companies.result) {
+                let company = companies.result[index];
+                //see if it exists first
+                let existingCompany = await modelAPI.companies.retrieveCompanies({search: company.name});
+                if (existingCompany.totalCount > 0 ) {
+                    console.log(company.name + ' already exists');
+                }
+                else {
+                    console.log('creating ' + company.name);
+                    modelAPI.companies.createCompany(company.name, modelAPI.companies.COMPANY_VENDOR);
+                }
+            }
+            resolve( logs );
+        }
+        catch ( err ) {
+            appLogger.log( "Error pulling companies from Network : " + networkTypeId + " " + err );
             reject( err );
         }
     });

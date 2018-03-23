@@ -826,6 +826,44 @@ exports.pushCompany = function( sessionData, network, companyId, dataAPI ) {
 }
 
 
+// Get company.
+//
+// sessionData - The session information for the user, including the //               connection data for the remote system.
+// network     - The networks record for the network that uses this
+//               protocol.
+// companyId   - The id for the local company data, for which the remote data
+//               will be retrieved.
+// dataAPI     - Gives access to the data records and error tracking for the
+//               operation.
+//
+// Returns a Promise that gets the company record from the remote system.
+exports.pullCompany = function( sessionData, network, dataAPI ) {
+    return new Promise( async function( resolve, reject ) {
+        // Get the remote companies.
+        // Set up the request options.
+        var options = {};
+        options.method = 'GET';
+        options.url = network.baseUrl + "/organizations" + "?limit=20&offset=0"  ;
+        options.headers = { "Content-Type": "application/json",
+            "Authorization": "Bearer " + sessionData.connection };
+        options.agentOptions = {
+            "secureProtocol": "TLSv1_2_method",
+            "rejectUnauthorized": false };
+
+        request( options, function( error, response, body ) {
+            if ( error ) {
+                dataAPI.addLog( network,"Error pulling companies from network " + network.name + ": " + error );
+                reject( error );
+            }
+            else {
+                dataAPI.addLog(network, body);
+                resolve( body );
+            }
+        });
+    });
+}
+
+
 //******************************************************************************
 // CRUD applications.
 //******************************************************************************
