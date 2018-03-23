@@ -131,10 +131,27 @@ class LoRaCompanyNetworkSettings extends Component {
         return this.state.enabled;
     }
 
+
+
     render() {
+        const regParamsOptions = [
+            {value: "US915", label: "US915"},
+            {value: "EU200", label: "EU200"},
+        ];
         return (
             <div className={this.state.enabled === true ? "" : "hidden" } >
-                No company data can be specified for {this.props.netRec.name} networks.
+                <div className="form-group">
+                    <label className="control-label" htmlFor="region">LoRaWAN Region</label>
+                    <Select
+                        name="region"
+                        options={regParamsOptions}
+                        value={this.state.value.region}
+                        onChange={this.onSelectChange.bind(this, 'region')}
+                    />
+                    <p className="help-block">
+                        Region of the LoRaWAN supported by the Network.
+                    </p>
+                </div>
             </div>
         );
       }
