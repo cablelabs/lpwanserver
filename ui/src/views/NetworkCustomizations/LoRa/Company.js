@@ -1,5 +1,6 @@
 import React, {Component} from 'react';
 import CompanyStore from "../../../stores/CompanyStore";
+import Select from 'react-select';
 
 
 // The default company network settings data entry, when the
