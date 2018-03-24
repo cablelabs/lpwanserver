@@ -23,6 +23,7 @@ class PullNetworks extends Component {
                 </ol>
               <div className={`panel-body clearfix `}>
                 <table className="table table-hover">
+                    <tbody>
                 <tr>
                   <td><RingLoader
                       color={'#123abc'}
@@ -32,6 +33,7 @@ class PullNetworks extends Component {
                     <p>Importing data from network server ${this.state.networkTypeId}, please wait.</p>
                   </td>
                 </tr>
+                    </tbody>
               </table>
               </div>
             </div>
