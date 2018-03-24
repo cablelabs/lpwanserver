@@ -1,7 +1,7 @@
 import React, {Component} from 'react';
 import {Link} from 'react-router-dom';
 import {RingLoader} from 'react-spinners';
-
+import FaCheck from 'react-icons/fa/check';
 
 import networkTypeStore from "../../stores/NetworkTypeStore";
 
@@ -27,6 +27,35 @@ class PullNetworks extends Component {
 
 
     render() {
+        const processing = this.state.loading;
+
+        const msg = processing ? (
+            <table className="table table-hover">
+                <tbody>
+                <tr>
+                    <td><RingLoader
+                        color={'#123abc'}
+                        loading={this.state.loading}
+                    /></td>
+                    <td>
+                        <p >Importing data from network server, please wait.</p>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        ): (
+            <table className="table table-hover">
+                <tbody>
+                <tr>
+                    <td><FaCheck/></td>
+                    <td>
+                        <p >Importing from network server complete.</p>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        )
+
         return (
             <div>{this.state.error && <div>Error Importing Data from Network Server: {this.state.errorMsg}</div>}
                 <div>
@@ -35,19 +64,7 @@ class PullNetworks extends Component {
                         <li><Link to={`/admin/networks`}>Networks</Link></li>
                     </ol>
                     <div className={`panel-body clearfix `}>
-                        <table className="table table-hover">
-                            <tbody>
-                            <tr>
-                                <td><RingLoader
-                                    color={'#123abc'}
-                                    loading={this.state.loading}
-                                /></td>
-                                <td>
-                                    <p>Importing data from network server {this.state.networkTypeId}, please wait.</p>
-                                </td>
-                            </tr>
-                            </tbody>
-                        </table>
+                        {msg}
                     </div>
                 </div>
             </div>

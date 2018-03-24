@@ -8,7 +8,7 @@ class NetworkRow extends Component {
   render() {
     return (
         <tr>
-            <td><Link to={`/admin/network/${this.props.network.id}`}>{this.props.network.name} {this.props.network.networkTypeId}</Link></td>
+            <td><Link to={`/admin/network/${this.props.network.id}`}>{this.props.network.name}</Link></td>
             <td>
                 <div className={`btn-group pull-right`}>
                     <Link to={`/admin/pull/${this.props.network.networkTypeId}`}>
