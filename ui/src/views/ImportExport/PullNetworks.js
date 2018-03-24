@@ -11,6 +11,7 @@ class PullNetworks extends Component {
         this.state = {
             loading: true,
             error: false,
+            errorMsg: '',
             networkTypeId: this.props.match.params.networkTypeId
         };
         networkTypeStore.pullNetworkType(this.props.match.params.networkTypeId)
@@ -18,7 +19,7 @@ class PullNetworks extends Component {
                 this.setState({loading: false, error: false});
             })
             .catch(error => {
-                this.setState({loading: false, error: true});
+                this.setState({loading: false, error: true, errorMsg: error.toString()});
             })
 
     }
@@ -41,7 +42,7 @@ class PullNetworks extends Component {
                                     loading={this.state.loading}
                                 /></td>
                                 <td>
-                                    <p>Importing data from network server ${this.state.networkTypeId}, please wait.</p>
+                                    <p>Importing data from network server {this.state.networkTypeId}, please wait.</p>
                                 </td>
                             </tr>
                             </tbody>
