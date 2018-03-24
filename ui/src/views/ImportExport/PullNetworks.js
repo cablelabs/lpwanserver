@@ -13,6 +13,12 @@ class PullNetworks extends Component {
             networkTypeId: this.props.match.params.networkTypeId
         };
         networkTypeStore.pullNetworkType(this.props.match.params.networkTypeId);
+
+       setTimeout(function() {
+           this.setState({
+               loading: false
+           });
+       }, 1000)
     }
     render() {
         return (
@@ -39,6 +45,8 @@ class PullNetworks extends Component {
             </div>
         )
     }
+
+
 }
 
 export default PullNetworks;
