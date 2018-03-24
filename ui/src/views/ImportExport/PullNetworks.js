@@ -23,21 +23,11 @@ class PullNetworks extends Component {
 
     }
 
-    const withErrorHandling = WrappedComponent => ({ showError, children }) => {
-        return (
-            <WrappedComponent>
-                {showError && <div className="error-message">Error Importing from Network</div>}
-                {children}
-            </WrappedComponent>
-        );
-    };
-
-    const DivWithErrorHandling = withErrorHandling(({children}) => <div>{children}</div>)
 
 
     render() {
         return (
-            <DivWithErrorHandling showError={this.state.error}>
+            <div>{this.props.errors && <div>Error Importing Data from Network Server</div>}
             <div>
                 <ol className="breadcrumb">
                     <li><Link to={`/`}>Home</Link></li>
@@ -59,7 +49,6 @@ class PullNetworks extends Component {
               </table>
               </div>
             </div>
-            </DivWithErrorHandling>
         )
     }
 
