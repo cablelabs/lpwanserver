@@ -16,6 +16,7 @@ class NetworkRow extends Component {
                     </Link>
                 </div>
             </td>
+            <td>${this.props.network}</td>
         </tr>
     );
   }
