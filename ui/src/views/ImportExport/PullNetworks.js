@@ -10,7 +10,8 @@ class PullNetworks extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            loading: true
+            loading: true,
+            networkId: this.props.match.params.networkId
         }
     }
     render() {
@@ -28,7 +29,7 @@ class PullNetworks extends Component {
                       loading={this.state.loading}
                   /></td>
                   <td>
-                    <p>Importing data from network servers, please wait.</p>
+                    <p>Importing data from network server ${this.state.networkId}, please wait.</p>
                   </td>
                 </tr>
               </table>
