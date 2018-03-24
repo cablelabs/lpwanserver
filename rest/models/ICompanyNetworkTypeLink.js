@@ -157,12 +157,13 @@ CompanyNetworkTypeLink.prototype.pullCompanyNetworkTypeLink = function( networkT
         try {
             var logs = await modelAPI.networkTypeAPI.pullCompany( networkTypeId );
             let companies = JSON.parse(logs[Object.keys(logs)[0]].logs);
+            console.log(companies);
             for (var index in companies.result) {
                 let company = companies.result[index];
                 //see if it exists first
                 let existingCompany = await modelAPI.companies.retrieveCompanies({search: company.name});
                 if (existingCompany.totalCount > 0 ) {
-                    existingCompany = existingCompany.results[0];
+                    existingCompany = existingCompany.records[0];
                     console.log(company.name + ' already exists');
                 }
                 else {
