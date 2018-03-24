@@ -15,9 +15,7 @@ class PullNetworks extends Component {
         networkTypeStore.pullNetworkType(this.props.match.params.networkTypeId);
 
        setTimeout(function() {
-           this.setState({
-               loading: false
-           });
+           this.state.loading = false
        }, 1000)
     }
     render() {
