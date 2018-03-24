@@ -181,6 +181,11 @@ CompanyNetworkTypeLink.prototype.pullCompanyNetworkTypeLink = function( networkT
                 }
 
             }
+            logs = await modelAPI.networkTypeAPI.pullApplication( networkTypeId );
+            let applications = JSON.parse(logs[Object.keys(logs)[0]].logs);
+            console.log(applications);
+
+
 
             resolve( logs );
         }

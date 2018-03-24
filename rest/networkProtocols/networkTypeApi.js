@@ -237,6 +237,21 @@ NetworkTypeApi.prototype.pushApplication = function( networkTypeId, applicationI
                 });
 }
 
+// Pull all application data from the remote network.
+//
+// networkTypeId - The networkTypes record id  identifying the networks to push
+//                 to.
+//
+// Returns a Promise that pushes changes to the remote network of type.
+NetworkTypeApi.prototype.pullApplication = function( networkTypeId ) {
+    return createPromiseOperationForNetworksOfType(
+        "Pull Application",
+        networkTypeId,
+        function( npda, network ) {
+            return protos.pullApplication( npda, network );
+        });
+}
+
 // Delete the application.
 //
 // networkTypeId - The networkTypes record id identifying the networks to delete
