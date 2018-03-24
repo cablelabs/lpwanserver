@@ -3,7 +3,7 @@ import {Link} from 'react-router-dom';
 import { RingLoader } from 'react-spinners';
 
 
-import networkStore from "../../stores/NetworkStore";
+import networkTypeStore from "../../stores/NetworkTypeStore";
 
 class PullNetworks extends Component {
     constructor(props) {
@@ -12,7 +12,7 @@ class PullNetworks extends Component {
             loading: true,
             networkTypeId: this.props.match.params.networkTypeId
         };
-        networkStore.pullNetworkType(this.state.networkTypeId);
+        networkTypeStore.pullNetworkType(this.state.networkTypeId);
     }
     render() {
         return (
