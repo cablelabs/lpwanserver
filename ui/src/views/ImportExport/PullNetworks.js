@@ -27,7 +27,7 @@ class PullNetworks extends Component {
 
     render() {
         return (
-            <div>{this.props.errors && <div>Error Importing Data from Network Server</div>}
+            <div>{this.state.error) && <div>Error Importing Data from Network Server</div>}
             <div>
                 <ol className="breadcrumb">
                     <li><Link to={`/`}>Home</Link></li>
