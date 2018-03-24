@@ -47,9 +47,9 @@ class PullNetworks extends Component {
             <table className="table table-hover">
                 <tbody>
                 <tr>
-                    <td><FaCheck/></td>
+                    <td>                        <p >Importing from network server complete.</p>
+                    </td>
                     <td>
-                        <p >Importing from network server complete.</p>
                     </td>
                 </tr>
                 </tbody>
