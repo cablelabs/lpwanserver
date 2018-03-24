@@ -5,10 +5,6 @@ import networkStore from "../../stores/NetworkStore";
 import SessionStore from "../../stores/SessionStore";
 
 class NetworkRow extends Component {
-    constructor() {
-        super();
-        console.log(this.props.network);
-    }
   render() {
     return (
         <tr>
