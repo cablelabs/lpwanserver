@@ -173,6 +173,47 @@ ApplicationNetworkTypeLink.prototype.deleteApplicationNetworkTypeLink = function
         });
     }
 
+// Pull the companyNetworkTypeLinks record.
+//
+// companyNetworkTypeLinks - the record to be pushed.  Note that the id must be
+//                           unchanged from retrieval to guarantee the same
+//                           record is updated.
+//
+// Returns a promise that executes the update.
+ApplicationNetworkTypeLink.prototype.pullApplicationNetworkTypeLink = function (networkTypeId) {
+    return new Promise(async function (resolve, reject) {
+        try {
+            // var logs = await modelAPI.networkTypeAPI.pullCompany(networkTypeId);
+            // let companies = JSON.parse(logs[Object.keys(logs)[0]].logs);
+            // for (var index in companies.result) {
+            //     let company = companies.result[index];
+            //     //see if it exists first
+            //     let existingCompany = await modelAPI.companies.retrieveCompanies({search: company.name});
+            //     if (existingCompany.totalCount > 0) {
+            //         console.log(company.name + ' already exists');
+            //     }
+            //     else
+            //         console.log('creating ' + company.name);
+            //         modelAPI.companies.createCompany(company.name, modelAPI.companies.COMPANY_VENDOR);
+            //     }
+            // }
+            // modelAPI.applicationNetworkTypeLinks.pullApplicationNetworkTypeLink(networkTypeId)
+            //     .then(function (ret) {
+            //         restServer.respondJson(res, 200, ret);
+            //     }).catch(function (err) {
+            //     appLogger.log("Error pulling applications from network " + networkId + ": " + err);
+            //     restServer.respond(res, err);
+            // });
+
+            resolve();
+        }
+        catch (err) {
+            appLogger.log("Error pulling applications from Network : " + networkTypeId + " " + err);
+            reject(err);
+        }
+    });
+}
+
 //******************************************************************************
 // Custom retrieval functions.
 //******************************************************************************

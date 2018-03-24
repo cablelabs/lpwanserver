@@ -153,7 +153,6 @@ CompanyNetworkTypeLink.prototype.pushCompanyNetworkTypeLink = function( companyN
 //
 // Returns a promise that executes the update.
 CompanyNetworkTypeLink.prototype.pullCompanyNetworkTypeLink = function( networkTypeId  ) {
-    var me = this;
     return new Promise( async function( resolve, reject ) {
         try {
             var logs = await modelAPI.networkTypeAPI.pullCompany( networkTypeId );
@@ -163,13 +162,33 @@ CompanyNetworkTypeLink.prototype.pullCompanyNetworkTypeLink = function( networkT
                 //see if it exists first
                 let existingCompany = await modelAPI.companies.retrieveCompanies({search: company.name});
                 if (existingCompany.totalCount > 0 ) {
+                    existingCompany = existingCompany.results[0];
                     console.log(company.name + ' already exists');
                 }
                 else {
                     console.log('creating ' + company.name);
-                    modelAPI.companies.createCompany(company.name, modelAPI.companies.COMPANY_VENDOR);
+                    existingCompany = await modelAPI.companies.createCompany(company.name, modelAPI.companies.COMPANY_VENDOR);
                 }
+                //see if it exists first
+                let existingCompanyNTL = await modelAPI.companyNetworkTypeLinks.retrieveCompanyNetworkTypeLinks({companyId: existingCompany.id});
+                if (existingCompanyNTL.totalCount > 0 ) {
+                    console.log(company.name + ' link already exists');
+                }
+                else {
+                    console.log('creating Network Link for ' + company.name);
+                    modelAPI.companyNetworkTypeLinks.createCompanyNetworkTypeLink(existingCompany.id, networkTypeId, {})
+                }
+
             }
+            // modelAPI.applicationNetworkTypeLinks.pullApplicationNetworkTypeLink(networkTypeId)
+            //     .then( function( ret ) {
+            //         appLogger.log("Successfully Pulled Applications from the Network Server")
+            //     // restServer.respondJson( res, 200, ret );
+            //     }).catch( function( err ) {
+            //         appLogger.log( "Error pulling applications from network " + networkId + ": " + err );
+            //         reject(err);
+            //     });
+
             resolve( logs );
         }
         catch ( err ) {
