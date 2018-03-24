@@ -19,6 +19,7 @@ class PullNetworks extends Component {
                 this.setState({loading: false, error: false});
             })
             .catch(error => {
+                console.log(error);
                 this.setState({loading: false, error: true, errorMsg: error.toString()});
             })
 
@@ -27,7 +28,7 @@ class PullNetworks extends Component {
 
     render() {
         return (
-            <div>{this.state.error && <div>Error Importing Data from Network Server</div>}
+            <div>{this.state.error && <div>Error Importing Data from Network Server: {this.state.errorMsg}</div>}
                 <div>
                     <ol className="breadcrumb">
                         <li><Link to={`/`}>Home</Link></li>
