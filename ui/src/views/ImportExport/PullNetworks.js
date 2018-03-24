@@ -12,7 +12,7 @@ class PullNetworks extends Component {
             loading: true,
             networkTypeId: this.props.match.params.networkTypeId
         };
-        networkStore.pullApplicationNetworkTypeLink(this.state.networkTypeId);
+        networkStore.pullNetworkType(this.state.networkTypeId);
     }
     render() {
         return (
