@@ -1,7 +1,6 @@
 import React, {Component} from 'react';
 import {Link} from 'react-router-dom';
 import {RingLoader} from 'react-spinners';
-import FaCheck from 'react-icons/fa/check';
 
 import networkTypeStore from "../../stores/NetworkTypeStore";
 
