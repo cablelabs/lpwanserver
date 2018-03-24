@@ -10,16 +10,34 @@ class PullNetworks extends Component {
         super(props);
         this.state = {
             loading: true,
+            error: false,
             networkTypeId: this.props.match.params.networkTypeId
         };
-        networkTypeStore.pullNetworkType(this.props.match.params.networkTypeId);
+        networkTypeStore.pullNetworkType(this.props.match.params.networkTypeId)
+            .then( function() {
+                this.setState({loading: false, error: false});
+            })
+            .catch(function(err) {
+                this.setState({loading: false, error: true});
+            })
 
-       setTimeout(function() {
-           this.state.loading = false
-       }, 1000)
     }
+
+    const withErrorHandling = WrappedComponent => ({ showError, children }) => {
+        return (
+            <WrappedComponent>
+                {showError && <div className="error-message">Error Importing from Network</div>}
+                {children}
+            </WrappedComponent>
+        );
+    };
+
+    const DivWithErrorHandling = withErrorHandling(({children}) => <div>{children}</div>)
+
+
     render() {
         return (
+            <DivWithErrorHandling showError={this.state.error}>
             <div>
                 <ol className="breadcrumb">
                     <li><Link to={`/`}>Home</Link></li>
@@ -41,6 +59,7 @@ class PullNetworks extends Component {
               </table>
               </div>
             </div>
+            </DivWithErrorHandling>
         )
     }
 
