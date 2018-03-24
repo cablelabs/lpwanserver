@@ -47,7 +47,7 @@ class LoRaCompanyNetworkSettings extends Component {
             if ( rec ) {
                 // Javascript libraries can get whiny with null.
                 if ( !rec.networkSettings ) {
-                    rec.networkSettings = undefined;
+                    rec.networkSettings = {serviceProfile: {region: ''}};
                 }
 
                 // We are saying we're enabled based on the database returned
