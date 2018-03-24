@@ -6,7 +6,7 @@ import SessionStore from "../../stores/SessionStore";
 
 class NetworkRow extends Component {
     constructor() {
-        super(props);
+        super();
         console.log(this.props.network);
     }
   render() {
