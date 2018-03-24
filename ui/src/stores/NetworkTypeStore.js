@@ -107,7 +107,7 @@ class NetworkTypeStore extends EventEmitter {
     pullNetworkType( id ) {
         return new Promise( function( resolve, reject ) {
             let header = sessionStore.getHeader();
-            fetch(rest_url + "/api/networkTypes/" + id + "/pull",
+            fetch(rest_url + "/api/companyNetworkTypeLinks/" + id + "/pull",
                 {
                     method: "POST",
                     credentials: 'same-origin',
