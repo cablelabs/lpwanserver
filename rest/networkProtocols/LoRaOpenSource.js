@@ -1191,7 +1191,7 @@ exports.pushApplication = function( sessionData, network, applicationId, dataAPI
 //               operation.
 //
 // Returns a Promise that gets the company record from the remote system.
-exports.pullCompany = function( sessionData, network, dataAPI ) {
+exports.pullApplication = function( sessionData, network, dataAPI ) {
     return new Promise( async function( resolve, reject ) {
         // Get the remote companies.
         // Set up the request options.
