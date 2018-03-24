@@ -180,14 +180,6 @@ CompanyNetworkTypeLink.prototype.pullCompanyNetworkTypeLink = function( networkT
                 }
 
             }
-            // modelAPI.applicationNetworkTypeLinks.pullApplicationNetworkTypeLink(networkTypeId)
-            //     .then( function( ret ) {
-            //         appLogger.log("Successfully Pulled Applications from the Network Server")
-            //     // restServer.respondJson( res, 200, ret );
-            //     }).catch( function( err ) {
-            //         appLogger.log( "Error pulling applications from network " + networkId + ": " + err );
-            //         reject(err);
-            //     });
 
             resolve( logs );
         }
@@ -196,7 +188,7 @@ CompanyNetworkTypeLink.prototype.pullCompanyNetworkTypeLink = function( networkT
             reject( err );
         }
     });
-}
+};
 
 
 
