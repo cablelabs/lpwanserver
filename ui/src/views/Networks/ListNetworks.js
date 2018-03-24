@@ -5,6 +5,10 @@ import networkStore from "../../stores/NetworkStore";
 import SessionStore from "../../stores/SessionStore";
 
 class NetworkRow extends Component {
+    constructor() {
+        super(props);
+        console.log(this.props.network);
+    }
   render() {
     return (
         <tr>
@@ -16,7 +20,6 @@ class NetworkRow extends Component {
                     </Link>
                 </div>
             </td>
-            <td>${this.props.network}</td>
         </tr>
     );
   }
