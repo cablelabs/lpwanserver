@@ -15,7 +15,7 @@ class LoRaCompanyNetworkSettings extends Component {
         this.state = {
             enabled: false,
             wasEnabled: false,
-            value: {region: ''},
+            value: {},
             original: {},
             rec: null,
         };
@@ -48,6 +48,9 @@ class LoRaCompanyNetworkSettings extends Component {
                 // Javascript libraries can get whiny with null.
                 if ( !rec.networkSettings ) {
                     rec.networkSettings = {serviceProfile: {region: ''}};
+                }
+                else if (!rec.networkSettings.serviceProfile) {
+                    rec.networkSettings.serviceProfile = {region: ''};
                 }
 
                 // We are saying we're enabled based on the database returned
