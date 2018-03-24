@@ -177,7 +177,7 @@ CompanyNetworkTypeLink.prototype.pullCompanyNetworkTypeLink = function( networkT
                 }
                 else {
                     console.log('creating Network Link for ' + company.name);
-                    modelAPI.companyNetworkTypeLinks.createCompanyNetworkTypeLink(existingCompany.id, networkTypeId, {})
+                    modelAPI.companyNetworkTypeLinks.createCompanyNetworkTypeLink(existingCompany.id, networkTypeId, {region: ''})
                 }
 
             }

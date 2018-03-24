@@ -15,7 +15,7 @@ class LoRaCompanyNetworkSettings extends Component {
         this.state = {
             enabled: false,
             wasEnabled: false,
-            value: {},
+            value: {region: ''},
             original: {},
             rec: null,
         };
