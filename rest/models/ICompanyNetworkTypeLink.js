@@ -158,17 +158,24 @@ CompanyNetworkTypeLink.prototype.pullCompanyNetworkTypeLink = function( networkT
             var logs = await modelAPI.networkTypeAPI.pullCompany( networkTypeId );
             let companies = JSON.parse(logs[Object.keys(logs)[0]].logs);
             console.log(companies);
+            let nsCoId = [];
+            let localCoId = [];
             for (var index in companies.result) {
                 let company = companies.result[index];
+                //Mapping of Org Ids to Company Ids
+                nsCoId.push(company.id);
+
                 //see if it exists first
                 let existingCompany = await modelAPI.companies.retrieveCompanies({search: company.name});
                 if (existingCompany.totalCount > 0 ) {
                     existingCompany = existingCompany.records[0];
                     console.log(company.name + ' already exists');
+                    localCoId.push(existingCompany.id);
                 }
                 else {
                     console.log('creating ' + company.name);
                     existingCompany = await modelAPI.companies.createCompany(company.name, modelAPI.companies.COMPANY_VENDOR);
+                    localCoId.push(existingCompany.id);
                 }
                 //see if it exists first
                 let existingCompanyNTL = await modelAPI.companyNetworkTypeLinks.retrieveCompanyNetworkTypeLinks({companyId: existingCompany.id});
@@ -194,7 +201,8 @@ CompanyNetworkTypeLink.prototype.pullCompanyNetworkTypeLink = function( networkT
                 }
                 else {
                     console.log('creating ' + application.name);
-                    existingApplication = await modelAPI.applications.createApplication(application.name, application.organizationID, null, null);
+                    let coIndex = nsCoId.indexOf(application.organizationID);
+                    existingApplication = await modelAPI.applications.createApplication(application.name, localCoId[coIndex], 1, 'https://locahost:8888');
                 }
                 //see if it exists first
                 let existingApplicationNTL = await modelAPI.applicationNetworkTypeLinks.retrieveApplicationNetworkTypeLinks({applicationId: existingApplication.id});
