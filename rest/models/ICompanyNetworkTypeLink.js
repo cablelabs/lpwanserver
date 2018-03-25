@@ -184,7 +184,29 @@ CompanyNetworkTypeLink.prototype.pullCompanyNetworkTypeLink = function( networkT
             logs = await modelAPI.networkTypeAPI.pullApplication( networkTypeId );
             let applications = JSON.parse(logs[Object.keys(logs)[0]].logs);
             console.log(applications);
+            for (var index in applications.result) {
+                let application = applications.result[index];
+                //see if it exists first
+                let existingApplication = await modelAPI.applications.retrieveCompanies({search: application.name});
+                if (existingApplication.totalCount > 0 ) {
+                    existingApplication = existingApplication.records[0];
+                    console.log(application.name + ' already exists');
+                }
+                else {
+                    console.log('creating ' + application.name);
+                    existingApplication = await modelAPI.applications.createApplication(application.name, application.organizationID, null, null);
+                }
+                //see if it exists first
+                let existingApplicationNTL = await modelAPI.applicationNetworkTypeLinks.retrieveApplicationNetworkTypeLinks({applicationId: existingApplication.id});
+                if (existingApplicationNTL.totalCount > 0 ) {
+                    console.log(application.name + ' link already exists');
+                }
+                else {
+                    console.log('creating Network Link for ' + application.name);
+                    modelAPI.applicationNetworkTypeLinks.createApplicationNetworkTypeLink(existingApplication.id, networkTypeId, {}, existingApplication.companyId);
+                }
 
+            }
 
 
             resolve( logs );
