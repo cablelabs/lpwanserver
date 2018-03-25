@@ -224,7 +224,7 @@ CompanyNetworkTypeLink.prototype.pullCompanyNetworkTypeLink = function( networkT
 
             logs = await modelAPI.networkTypeAPI.pullDeviceProfile( networkTypeId );
             let deviceProfiles = JSON.parse(logs[Object.keys(logs)[0]].logs);
-            appLogger.log(deviceProfiles);
+            appLogger.log(JSON.stringify(deviceProfiles));
             let nsDpId = [];
             let localDpId = [];
             for (var index in deviceProfiles.result) {
