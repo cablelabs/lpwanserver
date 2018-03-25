@@ -194,7 +194,7 @@ CompanyNetworkTypeLink.prototype.pullCompanyNetworkTypeLink = function( networkT
             for (var index in applications.result) {
                 let application = applications.result[index];
                 //see if it exists first
-                let existingApplication = await modelAPI.applications.retrieveApplicationbyName(application.name);
+                let existingApplication = await modelAPI.applications.retrieveApplications({search: application.name});
                 if (existingApplication.totalCount > 0 ) {
                     existingApplication = existingApplication.records[0];
                     console.log(application.name + ' already exists');
@@ -202,7 +202,7 @@ CompanyNetworkTypeLink.prototype.pullCompanyNetworkTypeLink = function( networkT
                 else {
                     console.log('creating ' + application.name);
                     let coIndex = nsCoId.indexOf(application.organizationID);
-                    console.log(application.name, localCoId[coIndex], 1, 'https://locahost:8888');
+                    console.log(application.name, localCoId[coIndex], 1, 'https://locahost:8888')
                     existingApplication = await modelAPI.applications.createApplication(application.name, localCoId[coIndex], 1, 'https://locahost:8888');
                 }
                 //see if it exists first
