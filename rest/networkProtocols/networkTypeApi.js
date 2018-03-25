@@ -354,6 +354,21 @@ NetworkTypeApi.prototype.pushDeviceProfile = function( networkTypeId, deviceProf
                 });
 }
 
+// Pull all deviceProfile data from the remote network.
+//
+// networkTypeId - The networkTypes record id  identifying the networks to pulled
+//                 to.
+//
+// Returns a Promise that pulls changes to the remote network of type.
+NetworkTypeApi.prototype.pullDeviceProfile = function( networkTypeId ) {
+    return createPromiseOperationForNetworksOfType(
+        "Pull DeviceProfile",
+        networkTypeId,
+        function( npda, network ) {
+            return protos.pullDeviceProfile( npda, network );
+        });
+}
+
 // Delete the deviceProfile.
 //
 // networkTypeId   - The networkTypes record id identifying the networks to delete

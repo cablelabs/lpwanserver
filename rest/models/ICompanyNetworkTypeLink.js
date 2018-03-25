@@ -191,12 +191,17 @@ CompanyNetworkTypeLink.prototype.pullCompanyNetworkTypeLink = function( networkT
             logs = await modelAPI.networkTypeAPI.pullApplication( networkTypeId );
             let applications = JSON.parse(logs[Object.keys(logs)[0]].logs);
             console.log(applications);
+            let nsAppId = [];
+            let localAppId = [];
             for (var index in applications.result) {
                 let application = applications.result[index];
+                nsAppId.push(application.id);
+
                 //see if it exists first
                 let existingApplication = await modelAPI.applications.retrieveApplications({search: application.name});
                 if (existingApplication.totalCount > 0 ) {
                     existingApplication = existingApplication.records[0];
+                    localAppId.push(existingApplication.id);
                     console.log(application.name + ' already exists');
                 }
                 else {
@@ -204,6 +209,7 @@ CompanyNetworkTypeLink.prototype.pullCompanyNetworkTypeLink = function( networkT
                     let coIndex = nsCoId.indexOf(application.organizationID);
                     console.log(application.name, localCoId[coIndex], 1, 'https://locahost:8888')
                     existingApplication = await modelAPI.applications.createApplication(application.name, localCoId[coIndex], 1, 'https://locahost:8888');
+                    localAppId.push(existingApplication.id);
                 }
                 //see if it exists first
                 let existingApplicationNTL = await modelAPI.applicationNetworkTypeLinks.retrieveApplicationNetworkTypeLinks({applicationId: existingApplication.id});
@@ -214,9 +220,32 @@ CompanyNetworkTypeLink.prototype.pullCompanyNetworkTypeLink = function( networkT
                     console.log('creating Network Link for ' + application.name);
                     modelAPI.applicationNetworkTypeLinks.createApplicationNetworkTypeLink(existingApplication.id, networkTypeId, {}, existingApplication.companyId);
                 }
-
             }
 
+            logs = await modelAPI.networkTypeAPI.pullDeviceProfile( networkTypeId );
+            let deviceProfiles = JSON.parse(logs[Object.keys(logs)[0]].logs);
+            console.log(deviceProfiles);
+            let nsDpId = [];
+            let localDpId = [];
+            for (var index in deviceProfiles.result) {
+                let deviceProfile = deviceProfiles.result[index];
+                nsDpId.push(deviceProfile.id);
+
+                //see if it exists first
+                let existingDeviceProfile = await modelAPI.deviceProfiles.retrieveDeviceProfiles({search: deviceProfile.name});
+                if (existingDeviceProfile.totalCount > 0 ) {
+                    existingDeviceProfile = existingDeviceProfile.records[0];
+                    localDpId.push(existingDeviceProfile.id);
+                    console.log(deviceProfile.name + ' already exists');
+                }
+                else {
+                    console.log('creating ' + deviceProfile.name);
+                    let coIndex = nsCoId.indexOf(deviceProfile.organizationID);
+                    console.log(networkTypeId, localCoId[coIndex], deviceProfile.name, {})
+                    existingDeviceProfile = await modelAPI.deviceProfiles.createDeviceProfile(networkTypeId, localCoId[coIndex], deviceProfile.name, {} )
+                    localDpId.push(existingDeviceProfile.id);
+                }
+            }
 
             resolve( logs );
         }
