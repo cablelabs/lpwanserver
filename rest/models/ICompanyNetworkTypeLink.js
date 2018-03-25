@@ -187,7 +187,7 @@ CompanyNetworkTypeLink.prototype.pullCompanyNetworkTypeLink = function( networkT
             for (var index in applications.result) {
                 let application = applications.result[index];
                 //see if it exists first
-                let existingApplication = await modelAPI.applications.retrieveCompanies({search: application.name});
+                let existingApplication = await modelAPI.applications.retrieveApplication({search: application.name});
                 if (existingApplication.totalCount > 0 ) {
                     existingApplication = existingApplication.records[0];
                     console.log(application.name + ' already exists');
