@@ -1,12 +1,10 @@
--- Version 2.0 LPWAN Server database
+-- Version 2.1 LPWAN Server database
+-- Set up the database schema -- No Data!
 --
 CREATE TABLE IF NOT EXISTS companyTypes (
-    type INTEGER PRIMARY KEY, /* 1 = admin, 2 = vendor, 3 = operator, 4 = devicemfg */
+    type INTEGER PRIMARY KEY,
     name TEXT UNIQUE COLLATE NOCASE
 );
-
--- insert into companyTypes (name, type)
---    values ('admin', 1), ('vendor', 2), ('operator', 3), ('devicemfg', 4);
 
 CREATE TABLE IF NOT EXISTS companies (
     id INTEGER PRIMARY KEY,
@@ -14,7 +12,7 @@ CREATE TABLE IF NOT EXISTS companies (
     type INT REFERENCES companyTypes( type )
 );
 
-create table if not exists passwordPolicies (
+CREATE TABLE IF NOT EXISTS passwordPolicies (
     id INTEGER PRIMARY KEY,
     ruleText TEXT,
     ruleRegExp TEXT,
@@ -23,12 +21,9 @@ create table if not exists passwordPolicies (
 );
 
 CREATE TABLE IF NOT EXISTS userRoles (
-    roleId INTEGER PRIMARY KEY, /* 1 = user, 2 = admin */
+    roleId INTEGER PRIMARY KEY,
     name TEXT UNIQUE COLLATE NOCASE
 );
-
--- insert into userRoles (roleId, name)
---    values (1, 'user'), (2, 'admin');
 
 CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY,
@@ -52,43 +47,24 @@ CREATE TABLE IF NOT EXISTS emailVerifications (
     FOREIGN KEY(userId) REFERENCES users(id) ON DELETE CASCADE
 );
 
-create table if not exists networkTypes (
+CREATE TABLE IF NOT EXISTS networkTypes (
     id INTEGER PRIMARY KEY,
     name TEXT
 );
 
-create table if not exists networkProviders (
+CREATE TABLE IF NOT EXISTS networkProviders (
     id INTEGER PRIMARY KEY,
     name TEXT
 );
 
-create table if not exists networkProtocols (
+CREATE TABLE IF NOT EXISTS networkProtocols (
     id INTEGER PRIMARY KEY,
     name TEXT,
     protocolHandler TEXT,
     networkTypeId INTEGER REFERENCES networkTypes( id ) NOT NULL
 );
 
--- create table if not exists provisioningTables (
---    id INTEGER PRIMARY KEY,
---    type TEXT
--- );
--- insert into provisioningTables ( id, type )
---    values ( 1, 'companies' ), ( 2, 'applications' ), ( 3, 'devices' );
-
---create table if not exists networkProvisioningFields (
---    id INTEGER PRIMARY KEY,
---    networkProtocolId INTEGER REFERENCES networkProtocols( id ) ON DELETE CASCADE NOT NULL,
---    fieldOrder INTEGER,
---    fieldName TEXT,
---    fieldLabel TEXT,
---    fieldType TEXT,
---    fieldSize INTEGER,
---    requiredField BOOLEAN,
---    provisioningTableId INTEGER REFERENCES provisioningTables( id ) NOT NULL
---);
-
-create table if not exists networks (
+CREATE TABLE IF NOT EXISTS networks (
     id INTEGER PRIMARY KEY,
     name TEXT,
     networkProviderId INTEGER REFERENCES networkProviders( id ) NOT NULL,
@@ -98,7 +74,7 @@ create table if not exists networks (
     securityData TEXT
 );
 
-create table if not exists companyNetworkTypeLinks (
+CREATE TABLE IF NOT EXISTS companyNetworkTypeLinks (
     id INTEGER PRIMARY KEY,
     companyId INTEGER REFERENCES companies( id ) ON DELETE CASCADE NOT NULL,
     networkTypeId INTEGER REFERENCES networkTypes( id ) ON DELETE CASCADE NOT NULL,
@@ -106,13 +82,13 @@ create table if not exists companyNetworkTypeLinks (
     UNIQUE( companyId, networkId )
 );
 
-create table if not exists reportingProtocols (
+CREATE TABLE IF NOT EXISTS reportingProtocols (
     id INTEGER PRIMARY KEY,
     name TEXT,
     protocolHandler TEXT
 );
 
-create table if not exists applications (
+CREATE TABLE IF NOT EXISTS applications (
     id INTEGER PRIMARY KEY,
     companyId INTEGER,
     name TEXT,
@@ -123,7 +99,7 @@ create table if not exists applications (
     FOREIGN KEY(reportingProtocolId) REFERENCES reportingProtocols(id)
 );
 
-create table if not exists applicationNetworkTypeLinks (
+CREATE TABLE IF NOT EXISTS applicationNetworkTypeLinks (
     id INTEGER PRIMARY KEY,
     applicationId INTEGER REFERENCES applications( id ) ON DELETE CASCADE NOT NULL,
     networkTypeId INTEGER REFERENCES networkTypes( id ) ON DELETE CASCADE NOT NULL,
@@ -131,7 +107,7 @@ create table if not exists applicationNetworkTypeLinks (
     UNIQUE( applicationId, networkId )
 );
 
-create table if not exists devices (
+CREATE TABLE IF NOT EXISTS devices (
     id INTEGER PRIMARY KEY,
     applicationId INTEGER references applications( id ) ON DELETE CASCADE NOT NULL,
     name TEXT,
@@ -139,7 +115,7 @@ create table if not exists devices (
     deviceModel TEXT
 );
 
-create table if not exists deviceProfiles (
+CREATE TABLE IF NOT EXISTS deviceProfiles (
     id INTEGER PRIMARY KEY,
     networkTypeId INTEGER REFERENCES networkTypes( id ) ON DELETE CASCADE NOT NULL,
     companyId INTEGER REFERENCES companies( id ) ON DELETE CASCADE NOT NULL,
@@ -148,7 +124,7 @@ create table if not exists deviceProfiles (
     networkSettings TEXT
 );
 
-create table if not exists deviceNetworkTypeLinks (
+CREATE TABLE IF NOT EXISTS deviceNetworkTypeLinks (
     id INTEGER PRIMARY KEY,
     deviceId INTEGER REFERENCES devices( id ) ON DELETE CASCADE NOT NULL,
     networkTypeId INTEGER REFERENCES networkTypes( id ) ON DELETE CASCADE NOT NULL,
@@ -157,7 +133,7 @@ create table if not exists deviceNetworkTypeLinks (
     UNIQUE( deviceId, networkTypeId )
 );
 
-create table if not exists protocolData (
+CREATE TABLE IF NOT EXISTS protocolData (
     id INTEGER PRIMARY KEY,
     networkId INTEGER REFERENCES networks( id ) ON DELETE CASCADE NOT NULL,
     networkProtocolId INTEGER REFERENCES networkProtocols( id ) ON DELETE CASCADE NOT NULL,

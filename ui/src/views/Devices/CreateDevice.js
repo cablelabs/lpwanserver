@@ -17,6 +17,7 @@ class CreateDevice extends Component {
     this.state = {
       device: {
           name: "",
+          description: "",
           deviceModel: "",
           applicationId: props.match.params.applicationID,
       },
@@ -98,6 +99,17 @@ class CreateDevice extends Component {
                                    required
                                    value={this.state.device.name || ''}
                                    onChange={this.onChange.bind(this, 'name')}/>
+
+                        </div>
+                        <div className="form-group">
+                            <label className="control-label" htmlFor="description">Device Description</label>
+                            <input className="form-control"
+                                   id="description"
+                                   type="text"
+                                   placeholder="e.g. 'Station on the roof'"
+                                   required
+                                   value={this.state.device.description || ''}
+                                   onChange={this.onChange.bind(this, 'description')}/>
 
                         </div>
                         <div className="form-group">

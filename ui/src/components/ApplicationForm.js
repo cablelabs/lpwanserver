@@ -229,6 +229,15 @@ class ApplicationForm extends Component {
                      value={this.state.application.name || ''} onChange={this.onChange.bind(this, 'name')}/>
             </div>
             <div className="form-group">
+              <label className="control-label" htmlFor="description">Application Description</label>
+              <input className="form-control"
+                     id="description"
+                     type="text"
+                     placeholder="e.g. 'Track temperature app'"
+                     required
+                     value={this.state.application.description || ''} onChange={this.onChange.bind(this, 'description')}/>
+            </div>
+            <div className="form-group">
               <label className="control-label" htmlFor="baseUrl">Post URL</label>
               <input className="form-control"
                      id="baseUrl"

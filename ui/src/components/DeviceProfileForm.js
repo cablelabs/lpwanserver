@@ -145,6 +145,16 @@ class DeviceProfileForm extends Component {
                      value={this.state.deviceProfile.name || ''} onChange={this.onChange.bind(this, 'name')}/>
             </div>
 
+            <div className="form-group">
+              <label className="control-label" htmlFor="description">Device Profile Description</label>
+              <input className="form-control"
+                     id="description"
+                     type="text"
+                     placeholder="e.g. 'IoT-Co LoRa temperature sensors'"
+                     required
+                     value={this.state.deviceProfile.description || ''} onChange={this.onChange.bind(this, 'description')}/>
+            </div>
+
             <NetworkSpecificUI
                   ref={ (comp) => { me.networkTypeLinksComp = comp; }}
                   dataName="DeviceProfile"

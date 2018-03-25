@@ -42,6 +42,8 @@ exports.initialize = function( app, server ) {
      * @apiSuccess {Object[]} object.records An array of Device Profile records.
      * @apiSuccess {Number} object.records.id The Device Profile's Id
      * @apiSuccess {String} object.records.name The Device Profile's name
+     * @apiSuccess {String} object.records.description The Device Profile's
+     *      description
      * @apiSuccess {Number} object.records.companyId The Id of the Company that
      *      the Device Profile belongs to.
      * @apiSuccess {Number} object.records.networkTypeId The Network Type that
@@ -121,6 +123,7 @@ exports.initialize = function( app, server ) {
      * @apiSuccess {Object} object
      * @apiSuccess {Number} object.id The Device Profile's Id
      * @apiSuccess {String} object.name The Device Profile's name
+     * @apiSuccess {String} object.description The Device Profile's description
      * @apiSuccess {Number} object.companyId The Id of the Company that
      *      the Device Profile belongs to.
      * @apiSuccess {Number} object.networkTypeId The Network Type that
@@ -163,6 +166,8 @@ exports.initialize = function( app, server ) {
      * @apiHeader {String} Authorization The Create Session's returned token
      *      prepended with "Bearer "
      * @apiParam (Request Body) {String} object.name The Device Profile's name
+     * @apiParam (Request Body) {String} object.description The Device
+     *      Profile's description
      * @apiParam (Request Body) {Number} object.companyId The Id of the Company
      *      that the Device Profile belongs to.
      * @apiParam (Request Body) {Number} object.networkTypeId The Network Type
@@ -174,6 +179,7 @@ exports.initialize = function( app, server ) {
      * @apiExample {json} Example body:
      *      {
      *          "name": "GPS Tracker",
+     *          "description": "GPS device for remote reporting",
      *          "companyId": 1,
      *          "networkTypeId": 1,
      *          "networkSettings": {...}
@@ -194,6 +200,7 @@ exports.initialize = function( app, server ) {
 
         // Verify that required fields exist.
         if ( !rec.name ||
+             !rec.description ||
              !rec.networkTypeId ||
              !rec.companyId ||
              !rec.networkSettings ) {
@@ -213,6 +220,7 @@ exports.initialize = function( app, server ) {
                                             rec.networkTypeId,
                                             rec.companyId,
                                             rec.name,
+                                            rec.description,
                                             rec.networkSettings ).then( function ( rec ) {
                 var send = {};
                 send.id = rec.id;
@@ -237,6 +245,8 @@ exports.initialize = function( app, server ) {
      * @apiHeader {String} Authorization The Create Session's returned token
      *      prepended with "Bearer "
      * @apiParam (Request Body) {String} [name] The Device Profile's name
+     * @apiParam (Request Body) {String} [description] The Device Profile's
+     *      description
      * @apiParam (Request Body) {Number} [companyId] The Id of the Company
      *      that the Device Profile belongs to.
      * @apiParam (Request Body) {Number} [networkTypeId] The Network Type
@@ -248,6 +258,7 @@ exports.initialize = function( app, server ) {
      * @apiExample {json} Example body:
      *      {
      *          "name": "GPS Tracker",
+     *          "description": "GPS tracker with remote reporting",
      *          "companyId": 1,
      *          "networkTypeId": 1,
      *          "networkSettings": {...}
@@ -273,6 +284,12 @@ exports.initialize = function( app, server ) {
             if ( ( req.body.name ) &&
                  ( req.body.name != dp.name ) ) {
                 data.name = req.body.name;
+                ++changed;
+            }
+
+            if ( ( req.body.description ) &&
+                 ( req.body.description != dp.description ) ) {
+                data.description = req.body.description;
                 ++changed;
             }
 

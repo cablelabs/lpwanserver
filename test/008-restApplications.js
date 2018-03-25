@@ -64,6 +64,7 @@ describe( "Applications", function() {
             .set('Content-Type', 'application/json')
             .send( { "companyId": 2,
                      "name": "MyGetPoorQuickApp",
+                     "description": "A really bad idea that was fun",
                      "baseUrl": "http://localhost:5086",
                      "reportingProtocolId": 1 } )
             .end(function(err, res){
@@ -79,6 +80,7 @@ describe( "Applications", function() {
             .set('Content-Type', 'application/json')
             .send( { "companyId": 2,
                      "name": "MyGetRichQuickApp",
+                     "description": "A really good idea that was boring",
                      "baseUrl": "http://localhost:5086",
                      "reportingProtocolId": 1 } )
             .end(function(err, res){
@@ -97,6 +99,7 @@ describe( "Applications", function() {
             .set('Content-Type', 'application/json')
             .send( { "companyId": 1,
                      "name": "MyEnterpriseApp",
+                     "description": "Ugh, enterprise apps",
                      "baseUrl": "http://localhost:5086",
                      "reportingProtocolId": 1 } )
             .end(function(err, res){
@@ -117,6 +120,7 @@ describe( "Applications", function() {
                 res.should.have.status(200);
                 var appObj = JSON.parse( res.text );
                 appObj.name.should.equal( "MyGetRichQuickApp" );
+                appObj.description.should.equal( "A really good idea that was boring" );
                 appObj.reportingProtocolId.should.equal( 1 );
                 done();
             });

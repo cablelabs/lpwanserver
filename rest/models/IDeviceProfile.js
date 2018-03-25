@@ -33,15 +33,16 @@ function DeviceProfile( server ) {
 // companyId         - The id for the company that owns this profile.
 // name              - The name of the device profile to present to the user for
 //                     selection.
+// description       - A description of the device profile.
 // networkSettings   - The settings required by the network protocol in json
 //                     format
 //
 // Returns the promise that will execute the create.
-DeviceProfile.prototype.createDeviceProfile = function( networkTypeId, companyId, name, networkSettings ) {
+DeviceProfile.prototype.createDeviceProfile = function( networkTypeId, companyId, name, description, networkSettings ) {
     var me = this;
     return new Promise( async function( resolve, reject ) {
         try {
-            var rec = await me.impl.createDeviceProfile( networkTypeId, companyId, name, networkSettings );
+            var rec = await me.impl.createDeviceProfile( networkTypeId, companyId, name, description, networkSettings );
             var logs = await modelAPI.networkTypeAPI.addDeviceProfile( networkTypeId, rec.id );
             rec.remoteAccessLogs = logs;
             resolve( rec );
@@ -74,7 +75,7 @@ DeviceProfile.prototype.updateDeviceProfile = function( deviceProfile ) {
     return new Promise( async function( resolve, reject ) {
         try {
             var rec = await me.impl.updateDeviceProfile( deviceProfile );
-            var logs = await modelAPI.networkTypeAPI.pushDeviceProfile( rec.networkTypeId, rec.companyId, rec.name, rec.networkSettings  );
+            var logs = await modelAPI.networkTypeAPI.pushDeviceProfile( rec.networkTypeId, deviceProfile.id  );
             rec.remoteAccessLogs = logs;
             resolve( rec );
         }
@@ -137,7 +138,7 @@ DeviceProfile.prototype.pushDeviceProfile = function( deviceProfile ) {
     return new Promise( async function( resolve, reject ) {
         try {
             var rec = await me.impl.retrieveDeviceProfile( deviceProfile );
-            var logs = await modelAPI.networkTypeAPI.pushDeviceProfile( rec.networkTypeId, deviceProfile  );
+            var logs = await modelAPI.networkTypeAPI.pushDeviceProfile( rec.networkTypeId, deviceProfile.id  );
             rec.remoteAccessLogs = logs;
             resolve( rec );
         }

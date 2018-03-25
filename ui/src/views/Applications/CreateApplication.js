@@ -94,6 +94,11 @@ class CreateApplication extends Component {
                        onChange={this.onChange.bind(this, 'name')}/>
               </div>
               <div className="form-group">
+                <label className="control-label" htmlFor="description">Application Description</label>
+                <input className="form-control" id="description" type="text" placeholder="e.g. 'Track temperature app'" value={this.state.application.description || ''}
+                       onChange={this.onChange.bind(this, 'description')}/>
+              </div>
+              <div className="form-group">
                 <label className="control-label" htmlFor="baseUrl">Post URL</label>
                 <input className="form-control" id="baseUrl" type="text" placeholder="URL to send sensor data to"
                        required value={this.state.application.baseUrl || ''}

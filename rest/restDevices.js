@@ -41,6 +41,7 @@ exports.initialize = function( app, server ) {
      * @apiSuccess {Object[]} object.records An array of Device records.
      * @apiSuccess {Number} object.records.id The Device's Id
      * @apiSuccess {String} object.records.name The Device's name
+     * @apiSuccess {String} object.records.description The Device's description
      * @apiSuccess {String} object.records.deviceModel The Device's Model
      *      information
      * @apiSuccess {Number} object.records.applicationId The Id of the
@@ -110,6 +111,7 @@ exports.initialize = function( app, server ) {
      * @apiSuccess {Object} object
      * @apiSuccess {Number} object.records.id The Device's Id
      * @apiSuccess {String} object.records.name The Device's name
+     * @apiSuccess {String} object.records.description The Device's description
      * @apiSuccess {String} object.records.deviceModel The Device's Model
      *      information
      * @apiSuccess {Number} object.records.applicationId The Id of the
@@ -141,6 +143,7 @@ exports.initialize = function( app, server ) {
      * @apiHeader {String} Authorization The Create Session's returned token
      *      prepended with "Bearer "
      * @apiParam (Request Body) {String} name The Device's name
+     * @apiParam (Request Body) {String} description The Device's description
      * @apiParam (Request Body) {String} deviceModel The Device's Model
      *      information
      * @apiParam (Request Body) {Number} applicationId The Id of the
@@ -148,6 +151,7 @@ exports.initialize = function( app, server ) {
      * @apiExample {json} Example body:
      *      {
      *          "name": "GPS for Fido",
+     *          "description": "GPS for Fido, he keeps running away",
      *          "deviceModel": "Bark 1",
      *          "applicationId": 1
      *      }
@@ -167,7 +171,7 @@ exports.initialize = function( app, server ) {
         }
 
         // Verify that required fields exist.
-        if ( !rec.name || !rec.applicationId || !rec.deviceModel ) {
+        if ( !rec.name || !rec.description || !rec.applicationId || !rec.deviceModel ) {
              restServer.respond( res, 400, "Missing required data" );
         }
 
@@ -180,6 +184,7 @@ exports.initialize = function( app, server ) {
         else {
             // OK, add it.
             modelAPI.devices.createDevice( rec.name,
+                                           rec.description,
                                            rec.applicationId,
                                            rec.deviceModel ).then( function ( rec ) {
                 var send = {};
@@ -203,6 +208,7 @@ exports.initialize = function( app, server ) {
      *      prepended with "Bearer "
      * @apiParam (URL Parameters) {Number} id The Device's id
      * @apiParam (Request Body) {String} [name] The Device's name
+     * @apiParam (Request Body) {String} [description] The Device's description
      * @apiParam (Request Body) {Number} [applicationId] The Id of the
      *      Application that the Device blongs to.  For a Company Admin user,
      *      this Appplication must belong to their own Company.
@@ -213,6 +219,7 @@ exports.initialize = function( app, server ) {
      * @apiExample {json} Example body:
      *      {
      *          "name": "GPS for Fido",
+     *          "description": "GPS for Fido, he keeps running away!",
      *          "deviceModel": "Bark 1",
      *          "applicationId": 1
      *      }
@@ -238,6 +245,12 @@ exports.initialize = function( app, server ) {
         if ( ( req.body.name ) &&
              ( req.body.name != req.device.name ) ) {
             data.name = req.body.name;
+            ++changed;
+        }
+
+        if ( ( req.body.description ) &&
+             ( req.body.description != req.device.description ) ) {
+            data.description = req.body.description;
             ++changed;
         }
 

@@ -65,6 +65,7 @@ describe( "DeviceProfiles", function() {
             .send( { "networkTypeId": 1,
                      "companyId": 2,
                      "name": "LoRaGPSNode",
+                     "description": "",
                      "networkSettings": { "foo": "bar" } } )
             .end(function(err, res){
                 res.should.have.status(403);
@@ -80,6 +81,7 @@ describe( "DeviceProfiles", function() {
             .send( { "networkTypeId": 1,
                      "companyId": 2,
                      "name": "LoRaGPSNode",
+                     "description": "GPS Node that works with LoRa",
                      "networkSettings": { "foo": "bar" } } )
             .end(function(err, res){
                 res.should.have.status(200);
@@ -98,6 +100,7 @@ describe( "DeviceProfiles", function() {
             .send({ "networkTypeId": 1,
                      "companyId": 2,
                      "name": "LoRaWeatherNode",
+                     "description": "GPS Node that works with LoRa",
                      "networkSettings": { "tempType": "C" } } )
             .end(function(err, res){
                 res.should.have.status(200);
@@ -117,6 +120,7 @@ describe( "DeviceProfiles", function() {
                 res.should.have.status(200);
                 var dpObj = JSON.parse( res.text );
                 dpObj.name.should.equal( "LoRaGPSNode" );
+                dpObj.description.should.equal( "GPS Node that works with LoRa" );
                 dpObj.networkTypeId.should.equal( 1 );
                 dpObj.companyId.should.equal( 2 );
                 done();

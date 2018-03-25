@@ -42,6 +42,8 @@ exports.initialize = function( app, server ) {
      * @apiSuccess {Object[]} object.records An array of Application records.
      * @apiSuccess {Number} object.records.id The Application's Id
      * @apiSuccess {String} object.records.name The Application's name
+     * @apiSuccess {String} object.records.description The Application's
+     *      description
      * @apiSuccess {Number} object.records.companyId The Id of the Company
      *      that the Application belongs to.
      * @apiSuccess {String} object.records.baseUrl The base URL used by the
@@ -116,6 +118,7 @@ exports.initialize = function( app, server ) {
      * @apiSuccess {Object} object
      * @apiSuccess {Number} object.id The Application's Id
      * @apiSuccess {String} object.name The Application's name
+     * @apiSuccess {String} object.description The Application's description
      * @apiSuccess {Number} object.companyId The Id of the Company
      *      that the Application belongs to.
      * @apiSuccess {String} object.baseUrl The base URL used by the
@@ -155,6 +158,8 @@ exports.initialize = function( app, server ) {
      * @apiHeader {String} Authorization The Create Session's returned token
      *      prepended with "Bearer "
      * @apiParam (Request Body) {String} name The Application's name
+     * @apiParam (Request Body) {String} description The Application's
+     *      description
      * @apiParam (Request Body) {Number} companyId The Id of the Company that
      *      the Application blongs to.  For a Company Admin user, this can
      *      only be the Id of their own Company.
@@ -167,6 +172,7 @@ exports.initialize = function( app, server ) {
      * @apiExample {json} Example body:
      *      {
      *          "name": "GPS Pet Tracker",
+     *          "description": "Pet finder with occasional reporting",
      *          "companyId": 1,
      *          "baseUrl": "https://IoTStuff.com/incomingData/GPSPetTracker"
      *          "reportingProtocolId": 1
@@ -186,7 +192,7 @@ exports.initialize = function( app, server ) {
         }
 
         // Verify that required fields exist.
-        if ( !rec.name || !rec.companyId || !rec.reportingProtocolId || !rec.baseUrl ) {
+        if ( !rec.name || !rec.description || !rec.companyId || !rec.reportingProtocolId || !rec.baseUrl ) {
              restServer.respond( res, 400, "Missing required data" );
              return;
         }
@@ -200,9 +206,10 @@ exports.initialize = function( app, server ) {
 
         // Do the add.
         modelAPI.applications.createApplication( rec.name,
-                                                   rec.companyId,
-                                                   rec.reportingProtocolId,
-                                                   rec.baseUrl ).then( function ( rec ) {
+                                                 rec.description,
+                                                 rec.companyId,
+                                                 rec.reportingProtocolId,
+                                                 rec.baseUrl ).then( function ( rec ) {
             var send = {};
             send.id = rec.id;
             restServer.respondJson( res, 200, send );
@@ -222,6 +229,8 @@ exports.initialize = function( app, server ) {
      *      prepended with "Bearer "
      * @apiParam (URL Parameters) {Number} id The Application's id
      * @apiParam (Request Body) {String} [name] The Application's name
+     * @apiParam (Request Body) {String} [description] The Application's
+     *      description
      * @apiParam (Request Body) {Number} [companyId] The Id of the Company that
      *      the Application blongs to.  For a Company Admin user, this can
      *      only be the Id of their own Company.
@@ -234,6 +243,7 @@ exports.initialize = function( app, server ) {
      * @apiExample {json} Example body:
      *      {
      *          "name": "GPS Pet Tracker",
+     *          "description": "Pet finder with occasional reporting"
      *          "companyId": 1,
      *          "baseUrl": "https://IoTStuff.com/incomingData/GPSPetTracker"
      *          "reportingProtocolId": 1
@@ -261,6 +271,12 @@ exports.initialize = function( app, server ) {
             if ( ( req.body.name ) &&
                  ( req.body.name != app.name ) ) {
                 data.name = req.body.name;
+                ++changed;
+            }
+
+            if ( ( req.body.description ) &&
+                 ( req.body.description != app.description ) ) {
+                data.description = req.body.description;
                 ++changed;
             }
 

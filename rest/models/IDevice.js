@@ -45,11 +45,13 @@ Device.prototype.retrieveDevice = function( id ) {
 // Create the device record.
 //
 // name          - the name of the device
+// description   - A description for the device
+// deviceModel   - Model information for the device.
 // applicationId - the id of the application this device belongs to
 //
 // Returns the promise that will execute the create.
-Device.prototype.createDevice = function( name, applicationId, deviceModel ) {
-    return this.impl.createDevice( name, applicationId, deviceModel );
+Device.prototype.createDevice = function( name, description, applicationId, deviceModel ) {
+    return this.impl.createDevice( name, description, applicationId, deviceModel );
 };
 
 // Update the device record.
