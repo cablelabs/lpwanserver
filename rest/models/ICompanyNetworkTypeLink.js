@@ -157,7 +157,7 @@ CompanyNetworkTypeLink.prototype.pullCompanyNetworkTypeLink = function( networkT
         try {
             var logs = await modelAPI.networkTypeAPI.pullCompany( networkTypeId );
             let companies = JSON.parse(logs[Object.keys(logs)[0]].logs);
-            console.log(companies);
+            appLogger.log(companies);
             let nsCoId = [];
             let localCoId = [];
             for (var index in companies.result) {
@@ -169,28 +169,28 @@ CompanyNetworkTypeLink.prototype.pullCompanyNetworkTypeLink = function( networkT
                 let existingCompany = await modelAPI.companies.retrieveCompanies({search: company.name});
                 if (existingCompany.totalCount > 0 ) {
                     existingCompany = existingCompany.records[0];
-                    console.log(company.name + ' already exists');
+                    appLogger.log(company.name + ' already exists');
                     localCoId.push(existingCompany.id);
                 }
                 else {
-                    console.log('creating ' + company.name);
+                    appLogger.log('creating ' + company.name);
                     existingCompany = await modelAPI.companies.createCompany(company.name, modelAPI.companies.COMPANY_VENDOR);
                     localCoId.push(existingCompany.id);
                 }
                 //see if it exists first
                 let existingCompanyNTL = await modelAPI.companyNetworkTypeLinks.retrieveCompanyNetworkTypeLinks({companyId: existingCompany.id});
                 if (existingCompanyNTL.totalCount > 0 ) {
-                    console.log(company.name + ' link already exists');
+                    appLogger.log(company.name + ' link already exists');
                 }
                 else {
-                    console.log('creating Network Link for ' + company.name);
+                    appLogger.log('creating Network Link for ' + company.name);
                     modelAPI.companyNetworkTypeLinks.createCompanyNetworkTypeLink(existingCompany.id, networkTypeId, {region: ''})
                 }
 
             }
             logs = await modelAPI.networkTypeAPI.pullApplication( networkTypeId );
             let applications = JSON.parse(logs[Object.keys(logs)[0]].logs);
-            console.log(applications);
+            appLogger.log(applications);
             let nsAppId = [];
             let localAppId = [];
             for (var index in applications.result) {
@@ -202,29 +202,29 @@ CompanyNetworkTypeLink.prototype.pullCompanyNetworkTypeLink = function( networkT
                 if (existingApplication.totalCount > 0 ) {
                     existingApplication = existingApplication.records[0];
                     localAppId.push(existingApplication.id);
-                    console.log(application.name + ' already exists');
+                    appLogger.log(application.name + ' already exists');
                 }
                 else {
-                    console.log('creating ' + application.name);
+                    appLogger.log('creating ' + application.name);
                     let coIndex = nsCoId.indexOf(application.organizationID);
-                    console.log(application.name, localCoId[coIndex], 1, 'https://locahost:8888')
+                    appLogger.log(application.name, localCoId[coIndex], 1, 'https://locahost:8888')
                     existingApplication = await modelAPI.applications.createApplication(application.name, localCoId[coIndex], 1, 'https://locahost:8888');
                     localAppId.push(existingApplication.id);
                 }
                 //see if it exists first
                 let existingApplicationNTL = await modelAPI.applicationNetworkTypeLinks.retrieveApplicationNetworkTypeLinks({applicationId: existingApplication.id});
                 if (existingApplicationNTL.totalCount > 0 ) {
-                    console.log(application.name + ' link already exists');
+                    appLogger.log(application.name + ' link already exists');
                 }
                 else {
-                    console.log('creating Network Link for ' + application.name);
+                    appLogger.log('creating Network Link for ' + application.name);
                     modelAPI.applicationNetworkTypeLinks.createApplicationNetworkTypeLink(existingApplication.id, networkTypeId, {}, existingApplication.companyId);
                 }
             }
 
             logs = await modelAPI.networkTypeAPI.pullDeviceProfile( networkTypeId );
             let deviceProfiles = JSON.parse(logs[Object.keys(logs)[0]].logs);
-            console.log(deviceProfiles);
+            appLogger.log(deviceProfiles);
             let nsDpId = [];
             let localDpId = [];
             for (var index in deviceProfiles.result) {
@@ -236,12 +236,12 @@ CompanyNetworkTypeLink.prototype.pullCompanyNetworkTypeLink = function( networkT
                 if (existingDeviceProfile.totalCount > 0 ) {
                     existingDeviceProfile = existingDeviceProfile.records[0];
                     localDpId.push(existingDeviceProfile.id);
-                    console.log(deviceProfile.name + ' already exists');
+                    appLogger.log(deviceProfile.name + ' already exists');
                 }
                 else {
-                    console.log('creating ' + deviceProfile.name);
+                    appLogger.log('creating ' + deviceProfile.name);
                     let coIndex = nsCoId.indexOf(deviceProfile.organizationID);
-                    console.log(networkTypeId, localCoId[coIndex], deviceProfile.name, {})
+                    appLogger.log(networkTypeId, localCoId[coIndex], deviceProfile.name, {})
                     existingDeviceProfile = await modelAPI.deviceProfiles.createDeviceProfile(networkTypeId, localCoId[coIndex], deviceProfile.name, {} )
                     localDpId.push(existingDeviceProfile.id);
                 }
