@@ -727,8 +727,8 @@ NetworkProtocolAccess.prototype.pullDeviceProfile = function( dataAPI, network )
                 network,
                 dataAPI );
         })
-            .then( function( ret ) { resolve( ret ); } )
-            .catch( function( err ) { reject( err ); } );
+            .then( function( ret ) { appLogger.log('pull worked'); resolve( ret ); } )
+            .catch( function( err ) { appLogger.log(err); reject( err ); } );
     });
 };
 
