@@ -1805,7 +1805,7 @@ exports.pullDeviceProfile = function( sessionData, network, dataAPI ) {
         // Set up the request options.
         var options = {};
         options.method = 'GET';
-        options.url = network.baseUrl + "/device-profiles/" + "?limit=20&offset=0"  ;
+        options.url = network.baseUrl + "/device-profiles" + "?limit=20&offset=0"  ;
         options.headers = { "Content-Type": "DeviceProfile/json",
             "Authorization": "Bearer " + sessionData.connection };
         options.agentOptions = {
