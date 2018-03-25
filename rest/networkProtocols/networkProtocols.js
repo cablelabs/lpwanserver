@@ -375,7 +375,7 @@ NetworkProtocolAccess.prototype.pullApplication = function( dataAPI, network ) {
         // Get the protocol for the network.
         var netProto = await me.getProtocol( network );
 
-        var loginData = await netProto.api.getApplicationAccessAccount( dataAPI, network );
+        var loginData = await netProto.api.getCompanyAccessAccount( dataAPI, network );
 
         // Use a session wrapper to call the function. (Session
         // wrapper manages logging in if session was not already set
