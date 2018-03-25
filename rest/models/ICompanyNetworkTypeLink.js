@@ -202,6 +202,7 @@ CompanyNetworkTypeLink.prototype.pullCompanyNetworkTypeLink = function( networkT
                 else {
                     console.log('creating ' + application.name);
                     let coIndex = nsCoId.indexOf(application.organizationID);
+                    console.log(application.name, localCoId[coIndex], 1, 'https://locahost:8888');
                     existingApplication = await modelAPI.applications.createApplication(application.name, localCoId[coIndex], 1, 'https://locahost:8888');
                 }
                 //see if it exists first
@@ -220,7 +221,7 @@ CompanyNetworkTypeLink.prototype.pullCompanyNetworkTypeLink = function( networkT
             resolve( logs );
         }
         catch ( err ) {
-            appLogger.log( "Error pulling companies from Network : " + networkTypeId + " " + err );
+            appLogger.log( "Error pulling from Network : " + networkTypeId + " " + err );
             reject( err );
         }
     });
