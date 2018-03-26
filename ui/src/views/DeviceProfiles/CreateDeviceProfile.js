@@ -32,7 +32,7 @@ class CreateDeviceProfile extends Component {
 
     try {
         if ( me.networkTypeLinksComp.onSubmit ) {
-            var ret = await me.networkTypeLinksComp.onSubmit( this.state.deviceProfile.name );
+            var ret = await me.networkTypeLinksComp.onSubmit( );
             console.log( "CreateDeviceProfile returns", ret );
         }
         else {
@@ -85,7 +85,7 @@ class CreateDeviceProfile extends Component {
 
               <div className="form-group">
                 <label className="control-label" htmlFor="description">Device Profile Description</label>
-                <input className="form-control" id="description" type="text" placeholder="e.g. 'IoT-Co LoRa temperature sensors'"  value={this.state.deviceProfile.description || ''}
+                <input className="form-control" id="description" type="text" placeholder="e.g. 'IoT-Co LoRa temperature sensors'" required value={this.state.deviceProfile.description || ''}
                        onChange={this.onChange.bind(this, 'description')}/>
               </div>
 

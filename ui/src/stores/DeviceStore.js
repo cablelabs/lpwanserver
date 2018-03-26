@@ -147,10 +147,11 @@ class DeviceStore extends EventEmitter {
           });
       }
 
-      createDeviceProfile( name, coid, netid, netSettings ) {
+      createDeviceProfile( name, desc, coid, netid, netSettings ) {
           return new Promise( function( resolve, reject ) {
               let header = sessionStore.getHeader();
               let rec = { name: name,
+                          description: desc,
                           networkTypeId: netid,
                           companyId: coid,
                           networkSettings: netSettings };
