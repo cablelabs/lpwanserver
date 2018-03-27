@@ -433,9 +433,8 @@ NetworkTypeApi.prototype.pushDevice = function( networkTypeId, deviceId ) {
 
 NetworkTypeApi.prototype.pullDevices = function( networkTypeId, applicationId) {
     return createPromiseOperationForNetworksOfType(
-        "Pull DeviceProfile",
+        "Pull Devices",
         networkTypeId,
-        applicationId,
         function( npda, network ) {
             return protos.pullDeviceProfiles( npda, network, applicationId );
         });
