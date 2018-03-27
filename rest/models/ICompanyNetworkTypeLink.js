@@ -3,6 +3,8 @@ var appLogger = require( "../lib/appLogger.js" );
 // Configuration access.
 var nconf = require('nconf');
 
+var protocolDataAccess = require('../networkProtocols/networkProtocolDataAccess');
+
 var modelAPI;
 
 //******************************************************************************
@@ -251,7 +253,6 @@ CompanyNetworkTypeLink.prototype.pullCompanyNetworkTypeLink = function( networkT
                     appLogger.log(networkTypeId, localCoId[coIndex], deviceProfile.name, networkSettings);
                     existingDeviceProfile = await modelAPI.deviceProfiles.createDeviceProfile(networkTypeId, localCoId[coIndex], deviceProfile.name, networkSettings )
                     localDpId.push(existingDeviceProfile.id);
-
                 }
             }
 
@@ -272,10 +273,22 @@ CompanyNetworkTypeLink.prototype.pullCompanyNetworkTypeLink = function( networkT
                     else {
                         appLogger.log('creating ' + existingDevice);
                         let appIndex = nsAppId.indexOf(device.applicationID);
+                        existingDevice = await modelAPI.devices.createDevice(device.name, localAppId[appIndex]);
+                    }
 
-                        existingDevice = await modelAPI.devices.createDevice(device.name, localAppId[appIndex], device);
+                    let existingDeviceNTL = await modelAPI.deviceNetworkTypeLinks.retrieveDeviceNetworkTypeLinks({deviceId: existingDevice.id});
+                    if (existingDeviceNTL.totalCount > 0 ) {
+                        appLogger.log(device.name + ' link already exists');
+                    }
+                    else {
+                        appLogger.log('creating Network Link for ' + device.name);
+                        let dpIndex = nsDpId.indexOf(device.deviceProfileID);
+                        let coId = protocolDataAccess.getCompanyByApplicationId(existingDevice.applicationId);
+
+                        modelAPI.deviceNetworkTypeLinks.createDeviceNetworkTypeLink(existingDevice.id, networkTypeId, localDpId[dpIndex], device, coId);
                     }
                 }
+
             }
 
             resolve( logs );
