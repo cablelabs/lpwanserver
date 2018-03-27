@@ -222,7 +222,7 @@ CompanyNetworkTypeLink.prototype.pullCompanyNetworkTypeLink = function( networkT
                 }
             }
 
-            logs = await modelAPI.networkTypeAPI.pullDeviceProfile( networkTypeId );
+            logs = await modelAPI.networkTypeAPI.pullDeviceProfiles( networkTypeId );
             let deviceProfiles = JSON.parse(logs[Object.keys(logs)[0]].logs);
             appLogger.log(JSON.stringify(deviceProfiles));
             let nsDpId = [];
@@ -230,7 +230,7 @@ CompanyNetworkTypeLink.prototype.pullCompanyNetworkTypeLink = function( networkT
             for (var index in deviceProfiles.result) {
                 let deviceProfile = deviceProfiles.result[index];
                 nsDpId.push(deviceProfile.deviceProfileID);
-                let networkSettings = await modelAPI.networkTypeAPI.retrieveDeviceProfile(deviceProfile.deviceProfileID);
+                let networkSettings = await modelAPI.networkTypeAPI.pullDeviceProfile(networkTypeId, deviceProfile.deviceProfileID);
                 networkSettings = networkSettings.deviceProfile;
 
                 //see if it exists first

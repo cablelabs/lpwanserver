@@ -711,7 +711,7 @@ NetworkProtocolAccess.prototype.pushDeviceProfile = function( dataAPI, network, 
 // Returns a Promise that ostensibly connects to the remote system and updates
 // or creates the remote company.  This may or may not do as promised (haha) -
 // the implementation is completely up to the developers of the protocols.
-NetworkProtocolAccess.prototype.pullDeviceProfile = function( dataAPI, network ) {
+NetworkProtocolAccess.prototype.pullDeviceProfiles = function( dataAPI, network ) {
     var me = this;
     return new Promise( async function( resolve, reject ) {
         // Get the protocol for the network.
@@ -723,7 +723,28 @@ NetworkProtocolAccess.prototype.pullDeviceProfile = function( dataAPI, network )
         // wrapper manages logging in if session was not already set
         // up or is expired)
         me.sessionWrapper( network, loginData, function( proto, sessionData ) {
-            return proto.api.pullDeviceProfile( sessionData,
+            return proto.api.pullDeviceProfiles( sessionData,
+                network,
+                dataAPI );
+        })
+            .then( function( ret ) { appLogger.log('pull worked'); resolve( ret ); } )
+            .catch( function( err ) { appLogger.log(err); reject( err ); } );
+    });
+};
+
+NetworkProtocolAccess.prototype.pullDeviceProfile = function( dataAPI, network, deviceProfileId ) {
+    var me = this;
+    return new Promise( async function( resolve, reject ) {
+        // Get the protocol for the network.
+        var netProto = await me.getProtocol( network );
+
+        var loginData = await netProto.api.getCompanyAccessAccount( dataAPI, network );
+
+        // Use a session wrapper to call the function. (Session
+        // wrapper manages logging in if session was not already set
+        // up or is expired)
+        me.sessionWrapper( network, loginData, function( proto, sessionData ) {
+            return proto.api.pullDeviceProfile( sessionData, deviceProfileId,
                 network,
                 dataAPI );
         })

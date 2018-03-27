@@ -1799,7 +1799,7 @@ exports.pushDeviceProfile = function( sessionData, network, deviceProfileId, dat
 //               operation.
 //
 // Returns a Promise that gets the company record from the remote system.
-exports.pullDeviceProfile = function( sessionData, network, dataAPI ) {
+exports.pullDeviceProfiles = function( sessionData, network, dataAPI ) {
     return new Promise( async function( resolve, reject ) {
         // Get the remote companies.
         // Set up the request options.
@@ -1815,6 +1815,32 @@ exports.pullDeviceProfile = function( sessionData, network, dataAPI ) {
         request( options, function( error, response, body ) {
             if ( error ) {
                 dataAPI.addLog( network,"Error pulling device profiles from network " + network.name + ": " + error );
+                reject( error );
+            }
+            else {
+                dataAPI.addLog(network, body);
+                resolve( body );
+            }
+        });
+    });
+};
+
+exports.pullDeviceProfile = function( sessionData, deviceProfileId, network, dataAPI ) {
+    return new Promise( async function( resolve, reject ) {
+        // Get the remote companies.
+        // Set up the request options.
+        var options = {};
+        options.method = 'GET';
+        options.url = network.baseUrl + "/device-profiles/" + deviceProfileId  ;
+        options.headers = { "Content-Type": "DeviceProfile/json",
+            "Authorization": "Bearer " + sessionData.connection };
+        options.agentOptions = {
+            "secureProtocol": "TLSv1_2_method",
+            "rejectUnauthorized": false };
+
+        request( options, function( error, response, body ) {
+            if ( error ) {
+                dataAPI.addLog( network,"Error pulling device profile" + deviceProfileId + " from network " + network.name + ": " + error );
                 reject( error );
             }
             else {

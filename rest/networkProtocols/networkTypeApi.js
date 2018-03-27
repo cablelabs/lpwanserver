@@ -360,7 +360,16 @@ NetworkTypeApi.prototype.pushDeviceProfile = function( networkTypeId, deviceProf
 //                 to.
 //
 // Returns a Promise that pulls changes to the remote network of type.
-NetworkTypeApi.prototype.pullDeviceProfile = function( networkTypeId ) {
+NetworkTypeApi.prototype.pullDeviceProfiles = function( networkTypeId ) {
+    return createPromiseOperationForNetworksOfType(
+        "Pull DeviceProfile",
+        networkTypeId,
+        function( npda, network ) {
+            return protos.pullDeviceProfile( npda, network );
+        });
+}
+
+NetworkTypeApi.prototype.pullDeviceProfile = function( networkTypeId, deviceProfileId ) {
     return createPromiseOperationForNetworksOfType(
         "Pull DeviceProfile",
         networkTypeId,
