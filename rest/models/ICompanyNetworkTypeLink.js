@@ -229,7 +229,9 @@ CompanyNetworkTypeLink.prototype.pullCompanyNetworkTypeLink = function( networkT
             let localDpId = [];
             for (var index in deviceProfiles.result) {
                 let deviceProfile = deviceProfiles.result[index];
-                nsDpId.push(deviceProfile.id);
+                nsDpId.push(deviceProfile.deviceProfileID);
+                let networkSettings = await modelAPI.networkTypeAPI.retrieveDeviceProfile(deviceProfile.deviceProfileID);
+                networkSettings = networkSettings.deviceProfile;
 
                 //see if it exists first
                 let existingDeviceProfile = await modelAPI.deviceProfiles.retrieveDeviceProfiles({search: deviceProfile.name});
@@ -237,15 +239,42 @@ CompanyNetworkTypeLink.prototype.pullCompanyNetworkTypeLink = function( networkT
                     existingDeviceProfile = existingDeviceProfile.records[0];
                     localDpId.push(existingDeviceProfile.id);
                     appLogger.log(deviceProfile.name + ' already exists');
+                    existingDeviceProfile.networkSettings = networkSettings;
+                    await existingDeviceProfile.updateDeviceProfile(existingDeviceProfile);
                 }
                 else {
                     appLogger.log('creating ' + deviceProfile.name);
                     let coIndex = nsCoId.indexOf(deviceProfile.organizationID);
-                    appLogger.log(networkTypeId, localCoId[coIndex], deviceProfile.name, {})
-                    existingDeviceProfile = await modelAPI.deviceProfiles.createDeviceProfile(networkTypeId, localCoId[coIndex], deviceProfile.name, {} )
+                    appLogger.log(networkTypeId, localCoId[coIndex], deviceProfile.name, networkSettings);
+                    existingDeviceProfile = await modelAPI.deviceProfiles.createDeviceProfile(networkTypeId, localCoId[coIndex], deviceProfile.name, networkSettings )
                     localDpId.push(existingDeviceProfile.id);
                 }
             }
+
+            // logs = await modelAPI.networkTypeAPI.pullDevice( networkTypeId );
+            // let devices = JSON.parse(logs[Object.keys(logs)[0]].logs);
+            // appLogger.log(JSON.stringify(devices));
+            // for (var index in devices.result) {
+            //     let device = devices.result[index];
+            //     let networkSettings = await modelAPI.networkTypeAPI.retrieveDevice(device.id);
+            //     networkSettings = networkSettings.somthing;
+            //
+            //     //see if it exists first
+            //     let existingDevice = await modelAPI.deviceProfiles.retrieveDevice({search: device.name});
+            //     if (existingDevice.totalCount > 0 ) {
+            //         existingDevice = existingDevice.records[0];
+            //         appLogger.log(device.name + ' already exists');
+            //         existingDevice.networkSettings = networkSettings;
+            //         await existingDevice.updateDevice(existingDevice);
+            //     }
+            //     else {
+            //         appLogger.log('creating ' + existingDevice.name);
+            //         let appIndex = nsAppId.indexOf(device.applicationID);
+            //
+            //         existingDevice = await modelAPI.deviceProfiles.createDevice(device.name, localAppId[appIndex], null);
+            //         localDpId.push(existingDevice.id);
+            //     }
+            // }
 
             resolve( logs );
         }
