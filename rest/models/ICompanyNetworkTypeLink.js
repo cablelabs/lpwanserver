@@ -232,7 +232,7 @@ CompanyNetworkTypeLink.prototype.pullCompanyNetworkTypeLink = function( networkT
                 nsDpId.push(deviceProfile.deviceProfileID);
                 let networkSettings = await modelAPI.networkTypeAPI.pullDeviceProfile(networkTypeId, deviceProfile.deviceProfileID);
                 networkSettings = networkSettings.deviceProfile;
-
+                appLogger.log(JSON.stringify(networkSettings));
                 //see if it exists first
                 let existingDeviceProfile = await modelAPI.deviceProfiles.retrieveDeviceProfiles({search: deviceProfile.name});
                 if (existingDeviceProfile.totalCount > 0 ) {
@@ -248,6 +248,7 @@ CompanyNetworkTypeLink.prototype.pullCompanyNetworkTypeLink = function( networkT
                     appLogger.log(networkTypeId, localCoId[coIndex], deviceProfile.name, networkSettings);
                     existingDeviceProfile = await modelAPI.deviceProfiles.createDeviceProfile(networkTypeId, localCoId[coIndex], deviceProfile.name, networkSettings )
                     localDpId.push(existingDeviceProfile.id);
+
                 }
             }
 
