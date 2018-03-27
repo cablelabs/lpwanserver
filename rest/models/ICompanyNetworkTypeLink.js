@@ -256,7 +256,7 @@ CompanyNetworkTypeLink.prototype.pullCompanyNetworkTypeLink = function( networkT
             }
 
             for (var appIndex in nsAppId) {
-                logs = await modelAPI.networkTypeAPI.pullDevices( networkTypeId, appIndex );
+                logs = await modelAPI.networkTypeAPI.pullDevices( networkTypeId, nsAppId[appIndex] );
                 let devices = JSON.parse(logs[Object.keys(logs)[0]].logs);
                 appLogger.log(JSON.stringify(devices));
                 for (var index in devices.result) {
@@ -270,11 +270,10 @@ CompanyNetworkTypeLink.prototype.pullCompanyNetworkTypeLink = function( networkT
                         await existingDevice.updateDevice(existingDevice);
                     }
                     else {
-                        appLogger.log('creating ' + existingDevice.name);
+                        appLogger.log('creating ' + existingDevice);
                         let appIndex = nsAppId.indexOf(device.applicationID);
 
-                        existingDevice = await modelAPI.devices.createDevice(device);
-                        localDpId.push(existingDevice.id);
+                        existingDevice = await modelAPI.devices.createDevice(device.name, localAppId[appIndex], device);
                     }
                 }
             }
