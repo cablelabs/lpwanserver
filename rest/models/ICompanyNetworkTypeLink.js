@@ -239,8 +239,10 @@ CompanyNetworkTypeLink.prototype.pullCompanyNetworkTypeLink = function( networkT
                 if (existingDeviceProfile.totalCount > 0 ) {
                     existingDeviceProfile = existingDeviceProfile.records[0];
                     localDpId.push(existingDeviceProfile.id);
-                    appLogger.log(deviceProfile.name + ' already exists');
+                    appLogger.log(deviceProfile.name + " " + existingDeviceProfile.id + ' already exists');
+                    appLogger.log(existingDeviceProfile);
                     existingDeviceProfile.networkSettings = networkSettings;
+                    appLogger.log(existingDeviceProfile);
                     await modelAPI.deviceProfiles.updateDeviceProfile(existingDeviceProfile);
                 }
                 else {
