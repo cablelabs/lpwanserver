@@ -429,6 +429,16 @@ NetworkTypeApi.prototype.pushDevice = function( networkTypeId, deviceId ) {
                 function( npda, network ) {
                     return protos.pushDevice( npda, network, deviceId );
                 });
+};
+
+NetworkTypeApi.prototype.pullDevices = function( networkTypeId, applicationId) {
+    return createPromiseOperationForNetworksOfType(
+        "Pull DeviceProfile",
+        networkTypeId,
+        applicationId,
+        function( npda, network ) {
+            return protos.pullDeviceProfiles( npda, network, applicationId );
+        });
 }
 
 // Delete the device.

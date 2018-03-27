@@ -598,6 +598,29 @@ NetworkProtocolAccess.prototype.pushDevice = function( dataAPI, network, deviceI
     });
 };
 
+
+NetworkProtocolAccess.prototype.pullDevices = function( dataAPI, network, applicationId ) {
+    var me = this;
+    return new Promise( async function( resolve, reject ) {
+        // Get the protocol for the network.
+        var netProto = await me.getProtocol( network );
+
+        var loginData = await netProto.api.getCompanyAccessAccount( dataAPI, network );
+
+        // Use a session wrapper to call the function. (Session
+        // wrapper manages logging in if session was not already set
+        // up or is expired)
+        me.sessionWrapper( network, loginData, function( proto, sessionData ) {
+            return proto.api.pullDeviceProfiles( sessionData,
+                network,
+                applicationId,
+                dataAPI );
+        })
+            .then( function( ret ) { appLogger.log('device pull worked'); resolve( ret ); } )
+            .catch( function( err ) { appLogger.log(err); reject( err ); } );
+    });
+};
+
 // Delete the device.
 //
 // dataAPI  - Access to the data we may need to execute this operation.

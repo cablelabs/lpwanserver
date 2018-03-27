@@ -1806,7 +1806,7 @@ exports.pullDeviceProfiles = function( sessionData, network, dataAPI ) {
         var options = {};
         options.method = 'GET';
         options.url = network.baseUrl + "/device-profiles" + "?limit=20&offset=0"  ;
-        options.headers = { "Content-Type": "DeviceProfile/json",
+        options.headers = { "Content-Type": "application/json",
             "Authorization": "Bearer " + sessionData.connection };
         options.agentOptions = {
             "secureProtocol": "TLSv1_2_method",
@@ -1832,7 +1832,7 @@ exports.pullDeviceProfile = function( sessionData, network, deviceProfileId, dat
         var options = {};
         options.method = 'GET';
         options.url = network.baseUrl + "/device-profiles/" + deviceProfileId  ;
-        options.headers = { "Content-Type": "DeviceProfile/json",
+        options.headers = { "Content-Type": "application/json",
             "Authorization": "Bearer " + sessionData.connection };
         options.agentOptions = {
             "secureProtocol": "TLSv1_2_method",
@@ -2255,3 +2255,29 @@ exports.pushDevice = function( sessionData, network, deviceId, dataAPI ) {
         resolve();
     });
 }
+
+exports.pullDevices = function( sessionData, network, applicationId, dataAPI ) {
+    return new Promise( async function( resolve, reject ) {
+        // Get the remote companies.
+        // Set up the request options.
+        var options = {};
+        options.method = 'GET';
+        options.url = network.baseUrl + "/applications/" + applicationId +"/devices" + "?limit=20&offset=0"  ;
+        options.headers = { "Content-Type": "application/json",
+            "Authorization": "Bearer " + sessionData.connection };
+        options.agentOptions = {
+            "secureProtocol": "TLSv1_2_method",
+            "rejectUnauthorized": false };
+
+        request( options, function( error, response, body ) {
+            if ( error ) {
+                dataAPI.addLog( network,"Error pulling device profiles from network " + network.name + ": " + error );
+                reject( error );
+            }
+            else {
+                dataAPI.addLog(network, body);
+                resolve( body );
+            }
+        });
+    });
+};
