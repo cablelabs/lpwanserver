@@ -231,8 +231,9 @@ CompanyNetworkTypeLink.prototype.pullCompanyNetworkTypeLink = function( networkT
                 let deviceProfile = deviceProfiles.result[index];
                 nsDpId.push(deviceProfile.deviceProfileID);
                 let networkSettings = await modelAPI.networkTypeAPI.pullDeviceProfile(networkTypeId, deviceProfile.deviceProfileID);
+                networkSettings = JSON.parse(networkSettings[Object.keys(logs)[0]].logs);
                 networkSettings = networkSettings.deviceProfile;
-                appLogger.log(JSON.stringify(networkSettings));
+
                 //see if it exists first
                 let existingDeviceProfile = await modelAPI.deviceProfiles.retrieveDeviceProfiles({search: deviceProfile.name});
                 if (existingDeviceProfile.totalCount > 0 ) {
