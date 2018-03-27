@@ -263,7 +263,7 @@ CompanyNetworkTypeLink.prototype.pullCompanyNetworkTypeLink = function( networkT
                     let device = devices.result[index];
 
                     //see if it exists first
-                    let existingDevice = await modelAPI.deviceProfiles.retrieveDevice({search: device.name});
+                    let existingDevice = await modelAPI.deviceProfiles.retrieveDevices({search: device.name});
                     if (existingDevice.totalCount > 0 ) {
                         existingDevice = existingDevice.records[0];
                         appLogger.log(device.name + ' already exists');
