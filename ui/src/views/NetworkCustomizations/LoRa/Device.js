@@ -11,6 +11,13 @@ class LoRaDeviceNetworkSettings extends Component {
         let initValue = {
             devEUI: "",
             appKey: "",
+            devAddr: "",
+            nwkSKey: "",
+            appSKey: "",
+            fCntUp: 0,
+            fCntDown: 0,
+            skipFCntCheck: false,
+            isABP: false,
         };
         this.state = {
             enabled: false,
@@ -41,8 +48,8 @@ class LoRaDeviceNetworkSettings extends Component {
                 this.setState( { deviceProfileList: [ { id: 0, name: "(None Available)" } ] } );
             }
             else {
-                this.setState( { deviceProfileList: recs.records,
-                                 deviceProfileId: recs.records[ 0 ].id } );
+                this.setState( { deviceProfileList: recs.records }, () => {
+                    this.setActivationFields( recs.records[ 0 ].id ) } );
             }
         })
         .catch( ( err ) => {
@@ -115,8 +122,49 @@ class LoRaDeviceNetworkSettings extends Component {
         this.setState( { value: v } );
     }
 
+    onActivationChange( field, e ) {
+        e.preventDefault();
+
+        let v = this.state.value;
+
+        if (e.target.type === "number") {
+          v[field] = parseInt(e.target.value, 10);
+        } else if (e.target.type === "checkbox") {
+          v[field] = e.target.checked;
+        } else {
+          v[field] = e.target.value;
+        }
+        this.setState( { value: v } );
+    }
+
     onSelectionChange(field, e) {
-        this.setState({deviceProfileId: parseInt(e.target.value, 10)});
+        this.setActivationFields( parseInt(e.target.value, 10) );
+    }
+
+    setActivationFields( id ) {
+        // If the deviceProfile does ABP, enable activation fields, and make
+        // required.  Otherwise, make not required.
+        let dpList = this.state.deviceProfileList;
+        let index = 0;
+        for ( ; index < dpList.length; ++index ) {
+            if ( dpList[ index ].id === id ) {
+                break;
+            }
+        }
+        if ( dpList[ index ].networkSettings.supportsJoin ) {
+            // Supports join, so if last was ABP, disable it.
+            if ( this.state.isABP ) {
+                this.setState( { isABP: false } );
+            }
+        }
+        else {
+            // Does not support join.  If last was not ABP, enable it.
+            if ( !this.state.isABP ) {
+                this.setState( { isABP: true } );
+            }
+        }
+
+        this.setState({deviceProfileId: id});
     }
 
     // Not an onSubmit for the framework, but called from the parent component
@@ -128,11 +176,7 @@ class LoRaDeviceNetworkSettings extends Component {
         try {
             if ( this.state.enabled ) {
                 // ... but we had no old record: CREATE
-                if ( null == this.state.rec ) {
-                    console.log( this.props.parentRec.id );
-                    console.log( this.props.netRec.id );
-                    console.log( this.state.deviceProfileId );
-                    console.log( this.state.value );
+                if ( null == this.state.oldValue ) {
                     await deviceStore.createDeviceNetworkType(
                                     this.props.parentRec.id,
                                     this.props.netRec.id,
@@ -180,6 +224,20 @@ class LoRaDeviceNetworkSettings extends Component {
         return this.state.enabled;
     }
 
+    getRandom( field, size, e ) {
+       e.preventDefault();
+       let rnd = '';
+       const chars = '0123456789abcdef';
+       for( let i = 0; i < size; ++i ) {
+           rnd += chars.charAt( Math.floor( Math.random() * chars.length ) );
+       }
+
+       let value = this.state.value;
+       value[ field ] = rnd;
+
+       this.setState( { value: value } );
+    }
+
     render() {
         if ( null == this.state.deviceProfileList ) {
             return ( <div></div> );
@@ -202,12 +260,13 @@ class LoRaDeviceNetworkSettings extends Component {
                 <div className="form-group">
                     <label className="control-label"
                            htmlFor="devEUI">
-                        The Device EUI identifying the device on a LoRa network
+                        The Device EUI identifying the device on a LoRa
+                        network
                     </label>
                     <input type="text"
                            className="form-control"
                            name="devEUI"
-                           value={this.state.value.devEUI}
+                           value={this.state.value.devEUI} placeholder="0000000000000000"
                            pattern="[0-9a-fA-F]{16}"
                            onChange={this.onTextChange.bind( this, 'devEUI' )} />
                     <p className="help-block">
@@ -215,21 +274,110 @@ class LoRaDeviceNetworkSettings extends Component {
                         on LoRa networks.
                     </p>
                 </div>
-                <div className="form-group">
-                    <label className="control-label"
-                           htmlFor="appKey">
-                        The Application Encryption Key for this device.
-                    </label>
-                    <input type="text"
-                           className="form-control"
-                           name="appKey"
-                           value={this.state.value.appKey}
-                           pattern="[0-9a-fA-F]{32}"
-                           onChange={this.onTextChange.bind( this, 'appKey')} />
-                    <p className="help-block">
-                        A 32-hex-digit string used to identify the device
-                        on LoRa networks.
-                    </p>
+                <div className={this.state.isABP ? "" : "hidden" } >
+                    <div className="form-group">
+                        <label className="control-label"
+                               htmlFor="devAddr">Device Address</label>
+                        &emsp;
+                        <button onClick={this.getRandom.bind(this, 'devAddr', 8 )} className="btn btn-xs">generate</button>
+                        <input className="form-control"
+                               id="devAddr"
+                               type="text"
+                               placeholder="00000000"
+                               pattern="[a-fA-F0-9]{8}"
+                               required={this.state.isABP}
+                               value={this.state.value.devAddr || ''}
+                               onChange={this.onActivationChange.bind(this, 'devAddr')} />
+                    </div>
+                    <div className="form-group">
+                        <label className="control-label"
+                               htmlFor="nwkSKey">Network session key</label>
+                        &emsp;
+                        <button onClick={this.getRandom.bind(this, 'nwkSKey', 32 )} className="btn btn-xs">generate</button>
+                        <input className="form-control"
+                               id="nwkSKey"
+                               type="text"
+                               placeholder="00000000000000000000000000000000"
+                               pattern="[A-Fa-f0-9]{32}"
+                               required={this.state.isABP}
+                               value={this.state.value.nwkSKey || ''}
+                               onChange={this.onActivationChange.bind(this, 'nwkSKey')} />
+                    </div>
+                    <div className="form-group">
+                        <label className="control-label"
+                               htmlFor="appSKey">Application session key</label>
+                        &emsp;
+                        <button onClick={this.getRandom.bind(this, 'appSKey', 32 )} className="btn btn-xs">generate</button>
+                        <input className="form-control"
+                               id="appSKey"
+                               type="text" placeholder="00000000000000000000000000000000"
+                               pattern="[A-Fa-f0-9]{32}"  required={this.state.isABP} value={this.state.value.appSKey || ''}  onChange={this.onActivationChange.bind(this, 'appSKey')} />
+                    </div>
+                    <div className="form-group">
+                        <label className="control-label"
+                               htmlFor="rx2DR">Uplink frame-counter</label>
+                        <input className="form-control"
+                               id="fCntUp"
+                               type="number"
+                               min="0"
+                               required={this.state.isABP}
+                               value={this.state.value.fCntUp || 0}
+                               onChange={this.onActivationChange.bind(this, 'fCntUp')} />
+                    </div>
+                    <div className="form-group">
+                        <label className="control-label"
+                               htmlFor="rx2DR">Downlink frame-counter</label>
+                        <input className="form-control"
+                               id="fCntDown"
+                               type="number"
+                               min="0"
+                               required={this.state.isABP}
+                               value={this.state.value.fCntDown || 0}
+                               onChange={this.onActivationChange.bind(this, 'fCntDown')}
+                             />
+                    </div>
+                    <div className="form-group">
+                        <label className="control-label"
+                               htmlFor="skipFCntCheck">
+                            Disable frame-counter validation
+                        </label>
+                        <div className="checkbox">
+                            <label>
+                                <input type="checkbox"
+                                       name="skipFCntCheck"
+                                       id="skipFCntCheck"
+                                checked={!!this.state.value.skipFCntCheck}
+                                       onChange={this.onActivationChange.bind(this, 'skipFCntCheck')}
+                                     />
+                                     Disable frame-counter validation
+                            </label>
+                        </div>
+                        <p className="help-block">
+                            Note that disabling the frame-counter validation
+                            will compromise security as it enables people to
+                            perform replay-attacks.
+                        </p>
+                    </div>
+                </div>
+                <div className={!this.state.isABP ? "" : "hidden" } >
+                    <div className="form-group">
+                        <label className="control-label"
+                               htmlFor="appKey">
+                            The Application Encryption Key for this device.
+                        </label>
+                        &emsp;
+                        <button onClick={this.getRandom.bind(this, 'appKey', 32 )} className="btn btn-xs">generate</button>
+                        <input type="text"
+                               className="form-control"
+                               name="appKey" placeholder="00000000000000000000000000000000"
+                               value={this.state.value.appKey}
+                               pattern="[0-9a-fA-F]{32}"
+                               onChange={this.onTextChange.bind( this, 'appKey')} />
+                        <p className="help-block">
+                            A 32-hex-digit string used to identify the device
+                            on LoRa networks.
+                        </p>
+                    </div>
                 </div>
             </div>
         );

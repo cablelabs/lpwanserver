@@ -1313,7 +1313,7 @@ exports.addDeviceProfile = function( sessionData, network, deviceProfileId, data
                 "deviceProfile": {
                     "macVersion": "1.0.2",
                     "regParamsRevision": "B",
-                    "supportsJoin": true,
+                    "supportsJoin": false,
                     "maxEIRP": 30,
                     "supports32bitFCnt": true
                 }
@@ -1389,7 +1389,6 @@ exports.addDeviceProfile = function( sessionData, network, deviceProfileId, data
                     options.json.deviceProfile.supportsJoin = deviceProfile.networkSettings.supportsJoin;
                 }
             }
-
             request( options, async function( error, response, body ) {
                 if ( error || response.statusCode >= 400 ) {
                     if ( error ) {
@@ -1738,11 +1737,13 @@ exports.addDevice = function( sessionData, network, deviceId, dataAPI ) {
     return new Promise( async function( resolve, reject ) {
         var device;
         var dntl;
+        var devpro;
         var appNwkId;
         var dpNwkId;
         try {
             device = await dataAPI.getDeviceById( deviceId );
             dntl = await dataAPI.getDeviceNetworkType( deviceId, network.networkTypeId );
+            devpro = await dataAPI.getDeviceProfileById( dntl.deviceProfileId );
             if ( !dntl.networkSettings || !dntl.networkSettings.devEUI ) {
                 dataAPI.addLog( network,"deviceNetworkTypeLink MUST have networkSettings which MUST have devEUI" );
                 reject( 400 );
@@ -1798,18 +1799,39 @@ exports.addDevice = function( sessionData, network, deviceId, dataAPI ) {
             else {
                 // LoRa Open Source uses the DevEUI as the node id.
                 dataAPI.putProtocolDataForKey( network.id,
-                                                     network.networkProtocolId,
-                                                     makeDeviceDataKey( device.id, "devNwkId" ),
-                                                     options.json.devEUI );
+                                               network.networkProtocolId,
+                                               makeDeviceDataKey( device.id, "devNwkId" ),
+                                               options.json.devEUI );
 
-                // Devices have a separate API for appkeys...
-                options.url = network.baseUrl + "/devices/" + dntl.networkSettings.devEUI + "/keys";
-                options.json = {
-                    "devEUI": dntl.networkSettings.devEUI,
-                    "deviceKeys": {
-                        "appKey": devNS.appKey,
-                    },
-                };
+                // Devices have to do a second call to set up either the
+                // Application Key (OTAA) or the Keys for ABP.
+                if ( !devpro.networkSettings.supportsJoin ) {
+                    // This is the ABP path.
+                    options.url = network.baseUrl + "/devices/" +
+                                  dntl.networkSettings.devEUI + "/activate";
+                    options.json = {
+                        "devEUI": dntl.networkSettings.devEUI,
+                        "devAddr": dntl.networkSettings.devAddr,
+                        "nwkSKey": dntl.networkSettings.nwkSKey,
+                        "appSKey": dntl.networkSettings.appSKey,
+                        "fCntUp": dntl.networkSettings.fCntUp,
+                        "fCntDown": dntl.networkSettings.fCntDown,
+                        "skipFCntCheck":
+                                dntl.networkSettings.skipFCntCheck,
+                    };
+                    appLogger.log( "options.json = " + JSON.stringify( options.json ) );
+                }
+                else {
+                    // This is the OTAA path.
+                    options.url = network.baseUrl + "/devices/" +
+                                  dntl.networkSettings.devEUI + "/keys";
+                    options.json = {
+                        "devEUI": dntl.networkSettings.devEUI,
+                        "deviceKeys": {
+                            "appKey": devNS.appKey,
+                        },
+                    };
+                }
                 request( options, function( error, response, body ) {
                     if ( error || response.statusCode >= 400 ) {
                         if ( error ) {
