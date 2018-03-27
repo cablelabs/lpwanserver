@@ -744,8 +744,9 @@ NetworkProtocolAccess.prototype.pullDeviceProfile = function( dataAPI, network, 
         // wrapper manages logging in if session was not already set
         // up or is expired)
         me.sessionWrapper( network, loginData, function( proto, sessionData ) {
-            return proto.api.pullDeviceProfile( sessionData, deviceProfileId,
+            return proto.api.pullDeviceProfile( sessionData,
                 network,
+                deviceProfileId,
                 dataAPI );
         })
             .then( function( ret ) { appLogger.log('pull worked'); resolve( ret ); } )

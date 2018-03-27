@@ -365,7 +365,7 @@ NetworkTypeApi.prototype.pullDeviceProfiles = function( networkTypeId ) {
         "Pull DeviceProfile",
         networkTypeId,
         function( npda, network ) {
-            return protos.pullDeviceProfile( npda, network );
+            return protos.pullDeviceProfiles( npda, network );
         });
 }
 
@@ -374,7 +374,7 @@ NetworkTypeApi.prototype.pullDeviceProfile = function( networkTypeId, deviceProf
         "Pull DeviceProfile",
         networkTypeId,
         function( npda, network ) {
-            return protos.pullDeviceProfile( npda, network );
+            return protos.pullDeviceProfile( npda, network, deviceProfileId );
         });
 }
 

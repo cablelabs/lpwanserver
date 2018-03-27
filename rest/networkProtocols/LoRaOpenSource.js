@@ -1825,7 +1825,7 @@ exports.pullDeviceProfiles = function( sessionData, network, dataAPI ) {
     });
 };
 
-exports.pullDeviceProfile = function( sessionData, deviceProfileId, network, dataAPI ) {
+exports.pullDeviceProfile = function( sessionData, network, deviceProfileId, dataAPI ) {
     return new Promise( async function( resolve, reject ) {
         // Get the remote companies.
         // Set up the request options.
