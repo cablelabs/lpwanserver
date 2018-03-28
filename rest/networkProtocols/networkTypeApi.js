@@ -436,7 +436,7 @@ NetworkTypeApi.prototype.pullDevices = function( networkTypeId, applicationId) {
         "Pull Devices",
         networkTypeId,
         function( npda, network ) {
-            return protos.pullDeviceProfiles( npda, network, applicationId );
+            return protos.pullDevices( npda, network, applicationId );
         });
 }
 
