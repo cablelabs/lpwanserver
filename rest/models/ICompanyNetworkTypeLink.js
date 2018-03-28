@@ -285,7 +285,7 @@ CompanyNetworkTypeLink.prototype.pullCompanyNetworkTypeLink = function( networkT
                     else {
                         appLogger.log('creating Network Link for ' + device.name);
                         let dpIndex = nsDpId.indexOf(device.deviceProfileID);
-                        let coId = protocolDataAccess.getCompanyByApplicationId(existingDevice.applicationId);
+                        let coId = protocolDataAccess.prototype.getCompanyByApplicationId(existingDevice.applicationId);
 
                         modelAPI.deviceNetworkTypeLinks.createDeviceNetworkTypeLink(existingDevice.id, networkTypeId, localDpId[dpIndex], device, coId);
                     }
