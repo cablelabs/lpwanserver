@@ -221,6 +221,7 @@ CompanyNetworkTypeLink.prototype.pullCompanyNetworkTypeLink = function( networkT
                 else {
                     appLogger.log('creating Network Link for ' + application.name);
                     modelAPI.applicationNetworkTypeLinks.createApplicationNetworkTypeLink(existingApplication.id, networkTypeId, {}, existingApplication.companyId);
+
                 }
             }
 
@@ -271,8 +272,9 @@ CompanyNetworkTypeLink.prototype.pullCompanyNetworkTypeLink = function( networkT
                         await existingDevice.updateDevice(existingDevice);
                     }
                     else {
-                        appLogger.log('creating ' + existingDevice);
+                        appLogger.log('creating ' + JSON.stringify(existingDevice));
                         let appIndex = nsAppId.indexOf(device.applicationID);
+                        appLogger.log("localAppId[" + appIndex + "] = " + localAppId[appIndex]);
                         existingDevice = await modelAPI.devices.createDevice(device.name, localAppId[appIndex]);
                     }
 
