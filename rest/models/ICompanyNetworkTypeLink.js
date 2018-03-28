@@ -272,7 +272,7 @@ CompanyNetworkTypeLink.prototype.pullCompanyNetworkTypeLink = function( networkT
                         await existingDevice.updateDevice(existingDevice);
                     }
                     else {
-                        appLogger.log('creating ' + JSON.stringify(existingDevice));
+                        appLogger.log('creating ' + JSON.stringify(device));
                         let appIndex = nsAppId.indexOf(device.applicationID);
                         appLogger.log("localAppId[" + appIndex + "] = " + localAppId[appIndex]);
                         existingDevice = await modelAPI.devices.createDevice(device.name, localAppId[appIndex]);
