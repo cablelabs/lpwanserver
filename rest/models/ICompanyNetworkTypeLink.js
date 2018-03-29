@@ -210,7 +210,7 @@ CompanyNetworkTypeLink.prototype.pullCompanyNetworkTypeLink = function( networkT
                     appLogger.log('creating ' + application.name);
                     let coIndex = nsCoId.indexOf(application.organizationID);
                     appLogger.log(application.name, localCoId[coIndex], 1, 'https://locahost:8888')
-                    existingApplication = await modelAPI.applications.createApplication(application.name, localCoId[coIndex], 1, 'https://locahost:8888');
+                    existingApplication = await modelAPI.applications.createApplication(application.name, application.description, localCoId[coIndex], 1, 'https://locahost:8888');
                     localAppId.push(existingApplication.id);
                 }
                 //see if it exists first
@@ -252,7 +252,7 @@ CompanyNetworkTypeLink.prototype.pullCompanyNetworkTypeLink = function( networkT
                     appLogger.log('creating ' + deviceProfile.name);
                     let coIndex = nsCoId.indexOf(deviceProfile.organizationID);
                     appLogger.log(networkTypeId, localCoId[coIndex], deviceProfile.name, networkSettings);
-                    existingDeviceProfile = await modelAPI.deviceProfiles.createDeviceProfile(networkTypeId, localCoId[coIndex], deviceProfile.name, networkSettings )
+                    existingDeviceProfile = await modelAPI.deviceProfiles.createDeviceProfile(networkTypeId, localCoId[coIndex], deviceProfile.name, deviceProfile.description, networkSettings )
                     localDpId.push(existingDeviceProfile.id);
                 }
             }
@@ -275,7 +275,7 @@ CompanyNetworkTypeLink.prototype.pullCompanyNetworkTypeLink = function( networkT
                         appLogger.log('creating ' + JSON.stringify(device));
                         let appIndex = nsAppId.indexOf(device.applicationID);
                         appLogger.log("localAppId[" + appIndex + "] = " + localAppId[appIndex]);
-                        existingDevice = await modelAPI.devices.createDevice(device.name, localAppId[appIndex]);
+                        existingDevice = await modelAPI.devices.createDevice(device.name, device.description, localAppId[appIndex]);
                     }
 
                     let existingDeviceNTL = await modelAPI.deviceNetworkTypeLinks.retrieveDeviceNetworkTypeLinks({deviceId: existingDevice.id});
