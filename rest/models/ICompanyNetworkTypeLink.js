@@ -209,7 +209,6 @@ CompanyNetworkTypeLink.prototype.pullCompanyNetworkTypeLink = function( networkT
                 else {
                     appLogger.log('creating ' + JSON.stringify(application));
                     let coIndex = nsCoId.indexOf(application.organizationID);
-                    appLogger.log(application.name, application.description, localCoId[coIndex], 1, 'https://locahost:8888')
                     existingApplication = await modelAPI.applications.createApplication(application.name, application.description, localCoId[coIndex], 1, 'http://set.me.to.your.real.url:8888');
                     localAppId.push(existingApplication.id);
                 }
