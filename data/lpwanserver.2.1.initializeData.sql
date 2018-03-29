@@ -18,7 +18,7 @@ INSERT INTO companies ( id, name, type )
 
 -- Set up a default password rule for all companies
 INSERT INTO passwordPolicies ( id, ruleText, ruleRegExp )
-    values ( 1, '1|'Must be at least 6 characters long', '^\S{6,}$' );
+    values ( 1, 'Must be at least 6 characters long', '^\S{6,}$' );
 
 -- Add a default global admin account.  Username: Admin, password: password
 -- Email will be fake, but marked as not verified (Admin users MUST have an
@@ -35,5 +35,5 @@ INSERT INTO networkProtocols ( id, name, protocolHandler, networkTypeId )
     values( 1, 'LoRa Open Source', 'LoRaOpenSource.js', 1 );
 
 -- Start with the POST reportingProtocol.
-INSERT INTO networkProtocols ( id, name, protocolHandler )
+INSERT INTO reportingProtocols ( id, name, protocolHandler )
     values( 1, 'POST', 'postHandler' );

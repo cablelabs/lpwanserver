@@ -79,7 +79,7 @@ CREATE TABLE IF NOT EXISTS companyNetworkTypeLinks (
     companyId INTEGER REFERENCES companies( id ) ON DELETE CASCADE NOT NULL,
     networkTypeId INTEGER REFERENCES networkTypes( id ) ON DELETE CASCADE NOT NULL,
     networkSettings TEXT,
-    UNIQUE( companyId, networkId )
+    UNIQUE( companyId, networkTypeId )
 );
 
 CREATE TABLE IF NOT EXISTS reportingProtocols (
@@ -104,7 +104,7 @@ CREATE TABLE IF NOT EXISTS applicationNetworkTypeLinks (
     applicationId INTEGER REFERENCES applications( id ) ON DELETE CASCADE NOT NULL,
     networkTypeId INTEGER REFERENCES networkTypes( id ) ON DELETE CASCADE NOT NULL,
     networkSettings TEXT,
-    UNIQUE( applicationId, networkId )
+    UNIQUE( applicationId, networkTypeId )
 );
 
 CREATE TABLE IF NOT EXISTS devices (

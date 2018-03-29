@@ -293,9 +293,9 @@ exports.initialize = function( app, server ) {
                 data.companyId = req.body.companyId;
                 ++changed;
             }
-            if ( ( req.body.reportingrotocolId ) &&
-                 ( req.body.reportingrotocolId != app.reportingrotocolId ) ) {
-                data.reportingrotocolId = req.body.reportingrotocolId;
+            if ( ( req.body.reportingProtocolId ) &&
+                 ( req.body.reportingProtocolId != app.reportingProtocolId ) ) {
+                data.reportingProtocolId = req.body.reportingProtocolId;
                 ++changed;
             }
             if ( ( req.body.baseUrl ) &&
@@ -504,6 +504,11 @@ exports.initialize = function( app, server ) {
         var applicationId = parseInt( req.params.applicationId );
         var networkId = parseInt( req.params.networkId );
         var data = req.body;
+
+        appLogger.log( "Received data from network " + networkId +
+                       " for application " + applicationId +
+                       ": " + JSON.stringify( data ) );
+
         modelAPI.applications.passDataToApplication( applicationId, networkId, data ).then( function( ) {
                  restServer.respond( res, 200 );
         })

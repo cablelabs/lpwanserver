@@ -271,8 +271,9 @@ Application.prototype.passDataToApplication = function( applicationId, networkId
     var me = this;
     return new Promise( async function( resolve, reject ) {
         try {
-            var proto = await modelAPI.networkProtocolAPI.getProtocol( network );
-            await proto.api.passDataToApplication( applicationId, networkId, data );
+            var application = await modelAPI.applications.retrieveApplication( applicationId );
+            var proto = await modelAPI.reportingProtocolAPIs.getProtocol( application );
+            await proto.report( data, application.baseUrl, application.name );
             resolve( 204 );
         }
         catch( err ) {
