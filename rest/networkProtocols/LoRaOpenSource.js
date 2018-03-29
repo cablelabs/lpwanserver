@@ -176,11 +176,13 @@ function makeDeviceProfileDataKey( deviceProfileId, dataName ) {
 // esoteric concept for general application management, so we provide this
 // method that will get a network server id from the LoRa system.
 function getANetworkServerID( network, connection ) {
+    appLogger.log('LoRaOpenSource: getANetworkServerID');
     return new Promise( async function( resolve, reject ) {
         // Set up the request options.
         var options = {};
         options.method = 'GET';
-        options.url = network.baseUrl + "/network-servers?limit=1&offset=0";
+        // options.url = network.baseUrl + "/network-servers?limit=1&offset=0";
+        options.url = network.baseUrl + "/network-servers?limit=20&offset=0";
         options.headers = { "Content-Type": "application/json",
                             "Authorization": "Bearer " + connection };
         options.agentOptions = {
@@ -213,6 +215,7 @@ function getANetworkServerID( network, connection ) {
                     reject( 404 );
                     return;
                 }
+                appLogger.log(nsList);
                 resolve( nsList[ 0 ].id );
             }
         });
@@ -823,6 +826,44 @@ exports.pushCompany = function( sessionData, network, companyId, dataAPI ) {
 }
 
 
+// Get company.
+//
+// sessionData - The session information for the user, including the //               connection data for the remote system.
+// network     - The networks record for the network that uses this
+//               protocol.
+// companyId   - The id for the local company data, for which the remote data
+//               will be retrieved.
+// dataAPI     - Gives access to the data records and error tracking for the
+//               operation.
+//
+// Returns a Promise that gets the company record from the remote system.
+exports.pullCompany = function( sessionData, network, dataAPI ) {
+    return new Promise( async function( resolve, reject ) {
+        // Get the remote companies.
+        // Set up the request options.
+        var options = {};
+        options.method = 'GET';
+        options.url = network.baseUrl + "/organizations" + "?limit=20&offset=0"  ;
+        options.headers = { "Content-Type": "application/json",
+            "Authorization": "Bearer " + sessionData.connection };
+        options.agentOptions = {
+            "secureProtocol": "TLSv1_2_method",
+            "rejectUnauthorized": false };
+
+        request( options, function( error, response, body ) {
+            if ( error ) {
+                dataAPI.addLog( network,"Error pulling companies from network " + network.name + ": " + error );
+                reject( error );
+            }
+            else {
+                dataAPI.addLog(network, body);
+                resolve( body );
+            }
+        });
+    });
+}
+
+
 //******************************************************************************
 // CRUD applications.
 //******************************************************************************
@@ -1139,7 +1180,42 @@ exports.pushApplication = function( sessionData, network, applicationId, dataAPI
         }
         resolve();
     });
-}
+};
+
+// Get application.
+//
+// sessionData - The session information for the user, including the //               connection data for the remote system.
+// network     - The networks record for the network that uses this
+//               protocol.
+// dataAPI     - Gives access to the data records and error tracking for the
+//               operation.
+//
+// Returns a Promise that gets the company record from the remote system.
+exports.pullApplication = function( sessionData, network, dataAPI ) {
+    return new Promise( async function( resolve, reject ) {
+        // Get the remote companies.
+        // Set up the request options.
+        var options = {};
+        options.method = 'GET';
+        options.url = network.baseUrl + "/applications" + "?limit=20&offset=0"  ;
+        options.headers = { "Content-Type": "application/json",
+            "Authorization": "Bearer " + sessionData.connection };
+        options.agentOptions = {
+            "secureProtocol": "TLSv1_2_method",
+            "rejectUnauthorized": false };
+
+        request( options, function( error, response, body ) {
+            if ( error ) {
+                dataAPI.addLog( network,"Error pulling applications from network " + network.name + ": " + error );
+                reject( error );
+            }
+            else {
+                dataAPI.addLog(network, body);
+                resolve( body );
+            }
+        });
+    });
+};
 
 
 //******************************************************************************
@@ -1710,7 +1786,70 @@ exports.pushDeviceProfile = function( sessionData, network, deviceProfileId, dat
         }
         resolve();
     });
-}
+};
+
+
+// Get DeviceProfile.
+//
+// sessionData - The session information for the user, including the //               connection data for the remote system.
+// network     - The networks record for the network that uses this
+//               protocol.
+// dataAPI     - Gives access to the data records and error tracking for the
+//               operation.
+//
+// Returns a Promise that gets the company record from the remote system.
+exports.pullDeviceProfiles = function( sessionData, network, dataAPI ) {
+    return new Promise( async function( resolve, reject ) {
+        // Get the remote companies.
+        // Set up the request options.
+        var options = {};
+        options.method = 'GET';
+        options.url = network.baseUrl + "/device-profiles" + "?limit=20&offset=0"  ;
+        options.headers = { "Content-Type": "application/json",
+            "Authorization": "Bearer " + sessionData.connection };
+        options.agentOptions = {
+            "secureProtocol": "TLSv1_2_method",
+            "rejectUnauthorized": false };
+
+        request( options, function( error, response, body ) {
+            if ( error ) {
+                dataAPI.addLog( network,"Error pulling device profiles from network " + network.name + ": " + error );
+                reject( error );
+            }
+            else {
+                dataAPI.addLog(network, body);
+                resolve( body );
+            }
+        });
+    });
+};
+
+exports.pullDeviceProfile = function( sessionData, network, deviceProfileId, dataAPI ) {
+    return new Promise( async function( resolve, reject ) {
+        // Get the remote companies.
+        // Set up the request options.
+        var options = {};
+        options.method = 'GET';
+        options.url = network.baseUrl + "/device-profiles/" + deviceProfileId  ;
+        options.headers = { "Content-Type": "application/json",
+            "Authorization": "Bearer " + sessionData.connection };
+        options.agentOptions = {
+            "secureProtocol": "TLSv1_2_method",
+            "rejectUnauthorized": false };
+
+        request( options, function( error, response, body ) {
+            if ( error ) {
+                dataAPI.addLog( network,"Error pulling device profile" + deviceProfileId + " from network " + network.name + ": " + error );
+                reject( error );
+            }
+            else {
+                dataAPI.addLog(network, body);
+                resolve( body );
+            }
+        });
+    });
+};
+
 
 
 //******************************************************************************
@@ -2138,3 +2277,29 @@ exports.pushDevice = function( sessionData, network, deviceId, dataAPI ) {
         resolve();
     });
 }
+
+exports.pullDevices = function( sessionData, network, applicationId, dataAPI ) {
+    return new Promise( async function( resolve, reject ) {
+        // Get the remote companies.
+        // Set up the request options.
+        var options = {};
+        options.method = 'GET';
+        options.url = network.baseUrl + "/applications/" + applicationId +"/devices" + "?limit=20&offset=0"  ;
+        options.headers = { "Content-Type": "application/json",
+            "Authorization": "Bearer " + sessionData.connection };
+        options.agentOptions = {
+            "secureProtocol": "TLSv1_2_method",
+            "rejectUnauthorized": false };
+
+        request( options, function( error, response, body ) {
+            if ( error ) {
+                dataAPI.addLog( network,"Error pulling device profiles from network " + network.name + ": " + error );
+                reject( error );
+            }
+            else {
+                dataAPI.addLog(network, body);
+                resolve( body );
+            }
+        });
+    });
+};

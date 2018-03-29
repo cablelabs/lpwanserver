@@ -34,6 +34,7 @@ import CreateReportingProtocol from "./views/ReportingProtocols/CreateReportingP
 import CreateDeviceProfile from "./views/DeviceProfiles/CreateDeviceProfile";
 import DeviceProfileLayout from "./views/DeviceProfiles/DeviceProfileLayout";
 import ErrorStore from "./stores/ErrorStore";
+import PullNetworks from "./views/ImportExport/PullNetworks";
 //import ApplicationStore from "./stores/ApplicationStore";
 
 // styling
@@ -83,6 +84,7 @@ class Layout extends Component {
             <Route exact path="/admin/network/:networkID" component={NetworkLayout}/>
             <Route exact path="/admin/networks" component={ListNetworks}/>
             <Route exact path="/admin/network" component={CreateNetwork}/>
+            <Route exact path="/admin/pull/:networkTypeId" component={PullNetworks}/>
             <Route exact path="/admin/reportingProtocol/:reportingProtocolID" component={ReportingProtocolLayout}/>
             <Route exact path="/admin/reportingProtocols" component={ListReportingProtocols}/>
             <Route exact path="/admin/reportingProtocol" component={CreateReportingProtocol}/>

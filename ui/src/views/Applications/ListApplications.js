@@ -311,6 +311,7 @@ class ListApplications extends Component {
           <li><Link to={`/`}>Home</Link></li>
         </ol>
 
+
         <div className="panel panel-default">
 
           <div className={`panel-heading clearfix `}>

@@ -227,6 +227,36 @@ NetworkProtocolAccess.prototype.pushCompany = function( dataAPI, network, compan
     });
 };
 
+// Pull company.  If the company exists on the remote system, update it to match
+// the local data.  Otherwise, create it.
+//
+// dataAPI   - Access to the data we may need to execute this operation.
+// network   - The network data.
+//
+// Returns a Promise that ostensibly connects to the remote system and updates
+// or creates the remote company.  This may or may not do as promised (haha) -
+// the implementation is completely up to the developers of the protocols.
+NetworkProtocolAccess.prototype.pullCompany = function( dataAPI, network ) {
+    var me = this;
+    return new Promise( async function( resolve, reject ) {
+        // Get the protocol for the network.
+        var netProto = await me.getProtocol( network );
+
+        var loginData = await netProto.api.getCompanyAccessAccount( dataAPI, network );
+
+        // Use a session wrapper to call the function. (Session
+        // wrapper manages logging in if session was not already set
+        // up or is expired)
+        me.sessionWrapper( network, loginData, function( proto, sessionData ) {
+            return proto.api.pullCompany( sessionData,
+                network,
+                dataAPI );
+        })
+            .then( function( ret ) { resolve( ret ); } )
+            .catch( function( err ) { reject( err ); } );
+    });
+};
+
 
 // Delete the company.
 //
@@ -328,6 +358,39 @@ NetworkProtocolAccess.prototype.pushApplication = function( dataAPI, network, ap
         .catch( function( err ) { reject( err ); } );
     });
 };
+
+
+// Pull company.  If the company exists on the remote system, update it to match
+// the local data.  Otherwise, create it.
+//
+// dataAPI   - Access to the data we may need to execute this operation.
+// network   - The network data.
+//
+// Returns a Promise that ostensibly connects to the remote system and updates
+// or creates the remote company.  This may or may not do as promised (haha) -
+// the implementation is completely up to the developers of the protocols.
+NetworkProtocolAccess.prototype.pullApplication = function( dataAPI, network ) {
+    var me = this;
+    return new Promise( async function( resolve, reject ) {
+        // Get the protocol for the network.
+        var netProto = await me.getProtocol( network );
+
+        var loginData = await netProto.api.getCompanyAccessAccount( dataAPI, network );
+
+        // Use a session wrapper to call the function. (Session
+        // wrapper manages logging in if session was not already set
+        // up or is expired)
+        me.sessionWrapper( network, loginData, function( proto, sessionData ) {
+            return proto.api.pullApplication( sessionData,
+                network,
+                dataAPI );
+        })
+            .then( function( ret ) { resolve( ret ); } )
+            .catch( function( err ) { reject( err ); } );
+    });
+};
+
+
 
 // Delete the application.
 //
@@ -535,6 +598,29 @@ NetworkProtocolAccess.prototype.pushDevice = function( dataAPI, network, deviceI
     });
 };
 
+
+NetworkProtocolAccess.prototype.pullDevices = function( dataAPI, network, applicationId ) {
+    var me = this;
+    return new Promise( async function( resolve, reject ) {
+        // Get the protocol for the network.
+        var netProto = await me.getProtocol( network );
+
+        var loginData = await netProto.api.getCompanyAccessAccount( dataAPI, network );
+
+        // Use a session wrapper to call the function. (Session
+        // wrapper manages logging in if session was not already set
+        // up or is expired)
+        me.sessionWrapper( network, loginData, function( proto, sessionData ) {
+            return proto.api.pullDevices( sessionData,
+                network,
+                applicationId,
+                dataAPI );
+        })
+            .then( function( ret ) { appLogger.log('device pull worked'); resolve( ret ); } )
+            .catch( function( err ) { appLogger.log(err); reject( err ); } );
+    });
+};
+
 // Delete the device.
 //
 // dataAPI  - Access to the data we may need to execute this operation.
@@ -635,6 +721,59 @@ NetworkProtocolAccess.prototype.pushDeviceProfile = function( dataAPI, network, 
         })
         .then( function( ret ) { resolve( ret ); } )
         .catch( function( err ) { reject( err ); } );
+    });
+};
+
+
+// Pull company.  If the company exists on the remote system, update it to match
+// the local data.  Otherwise, create it.
+//
+// dataAPI   - Access to the data we may need to execute this operation.
+// network   - The network data.
+//
+// Returns a Promise that ostensibly connects to the remote system and updates
+// or creates the remote company.  This may or may not do as promised (haha) -
+// the implementation is completely up to the developers of the protocols.
+NetworkProtocolAccess.prototype.pullDeviceProfiles = function( dataAPI, network ) {
+    var me = this;
+    return new Promise( async function( resolve, reject ) {
+        // Get the protocol for the network.
+        var netProto = await me.getProtocol( network );
+
+        var loginData = await netProto.api.getCompanyAccessAccount( dataAPI, network );
+
+        // Use a session wrapper to call the function. (Session
+        // wrapper manages logging in if session was not already set
+        // up or is expired)
+        me.sessionWrapper( network, loginData, function( proto, sessionData ) {
+            return proto.api.pullDeviceProfiles( sessionData,
+                network,
+                dataAPI );
+        })
+            .then( function( ret ) { appLogger.log('pull worked'); resolve( ret ); } )
+            .catch( function( err ) { appLogger.log(err); reject( err ); } );
+    });
+};
+
+NetworkProtocolAccess.prototype.pullDeviceProfile = function( dataAPI, network, deviceProfileId ) {
+    var me = this;
+    return new Promise( async function( resolve, reject ) {
+        // Get the protocol for the network.
+        var netProto = await me.getProtocol( network );
+
+        var loginData = await netProto.api.getCompanyAccessAccount( dataAPI, network );
+
+        // Use a session wrapper to call the function. (Session
+        // wrapper manages logging in if session was not already set
+        // up or is expired)
+        me.sessionWrapper( network, loginData, function( proto, sessionData ) {
+            return proto.api.pullDeviceProfile( sessionData,
+                network,
+                deviceProfileId,
+                dataAPI );
+        })
+            .then( function( ret ) { appLogger.log('pull worked'); resolve( ret ); } )
+            .catch( function( err ) { appLogger.log(err); reject( err ); } );
     });
 };
 

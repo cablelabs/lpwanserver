@@ -166,6 +166,21 @@ NetworkTypeApi.prototype.pushCompany = function( networkTypeId, companyId ) {
                 });
 }
 
+// Pull all company data from the remote network.
+//
+// networkTypeId - The networkTypes record id  identifying the networks to push
+//                 to.
+//
+// Returns a Promise that pushes changes to the remote network of type.
+NetworkTypeApi.prototype.pullCompany = function( networkTypeId ) {
+    return createPromiseOperationForNetworksOfType(
+        "Pull Company",
+        networkTypeId,
+        function( npda, network ) {
+            return protos.pullCompany( npda, network );
+        });
+}
+
 // Delete the company.
 //
 // networkTypeId - The networkTypes record id identifying the networks to delete
@@ -220,6 +235,21 @@ NetworkTypeApi.prototype.pushApplication = function( networkTypeId, applicationI
                 function( npda, network ) {
                     return protos.pushApplication( npda, network, applicationId );
                 });
+}
+
+// Pull all application data from the remote network.
+//
+// networkTypeId - The networkTypes record id  identifying the networks to push
+//                 to.
+//
+// Returns a Promise that pushes changes to the remote network of type.
+NetworkTypeApi.prototype.pullApplication = function( networkTypeId ) {
+    return createPromiseOperationForNetworksOfType(
+        "Pull Application",
+        networkTypeId,
+        function( npda, network ) {
+            return protos.pullApplication( npda, network );
+        });
 }
 
 // Delete the application.
@@ -324,6 +354,30 @@ NetworkTypeApi.prototype.pushDeviceProfile = function( networkTypeId, deviceProf
                 });
 }
 
+// Pull all deviceProfile data from the remote network.
+//
+// networkTypeId - The networkTypes record id  identifying the networks to pulled
+//                 to.
+//
+// Returns a Promise that pulls changes to the remote network of type.
+NetworkTypeApi.prototype.pullDeviceProfiles = function( networkTypeId ) {
+    return createPromiseOperationForNetworksOfType(
+        "Pull DeviceProfile",
+        networkTypeId,
+        function( npda, network ) {
+            return protos.pullDeviceProfiles( npda, network );
+        });
+}
+
+NetworkTypeApi.prototype.pullDeviceProfile = function( networkTypeId, deviceProfileId ) {
+    return createPromiseOperationForNetworksOfType(
+        "Pull DeviceProfile",
+        networkTypeId,
+        function( npda, network ) {
+            return protos.pullDeviceProfile( npda, network, deviceProfileId );
+        });
+}
+
 // Delete the deviceProfile.
 //
 // networkTypeId   - The networkTypes record id identifying the networks to delete
@@ -375,6 +429,15 @@ NetworkTypeApi.prototype.pushDevice = function( networkTypeId, deviceId ) {
                 function( npda, network ) {
                     return protos.pushDevice( npda, network, deviceId );
                 });
+};
+
+NetworkTypeApi.prototype.pullDevices = function( networkTypeId, applicationId) {
+    return createPromiseOperationForNetworksOfType(
+        "Pull Devices",
+        networkTypeId,
+        function( npda, network ) {
+            return protos.pullDevices( npda, network, applicationId );
+        });
 }
 
 // Delete the device.

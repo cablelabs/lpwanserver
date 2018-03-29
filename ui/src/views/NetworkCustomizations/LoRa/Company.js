@@ -1,5 +1,6 @@
 import React, {Component} from 'react';
 import CompanyStore from "../../../stores/CompanyStore";
+import Select from 'react-select';
 
 
 // The default company network settings data entry, when the
@@ -14,8 +15,8 @@ class LoRaCompanyNetworkSettings extends Component {
         this.state = {
             enabled: false,
             wasEnabled: false,
-            value: "",
-            original: "",
+            value: {},
+            original: {},
             rec: null,
         };
 
@@ -46,7 +47,10 @@ class LoRaCompanyNetworkSettings extends Component {
             if ( rec ) {
                 // Javascript libraries can get whiny with null.
                 if ( !rec.networkSettings ) {
-                    rec.networkSettings = undefined;
+                    rec.networkSettings = {serviceProfile: {region: ''}};
+                }
+                else if (!rec.networkSettings.serviceProfile) {
+                    rec.networkSettings.serviceProfile = {region: ''};
                 }
 
                 // We are saying we're enabled based on the database returned
@@ -131,10 +135,35 @@ class LoRaCompanyNetworkSettings extends Component {
         return this.state.enabled;
     }
 
+    onSelectChange(fieldLookup, val) {
+        let obj = {};
+        obj[fieldLookup] = val.value;
+        this.setState({
+            value: obj,
+        });
+    }
+
+
+
     render() {
+        const regParamsOptions = [
+            {value: "US915", label: "US915"},
+            {value: "EU200", label: "EU200"},
+        ];
         return (
             <div className={this.state.enabled === true ? "" : "hidden" } >
-                No company data can be specified for {this.props.netRec.name} networks.
+                <div className="form-group">
+                    <label className="control-label" htmlFor="region">LoRaWAN Region</label>
+                    <Select
+                        name="region"
+                        options={regParamsOptions}
+                        value={this.state.value.region}
+                        onChange={this.onSelectChange.bind(this, 'region')}
+                    />
+                    <p className="help-block">
+                        Region of the LoRaWAN supported by the Network.
+                    </p>
+                </div>
             </div>
         );
       }
