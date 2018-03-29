@@ -11,7 +11,35 @@ exports.initialize = function( app, server ) {
      ********************************************************************
     /**
      * Gets the networkProviders available
-     * - Can be called by any user.
+     *
+     * @api {get} /api/networkProviders Get Network Providers
+     * @apiGroup Network Providers
+     * @apiDescription Returns an array of the Network Providers that
+     *      match the options.
+     * @apiPermission All logged-in users.
+     * @apiHeader {String} Authorization The Create Session's returned token
+     *      prepended with "Bearer "
+     * @apiParam (Query Parameters) {Number} [limit] The maximum number of
+     *      records to return.  Use with offset to manage paging.  0 is the
+     *      same as unspecified, returning all users that match other query
+     *      parameters.
+     * @apiParam (Query Parameters) {Number} [offset] The offset into the
+     *      returned database query set.  Use with limit to manage paging.  0 is
+     *      the same as unspecified, returning the list from the beginning.
+     * @apiParam (Query Parameters) {String} [search] Search the Network
+     *      Providers based on name matches to the passed string.  In the
+     *      string, use "%" to match 0 or more characters and "_" to match
+     *      exactly one.  For example, to match names starting with "D", use
+     *      the string "D%".
+     * @apiSuccess {Object} object
+     * @apiSuccess {Number} object.totalCount The total number of records that
+     *      would have been returned if offset and limit were not specified.
+     *      This allows for calculation of number of "pages" of data.
+     * @apiSuccess {Object[]} object.records An array of Network Providers
+     *      records.
+     * @apiSuccess {Number} object.records.id The Network Provider's Id
+     * @apiSuccess {String} object.records.name The name of the Network Provider
+     * @apiVersion 0.1.0
      */
     app.get('/api/networkProviders', [restServer.isLoggedIn], function(req, res, next) {
         var options = {};
@@ -40,8 +68,18 @@ exports.initialize = function( app, server ) {
     });
 
     /**
-     * Gets the networkProvider record with the specified id.
-     * - Can be called by any user
+     * @apiDescription Gets the Network Provider record with the specified id.
+     *
+     * @api {get} /api/networkProviders/:id Get Network Provider
+     * @apiGroup Network Providers
+     * @apiPermission Any logged-in user.
+     * @apiHeader {String} Authorization The Create Session's returned token
+     *      prepended with "Bearer "
+     * @apiParam (URL Parameters) {Number} id The Network Provider's id
+     * @apiSuccess {Object} object
+     * @apiSuccess {Number} object.id The Network Provider's Id
+     * @apiSuccess {String} object.name The name of the Network Provider
+     * @apiVersion 0.1.0
      */
     app.get('/api/networkProviders/:id', [restServer.isLoggedIn],
                                      function(req, res, next) {
@@ -56,13 +94,19 @@ exports.initialize = function( app, server ) {
     });
 
     /**
-     * Creates a new networkProviders record.
-     * - A user with an admin company can create a networkProvider.
-     * - Requires a name.  The name is the name of the network type that has a
-     *   unique set of data.  "NB-IoT", "LoRa1.0", "LoRa1.1" may be examples.
-     * - {
-     *     "name": "NB-IoT"
-     *   }
+     * @apiDescription Creates a new networkProviders record.
+     *
+     * @api {post} /api/networkProviders Create Network Provider
+     * @apiGroup Network Providers
+     * @apiPermission System Admin
+     * @apiHeader {String} Authorization The Create Session's returned token
+     *      prepended with "Bearer "
+     * @apiParam (Request Body) {String} name The Network Provider's name
+     * @apiExample {json} Example body:
+     *      {
+     *          "name": "Kyrio"
+     *      }
+     * @apiSuccess {Number} id The new Network Provider's id.
      */
     app.post('/api/networkProviders', [restServer.isLoggedIn,
                                        restServer.fetchCompany,
@@ -93,8 +137,21 @@ exports.initialize = function( app, server ) {
     });
 
     /**
-     * Updates the networkProvider record with the specified id.
-     * - Can only be called by a user who is part of an admin company.
+     * @apiDescription Updates the Network Provider record with the specified
+     *      id.
+     *
+     * @api {put} /api/networkProviders/:id Update Network Provider
+     * @apiGroup Network Providers
+     * @apiPermission System Admin
+     * @apiHeader {String} Authorization The Create Session's returned token
+     *      prepended with "Bearer "
+     * @apiParam (URL Parameters) {Number} id The Network Provider's id
+     * @apiParam (Request Body) {String} name The Network Provider's name
+     * @apiExample {json} Example body:
+     *      {
+     *          "name": "CableLabs"
+     *      }
+     * @apiVersion 0.1.0
      */
     app.put('/api/networkProviders/:id', [restServer.isLoggedIn,
                                           restServer.fetchCompany,
@@ -139,8 +196,16 @@ exports.initialize = function( app, server ) {
     });
 
     /**
-     * Deletes the networkProvider record with the specified id.
-     * - Only a user with the admin company can delete a networkProvider.
+     * @apiDescription Deletes the Network Provider record with the specified
+     *      id.
+     *
+     * @api {delete} /api/networkProviders/:id Delete Network Provider
+     * @apiGroup Network Providers
+     * @apiPermission System Admin
+     * @apiHeader {String} Authorization The Create Session's returned token
+     *      prepended with "Bearer "
+     * @apiParam (URL Parameters) {Number} id The Network Provider's id
+     * @apiVersion 0.1.0
      */
     app.delete('/api/networkProviders/:id', [restServer.isLoggedIn,
                                              restServer.fetchCompany,

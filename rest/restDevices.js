@@ -11,24 +11,42 @@ exports.initialize = function( app, server ) {
     ********************************************************************/
     /**
      * Gets the devices available for access by the calling account.
-     * - If the caller is with the admin company, they can get all
-     *   devices from all companies.  Otherwise they get their own
-     *   company's devices only.
-     * - If the request includes a limit query parameter, only that number of
-     *   entries are returned.
-     * - If the request includes an offset query parameter, the first offset
-     *   records are skipped in the returned data.
-     * - If the request includes a search query parameter, the devices
-     *   will be limited to matches of the passed string to the name.  In the
-     *   string, use "%" to match 0 or more characters and "_" to match
-     *   exactly one.  So to match names starting with "D", use the string
-     *   "D%".
-     * - If the request has a companyId parameter, only applications from that
-     *   company will be returned.  This MUST be the user's company if the user
-     *   is not part of an ADMIN company.
-     * - If the request has a applicationId parameter, only devices for that
-     *   application will be returned.
-     * - Any combination of search terms are AND'd together.
+     *
+     * @api {get} /api/devices Get Devices
+     * @apiGroup Devices
+     * @apiDescription Returns an array of the Devices that match the options.
+     * @apiPermission System Admin, or Company Admin (limits returned data to
+     *       user's own Company's Devices)
+     * @apiHeader {String} Authorization The Create Session's returned token
+     *      prepended with "Bearer "
+     * @apiParam (Query Parameters) {Number} [limit] The maximum number of
+     *      records to return.  Use with offset to manage paging.  0 is the
+     *      same as unspecified, returning all users that match other query
+     *      parameters.
+     * @apiParam (Query Parameters) {Number} [offset] The offset into the
+     *      returned database query set.  Use with limit to manage paging.  0 is
+     *      the same as unspecified, returning the list from the beginning.
+     * @apiParam (Query Parameters) {String} [search] Search the Devices based
+     *      on name matches to the passed string.  In the string, use "%" to
+     *      match 0 or more characters and "_" to match exactly one.  For
+     *      example, to match names starting with "D", use the string "D%".
+     * @apiParam (Query Parameters) {Number} [companyId] Limit the Devices
+     *      to those belonging to the Company.
+     * @apiParam (Query Parameters) {Number} [applicationId] Limit the Devices
+     *      to those belonging to the Application.
+     * @apiSuccess {Object} object
+     * @apiSuccess {Number} object.totalCount The total number of records that
+     *      would have been returned if offset and limit were not specified.
+     *      This allows for calculation of number of "pages" of data.
+     * @apiSuccess {Object[]} object.records An array of Device records.
+     * @apiSuccess {Number} object.records.id The Device's Id
+     * @apiSuccess {String} object.records.name The Device's name
+     * @apiSuccess {String} object.records.description The Device's description
+     * @apiSuccess {String} object.records.deviceModel The Device's Model
+     *      information
+     * @apiSuccess {Number} object.records.applicationId The Id of the
+     *      Application that this Device belongs to.
+     * @apiVersion 0.1.0
      */
     app.get('/api/devices', [restServer.isLoggedIn, restServer.fetchCompany],
                             function(req, res, next) {
@@ -81,11 +99,24 @@ exports.initialize = function( app, server ) {
     });
 
     /**
-     * Gets the device record with the specified id.
-     * - A company user can get their own company's devices only
-     * - If the caller is with the admin company, they can get any device
-     * - Returned data will include an array of networks that is a list of
-     *   networkIds for networks this device is associated with.
+     * @apiDescription Gets the device record with the specified id.
+     *
+     * @api {get} /api/devices/:id Get Device
+     * @apiGroup Devices
+     * @apiPermission Any, but only System Admin can retrieve a device for a
+     *      company other than their own.
+     * @apiHeader {String} Authorization The Create Session's returned token
+     *      prepended with "Bearer "
+     * @apiParam (URL Parameters) {Number} id The Device's id
+     * @apiSuccess {Object} object
+     * @apiSuccess {Number} object.records.id The Device's Id
+     * @apiSuccess {String} object.records.name The Device's name
+     * @apiSuccess {String} object.records.description The Device's description
+     * @apiSuccess {String} object.records.deviceModel The Device's Model
+     *      information
+     * @apiSuccess {Number} object.records.applicationId The Id of the
+     *      Application that this Device belongs to.
+     * @apiVersion 0.1.0
      */
     app.get('/api/devices/:id', [restServer.isLoggedIn,
                                  restServer.fetchCompany,
@@ -103,14 +134,30 @@ exports.initialize = function( app, server ) {
     });
 
     /**
-     * Creates a new device record.
-     * - A user with an admin company can create a device for any company.
-     * - A company admin can create a device for their own company.
-     * - Requires in the json body:
-     *   - name
-     *   - applicationId
-     *   - device Model
-    */
+     * @apiDescription Creates a new device record.
+     *
+     * @api {post} /api/companies Create Device
+     * @apiGroup Devices
+     * @apiPermission System Admin or a Company Admin from the same Company
+     *      as the Device.
+     * @apiHeader {String} Authorization The Create Session's returned token
+     *      prepended with "Bearer "
+     * @apiParam (Request Body) {String} name The Device's name
+     * @apiParam (Request Body) {String} description The Device's description
+     * @apiParam (Request Body) {String} deviceModel The Device's Model
+     *      information
+     * @apiParam (Request Body) {Number} applicationId The Id of the
+     *      Application that this Device belongs to.
+     * @apiExample {json} Example body:
+     *      {
+     *          "name": "GPS for Fido",
+     *          "description": "GPS for Fido, he keeps running away",
+     *          "deviceModel": "Bark 1",
+     *          "applicationId": 1
+     *      }
+     * @apiSuccess {Number} id The new Device's id.
+     * @apiVersion 0.1.0
+     */
     app.post('/api/devices', [restServer.isLoggedIn,
                               restServer.fetchCompany,
                               restServer.isAdmin,
@@ -124,7 +171,7 @@ exports.initialize = function( app, server ) {
         }
 
         // Verify that required fields exist.
-        if ( !rec.name || !rec.applicationId || !rec.deviceModel ) {
+        if ( !rec.name || !rec.description || !rec.applicationId || !rec.deviceModel ) {
              restServer.respond( res, 400, "Missing required data" );
         }
 
@@ -137,6 +184,7 @@ exports.initialize = function( app, server ) {
         else {
             // OK, add it.
             modelAPI.devices.createDevice( rec.name,
+                                           rec.description,
                                            rec.applicationId,
                                            rec.deviceModel ).then( function ( rec ) {
                 var send = {};
@@ -151,10 +199,31 @@ exports.initialize = function( app, server ) {
     });
 
     /**
-     * Updates the device record with the specified id.
-     * - The company Admin can update the device.
-     * - If the caller is with the admin company, they can update any company.
-     * - Only the name,
+     * @apiDescription Updates the device record with the specified id.
+     *
+     * @api {put} /api/devices/:id Update Device
+     * @apiGroup Devices
+     * @apiPermission System Admin, or Company Admin for this Device's Company.
+     * @apiHeader {String} Authorization The Create Session's returned token
+     *      prepended with "Bearer "
+     * @apiParam (URL Parameters) {Number} id The Device's id
+     * @apiParam (Request Body) {String} [name] The Device's name
+     * @apiParam (Request Body) {String} [description] The Device's description
+     * @apiParam (Request Body) {Number} [applicationId] The Id of the
+     *      Application that the Device blongs to.  For a Company Admin user,
+     *      this Appplication must belong to their own Company.
+     * @apiParam (Request Body) {String} [deviceModel] The Device's Model
+     *      information
+     * @apiParam (Request Body) {Number} [applicationId] The Id of the
+     *      Application that this Device belongs to.
+     * @apiExample {json} Example body:
+     *      {
+     *          "name": "GPS for Fido",
+     *          "description": "GPS for Fido, he keeps running away!",
+     *          "deviceModel": "Bark 1",
+     *          "applicationId": 1
+     *      }
+     * @apiVersion 0.1.0
      */
     app.put('/api/devices/:id', [restServer.isLoggedIn,
                                  restServer.fetchCompany,
@@ -176,6 +245,12 @@ exports.initialize = function( app, server ) {
         if ( ( req.body.name ) &&
              ( req.body.name != req.device.name ) ) {
             data.name = req.body.name;
+            ++changed;
+        }
+
+        if ( ( req.body.description ) &&
+             ( req.body.description != req.device.description ) ) {
+            data.description = req.body.description;
             ++changed;
         }
 
@@ -253,9 +328,15 @@ exports.initialize = function( app, server ) {
     });
 
     /**
-     * Deletes the device record with the specified id.
-     * - Only a user with the admin company or the admin of the device's
-     *   company can delete an device.
+     * @apiDescription Deletes the device record with the specified id.
+     *
+     * @api {delete} /api/devices/:id Delete Devices
+     * @apiGroup Devices
+     * @apiPermission System Admin or Company Admin for the Device's Company
+     * @apiHeader {String} Authorization The Create Session's returned token
+     *      prepended with "Bearer "
+     * @apiParam (URL Parameters) {Number} id The Device's id
+     * @apiVersion 0.1.0
      */
     app.delete('/api/devices/:id', [restServer.isLoggedIn,
                                     restServer.fetchCompany,

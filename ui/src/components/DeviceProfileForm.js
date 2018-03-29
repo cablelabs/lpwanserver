@@ -38,7 +38,6 @@ class DeviceProfileForm extends Component {
   }
 
   componentDidMount() {
-      console.log( this.props );
     this.setState({
       deviceProfile: this.props.deviceProfile,
     });
@@ -68,22 +67,21 @@ class DeviceProfileForm extends Component {
 
 
   handleSubmit = async function(e) {
-      e.preventDefault();
-      var me = this;
       try {
+          var me = this;
+          e.preventDefault();
           if ( me.networkTypeLinksComp.onSubmit ) {
-              var ret = await me.networkTypeLinksComp.onSubmit();
-              console.log( "Device Profile Form update returns", ret );
+              await me.networkTypeLinksComp.onSubmit();
           }
           else {
               console.log("No data to update!" );
           }
+
+          me.props.history.push('/applications');
       }
       catch( err ) {
           console.log( "Error updating deviceProfile" , err );
       }
-
-      me.props.history.push('/applications');
   }
 
   componentWillReceiveProps(nextProps) {
@@ -91,7 +89,6 @@ class DeviceProfileForm extends Component {
   }
 
   updatePage(props) {
-      console.log( props );
     this.setState({
       deviceProfile: props.deviceProfile,
       pageNumber: props.page,
@@ -127,14 +124,14 @@ class DeviceProfileForm extends Component {
         <div className="btn-group pull-right">
 
             <div className="btn-group" role="group" aria-label="...">
-              <button type="button" className="btn btn-danger btn-sm" onClick={this.onDelete}>Delete Device Profile
+              <button type="button" className="btn btn-danger btn-sm" onClick={me.onDelete}>Delete Device Profile
               </button>
             </div>
 
         </div>
 
 
-        <form onSubmit={this.handleSubmit}>
+        <form onSubmit={me.handleSubmit}>
             <div className="form-group">
               <label className="control-label" htmlFor="name">Device Profile Name</label>
               <input className="form-control"
@@ -142,13 +139,23 @@ class DeviceProfileForm extends Component {
                      type="text"
                      placeholder="e.g. 'temperature-sensors'"
                      required
-                     value={this.state.deviceProfile.name || ''} onChange={this.onChange.bind(this, 'name')}/>
+                     value={me.state.deviceProfile.name || ''} onChange={me.onChange.bind(me, 'name')}/>
+            </div>
+
+            <div className="form-group">
+              <label className="control-label" htmlFor="description">Device Profile Description</label>
+              <input className="form-control"
+                     id="description"
+                     type="text"
+                     placeholder="e.g. 'IoT-Co LoRa temperature sensors'"
+                     required
+                     value={me.state.deviceProfile.description || ''} onChange={me.onChange.bind(me, 'description')}/>
             </div>
 
             <NetworkSpecificUI
                   ref={ (comp) => { me.networkTypeLinksComp = comp; }}
                   dataName="DeviceProfile"
-                  referenceDataId={this.state.deviceProfile.companyId}
+                  referenceDataId={me.state.deviceProfile.companyId}
                   dataRec={me.state.deviceProfile} />
 
             <hr/>

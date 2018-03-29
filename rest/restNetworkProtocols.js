@@ -11,16 +11,39 @@ exports.initialize = function( app, server ) {
      ********************************************************************
     /**
      * Gets the networkProtocols available
-     * - Can be called by any user.
-     * - If the request includes a limit query parameter, only that number of
-     *   entries are returned.
-     * - If the request includes an offset query parameter, the first offset
-     *   records are skipped in the returned data.
-     * - If the request includes a search query parameter, the networkProtocols
-     *   will be limited to records that match the passed string in either the
-     *   name or protocolType fields.  In the string, use "%" to match 0 or more
-     *   characters and "_" to match exactly one.  So to match names starting
-     *   with "D", use the string "D%".
+     *
+     * @api {get} /api/networkProtocols Get Network Protocols
+     * @apiGroup Network Protocols
+     * @apiDescription Returns an array of the Network Protocols that
+     *      match the options.
+     * @apiPermission All logged-in users.
+     * @apiHeader {String} Authorization The Create Session's returned token
+     *      prepended with "Bearer "
+     * @apiParam (Query Parameters) {Number} [limit] The maximum number of
+     *      records to return.  Use with offset to manage paging.  0 is the
+     *      same as unspecified, returning all users that match other query
+     *      parameters.
+     * @apiParam (Query Parameters) {Number} [offset] The offset into the
+     *      returned database query set.  Use with limit to manage paging.  0 is
+     *      the same as unspecified, returning the list from the beginning.
+     * @apiParam (Query Parameters) {String} [search] Search the Network
+     *      Protocols based on name matches to the passed string.  In the
+     *      string, use "%" to match 0 or more characters and "_" to match
+     *      exactly one.  For example, to match names starting with "D", use
+     *      the string "D%".
+     * @apiSuccess {Object} object
+     * @apiSuccess {Number} object.totalCount The total number of records that
+     *      would have been returned if offset and limit were not specified.
+     *      This allows for calculation of number of "pages" of data.
+     * @apiSuccess {Object[]} object.records An array of Network Protocols
+     *      records.
+     * @apiSuccess {Number} object.records.id The Network Protocol's Id
+     * @apiSuccess {String} object.records.name The name of the Network Protocol
+     * @apiSuccess {String} object.records.protocolHandler The Network Protocol
+     *      node code that communicates with a remote Network.
+     * @apiSuccess {Number} object.records.networkTypeId The id of the Network
+     *      Type that the Network Protocol uses for data input.
+     * @apiVersion 0.1.0
      */
     app.get('/api/networkProtocols', [restServer.isLoggedIn],
                                      function(req, res, next) {
@@ -50,8 +73,22 @@ exports.initialize = function( app, server ) {
     });
 
     /**
-     * Gets the networkProtocol record with the specified id.
-     * - Can be called by any user
+     * @apiDescription Gets the Network Protocol record with the specified id.
+     *
+     * @api {get} /api/networkProtocols/:id Get Network Protocol
+     * @apiGroup Network Protocols
+     * @apiPermission Any logged-in user.
+     * @apiHeader {String} Authorization The Create Session's returned token
+     *      prepended with "Bearer "
+     * @apiParam (URL Parameters) {Number} id The Network Protocol's id
+     * @apiSuccess {Object} object
+     * @apiSuccess {Number} object.id The Network Protocol's Id
+     * @apiSuccess {String} object.name The name of the Network Protocol
+     * @apiSuccess {String} object.protocolHandler The Network Protocol
+     *      node code that communicates with a remote Network.
+     * @apiSuccess {Number} object.networkTypeId The id of the Network
+     *      Type that the Network Protocol uses for data input.
+     * @apiVersion 0.1.0
      */
     app.get('/api/networkProtocols/:id', [restServer.isLoggedIn],
                                          function(req, res, next) {
@@ -66,18 +103,26 @@ exports.initialize = function( app, server ) {
     });
 
     /**
-     * Creates a new networkProtocols record.
-     * - A user with an admin company can create a networkProtocol.
-     * - Requires a name, protocolType, and a protocolHandler.  The name is the
-     *   name of the server type, such as "LoRa Open Source", "MachineQ", the
-     *   protocolType is the type of LPWAN, such as "LoRa", "NB-IoT", etc..  The
-     *   protocolHandler is the name of the file in the handlers directory that
-     *   supports the handler interface.
-     *   in the JSON body.
-     * - {
-     *     "name": "OpenSource LoRa",
-     *     "protocolHandler": "loraOpenSourceProtocolHandler.js"
-     *   }
+     * @apiDescription Creates a new Network Protocols record.
+     *
+     * @api {post} /api/networkProtocols Create Network Protocol
+     * @apiGroup Network Protocols
+     * @apiPermission System Admin
+     * @apiHeader {String} Authorization The Create Session's returned token
+     *      prepended with "Bearer "
+     * @apiParam (Request Body) {String} name The Network Protocol's name
+     * @apiParam (Request Body) {String} protocolHandler The Network Protocol
+     *      node code that communicates with a remote Network.
+     * @apiParam (Request Body) {Number} networkTypeId The Id of the Network
+     *      Type that the Network Protocol accepts as input.
+     * @apiExample {json} Example body:
+     *      {
+     *          "name": "LoRa Open Source",
+     *          "protocolHandler": "LoRaOpenSource.js"
+     *          "networkTypeId": 1
+     *      }
+     * @apiSuccess {Number} id The new Network Protocol's id.
+     * @apiVersion 0.1.0
      */
     app.post('/api/networkProtocols', [restServer.isLoggedIn,
                                        restServer.fetchCompany,
@@ -111,8 +156,27 @@ exports.initialize = function( app, server ) {
     });
 
     /**
-     * Updates the networkProtocol record with the specified id.
-     * - Can only be called by a user who is part of an admin company.
+     * @apiDescription Updates the Network Protocol record with the specified
+     *      id.
+     *
+     * @api {put} /api/networkProtocols/:id Update Network Protocol
+     * @apiGroup Network Protocols
+     * @apiPermission System Admin
+     * @apiHeader {String} Authorization The Create Session's returned token
+     *      prepended with "Bearer "
+     * @apiParam (URL Parameters) {Number} id The Network Protocol's id
+     * @apiParam (Request Body) {String} [name] The Network Protocol's name
+     * @apiParam (Request Body) {String} [protocolHandler] The Network Protocol
+     *      node code that communicates with a remote Network.
+     * @apiParam (Request Body) {Number} [networkTypeId] The Id of the Network
+     *      Type that the Network Protocol accepts as input.
+     * @apiExample {json} Example body:
+     *      {
+     *          "name": "LoRa Open Source",
+     *          "protocolHandler": "LoRaOpenSource.js",
+     *          "networkTypeId": 1
+     *      }
+     * @apiVersion 0.1.0
      */
     app.put('/api/networkProtocols/:id', [restServer.isLoggedIn,
                                           restServer.fetchCompany,
@@ -169,8 +233,16 @@ exports.initialize = function( app, server ) {
     });
 
     /**
-     * Deletes the networkProtocol record with the specified id.
-     * - Only a user with the admin company can delete a networkProtocol.
+     * @apiDescription Deletes the Network Protocol record with the specified
+     *      id.
+     *
+     * @api {delete} /api/networkProtocols/:id Delete Network Protocol
+     * @apiGroup Network Protocols
+     * @apiPermission System Admin
+     * @apiHeader {String} Authorization The Create Session's returned token
+     *      prepended with "Bearer "
+     * @apiParam (URL Parameters) {Number} id The Network Protocol's id
+     * @apiVersion 0.1.0
      */
     app.delete('/api/networkProtocols/:id', [restServer.isLoggedIn,
                                              restServer.fetchCompany,

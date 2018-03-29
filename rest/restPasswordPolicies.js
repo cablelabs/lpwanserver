@@ -10,7 +10,28 @@ exports.initialize = function( app, server ) {
      * Password Policy
      ********************************************************************/
      /**
-      * Gets the password policy record for the company.
+      * @apiDescription Gets the password policy records for the company.  All
+      *         returned records' ruleRegExp fields must "match" an entered
+      *         password for it to be considered valid for the company.
+      *
+      * @api {get} /api/passwordPolicies/company/:companyId
+      *     Get Company Password Policies
+      * @apiGroup Password Policies
+      * @apiPermission Any logged-in user.
+      * @apiHeader {String} Authorization The Create Session's returned token
+      *      prepended with "Bearer "
+      * @apiParam (URL Parameters) {Number} companyId The Company's id for
+      *     which to retrieve the Password Policies.
+      * @apiSuccess {Object[]} object An array of Password Policy records.
+      * @apiSuccess {Number} object.id The Password Policy's Id
+      * @apiSuccess {String} object.ruleText The Password Policy's description,
+      *     intended for display to the end user.
+      * @apiSuccess {String} object.ruleRegExp The Password Policy's
+      *     Javascript regular expression, which must "match" the entered
+      *     password for it to be considered valid.
+      * @apiSuccess {Boolean} [object.global] True indicates a system-wide rule,
+      *     which can only be changed by a System Admin.
+      * @apiVersion 0.1.0
       */
      app.get('/api/passwordPolicies/company/:companyId',
              [restServer.isLoggedIn,
@@ -45,10 +66,25 @@ exports.initialize = function( app, server ) {
      });
 
      /**
-      * Gets the passwordPolicy record with the specified id.
-      * - A company user can see their own passwordPolicy or global
-      * - If the caller is with the admin company, they can get any company's
-      *   passwordPolicy
+      * @apiDescription Gets the Password Policy record with the specified id.
+      *
+      * @api {get} /api/passwordPolicies/:id Get Password Policy
+      * @apiGroup Password Policies
+      * @apiPermission Any logged-in user can get their own company's Password
+      *     Policies or global Password Policies.  System Admin can get any
+      *     Password Policy.
+      * @apiHeader {String} Authorization The Create Session's returned token
+      *      prepended with "Bearer "
+      * @apiParam (URL Parameters) {Number} id The Password Policy's id.
+      * @apiSuccess {Number} id The Password Policy's Id
+      * @apiSuccess {String} ruleText The Password Policy's description,
+      *     intended for display to the end user.
+      * @apiSuccess {String} ruleRegExp The Password Policy's
+      *     Javascript regular expression, which must "match" the entered
+      *     password for it to be considered valid.
+      * @apiSuccess {Number} companyId The company who owns this Password Policy
+      *     or null if a global policy.
+      * @apiVersion 0.1.0
       */
     app.get('/api/passwordPolicies/:id', [restServer.isLoggedIn,
                                           restServer.fetchCompany],
@@ -77,16 +113,34 @@ exports.initialize = function( app, server ) {
     });
 
     /**
-     * Creates a new passwordPolicy record.
-     * - A user with an admin company can create a passwordPolicy for any
-     *   company.
-     * - A company Admin can create a rule for their own company.
-     * - Requires a ruleText, a ruleRegExp, and an optional companyId in the
-     *   JSON body. { "ruleText": "At least one number", "ruleRegExp": "[0-9]" }
-     * - If no companyId is in the rule,
-     *   - an admin company user creates a global rule for all companies
-     *   - a company admin creates a rule for their own company
-     * - Returns the generated id on success.
+     * @apiDescription Creates a new Password Policy record.
+     *
+     * @api {post} /api/passwordPolicies Create Password Policy
+     * @apiGroup Password Policies
+     * @apiPermission System Admin can create a Password Policy for any Company
+     *      or a global Password Policy (no companyId).  A Company Admin can
+     *      create Password Policies for their own company only.
+     * @apiHeader {String} Authorization The Create Session's returned token
+     *      prepended with "Bearer "
+     * @apiParam (Request Body) {String} ruleText The Password Policy's
+     *     description, intended for display to the end user.
+     * @apiParam (Request Body) {String} ruleRegExp The Password Policy's
+     *     Javascript regular expression, which must "match" the entered
+     *     password for it to be considered valid.
+     * @apiParam (Request Body) {Number} [companyId] The id of the company that
+     *      this Password Policy belongs to.  If not supplied, for
+     *      a System Admin, defaults to null (global rule for all
+     *      users/companies).  For Company Admin, defaults to the user's
+     *      companyId.  If specified by a Company Admin, it MUST match their
+     *      own company.
+     * @apiExample {json} Example body:
+     *      {
+     *          "ruleText": "Must contain a digit",
+     *          "ruleRegexp": "[0-9]",
+     *          "companyId": 3
+     *      }
+     * @apiSuccess {Number} id The new Password Policy's id.
+     * @apiVersion 0.1.0
      */
     app.post('/api/passwordPolicies', [restServer.isLoggedIn,
                                        restServer.fetchCompany,
@@ -133,9 +187,28 @@ exports.initialize = function( app, server ) {
     });
 
     /**
-     * Updates the passwordPolicy record with the specified id.
-     * - The company Admin can only update records with their own company's id.
-     * - If the caller is with the admin company, they can update the companyId.
+     * @apiDescription Updates the Password Policy record with the specified id.
+     *
+     * @api {put} /api/passwordPolicies/:id Update Password Policy
+     * @apiGroup Password Policies
+     * @apiPermission System Admin, or Company Admin for the Password Policy's *       Company.
+     * @apiHeader {String} Authorization The Create Session's returned token
+     *      prepended with "Bearer "
+     * @apiParam (URL Parameters) {Number} id The Password Policy's id
+     * @apiParam (Request Body) {String} [ruleText] The Password Policy's
+     *     description, intended for display to the end user.
+     * @apiParam (Request Body) {String} [ruleRegExp] The Password Policy's
+     *     Javascript regular expression, which must "match" the entered
+     *     password for it to be considered valid.
+     * @apiParam (Request Body) {Number} [companyId] The id of the company that
+     *      this Password Policy belongs to.  Can only be specified by a
+     *      System Admin.
+     * @apiExample {json} Example body:
+     *      {
+     *          "ruleText": "Must contain a digit",
+     *          "ruleRegexp": "[0-9]"
+     *      }
+     * @apiVersion 0.1.0
      */
     app.put('/api/passwordPolicies/:id', [restServer.isLoggedIn,
                                           restServer.fetchCompany,
@@ -211,9 +284,17 @@ exports.initialize = function( app, server ) {
     });
 
      /**
-      * Deletes the company record with the specified id.
-      * - Only a user with the admin company or the company's admin can delete
-      *   a passwordPolicy.
+      * @apiDescription Deletes the Password Policy record with the specified
+      *     id.
+      *
+      * @api {delete} /api/passwordPolicies/:id Delete Password Policy
+      * @apiGroup Password Policies
+      * @apiPermission System Admin, or Company Admin for the Password Policy's
+      *     company.
+      * @apiHeader {String} Authorization The Create Session's returned token
+      *      prepended with "Bearer "
+      * @apiParam (URL Parameters) {Number} id The Password Policy's id
+      * @apiVersion 0.1.0
       */
      app.delete('/api/passwordPolicies/:id', [restServer.isLoggedIn,
                                               restServer.fetchCompany,

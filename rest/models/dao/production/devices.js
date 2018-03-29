@@ -15,14 +15,17 @@ var httpError = require( 'http-errors' );
 // Create the device record.
 //
 // name                - the name of the device
+// description         - a description of the device
+// deviceModel         - model information for the device
 // applicationId       - the id of the Application this device belongs to
 //
 // Returns the promise that will execute the create.
-exports.createDevice = function( name, applicationId, deviceModel ) {
+exports.createDevice = function( name, description, applicationId, deviceModel ) {
     return new Promise( function( resolve, reject ) {
         // Create the user record.
         var device = {};
         device.name = name;
+        device.description = description;
         device.applicationId = applicationId;
         device.deviceModel = deviceModel;
 

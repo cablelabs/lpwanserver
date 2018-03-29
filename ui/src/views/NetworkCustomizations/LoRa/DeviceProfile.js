@@ -16,6 +16,7 @@ class LoRaDeviceProfileNetworkSettings extends Component {
             wasEnabled: false,
             value: {},
             original: {},
+            originalParentRec: JSON.stringify( props.parentRec ),
             rec: null,
         };
 
@@ -125,9 +126,8 @@ class LoRaDeviceProfileNetworkSettings extends Component {
 
     // Not an onSubmit for the framework, but called from the parent component
     // when the submit happens.  Do what need to be done for this networkType.
-    onSubmit = async function( name ) {
-        var ret = this.props.name + " is unchanged.";
-
+    onSubmit = async function() {
+        var ret = this.props.parentRec.name + " is unchanged.";
         // The factoryPresetFreqsStr field should actually be an array.
         // We will convert it over prior to the store.
         if ( this.state.value &&
@@ -147,16 +147,18 @@ class LoRaDeviceProfileNetworkSettings extends Component {
                 if ( !this.state.wasEnabled ) {
                     ret = await deviceStore.createDeviceProfile(
                                     this.props.parentRec.name,
+                                    this.props.parentRec.description,
                                     this.props.parentRec.companyId,
                                     this.props.netRec.id,
                                     this.state.value );
                     console.log( "CREATE: ", ret );
                 }
                 // ...and we had an old record with a data change: UPDATE
-                else if ( JSON.stringify( this.state.value ) !== this.state.original ) {
+                else if ( this.isChanged() ) {
                     var updRec = {
                         id: this.props.parentRec.id,
                         name: this.props.parentRec.name,
+                        description: this.props.parentRec.description,
                         companyId: this.props.parentRec.companyId,
                         networkTypeId: this.props.netRec.id,
                         networkSettings: this.state.value
@@ -180,8 +182,12 @@ class LoRaDeviceProfileNetworkSettings extends Component {
     }
 
     isChanged() {
+        // This is a little unusual - deviceProfiles don't follow the model of
+        // a parent record and a network record - it's all one.  So we have to
+        // check if the props changed as well.
         if ( ( this.state.enabled !== this.state.wasEnabled ) ||
-             ( JSON.stringify( this.state.value ) !== this.state.original ) ) {
+             ( JSON.stringify( this.state.value ) !== this.state.original ) ||
+             ( JSON.stringify( this.props.parentRec )!== this.state.originalParentRec ) ) {
                  return true;
         }
         else {

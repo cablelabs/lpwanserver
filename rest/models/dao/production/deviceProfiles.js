@@ -23,16 +23,18 @@ var httpError = require( 'http-errors' );
 // deviceId          - The id for the device this link is being created for
 // networkTypeId     - The id for the network the device is linked to
 // name              - The display name for the profile.
+// description       - The description for the profile
 // networkSettings   - The settings required by the network protocol in json
 //                     format
 // Returns the promise that will execute the create.
-exports.createDeviceProfile = function( networkTypeId, companyId, name, networkSettings ) {
+exports.createDeviceProfile = function( networkTypeId, companyId, name, description, networkSettings ) {
     return new Promise( function( resolve, reject ) {
         // Create the link record.
         var profile = {};
         profile.networkTypeId = networkTypeId;
         profile.companyId = companyId;
         profile.name = name;
+        profile.description = description;
         profile.networkSettings = JSON.stringify( networkSettings );
 
         // OK, save it!

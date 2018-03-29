@@ -64,6 +64,7 @@ describe( "Devices", function() {
             .set('Content-Type', 'application/json')
             .send( { "applicationId": 1,
                      "name": "MGPQD001",
+                     "description": "My Get Poor Quick Device 001",
                      "deviceModel": "Mark1" } )
             .end(function(err, res){
                 res.should.have.status(403);
@@ -78,6 +79,7 @@ describe( "Devices", function() {
             .set('Content-Type', 'application/json')
             .send( { "applicationId": 1,
                      "name": "MGRQD002",
+                     "description": "My Get Rich Quick Device 002",
                      "deviceModel": "Mark1" } )
             .end(function(err, res){
                 res.should.have.status(200);
@@ -95,6 +97,7 @@ describe( "Devices", function() {
             .set('Content-Type', 'application/json')
             .send({ "applicationId": 1,
                      "name": "MGRQD003",
+                     "description": "My Get Rich Quick Device 003",
                      "deviceModel": "Mark2" } )
             .end(function(err, res){
                 res.should.have.status(200);
@@ -114,6 +117,7 @@ describe( "Devices", function() {
                 res.should.have.status(200);
                 var devObj = JSON.parse( res.text );
                 devObj.name.should.equal( "MGRQD002" );
+                devObj.description.should.equal( "My Get Rich Quick Device 002" );
                 devObj.deviceModel.should.equal( "Mark1" );
                 done();
             });

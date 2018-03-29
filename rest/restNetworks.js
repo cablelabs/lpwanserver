@@ -11,24 +11,55 @@ exports.initialize = function( app, server ) {
      ********************************************************************
     /**
      * Gets the networks available
-     * - Can be called by any user.
-     * - If the request includes a limit query parameter, only that number of
-     *   entries are returned.
-     * - If the request includes an offset query parameter, the first offset records
-     *   are skipped in the returned data.
-     * - If the request includes a search query parameter, the networks
-     *   will be limited to records that match the passed string in the name
-     *   field.  In the string, use "%" to match 0 or more characters and "_" to
-     *   match exactly one.  So to match names starting with "D", use the string
-     *   "D%".
-     * - If request includes a networkProviderId query parameter, the returned
-     *   networks will only be ones that use that networkProvider.
-     * - If request includes a networkTypeId query parameter, the returned
-     *   networks will only be ones that use that networkType.
-     * - If request includes a networkProtocolId query parameter, the returned
-     *   networks will only be ones that use that networkProtocol.
+     *
+     * @api {get} /api/networks Get Networks
+     * @apiGroup Networks
+     * @apiDescription Returns an array of the Networks that match the
+     *      options.
+     * @apiPermission Any logged-in user, but only System Admins receive the
+     *      networkSecurity field(s).
+     * @apiHeader {String} Authorization The Create Session's returned token
+     *      prepended with "Bearer "
+     * @apiParam (Query Parameters) {Number} [limit] The maximum number of
+     *      records to return.  Use with offset to manage paging.  0 is the
+     *      same as unspecified, returning all users that match other query
+     *      parameters.
+     * @apiParam (Query Parameters) {Number} [offset] The offset into the
+     *      returned database query set.  Use with limit to manage paging.  0 is
+     *      the same as unspecified, returning the list from the beginning.
+     * @apiParam (Query Parameters) {String} [search] Search the Networks
+     *      based on name matches to the passed string.  In the string, use "%"
+     *      to match 0 or more characters and "_" to match exactly one.  For
+     *      example, to match names starting with "D", use the string "D%".
+     * @apiParam (Query Parameters) {Number} [networkProviderId] Limit the
+     *      Networks to those being provided by the Network Provider.
+     * @apiParam (Query Parameters) {Number} [networkTypeId] Limit the
+     *      Networks to those that support the Network Type.
+     * @apiParam (Query Parameters) {Number} [networkProtocolId] Limit the
+     *      Networks to those that use the Network Protocol.
+     * @apiSuccess {Object} object
+     * @apiSuccess {Number} object.totalCount The total number of records that
+     *      would have been returned if offset and limit were not specified.
+     *      This allows for calculation of number of "pages" of data.
+     * @apiSuccess {Object[]} object.records An array of Network records.
+     * @apiSuccess {Number} object.records.id The Network's Id
+     * @apiSuccess {String} object.records.name The Network's name
+     * @apiSuccess {Number} object.records.networkProviderId The Id of the
+     *      Network Provider that provides the Network.
+     * @apiSuccess {Number} object.records.networkTypeId The Id of the
+     *      Network Type that the Network uses.
+     * @apiSuccess {Number} object.records.networkProtocolId The Id of the
+     *      Network Protocol that the Network uses.
+     * @apiSuccess {String} object.records.baseUrl The base URL used by the
+     *      Network Protocol to reach the Network's API server.
+     * @apiSuccess {Number} object.records.securityData The data used to grant
+     *      secure access to the Network's server API.  (Only returned to
+     *      System Admins.)
+     * @apiVersion 0.1.0
      */
-    app.get('/api/networks', [restServer.isLoggedIn], function(req, res, next) {
+    app.get('/api/networks', [ restServer.isLoggedIn,
+                               restServer.fetchCompany ],
+                             function(req, res, next) {
         var options = {};
         if ( req.query.limit ) {
             var limitInt = parseInt( req.query.limit );
@@ -55,6 +86,12 @@ exports.initialize = function( app, server ) {
             options.networkProtocolId = req.query.networkProtocolId;
         }
         modelAPI.networks.retrieveNetworks( options ).then( function( networks ) {
+            // Remove sensitive data for non-admin users.
+            if ( req.company.type != modelAPI.companies.COMPANY_ADMIN ) {
+                for ( var i = 0; i < networks.records.length; ++i ) {
+                    delete networks.records[ i ].securityData;
+                }
+            }
             restServer.respondJson( res, null, networks );
         })
         .catch( function( err ) {
@@ -64,13 +101,41 @@ exports.initialize = function( app, server ) {
     });
 
     /**
-     * Gets the network record with the specified id.
-     * - Can be called by any user
+     * @apiDescription Gets the Network record with the specified id.
+     *
+     * @api {get} /api/networks/:id Get Network
+     * @apiGroup Networks
+     * @apiPermission Any logged-in user, but only System Admins receive the
+     *      networkSecurity field.
+     * @apiHeader {String} Authorization The Create Session's returned token
+     *      prepended with "Bearer "
+     * @apiParam (URL Parameters) {Number} id The Network's id
+     * @apiSuccess {Object} object
+     * @apiSuccess {Number} object.id The Network's Id
+     * @apiSuccess {String} object.name The Network's name
+     * @apiSuccess {Number} object.networkProviderId The Id of the
+     *      Network Provider that provides the Network.
+     * @apiSuccess {Number} object.networkTypeId The Id of the
+     *      Network Type that the Network uses.
+     * @apiSuccess {Number} object.networkProtocolId The Id of the
+     *      Network Protocol that the Network uses.
+     * @apiSuccess {String} object.baseUrl The base URL used by the
+     *      Network Protocol to reach the Network's API server.
+     * @apiSuccess {Number} object.securityData The data used to grant
+     *      secure access to the Network's server API. (Only returned to System
+     *      Admins.)
+     * @apiVersion 0.1.0
      */
-    app.get('/api/networks/:id', [restServer.isLoggedIn], function(req, res, next) {
+    app.get('/api/networks/:id', [ restServer.isLoggedIn,
+                                   restServer.fetchCompany ],
+                                 function(req, res, next) {
         var id = parseInt( req.params.id );
-        modelAPI.networks.retrieveNetwork( id ).then( function( np ) {
-            restServer.respondJson( res, null, np );
+        modelAPI.networks.retrieveNetwork( id ).then( function( network ) {
+            // Remove sensitive data for non-admin users.
+            if ( req.company.type != modelAPI.companies.COMPANY_ADMIN ) {
+                delete network.securityData;
+            }
+            restServer.respondJson( res, null, network );
         })
         .catch( function( err ) {
             appLogger.log( "Error getting network " + id + ": " + err );
@@ -79,20 +144,39 @@ exports.initialize = function( app, server ) {
     });
 
     /**
-     * Creates a new networks record.
-     * - A user with an admin company can create a network.
-     * - Requires a name, networkProtocolId (how to talk to the network),
-     *   baseUrl (to the network's API protocol interface), and optional
-     *   securityData (used by the protocol to gain access to the server).
-     *   in the JSON body.  DJS:  Added Service Profile to contain the Region
-     * - {
-     *     "name": "CableLabs Open Source LoRa",
-     *     "networkProviderId": 3,
-     *     "networkTypeId": 2,
-     *     "networkProtocolId": 4,
-     *     "baseUrl": "https://sensornet.cablelabs.com:5089",
-     *     "securityData": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiamNhbXBhbmVsbCIsImlhdCI6MTUwNDcyMTI0NywiZXhwIjoxNTA0NzY0NDQ3LCJpc3MiOiJscHdhbCJ9.LFUZRsx26bsYEn3S2cCmknWP8UhQ019dz9Ypv5EIDo8"
-     *   }
+     * @apiDescription Creates a new Network record.
+     *
+     * @api {post} /api/networks Create Network
+     * @apiGroup Networks
+     * @apiPermission System Admin.
+     * @apiHeader {String} Authorization The Create Session's returned token
+     *      prepended with "Bearer "
+     * @apiParam (Request Body)  {String} name The Network's name
+     * @apiParam (Request Body)  {Number} networkProviderId The Id of the
+     *      Network Provider that provides the Network.
+     * @apiParam (Request Body)  {Number} networkTypeId The Id of the
+     *      Network Type that the Network uses.
+     * @apiParam (Request Body)  {Number} networkProtocolId The Id of the
+     *      Network Protocol that the Network uses.
+     * @apiParam (Request Body) {String} baseUrl The base URL used by the
+     *      Network Protocol to reach the Network's API server.
+     * @apiParam (Request Body)  {Number} securityData The data used to grant
+     *      secure access to the Network's server API.  This data is defined by
+     *      the Network Type.
+     * @apiExample {json} Example body:
+     *      {
+     *          "name": "Kyrio LoRa Server",
+     *          "networkProviderId": 1,
+     *          "networkTypeId": 1,
+     *          "networkProtocolId": 2,
+     *          "baseUrl": "https://lora.kyrio.com/api"
+     *          "securityData": {
+     *                              "username": "admin",
+     *                              "password": "somesecretpassword"
+     *                          }
+     *      }
+     * @apiSuccess {Number} id The new Network's id.
+     * @apiVersion 0.1.0
      */
     app.post('/api/networks', [restServer.isLoggedIn,
                                restServer.fetchCompany,
@@ -134,8 +218,38 @@ exports.initialize = function( app, server ) {
     });
 
     /**
-     * Updates the network record with the specified id.
-     * - Can only be called by a user who is part of an admin company.
+     * @apiDescription Updates the Network record with the specified id.
+     *
+     * @api {put} /api/networks/:id Update Network
+     * @apiGroup Networks
+     * @apiPermission System Admin
+     * @apiHeader {String} Authorization The Create Session's returned token
+     *      prepended with "Bearer "
+     * @apiParam (URL Parameters) {Number} id The Network's id
+     * @apiParam (Request Body)  {String} [name] The Network's name
+     * @apiParam (Request Body)  {Number} [networkProviderId] The Id of the
+     *      Network Provider that provides the Network.
+     * @apiParam (Request Body)  {Number} [networkTypeId] The Id of the
+     *      Network Type that the Network uses.
+     * @apiParam (Request Body)  {Number} [networkProtocolId] The Id of the
+     *      Network Protocol that the Network uses.
+     * @apiParam (Request Body) {String} [baseUrl] The base URL used by the
+     *      Network Protocol to reach the Network's API server.
+     * @apiParam (Request Body)  {Number} [securityData] The data used to grant
+     *      secure access to the Network's server API.  This data is defined by
+     *      the Network Type.
+     * @apiExample {json} Example body:
+     *      {
+     *          "name": "Kyrio LoRa Server",
+     *          "networkProviderId": 1,
+     *          "networkTypeId": 1,
+     *          "networkProtocolId": 2,
+     *          "baseUrl": "https://lora.kyrio.com/api"
+     *          "securityData": {
+     *                              "username": "admin",
+     *                              "password": "somesecretpassword"
+     *                          }
+     *      }
      */
     app.put('/api/networks/:id', [restServer.isLoggedIn,
                                   restServer.fetchCompany,
@@ -210,8 +324,15 @@ exports.initialize = function( app, server ) {
     });
 
     /**
-     * Deletes the network record with the specified id.
-     * - Only a user with the admin company can delete a network.
+     * @apiDescription Deletes the Network record with the specified id.
+     *
+     * @api {delete} /api/networks/:id Delete Network
+     * @apiGroup Networks
+     * @apiPermission System Admin
+     * @apiHeader {String} Authorization The Create Session's returned token
+     *      prepended with "Bearer "
+     * @apiParam (URL Parameters) {Number} id The Network's id
+     * @apiVersion 0.1.0
      */
     app.delete('/api/networks/:id', [restServer.isLoggedIn,
                                      restServer.fetchCompany,

@@ -25,6 +25,42 @@ exports.initialize = function( app, server ) {
      *   limited to matches of the passed string.  In the string, use "%" to
      *   match 0 or more characters and "_" to match exactly one.  So to match
      *   usernames starting with "d", use the string "d%".
+     *
+     * @api {get} /api/users Get Users
+     * @apiGroup Users
+     * @apiDescription Returns an array of the Users that match the options.
+     * @apiPermission System Admin accesses all Users, Company Admin access
+     *       only their own Company's Users.
+     * @apiHeader {String} Authorization The Create Session's returned token
+     *      prepended with "Bearer "
+     * @apiParam (Query Parameters) {Number} [limit] The maximum number of
+     *      records to return.  Use with offset to manage paging.  0 is the
+     *      same as unspecified, returning all users that match other query
+     *      parameters.
+     * @apiParam (Query Parameters) {Number} [offset] The offset into the
+     *      returned database query set.  Use with limit to manage paging.  0 is
+     *      the same as unspecified, returning the list from the beginning.
+     * @apiParam (Query Parameters) {String} [search] Search the Users
+     *      based on username matches to the passed string.  In the string, use
+     *      "%" to match 0 or more characters and "_" to match exactly one.  For
+     *      example, to match names starting with "D", use the string "D%".
+     * @apiParam (Query Parameters) {Number} [companyId] Limit the Users to
+     *      those belonging to the Company.
+     * @apiSuccess {Object} object
+     * @apiSuccess {Number} object.totalCount The total number of records that
+     *      would have been returned if offset and limit were not specified.
+     *      This allows for calculation of number of "pages" of data.
+     * @apiSuccess {Object[]} object.records An array of User records.
+     * @apiSuccess {Number} object.records.id The User's Id
+     * @apiSuccess {String} object.records.username The User's username
+     * @apiSuccess {String} object.records.email The User's email
+     * @apiSuccess {Boolean} object.records.emailVerified Is the user's email
+     *      verified?
+     * @apiSuccess {String=admin,user} object.records.role The User's role in
+     *      the system.
+     * @apiSuccess {Number} object.records.companyId The Id of the Company
+     *      that the User belongs to.
+     * @apiVersion 0.1.0
      */
     app.get('/api/users', [restServer.isLoggedIn,
                            restServer.fetchCompany,
@@ -73,8 +109,25 @@ exports.initialize = function( app, server ) {
     });
 
     /**
-     * Gets the user record for the logged in user.  Note, this needs to be
-     * declared
+     * @apiDescription Gets the User record for the logged-in user based on the
+     *      Authorization header.
+     *
+     * @api {get} /api/users/me Get User "Me"
+     * @apiGroup Users
+     * @apiPermission Any logged-in user.
+     * @apiHeader {String} Authorization The Create Session's returned token
+     *      prepended with "Bearer "
+     * @apiSuccess {Object} object The User record
+     * @apiSuccess {Number} object.id The User's Id
+     * @apiSuccess {String} object.username The User's username
+     * @apiSuccess {String} object.email The User's email
+     * @apiSuccess {Boolean} object.emailVerified Is the user's email
+     *      verified?
+     * @apiSuccess {String=admin,user} object.role The User's role in
+     *      the system.
+     * @apiSuccess {Number} object.companyId The Id of the Company
+     *      that the User belongs to.
+     * @apiVersion 0.1.0
      */
     app.get('/api/users/me', [restServer.isLoggedIn], function(req, res, next) {
         // We could clone the object so we don't change the original in the
@@ -87,12 +140,27 @@ exports.initialize = function( app, server ) {
         restServer.respondJson( res, null, req.user );
     });
 
-    /**
-     * Gets the user record with the specified id.
-     * - The user can get themselves
-     * - The company Admin can get users for the company.
-     * - If the caller is with the admin company, they can get any user
-     */
+     /**
+      * @apiDescription  Gets the User record with the specified id.
+      *
+      * @api {get} /api/users/:id Get User
+      * @apiGroup Users
+      * @apiPermission Any logged-in user.  System Admin's
+      * @apiHeader {String} Authorization The Create Session's returned token
+      *      prepended with "Bearer "
+      * @apiParam (URL Parameters) {Number} id The User's id
+      * @apiSuccess {Object} object The User record
+      * @apiSuccess {Number} object.id The User's Id
+      * @apiSuccess {String} object.username The User's username
+      * @apiSuccess {String} object.email The User's email
+      * @apiSuccess {Boolean} object.emailVerified Is the user's email
+      *      verified?
+      * @apiSuccess {String=admin,user} object.role The User's role in
+      *      the system.
+      * @apiSuccess {Number} object.companyId The Id of the Company
+      *      that the User belongs to.
+      * @apiVersion 0.1.0
+      */
     app.get('/api/users/:id', [restServer.isLoggedIn, restServer.fetchCompany], function(req, res, next) {
         modelAPI.users.retrieveUser( parseInt( req.params.id ) ).then( function( user ) {
             if ( ( req.company.type != modelAPI.companies.COMPANY_ADMIN ) &&
@@ -114,13 +182,30 @@ exports.initialize = function( app, server ) {
     });
 
     /**
-     * Creates a new user record.
-     * - The company Admin can create users for the company.
-     * - If the caller is with the admin company, they can create a user for any
-     *   company.
-     * - Only the username, password, email, role, or companyId can be updated
-     *   - companyId can only be updated by a member of an admin company.
-     *   - role can only be updated by company admin.
+     * @apiDescription Creates a new User record.
+     *
+     * @api {post} /api/users Create User
+     * @apiGroup Users
+     * @apiPermission System Admin, or Company Admin can create new Users for
+     *      their own Company.
+     * @apiHeader {String} Authorization The Create Session's returned token
+     *      prepended with "Bearer "
+     * @apiParam (Request Body) {String} username The User's username
+     * @apiParam (Request Body) {String} [email] The User's email (required for
+     *      Admin users)
+     * @apiParam (Request Body) {String=admin,user} role The User's role
+     *      in the system.
+     * @apiParam (Request Body) {Number} companyId The Id of the Company
+     *      that the User belongs to.
+     * @apiExample {json} Example body:
+     *      {
+     *          "username": "jetson",
+     *          "email": "g.jetson@spacelysprockets.com",
+     *          "role": "user",
+     *          "companyId": 3
+     *      }
+     * @apiSuccess {Number} id The new User's id.
+     * @apiVersion 0.1.0
      */
     app.post('/api/users', [restServer.isLoggedIn,
                             restServer.fetchCompany,
@@ -185,13 +270,30 @@ exports.initialize = function( app, server ) {
     });
 
     /**
-     * Updates the user record with the specified id.
-     * - The user can update themselves
-     * - The company Admin can update users for the company.
-     * - If the caller is with the admin company, they can update any user.
-     * - Only the username, password, email, role, or companyId can be updated
-     *   - companyId can only be updated by a member of an admin company.
-     *   - role can only be updated by company admin.
+     * @apiDescription Updates the User record with the specified id.
+     *
+     * @api {put} /api/users/:id Update User
+     * @apiGroup Users
+     * @apiPermission System Admin, or Company Admin for this Company (cannot
+     *      change companyId), or any logged-in User on their own record (cannot
+     *      change companyId or role).
+     * @apiHeader {String} Authorization The Create Session's returned token
+     *      prepended with "Bearer "
+     * @apiParam (URL Parameters) {Number} id The User's id
+     * @apiParam (Request Body) {String} [username] The User's username
+     * @apiParam (Request Body) {String} [email] The User's email
+     * @apiParam (Request Body) {String=admin,user} [role] The User's role
+     *      in the system. (System or Company Admin only)
+     * @apiParam (Request Body) {Number} [companyId] The Id of the Company
+     *      that the User belongs to. (System Admin only)
+     * @apiExample {json} Example body:
+     *      {
+     *          "username": "jetson",
+     *          "email": "g.jetson@cogswellcogs.com",
+     *          "role": "user",
+     *          "companyId": 4
+     *      }
+     * @apiVersion 0.1.0
      */
     app.put('/api/users/:id', [restServer.isLoggedIn,
                                restServer.fetchCompany],
@@ -279,7 +381,7 @@ exports.initialize = function( app, server ) {
                 }
             }
 
-            // Ready.  DO we have anything to actually change?
+            // Ready.  Do we have anything to actually change?
             if ( 0 == changed ) {
                 // No changes.  But returning 304 apparently causes Apache to strip
                 // CORS info, causing the browser to throw a fit.  So just say,
@@ -303,10 +405,16 @@ exports.initialize = function( app, server ) {
     });
 
     /**
-     * Deletes the user record with the specified id.
-     * - The user cannot delete themselves
-     * - The company Admin can delete users for the company.
-     * - If the caller is with the admin company, they can delete any user.
+     * @apiDescription Deletes the User record with the specified id.
+     *
+     * @api {delete} /api/applications/:id Delete User
+     * @apiGroup Users
+     * @apiPermission System Admin, or Company Admin for this company, though
+     *      the caller cannot delete their own record.
+     * @apiHeader {String} Authorization The Create Session's returned token
+     *      prepended with "Bearer "
+     * @apiParam (URL Parameters) {Number} id The User's id
+     * @apiVersion 0.1.0
      */
     app.delete('/api/users/:id', [restServer.isLoggedIn,
                                   restServer.fetchCompany,
@@ -359,11 +467,17 @@ exports.initialize = function( app, server ) {
     });
 
     /**
-     * Updates the user's email associated with an accept/reject email
-     * - No login required
-     * - UUID is passed to the user via an email link
-     * - "accept" or "reject" function MUST be specified
-     * - Returns 204 (success) or 404 (UUID not known) or 400 (bad request)
+     * @apiDescription Verifies/rejects a user's email change
+     *
+     * @api {put} /api/users/verifyEmail/:uuid Verify User Email
+     * @apiGroup Users
+     * @apiPermission Any
+     * @apiParam (URL Parameters) {UUID} uuid The UUID supplied via email to the
+     *      email address.
+     * @apiParam (Query Parameters) {String=accept,reject} function The action
+     *      to take on the requested email change
+     * @apiParam (Query Parameters) {String} source Where the email verification
+     *      originated.
      */
     app.put("/api/users/verifyEmail/:uuid", function(req, res, next) {
         var uuid = req.params.uuid;

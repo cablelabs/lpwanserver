@@ -16,6 +16,7 @@ class CreateDeviceProfile extends Component {
     this.state = {
       deviceProfile: {
         name: "",
+        description: "",
         companyId: sessionStore.getUser().companyId,
       },
     };
@@ -31,7 +32,7 @@ class CreateDeviceProfile extends Component {
 
     try {
         if ( me.networkTypeLinksComp.onSubmit ) {
-            var ret = await me.networkTypeLinksComp.onSubmit( this.state.deviceProfile.name );
+            var ret = await me.networkTypeLinksComp.onSubmit( );
             console.log( "CreateDeviceProfile returns", ret );
         }
         else {
@@ -80,6 +81,12 @@ class CreateDeviceProfile extends Component {
                 <label className="control-label" htmlFor="name">Device Profile Name</label>
                 <input className="form-control" id="name" type="text" placeholder="e.g. 'temperature-sensors'" required value={this.state.deviceProfile.name || ''}
                        onChange={this.onChange.bind(this, 'name')}/>
+              </div>
+
+              <div className="form-group">
+                <label className="control-label" htmlFor="description">Device Profile Description</label>
+                <input className="form-control" id="description" type="text" placeholder="e.g. 'IoT-Co LoRa temperature sensors'" required value={this.state.deviceProfile.description || ''}
+                       onChange={this.onChange.bind(this, 'description')}/>
               </div>
 
               <NetworkSpecificUI
