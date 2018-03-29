@@ -207,10 +207,10 @@ CompanyNetworkTypeLink.prototype.pullCompanyNetworkTypeLink = function( networkT
                     appLogger.log(application.name + ' already exists');
                 }
                 else {
-                    appLogger.log('creating ' + application.name);
+                    appLogger.log('creating ' + JSON.stringify(application));
                     let coIndex = nsCoId.indexOf(application.organizationID);
-                    appLogger.log(application.name, localCoId[coIndex], 1, 'https://locahost:8888')
-                    existingApplication = await modelAPI.applications.createApplication(application.name, application.description, localCoId[coIndex], 1, 'https://locahost:8888');
+                    appLogger.log(application.name, application.description, localCoId[coIndex], 1, 'https://locahost:8888')
+                    existingApplication = await modelAPI.applications.createApplication(application.name, application.description, localCoId[coIndex], 1, 'http://set.me.to.your.real.url:8888');
                     localAppId.push(existingApplication.id);
                 }
                 //see if it exists first
