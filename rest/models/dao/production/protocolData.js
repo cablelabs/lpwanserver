@@ -1,6 +1,9 @@
 // Database implementation.
 var db = require( "../../../lib/dbsqlite.js" );
 
+// Logging
+var appLogger = require( '../../../lib/appLogger.js' );
+
 // Error reporting
 var httpError = require( 'http-errors' );
 
@@ -161,6 +164,34 @@ exports.clearProtocolData = function( networkId, networkProtocolId, keyStartsWit
             }
             else {
                 resolve();
+            }
+        });
+    });
+}
+
+// Retrieve the protocolData records with keys that start with the passed string
+// and have the passed data.
+//
+// networkId     - the record id of the network this data is stored for.
+// networkTypeId - the record id of the networkType this data is stored for.
+// key           - The key for the specific data item.
+//
+// Returns a promise that performs the delete.
+exports.reverseLookupProtocolData = function( networkId, keyLike, data ) {
+    return new Promise( function ( resolve, reject ) {
+        var sql = "select * from protocolData where networkId = " +
+                  db.sqlValue( networkId ) +
+                  " and dataIdentifier like \"" +
+                  keyLike +
+                  "\" and dataValue = "
+                  + db.sqlValue( data );
+
+        db.select(sql, function ( err, rows ) {
+            if ( err ) {
+                reject( err );
+            }
+            else {
+                resolve( rows );
             }
         });
     });

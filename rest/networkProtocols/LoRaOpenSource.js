@@ -1343,6 +1343,68 @@ exports.stopApplication = function( sessionData, network, applicationId, dataAPI
     });
 };
 
+// Post the data to the remote application server.
+//
+// networkId     - The network's id that the data is coming from.
+// applicationId - The local application's id.
+// data          - The data sent.
+//
+// Redirects the data to the application's server.  Uses the data from the
+// remote network to look up the device to include that data as well.
+exports.passDataToApplication = function( network, applicationId, data, dataAPI ) {
+    return new Promise( async function( resolve, reject ) {
+        // Get the reporting API, reject data if not running.
+        var reportingAPI = activeApplicationNetworkProtocols[ "" + applicationId + ":" + network.id ];
+
+        if ( !reportingAPI ) {
+            appLogger.log( "Rejecting received data from networkId " + network.id +
+                           " for applicationId " + applicationId +
+                           ". The appliction is not in a running state.  Data = " +
+                           JSON.stringify( data ) );
+            reject( "Application not running" );
+            return;
+        }
+
+        // This is a stand-alone call, so we'll generate our own data API to access
+        // the protocolData.
+        // Look up the DevEUI to get the deviceId to pass to the reportingAPI.
+        try {
+            var deviceId;
+            if ( data.devEUI ) {
+                var recs = await dataAPI.getProtocolDataWithData(
+                                           network.id,
+                                           'dev:%/devNwkId',
+                                           data.devEUI );
+                if ( recs && ( 0 < recs.length ) ) {
+                    let splitOnSlash = recs[ 0 ].dataIdentifier.split( "/" );
+                    let splitOnColon = splitOnSlash[0].split( ":" );
+                    deviceId = parseInt( splitOnColon[ 1 ] );
+
+                    let device = await dataAPI.getDeviceById( deviceId );
+                    data.deviceInfo = {};
+                    data.deviceInfo.name = device.name;
+                    data.deviceInfo.description = device.description;
+                    data.deviceInfo.model = device.deviceModel;
+                }
+            }
+
+            let app = await dataAPI.getApplicationById( applicationId );
+
+            data.applicationInfo = {};
+            data.applicationInfo.name = app.name;
+
+            data.networkInfo = {};
+            data.networkInfo.name = network.name;
+
+            await reportingAPI.report( data, app.baseUrl, app.name );
+        }
+        catch( err ) {
+            reject( err );
+        }
+
+        resolve();
+    });
+}
 
 //******************************************************************************
 // CRUD deviceProfiles.

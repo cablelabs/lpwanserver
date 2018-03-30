@@ -460,6 +460,13 @@ NetworkProtocolDataAccess.prototype.deleteProtocolDataForKey = function(
    return modelAPI.protocolData.clearProtocolData( networkId, networkProtocolId, keyStartsWith );
 }
 
+NetworkProtocolDataAccess.prototype.getProtocolDataWithData = function(
+                               networkId,
+                               keyLike,
+                               data ) {
+   return modelAPI.protocolData.reverseLookupProtocolData( networkId, keyLike, data );
+}
+
 NetworkProtocolDataAccess.prototype.access = function( network, data, k ) {
     var parts = data.split( delimiter );
     var vec = Buffer.from( parts[ 0 ], 'base64' );

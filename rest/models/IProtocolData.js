@@ -34,4 +34,8 @@ ProtocolData.prototype.clearProtocolData = function( networkId, networkProtocolI
     return this.impl.clearProtocolData( networkId, networkProtocolId, keyStartsWith );
 }
 
+ProtocolData.prototype.reverseLookupProtocolData = function( networkId, keyLike, data ) {
+    return this.impl.reverseLookupProtocolData( networkId, keyLike, data );
+}
+
 module.exports = ProtocolData;

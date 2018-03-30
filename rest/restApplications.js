@@ -508,8 +508,9 @@ exports.initialize = function( app, server ) {
         appLogger.log( "Received data from network " + networkId +
                        " for application " + applicationId +
                        ": " + JSON.stringify( data ) );
-
-        modelAPI.applications.passDataToApplication( applicationId, networkId, data ).then( function( ) {
+                       
+        modelAPI.applications.passDataToApplication( applicationId, networkId,
+            data ).then( function( ) {
                  restServer.respond( res, 200 );
         })
         .catch( function( err ) {

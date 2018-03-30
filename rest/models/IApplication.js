@@ -3,6 +3,8 @@ var nconf = require('nconf');
 
 // General libraries in use in this module.
 var appLogger = require( '../lib/appLogger.js' );
+// Used in getting data for the reportingProtocols
+var NetworkProtocolDataAccess = require( '../networkProtocols/networkProtocolDataAccess.js' );
 
 var modelAPI;
 var expressApp;
@@ -271,9 +273,10 @@ Application.prototype.passDataToApplication = function( applicationId, networkId
     var me = this;
     return new Promise( async function( resolve, reject ) {
         try {
-            var application = await modelAPI.applications.retrieveApplication( applicationId );
-            var proto = await modelAPI.reportingProtocolAPIs.getProtocol( application );
-            await proto.report( data, application.baseUrl, application.name );
+            var network = await modelAPI.networks.retrieveNetwork( networkId );
+            var proto = await modelAPI.networkProtocolAPI.getProtocol( network );
+            var dataAPI =  new NetworkProtocolDataAccess( modelAPI, "ReportingProtocol" );
+            await proto.api.passDataToApplication( network, applicationId, data, dataAPI );
             resolve( 204 );
         }
         catch( err ) {
