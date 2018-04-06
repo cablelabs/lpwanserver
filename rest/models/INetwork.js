@@ -158,6 +158,7 @@ Network.prototype.pullNetwork = function( networkId  ) {
             let networkType = await modelAPI.networkTypes.retrieveNetworkTypes(network.networkTypeId);
             var npda = new NetworkProtocolDataAccess(modelAPI, "Pull Network");
             npda.initLog(networkType, network);
+            appLogger.log(network);
             let result = modelAPI.networkProtocolAPI.pullNetwork(npda, network);
             appLogger.log( 'Success pulling from Network : ' + networkId + ' ' + err );
             resolve(result);
