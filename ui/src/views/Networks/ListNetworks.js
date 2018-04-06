@@ -11,7 +11,7 @@ class NetworkRow extends Component {
             <td><Link to={`/admin/network/${this.props.network.id}`}>{this.props.network.name}</Link></td>
             <td>
                 <div className={`btn-group pull-right`}>
-                    <Link to={`/admin/pull/${this.props.network.networkTypeId}`}>
+                    <Link to={`/admin/pull/${this.props.network.id}`}>
                         <button type="button" className="btn btn-default btn-sm">Import From Network</button>
                     </Link>
                 </div>
