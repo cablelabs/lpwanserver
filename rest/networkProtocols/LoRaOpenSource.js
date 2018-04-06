@@ -22,6 +22,7 @@ exports.getCompanyAccessAccount = async function( dataAPI, network ) {
         dataAPI.addLog( network, "Network security data is incomplete for " + network.name );
         return null;
     }
+    appLogger.log(secData);
     return { username: secData.username,
              password: secData.password,
              admin: true };
