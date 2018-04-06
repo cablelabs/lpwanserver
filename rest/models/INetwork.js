@@ -1,6 +1,7 @@
 // Configuration access.
 var nconf = require('nconf');
 var NetworkProtocolDataAccess = require( "../networkProtocols/networkProtocolDataAccess" );
+var appLogger = require('../lib/appLogger');
 
 //******************************************************************************
 // The Network interface.
@@ -141,7 +142,33 @@ Network.prototype.deleteNetwork = function( id ) {
             reject( err );
         }
     });
-}
+};
+
+// Pull the organization, applications, device profiles, and devices record.
+//
+// networkId - the network to be pulled from.
+//
+// Returns a promise that executes the pull.
+Network.prototype.pullNetwork = function( networkId  ) {
+    let me = this;
+    return new Promise(async function (resolve, reject) {
+        try {
+            appLogger.log(networkId);
+            let network = await me.impl.retrieveNetwork(networkId);
+            let networkType = await modelAPI.networkTypes.retrieveNetworkTypes(network.networkTypeId);
+            var npda = new NetworkProtocolDataAccess(modelAPI, "Pull Network");
+            npda.initLog(networkType, network);
+            let result = modelAPI.networkProtocolAPI.pullNetwork(npda, network);
+            appLogger.log( 'Success pulling from Network : ' + networkId + ' ' + err );
+            resolve(result);
+        }
+        catch (err) {
+            appLogger.log( "Error pulling from Network : " + networkId + " " + err );
+            reject(err);
+        }
+    });
+};
+
 
 genKey = function( networkId ) {
     return "nk" + networkId;

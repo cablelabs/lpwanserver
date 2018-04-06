@@ -32,7 +32,12 @@ exports.log = function( msg ) {
                          line + ": ";
         }
 
-        console.log( headers +
-                      msg );
+        if (typeof msg == 'object') {
+            console.log( headers + JSON.stringify(msg));
+        }
+        else {
+            console.log( headers +
+                msg );
+        }
     }
 }

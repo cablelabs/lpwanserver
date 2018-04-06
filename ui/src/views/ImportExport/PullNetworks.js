@@ -2,7 +2,7 @@ import React, {Component} from 'react';
 import {Link} from 'react-router-dom';
 import {RingLoader} from 'react-spinners';
 
-import networkTypeStore from "../../stores/NetworkTypeStore";
+import networkStore from "../../stores/NetworkStore";
 
 class PullNetworks extends Component {
     constructor(props) {
@@ -11,9 +11,9 @@ class PullNetworks extends Component {
             loading: true,
             error: false,
             errorMsg: '',
-            networkTypeId: this.props.match.params.networkTypeId
+            networkID: this.props.match.params.networkID
         };
-        networkTypeStore.pullNetworkType(this.props.match.params.networkTypeId)
+        networkStore.pullNetwork(this.props.match.params.networkID)
             .then(() => {
                 this.setState({loading: false, error: false});
             })
@@ -37,7 +37,7 @@ class PullNetworks extends Component {
                         loading={this.state.loading}
                     /></td>
                     <td>
-                        <p >Importing data from network server, please wait.</p>
+                        <p >Importing data from network server {this.state.networkId}, please wait.</p>
                     </td>
                 </tr>
                 </tbody>
