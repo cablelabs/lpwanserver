@@ -160,7 +160,7 @@ Network.prototype.pullNetwork = function( networkId  ) {
             npda.initLog(networkType, network);
             appLogger.log(network);
             let result = await modelAPI.networkProtocolAPI.pullNetwork(npda, network);
-            appLogger.log( 'Success pulling from Network : ' + networkId + ' ' + err );
+            appLogger.log( 'Success pulling from Network : ' + networkId );
             resolve(result);
         }
         catch (err) {

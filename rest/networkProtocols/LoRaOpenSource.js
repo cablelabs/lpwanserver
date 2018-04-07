@@ -858,8 +858,8 @@ exports.pullNetwork = function( sessionData, network, dataAPI ) {
                 reject( error );
             }
             else {
-                appLogger.log(body);
                 dataAPI.addLog(network, body);
+                appLogger.log(body);
                 resolve( body );
             }
         });
