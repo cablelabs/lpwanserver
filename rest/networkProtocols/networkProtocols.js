@@ -252,7 +252,7 @@ NetworkProtocolAccess.prototype.pullNetwork = function( dataAPI, network ) {
                 network,
                 dataAPI );
         })
-            .then( function( ret ) { appLogger.log(ret); resolve( ret ); } )
+            .then( function( ret ) { resolve( ret ); } )
             .catch( function( err ) { reject( err ); } );
     });
 };

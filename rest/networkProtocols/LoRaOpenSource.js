@@ -859,7 +859,6 @@ exports.pullNetwork = function( sessionData, network, dataAPI ) {
             }
             else {
                 dataAPI.addLog(network, body);
-                appLogger.log(body);
                 resolve( body );
             }
         });
