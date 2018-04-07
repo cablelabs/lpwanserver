@@ -851,12 +851,14 @@ exports.pullNetwork = function( sessionData, network, dataAPI ) {
             "secureProtocol": "TLSv1_2_method",
             "rejectUnauthorized": false };
 
+        appLogger.log(options);
         request( options, function( error, response, body ) {
             if ( error ) {
                 dataAPI.addLog( network,"Error pulling companies from network " + network.name + ": " + error );
                 reject( error );
             }
             else {
+                appLogger.log(body);
                 dataAPI.addLog(network, body);
                 resolve( body );
             }

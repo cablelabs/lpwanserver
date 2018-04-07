@@ -129,7 +129,6 @@ NetworkProtocolAccess.prototype.sessionWrapper = function( network, loginData, p
             // Use the session we have (now?) and run the operation.
             var id = await protocolFunc( proto, proto.sessionData[ loginData.username ] );
 
-            appLogger.log('It worked');
             // Worked, great, done.
             resolve( id );
         }
