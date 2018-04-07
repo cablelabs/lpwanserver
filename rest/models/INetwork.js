@@ -154,7 +154,7 @@ Network.prototype.pullNetwork = function( networkId  ) {
     return new Promise(async function (resolve, reject) {
         try {
             appLogger.log(networkId);
-            let network = await me.impl.retrieveNetwork(networkId);
+            let network = await me.prototype.retrieveNetwork(networkId);
             let networkType = await modelAPI.networkTypes.retrieveNetworkTypes(network.networkTypeId);
             var npda = new NetworkProtocolDataAccess(modelAPI, "Pull Network");
             npda.initLog(networkType, network);
