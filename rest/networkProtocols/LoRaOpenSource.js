@@ -17,12 +17,12 @@ var appLogger = require( '../lib/appLogger.js' );
 //           LoRa Open Source, this is a global admin account.
 exports.getCompanyAccessAccount = async function( dataAPI, network ) {
     let secData = network.securityData;
+    appLogger.log(secData);
     if ( !secData || !secData.username || !secData.password ) {
         appLogger.log( "Network security data is incomplete for " + network.name );
         dataAPI.addLog( network, "Network security data is incomplete for " + network.name );
         return null;
     }
-    appLogger.log(secData);
     return { username: secData.username,
              password: secData.password,
              admin: true };
