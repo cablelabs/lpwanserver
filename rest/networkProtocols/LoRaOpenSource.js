@@ -954,6 +954,7 @@ exports.pullNetwork = function( sessionData, network, dataAPI ) {
                 reject( error );
             }
             else {
+                body = JSON.parse(body);
                 dataAPI.addLog(network, body);
                 if (body.totalCount === 0) {
                     appLogger.log('No orgs');
