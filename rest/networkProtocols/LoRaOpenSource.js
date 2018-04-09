@@ -1090,11 +1090,13 @@ exports.addRemoteCompany = function (sessionData, remoteOrganization, network, d
                     network.networkProtocolId,
                     makeCompanyDataKey(existingCompany.id, "coUsrId"),
                     body.id);
+                // Set up a default Service Profile.
+                var serviceProfile = await getServiceProfileForOrg(network, remoteOrganization.id, existingCompany.id, sessionData.connection, dataAPI);
+                var networkServerId = await getNetworkServerById(network, serviceProfile.networkServerID, sessionData.connection, dataAPI);
+                resolve();
             }
 
-            // Set up a default Service Profile.
-            var serviceProfile = await getServiceProfileForOrg(network, remoteOrganization.id, existingCompany.id, sessionData.connection, dataAPI);
-            var networkServerId = await getNetworkServerById(network, serviceProfile.networkServerID, sessionData.connection, dataAPI);
+
 
 
 
