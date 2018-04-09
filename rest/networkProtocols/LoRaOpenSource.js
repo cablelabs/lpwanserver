@@ -1010,7 +1010,7 @@ exports.addRemoteCompany = function (sessionData, remoteOrganization, network, d
         }
         else {
             appLogger.log('creating ' + remoteOrganization.name);
-            existingCompany = await modelAPI.companies.createCompany(remoteOrganization.name, dataAPI.companies.COMPANY_VENDOR);
+            existingCompany = await modelAPI.companies.createCompany(remoteOrganization.name, modelAPI.companies.COMPANY_VENDOR);
             appLogger.log('Created ' + existingCompany.name);
         }
 
