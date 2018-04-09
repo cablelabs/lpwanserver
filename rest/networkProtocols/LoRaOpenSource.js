@@ -962,6 +962,7 @@ exports.pullNetwork = function( sessionData, network, dataAPI ) {
                     let orgs = body.result;
                     for (let index in orgs) {
                         let org = orgs[index];
+                        appLogger.log('Added ' + org.name);
                          me.addRemoteCompany(sessionData, org, network, dataAPI )
                              .then((body) =>{
                                  resolve(body);
