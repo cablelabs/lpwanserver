@@ -1001,7 +1001,7 @@ exports.addRemoteCompany = function (sessionData, remoteOrganization, network, d
     return new Promise(async function (resolve, reject) {
         //3.  Setup protocol data
         //4.  Add the company user to the remote Network
-
+        appLogger.log(dataAPI);
         //1.  add the remote company locally through the ICompany Interface
         let existingCompany = await dataAPI.companies.retrieveCompanies({search: remoteOrganization.name});
         if (existingCompany.totalCount > 0) {
