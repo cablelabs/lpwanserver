@@ -956,6 +956,8 @@ exports.pullNetwork = function( sessionData, network, dataAPI ) {
             else {
                 dataAPI.addLog(network, body);
                 if (!body.totalCount || body.totalCount === 0) {
+                    appLogger.log('No orgs');
+                    appLogger.log(body);
                     resolve (body);
                 }
                 else {
