@@ -934,6 +934,7 @@ exports.pushCompany = function( sessionData, network, companyId, dataAPI ) {
 //
 // Returns a Promise that gets the company record from the remote system.
 exports.pullNetwork = function( sessionData, network, dataAPI ) {
+    let me = this;
     return new Promise( async function( resolve, reject ) {
         // Get the remote companies.
         // Set up the request options.
@@ -954,7 +955,22 @@ exports.pullNetwork = function( sessionData, network, dataAPI ) {
             }
             else {
                 dataAPI.addLog(network, body);
-                resolve( body );
+                if (!body.totalCount || body.totalCount === 0) {
+                    resolve (body);
+                }
+                else {
+                    let orgs = body.result;
+                    for (let index in orgs) {
+                        let org = orgs[index];
+                         me.addRemoteCompany(sessionData, org, network, dataAPI )
+                             .then((body) =>{
+                                 resolve(body);
+                             })
+                             .catch((error) =>{
+                                 reject(error);
+                             })
+                    }
+                }
             }
         });
     });
