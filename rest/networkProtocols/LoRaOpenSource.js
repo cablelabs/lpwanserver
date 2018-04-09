@@ -223,6 +223,101 @@ function getANetworkServerID( network, connection ) {
     });
 }
 
+
+// Get the NetworkServer using the Service Profile a ServiceProfile.
+function getNetworkServerById( network, networkServerId, connection, dataAPI ) {
+    appLogger.log('LoRaOpenSource: getNetworkServerForRemoteOrganization');
+    return new Promise( async function( resolve, reject ) {
+        // Set up the request options.
+        var options = {};
+        options.method = 'GET';
+        options.url = network.baseUrl + "/network-servers/" + networkServerId;
+        options.headers = { "Content-Type": "application/json",
+            "Authorization": "Bearer " + connection };
+        options.agentOptions = {
+            "secureProtocol": "TLSv1_2_method",
+            "rejectUnauthorized": false };
+
+        request( options, async function( error, response, body ) {
+            if ( error || response.statusCode >= 400 ) {
+                if ( error ) {
+                    dataAPI.addLog( network, "Error on get Network Server: " + error );
+                    reject( error );
+                    return;
+                }
+                else {
+                    var bodyObj = JSON.parse( response.body );
+                    dataAPI.addLog( network, "Error on get Network Server: " +
+                        bodyObj.error +
+                        " (" + response.statusCode + ")" );
+                    dataAPI.addLog( network, "Request data = " + JSON.stringify( options ) );
+                    reject( response.statusCode );
+                    return;
+                }
+            }
+            else {
+                // Convert text to JSON array, use id from first element
+                var res = JSON.parse( body );
+                appLogger.log(res);
+                resolve( res );
+            }
+        });
+    });
+}
+
+
+// Get the Service Profile a for a Remote Org.
+function getServiceProfileForOrg( network, orgId, companyId, connection, dataAPI ) {
+    appLogger.log('LoRaOpenSource: getNetworkServerForRemoteOrganization');
+    return new Promise( async function( resolve, reject ) {
+        var spOptions = {};
+        spOptions.method = 'GET';
+        spOptions.url = network.baseUrl + "/service-profiles?organizationID=" + orgId + "&limit=20&offset=0";
+        spOptions.headers = {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + connection
+        };
+
+        spOptions.agentOptions = {
+            "secureProtocol": "TLSv1_2_method",
+            "rejectUnauthorized": false
+        };
+        request(spOptions, async function (error, response, body) {
+            if (error || response.statusCode >= 400) {
+                if (error) {
+                    dataAPI.addLog(network, "Error getting Service Profile: " + error);
+                    reject(error);
+                    return;
+                }
+                else {
+
+                    dataAPI.addLog(network, "Error getting Service Profile: " + response.statusCode +
+                        " (Server message: " + response.body.error + ")");
+                    reject(response.statusCode);
+                    return;
+                }
+            }
+            else {
+                // Save the ServiceProfile ID from the remote
+                // network.
+                await dataAPI.putProtocolDataForKey(
+                    network.id,
+                    network.networkProtocolId,
+                    makeCompanyDataKey(companyId, "coSPId"),
+                    body.serviceProfile.serviceProfileID);
+                // TODO: Remove this HACK.  Should not store the service profile locally
+                //       in case it gets changed on the remote server.
+                await dataAPI.putProtocolDataForKey(
+                    network.id,
+                    network.networkProtocolId,
+                    makeCompanyDataKey(companyId, "coSPNwkId"),
+                    body.networkServerID);
+                resolve();
+            }
+        }); // End of service profile create
+    });
+}
+
 // Creating a DeviceProfile requires a NetworkServerId.  However, you can't get
 // data from that table in LoRa if you aren't a Global Admin.  So get the
 // company's ServiceProfile and get it from that.
@@ -863,7 +958,130 @@ exports.pullNetwork = function( sessionData, network, dataAPI ) {
             }
         });
     });
+};
+
+
+
+// Add company.
+//
+// sessionData     - The session information for the user, including the //                   connection data for the remote system.
+// network         - The networks record for the network that uses this
+//                   protocol.
+// companyId       - The companyNetworkTypeLinks record id for this company and
+//                   network.
+// dataAPI         - Gives access to the data records and error tracking for the
+//                   operation.
+//
+// Returns a Promise that connects to the remote system and creates the
+// company.  The promise saves the id for the remote company, linked to the
+// local database record.  This method is called in an async manner against
+// lots of other networks, so logging should be done via the dataAPI.
+exports.addRemoteCompany = function (sessionData, remoteOrganization, network, dataAPI) {
+    return new Promise(async function (resolve, reject) {
+        //3.  Setup protocol data
+        //4.  Add the company user to the remote Network
+
+        //1.  add the remote company locally through the ICompany Interface
+        let existingCompany = await dataAPI.companies.retrieveCompanies({search: remoteOrganization.name});
+        if (existingCompany.totalCount > 0) {
+            existingCompany = existingCompany.records[0];
+            appLogger.log(existingCompany.name + ' already exists');
+        }
+        else {
+            appLogger.log('creating ' + remoteOrganization.name);
+            existingCompany = await dataAPI.companies.createCompany(remoteOrganization.name, dataAPI.companies.COMPANY_VENDOR);
+            appLogger.log('Created ' + existingCompany.name);
+        }
+
+        //2.  add the NTL to the local company
+        let existingCompanyNTL = await dataAPI.companyNetworkTypeLinks.retrieveCompanyNetworkTypeLinks({companyId: existingCompany.id});
+        if (existingCompanyNTL.totalCount > 0) {
+            appLogger.log(existingCompany.name + ' link already exists');
+        }
+        else {
+            appLogger.log('creating Network Link for ' + existingCompany.name);
+            existingCompanyNTL = await dataAPI.companyNetworkTypeLinks.createCompanyNetworkTypeLink(existingCompany.id, network.networkTypeId, {region: ''})
+        }
+
+        //3.  Setup protocol data
+        await dataAPI.putProtocolDataForKey(network.id,
+            network.networkProtocolId,
+            makeCompanyDataKey(existingCompany.id, "coNwkId"),
+            remoteOrganization.id);
+        var networkCoId = remoteOrganization.id;
+
+        // We will need an admin user for this company.
+        var userOptions = {};
+        userOptions.method = 'POST';
+        userOptions.url = network.baseUrl + "/users";
+        userOptions.headers = {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + sessionData.connection
+        };
+
+        // Get/generate the company username/password
+        var creds = await getCompanyAccount(dataAPI, network, existingCompany.id, true);
+
+        userOptions.json = {
+            "username": creds.username,
+            "password": creds.password,
+            "isActive": true,
+            "isAdmin": false,
+            "sessionTTL": 0,
+            "organizations": [
+                {
+                    "isAdmin": true,
+                    "organizationID": networkCoId
+                }
+            ],
+            "email": "fake@emailaddress.com",
+            "note": "Created by and for LPWAN Server"
+        };
+        userOptions.agentOptions = {
+            "secureProtocol": "TLSv1_2_method",
+            "rejectUnauthorized": false
+        };
+
+
+        request(userOptions, async function (error, response, body) {
+            if (error || response.statusCode >= 400) {
+                if (error) {
+                    dataAPI.addLog(network, "Error creating " + existingCompany.name +
+                        "'s admin user " + userOptions.json.username +
+                        ": " + error);
+                    reject(error);
+                    return;
+                }
+                else {
+
+                    dataAPI.addLog(network, "Error creating " + existingCompany.name +
+                        "'s admin user " + userOptions.json.username +
+                        ": " + response.statusCode +
+                        " (Server message: " + response.body.error + ")");
+                    reject(response.statusCode);
+                    return;
+                }
+            }
+            else {
+                // Save the user ID from the remote network.
+                await dataAPI.putProtocolDataForKey(network.id,
+                    network.networkProtocolId,
+                    makeCompanyDataKey(existingCompany.id, "coUsrId"),
+                    body.id);
+            }
+
+            // Set up a default Service Profile.
+            var serviceProfile = await getServiceProfileForOrg(network, remoteOrganization.id, existingCompany.id, sessionData.connection, dataAPI);
+            var networkServerId = await getNetworkServerById(network, serviceProfile.networkServerID, sessionData.connection, dataAPI);
+
+
+
+        }); // End of user create request.
+    });
 }
+
+
+
 
 
 //******************************************************************************
