@@ -933,7 +933,7 @@ exports.pushCompany = function( sessionData, network, companyId, dataAPI ) {
 //               operation.
 //
 // Returns a Promise that gets the company record from the remote system.
-exports.pullNetwork = function( sessionData, network, dataAPI ) {
+exports.pullNetwork = function( sessionData, network, dataAPI, modelAPI ) {
     let me = this;
     return new Promise( async function( resolve, reject ) {
         // Get the remote companies.
@@ -967,7 +967,7 @@ exports.pullNetwork = function( sessionData, network, dataAPI ) {
                     for (let index in orgs) {
                         let org = orgs[index];
                         appLogger.log('Added ' + org.name);
-                         me.addRemoteCompany(sessionData, org, network, dataAPI )
+                         me.addRemoteCompany(sessionData, org, network, dataAPI, modelAPI )
                              .then((body) =>{
                                  resolve(body);
                              })
@@ -997,31 +997,31 @@ exports.pullNetwork = function( sessionData, network, dataAPI ) {
 // company.  The promise saves the id for the remote company, linked to the
 // local database record.  This method is called in an async manner against
 // lots of other networks, so logging should be done via the dataAPI.
-exports.addRemoteCompany = function (sessionData, remoteOrganization, network, dataAPI) {
+exports.addRemoteCompany = function (sessionData, remoteOrganization, network, dataAPI, modelAPI) {
     return new Promise(async function (resolve, reject) {
         //3.  Setup protocol data
         //4.  Add the company user to the remote Network
         appLogger.log(dataAPI);
         //1.  add the remote company locally through the ICompany Interface
-        let existingCompany = await dataAPI.companies.retrieveCompanies({search: remoteOrganization.name});
+        let existingCompany = await modelAPI.companies.retrieveCompanies({search: remoteOrganization.name});
         if (existingCompany.totalCount > 0) {
             existingCompany = existingCompany.records[0];
             appLogger.log(existingCompany.name + ' already exists');
         }
         else {
             appLogger.log('creating ' + remoteOrganization.name);
-            existingCompany = await dataAPI.companies.createCompany(remoteOrganization.name, dataAPI.companies.COMPANY_VENDOR);
+            existingCompany = await modelAPI.companies.createCompany(remoteOrganization.name, dataAPI.companies.COMPANY_VENDOR);
             appLogger.log('Created ' + existingCompany.name);
         }
 
         //2.  add the NTL to the local company
-        let existingCompanyNTL = await dataAPI.companyNetworkTypeLinks.retrieveCompanyNetworkTypeLinks({companyId: existingCompany.id});
+        let existingCompanyNTL = await modelAPI.companyNetworkTypeLinks.retrieveCompanyNetworkTypeLinks({companyId: existingCompany.id});
         if (existingCompanyNTL.totalCount > 0) {
             appLogger.log(existingCompany.name + ' link already exists');
         }
         else {
             appLogger.log('creating Network Link for ' + existingCompany.name);
-            existingCompanyNTL = await dataAPI.companyNetworkTypeLinks.createCompanyNetworkTypeLink(existingCompany.id, network.networkTypeId, {region: ''})
+            existingCompanyNTL = await modelAPI.companyNetworkTypeLinks.createCompanyNetworkTypeLink(existingCompany.id, network.networkTypeId, {region: ''})
         }
 
         //3.  Setup protocol data
