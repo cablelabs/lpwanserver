@@ -962,6 +962,7 @@ exports.pullNetwork = function( sessionData, network, dataAPI ) {
                 }
                 else {
                     let orgs = body.result;
+                    appLogger.log(orgs);
                     for (let index in orgs) {
                         let org = orgs[index];
                         appLogger.log('Added ' + org.name);
