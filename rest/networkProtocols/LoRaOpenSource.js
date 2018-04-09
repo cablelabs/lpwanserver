@@ -300,6 +300,7 @@ function getServiceProfileForOrg( network, orgId, companyId, connection, dataAPI
             else {
                 // Save the ServiceProfile ID from the remote
                 // network.
+                appLogger.log(body);
                 await dataAPI.putProtocolDataForKey(
                     network.id,
                     network.networkProtocolId,
