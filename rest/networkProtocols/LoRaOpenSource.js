@@ -1093,6 +1093,9 @@ exports.addRemoteCompany = function (sessionData, remoteOrganization, network, d
                 // Set up a default Service Profile.
                 var serviceProfile = await getServiceProfileForOrg(network, remoteOrganization.id, existingCompany.id, sessionData.connection, dataAPI);
                 var networkServerId = await getNetworkServerById(network, serviceProfile.networkServerID, sessionData.connection, dataAPI);
+                appLogger.log('Got SP and NS');
+                appLogger.log(serviceProfile);
+                appLogger.log(networkServerId);
                 resolve();
             }
 
