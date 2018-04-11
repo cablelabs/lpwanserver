@@ -104,6 +104,7 @@ async function getCompanyAccount( dataAPI, network, companyId, generateIfMissing
     catch ( err ) {
         // Something's off.  Generate new if allowed.
         if ( generateIfMissing ) {
+            appLogger.log('Generating account for ' + companyId);
             // Take the company name, make it suitable for a user name, and then
             // add "admin" for the username.
             var corec = await dataAPI.getCompanyById( companyId );
@@ -113,6 +114,8 @@ async function getCompanyAccount( dataAPI, network, companyId, generateIfMissing
             kd = await dataAPI.genKey();
             secData = { "username": uname, "password": pass };
             srd = dataAPI.hide( network, secData, kd );
+            appLogger.log(uname);
+            appLogger.log(pass);
 
             // Save for future reference.networkId, networkProtocolId, key, data
             await dataAPI.putProtocolDataForKey(
@@ -282,6 +285,7 @@ function getServiceProfileForOrg( network, orgId, companyId, connection, dataAPI
             "secureProtocol": "TLSv1_2_method",
             "rejectUnauthorized": false
         };
+        appLogger.log(spOptions);
         request(spOptions, async function (error, response, body) {
             if (error || response.statusCode >= 400) {
                 if (error) {
@@ -300,20 +304,22 @@ function getServiceProfileForOrg( network, orgId, companyId, connection, dataAPI
             else {
                 // Save the ServiceProfile ID from the remote
                 // network.
+                body = JSON.parse(body);
                 appLogger.log(body);
+                let serviceProfile = body.result[0];
                 await dataAPI.putProtocolDataForKey(
                     network.id,
                     network.networkProtocolId,
                     makeCompanyDataKey(companyId, "coSPId"),
-                    body.serviceProfile.serviceProfileID);
+                    serviceProfile.serviceProfileID);
                 // TODO: Remove this HACK.  Should not store the service profile locally
                 //       in case it gets changed on the remote server.
                 await dataAPI.putProtocolDataForKey(
                     network.id,
                     network.networkProtocolId,
                     makeCompanyDataKey(companyId, "coSPNwkId"),
-                    body.networkServerID);
-                resolve();
+                    serviceProfile.networkServerID);
+                resolve(serviceProfile);
             }
         }); // End of service profile create
     });
@@ -967,14 +973,19 @@ exports.pullNetwork = function( sessionData, network, dataAPI, modelAPI ) {
                     appLogger.log(body);
                     for (let index in orgs) {
                         let org = orgs[index];
-                        appLogger.log('Added ' + org.name);
-                         me.addRemoteCompany(sessionData, org, network, dataAPI, modelAPI )
-                             .then((body) =>{
-                                 resolve(body);
-                             })
-                             .catch((error) =>{
-                                 reject(error);
-                             })
+                        if (org.name == 'loraserver') {
+                            //ignore
+                        }
+                        else {
+                            appLogger.log('Added ' + org.name);
+                            me.addRemoteCompany(sessionData, org, network, dataAPI, modelAPI)
+                                .then((body) => {
+                                    resolve(body);
+                                })
+                                .catch((error) => {
+                                    reject(error);
+                                })
+                        }
                     }
                 }
             }
@@ -1002,7 +1013,7 @@ exports.addRemoteCompany = function (sessionData, remoteOrganization, network, d
     return new Promise(async function (resolve, reject) {
         //3.  Setup protocol data
         //4.  Add the company user to the remote Network
-        appLogger.log(dataAPI);
+        appLogger.log('Adding ' + remoteOrganization.name + ' ' + remoteOrganization);
         //1.  add the remote company locally through the ICompany Interface
         let existingCompany = await modelAPI.companies.retrieveCompanies({search: remoteOrganization.name});
         if (existingCompany.totalCount > 0) {
@@ -1064,19 +1075,24 @@ exports.addRemoteCompany = function (sessionData, remoteOrganization, network, d
             "rejectUnauthorized": false
         };
 
-
+        appLogger.log(userOptions);
         request(userOptions, async function (error, response, body) {
             if (error || response.statusCode >= 400) {
                 if (error) {
                     dataAPI.addLog(network, "Error creating " + existingCompany.name +
                         "'s admin user " + userOptions.json.username +
                         ": " + error);
+                    appLogger.log(error);
                     reject(error);
                     return;
                 }
                 else {
 
                     dataAPI.addLog(network, "Error creating " + existingCompany.name +
+                        "'s admin user " + userOptions.json.username +
+                        ": " + response.statusCode +
+                        " (Server message: " + response.body.error + ")");
+                    appLogger.log("Error creating " + existingCompany.name +
                         "'s admin user " + userOptions.json.username +
                         ": " + response.statusCode +
                         " (Server message: " + response.body.error + ")");
@@ -1091,6 +1107,7 @@ exports.addRemoteCompany = function (sessionData, remoteOrganization, network, d
                     makeCompanyDataKey(existingCompany.id, "coUsrId"),
                     body.id);
                 // Set up a default Service Profile.
+                appLogger.log('Getting SP and NS');
                 var serviceProfile = await getServiceProfileForOrg(network, remoteOrganization.id, existingCompany.id, sessionData.connection, dataAPI);
                 var networkServerId = await getNetworkServerById(network, serviceProfile.networkServerID, sessionData.connection, dataAPI);
                 appLogger.log('Got SP and NS');
