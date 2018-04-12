@@ -147,8 +147,16 @@ class LoRaCompanyNetworkSettings extends Component {
 
     render() {
         const regParamsOptions = [
-            {value: "US915", label: "US915"},
-            {value: "EU200", label: "EU200"},
+            {value: "AS923", label: "AS923"},
+            {value: "AU915", label: "AU915"},
+            {value: "CN470", label: "CN470"},
+            {value: "CN779", label: "CN779"},
+            {value: "EU433", label: "EU433"},
+            {value: "EU868", label: "EU868"},
+            {value: "IN865", label: "IN865"},
+            {value: "KR920", label: "KR920"},
+            {value: "RU864", label: "RU864"},
+            {value: "US915", label: "US915"}
         ];
         return (
             <div className={this.state.enabled === true ? "" : "hidden" } >

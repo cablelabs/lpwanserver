@@ -994,6 +994,9 @@ exports.pullNetwork = function( sessionData, network, dataAPI, modelAPI ) {
 };
 
 
+function createRemoteUserAccount() {
+
+}
 
 // Add company.
 //
@@ -1011,6 +1014,7 @@ exports.pullNetwork = function( sessionData, network, dataAPI, modelAPI ) {
 // lots of other networks, so logging should be done via the dataAPI.
 exports.addRemoteCompany = function (sessionData, remoteOrganization, network, dataAPI, modelAPI) {
     return new Promise(async function (resolve, reject) {
+        let isNewNTL = false;
         //3.  Setup protocol data
         //4.  Add the company user to the remote Network
         appLogger.log('Adding ' + remoteOrganization.name + ' ' + remoteOrganization);
@@ -1029,98 +1033,116 @@ exports.addRemoteCompany = function (sessionData, remoteOrganization, network, d
         //2.  add the NTL to the local company
         let existingCompanyNTL = await modelAPI.companyNetworkTypeLinks.retrieveCompanyNetworkTypeLinks({companyId: existingCompany.id});
         if (existingCompanyNTL.totalCount > 0) {
+            existingCompanyNTL = existingCompanyNTL.records[0];
             appLogger.log(existingCompany.name + ' link already exists');
         }
         else {
             appLogger.log('creating Network Link for ' + existingCompany.name);
-            existingCompanyNTL = await modelAPI.companyNetworkTypeLinks.createCompanyNetworkTypeLink(existingCompany.id, network.networkTypeId, {region: ''})
+            existingCompanyNTL = await modelAPI.companyNetworkTypeLinks.createCompanyNetworkTypeLink(existingCompany.id, network.networkTypeId, {region: ''});
+            isNewNTL = true;
         }
 
-        //3.  Setup protocol data
-        await dataAPI.putProtocolDataForKey(network.id,
-            network.networkProtocolId,
-            makeCompanyDataKey(existingCompany.id, "coNwkId"),
-            remoteOrganization.id);
-        var networkCoId = remoteOrganization.id;
+        if (isNewNTL) {
 
-        // We will need an admin user for this company.
-        var userOptions = {};
-        userOptions.method = 'POST';
-        userOptions.url = network.baseUrl + "/users";
-        userOptions.headers = {
-            "Content-Type": "application/json",
-            "Authorization": "Bearer " + sessionData.connection
-        };
+            //3.  Setup protocol data
+            await
+            dataAPI.putProtocolDataForKey(network.id,
+                network.networkProtocolId,
+                makeCompanyDataKey(existingCompany.id, "coNwkId"),
+                remoteOrganization.id);
+            var networkCoId = remoteOrganization.id;
 
-        // Get/generate the company username/password
-        var creds = await getCompanyAccount(dataAPI, network, existingCompany.id, true);
+            // We will need an admin user for this company.
+            var userOptions = {};
+            userOptions.method = 'POST';
+            userOptions.url = network.baseUrl + "/users";
+            userOptions.headers = {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + sessionData.connection
+            };
 
-        userOptions.json = {
-            "username": creds.username,
-            "password": creds.password,
-            "isActive": true,
-            "isAdmin": false,
-            "sessionTTL": 0,
-            "organizations": [
-                {
-                    "isAdmin": true,
-                    "organizationID": networkCoId
-                }
-            ],
-            "email": "fake@emailaddress.com",
-            "note": "Created by and for LPWAN Server"
-        };
-        userOptions.agentOptions = {
-            "secureProtocol": "TLSv1_2_method",
-            "rejectUnauthorized": false
-        };
+            // Get/generate the company username/password
+            var creds = await
+            getCompanyAccount(dataAPI, network, existingCompany.id, true);
 
-        appLogger.log(userOptions);
-        request(userOptions, async function (error, response, body) {
-            if (error || response.statusCode >= 400) {
-                if (error) {
-                    dataAPI.addLog(network, "Error creating " + existingCompany.name +
-                        "'s admin user " + userOptions.json.username +
-                        ": " + error);
-                    appLogger.log(error);
-                    reject(error);
-                    return;
+            userOptions.json = {
+                "username": creds.username,
+                "password": creds.password,
+                "isActive": true,
+                "isAdmin": false,
+                "sessionTTL": 0,
+                "organizations": [
+                    {
+                        "isAdmin": true,
+                        "organizationID": networkCoId
+                    }
+                ],
+                "email": "fake@emailaddress.com",
+                "note": "Created by and for LPWAN Server"
+            };
+            userOptions.agentOptions = {
+                "secureProtocol": "TLSv1_2_method",
+                "rejectUnauthorized": false
+            };
+
+            appLogger.log(userOptions);
+            request(userOptions, async function (error, response, body) {
+                if (error || response.statusCode >= 400) {
+                    if (error) {
+                        dataAPI.addLog(network, "Error creating " + existingCompany.name +
+                            "'s admin user " + userOptions.json.username +
+                            ": " + error);
+                        appLogger.log(error);
+                        reject(error);
+                        return;
+                    }
+                    else {
+
+                        dataAPI.addLog(network, "Error creating " + existingCompany.name +
+                            "'s admin user " + userOptions.json.username +
+                            ": " + response.statusCode +
+                            " (Server message: " + response.body.error + ")");
+                        appLogger.log("Error creating " + existingCompany.name +
+                            "'s admin user " + userOptions.json.username +
+                            ": " + response.statusCode +
+                            " (Server message: " + response.body.error + ")");
+                        reject(response.statusCode);
+                        return;
+                    }
                 }
                 else {
-
-                    dataAPI.addLog(network, "Error creating " + existingCompany.name +
-                        "'s admin user " + userOptions.json.username +
-                        ": " + response.statusCode +
-                        " (Server message: " + response.body.error + ")");
-                    appLogger.log("Error creating " + existingCompany.name +
-                        "'s admin user " + userOptions.json.username +
-                        ": " + response.statusCode +
-                        " (Server message: " + response.body.error + ")");
-                    reject(response.statusCode);
-                    return;
+                    // Save the user ID from the remote network.
+                    await dataAPI.putProtocolDataForKey(network.id,
+                        network.networkProtocolId,
+                        makeCompanyDataKey(existingCompany.id, "coUsrId"),
+                        body.id);
+                    // Set up a default Service Profile.
+                    appLogger.log('Getting SP and NS');
+                    var serviceProfile = await getServiceProfileForOrg(network, remoteOrganization.id, existingCompany.id, sessionData.connection, dataAPI);
+                    var networkServer = await getNetworkServerById(network, serviceProfile.networkServerID, sessionData.connection, dataAPI);
+                    appLogger.log('Got SP and NS');
+                    appLogger.log(serviceProfile);
+                    appLogger.log(networkServer);
+                    existingCompanyNTL.networkSettings = {serviceProfile: networkServer};
+                    delete existingCompanyNTL.remoteAccessLogs;
+                    existingCompanyNTL = await modelAPI.companyNetworkTypeLinks.updateCompanyNetworkTypeLink(existingCompanyNTL);
+                    resolve();
                 }
-            }
-            else {
-                // Save the user ID from the remote network.
-                await dataAPI.putProtocolDataForKey(network.id,
-                    network.networkProtocolId,
-                    makeCompanyDataKey(existingCompany.id, "coUsrId"),
-                    body.id);
-                // Set up a default Service Profile.
-                appLogger.log('Getting SP and NS');
-                var serviceProfile = await getServiceProfileForOrg(network, remoteOrganization.id, existingCompany.id, sessionData.connection, dataAPI);
-                var networkServerId = await getNetworkServerById(network, serviceProfile.networkServerID, sessionData.connection, dataAPI);
-                appLogger.log('Got SP and NS');
-                appLogger.log(serviceProfile);
-                appLogger.log(networkServerId);
-                resolve();
-            }
-
-
-
-
-
-        }); // End of user create request.
+            }); // End of user create request.
+        }
+        else {
+            appLogger.log('Getting SP and NS');
+            var serviceProfile = await getServiceProfileForOrg(network, remoteOrganization.id, existingCompany.id, sessionData.connection, dataAPI);
+            var networkServer = await getNetworkServerById(network, serviceProfile.networkServerID, sessionData.connection, dataAPI);
+            appLogger.log('Got SP and NS');
+            appLogger.log(serviceProfile);
+            appLogger.log(networkServer);
+            existingCompanyNTL.networkSettings = {serviceProfile: networkServer};
+            delete existingCompanyNTL.remoteAccessLogs;
+            appLogger.log(existingCompanyNTL);
+            existingCompanyNTL = await modelAPI.companyNetworkTypeLinks.updateCompanyNetworkTypeLink(existingCompanyNTL);
+            resolve();
+        }
     });
 }
 
