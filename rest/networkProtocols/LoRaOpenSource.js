@@ -311,6 +311,50 @@ function getServiceProfileById( network, serviceProfileId, connection, dataAPI )
 }
 
 
+
+// Get the NetworkServer using the Service Profile a ServiceProfile.
+function getApplicationById( network, applicationId, connection, dataAPI ) {
+    appLogger.log('LoRaOpenSource: getApplicationById');
+    return new Promise( async function( resolve, reject ) {
+        // Set up the request options.
+        var options = {};
+        options.method = 'GET';
+        options.url = network.baseUrl + "/applications/" + applicationId;
+        options.headers = { "Content-Type": "application/json",
+            "Authorization": "Bearer " + connection };
+        options.agentOptions = {
+            "secureProtocol": "TLSv1_2_method",
+            "rejectUnauthorized": false };
+
+        appLogger.log(options);
+        request( options, async function( error, response, body ) {
+            if ( error || response.statusCode >= 400 ) {
+                if ( error ) {
+                    dataAPI.addLog( network, "Error on get Application: " + error );
+                    reject( error );
+                    return;
+                }
+                else {
+                    var bodyObj = JSON.parse( response.body );
+                    dataAPI.addLog( network, "Error on get Application: " +
+                        bodyObj.error +
+                        " (" + response.statusCode + ")" );
+                    dataAPI.addLog( network, "Request data = " + JSON.stringify( options ) );
+                    reject( response.statusCode );
+                    return;
+                }
+            }
+            else {
+                // Convert text to JSON array, use id from first element
+                var res = JSON.parse( body );
+                appLogger.log(res);
+                resolve( res );
+            }
+        });
+    });
+}
+
+
 // Get the Service Profile a for a Remote Org.
 function getServiceProfileForOrg( network, orgId, companyId, connection, dataAPI ) {
     appLogger.log('LoRaOpenSource: getNetworkServerForRemoteOrganization');
@@ -1273,8 +1317,9 @@ exports.addRemoteCompany = function (sessionData, remoteOrganization, network, d
 };
 
 
-exports.addRemoteApplication = function (sessionData, remoteApplication, network, companyMap, dataAPI, modelAPI) {
+exports.addRemoteApplication = function (sessionData, limitedRemoteApplication, network, companyMap, dataAPI, modelAPI) {
     return new Promise(async function (resolve, reject) {
+        let remoteApplication = await getApplicationById(network, limitedRemoteApplication.id, sessionData.connection, dataAPI);
         appLogger.log('Adding ' + remoteApplication.name );
         appLogger.log(remoteApplication);
         let existingApplication = await modelAPI.applications.retrieveApplications({search: remoteApplication.name});
@@ -1298,11 +1343,18 @@ exports.addRemoteApplication = function (sessionData, remoteApplication, network
         }
         else {
             appLogger.log('creating Network Link for ' + existingApplication.name);
-            let serviceProfile = await getServiceProfileById(network, remoteApplication.serviceProfileID, sessionData.connection, dataAPI);
-            appLogger.log('Got SP and NS');
-            appLogger.log(serviceProfile);
-            delete existingApplicationNTL.remoteAccessLogs;
-            existingApplicationNTL = await modelAPI.applicationNetworkTypeLinks.createRemoteApplicationNetworkTypeLink(existingApplication.id, network.networkTypeId, serviceProfile, existingApplication.companyId);
+            // let serviceProfile = await getServiceProfileById(network, remoteApplication.serviceProfileID, sessionData.connection, dataAPI);
+            // let networkServer = await getNetworkServerById(network, serviceProfile.networkServerID, sessionData.connection, dataAPI);
+            // appLogger.log('Got SP and NS');
+            // appLogger.log(serviceProfile);
+            // appLogger.log(networkServer);
+            // delete existingApplicationNTL.remoteAccessLogs;
+            let networkSettings = {
+                payloadCodec: remoteApplication.payloadCodec,
+                payloadDecoderScript: remoteApplication.payloadDecoderScript,
+                payloadEncoderScript: remoteApplication.payloadEncoderScript
+            }
+            existingApplicationNTL = await modelAPI.applicationNetworkTypeLinks.createRemoteApplicationNetworkTypeLink(existingApplication.id, network.networkTypeId, networkSettings, existingApplication.companyId);
             appLogger.log(existingApplicationNTL);
             await dataAPI.putProtocolDataForKey( network.id,
                 network.networkProtocolId,
@@ -1498,7 +1550,6 @@ exports.updateApplication = function( sessionData, network, applicationId, dataA
             "rejectUnauthorized": false };
 
         // Optional data
-        appLogger.log(options);
         if ( applicationData && applicationData.networkSettings ) {
             if ( applicationData.networkSettings.isABP ) {
                 options.json.isABP = applicationData.networkSettings.isABP;
@@ -1527,7 +1578,18 @@ exports.updateApplication = function( sessionData, network, applicationId, dataA
             if ( applicationData.networkSettings.installationMargin ) {
                 options.json.installationMargin = applicationData.networkSettings.installationMargin;
             }
+            if ( applicationData.networkSettings.payloadCodec ) {
+                options.json.payloadCodec = applicationData.networkSettings.payloadCodec;
+            }
+            if ( applicationData.networkSettings.payloadDecoderScript ) {
+                options.json.payloadDecoderScript = applicationData.networkSettings.payloadDecoderScript;
+            }
+            if ( applicationData.networkSettings.payloadEncoderScript ) {
+                options.json.payloadEncoderScript = applicationData.networkSettings.payloadEncoderScript;
+            }
         }
+        appLogger.log(applicationData);
+        appLogger.log(options);
 
         request( options, function( error, response, body ) {
             if ( error ) {
