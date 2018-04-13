@@ -47,6 +47,7 @@ class LoRaApplicationNetworkSettings extends Component {
             return;
         }
 
+        console.log(props);
         applicationStore.getApplicationNetworkType( props.parentRec.id,
                                                     props.netRec.id )
         .then( (rec) => {
@@ -182,8 +183,9 @@ console.log( "Submitting: state = ", this.state );
                 }
                 // ...and we had an old record with a data change: UPDATE
                 else if ( JSON.stringify( this.state.value ) !== this.state.original ) {
+                    console.log(this.props);
                     var updRec = {
-                        id: this.state.value.id,
+                        id: this.props.netRec.id,
                         networkSettings: this.state.value
                     };
                     await applicationStore.updateApplicationNetworkType( updRec );

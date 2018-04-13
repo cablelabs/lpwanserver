@@ -266,6 +266,48 @@ function getNetworkServerById( network, networkServerId, connection, dataAPI ) {
             }
         });
     });
+};
+
+
+// Get the NetworkServer using the Service Profile a ServiceProfile.
+function getServiceProfileById( network, serviceProfileId, connection, dataAPI ) {
+    appLogger.log('LoRaOpenSource: getServiceProfileById');
+    return new Promise( async function( resolve, reject ) {
+        // Set up the request options.
+        var options = {};
+        options.method = 'GET';
+        options.url = network.baseUrl + "/service-profiles/" + serviceProfileId;
+        options.headers = { "Content-Type": "application/json",
+            "Authorization": "Bearer " + connection };
+        options.agentOptions = {
+            "secureProtocol": "TLSv1_2_method",
+            "rejectUnauthorized": false };
+
+        request( options, async function( error, response, body ) {
+            if ( error || response.statusCode >= 400 ) {
+                if ( error ) {
+                    dataAPI.addLog( network, "Error on get Service Profile: " + error );
+                    reject( error );
+                    return;
+                }
+                else {
+                    var bodyObj = JSON.parse( response.body );
+                    dataAPI.addLog( network, "Error on get Service Profile: " +
+                        bodyObj.error +
+                        " (" + response.statusCode + ")" );
+                    dataAPI.addLog( network, "Request data = " + JSON.stringify( options ) );
+                    reject( response.statusCode );
+                    return;
+                }
+            }
+            else {
+                // Convert text to JSON array, use id from first element
+                var res = JSON.parse( body );
+                appLogger.log(res);
+                resolve( res );
+            }
+        });
+    });
 }
 
 
@@ -943,11 +985,38 @@ exports.pushCompany = function( sessionData, network, companyId, dataAPI ) {
 exports.pullNetwork = function( sessionData, network, dataAPI, modelAPI ) {
     let me = this;
     return new Promise( async function( resolve, reject ) {
+        me.pullCompanies(sessionData, network, dataAPI, modelAPI)
+            .then((companyMap) => {
+                appLogger.log('Success in pulling organizations from ' + network.name);
+                appLogger.log(companyMap);
+                me.pullApplications(sessionData, network, companyMap, dataAPI, modelAPI )
+                    .then((result) => {
+                        appLogger.log('Success in pulling applications from ' + network.name);
+                        appLogger.log(result);
+                        resolve();
+                    })
+                    .catch((err) => {
+                        appLogger.log('Failed to pull applications from ' + network.name);
+                        reject(err);
+                    })
+            })
+            .catch((err) => {
+                appLogger.log('Failed to pull organizations from ' + network.name);
+                reject(err);
+            })
+    });
+};
+
+exports.pullCompanies = function(sessionData, network, dataAPI, modelAPI ) {
+    let me = this;
+    let counter = 0;
+    return new Promise( async function( resolve, reject ) {
         // Get the remote companies.
         // Set up the request options.
-        var options = {};
+        let companyMap = [];
+        let options = {};
         options.method = 'GET';
-        options.url = network.baseUrl + "/organizations" + "?limit=20&offset=0"  ;
+        options.url = network.baseUrl + "/organizations" + "?limit=9999&offset=0"  ;
         options.headers = { "Content-Type": "application/json",
             "Authorization": "Bearer " + sessionData.connection };
         options.agentOptions = {
@@ -964,23 +1033,28 @@ exports.pullNetwork = function( sessionData, network, dataAPI, modelAPI ) {
                 body = JSON.parse(body);
                 dataAPI.addLog(network, body);
                 if (body.totalCount === 0) {
-                    appLogger.log('No orgs');
+                    appLogger.log('No organizations');
                     appLogger.log(body);
-                    resolve (body);
+                    resolve (companyMap);
                 }
                 else {
-                    let orgs = body.result;
+                    let organizations = body.result;
                     appLogger.log(body);
-                    for (let index in orgs) {
-                        let org = orgs[index];
-                        if (org.name == 'loraserver') {
-                            //ignore
+                    counter = organizations.length;
+                    for (let index in organizations) {
+                        let org = organizations[index];
+                        if (org.name === 'loraserver') {
+                            counter = counter -1;
                         }
                         else {
                             appLogger.log('Added ' + org.name);
                             me.addRemoteCompany(sessionData, org, network, dataAPI, modelAPI)
-                                .then((body) => {
-                                    resolve(body);
+                                .then((companyId) => {
+                                    counter = counter - 1;
+                                    companyMap.push({organizationId: org.id, companyId: companyId});
+                                    if (counter <= 0){
+                                        resolve(companyMap);
+                                    }
                                 })
                                 .catch((error) => {
                                     reject(error);
@@ -994,9 +1068,62 @@ exports.pullNetwork = function( sessionData, network, dataAPI, modelAPI ) {
 };
 
 
-function createRemoteUserAccount() {
+exports.pullApplications = function (sessionData, network, companyMap, dataAPI, modelAPI) {
+    let me = this;
+    let counter = 0;
+    return new Promise(async function (resolve, reject) {
+        let options = {};
+        options.method = 'GET';
+        options.url = network.baseUrl + "/applications" + "?limit=9999&offset=0";
+        options.headers = {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + sessionData.connection
+        };
+        options.agentOptions = {
+            "secureProtocol": "TLSv1_2_method",
+            "rejectUnauthorized": false
+        };
 
-}
+        appLogger.log(options);
+        request(options, function (error, response, body) {
+            if (error) {
+                dataAPI.addLog(network, "Error pulling applications from network " + network.name + ": " + error);
+                reject(error);
+            }
+            else {
+                body = JSON.parse(body);
+                dataAPI.addLog(network, body);
+                if (body.totalCount === 0) {
+                    appLogger.log('No apps');
+                    appLogger.log(body);
+                    resolve();
+                }
+                else {
+                    let apps = body.result;
+                    appLogger.log(body);
+                    counter = apps.length;
+                    for (let index in apps) {
+                        let app = apps[index];
+                        appLogger.log('Added ' + app.name);
+                        me.addRemoteApplication(sessionData, app, network, companyMap, dataAPI, modelAPI)
+                            .then(() => {
+                                counter = counter - 1;
+                                if (counter <= 0) {
+                                    resolve();
+                                }
+                            })
+                            .catch((error) => {
+                                reject(error);
+                            })
+                    }
+                }
+            }
+
+        });
+    });
+};
+
+
 
 // Add company.
 //
@@ -1038,12 +1165,11 @@ exports.addRemoteCompany = function (sessionData, remoteOrganization, network, d
         }
         else {
             appLogger.log('creating Network Link for ' + existingCompany.name);
-            existingCompanyNTL = await modelAPI.companyNetworkTypeLinks.createCompanyNetworkTypeLink(existingCompany.id, network.networkTypeId, {region: ''});
+            existingCompanyNTL = await modelAPI.companyNetworkTypeLinks.createRemoteCompanyNetworkTypeLink(existingCompany.id, network.networkTypeId, {region: ''});
             isNewNTL = true;
         }
 
         if (isNewNTL) {
-
             //3.  Setup protocol data
             await
             dataAPI.putProtocolDataForKey(network.id,
@@ -1125,26 +1251,67 @@ exports.addRemoteCompany = function (sessionData, remoteOrganization, network, d
                     appLogger.log(networkServer);
                     existingCompanyNTL.networkSettings = {serviceProfile: networkServer};
                     delete existingCompanyNTL.remoteAccessLogs;
-                    existingCompanyNTL = await modelAPI.companyNetworkTypeLinks.updateCompanyNetworkTypeLink(existingCompanyNTL);
-                    resolve();
+                    existingCompanyNTL = await modelAPI.companyNetworkTypeLinks.updateRemoteCompanyNetworkTypeLink(existingCompanyNTL);
+                    resolve(existingCompany.id);
                 }
             }); // End of user create request.
         }
         else {
             appLogger.log('Getting SP and NS');
-            var serviceProfile = await getServiceProfileForOrg(network, remoteOrganization.id, existingCompany.id, sessionData.connection, dataAPI);
-            var networkServer = await getNetworkServerById(network, serviceProfile.networkServerID, sessionData.connection, dataAPI);
+            let serviceProfile = await getServiceProfileForOrg(network, remoteOrganization.id, existingCompany.id, sessionData.connection, dataAPI);
+            let networkServer = await getNetworkServerById(network, serviceProfile.networkServerID, sessionData.connection, dataAPI);
             appLogger.log('Got SP and NS');
             appLogger.log(serviceProfile);
             appLogger.log(networkServer);
             existingCompanyNTL.networkSettings = {serviceProfile: networkServer};
             delete existingCompanyNTL.remoteAccessLogs;
             appLogger.log(existingCompanyNTL);
-            existingCompanyNTL = await modelAPI.companyNetworkTypeLinks.updateCompanyNetworkTypeLink(existingCompanyNTL);
-            resolve();
+            existingCompanyNTL = await modelAPI.companyNetworkTypeLinks.updateRemoteCompanyNetworkTypeLink(existingCompanyNTL);
+            resolve(existingCompany.id);
         }
     });
-}
+};
+
+
+exports.addRemoteApplication = function (sessionData, remoteApplication, network, companyMap, dataAPI, modelAPI) {
+    return new Promise(async function (resolve, reject) {
+        appLogger.log('Adding ' + remoteApplication.name );
+        appLogger.log(remoteApplication);
+        let existingApplication = await modelAPI.applications.retrieveApplications({search: remoteApplication.name});
+        appLogger.log(existingApplication);
+        if (existingApplication.totalCount > 0) {
+            existingApplication = existingApplication.records[0];
+            appLogger.log(existingApplication.name + ' already exists');
+        }
+        else {
+            appLogger.log('creating ' + remoteApplication.name)
+            let company = companyMap.find(o => o.organizationId === remoteApplication.organizationID)
+            appLogger.log(company);
+            appLogger.log(companyMap);
+            existingApplication = await modelAPI.applications.createApplication(remoteApplication.name, remoteApplication.description, company.companyId, 1, 'http://set.me.to.your.real.url:8888');
+            appLogger.log('Created ' + existingApplication.name);
+        }
+
+        let existingApplicationNTL = await modelAPI.applicationNetworkTypeLinks.retrieveApplicationNetworkTypeLinks({applicationId: existingApplication.id});
+        if (existingApplicationNTL.totalCount > 0) {
+            appLogger.log(existingApplication.name + ' link already exists');
+        }
+        else {
+            appLogger.log('creating Network Link for ' + existingApplication.name);
+            let serviceProfile = await getServiceProfileById(network, remoteApplication.serviceProfileID, sessionData.connection, dataAPI);
+            appLogger.log('Got SP and NS');
+            appLogger.log(serviceProfile);
+            delete existingApplicationNTL.remoteAccessLogs;
+            existingApplicationNTL = await modelAPI.applicationNetworkTypeLinks.createRemoteApplicationNetworkTypeLink(existingApplication.id, network.networkTypeId, serviceProfile, existingApplication.companyId);
+            appLogger.log(existingApplicationNTL);
+            await dataAPI.putProtocolDataForKey( network.id,
+                network.networkProtocolId,
+                makeApplicationDataKey( existingApplication.id, "appNwkId" ),
+                remoteApplication.id );
+        }
+        resolve(existingApplication.id);
+    });
+};
 
 
 
@@ -1331,6 +1498,7 @@ exports.updateApplication = function( sessionData, network, applicationId, dataA
             "rejectUnauthorized": false };
 
         // Optional data
+        appLogger.log(options);
         if ( applicationData && applicationData.networkSettings ) {
             if ( applicationData.networkSettings.isABP ) {
                 options.json.isABP = applicationData.networkSettings.isABP;
