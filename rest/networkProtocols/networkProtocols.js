@@ -236,7 +236,7 @@ NetworkProtocolAccess.prototype.pushCompany = function( dataAPI, network, compan
 // Returns a Promise that ostensibly connects to the remote system and updates
 // or creates the remote company.  This may or may not do as promised (haha) -
 // the implementation is completely up to the developers of the protocols.
-NetworkProtocolAccess.prototype.pullCompany = function( dataAPI, network ) {
+NetworkProtocolAccess.prototype.pullNetwork = function( dataAPI, network, modelAPI ) {
     var me = this;
     return new Promise( async function( resolve, reject ) {
         // Get the protocol for the network.
@@ -248,9 +248,10 @@ NetworkProtocolAccess.prototype.pullCompany = function( dataAPI, network ) {
         // wrapper manages logging in if session was not already set
         // up or is expired)
         me.sessionWrapper( network, loginData, function( proto, sessionData ) {
-            return proto.api.pullCompany( sessionData,
+            return proto.api.pullNetwork( sessionData,
                 network,
-                dataAPI );
+                dataAPI,
+                modelAPI);
         })
             .then( function( ret ) { resolve( ret ); } )
             .catch( function( err ) { reject( err ); } );

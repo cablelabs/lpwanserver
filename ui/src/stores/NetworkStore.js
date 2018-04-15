@@ -152,6 +152,29 @@ class NetworkStore extends EventEmitter {
             });
         });
     }
+
+    pullNetwork( id ) {
+        return new Promise( function( resolve, reject ) {
+            let header = sessionStore.getHeader();
+            fetch(rest_url + "/api/networks/" + id + "/pull",
+                {
+                    method: "POST",
+                    credentials: 'same-origin',
+                    headers: header,
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                }
+            )
+                .then(checkStatus)
+                .then(() => {
+                    // Should just return 200
+                    resolve();
+                })
+                .catch( function( err ) {
+                    reject( err );
+                });
+        });
+    }
   }
 
   const networkStore = new NetworkStore();

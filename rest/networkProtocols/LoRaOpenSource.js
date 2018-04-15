@@ -17,6 +17,7 @@ var appLogger = require( '../lib/appLogger.js' );
 //           LoRa Open Source, this is a global admin account.
 exports.getCompanyAccessAccount = async function( dataAPI, network ) {
     let secData = network.securityData;
+    appLogger.log(secData);
     if ( !secData || !secData.username || !secData.password ) {
         appLogger.log( "Network security data is incomplete for " + network.name );
         dataAPI.addLog( network, "Network security data is incomplete for " + network.name );
@@ -103,6 +104,7 @@ async function getCompanyAccount( dataAPI, network, companyId, generateIfMissing
     catch ( err ) {
         // Something's off.  Generate new if allowed.
         if ( generateIfMissing ) {
+            appLogger.log('Generating account for ' + companyId);
             // Take the company name, make it suitable for a user name, and then
             // add "admin" for the username.
             var corec = await dataAPI.getCompanyById( companyId );
@@ -112,6 +114,8 @@ async function getCompanyAccount( dataAPI, network, companyId, generateIfMissing
             kd = await dataAPI.genKey();
             secData = { "username": uname, "password": pass };
             srd = dataAPI.hide( network, secData, kd );
+            appLogger.log(uname);
+            appLogger.log(pass);
 
             // Save for future reference.networkId, networkProtocolId, key, data
             await dataAPI.putProtocolDataForKey(
@@ -219,6 +223,276 @@ function getANetworkServerID( network, connection ) {
                 resolve( nsList[ 0 ].id );
             }
         });
+    });
+}
+
+
+// Get the NetworkServer using the Service Profile a ServiceProfile.
+function getNetworkServerById( network, networkServerId, connection, dataAPI ) {
+    appLogger.log('LoRaOpenSource: getNetworkServerForRemoteOrganization');
+    return new Promise( async function( resolve, reject ) {
+        // Set up the request options.
+        var options = {};
+        options.method = 'GET';
+        options.url = network.baseUrl + "/network-servers/" + networkServerId;
+        options.headers = { "Content-Type": "application/json",
+            "Authorization": "Bearer " + connection };
+        options.agentOptions = {
+            "secureProtocol": "TLSv1_2_method",
+            "rejectUnauthorized": false };
+
+        request( options, async function( error, response, body ) {
+            if ( error || response.statusCode >= 400 ) {
+                if ( error ) {
+                    dataAPI.addLog( network, "Error on get Network Server: " + error );
+                    reject( error );
+                    return;
+                }
+                else {
+                    var bodyObj = JSON.parse( response.body );
+                    dataAPI.addLog( network, "Error on get Network Server: " +
+                        bodyObj.error +
+                        " (" + response.statusCode + ")" );
+                    dataAPI.addLog( network, "Request data = " + JSON.stringify( options ) );
+                    reject( response.statusCode );
+                    return;
+                }
+            }
+            else {
+                // Convert text to JSON array, use id from first element
+                var res = JSON.parse( body );
+                appLogger.log(res);
+                resolve( res );
+            }
+        });
+    });
+};
+
+
+
+// Get the NetworkServer using the Service Profile a ServiceProfile.
+function getDeviceProfileById( network, dpId, connection, dataAPI ) {
+    appLogger.log('LoRaOpenSource: getDeviceProfileById');
+    return new Promise( async function( resolve, reject ) {
+        // Set up the request options.
+        var options = {};
+        options.method = 'GET';
+        options.url = network.baseUrl + "/device-profiles/" + dpId;
+        options.headers = { "Content-Type": "application/json",
+            "Authorization": "Bearer " + connection };
+        options.agentOptions = {
+            "secureProtocol": "TLSv1_2_method",
+            "rejectUnauthorized": false };
+        appLogger.log(options);
+        request( options, async function( error, response, body ) {
+            if ( error || response.statusCode >= 400 ) {
+                if ( error ) {
+                    dataAPI.addLog( network, "Error on get Device Profile: " + error );
+                    reject( error );
+                    return;
+                }
+                else {
+                    var bodyObj = JSON.parse( response.body );
+                    dataAPI.addLog( network, "Error on get Device Profile: " +
+                        bodyObj.error +
+                        " (" + response.statusCode + ")" );
+                    dataAPI.addLog( network, "Request data = " + JSON.stringify( options ) );
+                    reject( response.statusCode );
+                    return;
+                }
+            }
+            else {
+                // Convert text to JSON array, use id from first element
+                var res = JSON.parse( body );
+                appLogger.log(res);
+                resolve( res );
+            }
+        });
+    });
+};
+
+
+// Get the NetworkServer using the Service Profile a ServiceProfile.
+function getDeviceById( network, deviceId, connection, dataAPI ) {
+    appLogger.log('LoRaOpenSource: getDeviceProfileById');
+    return new Promise( async function( resolve, reject ) {
+        // Set up the request options.
+        var options = {};
+        options.method = 'GET';
+        options.url = network.baseUrl + "/devices/" + deviceId;
+        options.headers = { "Content-Type": "application/json",
+            "Authorization": "Bearer " + connection };
+        options.agentOptions = {
+            "secureProtocol": "TLSv1_2_method",
+            "rejectUnauthorized": false };
+        appLogger.log(options)
+        request( options, async function( error, response, body ) {
+            if ( error || response.statusCode >= 400 ) {
+                if ( error ) {
+                    dataAPI.addLog( network, "Error on get Device: " + error );
+                    reject( error );
+                    return;
+                }
+                else {
+                    var bodyObj = JSON.parse( response.body );
+                    dataAPI.addLog( network, "Error on get Device: " +
+                        bodyObj.error +
+                        " (" + response.statusCode + ")" );
+                    dataAPI.addLog( network, "Request data = " + JSON.stringify( options ) );
+                    reject( response.statusCode );
+                    return;
+                }
+            }
+            else {
+                // Convert text to JSON array, use id from first element
+                var res = JSON.parse( body );
+                appLogger.log(res);
+                resolve( res );
+            }
+        });
+    });
+};
+
+
+// Get the NetworkServer using the Service Profile a ServiceProfile.
+function getServiceProfileById( network, serviceProfileId, connection, dataAPI ) {
+    appLogger.log('LoRaOpenSource: getServiceProfileById');
+    return new Promise( async function( resolve, reject ) {
+        // Set up the request options.
+        var options = {};
+        options.method = 'GET';
+        options.url = network.baseUrl + "/service-profiles/" + serviceProfileId;
+        options.headers = { "Content-Type": "application/json",
+            "Authorization": "Bearer " + connection };
+        options.agentOptions = {
+            "secureProtocol": "TLSv1_2_method",
+            "rejectUnauthorized": false };
+
+        request( options, async function( error, response, body ) {
+            if ( error || response.statusCode >= 400 ) {
+                if ( error ) {
+                    dataAPI.addLog( network, "Error on get Service Profile: " + error );
+                    reject( error );
+                    return;
+                }
+                else {
+                    var bodyObj = JSON.parse( response.body );
+                    dataAPI.addLog( network, "Error on get Service Profile: " +
+                        bodyObj.error +
+                        " (" + response.statusCode + ")" );
+                    dataAPI.addLog( network, "Request data = " + JSON.stringify( options ) );
+                    reject( response.statusCode );
+                    return;
+                }
+            }
+            else {
+                // Convert text to JSON array, use id from first element
+                var res = JSON.parse( body );
+                appLogger.log(res);
+                resolve( res );
+            }
+        });
+    });
+}
+
+
+
+// Get the NetworkServer using the Service Profile a ServiceProfile.
+function getApplicationById( network, applicationId, connection, dataAPI ) {
+    appLogger.log('LoRaOpenSource: getApplicationById');
+    return new Promise( async function( resolve, reject ) {
+        // Set up the request options.
+        var options = {};
+        options.method = 'GET';
+        options.url = network.baseUrl + "/applications/" + applicationId;
+        options.headers = { "Content-Type": "application/json",
+            "Authorization": "Bearer " + connection };
+        options.agentOptions = {
+            "secureProtocol": "TLSv1_2_method",
+            "rejectUnauthorized": false };
+
+        appLogger.log(options);
+        request( options, async function( error, response, body ) {
+            if ( error || response.statusCode >= 400 ) {
+                if ( error ) {
+                    dataAPI.addLog( network, "Error on get Application: " + error );
+                    reject( error );
+                    return;
+                }
+                else {
+                    var bodyObj = JSON.parse( response.body );
+                    dataAPI.addLog( network, "Error on get Application: " +
+                        bodyObj.error +
+                        " (" + response.statusCode + ")" );
+                    dataAPI.addLog( network, "Request data = " + JSON.stringify( options ) );
+                    reject( response.statusCode );
+                    return;
+                }
+            }
+            else {
+                // Convert text to JSON array, use id from first element
+                var res = JSON.parse( body );
+                appLogger.log(res);
+                resolve( res );
+            }
+        });
+    });
+}
+
+
+// Get the Service Profile a for a Remote Org.
+function getServiceProfileForOrg( network, orgId, companyId, connection, dataAPI ) {
+    appLogger.log('LoRaOpenSource: getNetworkServerForRemoteOrganization');
+    return new Promise( async function( resolve, reject ) {
+        var spOptions = {};
+        spOptions.method = 'GET';
+        spOptions.url = network.baseUrl + "/service-profiles?organizationID=" + orgId + "&limit=20&offset=0";
+        spOptions.headers = {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + connection
+        };
+
+        spOptions.agentOptions = {
+            "secureProtocol": "TLSv1_2_method",
+            "rejectUnauthorized": false
+        };
+        appLogger.log(spOptions);
+        request(spOptions, async function (error, response, body) {
+            if (error || response.statusCode >= 400) {
+                if (error) {
+                    dataAPI.addLog(network, "Error getting Service Profile: " + error);
+                    reject(error);
+                    return;
+                }
+                else {
+
+                    dataAPI.addLog(network, "Error getting Service Profile: " + response.statusCode +
+                        " (Server message: " + response.body.error + ")");
+                    reject(response.statusCode);
+                    return;
+                }
+            }
+            else {
+                // Save the ServiceProfile ID from the remote
+                // network.
+                body = JSON.parse(body);
+                appLogger.log(body);
+                let serviceProfile = body.result[0];
+                await dataAPI.putProtocolDataForKey(
+                    network.id,
+                    network.networkProtocolId,
+                    makeCompanyDataKey(companyId, "coSPId"),
+                    serviceProfile.serviceProfileID);
+                // TODO: Remove this HACK.  Should not store the service profile locally
+                //       in case it gets changed on the remote server.
+                await dataAPI.putProtocolDataForKey(
+                    network.id,
+                    network.networkProtocolId,
+                    makeCompanyDataKey(companyId, "coSPNwkId"),
+                    serviceProfile.networkServerID);
+                resolve(serviceProfile);
+            }
+        }); // End of service profile create
     });
 }
 
@@ -837,31 +1111,554 @@ exports.pushCompany = function( sessionData, network, companyId, dataAPI ) {
 //               operation.
 //
 // Returns a Promise that gets the company record from the remote system.
-exports.pullCompany = function( sessionData, network, dataAPI ) {
+exports.pullNetwork = function (sessionData, network, dataAPI, modelAPI) {
+    let me = this;
+    return new Promise(async function (resolve, reject) {
+        me.pullCompanies(sessionData, network, dataAPI, modelAPI)
+            .then((companyMap) => {
+                appLogger.log('Success in pulling organizations from ' + network.name);
+                appLogger.log(companyMap);
+                me.pullDeviceProfiles(sessionData, network, companyMap, dataAPI, modelAPI)
+                    .then((dpMap) => {
+                        appLogger.log('Success in pulling device profiles from ' + network.name);
+                        appLogger.log(dpMap);
+                        me.pullApplications(sessionData, network, companyMap, dpMap, dataAPI, modelAPI)
+                            .then((applicationMap) => {
+                                appLogger.log('Success in pulling applications from ' + network.name);
+                                appLogger.log(applicationMap);
+                                // me.pullDevices(sessionData, network, companyMap, applicationMap, dpMap, dataAPI, modelAPI)
+                                //     .then((result) => {
+                                //         appLogger.log('Success in pulling devices from ' + network.name);
+                                //         appLogger.log(result);
+                                //         resolve();
+                                //     })
+                                //     .catch((err) => {
+                                //         appLogger.log('Failed to pull devices from ' + network.name);
+                                //         reject(err);
+                                //     })
+                                resolve(applicationMap);
+                            })
+                            .catch((err) => {
+                                appLogger.log('Failed to pull applications from ' + network.name);
+                                reject(err);
+                            })
+                    })
+                    .catch((err) => {
+                        appLogger.log('Failed to pull device profiles from ' + network.name);
+                        reject(err);
+                    })
+            })
+            .catch((err) => {
+                appLogger.log('Failed to pull organizations from ' + network.name);
+                reject(err);
+            })
+    })
+};
+
+exports.pullCompanies = function(sessionData, network, dataAPI, modelAPI ) {
+    let me = this;
+    let counter = 0;
     return new Promise( async function( resolve, reject ) {
         // Get the remote companies.
         // Set up the request options.
-        var options = {};
+        let companyMap = [];
+        let options = {};
         options.method = 'GET';
-        options.url = network.baseUrl + "/organizations" + "?limit=20&offset=0"  ;
+        options.url = network.baseUrl + "/organizations" + "?limit=9999&offset=0"  ;
         options.headers = { "Content-Type": "application/json",
             "Authorization": "Bearer " + sessionData.connection };
         options.agentOptions = {
             "secureProtocol": "TLSv1_2_method",
             "rejectUnauthorized": false };
 
+        appLogger.log(options);
         request( options, function( error, response, body ) {
             if ( error ) {
                 dataAPI.addLog( network,"Error pulling companies from network " + network.name + ": " + error );
                 reject( error );
             }
             else {
+                body = JSON.parse(body);
                 dataAPI.addLog(network, body);
-                resolve( body );
+                if (body.totalCount === 0) {
+                    appLogger.log('No organizations');
+                    appLogger.log(body);
+                    resolve (companyMap);
+                }
+                else {
+                    let organizations = body.result;
+                    appLogger.log(body);
+                    counter = organizations.length;
+                    for (let index in organizations) {
+                        let org = organizations[index];
+                        if (org.name === 'loraserver') {
+                            counter = counter -1;
+                        }
+                        else {
+                            appLogger.log('Added ' + org.name);
+                            me.addRemoteCompany(sessionData, org, network, dataAPI, modelAPI)
+                                .then((companyId) => {
+                                    counter = counter - 1;
+                                    companyMap.push({organizationId: org.id, companyId: companyId});
+                                    if (counter <= 0){
+                                        resolve(companyMap);
+                                    }
+                                })
+                                .catch((error) => {
+                                    reject(error);
+                                })
+                        }
+                    }
+                }
             }
         });
     });
-}
+};
+
+
+exports.pullApplications = function (sessionData, network, companyMap, dpMap, dataAPI, modelAPI) {
+    let me = this;
+    let counter = 0;
+    return new Promise(async function (resolve, reject) {
+        let applicationMap = [];
+        let options = {};
+        options.method = 'GET';
+        options.url = network.baseUrl + "/applications" + "?limit=9999&offset=0";
+        options.headers = {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + sessionData.connection
+        };
+        options.agentOptions = {
+            "secureProtocol": "TLSv1_2_method",
+            "rejectUnauthorized": false
+        };
+
+        appLogger.log(options);
+        request(options, function (error, response, body) {
+            if (error) {
+                dataAPI.addLog(network, "Error pulling applications from network " + network.name + ": " + error);
+                reject(error);
+            }
+            else {
+                body = JSON.parse(body);
+                dataAPI.addLog(network, body);
+                if (body.totalCount === 0) {
+                    appLogger.log('No apps');
+                    appLogger.log(body);
+                    resolve(applicationMap);
+                }
+                else {
+                    let apps = body.result;
+                    appLogger.log(body);
+                    counter = apps.length;
+                    for (let index in apps) {
+                        let app = apps[index];
+                        appLogger.log('Added ' + app.name);
+                        me.addRemoteApplication(sessionData, app, network, companyMap, dpMap, dataAPI, modelAPI)
+                            .then((applicationId) => {
+                                counter = counter - 1;
+                                applicationMap.push({remoteApplicationId: app.id, applicationId: applicationId});
+                                if (counter <= 0) {
+                                    resolve(applicationMap);
+                                }
+                            })
+                            .catch((error) => {
+                                reject(error);
+                            })
+                    }
+                }
+            }
+
+        });
+    });
+};
+
+
+
+exports.pullDeviceProfiles = function (sessionData, network, companyMap, dataAPI, modelAPI) {
+    let me = this;
+    let counter = 0;
+    return new Promise(async function (resolve, reject) {
+        let dpMap = [];
+        let options = {};
+        options.method = 'GET';
+        options.url = network.baseUrl + "/device-profiles" + "?limit=9999&offset=0";
+        options.headers = {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + sessionData.connection
+        };
+        options.agentOptions = {
+            "secureProtocol": "TLSv1_2_method",
+            "rejectUnauthorized": false
+        };
+
+        appLogger.log(options);
+        request(options, function (error, response, body) {
+            if (error) {
+                dataAPI.addLog(network, "Error pulling device profiles from network " + network.name + ": " + error);
+                reject(error);
+            }
+            else {
+                body = JSON.parse(body);
+                dataAPI.addLog(network, body);
+                if (body.totalCount == 0) {
+                    appLogger.log('No device profiles');
+                    appLogger.log(body);
+                    resolve(dpMap);
+                }
+                else {
+                    let deviceProfiles = body.result;
+                    appLogger.log(body);
+                    counter = deviceProfiles.length;
+                    for (let index in deviceProfiles) {
+                        let dp = deviceProfiles[index];
+                        appLogger.log('Added ' + dp.name);
+                        me.addRemoteDeviceProfile(sessionData, dp, network, companyMap, dataAPI, modelAPI)
+                            .then((dpId) => {
+                                counter = counter - 1;
+                                dpMap.push({remoteDeviceProfileId: dp.deviceProfileID, deviceProfileId: dpId});
+                                if (counter <= 0) {
+                                    resolve(dpMap);
+                                }
+                            })
+                            .catch((error) => {
+                                reject(error);
+                            })
+                    }
+                }
+            }
+
+        });
+    });
+};
+
+exports.pullDevices = function (sessionData, network, companyId, dpMap, remoteApplicationId, applicationId, dataAPI, modelAPI) {
+    let me = this;
+    let counter = 0;
+    return new Promise(async function (resolve, reject) {
+        let deviceMap = [];
+        let options = {};
+        options.method = 'GET';
+        options.url = network.baseUrl + "/applications/" + remoteApplicationId + "/devices" + "?limit=9999&offset=0";
+        options.headers = {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + sessionData.connection
+        };
+        options.agentOptions = {
+            "secureProtocol": "TLSv1_2_method",
+            "rejectUnauthorized": false
+        };
+
+        appLogger.log(options);
+        request(options, function (error, response, body) {
+            if (error) {
+                dataAPI.addLog(network, "Error pulling devices from network " + network.name + ": " + error);
+                reject(error);
+            }
+            else {
+                appLogger.log(body);
+                body = JSON.parse(body);
+                dataAPI.addLog(network, body);
+                if (body.totalCount == 0) {
+                    appLogger.log('No devices');
+                    appLogger.log(body);
+                    resolve(deviceMap);
+                }
+                else {
+                    let devices = body.result;
+                    appLogger.log(body);
+                    counter = devices.length;
+                    for (let index in devices) {
+                        let device = devices[index];
+                        appLogger.log('Added ' + device.name);
+                        me.addRemoteDevice(sessionData, device, network, companyId, dpMap, remoteApplicationId, applicationId, dataAPI, modelAPI)
+                            .then((deviceId) => {
+                                counter = counter - 1;
+                                deviceMap.push({remoteDeviceId: device.id, deviceId: deviceId});
+                                if (counter <= 0) {
+                                    resolve(deviceMap);
+                                }
+                            })
+                            .catch((error) => {
+                                reject(error);
+                            })
+                    }
+                }
+            }
+
+        });
+    });
+};
+
+// Add company.
+//
+// sessionData     - The session information for the user, including the //                   connection data for the remote system.
+// network         - The networks record for the network that uses this
+//                   protocol.
+// companyId       - The companyNetworkTypeLinks record id for this company and
+//                   network.
+// dataAPI         - Gives access to the data records and error tracking for the
+//                   operation.
+//
+// Returns a Promise that connects to the remote system and creates the
+// company.  The promise saves the id for the remote company, linked to the
+// local database record.  This method is called in an async manner against
+// lots of other networks, so logging should be done via the dataAPI.
+exports.addRemoteCompany = function (sessionData, remoteOrganization, network, dataAPI, modelAPI) {
+    return new Promise(async function (resolve, reject) {
+        let isNewNTL = false;
+        //3.  Setup protocol data
+        //4.  Add the company user to the remote Network
+        appLogger.log('Adding ' + remoteOrganization.name + ' ' + remoteOrganization);
+        //1.  add the remote company locally through the ICompany Interface
+        let existingCompany = await modelAPI.companies.retrieveCompanies({search: remoteOrganization.name});
+        if (existingCompany.totalCount > 0) {
+            existingCompany = existingCompany.records[0];
+            appLogger.log(existingCompany.name + ' already exists');
+        }
+        else {
+            appLogger.log('creating ' + remoteOrganization.name);
+            existingCompany = await modelAPI.companies.createCompany(remoteOrganization.name, modelAPI.companies.COMPANY_VENDOR);
+            appLogger.log('Created ' + existingCompany.name);
+        }
+
+        //2.  add the NTL to the local company
+        let existingCompanyNTL = await modelAPI.companyNetworkTypeLinks.retrieveCompanyNetworkTypeLinks({companyId: existingCompany.id});
+        if (existingCompanyNTL.totalCount > 0) {
+            existingCompanyNTL = existingCompanyNTL.records[0];
+            appLogger.log(existingCompany.name + ' link already exists');
+        }
+        else {
+            appLogger.log('creating Network Link for ' + existingCompany.name);
+            existingCompanyNTL = await modelAPI.companyNetworkTypeLinks.createRemoteCompanyNetworkTypeLink(existingCompany.id, network.networkTypeId, {region: ''});
+            isNewNTL = true;
+        }
+
+        if (isNewNTL) {
+            //3.  Setup protocol data
+            await
+            dataAPI.putProtocolDataForKey(network.id,
+                network.networkProtocolId,
+                makeCompanyDataKey(existingCompany.id, "coNwkId"),
+                remoteOrganization.id);
+            var networkCoId = remoteOrganization.id;
+
+            // We will need an admin user for this company.
+            var userOptions = {};
+            userOptions.method = 'POST';
+            userOptions.url = network.baseUrl + "/users";
+            userOptions.headers = {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + sessionData.connection
+            };
+
+            // Get/generate the company username/password
+            var creds = await
+            getCompanyAccount(dataAPI, network, existingCompany.id, true);
+
+            userOptions.json = {
+                "username": creds.username,
+                "password": creds.password,
+                "isActive": true,
+                "isAdmin": false,
+                "sessionTTL": 0,
+                "organizations": [
+                    {
+                        "isAdmin": true,
+                        "organizationID": networkCoId
+                    }
+                ],
+                "email": "fake@emailaddress.com",
+                "note": "Created by and for LPWAN Server"
+            };
+            userOptions.agentOptions = {
+                "secureProtocol": "TLSv1_2_method",
+                "rejectUnauthorized": false
+            };
+
+            appLogger.log(userOptions);
+            request(userOptions, async function (error, response, body) {
+                if (error || response.statusCode >= 400) {
+                    if (error) {
+                        dataAPI.addLog(network, "Error creating " + existingCompany.name +
+                            "'s admin user " + userOptions.json.username +
+                            ": " + error);
+                        appLogger.log(error);
+                        reject(error);
+                        return;
+                    }
+                    else {
+
+                        dataAPI.addLog(network, "Error creating " + existingCompany.name +
+                            "'s admin user " + userOptions.json.username +
+                            ": " + response.statusCode +
+                            " (Server message: " + response.body.error + ")");
+                        appLogger.log("Error creating " + existingCompany.name +
+                            "'s admin user " + userOptions.json.username +
+                            ": " + response.statusCode +
+                            " (Server message: " + response.body.error + ")");
+                        reject(response.statusCode);
+                        return;remoteDeviceId
+                    }
+                }
+                else {
+                    // Save the user ID from the remote network.
+                    await dataAPI.putProtocolDataForKey(network.id,
+                        network.networkProtocolId,
+                        makeCompanyDataKey(existingCompany.id, "coUsrId"),
+                        body.id);
+                    // Set up a default Service Profile.
+                    appLogger.log('Getting SP and NS');
+                    var serviceProfile = await getServiceProfileForOrg(network, remoteOrganization.id, existingCompany.id, sessionData.connection, dataAPI);
+                    var networkServer = await getNetworkServerById(network, serviceProfile.networkServerID, sessionData.connection, dataAPI);
+                    appLogger.log('Got SP and NS');
+                    appLogger.log(serviceProfile);
+                    appLogger.log(networkServer);
+                    existingCompanyNTL.networkSettings = {serviceProfile: networkServer};
+                    delete existingCompanyNTL.remoteAccessLogs;
+                    existingCompanyNTL = await modelAPI.companyNetworkTypeLinks.updateRemoteCompanyNetworkTypeLink(existingCompanyNTL);
+                    resolve(existingCompany.id);
+                }
+            }); // End of user create request.
+        }
+        else {
+            appLogger.log('Getting SP and NS');
+            let serviceProfile = await getServiceProfileForOrg(network, remoteOrganization.id, existingCompany.id, sessionData.connection, dataAPI);
+            let networkServer = await getNetworkServerById(network, serviceProfile.networkServerID, sessionData.connection, dataAPI);
+            appLogger.log('Got SP and NS');
+            appLogger.log(serviceProfile);
+            appLogger.log(networkServer);
+            existingCompanyNTL.networkSettings = {serviceProfile: networkServer};
+            delete existingCompanyNTL.remoteAccessLogs;
+            appLogger.log(existingCompanyNTL);
+            existingCompanyNTL = await modelAPI.companyNetworkTypeLinks.updateRemoteCompanyNetworkTypeLink(existingCompanyNTL);
+            resolve(existingCompany.id);
+        }
+    });
+};
+
+
+exports.addRemoteApplication = function (sessionData, limitedRemoteApplication, network, companyMap, dpMap, dataAPI, modelAPI) {
+    let me = this;
+    return new Promise(async function (resolve, reject) {
+        let remoteApplication = await getApplicationById(network, limitedRemoteApplication.id, sessionData.connection, dataAPI);
+        appLogger.log('Adding ' + remoteApplication.name );
+        appLogger.log(remoteApplication);
+        let existingApplication = await modelAPI.applications.retrieveApplications({search: remoteApplication.name});
+        appLogger.log(existingApplication);
+        if (existingApplication.totalCount > 0) {
+            existingApplication = existingApplication.records[0];
+            appLogger.log(existingApplication.name + ' already exists');
+        }
+        else {
+            appLogger.log('creating ' + remoteApplication.name)
+            let company = companyMap.find(o => o.organizationId === remoteApplication.organizationID)
+            appLogger.log(company);
+            appLogger.log(companyMap);
+            existingApplication = await modelAPI.applications.createApplication(remoteApplication.name, remoteApplication.description, company.companyId, 1, 'http://set.me.to.your.real.url:8888');
+            appLogger.log('Created ' + existingApplication.name);
+        }
+
+        let existingApplicationNTL = await modelAPI.applicationNetworkTypeLinks.retrieveApplicationNetworkTypeLinks({applicationId: existingApplication.id});
+        if (existingApplicationNTL.totalCount > 0) {
+            appLogger.log(existingApplication.name + ' link already exists');
+        }
+        else {
+            appLogger.log('creating Network Link for ' + existingApplication.name);
+            // let serviceProfile = await getServiceProfileById(network, remoteApplication.serviceProfileID, sessionData.connection, dataAPI);
+            // let networkServer = await getNetworkServerById(network, serviceProfile.networkServerID, sessionData.connection, dataAPI);
+            // appLogger.log('Got SP and NS');
+            // appLogger.log(serviceProfile);
+            // appLogger.log(networkServer);
+            // delete existingApplicationNTL.remoteAccessLogs;
+            let networkSettings = {
+                payloadCodec: remoteApplication.payloadCodec,
+                payloadDecoderScript: remoteApplication.payloadDecoderScript,
+                payloadEncoderScript: remoteApplication.payloadEncoderScript
+            }
+            existingApplicationNTL = await modelAPI.applicationNetworkTypeLinks.createRemoteApplicationNetworkTypeLink(existingApplication.id, network.networkTypeId, networkSettings, existingApplication.companyId);
+            appLogger.log(existingApplicationNTL);
+            await dataAPI.putProtocolDataForKey(network.id,
+                network.networkProtocolId,
+                makeApplicationDataKey(existingApplication.id, "appNwkId"),
+                remoteApplication.id);
+        }
+        me.pullDevices(sessionData, network, existingApplication.companyId, dpMap, remoteApplication.id, existingApplication.id, dataAPI, modelAPI)
+            .then((result) => {
+                appLogger.log('Success in pulling devices from ' + network.name);
+                appLogger.log(result);
+                resolve(existingApplication.id);
+            })
+            .catch((err) => {
+                appLogger.log('Failed to pull devices from ' + network.name);
+                reject(err);
+            })
+
+    });
+};
+
+
+
+exports.addRemoteDeviceProfile = function (sessionData, limitedRemoteDeviceProfile, network, companyMap, dataAPI, modelAPI) {
+    return new Promise(async function (resolve, reject) {
+        let remoteDeviceProfile = await getDeviceProfileById(network, limitedRemoteDeviceProfile.deviceProfileID, sessionData.connection, dataAPI);
+        appLogger.log('Adding ' + remoteDeviceProfile.name );
+        appLogger.log(remoteDeviceProfile);
+        let company = companyMap.find(o => o.organizationId === remoteDeviceProfile.organizationID);
+        appLogger.log(company);
+        let existingDeviceProfile = await modelAPI.deviceProfiles.retrieveDeviceProfiles({search: remoteDeviceProfile.name});
+        appLogger.log(existingDeviceProfile);
+        if (existingDeviceProfile.totalCount > 0) {
+            existingDeviceProfile = existingDeviceProfile.records[0];
+            appLogger.log(existingDeviceProfile.name + ' already exists');
+        }
+        else {
+            appLogger.log('creating ' + remoteDeviceProfile.name);
+            appLogger.log(remoteDeviceProfile);
+            existingDeviceProfile = await modelAPI.deviceProfiles.createRemoteDeviceProfile(network.networkTypeId, company.companyId, remoteDeviceProfile.name, 'Device Profile managed by LPWAN Server, perform changes via LPWAN', remoteDeviceProfile.deviceProfile);
+            appLogger.log('Created ' + existingDeviceProfile.name);
+        }
+        resolve(existingDeviceProfile.id);
+    });
+};
+
+
+exports.addRemoteDevice = function (sessionData, limitedRemoteDevice, network, companyId, dpMap, remoteApplicationId, applicationId, dataAPI, modelAPI) {
+    return new Promise(async function (resolve, reject) {
+        let remoteDevice = await getDeviceById(network, limitedRemoteDevice.devEUI, sessionData.connection, dataAPI);
+        appLogger.log('Adding ' + remoteDevice.name );
+        appLogger.log(remoteDevice);
+        let deviceProfile = dpMap.find(o => o.remoteDeviceProfileId == remoteDevice.deviceProfileID);
+        appLogger.log(deviceProfile);
+        let existingDevice = await modelAPI.devices.retrieveDevices({search: remoteDevice.name});
+        appLogger.log(existingDevice);
+        if (existingDevice.totalCount > 0) {
+            existingDevice = existingDevice.records[0];
+            appLogger.log(existingDevice.name + ' already exists');
+        }
+        else {
+            appLogger.log('creating ' + remoteDevice.name)
+            existingDevice = await modelAPI.devices.createDevice(remoteDevice.name, remoteDevice.description, applicationId);
+            appLogger.log('Created ' + existingDevice.name);
+        }
+
+        let existingDeviceNTL = await modelAPI.deviceNetworkTypeLinks.retrieveDeviceNetworkTypeLinks({deviceId: existingDevice.id});
+        if (existingDeviceNTL.totalCount > 0) {
+            appLogger.log(existingDevice.name + ' link already exists');
+        }
+        else {
+            appLogger.log('creating Network Link for ' + existingDevice.name);
+            existingDeviceNTL = await modelAPI.deviceNetworkTypeLinks.createRemoteDeviceNetworkTypeLink(existingDevice.id, network.networkTypeId, deviceProfile.deviceProfileId, existingDevice, companyId);
+            appLogger.log(existingDeviceNTL);
+            dataAPI.putProtocolDataForKey( network.id,
+                network.networkProtocolId,
+                makeDeviceDataKey( existingDevice.id, "devNwkId" ),
+                remoteDevice.devEUI );
+        }
+        resolve(existingDevice.id);
+    });
+};
+
 
 
 //******************************************************************************
@@ -1038,11 +1835,19 @@ exports.updateApplication = function( sessionData, network, applicationId, dataA
         options.headers = { "Content-Type": "application/json",
                             "Authorization": "Bearer " + sessionData.connection };
         options.json = {
+            "id": appNetworkId,
             "name": application.name,
-            "organizationID": coNetworkId };
+            "organizationID": coNetworkId,
+            "description": "This Application is Managed by LPWanServer",
+            "payloadCodec": '',
+            "payloadDecoderScript": '',
+            "payloadEncoderScript": ''
+        };
         options.agentOptions = {
             "secureProtocol": "TLSv1_2_method",
             "rejectUnauthorized": false };
+
+
 
         // Optional data
         if ( applicationData && applicationData.networkSettings ) {
@@ -1073,7 +1878,19 @@ exports.updateApplication = function( sessionData, network, applicationId, dataA
             if ( applicationData.networkSettings.installationMargin ) {
                 options.json.installationMargin = applicationData.networkSettings.installationMargin;
             }
+            if ( applicationData.networkSettings.payloadCodec && applicationData.networkSettings.payloadCodec !== 'NONE') {
+                options.json.payloadCodec = applicationData.networkSettings.payloadCodec;
+            }
+            if ( applicationData.networkSettings.payloadDecoderScript ) {
+                options.json.payloadDecoderScript = applicationData.networkSettings.payloadDecoderScript;
+            }
+            if ( applicationData.networkSettings.payloadEncoderScript ) {
+                options.json.payloadEncoderScript = applicationData.networkSettings.payloadEncoderScript;
+            }
         }
+        appLogger.log(application);
+        appLogger.log(applicationData);
+        appLogger.log(options);
 
         request( options, function( error, response, body ) {
             if ( error ) {
@@ -1081,6 +1898,7 @@ exports.updateApplication = function( sessionData, network, applicationId, dataA
                 reject( error );
             }
             else {
+                appLogger.log(body);
                 resolve();
             }
         });
@@ -1182,40 +2000,6 @@ exports.pushApplication = function( sessionData, network, applicationId, dataAPI
     });
 };
 
-// Get application.
-//
-// sessionData - The session information for the user, including the //               connection data for the remote system.
-// network     - The networks record for the network that uses this
-//               protocol.
-// dataAPI     - Gives access to the data records and error tracking for the
-//               operation.
-//
-// Returns a Promise that gets the company record from the remote system.
-exports.pullApplication = function( sessionData, network, dataAPI ) {
-    return new Promise( async function( resolve, reject ) {
-        // Get the remote companies.
-        // Set up the request options.
-        var options = {};
-        options.method = 'GET';
-        options.url = network.baseUrl + "/applications" + "?limit=20&offset=0"  ;
-        options.headers = { "Content-Type": "application/json",
-            "Authorization": "Bearer " + sessionData.connection };
-        options.agentOptions = {
-            "secureProtocol": "TLSv1_2_method",
-            "rejectUnauthorized": false };
-
-        request( options, function( error, response, body ) {
-            if ( error ) {
-                dataAPI.addLog( network,"Error pulling applications from network " + network.name + ": " + error );
-                reject( error );
-            }
-            else {
-                dataAPI.addLog(network, body);
-                resolve( body );
-            }
-        });
-    });
-};
 
 
 //******************************************************************************
@@ -1851,66 +2635,9 @@ exports.pushDeviceProfile = function( sessionData, network, deviceProfileId, dat
 };
 
 
-// Get DeviceProfile.
-//
-// sessionData - The session information for the user, including the //               connection data for the remote system.
-// network     - The networks record for the network that uses this
-//               protocol.
-// dataAPI     - Gives access to the data records and error tracking for the
-//               operation.
-//
-// Returns a Promise that gets the company record from the remote system.
-exports.pullDeviceProfiles = function( sessionData, network, dataAPI ) {
-    return new Promise( async function( resolve, reject ) {
-        // Get the remote companies.
-        // Set up the request options.
-        var options = {};
-        options.method = 'GET';
-        options.url = network.baseUrl + "/device-profiles" + "?limit=20&offset=0"  ;
-        options.headers = { "Content-Type": "application/json",
-            "Authorization": "Bearer " + sessionData.connection };
-        options.agentOptions = {
-            "secureProtocol": "TLSv1_2_method",
-            "rejectUnauthorized": false };
 
-        request( options, function( error, response, body ) {
-            if ( error ) {
-                dataAPI.addLog( network,"Error pulling device profiles from network " + network.name + ": " + error );
-                reject( error );
-            }
-            else {
-                dataAPI.addLog(network, body);
-                resolve( body );
-            }
-        });
-    });
-};
 
-exports.pullDeviceProfile = function( sessionData, network, deviceProfileId, dataAPI ) {
-    return new Promise( async function( resolve, reject ) {
-        // Get the remote companies.
-        // Set up the request options.
-        var options = {};
-        options.method = 'GET';
-        options.url = network.baseUrl + "/device-profiles/" + deviceProfileId  ;
-        options.headers = { "Content-Type": "application/json",
-            "Authorization": "Bearer " + sessionData.connection };
-        options.agentOptions = {
-            "secureProtocol": "TLSv1_2_method",
-            "rejectUnauthorized": false };
 
-        request( options, function( error, response, body ) {
-            if ( error ) {
-                dataAPI.addLog( network,"Error pulling device profile" + deviceProfileId + " from network " + network.name + ": " + error );
-                reject( error );
-            }
-            else {
-                dataAPI.addLog(network, body);
-                resolve( body );
-            }
-        });
-    });
-};
 
 
 
@@ -2339,29 +3066,3 @@ exports.pushDevice = function( sessionData, network, deviceId, dataAPI ) {
         resolve();
     });
 }
-
-exports.pullDevices = function( sessionData, network, applicationId, dataAPI ) {
-    return new Promise( async function( resolve, reject ) {
-        // Get the remote companies.
-        // Set up the request options.
-        var options = {};
-        options.method = 'GET';
-        options.url = network.baseUrl + "/applications/" + applicationId +"/devices" + "?limit=20&offset=0"  ;
-        options.headers = { "Content-Type": "application/json",
-            "Authorization": "Bearer " + sessionData.connection };
-        options.agentOptions = {
-            "secureProtocol": "TLSv1_2_method",
-            "rejectUnauthorized": false };
-
-        request( options, function( error, response, body ) {
-            if ( error ) {
-                dataAPI.addLog( network,"Error pulling device profiles from network " + network.name + ": " + error );
-                reject( error );
-            }
-            else {
-                dataAPI.addLog(network, body);
-                resolve( body );
-            }
-        });
-    });
-};

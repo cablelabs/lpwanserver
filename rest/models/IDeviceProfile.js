@@ -52,7 +52,21 @@ DeviceProfile.prototype.createDeviceProfile = function( networkTypeId, companyId
             reject( err );
         }
     });
-}
+};
+
+DeviceProfile.prototype.createRemoteDeviceProfile = function( networkTypeId, companyId, name, description, networkSettings ) {
+    var me = this;
+    return new Promise( async function( resolve, reject ) {
+        try {
+            var rec = await me.impl.createDeviceProfile( networkTypeId, companyId, name, description, networkSettings );
+            resolve( rec );
+        }
+        catch( err ) {
+            appLogger.log( "Failed to create deviceProfile:" + err );
+            reject( err );
+        }
+    });
+};
 
 // Retrieve a deviceProfiles record by id.
 //

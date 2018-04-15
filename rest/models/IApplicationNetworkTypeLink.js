@@ -56,7 +56,21 @@ ApplicationNetworkTypeLink.prototype.createApplicationNetworkTypeLink = function
             reject( err );
         }
     });
-}
+};
+
+ApplicationNetworkTypeLink.prototype.createRemoteApplicationNetworkTypeLink = function( applicationId, networkTypeId, networkSettings, validateCompanyId ) {
+    var me = this;
+    return new Promise( async function( resolve, reject ) {
+        try {
+            var rec = await me.impl.createApplicationNetworkTypeLink( applicationId, networkTypeId, networkSettings, validateCompanyId );
+            resolve( rec );
+        }
+        catch ( err ) {
+            appLogger.log( "Error creating applicationNetworkTypeLink: " + err );
+            reject( err );
+        }
+    });
+};
 
 // Retrieve a applicationNetworkTypeLinks record by id.
 //
@@ -92,7 +106,22 @@ ApplicationNetworkTypeLink.prototype.updateApplicationNetworkTypeLink = function
             reject( err );
         }
     });
-}
+};
+
+ApplicationNetworkTypeLink.prototype.updateRemoteApplicationNetworkTypeLink = function( applicationNetworkTypeLink, validateCompanyId ) {
+    var me = this;
+    return new Promise( async function( resolve, reject ) {
+        try {
+            var rec = await me.impl.updateApplicationNetworkTypeLink( applicationNetworkTypeLink, validateCompanyId );
+            var logs = await modelAPI.networkTypeAPI.pushApplication( rec.networkTypeId, rec.applicationId, rec.networkSettings );
+            resolve( rec );
+        }
+        catch ( err ) {
+            appLogger.log( "Error updating applicationNetworkTypeLink: " + err );
+            reject( err );
+        }
+    });
+};
 
 // Delete the applicationNetworkTypeLinks record.
 //

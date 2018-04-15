@@ -48,7 +48,21 @@ CompanyNetworkTypeLink.prototype.createCompanyNetworkTypeLink = function( compan
             reject( err );
         }
     });
-}
+};
+
+CompanyNetworkTypeLink.prototype.createRemoteCompanyNetworkTypeLink = function( companyId, networkTypeId, networkSettings ) {
+    var me = this;
+    return new Promise( async function( resolve, reject ) {
+        try {
+            var rec = await me.impl.createCompanyNetworkTypeLink( companyId, networkTypeId, networkSettings );
+            resolve( rec );
+        }
+        catch ( err ) {
+            appLogger.log( "Error creating companyNetworkTypeLink: " + err );
+            reject( err );
+        }
+    });
+};
 
 // Retrieve a companyNetworkTypeLinks record by id.
 //
@@ -79,7 +93,21 @@ CompanyNetworkTypeLink.prototype.updateCompanyNetworkTypeLink = function( compan
             reject( err );
         }
     });
-}
+};
+
+CompanyNetworkTypeLink.prototype.updateRemoteCompanyNetworkTypeLink = function( companyNetworkTypeLink ) {
+    var me = this;
+    return new Promise( async function( resolve, reject ) {
+        try {
+            var rec = await me.impl.updateCompanyNetworkTypeLink( companyNetworkTypeLink );
+            resolve( rec );
+        }
+        catch ( err ) {
+            appLogger.log( "Error updating companyNetworkTypeLink: " + err );
+            reject( err );
+        }
+    });
+};
 
 // Delete the companyNetworkTypeLinks record.
 //

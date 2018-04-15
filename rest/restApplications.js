@@ -259,7 +259,7 @@ exports.initialize = function( app, server ) {
         // We'll start by getting the application, as a read is much less
         // expensive than a write, and then we'll be able to tell if anything
         // really changed before we even try to write.
-        modelAPI.applications.retrieveApplication( req.params.id ).then( function( app ) {
+        modelAPI.applications.retrieveApplication( data.id ).then( function( app ) {
             // Verify that the user can make the change.
             if ( ( modelAPI.companies.COMPANY_ADMIN != req.company.type ) &&
                  ( req.user.companyId != app.companyId ) ) {

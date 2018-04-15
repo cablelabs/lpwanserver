@@ -300,14 +300,16 @@ NetworkProtocolDataAccess.prototype.getApplicationNetworkType = function( applic
     var me = this;
     return new Promise( async function( resolve, reject ) {
         try {
+            appLogger.log(applicationId);
+            appLogger.log(networkTypeId);
             var ant = me.applicationNetworkTypeCache[ "" + applicationId + ":" + networkTypeId ];
             if ( ant ) {
                 resolve( ant );
             }
             else {
-                var antls = await modelAPI.applicationNetworkTypeLinks.retrieveApplicationNetworkTypeLinks( { "applicationId": applicationId, "networkTypeId": networkTypeId } );
-                me.applicationNetworkTypeCache[ "" + applicationId + ":" + networkTypeId ] = antls[ 0 ];
-                resolve( antls[ 0 ] );
+                var antls = await modelAPI.applicationNetworkTypeLinks.retrieveApplicationNetworkTypeLinks( { applicationId: applicationId, networkTypeId: networkTypeId } );
+                me.applicationNetworkTypeCache[ "" + applicationId + ":" + networkTypeId ] = antls.records[ 0 ];
+                resolve( antls.records[ 0 ]);
             }
         }
         catch( err ) {

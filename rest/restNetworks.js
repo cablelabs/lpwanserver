@@ -348,5 +348,25 @@ exports.initialize = function( app, server ) {
             restServer.respond( res, err );
         });
     });
+    /**
+     * Pulls the company records from the network with the specified id.
+     * - Only a user with the admin company or the admin of the device's
+     *   company can delete an device. TODO: Is this true?
+     */
+    app.post('/api/networks/:networkId/pull', [restServer.isLoggedIn,
+            restServer.fetchCompany,
+            restServer.isAdmin],
+        function(req, res, next) {
+            var networkId = parseInt( req.params.networkId );
+            // If the caller is a global admin, or the device is part of the company
+            // admin's company, we can push.
+            modelAPI.networks.pullNetwork( networkId ).then( function( ret ) {
+                restServer.respondJson( res, 200, ret );
+            }).catch( function( err ) {
+                appLogger.log( "Error pulling from network " + networkId + ": " + err );
+                restServer.respond( res, err );
+            });
+        });
+
 
 }
