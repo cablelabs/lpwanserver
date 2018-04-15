@@ -1578,22 +1578,22 @@ exports.addRemoteApplication = function (sessionData, limitedRemoteApplication, 
             }
             existingApplicationNTL = await modelAPI.applicationNetworkTypeLinks.createRemoteApplicationNetworkTypeLink(existingApplication.id, network.networkTypeId, networkSettings, existingApplication.companyId);
             appLogger.log(existingApplicationNTL);
-            await dataAPI.putProtocolDataForKey( network.id,
+            await dataAPI.putProtocolDataForKey(network.id,
                 network.networkProtocolId,
-                makeApplicationDataKey( existingApplication.id, "appNwkId" ),
-                remoteApplication.id );
-                me.pullDevices(sessionData, network, existingApplication.companyId, dpMap, remoteApplication.id, existingApplication.id, dataAPI, modelAPI)
-                .then((result) => {
-                    appLogger.log('Success in pulling devices from ' + network.name);
-                    appLogger.log(result);
-                    resolve(existingApplication.id);
-                })
-                .catch((err) => {
-                    appLogger.log('Failed to pull devices from ' + network.name);
-                    reject(err);
-                })
-
+                makeApplicationDataKey(existingApplication.id, "appNwkId"),
+                remoteApplication.id);
         }
+        me.pullDevices(sessionData, network, existingApplication.companyId, dpMap, remoteApplication.id, existingApplication.id, dataAPI, modelAPI)
+            .then((result) => {
+                appLogger.log('Success in pulling devices from ' + network.name);
+                appLogger.log(result);
+                resolve(existingApplication.id);
+            })
+            .catch((err) => {
+                appLogger.log('Failed to pull devices from ' + network.name);
+                reject(err);
+            })
+
     });
 };
 
