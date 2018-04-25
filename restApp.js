@@ -27,7 +27,11 @@ process.on( 'unhandledRejection', (reason, p) => {
 var nconf = require('nconf');
 // Priority order for settings: command line, environment vars,
 // the file config.js at the project root directory.
-nconf.argv().env().file( { file: 'config.hjson', format: require('hjson') } );
+nconf.argv().env();
+var environment = '.' + nconf.get('NODE_ENV') || 'production'
+nconf.file( { file: 'config.hjson' + environment , format: require('hjson') } );
+
+console.log('config.hjson' + environment)
 
 // Create the REST application.
 var app = express();
@@ -39,6 +43,9 @@ var ipPort = nconf.get( "port" );
 // Load the ssl config
 var sslkeyName = nconf.get( "ssl_key_file" );
 var sslcertName = nconf.get( "ssl_cert_file" );
+
+console.log(sslkeyName);
+console.log(sslcertName);
 
 if ( sslkeyName && sslcertName ){
     // Load the files
