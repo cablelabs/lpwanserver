@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/cablelabs/lpwanserver.svg?branch=master)](https://travis-ci.org/cablelabs/lpwanserver)
+
 # LPWAN Server (lpwanserver)
 
 This is the CableLabs' LPWAN Server project.  It is a React UI that uses 
