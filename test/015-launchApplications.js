@@ -89,7 +89,7 @@ describe( "Launch Applications", function() {
         });
     });
 
-    describe( "POST /api/applications/{id}/test to test", function() {
+    describe.skip( "POST /api/applications/{id}/test to test", function() {
         var testData = { 'SomeData': 'toBePassed' };
         it('should return 200 on admin', function( done ) {
             server
