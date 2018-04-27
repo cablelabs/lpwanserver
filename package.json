@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "start": "node ./bin/rest",
-    "test": "mocha"
+    "test": "./test.sh",
+    "silent": "npm start > output.txt 2> error.txt"
   },
   "dependencies": {
     "async": "~2.0.1",

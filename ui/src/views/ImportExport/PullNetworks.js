@@ -19,7 +19,7 @@ class PullNetworks extends Component {
             })
             .catch(error => {
                 console.log(error);
-                this.setState({loading: false, error: true, errorMsg: error.toString()});
+                this.setState({loading: false, error: true, errorMsg: JSON.stringify(error)});
             })
 
     }

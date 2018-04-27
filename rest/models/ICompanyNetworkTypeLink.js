@@ -54,11 +54,13 @@ CompanyNetworkTypeLink.prototype.createRemoteCompanyNetworkTypeLink = function( 
     var me = this;
     return new Promise( async function( resolve, reject ) {
         try {
+            appLogger.log(companyId + " "  + networkTypeId)
             var rec = await me.impl.createCompanyNetworkTypeLink( companyId, networkTypeId, networkSettings );
             resolve( rec );
         }
         catch ( err ) {
             appLogger.log( "Error creating companyNetworkTypeLink: " + err );
+            appLogger.log(companyId + " "  + networkTypeId)
             reject( err );
         }
     });

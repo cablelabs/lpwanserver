@@ -61,8 +61,6 @@ DeviceNetworkTypeLink.prototype.createRemoteDeviceNetworkTypeLink = function( de
     return new Promise( async function( resolve, reject ) {
         try {
             var rec = await me.impl.createDeviceNetworkTypeLink( deviceId, networkTypeId, deviceProfileId, networkSettings, validateCompanyId );
-            var logs = await modelAPI.networkTypeAPI.addDevice( networkTypeId, deviceId, networkSettings );
-            rec.remoteAccessLogs = logs;
             resolve( rec );
         }
         catch ( err ) {
