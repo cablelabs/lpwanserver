@@ -293,6 +293,8 @@ function getDeviceProfileById( network, dpId, connection, dataAPI ) {
                 }
                 else {
                     var bodyObj = JSON.parse( response.body );
+                    appLogger.log(bodyObj);
+                    appLogger.log(options);
                     dataAPI.addLog( network, "Error on get Device Profile: " +
                         bodyObj.error +
                         " (" + response.statusCode + ")" );
@@ -477,20 +479,26 @@ function getServiceProfileForOrg( network, orgId, companyId, connection, dataAPI
                 // network.
                 body = JSON.parse(body);
                 appLogger.log(body);
-                let serviceProfile = body.result[0];
-                await dataAPI.putProtocolDataForKey(
-                    network.id,
-                    network.networkProtocolId,
-                    makeCompanyDataKey(companyId, "coSPId"),
-                    serviceProfile.serviceProfileID);
-                // TODO: Remove this HACK.  Should not store the service profile locally
-                //       in case it gets changed on the remote server.
-                await dataAPI.putProtocolDataForKey(
-                    network.id,
-                    network.networkProtocolId,
-                    makeCompanyDataKey(companyId, "coSPNwkId"),
-                    serviceProfile.networkServerID);
-                resolve(serviceProfile);
+                if (body.totalCount == 0) {
+                    //no SP to get
+                    resolve();
+                }
+                else {
+                    let serviceProfile = body.result[0];
+                    await dataAPI.putProtocolDataForKey(
+                        network.id,
+                        network.networkProtocolId,
+                        makeCompanyDataKey(companyId, "coSPId"),
+                        serviceProfile.serviceProfileID);
+                    // TODO: Remove this HACK.  Should not store the service profile locally
+                    //       in case it gets changed on the remote server.
+                    await dataAPI.putProtocolDataForKey(
+                        network.id,
+                        network.networkProtocolId,
+                        makeCompanyDataKey(companyId, "coSPNwkId"),
+                        serviceProfile.networkServerID);
+                    resolve(serviceProfile);
+                }
             }
         }); // End of service profile create
     });
@@ -1122,6 +1130,7 @@ exports.pullNetwork = function (sessionData, network, dataAPI, modelAPI) {
                     .then((dpMap) => {
                         appLogger.log('Success in pulling device profiles from ' + network.name);
                         appLogger.log(dpMap);
+
                         me.pullApplications(sessionData, network, companyMap, dpMap, dataAPI, modelAPI)
                             .then((applicationMap) => {
                                 appLogger.log('Success in pulling applications from ' + network.name);
@@ -1136,7 +1145,7 @@ exports.pullNetwork = function (sessionData, network, dataAPI, modelAPI) {
                                 //         appLogger.log('Failed to pull devices from ' + network.name);
                                 //         reject(err);
                                 //     })
-                                resolve(applicationMap);
+                                resolve();
                             })
                             .catch((err) => {
                                 appLogger.log('Failed to pull applications from ' + network.name);
@@ -1158,6 +1167,7 @@ exports.pullNetwork = function (sessionData, network, dataAPI, modelAPI) {
 exports.pullCompanies = function(sessionData, network, dataAPI, modelAPI ) {
     let me = this;
     let counter = 0;
+    let currentConnections = 0;
     return new Promise( async function( resolve, reject ) {
         // Get the remote companies.
         // Set up the request options.
@@ -1195,18 +1205,38 @@ exports.pullCompanies = function(sessionData, network, dataAPI, modelAPI ) {
                             counter = counter -1;
                         }
                         else {
-                            appLogger.log('Added ' + org.name);
-                            me.addRemoteCompany(sessionData, org, network, dataAPI, modelAPI)
-                                .then((companyId) => {
-                                    counter = counter - 1;
-                                    companyMap.push({organizationId: org.id, companyId: companyId});
-                                    if (counter <= 0){
-                                        resolve(companyMap);
-                                    }
-                                })
-                                .catch((error) => {
-                                    reject(error);
-                                })
+                            if (currentConnections > 30) {
+                                appLogger.log('Waiting for open connection ' + org.name);
+                                setTimeout(()=>{
+                                    appLogger.log('Waiting Finished.  Adding ' + org.name);
+                                    add()
+                                }, 5000)
+                            }
+                            else {
+                                add()
+                            }
+
+                            function add() {
+                                currentConnections += 1;
+                                appLogger.log('Added ' + org.name);
+                                me.addRemoteCompany(sessionData, org, network, dataAPI, modelAPI)
+                                    .then((companyId) => {
+                                        counter = counter - 1;
+                                        currentConnections -= 1;
+                                        companyMap.push({organizationId: org.id, companyId: companyId});
+                                        if (counter <= 0) {
+                                            resolve(companyMap);
+                                        }
+                                    })
+                                    .catch((error) => {
+                                        counter = counter - 1;
+                                        currentConnections -= 1;
+                                        appLogger.log(error);
+                                        if (counter <= 0) {
+                                            resolve(companyMap);
+                                        }
+                                    })
+                            }
                         }
                     }
                 }
@@ -1322,7 +1352,9 @@ exports.pullDeviceProfiles = function (sessionData, network, companyMap, dataAPI
                                 }
                             })
                             .catch((error) => {
-                                reject(error);
+                                //This one didn't work?  Not sure why
+                                appLogger.log(error);
+                                counter = counter - 1;
                             })
                     }
                 }
@@ -1417,13 +1449,13 @@ exports.addRemoteCompany = function (sessionData, remoteOrganization, network, d
             appLogger.log(existingCompany.name + ' already exists');
         }
         else {
-            appLogger.log('creating ' + remoteOrganization.name);
             existingCompany = await modelAPI.companies.createCompany(remoteOrganization.name, modelAPI.companies.COMPANY_VENDOR);
-            appLogger.log('Created ' + existingCompany.name);
+            appLogger.log('Created ' + existingCompany.name + ' id ' + existingCompany.id);
         }
 
         //2.  add the NTL to the local company
         let existingCompanyNTL = await modelAPI.companyNetworkTypeLinks.retrieveCompanyNetworkTypeLinks({companyId: existingCompany.id});
+        appLogger.log(existingCompanyNTL);
         if (existingCompanyNTL.totalCount > 0) {
             existingCompanyNTL = existingCompanyNTL.records[0];
             appLogger.log(existingCompany.name + ' link already exists');
@@ -1478,7 +1510,7 @@ exports.addRemoteCompany = function (sessionData, remoteOrganization, network, d
 
             appLogger.log(userOptions);
             request(userOptions, async function (error, response, body) {
-                if (error || response.statusCode >= 400) {
+                if (error || (response.statusCode >= 400 && response.statusCode != 409)) {
                     if (error) {
                         dataAPI.addLog(network, "Error creating " + existingCompany.name +
                             "'s admin user " + userOptions.json.username +
@@ -1510,7 +1542,10 @@ exports.addRemoteCompany = function (sessionData, remoteOrganization, network, d
                     // Set up a default Service Profile.
                     appLogger.log('Getting SP and NS');
                     var serviceProfile = await getServiceProfileForOrg(network, remoteOrganization.id, existingCompany.id, sessionData.connection, dataAPI);
-                    var networkServer = await getNetworkServerById(network, serviceProfile.networkServerID, sessionData.connection, dataAPI);
+                    let networkServer = {};
+                    if (serviceProfile && serviceProfile.networkServerID) {
+                        networkServer = await getNetworkServerById(network, serviceProfile.networkServerID, sessionData.connection, dataAPI);
+                    }
                     appLogger.log('Got SP and NS');
                     appLogger.log(serviceProfile);
                     appLogger.log(networkServer);
@@ -1524,7 +1559,10 @@ exports.addRemoteCompany = function (sessionData, remoteOrganization, network, d
         else {
             appLogger.log('Getting SP and NS');
             let serviceProfile = await getServiceProfileForOrg(network, remoteOrganization.id, existingCompany.id, sessionData.connection, dataAPI);
-            let networkServer = await getNetworkServerById(network, serviceProfile.networkServerID, sessionData.connection, dataAPI);
+            let networkServer = {};
+            if (serviceProfile && serviceProfile.networkServerID) {
+                networkServer = await getNetworkServerById(network, serviceProfile.networkServerID, sessionData.connection, dataAPI);
+            }
             appLogger.log('Got SP and NS');
             appLogger.log(serviceProfile);
             appLogger.log(networkServer);
@@ -1601,24 +1639,47 @@ exports.addRemoteApplication = function (sessionData, limitedRemoteApplication, 
 
 exports.addRemoteDeviceProfile = function (sessionData, limitedRemoteDeviceProfile, network, companyMap, dataAPI, modelAPI) {
     return new Promise(async function (resolve, reject) {
-        let remoteDeviceProfile = await getDeviceProfileById(network, limitedRemoteDeviceProfile.deviceProfileID, sessionData.connection, dataAPI);
-        appLogger.log('Adding ' + remoteDeviceProfile.name );
-        appLogger.log(remoteDeviceProfile);
-        let company = companyMap.find(o => o.organizationId === remoteDeviceProfile.organizationID);
-        appLogger.log(company);
-        let existingDeviceProfile = await modelAPI.deviceProfiles.retrieveDeviceProfiles({search: remoteDeviceProfile.name});
-        appLogger.log(existingDeviceProfile);
-        if (existingDeviceProfile.totalCount > 0) {
-            existingDeviceProfile = existingDeviceProfile.records[0];
-            appLogger.log(existingDeviceProfile.name + ' already exists');
-        }
-        else {
-            appLogger.log('creating ' + remoteDeviceProfile.name);
-            appLogger.log(remoteDeviceProfile);
-            existingDeviceProfile = await modelAPI.deviceProfiles.createRemoteDeviceProfile(network.networkTypeId, company.companyId, remoteDeviceProfile.name, 'Device Profile managed by LPWAN Server, perform changes via LPWAN', remoteDeviceProfile.deviceProfile);
-            appLogger.log('Created ' + existingDeviceProfile.name);
-        }
-        resolve(existingDeviceProfile.id);
+        getDeviceProfileById(network, limitedRemoteDeviceProfile.deviceProfileID, sessionData.connection, dataAPI)
+            .then((remoteDeviceProfile) => {
+                appLogger.log('Adding ' + remoteDeviceProfile.name );
+                appLogger.log(remoteDeviceProfile);
+                let company = companyMap.find(o => o.organizationId === remoteDeviceProfile.organizationID);
+                appLogger.log(company);
+                modelAPI.deviceProfiles.retrieveDeviceProfiles({search: remoteDeviceProfile.name})
+                    .then(existingDeviceProfile=>{
+                        appLogger.log(existingDeviceProfile);
+                        if (existingDeviceProfile.totalCount > 0) {
+                            existingDeviceProfile = existingDeviceProfile.records[0];
+                            appLogger.log(existingDeviceProfile.name + ' already exists');
+                            resolve(existingDeviceProfile.id);
+                        }
+                        else {
+                            appLogger.log('creating ' + remoteDeviceProfile.name);
+                            appLogger.log(remoteDeviceProfile);
+                            modelAPI.deviceProfiles.createRemoteDeviceProfile(network.networkTypeId, company.companyId,
+                                remoteDeviceProfile.name, 'Device Profile managed by LPWAN Server, perform changes via LPWAN',
+                                remoteDeviceProfile.deviceProfile)
+                                .then((existingDeviceProfile) =>{
+                                    appLogger.log('Created ' + existingDeviceProfile.name);
+                                    resolve(existingDeviceProfile.id);
+                                })
+                                .catch((error) => {
+                                    appLogger.log(error);
+                                    reject(error);
+                                })
+                        }
+                    })
+                    .catch((error) =>{
+                        appLogger.log(error);
+                        reject(error);
+                    })
+
+            })
+            .catch((error) => {
+                appLogger.log(error);
+                reject(error);
+            })
+
     });
 };
 
@@ -1648,7 +1709,7 @@ exports.addRemoteDevice = function (sessionData, limitedRemoteDevice, network, c
         }
         else {
             appLogger.log('creating Network Link for ' + existingDevice.name);
-            existingDeviceNTL = await modelAPI.deviceNetworkTypeLinks.createRemoteDeviceNetworkTypeLink(existingDevice.id, network.networkTypeId, deviceProfile.deviceProfileId, existingDevice, companyId);
+            existingDeviceNTL = await modelAPI.deviceNetworkTypeLinks.createRemoteDeviceNetworkTypeLink(existingDevice.id, network.networkTypeId, deviceProfile.deviceProfileId, remoteDevice, companyId);
             appLogger.log(existingDeviceNTL);
             dataAPI.putProtocolDataForKey( network.id,
                 network.networkProtocolId,
