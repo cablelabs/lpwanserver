@@ -5,6 +5,35 @@ import {EventEmitter} from "events";
 
 class NetworkProtocolStore extends EventEmitter {
 
+    getNetworkProtocolHandlers() {
+        return new Promise( function( resolve, reject ) {
+            let header = sessionStore.getHeader();
+
+            fetch( rest_url + "/api/networkProtocolHandlers",
+                {
+                    method: "GET",
+                    credentials: 'same-origin',
+                    headers: header,
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                })
+                .then(checkStatus)
+                .then((response) => response.json())
+                .then((responseData) => {
+                    if (!responseData) {
+                        resolve([]);
+                    }
+                    else {
+                       resolve(responseData);
+                    }
+                })
+                .catch( err => {
+                    errorHandler( err );
+                    reject( err );
+                });
+        });
+    }
+
   getNetworkProtocols() {
       return new Promise( function( resolve, reject ) {
           let header = sessionStore.getHeader();

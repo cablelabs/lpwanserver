@@ -10,7 +10,7 @@ var server = chai.request(server);
 var npId1;
 var npId2;
 
-describe( "NetworkProtocols", function() {
+describe( "ReportingProtocols", function() {
     var adminToken;
     var coAdminToken;
     var userToken;
@@ -57,23 +57,24 @@ describe( "NetworkProtocols", function() {
         });
     });
 
-    describe("GET /api/networkProtocolHandlers", function () {
-        it('should return 200 on coAdmin', function (done) {
-            server
-              .get('/api/networkProtocolHandlers')
-              .set('Authorization', 'Bearer ' + coAdminToken)
-              .set('Content-Type', 'application/json')
-              .set('Accept', 'application/json')
-              .end(function (err, res) {
-                  res.should.have.status(200);
-                  let body = JSON.parse(res.text);
-                  body.should.have.length(3);
-                  done();
-              });
+  describe( "GET /api/reportingProtocolHandlers", function() {
+    it('should return 200 on coAdmin', function( done ) {
+      server
+        .get('/api/reportingProtocolHandlers')
+        .set('Authorization', 'Bearer ' + coAdminToken )
+        .set('Content-Type', 'application/json')
+        .set('Accept', 'application/json')
+        .end(function(err, res){
+          res.should.have.status(200);
+          let body = JSON.parse(res.text);
+          body.should.have.length(2);
+          done();
         });
     });
 
-    describe( "POST /api/networkProtocols", function() {
+  });
+
+    describe( "POST /api/reportingProtocols", function() {
         it('should return 403 (forbidden) on user', function( done ) {
             server
             .post('/api/passwordPolicies')
@@ -88,7 +89,7 @@ describe( "NetworkProtocols", function() {
 
         it('should return 403 on coAdmin', function( done ) {
             server
-            .post('/api/networkProtocols')
+            .post('/api/reportingProtocols')
             .set('Authorization', 'Bearer ' + coAdminToken )
             .set('Content-Type', 'application/json')
             .send( { "name": "LoRa Open Source", "networkTypeId": 1, "protocolHandler": "LoRaOpenSource.js" }  )
@@ -98,9 +99,9 @@ describe( "NetworkProtocols", function() {
             });
         });
 
-        it('should return 200 on creating new network protocol with admin account #1', function( done ) {
+        it('should return 200 on creating new reporting Protocol with admin account #1', function( done ) {
             server
-            .post('/api/networkProtocols')
+            .post('/api/reportingProtocols')
             .set('Authorization', 'Bearer ' + adminToken )
             .set('Content-Type', 'application/json')
             .send( { "name": "LoRa Open Source", "networkTypeId": 1, "protocolHandler": "LoRaOpenSource.js" } )
@@ -112,9 +113,9 @@ describe( "NetworkProtocols", function() {
             });
         });
 
-        it('should return 200 on creating new network protocol with admin account #2', function( done ) {
+        it('should return 200 on creating new reporting Protocol with admin account #2', function( done ) {
             server
-            .post('/api/networkProtocols')
+            .post('/api/reportingProtocols')
             .set('Authorization', 'Bearer ' + adminToken )
             .set('Content-Type', 'application/json')
             .send( { "name": "T-Mobile NB-IoT", "networkTypeId": 2, "protocolHandler": "TMobileNBIoT.js" } )
@@ -126,55 +127,52 @@ describe( "NetworkProtocols", function() {
             });
         });
     });
-    describe( "GET /api/networkProtocols", function() {
-        it('should return 200 with 2 protocols on coAdmin', function( done ) {
+    describe( "GET /api/reportingProtocols", function() {
+        it('should return 200 with 3 protocols on coAdmin', function( done ) {
             server
-            .get('/api/networkProtocols' )
+            .get('/api/reportingProtocols' )
             .set('Authorization', 'Bearer ' + coAdminToken )
             .set('Content-Type', 'application/json')
             .end(function(err, res){
                 res.should.have.status(200);
                 var result = JSON.parse( res.text );
-                result.records.should.be.instanceof( Array );
-                result.records.should.have.length( 2 );
-                result.totalCount.should.equal( 2 );
+                result.should.be.instanceof( Array );
+                result.should.have.length( 3 );
                 done();
             });
         });
 
-        it('should return 200 with 2 protocols on user', function( done ) {
+        it('should return 200 with 3 protocols on user', function( done ) {
             server
-            .get('/api/networkProtocols' )
+            .get('/api/reportingProtocols' )
             .set('Authorization', 'Bearer ' + userToken )
             .set('Content-Type', 'application/json')
             .end(function(err, res){
-                res.should.have.status(200);
-                var result = JSON.parse( res.text );
-                result.records.should.be.instanceof( Array );
-                result.records.should.have.length( 2 );
-                result.totalCount.should.equal( 2 );
-                done();
+              res.should.have.status(200);
+              var result = JSON.parse( res.text );
+              result.should.be.instanceof( Array );
+              result.should.have.length( 3 );
+              done();
             });
         });
 
-        it('should return 200 with 2 protocols on admin', function( done ) {
+        it('should return 200 with 3 protocols on admin', function( done ) {
             server
-            .get('/api/networkProtocols' )
+            .get('/api/reportingProtocols' )
             .set('Authorization', 'Bearer ' + adminToken )
             .set('Content-Type', 'application/json')
             .end(function(err, res){
-                res.should.have.status(200);
-                var result = JSON.parse( res.text );
-                result.records.should.be.instanceof( Array );
-                result.records.should.have.length( 2 );
-                result.totalCount.should.equal( 2 );
-                done();
+              res.should.have.status(200);
+              var result = JSON.parse( res.text );
+              result.should.be.instanceof( Array );
+              result.should.have.length( 3 );
+              done();
             });
         });
 
-        it('should return 200 with 1 protocol search NB-IoT', function( done ) {
+        it.skip('should return 200 with 1 protocol search NB-IoT', function( done ) {
             server
-            .get('/api/networkProtocols?search=%NB-IoT%' )
+            .get('/api/reportingProtocols?search=%NB-IoT%' )
             .set('Authorization', 'Bearer ' + adminToken )
             .set('Content-Type', 'application/json')
             .end(function(err, res){
@@ -186,26 +184,25 @@ describe( "NetworkProtocols", function() {
                 done();
             });
         })
-        it('should return 200 with 1 protocol limit 1 offset 1', function( done ) {
+        it.skip('should return 200 with 1 protocol limit 1 offset 1', function( done ) {
             server
-            .get('/api/networkProtocols?limit=1&offset=1' )
+            .get('/api/reportingProtocols?limit=1&offset=1' )
             .set('Authorization', 'Bearer ' + adminToken )
             .set('Content-Type', 'application/json')
             .end(function(err, res){
                 res.should.have.status(200);
                 var result = JSON.parse( res.text );
-                result.records.should.be.instanceof( Array );
-                result.records.should.have.length( 1 );
-                result.totalCount.should.equal( 2 );
+                result.should.be.instanceof( Array );
+                result.should.have.length( 1 );
                 done();
             });
         });
     });
 
-    describe( "GET /api/networkProtocols/{id}", function() {
+    describe( "GET /api/reportingProtocols/{id}", function() {
         it('should return 200 on coAdmin', function( done ) {
             server
-            .get('/api/networkProtocols/' + npId1 )
+            .get('/api/reportingProtocols/' + npId1 )
             .set('Authorization', 'Bearer ' + coAdminToken )
             .set('Content-Type', 'application/json')
             .end(function(err, res){
@@ -216,7 +213,7 @@ describe( "NetworkProtocols", function() {
 
         it('should return 200 on user', function( done ) {
             server
-            .get('/api/networkProtocols/' + npId2 )
+            .get('/api/reportingProtocols/' + npId2 )
             .set('Authorization', 'Bearer ' + userToken )
             .set('Content-Type', 'application/json')
             .end(function(err, res){
@@ -227,7 +224,7 @@ describe( "NetworkProtocols", function() {
 
         it('should return 200 on admin', function( done ) {
             server
-            .get('/api/networkProtocols/' + npId2 )
+            .get('/api/reportingProtocols/' + npId2 )
             .set('Authorization', 'Bearer ' + adminToken )
             .set('Content-Type', 'application/json')
             .end(function(err, res){
@@ -237,10 +234,10 @@ describe( "NetworkProtocols", function() {
         });
     });
 
-    describe( "PUT /api/networkProtocols", function() {
+    describe( "PUT /api/reportingProtocols", function() {
         it('should return 403 (forbidden) on coAdmin', function( done ) {
             server
-            .put('/api/networkProtocols/' + npId1 )
+            .put('/api/reportingProtocols/' + npId1 )
             .set('Authorization', 'Bearer ' + coAdminToken )
             .set('Content-Type', 'application/json')
             .send( "{\"name\": \"I Hacked Your Networks\" }" )
@@ -252,7 +249,7 @@ describe( "NetworkProtocols", function() {
 
         it('should return 403 (forbidden) on user', function( done ) {
             server
-            .put('/api/networkProtocols/' + npId2 )
+            .put('/api/reportingProtocols/' + npId2 )
             .set('Authorization', 'Bearer ' + userToken )
             .set('Content-Type', 'application/json')
             .send( "{\"name\": \"I Hacked Your Networks\" }" )
@@ -264,7 +261,7 @@ describe( "NetworkProtocols", function() {
 
         it('should return 204 on admin', function( done ) {
             server
-            .put('/api/networkProtocols/' + npId2 )
+            .put('/api/reportingProtocols/' + npId2 )
             .set('Authorization', 'Bearer ' + adminToken )
             .set('Content-Type', 'application/json')
             .send( "{\"name\": \"Sprint NB-IoT\" }" )
@@ -276,7 +273,7 @@ describe( "NetworkProtocols", function() {
 
         it('should return 200 on get with new company name', function( done ) {
             server
-            .get('/api/networkProtocols/' + npId2 )
+            .get('/api/reportingProtocols/' + npId2 )
             .set('Authorization', 'Bearer ' + adminToken )
             .set('Content-Type', 'application/json')
             .send()
@@ -290,10 +287,10 @@ describe( "NetworkProtocols", function() {
     });
 
 
-    describe( "DELETE /api/networkProtocols", function() {
+    describe( "DELETE /api/reportingProtocols", function() {
         it('should return 204 on admin', function( done ) {
             server
-            .delete('/api/networkProtocols/' + npId1 )
+            .delete('/api/reportingProtocols/' + npId1 )
             .set('Authorization', 'Bearer ' + adminToken )
             .end(function(err, res){
                 res.should.have.status(204);
@@ -302,7 +299,7 @@ describe( "NetworkProtocols", function() {
         });
         it('should return 403 on coAdmin', function( done ) {
             server
-            .delete('/api/networkProtocols/' + npId2 )
+            .delete('/api/reportingProtocols/' + npId2 )
             .set('Authorization', 'Bearer ' + coAdminToken )
             .end(function(err, res){
                 res.should.have.status(403);
@@ -312,7 +309,7 @@ describe( "NetworkProtocols", function() {
 
         it('should return 403 on user', function( done ) {
             server
-            .delete('/api/networkProtocols/' + npId2 )
+            .delete('/api/reportingProtocols/' + npId2 )
             .set('Authorization', 'Bearer ' + userToken )
             .end(function(err, res){
                 res.should.have.status(403);
@@ -322,7 +319,7 @@ describe( "NetworkProtocols", function() {
 
         it('should return 204 on admin', function( done ) {
             server
-            .delete('/api/networkProtocols/' + npId2 )
+            .delete('/api/reportingProtocols/' + npId2 )
             .set('Authorization', 'Bearer ' + adminToken )
             .end(function(err, res){
                 res.should.have.status(204);
@@ -332,7 +329,7 @@ describe( "NetworkProtocols", function() {
 
         it('should return 404 on get', function( done ) {
             server
-            .get('/api/networkProtocols/' + npId2 )
+            .get('/api/reportingProtocols/' + npId2 )
             .set('Authorization', 'Bearer ' + adminToken )
             .set('Content-Type', 'application/json')
             .send()
