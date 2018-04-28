@@ -16,9 +16,20 @@ class ReportingProtocolForm extends Component {
   constructor(props) {
     super(props);
     this.state = {
-        reportingProtocol: props.reportingProtocol,
-        isGlobalAdmin: SessionStore.isAdmin(),
-    };
+      reportingProtocol: props.reportingProtocol,
+      reportingProtocolHandlers: [],
+      isGlobalAdmin: SessionStore.isAdmin(),
+    }
+
+    reportingProtocolStore.getReportingProtocolHandlers()
+      .then((response) => {
+        //Add a none selected place holder
+        let temp = [{id: '', name: 'No Handler Selected'}];
+        temp = temp.concat(response);
+        this.setState({
+          reportingProtocolHandlers: temp,
+        });
+      });
 
     this.componentWillMount = this.componentWillMount.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
@@ -36,7 +47,10 @@ class ReportingProtocolForm extends Component {
 
   onChange(field, e) {
     let reportingProtocol = this.state.reportingProtocol;
-    if ( (e.target.type === "number") || (e.target.type === "select-one") ) {
+    if (field === 'protocolHandler') {
+      reportingProtocol[field] = e.target.value;
+    }
+    else if ( (e.target.type === "number") || (e.target.type === "select-one") ) {
       reportingProtocol[field] = parseInt(e.target.value, 10);
     } else if (e.target.type === "checkbox") {
       reportingProtocol[field] = e.target.checked;
@@ -96,13 +110,13 @@ class ReportingProtocolForm extends Component {
             </div>
             <div className="form-group">
               <label className="control-label" htmlFor="protocolHandler">Reporting Protocol Handler</label>
-              <input className="form-control"
-                     id="protocolHandler"
-                     type="text"
-                     placeholder="e.g. 'postHandler'"
-                     required
-                     value={this.state.reportingProtocol.protocolHandler || ''}
-                     onChange={this.onChange.bind(this, 'protocolHandler')}/>
+              <select className="form-control"
+                      id="protocolHandler"
+                      required
+                      value={this.state.reportingProtocol.protocolHandler}
+                      onChange={this.onChange.bind(this, 'protocolHandler')}>
+                {this.state.reportingProtocolHandlers.map( protocol => <option value={protocol.id} key={"typeSelector" + protocol.id }>{protocol.name}</option>)}
+              </select>
               <p className="help-block">
                 Specifies the name of the file on the REST Server that handles
                 the passing of data back to the application vendor.

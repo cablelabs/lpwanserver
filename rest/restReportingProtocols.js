@@ -1,4 +1,5 @@
 var appLogger = require( "./lib/appLogger.js" );
+const fs = require('fs')
 var restServer;
 var modelAPI;
 
@@ -205,5 +206,38 @@ exports.initialize = function( app, server ) {
             appLogger.log( "Error deleting reportingProtocol " + id + ": " + err );
             restServer.respond( res, err );
         });
+    });
+
+  /**
+   * @apiDescription Gets the Reporting Protocol Handlers available.
+   *
+   * @api {get} /api/reportingProtocolHandlers/ Get Reporting Handlers
+   * @apiGroup Reporting Protocols
+   * @apiPermission Any logged-in user.
+   * @apiHeader {String} Authorization The Create Session's returned token
+   *      prepended with "Bearer "
+   * @apiSuccess {Array} array of protocol handlers available.
+   * @apiVersion 0.1.0
+   */
+  app.get('/api/reportingProtocolHandlers/', [restServer.isLoggedIn],
+    function(req, res, next) {
+      let fileList = fs.readdirSync('./rest/reportingProtocols/');
+      let handlerList = [];
+      for (onefile in fileList) {
+        if (
+          fileList[onefile] === 'reportingProtocols.js' ||
+          fileList[onefile] === 'protocolhandlertemplate.js' ||
+          fileList[onefile] === 'README.txt'
+        ){
+        }
+        else {
+          let temp = {
+            id: fileList[onefile],
+            name: fileList[onefile].split('.')[0]
+          };
+          handlerList.push(temp);
+        }
+      }
+      restServer.respondJson( res, null, handlerList );
     });
 }

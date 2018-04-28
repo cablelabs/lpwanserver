@@ -20,6 +20,7 @@ class CreateNetworkProtocol extends Component {
           networkTypeId: 0,
       },
       networkTypes: [],
+      networkProtocolHandlers: []
     };
 
     networkTypeStore.getNetworkTypes()
@@ -31,6 +32,18 @@ class CreateNetworkProtocol extends Component {
                             networkTypes: response,
                        } );
      });
+
+    networkProtocolStore.getNetworkProtocolHandlers()
+      .then((response) => {
+        //Add a none selected place holder
+        let temp = [{id: '', name: 'No Handler Selected'}];
+        temp = temp.concat(response);
+          this.setState({
+            networkProtocolHandlers: temp,
+          });
+      });
+
+
 
     this.onChange = this.onChange.bind(this);
     this.onSubmit = this.onSubmit.bind(this);
@@ -56,7 +69,10 @@ class CreateNetworkProtocol extends Component {
 
   onChange(field, e) {
     let networkProtocol = this.state.networkProtocol;
-    if ( (e.target.type === "number") || (e.target.type === "select-one") ) {
+    if (field === 'protocolHandler') {
+      networkProtocol[field] = e.target.value;
+    }
+    else if ( (e.target.type === "number") || (e.target.type === "select-one") ) {
       networkProtocol[field] = parseInt(e.target.value, 10);
     } else if (e.target.type === "checkbox") {
       networkProtocol[field] = e.target.checked;
@@ -92,13 +108,13 @@ class CreateNetworkProtocol extends Component {
             </div>
             <div className="form-group">
               <label className="control-label" htmlFor="protocolHandler">Network Protocol Handler</label>
-              <input className="form-control"
+              <select className="form-control"
                      id="protocolHandler"
-                     type="text"
-                     placeholder="e.g. 'LoRaOpenSource'"
-                     required
-                     value={this.state.networkProtocol.protocolHandler || ''}
-                     onChange={this.onChange.bind(this, 'protocolHandler')}/>
+                      required
+                      value={this.state.networkProtocol.protocolHandler}
+                      onChange={this.onChange.bind(this, 'protocolHandler')}>
+              {this.state.networkProtocolHandlers.map( protocol => <option value={protocol.id} key={"typeSelector" + protocol.id }>{protocol.name}</option>)}
+              </select>
               <p className="help-block">
                 Specifies the name of the file on the REST Server that handles
                 the communication with the servers that use this protocol.

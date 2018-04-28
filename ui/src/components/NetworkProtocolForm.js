@@ -19,12 +19,23 @@ class NetworkProtocolForm extends Component {
     this.state = {
         networkProtocol: props.networkProtocol,
         networkTypes: [],
+        networkProtocolHandlers: [],
         isGlobalAdmin: SessionStore.isAdmin(),
     };
 
     networkTypeStore.getNetworkTypes()
     .then( response => this.setState( { networkTypes: response } ) )
     .catch( err =>  this.props.history.push('/admin/networkProtocols') );
+
+    networkProtocolStore.getNetworkProtocolHandlers()
+      .then((response) => {
+        //Add a none selected place holder
+        let temp = [{id: '', name: 'No Handler Selected'}];
+        temp = temp.concat(response);
+        this.setState({
+          networkProtocolHandlers: temp,
+        });
+      });
 
     this.componentWillMount = this.componentWillMount.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
@@ -42,7 +53,10 @@ class NetworkProtocolForm extends Component {
 
   onChange(field, e) {
     let networkProtocol = this.state.networkProtocol;
-    if ( (e.target.type === "number") || (e.target.type === "select-one") ) {
+    if (field === 'protocolHandler') {
+      networkProtocol[field] = e.target.value;
+    }
+    else if ( (e.target.type === "number") || (e.target.type === "select-one") ) {
       networkProtocol[field] = parseInt(e.target.value, 10);
     } else if (e.target.type === "checkbox") {
       networkProtocol[field] = e.target.checked;
@@ -102,13 +116,13 @@ class NetworkProtocolForm extends Component {
             </div>
             <div className="form-group">
               <label className="control-label" htmlFor="protocolHandler">Network Protocol Handler</label>
-              <input className="form-control"
-                     id="protocolHandler"
-                     type="text"
-                     placeholder="e.g. 'LoRaOpenSource'"
-                     required
-                     value={this.state.networkProtocol.protocolHandler || ''}
-                     onChange={this.onChange.bind(this, 'protocolHandler')}/>
+              <select className="form-control"
+                      id="protocolHandler"
+                      required
+                      value={this.state.networkProtocol.protocolHandler}
+                      onChange={this.onChange.bind(this, 'protocolHandler')}>
+                {this.state.networkProtocolHandlers.map( protocol => <option value={protocol.id} key={"typeSelector" + protocol.id }>{protocol.name}</option>)}
+              </select>
               <p className="help-block">
                 Specifies the name of the file on the REST Server that handles
                 the communication with the servers that use this potocol.

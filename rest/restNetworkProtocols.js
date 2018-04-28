@@ -1,4 +1,5 @@
 var appLogger = require( "./lib/appLogger.js" );
+const fs = require('fs');
 var restServer;
 var modelAPI;
 
@@ -151,6 +152,7 @@ exports.initialize = function( app, server ) {
             restServer.respondJson( res, 200, send );
         })
         .catch( function( err ) {
+            appLogger.log(err);
             restServer.respond( res, err );
         });
     });
@@ -164,7 +166,7 @@ exports.initialize = function( app, server ) {
      * @apiPermission System Admin
      * @apiHeader {String} Authorization The Create Session's returned token
      *      prepended with "Bearer "
-     * @apiParam (URL Parameters) {Number} id The Network Protocol's id
+     * @apiParam (URL Parameters) {Number} networkProtocolHandlersid The Network Protocol's id
      * @apiParam (Request Body) {String} [name] The Network Protocol's name
      * @apiParam (Request Body) {String} [protocolHandler] The Network Protocol
      *      node code that communicates with a remote Network.
@@ -189,7 +191,7 @@ exports.initialize = function( app, server ) {
         // changed before we even try to write.
         modelAPI.networkProtocols.retrieveNetworkProtocol( req.params.id ).then( function( np ) {
             // Fields that may exist in the request body that can change.  Make
-            // sure they actually differ, though.
+            // sure they actually differ, thnetworkProtocolHandlersough.
             var changed = 0;
             if ( ( req.body.name ) &&
                  ( req.body.name != np.name ) ) {
@@ -238,7 +240,7 @@ exports.initialize = function( app, server ) {
      *
      * @api {delete} /api/networkProtocols/:id Delete Network Protocol
      * @apiGroup Network Protocols
-     * @apiPermission System Admin
+     * @apiPermission System AdminnetworkProtocolHandlers
      * @apiHeader {String} Authorization The Create Session's returned token
      *      prepended with "Bearer "
      * @apiParam (URL Parameters) {Number} id The Network Protocol's id
@@ -257,4 +259,39 @@ exports.initialize = function( app, server ) {
             restServer.respond( res, err );
         });
     });
+
+    /**
+     * @apiDescription Gets the Network Protocol Handlers avalible.
+     *
+     * @api {get} /api/networkProtocolsHandlers/ Get Network Protocol
+     * @apiGroup Network Protocols
+     * @apiPermission Any logged-in user.
+     * @apiHeader {String} Authorization The Create Session's returned token
+     *      prepended with "Bearer "
+     * @apiSuccess {Array} array of protocol handlers available.
+     * @apiVersion 0.1.0
+     */
+    app.get('/api/networkProtocolHandlers/', [restServer.isLoggedIn],
+        function(req, res, next) {
+            let fileList = fs.readdirSync('./rest/networkProtocols/');
+            let handlerList = [];
+            for (onefile in fileList) {
+                if (
+                    fileList[onefile] === 'networkProtocolDataAccess.js' ||
+                    fileList[onefile] === 'networkProtocols.js' ||
+                    fileList[onefile] === 'networkTypeApi.js' ||
+                    fileList[onefile] === 'protocoltemplate.js' ||
+                    fileList[onefile] === 'README.txt'
+                ){
+                }
+                else {
+                    let temp = {
+                        id: fileList[onefile],
+                      name: fileList[onefile].split('.')[0]
+                    };
+                    handlerList.push(temp);
+                }
+            }
+            restServer.respondJson( res, null, handlerList );
+        });
 }
