@@ -8,10 +8,7 @@ import reportingProtocolStore from "../../stores/ReportingProtocolStore";
 import ErrorStore from "../../stores/ErrorStore";
 import NetworkSpecificUI from "../NetworkCustomizations/NetworkSpecificUI";
 import PropTypes from 'prop-types';
-import deviceStore from "../../stores/DeviceStore";
 import companyStore from "../../stores/CompanyStore";
-import userStore from "../../stores/UserStore";
-import networkTypeStore from "../../stores/NetworkTypeStore";
 
 class CreateApplication extends Component {
     static contextTypes = {
@@ -129,8 +126,6 @@ class CreateApplication extends Component {
 
     onChange(field, e) {
         let application = this.state.application;
-        console.log(e);
-        console.log(field);
 
         if (field === "companyId") {
             application[field] = e.value;
@@ -142,7 +137,6 @@ class CreateApplication extends Component {
             application[field] = e.target.value;
         }
         this.setState({application: application});
-        console.log(this.state.application)
     }
 
     render() {

@@ -3,6 +3,8 @@ import PropTypes from 'prop-types';
 import sessionStore from "../stores/SessionStore";
 import userStore from "../stores/UserStore";
 import {withRouter} from "react-router-dom";
+import companyStore from "../stores/CompanyStore";
+import Select from 'react-select';
 
 class UserForm extends Component {
   static contextTypes = {
@@ -11,10 +13,14 @@ class UserForm extends Component {
 
   constructor() {
     super();
-
+    let isGlobalAdmin = sessionStore.isGlobalAdmin();
+    let isAdmin = sessionStore.isAdmin();
     this.state = {
-      user: {"isAdmin": false},
-      showPasswordField: true,
+        user: {"isAdmin": false},
+        showPasswordField: true,
+        isGlobalAdmin: isGlobalAdmin,
+        isAdmin: isAdmin,
+        filterList: undefined
     };
 
     this.handleSubmit = this.handleSubmit.bind(this);
@@ -34,9 +40,55 @@ class UserForm extends Component {
     });
   }
 
+  sessionWatch() {
+    this.setState({
+      isGlobalAdmin: sessionStore.isGlobalAdmin(),
+    });
+  }
+
+  componentDidMount = async function (props) {
+    // Check for a user, and redirect to login if none is set.
+    let user = sessionStore.getUser();
+    if (!user || !user.id || (user.id === 0)) {
+      this.props.history.push("/login");
+      return;
+    }
+
+    sessionStore.on("change", this.sessionWatch);
+
+    // Admin?  Needs company list.
+    let companies = {};
+    let filterList = [];
+    if (this.state.isAdmin) {
+      let recs;
+      try {
+        let cos = await companyStore.getAll();
+        recs = cos.records;
+      }
+      catch (err) {
+        console.log("Error getting company selection list:" + err);
+        recs = [];
+      }
+      for (let i = 0; i < recs.length; ++i) {
+        let rec = recs[i];
+        companies[rec.id] = rec;
+        filterList.push({label: rec.name, value: rec.id});
+      }
+    }
+    this.setState({
+      companies: companies,
+      filterList: filterList
+    });
+
+  };
+
+
   onChange(field, e) {
     let user = this.state.user;
-    if (e.target.type === "checkbox") {
+    if (field === 'companyId') {
+      user[field] = e.value;
+    }
+    else if (e.target.type === "checkbox") {
       user[field] = e.target.checked;
     } else {
       user[field] = e.target.value;
@@ -60,6 +112,16 @@ class UserForm extends Component {
   render() {
     return (
       <form onSubmit={this.handleSubmit}>
+          <div className={`panel-body clearfix ${this.state.isGlobalAdmin ? '' : 'hidden'}`}>
+              <div className="form-group">
+                  <label className="control-label" htmlFor="companyId">Company</label>
+                  <Select
+                    value={this.state.user.companyId}
+                    options={this.state.filterList}
+                    onChange={this.onChange.bind(this, 'companyId')}
+                    placeholder="Select Company"/>
+              </div>
+          </div>
         <div className="form-group">
           <label className="control-label" htmlFor="username">Username</label>
           <input className="form-control" id="username" type="text" placeholder="username" required
