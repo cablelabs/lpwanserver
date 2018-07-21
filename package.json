@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "start": "node ./bin/rest",
+    "mocha": "mocha",
     "test": "./test.sh",
     "silent": "npm start > output.txt 2> error.txt"
   },

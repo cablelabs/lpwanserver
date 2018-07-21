@@ -1,14 +1,16 @@
 var assert = require('assert');
 var chai = require('chai');
 var chaiHttp = require('chai-http');
-var server = require('../restApp.js');
+var app = require('../restApp.js');
 var should = chai.should();
 
 chai.use( chaiHttp );
-var server = chai.request(server);
+var server = chai.request(app).keepOpen();
 
 var npId1;
 var npId2;
+const NUMBER_PROTOCOLS = 2;
+const NUMBER_PROTOCOL_HANDLERS = 5;
 
 describe( "NetworkProtocols", function() {
     var adminToken;
@@ -67,7 +69,7 @@ describe( "NetworkProtocols", function() {
               .end(function (err, res) {
                   res.should.have.status(200);
                   let body = JSON.parse(res.text);
-                  body.should.have.length(3);
+                  body.should.have.length(NUMBER_PROTOCOL_HANDLERS);
                   done();
               });
         });
@@ -127,7 +129,7 @@ describe( "NetworkProtocols", function() {
         });
     });
     describe( "GET /api/networkProtocols", function() {
-        it('should return 200 with 2 protocols on coAdmin', function( done ) {
+        it('should return 200 with 5 protocols on coAdmin', function( done ) {
             server
             .get('/api/networkProtocols' )
             .set('Authorization', 'Bearer ' + coAdminToken )
@@ -136,8 +138,8 @@ describe( "NetworkProtocols", function() {
                 res.should.have.status(200);
                 var result = JSON.parse( res.text );
                 result.records.should.be.instanceof( Array );
-                result.records.should.have.length( 2 );
-                result.totalCount.should.equal( 2 );
+                result.records.should.have.length(NUMBER_PROTOCOLS);
+                result.totalCount.should.equal(NUMBER_PROTOCOLS);
                 done();
             });
         });
@@ -151,8 +153,8 @@ describe( "NetworkProtocols", function() {
                 res.should.have.status(200);
                 var result = JSON.parse( res.text );
                 result.records.should.be.instanceof( Array );
-                result.records.should.have.length( 2 );
-                result.totalCount.should.equal( 2 );
+                result.records.should.have.length(NUMBER_PROTOCOLS);
+                result.totalCount.should.equal(NUMBER_PROTOCOLS);
                 done();
             });
         });
@@ -166,8 +168,8 @@ describe( "NetworkProtocols", function() {
                 res.should.have.status(200);
                 var result = JSON.parse( res.text );
                 result.records.should.be.instanceof( Array );
-                result.records.should.have.length( 2 );
-                result.totalCount.should.equal( 2 );
+                result.records.should.have.length(NUMBER_PROTOCOLS);
+                result.totalCount.should.equal(NUMBER_PROTOCOLS);
                 done();
             });
         });
@@ -196,7 +198,7 @@ describe( "NetworkProtocols", function() {
                 var result = JSON.parse( res.text );
                 result.records.should.be.instanceof( Array );
                 result.records.should.have.length( 1 );
-                result.totalCount.should.equal( 2 );
+                result.totalCount.should.equal( NUMBER_PROTOCOLS );
                 done();
             });
         });

@@ -14,7 +14,7 @@ PID=$!
 # TODO: Verify/set config to use the test database
 
 # Run the suite
-mocha
+mocha --exit
 
 kill $PID
 rm -f receivedPostData.txt
