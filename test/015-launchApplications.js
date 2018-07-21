@@ -6,7 +6,7 @@ var restserver = require('../restApp.js');
 var should = chai.should();
 
 chai.use( chaiHttp );
-var server = chai.request(restserver);
+var server = chai.request(restserver).keepOpen();
 
 describe( "Launch Applications", function() {
     var adminToken;

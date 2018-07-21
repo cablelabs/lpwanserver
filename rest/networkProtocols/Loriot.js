@@ -9,7 +9,8 @@ var appLogger = require( '../lib/appLogger.js' );
 // This is a cross-platform API that must remain consistent.
 //******************************************************************************
 
-// The login account data needed to manipulate companies.
+// NOTE:  For TTN, there are no companies stored on the server.  Only The admin
+//      company has an account.
 //
 // dataAPI - The API that handles common data access and manipulation functions
 //           on behalf of the protocol.

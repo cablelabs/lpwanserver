@@ -1,11 +1,11 @@
 var assert = require('assert');
 var chai = require('chai');
 var chaiHttp = require('chai-http');
-var server = require('../restApp.js');
+var app = require('../restApp.js');
 var should = chai.should();
 
 chai.use( chaiHttp );
-var server = chai.request(server);
+var server = chai.request(app).keepOpen();
 
 var npId1;
 var npId2;
