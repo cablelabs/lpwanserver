@@ -369,4 +369,9 @@ exports.initialize = function( app, server ) {
         });
 
 
+    app.get('/api/oauth/callback', [],
+      function(req, res, next) {
+        restServer.respondJson(res, 200, {});
+      });
+
 }
