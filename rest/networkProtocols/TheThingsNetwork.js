@@ -3,9 +3,9 @@ const request = require('request')
 const nconf = require('nconf')
 const appLogger = require('../lib/appLogger.js')
 
-/// ////////////////////////////////////////////////////////
-// Utilities
-/// ////////////////////////////////////////////////////////
+// ********************************************************
+// Authentication
+// ********************************************************
 
 //
 // dataAPI - The API that handles common data access and manipulation functions
@@ -137,6 +137,66 @@ function makeDeviceProfileDataKey (deviceProfileId, dataName) {
   return 'dp:' + deviceProfileId + '/' + dataName
 }
 
+//* *****************************************************************************
+// Login/logout
+//* *****************************************************************************
+
+// Connect with the remote system.
+//
+// network     - The networks record for the network that uses this
+//               protocol.
+// loginData   - The companyNetworkTypeLinks record for this company and network.
+//
+// Returns a Promise that connects to the remote system.  We treat all
+// connections like a login session, and it is up to the code in this module
+// to implement that concept.  The promise returns the opaque session data to
+// be passed into other methods.
+exports.connect = function (network, loginData) {
+  return new Promise(function (resolve, reject) {
+    // Set up the request options.
+    var options = {}
+    options.method = 'POST'
+    options.url = network.baseUrl + '/users/token'
+    options.headers = {'Content-Type': 'application/json'}
+    options.json = loginData
+    options.agentOptions = {'secureProtocol': 'TLSv1_2_method', 'rejectUnauthorized': false}
+
+    request(options, function (error, response, body) {
+      if (error) {
+        appLogger.log('Error on sign in: ' + error)
+        reject(error)
+      } else if (response.statusCode >= 400) {
+        appLogger.log('Error on sign in: ' + response.statusCode + ', ' + response.body.error)
+        reject(response.statusCode)
+      } else {
+        var token = body.jwt
+        if (token) {
+          resolve(token)
+        } else {
+          reject(new Error('No token'))
+        }
+      }
+    })
+  })
+}
+
+// Disconnect with the remote system.
+//
+// connection - The data top use to drop the connection
+//
+// Returns a Promise that disconnects from the remote system.
+exports.disconnect = function (connection) {
+  return new Promise(function (resolve, reject) {
+    // LoRa app server doesn't have a logout.  Just clear the token.
+    connection = null
+    resolve()
+  })
+}
+
+// ********************************************************
+// Utilities
+// ********************************************************
+
 // Get the NetworkServer using the Service Profile a ServiceProfile.
 function getDeviceById (network, deviceId, connection, dataAPI) {
   appLogger.log('TheThingsNetwork: getDeviceProfileById')
@@ -218,113 +278,11 @@ function getApplicationById (network, applicationId, connection, dataAPI) {
   })
 }
 
-//* *****************************************************************************
-// Login/logout
-//* *****************************************************************************
+// **********************************************
+// Pull/Push Remote Data
+// **********************************************
 
-// Connect with the remote system.
-//
-// network     - The networks record for the network that uses this
-//               protocol.
-// loginData   - The companyNetworkTypeLinks record for this company and network.
-//
-// Returns a Promise that connects to the remote system.  We treat all
-// connections like a login session, and it is up to the code in this module
-// to implement that concept.  The promise returns the opaque session data to
-// be passed into other methods.
-exports.connect = function (network, loginData) {
-  return new Promise(function (resolve, reject) {
-    // Set up the request options.
-    var options = {}
-    options.method = 'POST'
-    options.url = network.baseUrl + '/internal/login'
-    options.headers = {'Content-Type': 'application/json'}
-    options.json = loginData
-    options.agentOptions = {'secureProtocol': 'TLSv1_2_method', 'rejectUnauthorized': false}
-
-    request(options, function (error, response, body) {
-      if (error) {
-        appLogger.log('Error on signin: ' + error)
-        reject(error)
-      } else if (response.statusCode >= 400) {
-        appLogger.log('Error on signin: ' + response.statusCode + ', ' + response.body.error)
-        reject(response.statusCode)
-      } else {
-        var token = body.jwt
-        if (token) {
-          resolve(token)
-        } else {
-          reject(new Error('No token'))
-        }
-      }
-    })
-  })
-}
-
-// Disconnect with the remote system.
-//
-// connection - The data top use to drop the connection
-//
-// Returns a Promise that disconnects from the remote system.
-exports.disconnect = function (connection) {
-  return new Promise(function (resolve, reject) {
-    // LoRa app server doesn't have a logout.  Just clear the token.
-    connection = null
-    resolve()
-  })
-}
-
-//* *****************************************************************************
-// Companies are not supported by TTN, the main LPWan user serves
-// as a proxy for all user companies.
-//* *****************************************************************************
-
-// Companies are not supported by TTN
-exports.addCompany = function (sessionData, network, companyId, dataAPI) {
-  appLogger.log('TheThingsNetwork: addCompany')
-  appLogger.log('Companies are not supported by TTN')
-  let error = new Error('Companies are not supported by TTN')
-  dataAPI.addLog(network, 'Error on Add Companies: ' + error)
-  return (error)
-}
-
-// Companies are not supported by TTN
-exports.getCompany = function (sessionData, network, companyId, dataAPI) {
-  appLogger.log('TheThingsNetwork: getCompany')
-  appLogger.log('Companies are not supported by TTN')
-  let error = new Error('Companies are not supported by TTN')
-  dataAPI.addLog(network, 'Error on Get Companies: ' + error)
-  return (error)
-}
-
-// Companies are not supported by TTN
-exports.updateCompany = function (sessionData, network, companyId, dataAPI) {
-  appLogger.log('TheThingsNetwork: updateCompany')
-  appLogger.log('Companies are not supported by TTN')
-  let error = new Error('Companies are not supported by TTN')
-  dataAPI.addLog(network, 'Error on Update Companies: ' + error)
-  return (error)
-}
-
-// Companies are not supported by TTN
-exports.deleteCompany = function (sessionData, network, companyId, dataAPI) {
-  appLogger.log('TheThingsNetwork: deleteCompany')
-  appLogger.log('Companies are not supported by TTN')
-  let error = new Error('Companies are not supported by TTN')
-  dataAPI.addLog(network, 'Error on Delete Companies: ' + error)
-  return (error)
-}
-
-// Companies are not supported by TTN
-exports.pushCompany = function (sessionData, network, companyId, dataAPI) {
-  appLogger.log('TheThingsNetwork: getCompany')
-  appLogger.log('Companies are not supported by TTN')
-  let error = new Error('Companies are not supported by TTN')
-  dataAPI.addLog(network, 'Error on Get Companies: ' + error)
-  return (error)
-}
-
-// Get company.
+// Pull data from the TTN Network
 //
 // sessionData - The session information for the user, including the
 //               connection data for the remote system.
@@ -381,86 +339,6 @@ exports.pullNetwork = function (sessionData, network, dataAPI, modelAPI) {
   })
 }
 
-exports.pullCompanies = function (sessionData, network, dataAPI, modelAPI) {
-  let me = this
-  let counter = 0
-  let currentConnections = 0
-  return new Promise(async function (resolve, reject) {
-    // Get the remote companies.
-    // Set up the request options.
-    let companyMap = []
-    let options = {}
-    options.method = 'GET'
-    options.url = network.baseUrl + '/organizations' + '?limit=9999&offset=0'
-    options.headers = {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + sessionData.connection
-    }
-    options.agentOptions = {
-      'secureProtocol': 'TLSv1_2_method',
-      'rejectUnauthorized': false
-    }
-
-    appLogger.log(options)
-    request(options, function (error, response, body) {
-      if (error) {
-        dataAPI.addLog(network, 'Error pulling companies from network ' + network.name + ': ' + error)
-        reject(error)
-      } else {
-        body = JSON.parse(body)
-        dataAPI.addLog(network, body)
-        if (body.totalCount === 0) {
-          appLogger.log('No organizations')
-          appLogger.log(body)
-          resolve(companyMap)
-        } else {
-          let organizations = body.result
-          appLogger.log(body)
-          counter = organizations.length
-          for (let index in organizations) {
-            let org = organizations[index]
-            if (org.name === 'loraserver') {
-              counter = counter - 1
-            } else {
-              if (currentConnections > 30) {
-                appLogger.log('Waiting for open connection ' + org.name)
-                setTimeout(() => {
-                  appLogger.log('Waiting Finished.  Adding ' + org.name)
-                  add()
-                }, 5000)
-              } else {
-                add()
-              }
-              // eslint-disable-next-line no-inner-declarations
-              function add () {
-                currentConnections += 1
-                appLogger.log('Added ' + org.name)
-                me.addRemoteCompany(sessionData, org, network, dataAPI, modelAPI)
-                  .then((companyId) => {
-                    counter = counter - 1
-                    currentConnections -= 1
-                    companyMap.push({organizationId: org.id, companyId: companyId})
-                    if (counter <= 0) {
-                      resolve(companyMap)
-                    }
-                  })
-                  .catch((error) => {
-                    counter = counter - 1
-                    currentConnections -= 1
-                    appLogger.log(error)
-                    if (counter <= 0) {
-                      resolve(companyMap)
-                    }
-                  })
-              }
-            }
-          }
-        }
-      }
-    })
-  })
-}
-
 exports.pullApplications = function (sessionData, network, companyMap, dpMap, dataAPI, modelAPI) {
   let me = this
   let counter = 0
@@ -507,62 +385,6 @@ exports.pullApplications = function (sessionData, network, companyMap, dpMap, da
               })
               .catch((error) => {
                 reject(error)
-              })
-          }
-        }
-      }
-    })
-  })
-}
-
-exports.pullDeviceProfiles = function (sessionData, network, companyMap, dataAPI, modelAPI) {
-  let me = this
-  let counter = 0
-  return new Promise(async function (resolve, reject) {
-    let dpMap = []
-    let options = {}
-    options.method = 'GET'
-    options.url = network.baseUrl + '/device-profiles' + '?limit=9999&offset=0'
-    options.headers = {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + sessionData.connection
-    }
-    options.agentOptions = {
-      'secureProtocol': 'TLSv1_2_method',
-      'rejectUnauthorized': false
-    }
-
-    appLogger.log(options)
-    request(options, function (error, response, body) {
-      if (error) {
-        dataAPI.addLog(network, 'Error pulling device profiles from network ' + network.name + ': ' + error)
-        reject(error)
-      } else {
-        body = JSON.parse(body)
-        dataAPI.addLog(network, body)
-        if (body.totalCount === 0) {
-          appLogger.log('No device profiles')
-          appLogger.log(body)
-          resolve(dpMap)
-        } else {
-          let deviceProfiles = body.result
-          appLogger.log(body)
-          counter = deviceProfiles.length
-          for (let index in deviceProfiles) {
-            let dp = deviceProfiles[index]
-            appLogger.log('Added ' + dp.name)
-            me.addRemoteDeviceProfile(sessionData, dp, network, companyMap, dataAPI, modelAPI)
-              .then((dpId) => {
-                counter = counter - 1
-                dpMap.push({remoteDeviceProfileId: dp.deviceProfileID, deviceProfileId: dpId})
-                if (counter <= 0) {
-                  resolve(dpMap)
-                }
-              })
-              .catch((error) => {
-                // This one didn't work?  Not sure why
-                appLogger.log(error)
-                counter = counter - 1
               })
           }
         }
@@ -626,11 +448,6 @@ exports.pullDevices = function (sessionData, network, companyId, dpMap, remoteAp
   })
 }
 
-// TTN does not support companies.
-exports.addRemoteCompany = function (sessionData, remoteOrganization, network, dataAPI, modelAPI) {
-  return (new Error('TTN Does not Support Companies'))
-}
-
 exports.addRemoteApplication = function (sessionData, limitedRemoteApplication, network, companyMap, dpMap, dataAPI, modelAPI) {
   let me = this
   return new Promise(async function (resolve, reject) {
@@ -685,14 +502,6 @@ exports.addRemoteApplication = function (sessionData, limitedRemoteApplication, 
         reject(err)
       })
   })
-}
-
-exports.addRemoteDeviceProfile = function (sessionData, limitedRemoteDeviceProfile, network, companyMap, dataAPI, modelAPI) {
-  appLogger.log('TheThingsNetwork: getDeviceProfileById')
-  appLogger.log('Device Profiles are not supported by TTN')
-  let error = new Error('Device Profiles are not supported by TTN')
-  dataAPI.addLog(network, 'Error on get DeviceProfile: ' + error)
-  return (error)
 }
 
 exports.addRemoteDevice = function (sessionData, limitedRemoteDevice, network, companyId, dpMap, remoteApplicationId, applicationId, dataAPI, modelAPI) {
@@ -1227,41 +1036,13 @@ exports.passDataToApplication = function (network, applicationId, data, dataAPI)
 }
 
 //* *****************************************************************************
-// TTN Does not Support Device Profiles
-//* *****************************************************************************
-
-exports.addDeviceProfile = function (sessionData, network, deviceProfileId, dataAPI) {
-  appLogger()
-  return {}
-}
-
-exports.getDeviceProfile = function (sessionData, network, deviceProfileId, dataAPI) {
-  appLogger.log('Device Profiles do not exist on TTN')
-  dataAPI.addLog(network, 'Device Profiles do not exist on TTN')
-}
-
-exports.updateDeviceProfile = function (sessionData, network, deviceProfileId, dataAPI) {
-  appLogger.log('Device Profiles do not exist on TTN')
-  dataAPI.addLog(network, 'Device Profiles do not exist on TTN')
-}
-
-exports.deleteDeviceProfile = function (sessionData, network, deviceProfileId, dataAPI) {
-  appLogger.log('Device Profiles do not exist on TTN')
-  dataAPI.addLog(network, 'Device Profiles do not exist on TTN')
-}
-
-exports.pushDeviceProfile = function (sessionData, network, deviceProfileId, dataAPI) {
-  appLogger.log('Device Profiles do not exist on TTN')
-  dataAPI.addLog(network, 'Device Profiles do not exist on TTN')
-}
-
-//* *****************************************************************************
 // CRUD devices.
 //* *****************************************************************************
 
 // Add device.
 //
-// sessionData     - The session information for the user, including the //                   connection data for the remote system.
+// sessionData     - The session information for the user, including the
+//                   connection data for the remote system.
 // network         - The networks record for the network that uses this
 //                   protocol.
 // companyData     - The companyNetworkTypeLinks record for this company and
@@ -1665,4 +1446,126 @@ exports.pushDevice = function (sessionData, network, deviceId, dataAPI) {
     }
     resolve()
   })
+}
+
+//* *****************************************************************************
+// Companies & Device Profiles are not supported by TTN, the main LPWan user serves
+// as a proxy for all user companies.
+//* *****************************************************************************
+
+exports.addCompany = function (sessionData, network, companyId, dataAPI) {
+  appLogger.log('TheThingsNetwork: addCompany')
+  appLogger.log('Companies are not supported by TTN')
+  let error = new Error('Companies are not supported by TTN')
+  dataAPI.addLog(network, 'Error on Add Companies: ' + error)
+  return (error)
+}
+
+exports.getCompany = function (sessionData, network, companyId, dataAPI) {
+  appLogger.log('TheThingsNetwork: getCompany')
+  appLogger.log('Companies are not supported by TTN')
+  let error = new Error('Companies are not supported by TTN')
+  dataAPI.addLog(network, 'Error on Get Companies: ' + error)
+  return (error)
+}
+
+exports.updateCompany = function (sessionData, network, companyId, dataAPI) {
+  appLogger.log('TheThingsNetwork: updateCompany')
+  appLogger.log('Companies are not supported by TTN')
+  let error = new Error('Companies are not supported by TTN')
+  dataAPI.addLog(network, 'Error on Update Companies: ' + error)
+  return (error)
+}
+
+exports.deleteCompany = function (sessionData, network, companyId, dataAPI) {
+  appLogger.log('TheThingsNetwork: deleteCompany')
+  appLogger.log('Companies are not supported by TTN')
+  let error = new Error('Companies are not supported by TTN')
+  dataAPI.addLog(network, 'Error on Delete Companies: ' + error)
+  return (error)
+}
+
+exports.pushCompany = function (sessionData, network, companyId, dataAPI) {
+  appLogger.log('TheThingsNetwork: getCompany')
+  appLogger.log('Companies are not supported by TTN')
+  let error = new Error('Companies are not supported by TTN')
+  dataAPI.addLog(network, 'Error on Get Companies: ' + error)
+  return (error)
+}
+
+// TTN does not support companies.
+exports.addRemoteCompany = function (sessionData, remoteOrganization, network, dataAPI, modelAPI) {
+  appLogger.log('TheThingsNetwork: addRemoteCompany')
+  appLogger.log('Companies are not supported by TTN')
+  let error = new Error('Companies are not supported by TTN')
+  dataAPI.addLog(network, 'Error on Add Remote Companies: ' + error)
+  return (error)
+}
+
+exports.pullCompanies = function (sessionData, network, dataAPI, modelAPI) {
+  appLogger.log('TheThingsNetwork: pullCompany')
+  appLogger.log('Companies are not supported by TTN')
+  let error = new Error('Companies are not supported by TTN')
+  dataAPI.addLog(network, 'Error on Pull Companies: ' + error)
+  return (error)
+}
+
+//* *****************************************************************************
+// TTN Does not Support Device Profiles
+//* *****************************************************************************
+
+exports.addRemoteDeviceProfile = function (sessionData, limitedRemoteDeviceProfile, network, companyMap, dataAPI, modelAPI) {
+  appLogger.log('TheThingsNetwork: addRemoteDeviceProfile')
+  appLogger.log('Device Profiles are not supported by TTN')
+  let error = new Error('Device Profiles are not supported by TTN')
+  dataAPI.addLog(network, 'Error on addRemoteDeviceProfile: ' + error)
+  return (error)
+}
+
+exports.pullDeviceProfiles = function (sessionData, network, companyMap, dataAPI, modelAPI) {
+  appLogger.log('TheThingsNetwork: pullDeviceProfiles')
+  appLogger.log('Device Profiles are not supported by TTN')
+  let error = new Error('Device Profiles are not supported by TTN')
+  dataAPI.addLog(network, 'Error on pullDeviceProfiles: ' + error)
+  return (error)
+}
+
+exports.addDeviceProfile = function (sessionData, network, deviceProfileId, dataAPI) {
+  appLogger.log('TheThingsNetwork: addDeviceProfile')
+  appLogger.log('Device Profiles are not supported by TTN')
+  let error = new Error('Device Profiles are not supported by TTN')
+  dataAPI.addLog(network, 'Error on addDeviceProfile: ' + error)
+  return (error)
+}
+
+exports.getDeviceProfile = function (sessionData, network, deviceProfileId, dataAPI) {
+  appLogger.log('TheThingsNetwork: getDeviceProfile')
+  appLogger.log('Device Profiles are not supported by TTN')
+  let error = new Error('Device Profiles are not supported by TTN')
+  dataAPI.addLog(network, 'Error on getDeviceProfile: ' + error)
+  return (error)
+}
+
+exports.updateDeviceProfile = function (sessionData, network, deviceProfileId, dataAPI) {
+  appLogger.log('TheThingsNetwork: updateDeviceProfile')
+  appLogger.log('Device Profiles are not supported by TTN')
+  let error = new Error('Device Profiles are not supported by TTN')
+  dataAPI.addLog(network, 'Error on updateDeviceProfile: ' + error)
+  return (error)
+}
+
+exports.deleteDeviceProfile = function (sessionData, network, deviceProfileId, dataAPI) {
+  appLogger.log('TheThingsNetwork: deleteDeviceProfile')
+  appLogger.log('Device Profiles are not supported by TTN')
+  let error = new Error('Device Profiles are not supported by TTN')
+  dataAPI.addLog(network, 'Error on deleteDeviceProfile: ' + error)
+  return (error)
+}
+
+exports.pushDeviceProfile = function (sessionData, network, deviceProfileId, dataAPI) {
+  appLogger.log('TheThingsNetwork: pushDeviceProfile')
+  appLogger.log('Device Profiles are not supported by TTN')
+  let error = new Error('Device Profiles are not supported by TTN')
+  dataAPI.addLog(network, 'Error on pushDeviceProfile: ' + error)
+  return (error)
 }
