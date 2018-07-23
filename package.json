@@ -8,7 +8,7 @@
     "test": "./test.sh",
     "silent": "npm start > output.txt 2> error.txt",
     "local": "export NODE_ENV=local;npm start",
-    "lint": "jshint rest/"
+    "lint": "eslint rest/"
   },
   "dependencies": {
     "async": "~2.0.1",
