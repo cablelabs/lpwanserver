@@ -6,6 +6,7 @@
     "bootstrap": "^3.3.7",
     "bootswatch": "^3.3.7",
     "codemirror": "^5.33.0",
+    "env-cmd": "^8.0.2",
     "flux": "^3.1.3",
     "history": "^4.7.2",
     "jwt-decode": "^2.2.0",
@@ -23,6 +24,7 @@
     "react-spinners": "^0.2.6"
   },
   "scripts": {
+    "local": "env-cmd .env.local react-scripts start",
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test --env=jsdom",

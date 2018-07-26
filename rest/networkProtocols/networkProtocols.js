@@ -6,6 +6,11 @@ var appLogger = require('../lib/appLogger.js')
 // for the upper layers.
 // ******************************************************************************
 
+/**
+ * Defines the generic cross-network API, and manages the network protocols
+ * for the upper layers.
+ * @class NetworkProtocolAccess
+ */
 var networkProtocolMap
 
 // Constructor - gets the database API for the networkProtocols
@@ -21,6 +26,10 @@ function clearProtocolMap () {
 
 // Clears the network from the protocol map. Should be called if the network
 // is updated with a new protocol, or is deleted.
+/**
+ *
+ * @param network Network to be removed from the protocol
+ */
 NetworkProtocolAccess.prototype.clearProtocol = function (network) {
   var id = network.id
   if (networkProtocolMap[id]) {
@@ -28,6 +37,10 @@ NetworkProtocolAccess.prototype.clearProtocol = function (network) {
   }
 }
 
+/**
+ * @param network
+ * @returns {Promise<Protocol>} - Protocol Handler for this network.
+ */
 NetworkProtocolAccess.prototype.getProtocol = function (network) {
   var me = this
   return new Promise(async function (resolve, reject) {
@@ -54,24 +67,15 @@ NetworkProtocolAccess.prototype.getProtocol = function (network) {
 // Connect/Disconnect remote session.
 //* *****************************************************************************
 
-// Connect with the remote system.
-//
-// network     - The networks record for the network that uses this
-//               protocol.
-// loginData   - The data needed to log in to the remote network.  This may be
-//               a username/password or some access key.  This is obtained
-//               using either getCompanyAccessAccount() or getCompanyAccount()
-//               for the operation in question.
-//
-// Returns a Promise that connects to the remote system.  We treat all
-// connections like a login session, and it is up to the code in this module
-// to implement that concept.  The promise returns the opaque session data to
-// be passed into other methods.
+/**
+ *
+ * @param network
+ * @param loginData
+ * @returns {Promise<any>} - Key, token, or connection data required to access the network
+ */
 NetworkProtocolAccess.prototype.connect = function (network, loginData) {
   var me = this
   return new Promise(async function (resolve, reject) {
-    // There may be connection data in the cache, but this call will
-    // supercede it.
     try {
       var proto = await me.getProtocol(network)
       var connection = await proto.api.connect(network, loginData)
@@ -87,12 +91,11 @@ NetworkProtocolAccess.prototype.connect = function (network, loginData) {
   })
 }
 
-// Disconnect with the remote system.
-//
-// network   - the network to disconnect from
-// loginData - the account to disconnect.
-//
-// Immediately drops the connection data for the login on the network.
+/**
+ *
+ * @param network - the network to disconnect from
+ * @param account - to account to disconnect
+ */
 NetworkProtocolAccess.prototype.disconnect = function (network, loginData) {
   var id = network.id
   if (networkProtocolMap[id]) {
