@@ -12,8 +12,8 @@ module.exports = {
   activeApplicationNetworkProtocols: {},
   metaData:
     {
-      protocolHandlerName: 'Loriot',
-      networkType: 'Lora',
+      protocolHandlerName: 'TMobileNBIoT',
+      networkType: 'NBIoT',
       oauthUrl: '',
       protocolHandlerNetworkFields: [
         {
@@ -28,12 +28,12 @@ module.exports = {
 }
 
 module.exports.register = function (networkProtocols) {
-  appLogger.log('Loriot:register')
+  appLogger.log('TMobileNBIoT:register')
   return new Promise(async function (resolve, reject) {
     let me = {
-      name: 'Loriot',
-      networkTypeId: 1,
-      protocolHandler: 'Loriot.js'
+      name: 'TMobileNBIoT',
+      networkTypeId: 2,
+      protocolHandler: 'TMobileNBIoT.js'
     }
     await networkProtocols.upsertNetworkProtocol(me)
     resolve()

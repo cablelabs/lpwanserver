@@ -1,5 +1,6 @@
 // General libraries in use in this module.
 var appLogger = require('../lib/appLogger.js')
+const fs = require('fs')
 
 // ******************************************************************************
 // Defines the generic cross-network API, and manages the network protocols
@@ -14,16 +15,33 @@ var appLogger = require('../lib/appLogger.js')
 var networkProtocolMap
 
 // Constructor - gets the database API for the networkProtocols
-function NetworkProtocolAccess (networkProtocolAPI) {
+function NetworkProtocolAccess(networkProtocolAPI) {
   this.npAPI = networkProtocolAPI
   clearProtocolMap()
 }
 
 // Resets the entire protocol map.
-function clearProtocolMap () {
+function clearProtocolMap() {
   networkProtocolMap = {}
 }
 
+NetworkProtocolAccess.prototype.register = function () {
+  let fileList = fs.readdirSync('./rest/networkProtocols')
+  for (let onefile in fileList) {
+    if (
+      fileList[onefile] === 'networkProtocolDataAccess.js' ||
+      fileList[onefile] === 'networkProtocols.js' ||
+      fileList[onefile] === 'networkTypeApi.js' ||
+      fileList[onefile] === 'protocoltemplate.js' ||
+      fileList[onefile] === 'README.txt'
+    ) {
+    } else {
+      let handler = fileList[onefile].split('.')[0]
+      let proto = require('./' + handler)
+      proto.register(this.npAPI)
+    }
+  }
+}
 // Clears the network from the protocol map. Should be called if the network
 // is updated with a new protocol, or is deleted.
 /**
@@ -108,7 +126,7 @@ NetworkProtocolAccess.prototype.disconnect = function (network, loginData) {
   }
 }
 
-// For methods that require sessions, make sure we have a current one for the
+// For methods that require sessions, make sure./rest/networkProtocols/ we have a current one for the
 // network/login.  If not log in.  Then try running protocolFunc with the
 // protocol and the session data.  If the first attempt fails with 401
 // (unauthorized), try logging in again, assuming the previous login expired,

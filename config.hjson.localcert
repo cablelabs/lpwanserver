@@ -41,8 +41,8 @@
 
     // Set up SSL support.  Note that both ssl_key_file and ssl_cert_file
     // must be defined to enable https connections.
-    ssl_key_file:
-    ssl_cert_file:
+    ssl_key_file: ssl/privateKey.key
+    ssl_cert_file: ssl/lpwan.crt
 
     // The base URL to use for links back to this site for emails sent
     // to verify user email addresses or pointers back to us for data delivery.
