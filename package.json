@@ -8,6 +8,7 @@
     "mocha": "mocha",
     "test": "./test.sh",
     "silent": "npm start > output.txt 2> error.txt",
+    "localcert": "export NODE_ENV=localcert;npm start",
     "local": "export NODE_ENV=local;npm start",
     "lint": "eslint rest/",
     "doc": "jsdoc -r ./rest -d ./docs"
