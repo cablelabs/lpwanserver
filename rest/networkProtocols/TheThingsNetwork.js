@@ -1533,7 +1533,7 @@ module.exports.pushDeviceProfile = function (sessionData, network, deviceProfile
  */
 function getCompanyAccount (dataAPI, network, companyId, generateIfMissing) {
   let secData = network.securityData
-  if (!secData || (!secData.bearerToken && !secData.refreshToken && !secData.accessCode)) {
+  if (!secData || (!secData.access_token && !secData.refresh_token)) {
     appLogger.log('Network security data is incomplete for ' + network.name)
     dataAPI.addLog(network, 'Network security data is incomplete for ' + network.name)
     return null
