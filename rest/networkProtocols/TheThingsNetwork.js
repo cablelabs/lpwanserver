@@ -1661,7 +1661,7 @@ function getApplicationById (network, applicationId, connection, dataAPI) {
         dataAPI.addLog(network, 'Error on get Application: ' +
           bodyObj.error +
           ' (' + response.statusCode + ')')
-        dataAPI.addLog(network, 'Request data = ' + JSON.strapiKeyingify(options))
+        dataAPI.addLog(network, 'Request data = ' + JSON.stringify(options))
         reject(response.statusCode)
       } else {
         let res = JSON.parse(body)
