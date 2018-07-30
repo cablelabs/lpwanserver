@@ -41,6 +41,12 @@ module.exports = {
     }
 }
 
+/**
+ * Upon startup this function "registers" the protocol with the system.
+ *
+ * @param networkProtocols - Module to access the network protocols in the database
+ * @returns {Promise<?>} - Empty promise means register worked
+ */
 module.exports.register = function (networkProtocols) {
   appLogger.log('TTN:register')
   return new Promise(async function (resolve, reject) {
@@ -61,20 +67,10 @@ module.exports.register = function (networkProtocols) {
  *           on behalf of the protocol.
  * @param {!Object} network - The network that we are to get the company account info for.  For
  *           The Things Network, this is a lpwan The Things Network user account.
- * @returns {Promise<*>} - security data
+ * @returns {Promise<SecurityData>} - The Things Network account information
  */
 module.exports.getCompanyAccessAccount = async function (dataAPI, network) {
-  let secData = network.securityData
-  appLogger.log(secData)
-  if (!secData || !secData.apiKey) {
-    appLogger.log('Network security data is incomplete for ' + network.name)
-    dataAPI.addLog(network, 'Network security data is incomplete for ' + network.name)
-    return null
-  }
-  return {
-    apiKey: secData.apiKey,
-    admin: true
-  }
+  return getCompanyAccount(dataAPI, network, 1, false)
 }
 
 /**
@@ -102,7 +98,7 @@ module.exports.getApplicationAccessAccount = async function (dataAPI, network, a
  * @param {!Object} network - The network that we are to get the company account info for.  For
  *           The Things Network, this is a lpwan The Things Network user account.
  * @param {!String} applicationId -The id of the local application record
- * @returns {Promise<*>} - The Things Network account information
+ * @returns {Promise<SecurityData>} - The Things Network account information
  */
 module.exports.getDeviceAccessAccount = async function (dataAPI, network, deviceId) {
   let co = await dataAPI.getCompanyByDeviceId(deviceId)
@@ -118,7 +114,7 @@ module.exports.getDeviceAccessAccount = async function (dataAPI, network, device
  * @param {!Object} network - The network that we are to get the company account info for.  For
  *           The Things Network, this is a lpwan The Things Network user account.
  * @param {!String} applicationId -The id of the local application record
- * @returns {Promise<*>} - The Things Network account information
+ * @returns {Promise<SecurityData>} - The Things Network account information
  */
 module.exports.getDeviceProfileAccessAccount = async function (dataAPI, network, deviceId) {
   let co = await dataAPI.getCompanyByDeviceProfileId(deviceId)
@@ -133,10 +129,36 @@ module.exports.getDeviceProfileAccessAccount = async function (dataAPI, network,
  */
 module.exports.connect = function (network, loginData) {
   return new Promise(function (resolve, reject) {
-    if (loginData.apiKey) {
-      resolve(loginData.apiKey)
+    let options = {}
+    if (loginData.refresh_token) {
+      options.method = 'POST'
+      options.url = network.baseUrl + '/users/token'
+      let auth = Buffer.from(loginData.clientId + ':' + loginData.clientSecret).toString('base64')
+      options.headers = { 'Content-Type': 'application/json', 'Authorization': 'Basic ' + auth }
+      options.json = {
+        grant_type: 'refresh_token',
+        refresh_token: loginData.refresh_token,
+        redirect_url: 'https://mercury.schrimpsher.com:3200/api/oauth/callback'
+      }
+      console.log(options)
+      request(options, function (error, response, body) {
+        if (error) {
+          appLogger.log('Error on signin: ' + error)
+          reject(error)
+        } else if (response.statusCode >= 400) {
+          appLogger.log('Error on signin: ' + response.statusCode + ', ' + response.body.error)
+          reject(response.statusCode)
+        } else {
+          var token = body.access_token
+          if (token) {
+            resolve(token)
+          } else {
+            reject(new Error('No token'))
+          }
+        }
+      })
     } else {
-      reject(new Error('No token'))
+      reject(new Error('LPWan does not have credentials for TTN'))
     }
   })
 }
@@ -381,6 +403,34 @@ module.exports.getApplication = function (sessionData, network, applicationId, d
         dataAPI.addLog(network, 'Error on get application: ' + error)
         reject(error)
       } else {
+        resolve(body)
+      }
+    })
+  })
+}
+
+module.exports.getApplications = function (sessionData, network, dataAPI) {
+  return new Promise(async function (resolve, reject) {
+    let options = {}
+    options.method = 'GET'
+    options.url = network.baseUrl + '/applications'
+    options.headers = {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + sessionData.connection
+    }
+    options.agentOptions = {
+      'secureProtocol': 'TLSv1_2_method',
+      'rejectUnauthorized': false
+    }
+    options.json = true
+
+    request(options, function (error, response, body) {
+      if (error) {
+        dataAPI.addLog(network, 'Error on get application: ' + error)
+        reject(error)
+      } else {
+        dataAPI.addLog(network, response.headers)
+        dataAPI.addLog(network, body)
         resolve(body)
       }
     })
@@ -1481,35 +1531,14 @@ module.exports.pushDeviceProfile = function (sessionData, network, deviceProfile
  * @param {!boolean} generateIfMissing - No used in The Things Network
  * @returns {?SecurityData}
  */
-async function getCompanyAccount (dataAPI, network, companyId, generateIfMissing) {
-  let srd
-  let kd
-  let secData
-  try {
-    srd = await dataAPI.getProtocolDataForKey(
-      network.id,
-      network.networkProtocolId,
-      makeCompanyDataKey(companyId, 'sd'))
-
-    kd = await dataAPI.getProtocolDataForKey(
-      network.id,
-      network.networkProtocolId,
-      makeCompanyDataKey(companyId, 'kd'))
-    secData = await dataAPI.access(network, srd, kd)
-    if (!secData.appKey) {
-      dataAPI.addLog(network,
-        'Company security data is incomplete for company id ' +
-        companyId)
-      return null
-    } else {
-      return secData
-    }
-  } catch (err) {
-    dataAPI.addLog(network,
-      'Company security data is missing for company id ' +
-      companyId)
+function getCompanyAccount (dataAPI, network, companyId, generateIfMissing) {
+  let secData = network.securityData
+  if (!secData || (!secData.access_token && !secData.refresh_token)) {
+    appLogger.log('Network security data is incomplete for ' + network.name)
+    dataAPI.addLog(network, 'Network security data is incomplete for ' + network.name)
     return null
   }
+  return secData
 }
 
 /**
