@@ -17,25 +17,37 @@ module.exports = {
       oauthUrl: 'https://account.thethingsnetwork.org/users/authorize',
       protocolHandlerNetworkFields: [
         {
-          fieldName: 'clientId',
-          fieldDesc: 'Client Id',
-          fieldHelp: 'The client id chosen when registering LPWan',
-          fieldType: 'string',
-          displayWithQueryParameter: ''
+          name: 'clientId',
+          description: 'Client Id',
+          help: 'The client id chosen when registering LPWan',
+          type: 'string',
+          label: 'Client ID',
+          value: '',
+          required: true,
+          placeholder: 'TTN Client ID',
+          oauthQueryParameter: ''
         },
         {
-          fieldName: 'clientSecret',
-          fieldDesc: 'Client Secret',
-          fieldHelp: 'The client secret provided when registering LPWan',
-          fieldType: 'string',
-          displayWithQueryParameter: ''
+          name: 'clientSecret',
+          description: 'Client Secret',
+          help: 'The client secret provided when registering LPWan',
+          type: 'string',
+          label: 'Client Secret',
+          value: '',
+          required: true,
+          placeholder: 'TTN Client Secret',
+          oauthQueryParameter: ''
         },
         {
-          fieldName: 'accessCode',
-          fieldDesc: 'accessCode',
-          fieldHelp: 'The accessCode returned after authorizing LPWan with TTN',
-          fieldType: 'string',
-          displayWithQueryParameter: 'code'
+          name: 'accessCode',
+          desc: 'accessCode',
+          help: 'The accessCode returned after authorizing LPWan with TTN',
+          type: 'string',
+          label: 'Access Code',
+          value: '',
+          required: false,
+          placeholder: 'TTN Access Code',
+          oauthQueryParameter: 'code'
         }
       ]
     }

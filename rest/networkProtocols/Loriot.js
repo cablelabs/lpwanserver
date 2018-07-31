@@ -17,12 +17,15 @@ module.exports = {
       oauthUrl: '',
       protocolHandlerNetworkFields: [
         {
-          fieldName: 'apikey',
-          fieldDesc: 'API Key',
-          fieldHelp: 'The api key of the LoraOS admin account',
-          fieldType: 'string',
-          displayWithQueryParameter: ''
-        }
+          name: 'apikey',
+          description: 'API Key',
+          help: 'The api key of the LoraOS admin account',
+          type: 'string',
+          label: 'Loriot API Key',
+          value: '',
+          required: true,
+          placeholder: 'Loriot API Key',
+          oauthQueryParameter: ''        }
       ]
     }
 }
