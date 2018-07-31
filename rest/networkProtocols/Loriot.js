@@ -24,8 +24,8 @@ module.exports = {
           label: 'Loriot API Key',
           value: '',
           required: true,
-          placeholder: 'Loriot API Key',
-          oauthQueryParameter: 'e.g. BBBB-AoAM01_Yc4sUCAutgeOPz...'
+          placeholder: 'e.g. BBBB-AoAM01_Yc4sUCAutgeOPz...',
+          oauthQueryParameter: ''
         }
       ]
     }
