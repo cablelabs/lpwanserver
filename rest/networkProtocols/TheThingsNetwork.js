@@ -18,35 +18,35 @@ module.exports = {
       protocolHandlerNetworkFields: [
         {
           name: 'clientId',
-          description: 'Client Id',
-          help: 'The client id chosen when registering LPWan',
+          description: 'The client id chosen when registering LPWan',
+          help: '',
           type: 'string',
           label: 'Client ID',
           value: '',
           required: true,
-          placeholder: 'TTN Client ID',
+          placeholder: 'your-things-client-id',
           oauthQueryParameter: ''
         },
         {
           name: 'clientSecret',
-          description: 'Client Secret',
-          help: 'The client secret provided when registering LPWan',
+          description: 'The client secret provided when registering LPWan',
+          help: '',
           type: 'string',
           label: 'Client Secret',
           value: '',
           required: true,
-          placeholder: 'TTN Client Secret',
+          placeholder: 'e.g. ZDTXlylatAHYPDBOXx...',
           oauthQueryParameter: ''
         },
         {
           name: 'accessCode',
-          desc: 'accessCode',
-          help: 'The accessCode returned after authorizing LPWan with TTN',
-          type: 'string',
+          desc: 'The accessCode returned after authorizing LPWan with TTN',
+          help: '',
+          type: 'readOnly',
           label: 'Access Code',
           value: '',
           required: false,
-          placeholder: 'TTN Access Code',
+          placeholder: 'e.g. DWYDC9ALpFbKCNe...',
           oauthQueryParameter: 'code'
         }
       ]
