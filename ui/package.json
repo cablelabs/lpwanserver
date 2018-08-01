@@ -12,6 +12,7 @@
     "jwt-decode": "^2.2.0",
     "leaflet": "^1.2.0",
     "prop-types": "^15.6.0",
+    "ramda": "^0.25.0",
     "react": "^15.6.2",
     "react-bootstrap": "^0.31.5",
     "react-codemirror2": "^3.0.7",
@@ -29,5 +30,10 @@
     "build": "react-scripts build",
     "test": "react-scripts test --env=jsdom",
     "eject": "react-scripts eject"
+  },
+  "devDependencies": {
+    "eslint": "^5.2.0",
+    "eslint-plugin-babel": "^5.1.0",
+    "eslint-plugin-react": "^7.10.0"
   }
 }

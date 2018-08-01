@@ -1,20 +1,26 @@
 import React, {Component} from "react";
+import PropTypes from 'prop-types';
 import {Link, withRouter} from 'react-router-dom';
-
+import { pathOr, lensPath, lensProp, set as lensSet } from 'ramda';
 import networkStore from "../../stores/NetworkStore";
 import networkTypeStore from "../../stores/NetworkTypeStore";
 import networkProtocolStore from "../../stores/NetworkProtocolStore";
 import networkProviderStore from "../../stores/NetworkProviderStore";
-import PropTypes from 'prop-types';
+import DynamicForm from '../../components/DynamicForm';
+import { inputEventToValue, fieldSpecListToValues } from '../../utils/inputUtils';
+import { idxById } from '../../utils/objectListUtils';
 
+//******************************************************************************
+// The component
+//******************************************************************************
 
 class CreateNetwork extends Component {
   static contextTypes = {
     router: PropTypes.object.isRequired
   };
 
-  constructor() {
-    super();
+  constructor(props, ...rest) {
+    super(props, ...rest);
     this.state = {
         name: "",
         networkProviderId: 0,
@@ -26,131 +32,71 @@ class CreateNetwork extends Component {
         networkProviders: [],
     };
 
-
-    this.netsecui = {};
-    this.netSecUIComponent = null;
-
     networkTypeStore.getNetworkTypes()
-    .then( ( response ) => {
-        // Default to first type so the UI matches the default selection.
-        this.setState( { networkTypes: response,
-                         networkTypeId: response[ 0 ].id } );
-
-        // Set up the network secuity to match.
-        this.netsecui = {};
-        this.generateSecurityDataUI( true );
-        this.netSecUIComponent = null;
+    .then( response => {
+        // default to first type in the list
+        this.setState({
+            networkTypes: response,
+            networkTypeId: response[ 0 ].id
+        });
     });
     networkProtocolStore.getNetworkProtocols()
-    .then( response => this.setState(
-                    { networkProtocols: response.records,
-                      networkProtocolId: response.records[ 0 ].id} ) );
-    networkProviderStore.getNetworkProviders()
-    .then( response => this.setState(
-                    { networkProviders: response.records,
-                      networkProviderId: response.records[ 0 ].id } ) );
+    .then( ({records}) => this.setState({
+        // default to first protocol in the list
+        networkProtocols: records,
+        networkProtocolId: records[ 0 ].id,
+        securityData: fieldSpecListToValues(
+          pathOr({}, [0, 'metaData', 'protocolHandlerNetworkFields'], records))
+      })
+    );
 
+    networkProviderStore.getNetworkProviders()
+    .then( ({records}) => this.setState({
+        // default to first provider in the list
+        networkProviders: records,
+        networkProviderId: records[ 0 ].id
+      })
+    );
 
     this.onSubmit = this.onSubmit.bind(this);
     this.onChange = this.onChange.bind(this);
-    this.generateSecurityDataUI = this.generateSecurityDataUI.bind(this);
-    this.addNetSecUIComponent = this.addNetSecUIComponent.bind(this);
   }
 
   onSubmit(e) {
     e.preventDefault();
-    let securityData = {};
-    if ( this.netSecUIComponent ) {
-        securityData = this.netSecUIComponent.getSecurityData();
-    }
     networkStore.createNetwork( this.state.name,
                                 this.state.networkProviderId,
                                 this.state.networkTypeId,
                                 this.state.networkProtocolId,
                                 this.state.baseUrl,
-                                securityData )
+                                this.state.securityData )
     .then( (responseData) => {
         this.props.history.push('/admin/networks');
     });
   }
 
-  componentWillMount() {
+  onChange(path, field, e) {
 
-  }
+      const value = inputEventToValue(e);
+      let newState = this.state;
 
-  onChange(field, e) {
-      let network = this.state;
-      if ( (e.target.type === "number") || (e.target.type === "select-one") ) {
-        network[field] = parseInt(e.target.value, 10);
-      } else if (e.target.type === "checkbox") {
-        network[field] = e.target.checked;
-      } else {
-        network[field] = e.target.value;
+      if ( field === 'networkProtocolId' && value !== this.state.networkProtocolId ) {
+        newState = lensSet(
+            lensProp('securityData'),
+            fieldSpecListToValues(getCurrentProtocolFields(value, this.state.networkProtocols||[])),
+            newState);
       }
-
-      if ( field === "networkTypeId" ) {
-          this.generateSecurityDataUI( true );
-      }
-
-      this.setState( network );
-  }
-
-  addNetSecUIComponent( comp ) {
-      this.netSecUIComponent = comp;
-  }
-
-  generateSecurityDataUI( resetState ) {
-      let types = this.state.networkTypes;
-      let typeName = "default";
-      for ( var i = 0; i < types.length; ++i ) {
-          if ( this.state.networkTypeId === types[ i ].id ) {
-              typeName = types[ i ].name;
-          }
-      }
-
-      import( "../NetworkCustomizations/" + typeName + "/Network.js" )
-      .then( ( comp ) => {
-          this.netsecui = comp;
-          if ( resetState ) {
-              this.setState( {} );
-          }
-      })
-      .catch( ( err ) => {
-           console.log( "Can't find networkType securityData UI: " + err );
-           console.log( "Loading default" );
-
-           import( "../NetworkCustomizations/default/Network.js" )
-           .then( ( comp ) => {
-               this.netsecui = comp;
-               if ( resetState ) {
-                   this.setState( {} );
-               }
-           })
-           .catch( ( err ) => {
-                console.log( "Can't find networkType securityData UI", err );
-           });
-
-      });
-
+      newState = lensSet(lensPath([...path, field]), value, newState);
+      this.setState(newState);
   }
 
   render() {
-    var NetSecUI;
-    if ( this.netsecui.default ) {
-        NetSecUI = this.netsecui.default;
-    }
-    else {
-        return ( <div></div> );
-    }
 
-    let networkTypeIndex = 0;
-    if ( this.state.networkTypes ) {
-        for ( let i = 0; i < this.state.networkTypes.length; ++i ) {
-            if ( this.state.networkTypes[ i ].id === this.state.networkTypeId ) {
-                networkTypeIndex = i;
-            }
-        }
-    }
+    const { networkProtocols=[], networkProtocolId, securityData={} } = this.state;
+    const networkProtocolIndex = idxById(networkProtocolId, networkProtocols);
+    const protocolFields = getCurrentProtocolFields(networkProtocolId, networkProtocols);
+
+    console.log('this.state', this.state);
 
     return (
       <div>
@@ -173,7 +119,7 @@ class CreateNetwork extends Component {
                        placeholder="e.g. 'Kyrio LoRa'"
                        required
                        value={this.state.name || ''}
-                       onChange={this.onChange.bind(this, 'name')}/>
+                       onChange={this.onChange.bind(this, [], 'name')}/>
                 <p className="help-block">
                   The name of the remote IoT network.
                 </p>
@@ -185,7 +131,7 @@ class CreateNetwork extends Component {
                         id="networkTypeId"
                         required
                         value={this.state.networkTypeId}
-                        onChange={this.onChange.bind(this, 'networkTypeId')}>
+                        onChange={this.onChange.bind(this, [], 'networkTypeId')}>
                   {this.state.networkTypes.map( nt => <option value={nt.id} key={"typeSelector" + nt.id }>{nt.name}</option>)}
                 </select>
                 <p className="help-block">
@@ -200,8 +146,12 @@ class CreateNetwork extends Component {
                         id="networkProtocolId"
                         required
                         value={this.state.networkProtocolId}
-                        onChange={this.onChange.bind(this, 'networkProtocolId')}>
-                  {this.state.networkProtocols.map( nprot => <option value={nprot.id} key={"typeSelector" + nprot.id } disabled={nprot.networkTypeId !== this.state.networkTypeId}>{nprot.name}</option>)}
+                        onChange={this.onChange.bind(this, [], 'networkProtocolId')}>
+                  {networkProtocols.map( nprot =>
+                    <option
+                      value={nprot.id}
+                      key={"typeSelector" + nprot.id }
+                      disabled={nprot.networkTypeId !== this.state.networkTypeId}>{nprot.name}</option>)}
                 </select>
                 <p className="help-block">
                   Specifies the Network Protocol that this application will use
@@ -216,7 +166,7 @@ class CreateNetwork extends Component {
                         id="networkProviderId"
                         required
                         value={this.state.networkProviderId}
-                        onChange={this.onChange.bind(this, 'networkProviderId')}>
+                        onChange={this.onChange.bind(this, [], 'networkProviderId')}>
                   {this.state.networkProviders.map( nprov => <option value={nprov.id} key={"typeSelector" + nprov.id }>{nprov.name}</option>)}
                 </select>
                 <p className="help-block">
@@ -232,7 +182,7 @@ class CreateNetwork extends Component {
                        type="text"
                        placeholder="e.g. 'https://myapp.com:12345/delivery/'"
                        required value={this.state.baseUrl || ''}
-                       onChange={this.onChange.bind(this, 'baseUrl')}/>
+                       onChange={this.onChange.bind(this, [], 'baseUrl')}/>
                 <p className="help-block">
                   The base API address that the network protocol uses to access
                   and update data on this network.  The network protocol may
@@ -243,15 +193,16 @@ class CreateNetwork extends Component {
 
               <strong>
                   Network-specific data for this&ensp;
-                  { this.state.networkTypes[ networkTypeIndex ].name }
+                  { pathOr('', [networkProtocolIndex, 'name'], networkProtocols) }
                   &ensp;network
               </strong>
-              <NetSecUI
-                  ref={
-                      (thisComponent) => {
-                          this.addNetSecUIComponent( thisComponent ); } }
-                  securityData="{}" />
-
+              <DynamicForm
+                fieldSpecs={protocolFields}
+                fieldValues={securityData}
+                onFieldChange={this.onChange}
+                path={['securityData']}
+                key={networkProtocolIndex}
+              />
               <div className="btn-toolbar pull-right">
                 <button type="submit" className="btn btn-primary">Submit</button>
               </div>
@@ -265,3 +216,13 @@ class CreateNetwork extends Component {
 }
 
 export default withRouter(CreateNetwork);
+
+//******************************************************************************
+// Helper Functions
+//******************************************************************************
+
+function getCurrentProtocolFields(networkProtocolId=0, networkProtocols=[] ) {
+  const networkProtocolIndex = idxById(networkProtocolId, networkProtocols);
+  return pathOr([],
+    [networkProtocolIndex, 'metaData', 'protocolHandlerNetworkFields'], networkProtocols);
+}
