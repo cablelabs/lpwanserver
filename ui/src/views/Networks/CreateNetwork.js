@@ -7,7 +7,7 @@ import networkTypeStore from "../../stores/NetworkTypeStore";
 import networkProtocolStore from "../../stores/NetworkProtocolStore";
 import networkProviderStore from "../../stores/NetworkProviderStore";
 import DynamicForm from '../../components/DynamicForm';
-import { inputEventToValue, fieldListToValues } from '../../utils/inputUtils';
+import { inputEventToValue, fieldSpecListToValues } from '../../utils/inputUtils';
 import { idxById } from '../../utils/objectListUtils';
 
 //******************************************************************************
@@ -45,7 +45,7 @@ class CreateNetwork extends Component {
         // default to first protocol in the list
         networkProtocols: records,
         networkProtocolId: records[ 0 ].id,
-        securityData: fieldListToValues(
+        securityData: fieldSpecListToValues(
           pathOr({}, [0, 'metaData', 'protocolHandlerNetworkFields'], records))
       })
     );
@@ -83,15 +83,9 @@ class CreateNetwork extends Component {
       if ( field === 'networkProtocolId' && value !== this.state.networkProtocolId ) {
         newState = lensSet(
             lensProp('securityData'),
-            fieldListToValues(getCurrentProtocolFields(value, this.state.networkProtocols||[])),
+            fieldSpecListToValues(getCurrentProtocolFields(value, this.state.networkProtocols||[])),
             newState);
       }
-
-      console.log('path: ', path);
-      console.log('field: ', field);
-      console.log('value: ', value);
-      console.log('newState: ', newState);
-
       newState = lensSet(lensPath([...path, field]), value, newState);
       this.setState(newState);
   }
@@ -103,7 +97,6 @@ class CreateNetwork extends Component {
     const protocolFields = getCurrentProtocolFields(networkProtocolId, networkProtocols);
 
     console.log('this.state', this.state);
-
 
     return (
       <div>

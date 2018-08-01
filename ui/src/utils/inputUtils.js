@@ -11,8 +11,8 @@ export const inputEventToValue = e =>
 // Given a list of field specs, return an object that contains values for all
 // of the fields.  If `fieldValue` in not present on a field spec, the proprety
 // will be be created assigned an empty string (which works well for empty controlled input components)
-export const fieldListToValues = fields =>
-  fields.reduce((fieldVals, { fieldName, fieldValue })=> ({
-      ...fieldVals,
-      [fieldName]: isNil(fieldValue) ? '' : fieldValue,
+export const fieldSpecListToValues = fields =>
+  fields.reduce((fieldValsAccum, { name, value })=> ({
+      ...fieldValsAccum,
+      [name]: isNil(value) ? '' : value,
     }), {});

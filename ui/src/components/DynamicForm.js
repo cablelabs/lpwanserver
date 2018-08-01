@@ -10,12 +10,14 @@ import PT from 'prop-types';
 //******************************************************************************
 
 const fieldSpecShape = {
-  fieldName: PT.string.isRequired,
-  fieldType: PT.string.isRequired, // [string | number ] TODO: add zip/email, etc
-  fieldDesc: PT.string.isRequired, // printed as the label above the field
-  fieldHint: PT.string,            // hint text displayed in empty field
-  fieldHelp: PT.string,
-  displayWithQueryParameter: PT.string,
+  name: PT.string.isRequired,  // input field Name
+  type: PT.string.isRequired,  // HTML field input type 'string', 'number', 'checkbox', etc
+  value: PT.node,              // initial/default value
+  label: PT.string,            // Label for the input field
+  description: PT.string,      // Shown below the input field for user info
+  placehoder: PT.string,       // hint text displayed in empty field
+  required: PT.bool,           // is a value required for this input field
+  help: PT.string,             // provide more deatiled info about this field (pop up)
 };
 
 DynamicForm.propTypes = {
@@ -23,11 +25,11 @@ DynamicForm.propTypes = {
   fieldValues: PT.object.isRequired,
     // object containing props and corresponding values for the fieldNames
     // supplied in the list of field specs.
+  onFieldChange: PT.func,
+    // called on change to any field. sig: onFieldChange(path, fieldName, e)
   path: PT.arrayOf(PT.string),
     // path to supply to onFieldChange()
     // this will tell parent component where in an object the fields are being set
-  onFieldChange: PT.func,
-    // called on change to any field. sig: onFieldChange(path, fieldName, e)
 };
 
 DynamicForm.defaultValue = {
@@ -43,14 +45,11 @@ export default function DynamicForm(props) {
   const { fieldSpecs, fieldValues, path, onFieldChange } = props;
   return (
     <div>
-      { fieldSpecs.map((curField,idx) =>
+      { fieldSpecs.map((curFieldSpec,idx) =>
         <FieldInput
-          {...fieldSpecToInputProps(curField)}
-          value={fieldValues[curField.fieldName]}
-          onChange={e=>onFieldChange(path, curField.fieldName, e)}
-          label={curField.fieldDesc || ''}
-          placeholder='someplace'
-          help='for help, see a doctor'
+          {...curFieldSpec}
+          value={fieldValues[curFieldSpec.name]}
+          onChange={e=>onFieldChange(path, curFieldSpec.name, e)}
           key={idx}
         />
       )}
@@ -79,28 +78,16 @@ FieldInput.defaultProps = {
 };
 
 function FieldInput(props) {
-
-  const { label, type, value, placeholder, help, onChange, required } = props;
+  const { label, type, name, value, placeholder, description, onChange, required } = props;
   return (
     <div className="form-group">
       <label className="control-label" htmlFor="name">{label}</label>
       <input className="form-control"
-        {...{ type, value, placeholder, onChange, required }}
+        {...{ type, name, value, placeholder, onChange, required }}
       />
       <p className="help-block">
-        {help}
+        {description}
       </p>
     </div>
   );
-}
-
-//******************************************************************************
-// Helper fxns
-//******************************************************************************
-
-function fieldSpecToInputProps(field) {
-  return({
-    type: field.fieldType,
-    onChange: field.onChange,
-  });
 }
