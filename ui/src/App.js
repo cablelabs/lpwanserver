@@ -28,6 +28,10 @@ import CreateNetworkProtocol from "./views/NetworkProtocols/CreateNetworkProtoco
 import ListNetworks from "./views/Networks/ListNetworks";
 import NetworkLayout from "./views/Networks/NetworkLayout";
 import CreateNetwork from "./views/Networks/CreateNetwork";
+//STEVE:>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+// Also, see below where OAuthNetwork is used (did not like comments there)
+import OAuthNetwork from "./views/Networks/OAuthNetwork";
+//<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 import ListReportingProtocols from "./views/ReportingProtocols/ListReportingProtocols";
 import ReportingProtocolLayout from "./views/ReportingProtocols/ReportingProtocolLayout";
 import CreateReportingProtocol from "./views/ReportingProtocols/CreateReportingProtocol";
@@ -84,6 +88,7 @@ class Layout extends Component {
             <Route exact path="/admin/network/:networkID" component={NetworkLayout}/>
             <Route exact path="/admin/networks" component={ListNetworks}/>
             <Route exact path="/admin/network" component={CreateNetwork}/>
+            <Route exact path="/admin/networks/oauth" component={OAuthNetwork}/>
             <Route exact path="/admin/pull/:networkID" component={PullNetworks}/>
             <Route exact path="/admin/reportingProtocol/:reportingProtocolID" component={ReportingProtocolLayout}/>
             <Route exact path="/admin/reportingProtocols" component={ListReportingProtocols}/>

@@ -39,6 +39,15 @@ class SessionStore extends EventEmitter {
         return this.settings[key];
     }
 
+//STEVE:>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    putSetting(key, value) {
+        this.settings[key] = value;
+    }
+
+    removeSetting(key) {
+        delete this.settings[key];
+    }
+//<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     isAdmin() {
         return (this.getUser().role === "admin") || this.isGlobalAdmin();
     }
