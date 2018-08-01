@@ -71,6 +71,7 @@ class CreateNetwork extends Component {
                                 this.state.baseUrl,
                                 this.state.securityData )
     .then( (responseData) => {
+        console.log('CreateNetwork(): onSubmit ()responseData: ', responseData);
         this.props.history.push('/admin/networks');
     });
   }
@@ -94,9 +95,11 @@ class CreateNetwork extends Component {
 
     const { networkProtocols=[], networkProtocolId, securityData={} } = this.state;
     const networkProtocolIndex = idxById(networkProtocolId, networkProtocols);
+    const oauthUrl = pathOr('', [networkProtocolIndex, 'metaData', 'oauthUrl'], networkProtocols);
     const protocolFields = getCurrentProtocolFields(networkProtocolId, networkProtocols);
 
     console.log('this.state', this.state);
+    console.log('oauthUrl: ', oauthUrl);
 
     return (
       <div>
@@ -190,19 +193,39 @@ class CreateNetwork extends Component {
                   services as defined by the protocol.
                 </p>
               </div>
+              { oauthUrl &&
+                <div className="form-section-margin-top">
+                  <strong>
+                      Sign into your &ensp;
+                      { pathOr('', [networkProtocolIndex, 'name'], networkProtocols) }
+                      &ensp;account
+                  </strong>
+                  <br />
+                  <button
+                    type="button"
+                    className="btn btn-default btn-sm"
+                  >
+                    Authorize
+                </button>
+                </div>
+              }
 
-              <strong>
-                  Network-specific data for this&ensp;
-                  { pathOr('', [networkProtocolIndex, 'name'], networkProtocols) }
-                  &ensp;network
-              </strong>
-              <DynamicForm
-                fieldSpecs={protocolFields}
-                fieldValues={securityData}
-                onFieldChange={this.onChange}
-                path={['securityData']}
-                key={networkProtocolIndex}
-              />
+              { protocolFields &&
+                <div className="form-section-margin-top">
+                  <strong>
+                      Network-specific data for this&ensp;
+                      { pathOr('', [networkProtocolIndex, 'name'], networkProtocols) }
+                      &ensp;network
+                  </strong>
+                  <DynamicForm
+                    fieldSpecs={protocolFields}
+                    fieldValues={securityData}
+                    onFieldChange={this.onChange}
+                    path={['securityData']}
+                    key={networkProtocolIndex}
+                  />
+                </div>
+              }
               <div className="btn-toolbar pull-right">
                 <button type="submit" className="btn btn-primary">Submit</button>
               </div>
