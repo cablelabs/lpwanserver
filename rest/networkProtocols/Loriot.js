@@ -328,6 +328,41 @@ module.exports.addApplication = function (sessionData, network, applicationId, d
 }
 
 /**
+ * Get all applications aligned with LPWan
+ * @param sessionData
+ * @param network
+ * @param dataAPI
+ * @returns {Promise<any>}
+ */
+module.exports.getApplications = function (sessionData, network, dataAPI) {
+  return new Promise(async function (resolve, reject) {
+    let options = {}
+    options.method = 'GET'
+    options.url = network.baseUrl + '/1/nwk/apps'
+    options.headers = {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + sessionData.connection
+    }
+    options.agentOptions = {
+      'secureProtocol': 'TLSv1_2_method',
+      'rejectUnauthorized': false
+    }
+    options.json = true
+
+    request(options, function (error, response, body) {
+      if (error) {
+        dataAPI.addLog(network, 'Error on get application: ' + error)
+        reject(error)
+      } else {
+        dataAPI.addLog(network, response.headers)
+        dataAPI.addLog(network, body)
+        resolve(body)
+      }
+    })
+  })
+}
+
+/**
  * @desc get an application from the Loriot network
  *
  * @param sessionData - The session information for the user, including the connection
@@ -346,7 +381,7 @@ module.exports.getApplication = function (sessionData, network, applicationId, d
     // Set up the request options.
     let options = {}
     options.method = 'GET'
-    options.url = network.baseUrl + '/applications/' + appNetworkId
+    options.url = network.baseUrl + '/1/nwk/app/' + appNetworkId
     options.headers = {
       'Content-Type': 'application/json',
       'Authorization': 'Bearer ' + sessionData.connection
