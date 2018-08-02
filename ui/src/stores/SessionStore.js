@@ -1,8 +1,8 @@
 import { EventEmitter } from "events";
 import { checkStatus } from "./helpers";
 import dispatcher from "../dispatcher";
-import userStore from "./UserStore"
-import companyStore from "./CompanyStore"
+import userStore from "./UserStore";
+import companyStore from "./CompanyStore";
 
 let rest_url = process.env.REACT_APP_REST_SERVER_URL;
 
@@ -82,10 +82,10 @@ class SessionStore extends EventEmitter {
                 "Authorization": "Bearer " + token,
                 'Accept': 'application/json',
                 'Content-Type': 'application/json',
-            }
+            };
         }
         else {
-            return {}
+            return {};
         }
     }
 

@@ -9,6 +9,7 @@ import networkProviderStore from "../../stores/NetworkProviderStore";
 import DynamicForm from '../../components/DynamicForm';
 import { inputEventToValue, fieldSpecListToValues } from '../../utils/inputUtils';
 import { idxById } from '../../utils/objectListUtils';
+import { navigateToExernalUrl } from '../../utils/navUtils';
 
 //******************************************************************************
 // The component
@@ -40,6 +41,7 @@ class CreateNetwork extends Component {
             networkTypeId: response[ 0 ].id
         });
     });
+    
     networkProtocolStore.getNetworkProtocols()
     .then( ({records}) => this.setState({
         // default to first protocol in the list
@@ -95,11 +97,11 @@ class CreateNetwork extends Component {
 
     const { networkProtocols=[], networkProtocolId, securityData={} } = this.state;
     const networkProtocolIndex = idxById(networkProtocolId, networkProtocols);
-    const oauthUrl = pathOr('', [networkProtocolIndex, 'metaData', 'oauthUrl'], networkProtocols);
     const protocolFields = getCurrentProtocolFields(networkProtocolId, networkProtocols);
 
-    console.log('this.state', this.state);
-    console.log('oauthUrl: ', oauthUrl);
+    const oauthUrl = pathOr('', [networkProtocolIndex, 'metaData', 'oauthUrl'], networkProtocols);
+    const thisServer = process.env.REACT_APP_PUBLIC_BASE_URL;
+    const oauthRedirect =  makeOauthRedirectUrl(thisServer, securityData, oauthUrl);
 
     return (
       <div>
@@ -196,20 +198,19 @@ class CreateNetwork extends Component {
               { oauthUrl &&
                 <div className="form-section-margin-top">
                   <strong>
-                      Sign into your &ensp;
-                      { pathOr('', [networkProtocolIndex, 'name'], networkProtocols) }
-                      &ensp;account
+                      Sign into your account for { pathOr('', [networkProtocolIndex, 'name'], networkProtocols) }
                   </strong>
                   <br />
-                  <button
-                    type="button"
-                    className="btn btn-default btn-sm"
-                  >
-                    Authorize
-                </button>
+                  <div className={`btn-group`}>
+                      <button
+                        type="button"
+                        className="btn btn-default btn-sm"
+                        onClick={()=>navigateToExernalUrl(oauthRedirect)}
+                        >
+                        Authorize</button>
+                  </div>
                 </div>
               }
-
               { protocolFields &&
                 <div className="form-section-margin-top">
                   <strong>
@@ -248,4 +249,23 @@ function getCurrentProtocolFields(networkProtocolId=0, networkProtocols=[] ) {
   const networkProtocolIndex = idxById(networkProtocolId, networkProtocols);
   return pathOr([],
     [networkProtocolIndex, 'metaData', 'protocolHandlerNetworkFields'], networkProtocols);
+}
+
+function makeOauthRedirectUrl(thisServer, securityData, oauthUrl) {
+
+  // TODO: get this from proto metadata eventually
+  const queryParams = [
+    { name: 'client_id', value: securityData.clientId },
+    { name: 'response_type', value: 'code' },
+  ];
+
+  // TODO: make returnPath config param?
+  const returnPath = 'admin/networks/oauth';
+  const redirectParam = { name: 'redirect_uri', value: `${thisServer}/${returnPath}` };
+  return ([...queryParams, redirectParam]).reduce((urlAccum, curParam, i) =>
+    `${urlAccum}${i>0 ? '&':'?'}${curParam.name}=${curParam.value}`,`${oauthUrl}`);
+
+  // NOTE: for error stuff
+  // ?error=invalid_request&error_description=Wrong%20RedirectUri%20provided"
+
 }
