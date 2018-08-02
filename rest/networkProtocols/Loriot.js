@@ -1566,7 +1566,7 @@ function getDeviceById (network, deviceId, connection, dataAPI) {
     options.method = 'GET'
     options.url = network.baseUrl + '/devices/' + deviceId
     options.headers = {
-      'Content-Type': 'applicati&& !secData.refresh_tokenon/json',
+      'Content-Type': 'application/json',
       'Authorization': 'Bearer ' + connection
     }
     options.agentOptions = {
