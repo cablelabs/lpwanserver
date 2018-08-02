@@ -54,17 +54,7 @@ module.exports.register = function (networkProtocols) {
  * @returns {Promise<*>} - security data
  */
 module.exports.getCompanyAccessAccount = async function (dataAPI, network) {
-  let secData = network.securityData
-  appLogger.log(secData)
-  if (!secData || !secData.apiKey) {
-    appLogger.log('Network security data is incomplete for ' + network.name)
-    dataAPI.addLog(network, 'Network security data is incomplete for ' + network.name)
-    return null
-  }
-  return {
-    apiKey: secData.apiKey,
-    admin: true
-  }
+  return getCompanyAccount(dataAPI, network, 1, false)
 }
 
 /**
@@ -338,6 +328,41 @@ module.exports.addApplication = function (sessionData, network, applicationId, d
 }
 
 /**
+ * Get all applications aligned with LPWan
+ * @param sessionData
+ * @param network
+ * @param dataAPI
+ * @returns {Promise<any>}
+ */
+module.exports.getApplications = function (sessionData, network, dataAPI) {
+  return new Promise(async function (resolve, reject) {
+    let options = {}
+    options.method = 'GET'
+    options.url = network.baseUrl + '/1/nwk/apps'
+    options.headers = {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + sessionData.connection
+    }
+    options.agentOptions = {
+      'secureProtocol': 'TLSv1_2_method',
+      'rejectUnauthorized': false
+    }
+    options.json = true
+
+    request(options, function (error, response, body) {
+      if (error) {
+        dataAPI.addLog(network, 'Error on get application: ' + error)
+        reject(error)
+      } else {
+        dataAPI.addLog(network, response.headers)
+        dataAPI.addLog(network, body)
+        resolve(body)
+      }
+    })
+  })
+}
+
+/**
  * @desc get an application from the Loriot network
  *
  * @param sessionData - The session information for the user, including the connection
@@ -356,7 +381,7 @@ module.exports.getApplication = function (sessionData, network, applicationId, d
     // Set up the request options.
     let options = {}
     options.method = 'GET'
-    options.url = network.baseUrl + '/applications/' + appNetworkId
+    options.url = network.baseUrl + '/1/nwk/app/' + appNetworkId
     options.headers = {
       'Content-Type': 'application/json',
       'Authorization': 'Bearer ' + sessionData.connection
@@ -1472,34 +1497,13 @@ module.exports.pushDeviceProfile = function (sessionData, network, deviceProfile
  * @returns {?SecurityData}
  */
 async function getCompanyAccount (dataAPI, network, companyId, generateIfMissing) {
-  let srd
-  let kd
-  let secData
-  try {
-    srd = await dataAPI.getProtocolDataForKey(
-      network.id,
-      network.networkProtocolId,
-      makeCompanyDataKey(companyId, 'sd'))
-
-    kd = await dataAPI.getProtocolDataForKey(
-      network.id,
-      network.networkProtocolId,
-      makeCompanyDataKey(companyId, 'kd'))
-    secData = await dataAPI.access(network, srd, kd)
-    if (!secData.appKey) {
-      dataAPI.addLog(network,
-        'Company security data is incomplete for company id ' +
-        companyId)
-      return null
-    } else {
-      return secData
-    }
-  } catch (err) {
-    dataAPI.addLog(network,
-      'Company security data is missing for company id ' +
-      companyId)
+  let secData = network.securityData
+  if (!secData || !secData.apiKey ){
+    appLogger.log('Network security data is incomplete for ' + network.name)
+    dataAPI.addLog(network, 'Network security data is incomplete for ' + network.name)
     return null
   }
+  return secData
 }
 
 /**

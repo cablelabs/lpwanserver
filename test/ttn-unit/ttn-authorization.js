@@ -8,11 +8,12 @@ var testNetwork = {}
 var nconf = require('nconf')
 var loginData = {}
 var mockDataAPI = require('./mock-data-api')
+var session = {}
 
 describe('TTN Unit Tests for Authorization', () => {
   before('Create Network Protocol', async () => {
     nconf.argv().env()
-    nconf.file({ file: 'config.hjson.unit', format: require('hjson') })
+    nconf.file({ file: 'config.hjson.ttn-unit', format: require('hjson') })
     mockServer = new MockServer()
     loginData = {
       token_type: 'bearer',
@@ -41,12 +42,11 @@ describe('TTN Unit Tests for Authorization', () => {
     let ttnProtocol = await mockServer.networkProtocols.retrieveNetworkProtocol(1)
     let ttn = require('../../rest/networkProtocols/' + ttnProtocol.protocolHandler)
     let token = await ttn.connect(testNetwork, loginData)
-    console.log(token)
+    session = {connection: token}
   })
   it('Get Applications', async () => {
     let ttnProtocol = await mockServer.networkProtocols.retrieveNetworkProtocol(1)
     let ttn = require('../../rest/networkProtocols/' + ttnProtocol.protocolHandler)
-    let session = {connection: loginData.access_token}
     let app = await ttn.getApplications(session, testNetwork, mockDataAPI)
     app.length.should.equal(2)
   })
