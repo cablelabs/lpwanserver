@@ -54,17 +54,7 @@ module.exports.register = function (networkProtocols) {
  * @returns {Promise<*>} - security data
  */
 module.exports.getCompanyAccessAccount = async function (dataAPI, network) {
-  let secData = network.securityData
-  appLogger.log(secData)
-  if (!secData || !secData.apiKey) {
-    appLogger.log('Network security data is incomplete for ' + network.name)
-    dataAPI.addLog(network, 'Network security data is incomplete for ' + network.name)
-    return null
-  }
-  return {
-    apiKey: secData.apiKey,
-    admin: true
-  }
+  return getCompanyAccount(dataAPI, network, 1, false)
 }
 
 /**
@@ -1472,34 +1462,13 @@ module.exports.pushDeviceProfile = function (sessionData, network, deviceProfile
  * @returns {?SecurityData}
  */
 async function getCompanyAccount (dataAPI, network, companyId, generateIfMissing) {
-  let srd
-  let kd
-  let secData
-  try {
-    srd = await dataAPI.getProtocolDataForKey(
-      network.id,
-      network.networkProtocolId,
-      makeCompanyDataKey(companyId, 'sd'))
-
-    kd = await dataAPI.getProtocolDataForKey(
-      network.id,
-      network.networkProtocolId,
-      makeCompanyDataKey(companyId, 'kd'))
-    secData = await dataAPI.access(network, srd, kd)
-    if (!secData.appKey) {
-      dataAPI.addLog(network,
-        'Company security data is incomplete for company id ' +
-        companyId)
-      return null
-    } else {
-      return secData
-    }
-  } catch (err) {
-    dataAPI.addLog(network,
-      'Company security data is missing for company id ' +
-      companyId)
+  let secData = network.securityData
+  if (!secData || !secData.apiKey ){
+    appLogger.log('Network security data is incomplete for ' + network.name)
+    dataAPI.addLog(network, 'Network security data is incomplete for ' + network.name)
     return null
   }
+  return secData
 }
 
 /**
@@ -1562,7 +1531,7 @@ function getDeviceById (network, deviceId, connection, dataAPI) {
     options.method = 'GET'
     options.url = network.baseUrl + '/devices/' + deviceId
     options.headers = {
-      'Content-Type': 'application/json',
+      'Content-Type': 'applicati&& !secData.refresh_tokenon/json',
       'Authorization': 'Bearer ' + connection
     }
     options.agentOptions = {
