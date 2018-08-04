@@ -108,7 +108,6 @@ class NetworkStore extends EventEmitter {
     updateNetwork( updatedRec ) {
         return new Promise( function( resolve, reject ) {
             let header = sessionStore.getHeader();
-    console.log( "NetworkStore: updatedRec:", updatedRec );
             fetch(rest_url + "/api/networks/" + updatedRec.id,
                 {
                     method: "PUT",

@@ -7,9 +7,10 @@ import networkTypeStore from "../../stores/NetworkTypeStore";
 import networkProtocolStore from "../../stores/NetworkProtocolStore";
 import networkProviderStore from "../../stores/NetworkProviderStore";
 import DynamicForm from '../../components/DynamicForm';
-import { inputEventToValue, fieldSpecListToValues } from '../../utils/inputUtils';
+import { inputEventToValue, fieldSpecsToValues } from '../../utils/inputUtils';
 import { idxById } from '../../utils/objectListUtils';
 import { navigateToExernalUrl } from '../../utils/navUtils';
+import sessionStore from "../../stores/SessionStore";
 
 //******************************************************************************
 // The component
@@ -41,13 +42,13 @@ class CreateNetwork extends Component {
             networkTypeId: response[ 0 ].id
         });
     });
-    
+
     networkProtocolStore.getNetworkProtocols()
     .then( ({records}) => this.setState({
         // default to first protocol in the list
         networkProtocols: records,
         networkProtocolId: records[ 0 ].id,
-        securityData: fieldSpecListToValues(
+        securityData: fieldSpecsToValues(
           pathOr({}, [0, 'metaData', 'protocolHandlerNetworkFields'], records))
       })
     );
@@ -65,6 +66,8 @@ class CreateNetwork extends Component {
   }
 
   onSubmit(e) {
+    const { networkProtocols=[], networkProtocolId, securityData={} } = this.state;
+
     e.preventDefault();
     networkStore.createNetwork( this.state.name,
                                 this.state.networkProviderId,
@@ -72,36 +75,46 @@ class CreateNetwork extends Component {
                                 this.state.networkProtocolId,
                                 this.state.baseUrl,
                                 this.state.securityData )
-    .then( (responseData) => {
-        console.log('CreateNetwork(): onSubmit ()responseData: ', responseData);
+    .then( newNetworkId => {
+      const networkProtocolIndex = idxById(networkProtocolId, networkProtocols);
+      const oauthUrl = pathOr('', [networkProtocolIndex, 'metaData', 'oauthUrl'], networkProtocols);
+      if ( oauthUrl) {
+        const thisServer = process.env.REACT_APP_PUBLIC_BASE_URL;
+        const oauthRedirect =  makeOauthRedirectUrl(thisServer, securityData, oauthUrl);
+        sessionStore.putSetting('oauthNetworkTarget', newNetworkId);
+        sessionStore.putSetting('oauthStartTime', Date.now());
+        navigateToExernalUrl(oauthRedirect);
+        // this.props.history.push('/admin/networks');
+      }
+      else {
         this.props.history.push('/admin/networks');
+      }
     });
   }
 
   onChange(path, field, e) {
-
+      const { networkProtocols=[], networkProtocolId } = this.state;
       const value = inputEventToValue(e);
       let newState = this.state;
 
-      if ( field === 'networkProtocolId' && value !== this.state.networkProtocolId ) {
-        newState = lensSet(
-            lensProp('securityData'),
-            fieldSpecListToValues(getCurrentProtocolFields(value, this.state.networkProtocols||[])),
-            newState);
+      if ( field === 'networkProtocolId' && value !== networkProtocolId ) {
+        const securityDataLens = lensProp('securityData');
+        const securityValues = fieldSpecsToValues(currentProtocolFields(value, networkProtocols));
+        newState = lensSet(securityDataLens, securityValues, newState);
       }
-      newState = lensSet(lensPath([...path, field]), value, newState);
+
+      const fieldLens = lensPath([...path, field]);
+      newState = lensSet(fieldLens, value, newState);
       this.setState(newState);
   }
 
   render() {
 
+    // console.log('this.state', this.state);
+
     const { networkProtocols=[], networkProtocolId, securityData={} } = this.state;
     const networkProtocolIndex = idxById(networkProtocolId, networkProtocols);
-    const protocolFields = getCurrentProtocolFields(networkProtocolId, networkProtocols);
-
-    const oauthUrl = pathOr('', [networkProtocolIndex, 'metaData', 'oauthUrl'], networkProtocols);
-    const thisServer = process.env.REACT_APP_PUBLIC_BASE_URL;
-    const oauthRedirect =  makeOauthRedirectUrl(thisServer, securityData, oauthUrl);
+    const protocolFields = currentProtocolFields(networkProtocolId, networkProtocols);
 
     return (
       <div>
@@ -195,28 +208,11 @@ class CreateNetwork extends Component {
                   services as defined by the protocol.
                 </p>
               </div>
-              { oauthUrl &&
-                <div className="form-section-margin-top">
-                  <strong>
-                      Sign into your account for { pathOr('', [networkProtocolIndex, 'name'], networkProtocols) }
-                  </strong>
-                  <br />
-                  <div className={`btn-group`}>
-                      <button
-                        type="button"
-                        className="btn btn-default btn-sm"
-                        onClick={()=>navigateToExernalUrl(oauthRedirect)}
-                        >
-                        Authorize</button>
-                  </div>
-                </div>
-              }
               { protocolFields &&
                 <div className="form-section-margin-top">
                   <strong>
-                      Network-specific data for this&ensp;
-                      { pathOr('', [networkProtocolIndex, 'name'], networkProtocols) }
-                      &ensp;network
+                      { `${pathOr('', [networkProtocolIndex, 'name'], networkProtocols)} ` }
+                      network specific data
                   </strong>
                   <DynamicForm
                     fieldSpecs={protocolFields}
@@ -245,7 +241,7 @@ export default withRouter(CreateNetwork);
 // Helper Functions
 //******************************************************************************
 
-function getCurrentProtocolFields(networkProtocolId=0, networkProtocols=[] ) {
+function currentProtocolFields(networkProtocolId=0, networkProtocols=[] ) {
   const networkProtocolIndex = idxById(networkProtocolId, networkProtocols);
   return pathOr([],
     [networkProtocolIndex, 'metaData', 'protocolHandlerNetworkFields'], networkProtocols);

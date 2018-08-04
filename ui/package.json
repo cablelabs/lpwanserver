@@ -12,6 +12,7 @@
     "jwt-decode": "^2.2.0",
     "leaflet": "^1.2.0",
     "prop-types": "^15.6.0",
+    "query-string": "^6.1.0",
     "ramda": "^0.25.0",
     "react": "^15.6.2",
     "react-bootstrap": "^0.31.5",

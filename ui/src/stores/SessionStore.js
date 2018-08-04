@@ -3,6 +3,7 @@ import { checkStatus } from "./helpers";
 import dispatcher from "../dispatcher";
 import userStore from "./UserStore";
 import companyStore from "./CompanyStore";
+import { dissocPath, lensPath, set as lensSet } from 'ramda';
 
 let rest_url = process.env.REACT_APP_REST_SERVER_URL;
 
@@ -39,15 +40,21 @@ class SessionStore extends EventEmitter {
         return this.settings[key];
     }
 
-//STEVE:>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     putSetting(key, value) {
-        this.settings[key] = value;
+      const user = JSON.parse( sessionStorage.getItem( "user" ));
+      const lens = lensPath(["settings", key]);
+      sessionStorage.setItem( "user",
+        JSON.stringify(lensSet(lens, value, user)));
+
     }
 
     removeSetting(key) {
-        delete this.settings[key];
+      const user = JSON.parse( sessionStorage.getItem( "user" ));
+      sessionStorage.setItem( "user",
+        JSON.stringify( dissocPath(["settings", key], user )));
+
     }
-//<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
     isAdmin() {
         return (this.getUser().role === "admin") || this.isGlobalAdmin();
     }
