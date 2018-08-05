@@ -1,8 +1,9 @@
 import React, { Component } from 'react';
 import { withRouter } from 'react-router-dom';
-import { pathOr } from 'ramda';
+import { pathOr, propOr } from 'ramda';
 import qs from 'query-string';
 import networkStore from '../../stores/NetworkStore';
+import networkProtocolStore from '../../stores/NetworkProtocolStore';
 import sessionStore from '../../stores/SessionStore';
 import PropTypes from 'prop-types';
 
@@ -60,18 +61,39 @@ class OAuthNetwork extends Component {
     else {
 
       console.log('Looks like TTN OAuth worked');
-      networkStore.updateNetwork({
-        id: targetNetworkId,
-        securityData : { accessCode: queryParams.code }})
-      .then( res => {
-          console.log('Network updated with OAuth credentials');
-          console.log('Network update result: ', res);
+      let network = null;
+      networkStore.getNetwork(targetNetworkId)
+      .then( nw => {
+        network = nw;
+        return networkProtocolStore.getNetworkProtocol(network.networkProtocolId);
       })
-      .catch((err) => {
-          console.log('Network ' + targetNetworkId + ' update failed for adding OAuth credentials: ' + err);
+      .then( networkProtocol => {
+        console.log('networkProtocol: ', networkProtocol);
+        console.log('network: ', network);
+        // NOTE: currently the medaData fields are not returned by GET networkProcools/:id
+        // A bug has been created for that
+      })
+      .catch( err => {
+          const networkName = propOr('', 'name', network);
+          console.warn(`Unable to add Oauth credentials for ${networkName}: ${err}`);
+          props.history.push('/admin/networks');
+
       });
 
-      //     props.history.push('/admin/networks');
+
+
+      // networkStore.updateNetwork({
+      //   id: targetNetworkId,
+      //   securityData : { accessCode: queryParams.code }})
+      // .then( res => {
+      //     console.log('Network updated with OAuth credentials');
+      // })
+      // .catch((err) => {
+      //     console.log('Network ' + targetNetworkId + ' update failed for adding OAuth credentials: ' + err);
+      // });
+
+      // commented out for now for easier debugging
+      // props.history.push('/admin/networks');
     }
 
 
@@ -167,5 +189,7 @@ class OAuthNetwork extends Component {
       return (<div>OAuthNetwork: You should never see this</div>);
   }
 }
+
+
 
 export default withRouter(OAuthNetwork);
