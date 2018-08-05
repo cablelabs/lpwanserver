@@ -55,7 +55,7 @@
     // Found in the subdirectory of rest/models/dao
     /////////////////////////////////////////////////////////////
     // The directory to grab the DAO implementations from
-    impl_directory: ../../../test/unit
+    impl_directory: ../../../test/ttn-unit
 
     //////////////////////////////////////////////////////////
     // Database settings

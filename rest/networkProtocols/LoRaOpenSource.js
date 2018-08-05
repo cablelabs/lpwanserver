@@ -20,18 +20,26 @@ module.exports.metaData =
     oauthUrl: '',
     protocolHandlerNetworkFields: [
       {
-        fieldName: 'username',
-        fieldDesc: 'Username',
-        fieldHelp: 'The username of the LoraOS admin account',
-        fieldType: 'string',
-        displayWithQueryParameter: ''
+        name: 'username',
+        description: 'The username of the LoraOS admin account',
+        help: '',
+        type: 'string',
+        label: 'Username',
+        value: '',
+        required: true,
+        placeholder: 'myLoraUsername',
+        oauthQueryParameter: ''
       },
       {
-        fieldName: 'password',
-        fieldDesc: 'Password',
-        fieldHelp: 'The password of he LoraOS admin account',
-        fieldType: 'password',
-        displayWithQueryParameter: ''
+        name: 'password',
+        description: 'The password of he LoraOS admin account',
+        help: '',
+        type: 'password',
+        label: 'Password',
+        value: '',
+        required: true,
+        placeholder: 'myLoraPassword',
+        oauthQueryParameter: ''
       }
     ]
   }

@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node ./bin/rest",
     "mocha": "export NODE_ENV=local;mocah",
-    "unit": "export NODE_ENV=unit;mocha test/unit",
+    "ttn-test": "export NODE_ENV=ttn-unit;mocha test/ttn-unit",
+    "loriot-test": "export NODE_ENV=loriot-unit;mocha test/loriot-unit",
     "test": "./test.sh",
     "silent": "npm start > output.txt 2> error.txt",
     "localcert": "export NODE_ENV=localcert;npm start",
