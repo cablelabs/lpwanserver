@@ -68,6 +68,7 @@ Network.prototype.createNetwork = function (name, networkProviderId, networkType
       let dataAPI = new NetworkProtocolDataAccess(modelAPI, 'INetwork Create')
       let k = dataAPI.genKey()
       if (securityData) {
+        securityData.authorized = false
         securityData = dataAPI.hide(null, securityData, k)
       }
       let ret = await me.impl.createNetwork(name,
