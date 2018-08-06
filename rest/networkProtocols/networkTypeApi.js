@@ -20,7 +20,7 @@ var protos;
 //******************************************************************************
 function NetworkTypeApi( dataModel  ) {
     modelAPI = dataModel;
-    protos = new NetworkProtocols( dataModel.networkProtocols );
+    protos = new NetworkProtocols( dataModel );
     protos.register()
 }
 
