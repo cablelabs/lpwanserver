@@ -96,7 +96,8 @@ exports.initialize = function (app, server) {
     function (req, res, next) {
       var id = req.params.id
       modelAPI.networkProtocols.retrieveNetworkProtocol(parseInt(req.params.id)).then(function (np) {
-        restServer.respondJson(res, null, np)
+        // restServer.respondJson(res, null, np)
+        restServer.respond(res, 200, np)
       })
         .catch(function (err) {
           appLogger.log('Error getting networkProtocol ' + req.params.id + ': ' + err)
