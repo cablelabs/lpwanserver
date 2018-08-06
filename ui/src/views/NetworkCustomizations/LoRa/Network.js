@@ -10,7 +10,6 @@ import React, {Component} from 'react';
 class LoRaNetworkSettings extends Component {
     constructor( props ) {
         super( props );
-console.log( "LoRa security data entry", props.securityData );
         this.state = {
             securityData: props.securityData
         };

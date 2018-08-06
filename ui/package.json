@@ -14,6 +14,7 @@
     "prop-types": "^15.6.0",
     "query-string": "^6.1.0",
     "ramda": "^0.25.0",
+    "ramda-adjunct": "^2.9.0",
     "react": "^15.6.2",
     "react-bootstrap": "^0.31.5",
     "react-codemirror2": "^3.0.7",

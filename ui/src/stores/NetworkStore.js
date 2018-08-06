@@ -38,7 +38,7 @@ class NetworkStore extends EventEmitter {
                     resolve({ totalCount: 0, records: [] });
                 }
                 else {
-                    console.log(responseData);
+                    // console.log(responseData);
                     resolve(responseData);
                 }
             })

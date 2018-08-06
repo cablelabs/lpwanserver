@@ -32,7 +32,7 @@ class ErrorStore extends EventEmitter {
 
     for(var error of this.errors) {
       if(error.id === id) {
-        err = error
+        err = error;
       }
     }
 
