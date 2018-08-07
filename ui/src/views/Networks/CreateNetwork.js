@@ -39,7 +39,7 @@ class CreateNetwork extends Component {
         // default to first type in the list
         this.setState({
             networkTypes: response,
-            networkTypeId: response[ 0 ].id
+            networkTypeId: pathOr(0, [0, 'id'], response),
         });
     });
 
@@ -47,7 +47,7 @@ class CreateNetwork extends Component {
     .then( ({records}) => this.setState({
         // default to first protocol in the list
         networkProtocols: records,
-        networkProtocolId: records[ 0 ].id,
+        networkProtocolId: pathOr(0, [0, 'id'], records),
         securityData: fieldSpecsToValues(
           pathOr({}, [0, 'metaData', 'protocolHandlerNetworkFields'], records))
       })
@@ -57,7 +57,7 @@ class CreateNetwork extends Component {
     .then( ({records}) => this.setState({
         // default to first provider in the list
         networkProviders: records,
-        networkProviderId: records[ 0 ].id
+        networkProviderId: pathOr(0, [0, 'id'], records),
       })
     );
 
