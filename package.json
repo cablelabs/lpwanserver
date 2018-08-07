@@ -13,7 +13,8 @@
     "localcert": "export NODE_ENV=localcert;npm start",
     "local": "export NODE_ENV=local;npm start",
     "lint": "eslint rest/",
-    "doc": "jsdoc -r ./rest -d ./docs"
+    "doc": "jsdoc -r ./rest -d ./docs",
+    "mac": "export NODE_ENV=mac;npm start"
   },
   "dependencies": {
     "async": "~2.0.1",

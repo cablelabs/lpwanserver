@@ -15,13 +15,14 @@ const fs = require('fs')
 var networkProtocolMap
 
 // Constructor - gets the database API for the networkProtocols
-function NetworkProtocolAccess(networkProtocolAPI) {
-  this.npAPI = networkProtocolAPI
+function NetworkProtocolAccess (dataModel) {
+  this.npAPI = dataModel.networkProtocols
+  this.modelAPI = dataModel
   clearProtocolMap()
 }
 
 // Resets the entire protocol map.
-function clearProtocolMap() {
+function clearProtocolMap () {
   networkProtocolMap = {}
 }
 
@@ -142,6 +143,8 @@ NetworkProtocolAccess.prototype.sessionWrapper = function (network, loginData, p
         // Wait, we don't have a session.  Just log in.
         appLogger.log('No session for login, connecting...')
         await me.connect(network, loginData)
+        network.securityData.authorized = true
+        this.modelAPI.network.updateNetwork(network)
       }
       // Use the session we have (now?) and run the operation.
       var id = await protocolFunc(proto, proto.sessionData[loginData.username])
@@ -157,9 +160,13 @@ NetworkProtocolAccess.prototype.sessionWrapper = function (network, loginData, p
           appLogger.log('Reconnected session...')
           // Use the NEW session and run the operation.
           id = await protocolFunc(proto, proto.sessionData[loginData.username])
+          network.securityData.authorized = true
+          this.modelAPI.network.updateNetwork(network)
         } catch (err) {
           // Error again, just report
           appLogger.log('Access failure with ' + network.name + ': ' + err)
+          network.securityData.authorized = false
+          this.modelAPI.network.updateNetwork(network)
           reject(err)
         }
       } else {
