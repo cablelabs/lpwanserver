@@ -5,11 +5,13 @@ import React, { Component } from 'react';
 import { withRouter } from 'react-router-dom';
 import { pathOr, propOr, isEmpty, isNil, pick, keys } from 'ramda';
 import qs from 'query-string';
-import dispatcher from "../../dispatcher";
+import { dispatchError } from '../../utils/errorUtils';
+import { capitalize, removeUnderscores } from '../../utils/stringUtils';
 import networkStore from '../../stores/NetworkStore';
 import networkProtocolStore from '../../stores/NetworkProtocolStore';
 import sessionStore from '../../stores/SessionStore';
 import PropTypes from 'prop-types';
+
 
 // Values from env is in minutes.  Change to milliseconds.
 const oauthTimeout = Number(process.env.REACT_APP_OAUTH_TIMEOUT * 60 * 1000);
@@ -71,21 +73,6 @@ export default withRouter(OAuthNetwork);
 //******************************************************************************
 // Helper Functions
 //******************************************************************************
-
-function dispatchError(error) {
-  console.warn(error);
-  return dispatcher.dispatch({ type: "CREATE_ERROR", error });
-}
-
-// TODO: put in general utilty
-function capitalize(str) {
-    return str.charAt(0).toUpperCase() + str.slice(1);
-}
-
-// TODO: put in general utilty
-function removeUnderscores(str) {
-    return str.replace(/_/g, ' ');
-}
 
 async function handleOauthReturn(targetNetworkId, queryParams) {
 
