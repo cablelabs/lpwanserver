@@ -49,17 +49,10 @@ class NetworkStore extends EventEmitter {
         });
     }
 
-    createNetwork( name, networkProviderId, networkTypeId, networkProtocolId, baseUrl, securityData  ) {
+    // createNetwork( name, networkProviderId, networkTypeId, networkProtocolId, baseUrl, securityData  ) {
+    createNetwork( rec ) {
         return new Promise( function( resolve, reject ) {
             let header = sessionStore.getHeader();
-            let rec = {
-                        name: name,
-                        networkProviderId: networkProviderId,
-                        networkTypeId: networkTypeId,
-                        networkProtocolId: networkProtocolId,
-                        baseUrl: baseUrl,
-                        securityData: securityData,
-                      };
             fetch(rest_url + "/api/networks",
                 {
                     method: "POST",

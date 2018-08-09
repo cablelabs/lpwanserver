@@ -1,62 +1,48 @@
-import React, {Component} from "react";
-import {Link} from 'react-router-dom';
-import PropTypes from 'prop-types';
+import React from 'react';
+import { Link, withRouter } from 'react-router-dom';
+import { path, propOr } from 'ramda';
+import CreateOrEditNetwork from './CreateOrEditNetwork';
+import FetchNetwork from '../../components/fetch/FetchNetwork';
 
 
-import networkStore from "../../stores/NetworkStore";
-import NetworkForm from "../../components/NetworkForm";
+function NetworkLayout(props) {
 
+  // See if we are dealing with an existing network or not
+  const networkId = path([ 'match', 'params', 'networkID' ], props);
+  const isNew = !networkId;
 
-class NetworkLayout extends Component {
-  static contextTypes = {
-    router: PropTypes.object.isRequired
-  };
+  const breadCrumbs = [
+    { to: `/`, text: 'Home' },
+    { to: `/admin/networks`, text: 'Networks' },
+  ];
 
-  constructor(props) {
-    super(props);
-
-    this.state = {
-      network: {},
-    };
-
-    networkStore.getNetwork( props.match.params.networkID ).then( (network) => {
-        this.setState( { network: network } );
-    })
-    .catch( ( err ) => { this.props.history.push('/admin/networks'); });
-
-    this.onSubmit = this.onSubmit.bind(this);
-  }
-
-    onSubmit() {
-    console.log( "Network update:", this.state.network );
-      networkStore.updateNetwork( this.state.network ).then( (data) => {
-        this.props.history.push('/admin/networks');
-      })
-      .catch( (err) => {
-          alert( "Network update failed: ", err );
-      });
-
-  }
-
-  render() {
-
-    if ( !this.state.network.id ) {
-        return ( <div></div> );
-    }
-
-    return (
-      <div>
-        <ol className="breadcrumb">
-          <li><Link to={`/`}>Home</Link></li>
-          <li><Link to={`/admin/networks`}>Networks</Link></li>
-          <li className="active">{this.state.network.name}</li>
-        </ol>
-        <div className="panel-body">
-          <NetworkForm network={this.state.network} onSubmit={this.onSubmit} update={true}/>
-        </div>
-      </div>
-    );
-  }
+  return (
+    <div className="panel-body">
+      <FetchNetwork networkId={networkId} render={ network =>
+         <BreadCrumbs
+           trail={breadCrumbs}
+           destination={ isNew ? 'CreateNetwork' : propOr('?', 'name', network) }
+         />
+       }
+      />
+      <CreateOrEditNetwork
+        {...{ isNew, networkId }}
+      />
+    </div>
+  );
 }
 
-export default NetworkLayout;
+export default withRouter(NetworkLayout);
+
+//******************************************************************************
+// Helper components
+//******************************************************************************
+
+function BreadCrumbs({trail, destination}) {
+  return (
+    <ol className="breadcrumb">
+      { trail.map((c,key)=><li key={key}><Link to={c.to}>{c.text}</Link></li>) }
+      <li className="active">{destination}</li>
+    </ol>
+  );
+}

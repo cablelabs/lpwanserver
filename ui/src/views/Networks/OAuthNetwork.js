@@ -33,9 +33,8 @@ class OAuthNetwork extends Component {
     const oauthStartTime = Number(sessionStore.getSetting('oauthStartTime'));
     const elapsedTime = Date.now() - oauthStartTime;
 
-    // TODO temporarily commented out for easier testing
-    // sessionStore.removeSetting('oauthNetworkTarget');
-    // sessionStore.removeSetting('oauthStartTime');
+    sessionStore.removeSetting('oauthNetworkTarget');
+    sessionStore.removeSetting('oauthStartTime');
 
     // TODO: test the time out
     if (elapsedTime <= oauthTimeout) {

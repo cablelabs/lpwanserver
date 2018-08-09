@@ -208,6 +208,7 @@ class CreateNetwork extends Component {
                   services as defined by the protocol.
                 </p>
               </div>
+
               { protocolFields &&
                 <div className="form-section-margin-top">
                   <strong>
@@ -217,7 +218,7 @@ class CreateNetwork extends Component {
                   <DynamicForm
                     fieldSpecs={protocolFields}
                     fieldValues={securityData}
-                    onFieldChange={this.onChange}
+                    onChange={this.onChange}
                     path={['securityData']}
                     key={networkProtocolIndex}
                   />

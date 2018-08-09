@@ -4,6 +4,7 @@
 
 import React from 'react';
 import PT from 'prop-types';
+import FormInput from './FormInput';
 
 //******************************************************************************
 // Interface
@@ -25,15 +26,15 @@ DynamicForm.propTypes = {
   fieldValues: PT.object.isRequired,
     // object containing props and corresponding values for the fieldNames
     // supplied in the list of field specs.
-  onFieldChange: PT.func,
-    // called on change to any field. sig: onFieldChange(path, fieldName, e)
+  onChange: PT.func,
+    // called on change to any field. sig: onChange(path, fieldName, e)
   path: PT.arrayOf(PT.string),
-    // path to supply to onFieldChange()
+    // path to supply to onChange()
     // this will tell parent component where in an object the fields are being set
 };
 
 DynamicForm.defaultValue = {
-  onFieldChange: ()=>null,
+  onChange: ()=>null,
   path: [],
 };
 
@@ -42,52 +43,17 @@ DynamicForm.defaultValue = {
 //******************************************************************************
 
 export default function DynamicForm(props) {
-  const { fieldSpecs, fieldValues, path, onFieldChange } = props;
+  const { fieldSpecs, fieldValues, path, onChange } = props;
   return (
     <div>
       { fieldSpecs.map((curFieldSpec,idx) =>
-        <FieldInput
+        <FormInput
           {...curFieldSpec}
-          value={fieldValues[curFieldSpec.name]}
-          onChange={e=>onFieldChange(path, curFieldSpec.name, e)}
+          value={fieldValues[curFieldSpec.name]||''}
+          onChange={e=>onChange(path, curFieldSpec.name, e)}
           key={idx}
         />
       )}
-    </div>
-  );
-}
-
-//******************************************************************************
-// Sub Components
-//******************************************************************************
-
-FieldInput.propTypes = {
-  label: PT.string.isRequired,
-  type: PT.string.isRequired,
-  value: PT.oneOfType([PT.string,PT.number]),
-  placeholder: PT.string,
-  help: PT.string,
-  onChange: PT.func,
-  required: PT.bool,
-};
-
-FieldInput.defaultProps = {
-  required: false,
-  placeholder: '',
-  onChange: ()=>null,
-};
-
-function FieldInput(props) {
-  const { label, type, name, value, placeholder, description, onChange, required } = props;
-  return (
-    <div className="form-group">
-      <label className="control-label" htmlFor="name">{label}</label>
-      <input className="form-control"
-        {...{ type, name, value, placeholder, onChange, required }}
-      />
-      <p className="help-block">
-        {description}
-      </p>
     </div>
   );
 }
