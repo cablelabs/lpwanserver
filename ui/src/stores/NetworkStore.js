@@ -38,7 +38,7 @@ class NetworkStore extends EventEmitter {
                     resolve({ totalCount: 0, records: [] });
                 }
                 else {
-                    console.log(responseData);
+                    // console.log(responseData);
                     resolve(responseData);
                 }
             })
@@ -49,17 +49,10 @@ class NetworkStore extends EventEmitter {
         });
     }
 
-    createNetwork( name, networkProviderId, networkTypeId, networkProtocolId, baseUrl, securityData  ) {
+    // createNetwork( name, networkProviderId, networkTypeId, networkProtocolId, baseUrl, securityData  ) {
+    createNetwork( rec ) {
         return new Promise( function( resolve, reject ) {
             let header = sessionStore.getHeader();
-            let rec = {
-                        name: name,
-                        networkProviderId: networkProviderId,
-                        networkTypeId: networkTypeId,
-                        networkProtocolId: networkProtocolId,
-                        baseUrl: baseUrl,
-                        securityData: securityData,
-                      };
             fetch(rest_url + "/api/networks",
                 {
                     method: "POST",
@@ -108,7 +101,6 @@ class NetworkStore extends EventEmitter {
     updateNetwork( updatedRec ) {
         return new Promise( function( resolve, reject ) {
             let header = sessionStore.getHeader();
-    console.log( "NetworkStore: updatedRec:", updatedRec );
             fetch(rest_url + "/api/networks/" + updatedRec.id,
                 {
                     method: "PUT",

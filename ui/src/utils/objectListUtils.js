@@ -35,5 +35,5 @@ export const idxById = idxByPropVal('id');
 export const containesById = containesByPropVal('id');
 
 // return first object in list with matching id, or undefined if no matches
-// findById :: '' -> [{}] -> {}
+// '' -> [{}] -> {}
 export const findById = findByPropVal('id');
