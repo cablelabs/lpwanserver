@@ -155,8 +155,38 @@ module.exports.getDeviceProfileAccessAccount = async function (dataAPI, network,
  */
 module.exports.connect = function (network, loginData) {
   return new Promise(function (resolve, reject) {
+    appLogger.log('Inside TTN connect')
     let options = {}
-    if (loginData.refresh_token) {
+    if (loginData.code) {
+      options.method = 'POST'
+      options.url = network.baseUrl + '/users/token'
+      let auth = Buffer.from(loginData.clientId + ':' + loginData.clientSecret).toString('base64')
+      options.headers = { 'Content-Type': 'application/json', 'Authorization': 'Basic ' + auth }
+      options.json = {
+        grant_type: 'authorization_code',
+        code: loginData.code,
+        redirect_url: 'https://mercury.schrimpsher.com:3200/api/oauth/callback'
+      }
+      appLogger.log(options)
+      request(options, function (error, response, body) {
+        if (error) {
+          appLogger.log('Error on signin: ' + error)
+          reject(error)
+        } else if (response.statusCode >= 400) {
+          appLogger.log('Error on signin: ' + response.statusCode + ', ' + response.body.error)
+          reject(response.statusCode)
+        } else {
+          appLogger.log(body)
+          var token = body.access_token
+          if (token) {
+            resolve(body)
+          } else {
+            reject(new Error('No token'))
+          }
+        }
+      })
+    }
+    else if (loginData.refresh_token) {
       options.method = 'POST'
       options.url = network.baseUrl + '/users/token'
       let auth = Buffer.from(loginData.clientId + ':' + loginData.clientSecret).toString('base64')
@@ -177,7 +207,7 @@ module.exports.connect = function (network, loginData) {
         } else {
           var token = body.access_token
           if (token) {
-            resolve(token)
+            resolve(body)
           } else {
             reject(new Error('No token'))
           }
@@ -289,7 +319,7 @@ module.exports.pullApplications = function (sessionData, network, companyMap, dp
     options.url = network.baseUrl + '/applications' + '?limit=9999&offset=0'
     options.headers = {
       'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + sessionData.connection
+      'Authorization': 'Bearer ' + sessionData.connection.access_token
     }
     options.agentOptions = {
       'secureProtocol': 'TLSv1_2_method',
@@ -360,7 +390,7 @@ module.exports.addApplication = function (sessionData, network, applicationId, d
     options.url = network.baseUrl + '/applications'
     options.headers = {
       'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + sessionData.connection
+      'Authorization': 'Bearer ' + sessionData.connection.access_token
     }
     options.json = {
       'name': application.name
@@ -417,7 +447,7 @@ module.exports.getApplication = function (sessionData, network, applicationId, d
     options.url = network.baseUrl + '/applications/' + appNetworkId
     options.headers = {
       'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + sessionData.connection
+      'Authorization': 'Bearer ' + sessionData.connection.access_token
     }
     options.agentOptions = {
       'secureProtocol': 'TLSv1_2_method',
@@ -442,7 +472,7 @@ module.exports.getApplications = function (sessionData, network, dataAPI) {
     options.url = network.baseUrl + '/applications'
     options.headers = {
       'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + sessionData.connection
+      'Authorization': 'Bearer ' + sessionData.connection.access_token
     }
     options.agentOptions = {
       'secureProtocol': 'TLSv1_2_method',
@@ -493,7 +523,7 @@ module.exports.updateApplication = function (sessionData, network, applicationId
     options.url = network.baseUrl + '/applications/' + appNetworkId
     options.headers = {
       'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + sessionData.connection
+      'Authorization': 'Bearer ' + sessionData.connection.access_token
     }
     options.json = {
       'id': appNetworkId,
@@ -587,7 +617,7 @@ module.exports.deleteApplication = function (sessionData, network, applicationId
     options.url = network.baseUrl + '/applications/' + appNetworkId
     options.headers = {
       'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + sessionData.connection
+      'Authorization': 'Bearer ' + sessionData.connection.access_token
     }
     options.agentOptions = {
       'secureProtocol': 'TLSv1_2_method',
@@ -686,7 +716,7 @@ module.exports.startApplication = function (sessionData, network, applicationId,
       options.url = network.baseUrl + '/applications/' + appNwkId + '/integrations/http'
       options.headers = {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + sessionData.connection
+        'Authorization': 'Bearer ' + sessionData.connection.access_token
       }
       options.agentOptions = {
         'secureProtocol': 'TLSv1_2_method',
@@ -753,7 +783,7 @@ module.exports.stopApplication = function (sessionData, network, applicationId, 
     options.url = network.baseUrl + '/applications/' + appNwkId + '/integrations/http'
     options.headers = {
       'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + sessionData.connection
+      'Authorization': 'Bearer ' + sessionData.connection.access_token
     }
     options.agentOptions = {
       'secureProtocol': 'TLSv1_2_method',
@@ -867,7 +897,7 @@ module.exports.pullDevices = function (sessionData, network, companyId, dpMap, r
     options.url = network.baseUrl + '/applications/' + remoteApplicationId + '/devices' + '?limit=9999&offset=0'
     options.headers = {
       'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + sessionData.connection
+      'Authorization': 'Bearer ' + sessionData.connection.access_token
     }
     options.agentOptions = {
       'secureProtocol': 'TLSv1_2_method',
@@ -957,7 +987,7 @@ module.exports.addDevice = function (sessionData, network, deviceId, dataAPI) {
     options.url = network.baseUrl + '/devices'
     options.headers = {
       'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + sessionData.connection
+      'Authorization': 'Bearer ' + sessionData.connection.access_token
     }
     options.json = {
       'applicationID': appNwkId,
@@ -1059,7 +1089,7 @@ module.exports.getDevice = function (sessionData, network, deviceId, dataAPI) {
       options.url = network.baseUrl + '/devices/' + devNetworkId
       options.headers = {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + sessionData.connection
+        'Authorization': 'Bearer ' + sessionData.connection.access_token
       }
       options.agentOptions = {
         'secureProtocol': 'TLSv1_2_method',
@@ -1131,7 +1161,7 @@ module.exports.updateDevice = function (sessionData, network, deviceId, dataAPI)
     options.url = network.baseUrl + '/devices/' + devNetworkId
     options.headers = {
       'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + sessionData.connection
+      'Authorization': 'Bearer ' + sessionData.connection.access_token
     }
     options.json = {
       'applicationID': appNwkId,
@@ -1212,7 +1242,7 @@ module.exports.deleteDevice = function (sessionData, network, deviceId, dataAPI)
     options.url = network.baseUrl + '/devices/' + devNetworkId
     options.headers = {
       'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + sessionData.connection
+      'Authorization': 'Bearer ' + sessionData.connection.access_token
     }
     options.agentOptions = {
       'secureProtocol': 'TLSv1_2_method',

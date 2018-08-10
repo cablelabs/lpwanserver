@@ -6,7 +6,7 @@
     ///////////////////////////////////////////////////////////////////////////
     // Log format for morgan.  If commented out, no API access logging is
     // performed.  Not logging can be useful for running the test scripts.
-    log_format_morgan: dev
+    //log_format_morgan: dev
 
     // General log settings.  Enable logs in general.
     logging_enabled: true
