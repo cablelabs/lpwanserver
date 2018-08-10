@@ -58,8 +58,7 @@ export default function NetworkForm(props) {
 
   return(
     <div className="panel panel-default">
-
-      <div className="panel-heading " style={{display:'flex', justifyContent:'space-between'}}>
+      <div className="panel-heading d-flex jc-sb">
         <h3 className="panel-title panel-title-buttons">{panelHeading}</h3>
         { !isNew &&
         <div className="btn-group pull-right">

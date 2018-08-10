@@ -1,7 +1,7 @@
 import React, {Component} from "react";
 import PT from 'prop-types';
 import { withRouter } from 'react-router-dom';
-import { propOr, pathOr, lensPath, append, set, pick, view } from 'ramda';
+import { propOr, pathOr, lensPath, lensProp, append, set, pick, view, merge } from 'ramda';
 import { dispatchError } from '../../utils/errorUtils';
 import { viewOr } from 'ramda-adjunct';
 import sessionStore from "../../stores/SessionStore";
@@ -92,9 +92,18 @@ class CreateOrEditNetwork extends Component {
   }
 
   onChange(path, field, e) {
-      const value = inputEventToValue(e);
-      const fieldLens = lensPath([...path, field]);
-      this.setState(set(fieldLens, value, this.state));
+    const value = inputEventToValue(e);
+    const { networkProtocols=[], securityData={} } = this.state;
+
+    let pendingState = this.state;
+    if (field === 'networkProtocolId') {
+      const securityDefaults = getCurrentSecurityDefaults(value, networkProtocols);
+      const securityDataLens = lensProp('securityData');
+      pendingState = set(securityDataLens, merge(securityDefaults, securityData), pendingState);
+    }
+
+    const fieldLens = lensPath([...path, field]);
+    this.setState(set(fieldLens, value, pendingState));
   }
 
   onSubmit(e) {
@@ -114,12 +123,23 @@ class CreateOrEditNetwork extends Component {
     })
 
     .then( newNetworkId => {
+
+      // We get back the networkId on create, but not on update.
+      const networkId = isNew ? newNetworkId : pathOr(-1, ['network', 'id'], this.state);
       const networkProtocolIndex = idxById(networkProtocolId, networkProtocols);
+      // TODO: For determining if we should do OAuth processing:
+      // Also check to see if code is NOT there.  If we have a code, we
+      // should be OK. (Maybe authTokens OR code).  Implies auth failure on back
+      // end should clear these fields.  I think there is an "EmailSiteAdmin"
+      // function that should probably be used in this case.
+      // SPS: I am thinking that we have createNetwork/updateNetwork return the full object 
+      // contiaing the results of the operation, then we can check returnedNetwork.securityData.authorized
+      // to see if we can skip OAUTH
       const oauthUrl = pathOr('', [networkProtocolIndex, 'metaData', 'oauthUrl'], networkProtocols);
       if ( oauthUrl) {
         const thisServer = process.env.REACT_APP_PUBLIC_BASE_URL;
         const oauthRedirect =  makeOauthRedirectUrl(thisServer, securityData, oauthUrl);
-        sessionStore.putSetting('oauthNetworkTarget', newNetworkId);
+        sessionStore.putSetting('oauthNetworkTarget', networkId);
         sessionStore.putSetting('oauthStartTime', Date.now());
         navigateToExernalUrl(oauthRedirect);
       }
@@ -178,6 +198,11 @@ function getCurrentSecurityProps(networkProtocolId, networkProtocols) {
   const protoFields = getCurrentProtocolFields(networkProtocolId, networkProtocols);
   return protoFields.reduce((propAccum,curField)=>
     curField.name ? append( curField.name, propAccum) : propAccum, []);
+}
+
+function getCurrentSecurityDefaults(networkProtocolId, networkProtocols) {
+  const protoFields = getCurrentProtocolFields(networkProtocolId, networkProtocols);
+  return fieldSpecsToValues(protoFields);
 }
 
 function makeOauthRedirectUrl(thisServer, securityData, oauthUrl) {

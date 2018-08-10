@@ -1,8 +1,11 @@
 import React from 'react';
-import { Link, withRouter } from 'react-router-dom';
+import { withRouter } from 'react-router-dom';
 import { path, propOr } from 'ramda';
+import BreadCrumbs from '../../components/BreadCrumbs';
 import CreateOrEditNetwork from './CreateOrEditNetwork';
-import FetchNetwork from '../../components/fetch/FetchNetwork';
+import FetchNetworks from '../../components/fetch/FetchNetworks';
+import FetchNothing from '../../components/fetch/FetchNothing';
+
 
 
 function NetworkLayout(props) {
@@ -16,14 +19,15 @@ function NetworkLayout(props) {
     { to: `/admin/networks`, text: 'Networks' },
   ];
 
+  const Fetch = isNew ? FetchNothing : FetchNetworks;
   return (
     <div className="panel-body">
-      <FetchNetwork networkId={networkId} render={ network =>
-         <BreadCrumbs
-           trail={breadCrumbs}
-           destination={ isNew ? 'CreateNetwork' : propOr('?', 'name', network) }
-         />
-       }
+      <Fetch id={networkId} render={ network => {
+        return <BreadCrumbs
+          trail={breadCrumbs}
+          destination={ isNew ? 'CreateNetwork' : propOr('?', 'name', network) }
+         />;
+      }}
       />
       <CreateOrEditNetwork
         {...{ isNew, networkId }}
@@ -33,16 +37,3 @@ function NetworkLayout(props) {
 }
 
 export default withRouter(NetworkLayout);
-
-//******************************************************************************
-// Helper components
-//******************************************************************************
-
-function BreadCrumbs({trail, destination}) {
-  return (
-    <ol className="breadcrumb">
-      { trail.map((c,key)=><li key={key}><Link to={c.to}>{c.text}</Link></li>) }
-      <li className="active">{destination}</li>
-    </ol>
-  );
-}

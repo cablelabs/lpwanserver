@@ -26,6 +26,7 @@ import ListNetworkProtocols from "./views/NetworkProtocols/ListNetworkProtocols"
 import NetworkProtocolLayout from "./views/NetworkProtocols/NetworkProtocolLayout";
 import CreateNetworkProtocol from "./views/NetworkProtocols/CreateNetworkProtocol";
 import ListNetworks from "./views/Networks/ListNetworks";
+import ListNetworks2 from "./views/Networks/ListNetworks2";
 import NetworkLayout from "./views/Networks/NetworkLayout";
 import OAuthNetwork from "./views/Networks/OAuthNetwork";
 import ListReportingProtocols from "./views/ReportingProtocols/ListReportingProtocols";
@@ -84,6 +85,7 @@ class Layout extends Component {
             <Route exact path="/admin/networks" component={ListNetworks}/>
             <Route exact path="/admin/network/:networkID" component={NetworkLayout}/>
             <Route exact path="/admin/network" component={NetworkLayout}/>
+            <Route exact path="/admin/networks2" component={ListNetworks2}/>
             <Route exact path="/admin/networks/oauth" component={OAuthNetwork}/>
             <Route exact path="/admin/pull/:networkID" component={PullNetworks}/>
             <Route exact path="/admin/reportingProtocol/:reportingProtocolID" component={ReportingProtocolLayout}/>

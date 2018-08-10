@@ -102,3 +102,42 @@ input[type=number] {
 .form-section-margin-top {
     margin-top: 30px;
 }
+
+/* additional colors */
+.txt-color-alt {
+  color: #009688;
+}
+
+
+/* some general util classes */
+
+.d-flex { display: flex; }
+.jc-sb { justify-content: space-between }
+
+.fs-xs { font-size: x-small; }
+.fs-s  { font-size: small;   }
+.fs-m  { font-size: medium;  }
+.fs-l  { font-size: large;   }
+.fs-xl { font-size: x-large; }
+
+.brd-top { border-top: 1px solid #dddddd; }
+.brd-bot { border-bottom: 1px solid #dddddd; }
+
+/* for the aggregated network display page */
+
+
+
+.nl-nwtype-label {
+  font-size: large;
+  color: #009688;
+}
+
+.nl-nwproto-container {
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px solid #dddddd;
+}
+
+.nl-nwproto-label {
+  font-size: large;
+}
