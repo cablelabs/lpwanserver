@@ -56,7 +56,7 @@ class ListNetworks extends Component {
 
     networkStore.getNetworks()
     .then( networks => {
-        console.log( networks );
+        // console.log( networks );
         this.setState({networks: networks.records});
         window.scrollTo(0, 0);
     });

@@ -82,6 +82,7 @@ class Navbar extends Component {
                   <li><a href={`/admin/networkProviders`}>Network Providers</a></li>
                   <li><a href={`/admin/networkProtocols`}>Network Protocols</a></li>
                   <li><a href={`/admin/networks`}>Networks</a></li>
+                  {/*<li><a href={`/admin/networks2`}>Networks 2</a></li>*/ }
                 </ul>
                </li>
 
