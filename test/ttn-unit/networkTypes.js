@@ -5,6 +5,7 @@ exports.createNetworkType = function (name) {
     // Create the record.
     networkType.id = 1
     networkType.name = name
+    resolve(networkType.id)
   })
 }
 
@@ -47,7 +48,8 @@ exports.deleteNetworkType = function (networkTypeId) {
 // Returns a promise that does the retrieval.
 exports.retrieveAllNetworkTypes = function () {
   return new Promise(function (resolve, reject) {
-    resolve(networkType)
+    let temp = [networkType]
+    resolve(temp)
   })
 }
 

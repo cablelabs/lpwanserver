@@ -1,12 +1,12 @@
-var appLogger = require( "./lib/appLogger.js" );
-var restServer;
-var modelAPI;
+var appLogger = require('./lib/appLogger.js')
+var restServer
+var modelAPI
 
-exports.initialize = function( app, server ) {
-    restServer = server;
-    modelAPI = server.modelAPI;
+exports.initialize = function (app, server) {
+  restServer = server
+  modelAPI = server.modelAPI
 
-    /*********************************************************************
+  /*********************************************************************
      * Networks API.
      ********************************************************************
     /**
@@ -57,50 +57,50 @@ exports.initialize = function( app, server ) {
      *      System Admins.)
      * @apiVersion 0.1.0
      */
-    app.get('/api/networks', [ restServer.isLoggedIn,
-                               restServer.fetchCompany ],
-                             function(req, res, next) {
-        var options = {};
-        if ( req.query.limit ) {
-            var limitInt = parseInt( req.query.limit );
-            if ( !isNaN( limitInt ) ) {
-                options.limit = limitInt;
-            }
+  app.get('/api/networks', [ restServer.isLoggedIn,
+    restServer.fetchCompany ],
+  function (req, res, next) {
+    var options = {}
+    if (req.query.limit) {
+      var limitInt = parseInt(req.query.limit)
+      if (!isNaN(limitInt)) {
+        options.limit = limitInt
+      }
+    }
+    if (req.query.offset) {
+      var offsetInt = parseInt(req.query.offset)
+      if (!isNaN(offsetInt)) {
+        options.offset = offsetInt
+      }
+    }
+    if (req.query.search) {
+      options.search = req.query.search
+    }
+    if (req.query.networkProviderId) {
+      options.networkProviderId = req.query.networkProviderId
+    }
+    if (req.query.networkTypeId) {
+      options.networkTypeId = req.query.networkTypeId
+    }
+    if (req.query.networkProtocolId) {
+      options.networkProtocolId = req.query.networkProtocolId
+    }
+    modelAPI.networks.retrieveNetworks(options).then(function (networks) {
+      // Remove sensitive data for non-admin users.
+      if (req.company.type != modelAPI.companies.COMPANY_ADMIN) {
+        for (var i = 0; i < networks.records.length; ++i) {
+          delete networks.records[ i ].securityData
         }
-        if ( req.query.offset ) {
-            var offsetInt = parseInt( req.query.offset );
-            if ( !isNaN( offsetInt ) ) {
-                options.offset = offsetInt;
-            }
-        }
-        if ( req.query.search ) {
-            options.search = req.query.search;
-        }
-        if ( req.query.networkProviderId ) {
-            options.networkProviderId = req.query.networkProviderId;
-        }
-        if ( req.query.networkTypeId ) {
-            options.networkTypeId = req.query.networkTypeId;
-        }
-        if ( req.query.networkProtocolId ) {
-            options.networkProtocolId = req.query.networkProtocolId;
-        }
-        modelAPI.networks.retrieveNetworks( options ).then( function( networks ) {
-            // Remove sensitive data for non-admin users.
-            if ( req.company.type != modelAPI.companies.COMPANY_ADMIN ) {
-                for ( var i = 0; i < networks.records.length; ++i ) {
-                    delete networks.records[ i ].securityData;
-                }
-            }
-            restServer.respondJson( res, null, networks );
-        })
-        .catch( function( err ) {
-            appLogger.log( "Error getting networks: " + err );
-            restServer.respond( res, err );
-        });
-    });
+      }
+      restServer.respond(res, 200, networks)
+    })
+      .catch(function (err) {
+        appLogger.log('Error getting networks: ' + err)
+        restServer.respond(res, err)
+      })
+  })
 
-    /**
+  /**
      * @apiDescription Gets the Network record with the specified id.
      *
      * @api {get} /api/networks/:id Get Network
@@ -126,24 +126,24 @@ exports.initialize = function( app, server ) {
      *      Admins.)
      * @apiVersion 0.1.0
      */
-    app.get('/api/networks/:id', [ restServer.isLoggedIn,
-                                   restServer.fetchCompany ],
-                                 function(req, res, next) {
-        var id = parseInt( req.params.id );
-        modelAPI.networks.retrieveNetwork( id ).then( function( network ) {
-            // Remove sensitive data for non-admin users.
-            if ( req.company.type != modelAPI.companies.COMPANY_ADMIN ) {
-                delete network.securityData;
-            }
-            restServer.respondJson( res, null, network );
-        })
-        .catch( function( err ) {
-            appLogger.log( "Error getting network " + id + ": " + err );
-            restServer.respond( res, err );
-        });
-    });
+  app.get('/api/networks/:id', [ restServer.isLoggedIn,
+    restServer.fetchCompany ],
+  function (req, res, next) {
+    var id = parseInt(req.params.id)
+    modelAPI.networks.retrieveNetwork(id).then(function (network) {
+      // Remove sensitive data for non-admin users.
+      if (req.company.type != modelAPI.companies.COMPANY_ADMIN) {
+        delete network.securityData
+      }
+      restServer.respond(res, 200, network)
+    })
+      .catch(function (err) {
+        appLogger.log('Error getting network ' + id + ': ' + err)
+        restServer.respond(res, err)
+      })
+  })
 
-    /**
+  /**
      * @apiDescription Creates a new Network record.
      *
      * @api {post} /api/networks Create Network
@@ -178,46 +178,46 @@ exports.initialize = function( app, server ) {
      * @apiSuccess {Number} id The new Network's id.
      * @apiVersion 0.1.0
      */
-    app.post('/api/networks', [restServer.isLoggedIn,
-                               restServer.fetchCompany,
-                               restServer.isAdminCompany],
-                              function(req, res, next) {
-        var rec = req.body;
-        // You can't specify an id.
-        if ( rec.id ) {
-            restServer.respond( res, 400, "Cannot specify the network's id in create" );
-            return;
-        }
+  app.post('/api/networks', [restServer.isLoggedIn,
+    restServer.fetchCompany,
+    restServer.isAdminCompany],
+  function (req, res, next) {
+    var rec = req.body
+    // You can't specify an id.
+    if (rec.id) {
+      restServer.respond(res, 400, "Cannot specify the network's id in create")
+      return
+    }
 
-        // Verify that required fields exist.
-        if ( !rec.name ||
+    // Verify that required fields exist.
+    if (!rec.name ||
              !rec.networkProviderId ||
              !rec.networkTypeId ||
              !rec.networkProtocolId ||
-             !rec.baseUrl ) {
-            restServer.respond( res, 400, "Missing required data" );
-            return;
-        }
+             !rec.baseUrl) {
+      restServer.respond(res, 400, 'Missing required data')
+      return
+    }
 
-        // Do the add.
-        modelAPI.networks.createNetwork(
-                                    rec.name,
-                                    rec.networkProviderId,
-                                    rec.networkTypeId,
-                                    rec.networkProtocolId,
-                                    rec.baseUrl,
-                                    rec.securityData ).then( function ( rec ) {
-            var send = {};
-            send.id = rec.id;
-            restServer.respondJson( res, 200, send );
-        })
-        .catch( function( err ) {
-            appLogger.log( "Error creating network" + err );
-            restServer.respond( res, err );
-        });
-    });
+    // Do the add.
+    modelAPI.networks.createNetwork(
+      rec.name,
+      rec.networkProviderId,
+      rec.networkTypeId,
+      rec.networkProtocolId,
+      rec.baseUrl,
+      rec.securityData).then(function (rec) {
+      var send = {}
+      send.id = rec.id
+      restServer.respondJson(res, 200, send)
+    })
+      .catch(function (err) {
+        appLogger.log('Error creating network' + err)
+        restServer.respond(res, err)
+      })
+  })
 
-    /**
+  /**
      * @apiDescription Updates the Network record with the specified id.
      *
      * @api {put} /api/networks/:id Update Network
@@ -251,79 +251,84 @@ exports.initialize = function( app, server ) {
      *                          }
      *      }
      */
-    app.put('/api/networks/:id', [restServer.isLoggedIn,
-                                  restServer.fetchCompany,
-                                  restServer.isAdminCompany],
-                                 function(req, res, next) {
-        var data = {};
-        data.id = parseInt( req.params.id );
-        // We'll start by getting the network, as a read is much less expensive than
-        // a write, and then we'll be able to tell if anything really changed before
-        // we even try to write.
-        modelAPI.networks.retrieveNetwork( data.id ).then( function( ntwk ) {
-            // Fields that may exist in the request body that can change.  Make
-            // sure they actually differ, though.
-            var changed = 0;
-            if ( ( req.body.name ) &&
-                 ( req.body.name != ntwk.name ) ) {
-                data.name = req.body.name;
-                ++changed;
-            }
-            if ( req.body.networkProviderId ) {
-                if ( req.body.networkProviderId != ntwk.networkProviderId ) {
-                    data.networkProviderId = req.body.networkProviderId;
-                    ++changed;
-                }
-            }
-            if ( req.body.networkTypeId ) {
-                if ( req.body.networkTypeId != ntwk.networkTypeId ) {
-                    data.networkTypeId = req.body.networkTypeId;
-                    ++changed;
-                }
-            }
-            if ( req.body.networkProtocolId ) {
-                if ( req.body.networkProtocolId != ntwk.networkProtocolId ) {
-                    data.networkProtocolId = req.body.networkProtocolId;
-                    ++changed;
-                }
-            }
-            if ( req.body.baseUrl ) {
-                if ( req.body.baseUrl != ntwk.baseUrl ) {
-                    data.baseUrl = req.body.baseUrl;
-                    ++changed;
-                }
-            }
-            if ( req.body.securityData ) {
-                if ( req.body.securityData !== ntwk.securityData ) {
-                    data.securityData = req.body.securityData;
-                    ++changed;
-                }
-            }
+  app.put('/api/networks/:id', [restServer.isLoggedIn,
+    restServer.fetchCompany,
+    restServer.isAdminCompany],
+  function (req, res, next) {
+    var data = req.body
+    data.id = parseInt(req.params.id)
+    modelAPI.networks.updateNetwork(data).then(function (rec) {
+      restServer.respond(res, 204)
+    })
+      .catch(function (err) {
+        restServer.respond(res, err)
+      })
+    // We'll start by getting the network, as a read is much less expensive than
+    // a write, and then we'll be able to tell if anything really changed before
+    // we even try to write.
+    // modelAPI.networks.retrieveNetwork(data.id).then(function (ntwk) {
+    //   // Fields that may exist in the request body that can change.  Make
+    //   // sure they actually differ, though.
+    //   var changed = 0
+    //   if ((req.body.name) &&
+    //              (req.body.name != ntwk.name)) {
+    //     data.name = req.body.name
+    //     ++changed
+    //   }
+    //   if (req.body.networkProviderId) {
+    //     if (req.body.networkProviderId != ntwk.networkProviderId) {
+    //       data.networkProviderId = req.body.networkProviderId
+    //       ++changed
+    //     }
+    //   }
+    //   if (req.body.networkTypeId) {
+    //     if (req.body.networkTypeId != ntwk.networkTypeId) {
+    //       data.networkTypeId = req.body.networkTypeId
+    //       ++changed
+    //     }
+    //   }
+    //   if (req.body.networkProtocolId) {
+    //     if (req.body.networkProtocolId != ntwk.networkProtocolId) {
+    //       data.networkProtocolId = req.body.networkProtocolId
+    //       ++changed
+    //     }
+    //   }
+    //   if (req.body.baseUrl) {
+    //     if (req.body.baseUrl != ntwk.baseUrl) {
+    //       data.baseUrl = req.body.baseUrl
+    //       ++changed
+    //     }
+    //   }
+    //   if (req.body.securityData) {
+    //     if (req.body.securityData !== ntwk.securityData) {
+    //       data.securityData = req.body.securityData
+    //       ++changed
+    //     }
+    //   }
+    //
+    //   // Ready.  DO we have anything to actually change?
+    //   if (changed == 0) {
+    //     // No changes.  But returning 304 apparently causes Apache to strip
+    //     // CORS info, causing the browser to throw a fit.  So just say,
+    //     // "Yeah, we did that.  Really.  Trust us."
+    //     restServer.respond(res, 204)
+    //   } else {
+    //     // Do the update.
+    //     modelAPI.networks.updateNetwork(data).then(function (rec) {
+    //       restServer.respond(res, 204)
+    //     })
+    //       .catch(function (err) {
+    //         restServer.respond(res, err)
+    //       })
+    //   }
+    // })
+    //   .catch(function (err) {
+    //     appLogger.log('Error getting network ' + data.id + ': ' + err)
+    //     restServer.respond(res, err)
+    //   })
+  })
 
-            // Ready.  DO we have anything to actually change?
-            if ( 0 == changed ) {
-                // No changes.  But returning 304 apparently causes Apache to strip
-                // CORS info, causing the browser to throw a fit.  So just say,
-                // "Yeah, we did that.  Really.  Trust us."
-                restServer.respond( res, 204 );
-            }
-            else {
-                // Do the update.
-                modelAPI.networks.updateNetwork( data ).then( function ( rec ) {
-                    restServer.respond( res, 204 );
-                })
-                .catch( function( err ) {
-                    restServer.respond( res, err );
-                });
-            }
-        })
-        .catch( function( err ) {
-            appLogger.log( "Error getting network " + data.id + ": " + err );
-            restServer.respond( res, err );
-        });
-    });
-
-    /**
+  /**
      * @apiDescription Deletes the Network record with the specified id.
      *
      * @api {delete} /api/networks/:id Delete Network
@@ -334,44 +339,42 @@ exports.initialize = function( app, server ) {
      * @apiParam (URL Parameters) {Number} id The Network's id
      * @apiVersion 0.1.0
      */
-    app.delete('/api/networks/:id', [restServer.isLoggedIn,
-                                     restServer.fetchCompany,
-                                     restServer.isAdminCompany],
-                                    function(req, res, next) {
-        var id = parseInt( req.params.id );
-        // If the caller is a global admin, we can just delete.
-        modelAPI.networks.deleteNetwork( id ).then( function( ) {
-            restServer.respond( res, 204 );
-        })
-        .catch( function( err ) {
-            appLogger.log( "Error deleting network " + id + ": " + err );
-            restServer.respond( res, err );
-        });
-    });
-    /**
+  app.delete('/api/networks/:id', [restServer.isLoggedIn,
+    restServer.fetchCompany,
+    restServer.isAdminCompany],
+  function (req, res, next) {
+    var id = parseInt(req.params.id)
+    // If the caller is a global admin, we can just delete.
+    modelAPI.networks.deleteNetwork(id).then(function () {
+      restServer.respond(res, 204)
+    })
+      .catch(function (err) {
+        appLogger.log('Error deleting network ' + id + ': ' + err)
+        restServer.respond(res, err)
+      })
+  })
+  /**
      * Pulls the company records from the network with the specified id.
      * - Only a user with the admin company or the admin of the device's
      *   company can delete an device. TODO: Is this true?
      */
-    app.post('/api/networks/:networkId/pull', [restServer.isLoggedIn,
-            restServer.fetchCompany,
-            restServer.isAdmin],
-        function(req, res, next) {
-            var networkId = parseInt( req.params.networkId );
-            // If the caller is a global admin, or the device is part of the company
-            // admin's company, we can push.
-            modelAPI.networks.pullNetwork( networkId ).then( function( ret ) {
-                restServer.respondJson( res, 200, ret );
-            }).catch( function( err ) {
-                appLogger.log( "Error pulling from network " + networkId + ": " + err );
-                restServer.respond( res, err );
-            });
-        });
+  app.post('/api/networks/:networkId/pull', [restServer.isLoggedIn,
+    restServer.fetchCompany,
+    restServer.isAdmin],
+  function (req, res, next) {
+    var networkId = parseInt(req.params.networkId)
+    // If the caller is a global admin, or the device is part of the company
+    // admin's company, we can push.
+    modelAPI.networks.pullNetwork(networkId).then(function (ret) {
+      restServer.respondJson(res, 200, ret)
+    }).catch(function (err) {
+      appLogger.log('Error pulling from network ' + networkId + ': ' + err)
+      restServer.respond(res, err)
+    })
+  })
 
-
-    app.get('/api/oauth/callback', [],
-      function(req, res, next) {
-        restServer.respondJson(res, 200, {});
-      });
-
+  app.get('/api/oauth/callback', [],
+    function (req, res, next) {
+      restServer.respondJson(res, 200, {})
+    })
 }

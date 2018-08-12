@@ -72,6 +72,7 @@ NetworkType.prototype.retrieveNetworkType = function( id ) {
     var me = this;
     return new Promise( function( resolve, reject ) {
         var ret = me.reverseTypes[ id ];
+        console.log(me.reverseTypes)
         if ( ret ) {
             // Build this simple record rather than doing a database hit or a
             // linear search through the cached records.
@@ -97,8 +98,12 @@ NetworkType.prototype.createNetworkType = function( name ) {
     return new Promise( function( resolve, reject ) {
         me.impl.createNetworkType( name ).then( function( id ) {
             // Reload the cache on success.
-            me.reloadCache();
-            resolve( id );
+            me.reloadCache()
+              .then(() => {
+                resolve( id );
+              }).catch((err) => {
+                  reject(err)
+            })
         })
         .catch( function( err ) {
             reject( err );

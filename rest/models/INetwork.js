@@ -9,7 +9,7 @@ var appLogger = require('../lib/appLogger')
 var modelAPI
 
 function Network (server) {
-  this.impl = new require('./dao/' +
+  this.impl = require('./dao/' +
                              nconf.get('impl_directory') +
                              '/networks.js')
   modelAPI = server
@@ -53,7 +53,6 @@ Network.prototype.retrieveNetwork = function (id) {
           genKey(id))
         ret.securityData = await dataAPI.access(ret, ret.securityData, k)
       }
-
       resolve(ret)
     } catch (err) {
       reject(err)
@@ -109,14 +108,50 @@ Network.prototype.updateNetwork = function (record) {
           genKey(record.id),
           k)
       }
-
       if (record.securityData) {
-        record.securityData = dataAPI.hide(null,
-          record.securityData,
-          k)
+        if (record.securityData.code) {
+          modelAPI.networkTypeAPI.connect(record, record.securityData)
+            .then((connection) => {
+              if (connection instanceof Object) {
+                for (var prop in connection) {
+                  record.securityData[prop] = connection[prop]
+                }
+              } else {
+                record.securityData.access_token = connection
+              }
+              record.securityData.authorized = true
+              record.securityData = dataAPI.hide(null,
+                record.securityData,
+                k)
+              me.impl.updateNetwork(record)
+                .then((rec) => {
+                  resolve(rec)
+                })
+                .catch((err) => {
+                  reject(err)
+                })
+            })
+            .catch((err) => {
+              reject(err)
+            })
+        } else {
+          if (record.securityData.access_token) {
+            record.securityData.authorized = true
+          } else {
+            record.securityData.authorized = false
+          }
+          record.securityData = dataAPI.hide(null,
+            record.securityData,
+            k)
+          me.impl.updateNetwork(record)
+            .then((rec) => {
+              resolve(rec)
+            })
+            .catch((err) => {
+              reject(err)
+            })
+        }
       }
-      let ret = await me.impl.updateNetwork(record)
-      resolve(ret)
     } catch (err) {
       reject(err)
     }

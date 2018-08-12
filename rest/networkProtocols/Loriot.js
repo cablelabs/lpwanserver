@@ -1498,7 +1498,7 @@ module.exports.pushDeviceProfile = function (sessionData, network, deviceProfile
  */
 async function getCompanyAccount (dataAPI, network, companyId, generateIfMissing) {
   let secData = network.securityData
-  if (!secData || !secData.apiKey ){
+  if (!secData || !secData.apiKey) {
     appLogger.log('Network security data is incomplete for ' + network.name)
     dataAPI.addLog(network, 'Network security data is incomplete for ' + network.name)
     return null
