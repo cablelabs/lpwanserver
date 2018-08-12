@@ -34,7 +34,7 @@
     // URL settings
     ////////////////////////////////////////////////////////////
     // The numeric IP address to bind the server's listener to.
-    bind_address: "mercury.schrimpsher.com"
+    bind_address: "localhost"
 
     // The port to bind the listener to.
     port: 3200

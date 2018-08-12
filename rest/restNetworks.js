@@ -92,7 +92,7 @@ exports.initialize = function (app, server) {
           delete networks.records[ i ].securityData
         }
       }
-      restServer.respondJson(res, null, networks)
+      restServer.respond(res, 200, networks)
     })
       .catch(function (err) {
         appLogger.log('Error getting networks: ' + err)
@@ -135,7 +135,7 @@ exports.initialize = function (app, server) {
       if (req.company.type != modelAPI.companies.COMPANY_ADMIN) {
         delete network.securityData
       }
-      restServer.respondJson(res, null, network)
+      restServer.respond(res, 200, network)
     })
       .catch(function (err) {
         appLogger.log('Error getting network ' + id + ': ' + err)
@@ -255,71 +255,77 @@ exports.initialize = function (app, server) {
     restServer.fetchCompany,
     restServer.isAdminCompany],
   function (req, res, next) {
-    var data = {}
+    var data = req.body
     data.id = parseInt(req.params.id)
+    modelAPI.networks.updateNetwork(data).then(function (rec) {
+      restServer.respond(res, 204)
+    })
+      .catch(function (err) {
+        restServer.respond(res, err)
+      })
     // We'll start by getting the network, as a read is much less expensive than
     // a write, and then we'll be able to tell if anything really changed before
     // we even try to write.
-    modelAPI.networks.retrieveNetwork(data.id).then(function (ntwk) {
-      // Fields that may exist in the request body that can change.  Make
-      // sure they actually differ, though.
-      var changed = 0
-      if ((req.body.name) &&
-                 (req.body.name != ntwk.name)) {
-        data.name = req.body.name
-        ++changed
-      }
-      if (req.body.networkProviderId) {
-        if (req.body.networkProviderId != ntwk.networkProviderId) {
-          data.networkProviderId = req.body.networkProviderId
-          ++changed
-        }
-      }
-      if (req.body.networkTypeId) {
-        if (req.body.networkTypeId != ntwk.networkTypeId) {
-          data.networkTypeId = req.body.networkTypeId
-          ++changed
-        }
-      }
-      if (req.body.networkProtocolId) {
-        if (req.body.networkProtocolId != ntwk.networkProtocolId) {
-          data.networkProtocolId = req.body.networkProtocolId
-          ++changed
-        }
-      }
-      if (req.body.baseUrl) {
-        if (req.body.baseUrl != ntwk.baseUrl) {
-          data.baseUrl = req.body.baseUrl
-          ++changed
-        }
-      }
-      if (req.body.securityData) {
-        if (req.body.securityData !== ntwk.securityData) {
-          data.securityData = req.body.securityData
-          ++changed
-        }
-      }
-
-      // Ready.  DO we have anything to actually change?
-      if (changed == 0) {
-        // No changes.  But returning 304 apparently causes Apache to strip
-        // CORS info, causing the browser to throw a fit.  So just say,
-        // "Yeah, we did that.  Really.  Trust us."
-        restServer.respond(res, 204)
-      } else {
-        // Do the update.
-        modelAPI.networks.updateNetwork(data).then(function (rec) {
-          restServer.respond(res, 204)
-        })
-          .catch(function (err) {
-            restServer.respond(res, err)
-          })
-      }
-    })
-      .catch(function (err) {
-        appLogger.log('Error getting network ' + data.id + ': ' + err)
-        restServer.respond(res, err)
-      })
+    // modelAPI.networks.retrieveNetwork(data.id).then(function (ntwk) {
+    //   // Fields that may exist in the request body that can change.  Make
+    //   // sure they actually differ, though.
+    //   var changed = 0
+    //   if ((req.body.name) &&
+    //              (req.body.name != ntwk.name)) {
+    //     data.name = req.body.name
+    //     ++changed
+    //   }
+    //   if (req.body.networkProviderId) {
+    //     if (req.body.networkProviderId != ntwk.networkProviderId) {
+    //       data.networkProviderId = req.body.networkProviderId
+    //       ++changed
+    //     }
+    //   }
+    //   if (req.body.networkTypeId) {
+    //     if (req.body.networkTypeId != ntwk.networkTypeId) {
+    //       data.networkTypeId = req.body.networkTypeId
+    //       ++changed
+    //     }
+    //   }
+    //   if (req.body.networkProtocolId) {
+    //     if (req.body.networkProtocolId != ntwk.networkProtocolId) {
+    //       data.networkProtocolId = req.body.networkProtocolId
+    //       ++changed
+    //     }
+    //   }
+    //   if (req.body.baseUrl) {
+    //     if (req.body.baseUrl != ntwk.baseUrl) {
+    //       data.baseUrl = req.body.baseUrl
+    //       ++changed
+    //     }
+    //   }
+    //   if (req.body.securityData) {
+    //     if (req.body.securityData !== ntwk.securityData) {
+    //       data.securityData = req.body.securityData
+    //       ++changed
+    //     }
+    //   }
+    //
+    //   // Ready.  DO we have anything to actually change?
+    //   if (changed == 0) {
+    //     // No changes.  But returning 304 apparently causes Apache to strip
+    //     // CORS info, causing the browser to throw a fit.  So just say,
+    //     // "Yeah, we did that.  Really.  Trust us."
+    //     restServer.respond(res, 204)
+    //   } else {
+    //     // Do the update.
+    //     modelAPI.networks.updateNetwork(data).then(function (rec) {
+    //       restServer.respond(res, 204)
+    //     })
+    //       .catch(function (err) {
+    //         restServer.respond(res, err)
+    //       })
+    //   }
+    // })
+    //   .catch(function (err) {
+    //     appLogger.log('Error getting network ' + data.id + ': ' + err)
+    //     restServer.respond(res, err)
+    //   })
   })
 
   /**

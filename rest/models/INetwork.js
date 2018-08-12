@@ -135,6 +135,11 @@ Network.prototype.updateNetwork = function (record) {
               reject(err)
             })
         } else {
+          if (record.securityData.access_token) {
+            record.securityData.authorized = true
+          } else {
+            record.securityData.authorized = false
+          }
           record.securityData = dataAPI.hide(null,
             record.securityData,
             k)

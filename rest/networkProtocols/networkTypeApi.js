@@ -18,7 +18,7 @@ var protos
 // Defines the generic cross-network API from the perspective of a networkType,
 // that propogates calls the the individual networks on behalf of the caller.
 //* *****************************************************************************
-function NetworkTypeApi(dataModel) {
+function NetworkTypeApi (dataModel) {
   modelAPI = dataModel
   protos = new NetworkProtocols(dataModel)
   protos.register()
@@ -30,7 +30,7 @@ function NetworkTypeApi(dataModel) {
 // than one caller at a time.
 var doneTracker = {}
 
-function allDoneInit(count) {
+function allDoneInit (count) {
   // Set up an id for this operation.  Unix timestamp should be sufficient.
   let id = Math.floor(new Date())
   // But just in case we're running really tight operations...
@@ -46,7 +46,7 @@ function allDoneInit(count) {
   return id
 }
 
-function done(id, logs, resolve) {
+function done (id, logs, resolve) {
   // Get the tracker and make sure it exists.
   let tracker = doneTracker[id]
   if (tracker) {
@@ -77,9 +77,9 @@ function done(id, logs, resolve) {
 //                    against.
 // operationFunction - A callback function that returns a promise for the passed
 //                     network, using the passed NetworkProtocolDataAccess.
-function createPromiseOperationForNetworksOfType(operationName,
-                                                 networkTypeId,
-                                                 operationFunction) {
+function createPromiseOperationForNetworksOfType (operationName,
+  networkTypeId,
+  operationFunction) {
   return new Promise(async function (resolve, reject) {
     // Get the data access object/cache set up for this operation across all
     // networks associated with the networkType.  This object keeps a cache
@@ -99,6 +99,7 @@ function createPromiseOperationForNetworksOfType(operationName,
       // networkType.
       networks = await npda.getNetworksOfType(networkTypeId)
     } catch (err) {
+      appLogger.log('Error retrieving networks for type ID ' + networkTypeId)
       npda.addLog(null, 'Error retrieving networks for type ID ' + networkTypeId)
       resolve(npda.getLogs())
       return
@@ -131,7 +132,7 @@ function createPromiseOperationForNetworksOfType(operationName,
 
 //* *****************************************************************************
 // Add/Push/Delete remote companies.
-//* *****************************************************************************
+//* ************************************************************134:4*****************
 
 // Add company.
 //
@@ -466,6 +467,5 @@ NetworkTypeApi.prototype.connect = function (network, loginData) {
       })
   })
 }
-
 
 module.exports = NetworkTypeApi

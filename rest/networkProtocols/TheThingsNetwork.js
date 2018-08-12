@@ -50,20 +50,20 @@ module.exports = {
           oauthQueryParameter: 'code'
         }
       ],
-      "oauthRequestUrlQueryParams": [
+      oauthRequestUrlQueryParams: [
         {
-          "name": "response_type",
-          "valueSource": "value",
-          "value": "code"
+          name: 'response_type',
+          valueSource: 'value',
+          value: 'code'
         },
         {
-          "name": "cliend_id",
-          "valueSource": "protocolHandlerNetworkField",
-          "protocolHandlerNetworkField": "clientId"
+          name: 'cliend_id',
+          valueSource: 'protocolHandlerNetworkField',
+          protocolHandlerNetworkField: 'clientId'
         }
       ],
-      "oauthResponseUrlQueryParams": [ "code" ],
-      "oauthResponseUrlErrorParams": [ "error", "error_description" ]
+      oauthResponseUrlQueryParams: [ 'code' ],
+      oauthResponseUrlErrorParams: [ 'error', 'error_description' ]
     }
 }
 
@@ -154,8 +154,8 @@ module.exports.getDeviceProfileAccessAccount = async function (dataAPI, network,
  * @returns {Promise<BearerToken>}
  */
 module.exports.connect = function (network, loginData) {
+  appLogger.log('Inside TTN connect')
   return new Promise(function (resolve, reject) {
-    appLogger.log('Inside TTN connect')
     let options = {}
     if (loginData.code) {
       options.method = 'POST'
@@ -178,6 +178,7 @@ module.exports.connect = function (network, loginData) {
         } else {
           appLogger.log(body)
           var token = body.access_token
+          body.username = 'TTNUser'
           if (token) {
             resolve(body)
           } else {
@@ -185,8 +186,7 @@ module.exports.connect = function (network, loginData) {
           }
         }
       })
-    }
-    else if (loginData.refresh_token) {
+    } else if (loginData.refresh_token) {
       options.method = 'POST'
       options.url = network.baseUrl + '/users/token'
       let auth = Buffer.from(loginData.clientId + ':' + loginData.clientSecret).toString('base64')
@@ -206,6 +206,7 @@ module.exports.connect = function (network, loginData) {
           reject(response.statusCode)
         } else {
           var token = body.access_token
+          body.username = 'TTNUser'
           if (token) {
             resolve(body)
           } else {
@@ -469,7 +470,7 @@ module.exports.getApplications = function (sessionData, network, dataAPI) {
   return new Promise(async function (resolve, reject) {
     let options = {}
     options.method = 'GET'
-    options.url = network.baseUrl + '/applications'
+    options.url = network.baseUrl + '/api/v2/applications'
     options.headers = {
       'Content-Type': 'application/json',
       'Authorization': 'Bearer ' + sessionData.connection.access_token
@@ -479,7 +480,7 @@ module.exports.getApplications = function (sessionData, network, dataAPI) {
       'rejectUnauthorized': false
     }
     options.json = true
-
+    console.log(options)
     request(options, function (error, response, body) {
       if (error) {
         dataAPI.addLog(network, 'Error on get application: ' + error)

@@ -20,7 +20,8 @@ exports.createNetwork = function (name, networkProviderId, networkTypeId, networ
 
 exports.retrieveNetwork = function (id) {
   return new Promise(function (resolve, reject) {
-    resolve(network)
+    let obj2 = JSON.parse(JSON.stringify(network));
+    resolve(obj2)
   })
 }
 
@@ -41,6 +42,9 @@ exports.deleteNetwork = function (networkId) {
 
 exports.retrieveNetworks = function (options) {
   return new Promise(function (resolve, reject) {
-    resolve(network)
+    let temp = {
+      records: [network]
+    }
+    resolve(temp)
   })
 }

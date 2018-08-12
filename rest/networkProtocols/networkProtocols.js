@@ -94,17 +94,23 @@ NetworkProtocolAccess.prototype.getProtocol = function (network) {
  */
 NetworkProtocolAccess.prototype.connect = function (network, loginData) {
   var me = this
+  appLogger.log('Inside NPA connect')
   return new Promise(async function (resolve, reject) {
     try {
       var proto = await me.getProtocol(network)
-      var connection = await proto.api.connect(network, loginData)
-      if (!proto.sessionData[loginData.username]) {
-        proto.sessionData[loginData.username] = {}
-      }
-      proto.sessionData[loginData.username].connection = connection
-      resolve(connection)
+      proto.api.connect(network, loginData)
+        .then((connection) => {
+          appLogger.log(connection)
+          if (!proto.sessionData[network.id]) {
+            proto.sessionData[network.id] = {}
+          }
+          proto.sessionData[network.id].connection = connection
+          resolve(connection)
+        }).catch((err) => {
+          appLogger.log('Connect failure with' + network.name + ': ' + err)
+          reject(err)
+        })
     } catch (err) {
-      appLogger.log('Connect failure with' + network.name + ': ' + err)
       reject(err)
     }
   })
@@ -139,15 +145,24 @@ NetworkProtocolAccess.prototype.sessionWrapper = function (network, loginData, p
       // Get the protocol, use the session to make the call to the
       // network's protocol code.
       var proto = await me.getProtocol(network)
-      if (!proto.sessionData[loginData.username]) {
+      if (!network.securityData.authorized) {
         // Wait, we don't have a session.  Just log in.
         appLogger.log('No session for login, connecting...')
         await me.connect(network, loginData)
+        network.securityData = proto.sessionData[network.id].connection
         network.securityData.authorized = true
         this.modelAPI.network.updateNetwork(network)
       }
+      if (!proto.sessionData) {
+        proto.sessionData = {}
+      }
+      if (!proto.sessionData[network.id]) {
+        proto.sessionData[network.id] = {
+          connection: loginData
+        }
+      }
       // Use the session we have (now?) and run the operation.
-      var id = await protocolFunc(proto, proto.sessionData[loginData.username])
+      var id = await protocolFunc(proto, proto.sessionData[network.id])
 
       // Worked, great, done.
       resolve(id)
@@ -159,7 +174,8 @@ NetworkProtocolAccess.prototype.sessionWrapper = function (network, loginData, p
           await me.connect(network, loginData)
           appLogger.log('Reconnected session...')
           // Use the NEW session and run the operation.
-          id = await protocolFunc(proto, proto.sessionData[loginData.username])
+          id = await protocolFunc(proto, proto.sessionData[network.id])
+          network.securityData = proto.sessionData[network.id].connection
           network.securityData.authorized = true
           this.modelAPI.network.updateNetwork(network)
         } catch (err) {
@@ -383,7 +399,6 @@ NetworkProtocolAccess.prototype.pushApplication = function (dataAPI, network, ap
     var netProto = await me.getProtocol(network)
 
     var loginData = await netProto.api.getApplicationAccessAccount(dataAPI, network, applicationId)
-
     // Use a session wrapper to call the function. (Session
     // wrapper manages logging in if session was not already set
     // up or is expired)
@@ -392,10 +407,9 @@ NetworkProtocolAccess.prototype.pushApplication = function (dataAPI, network, ap
         network,
         applicationId,
         dataAPI)
+    }).then(function (ret) {
+      resolve(ret)
     })
-      .then(function (ret) {
-        resolve(ret)
-      })
       .catch(function (err) {
         reject(err)
       })
@@ -423,11 +437,12 @@ NetworkProtocolAccess.prototype.pullApplication = function (dataAPI, network) {
     // wrapper manages logging in if session was not already set
     // up or is expired)
     me.sessionWrapper(network, loginData, function (proto, sessionData) {
-      return proto.api.pullApplication(sessionData,
+      return proto.api.getApplications(sessionData,
         network,
         dataAPI)
     })
       .then(function (ret) {
+        appLogger.log(ret)
         resolve(ret)
       })
       .catch(function (err) {
@@ -479,7 +494,7 @@ NetworkProtocolAccess.prototype.deleteApplication = function (dataAPI, network, 
 //                   protocol.
 // companyData     - The companyNetworkTypeLinks record for this company and
 //                   network.
-// application     - The applications record.
+// application     - The applicatiapions record.
 // applicationData - The applicationNetworkTypeLinks record for this Application
 //                   and network.
 // deliveryFunc    - The function to call with new data.
