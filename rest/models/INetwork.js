@@ -152,6 +152,15 @@ Network.prototype.updateNetwork = function (record) {
             })
         }
       }
+      else {
+        me.impl.updateNetwork(record)
+          .then((rec) => {
+            resolve(rec)
+          })
+          .catch((err) => {
+            reject(err)
+          })
+      }
     } catch (err) {
       reject(err)
     }

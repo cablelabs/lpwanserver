@@ -149,9 +149,13 @@ NetworkProtocolAccess.prototype.sessionWrapper = function (network, loginData, p
         // Wait, we don't have a session.  Just log in.
         appLogger.log('No session for login, connecting...')
         await me.connect(network, loginData)
-        network.securityData = proto.sessionData[network.id].connection
+        if (typeof proto.sessionData[network.id].connection === 'object') {
+          for (let prop in proto.sessionData[network.id].connection) {
+            network.securityData[prop] = proto.sessionData[network.id].connection[prop]
+          }
+        }
         network.securityData.authorized = true
-        this.modelAPI.network.updateNetwork(network)
+        me.modelAPI.networks.updateNetwork(network)
       }
       if (!proto.sessionData) {
         proto.sessionData = {}
@@ -175,14 +179,18 @@ NetworkProtocolAccess.prototype.sessionWrapper = function (network, loginData, p
           appLogger.log('Reconnected session...')
           // Use the NEW session and run the operation.
           id = await protocolFunc(proto, proto.sessionData[network.id])
-          network.securityData = proto.sessionData[network.id].connection
+          if (typeof proto.sessionData[network.id].connection === 'object') {
+            for (let prop in proto.sessionData[network.id].connection) {
+              network.securityData[prop] = proto.sessionData[network.id].connection[prop]
+            }
+          }
           network.securityData.authorized = true
-          this.modelAPI.network.updateNetwork(network)
+          me.modelAPI.networks.updateNetwork(network)
         } catch (err) {
           // Error again, just report
           appLogger.log('Access failure with ' + network.name + ': ' + err)
           network.securityData.authorized = false
-          this.modelAPI.network.updateNetwork(network)
+          me.modelAPI.networks.updateNetwork(network)
           reject(err)
         }
       } else {
@@ -548,6 +556,7 @@ NetworkProtocolAccess.prototype.stopApplication = function (dataAPI, network, ap
     try {
       // Get the protocol for the network.
       var netProto = await me.getProtocol(network)
+      appLogger.log(netProto)
 
       var loginData = await netProto.api.getApplicationAccessAccount(dataAPI, network, applicationId)
     } catch (err) {

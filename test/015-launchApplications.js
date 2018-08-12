@@ -117,6 +117,8 @@ describe('Launch Applications', function () {
         .send()
         .end(function (err, res) {
           res.should.have.status(200)
+          var logs = JSON.stringify(res.body)
+          logs.indexOf('Error').should.equal(-1)
           done()
         })
     })
