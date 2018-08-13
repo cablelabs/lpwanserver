@@ -220,7 +220,6 @@ exports.initialize = function (app, server) {
       }
 
       // Ready.  DO we have        appLogger.log(nps)
- anything to actually change?
       if (changed == 0) {
         // No changes.  But returning 304 apparently causes Apache to strip
         // CORS info, causing the browser to throw a fit.  So just say,
