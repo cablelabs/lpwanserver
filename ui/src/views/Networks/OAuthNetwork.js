@@ -5,7 +5,6 @@ import React, { Component } from 'react';
 import { withRouter } from 'react-router-dom';
 import { pathOr, propOr, isEmpty, isNil, pick, keys } from 'ramda';
 import qs from 'query-string';
-import { dispatchError } from '../../utils/errorUtils';
 import { capitalize, removeUnderscores } from '../../utils/stringUtils';
 import networkStore from '../../stores/NetworkStore';
 import networkProtocolStore from '../../stores/NetworkProtocolStore';
@@ -17,7 +16,7 @@ import PropTypes from 'prop-types';
 const oauthTimeout = Number(process.env.REACT_APP_OAUTH_TIMEOUT * 60 * 1000);
 
 //******************************************************************************
-// The Compnent
+// The Component
 //******************************************************************************
 
 class OAuthNetwork extends Component {
@@ -43,21 +42,18 @@ class OAuthNetwork extends Component {
           const networkName = propOr('?', 'name', network);
           const protocolName = propOr('?', 'name', networkProtocol);
           console.log(`Authorization of network '${protocolName}' ${networkName} succeeded`);
-          // TODO: put up a toast with above message
-          props.history.push('/admin/networks');
+          // Tell edit screen we're good.
+          props.history.push(`/admin/network/${targetNetworkId}?oauthStatus=success`);
         })
-        .catch( err => dispatchError(
-          'Error while attemping to authorize with the remote network provider. ' +
-          propOr('', 'message', err) + ' Please try again'
-        ));
+        .catch( err => {
+          // Tell edit screen we had an issue.
+          console.log("Error being reported");
+          props.history.push(`/admin/network/${targetNetworkId}?oauthStatus=fail&oauthError=${encodeURIComponent(err.message)}`);
+        });
     }
     else {
-      dispatchError('Authorization attempt timed out.  Please try again');
-      props.history.push(`/admin/networks`);
+      props.history.push(`/admin/network/${targetNetworkId}?oauthStatus=fail&oauthError=${encodeURIComponent('Error: Timeout.  Error_description: Authorization attempt timed out.  Please try again')}`);
     }
-
-    // if we get here, there was a problem, so go to network edit page
-    props.history.push(`/admin/network/${targetNetworkId}`);
   }
 
   // We just store the OAuth code and redirect - nothing to render.
@@ -74,11 +70,9 @@ export default withRouter(OAuthNetwork);
 //******************************************************************************
 
 async function handleOauthReturn(targetNetworkId, queryParams) {
-
   const network = await networkStore.getNetwork(targetNetworkId);
   const networkProtocol = network && network.networkProtocolId ?
     await networkProtocolStore.getNetworkProtocol(network.networkProtocolId) : null;
-
   if ( isNil(network) || isNil(networkProtocol))
     throw new Error(`Unable to fetch network/networkProtocol data during oauth for network ${targetNetworkId}`);
 
@@ -102,7 +96,6 @@ async function handleOauthReturn(targetNetworkId, queryParams) {
    // Oauth failed
    else {
      throw new Error(
-       `Trying to authorize network '${propOr('?', 'name', network)}'. ` +
        keys(errorParams).reduce((emsg, ekey)=>
         `${emsg} ${capitalize(ekey)}: ${removeUnderscores(errorParams[ekey])}.`,'')
      );

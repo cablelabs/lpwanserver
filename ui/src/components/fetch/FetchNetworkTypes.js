@@ -20,7 +20,7 @@ FetchNetworkTypes.propTypes = {
   render: PT.func
     // this funcion is called with results of the fetch
     // called as props.render({networkType}), for single fetch,
-    // called as props.render({networkType}]) for list fetch
+    // called as props.render([{networkType}]) for list fetch
 };
 
 //
