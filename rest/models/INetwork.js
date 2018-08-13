@@ -135,7 +135,7 @@ Network.prototype.updateNetwork = function (record) {
               reject(err)
             })
         } else {
-          if (record.securityData.access_token) {
+          if (record.securityData.access_token || record.securityData.apikey) {
             record.securityData.authorized = true
           } else {
             record.securityData.authorized = false
@@ -151,8 +151,7 @@ Network.prototype.updateNetwork = function (record) {
               reject(err)
             })
         }
-      }
-      else {
+      } else {
         me.impl.updateNetwork(record)
           .then((rec) => {
             resolve(rec)
