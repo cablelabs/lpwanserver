@@ -142,18 +142,23 @@ module.exports.test = function (network, loginData) {
       }
       options.json = true
       request(options, function (error, response, body) {
-        if (error) {
-          appLogger.log('Error on get application: ' + error)
-          reject(error)
-        } else if (response.statusCode === 401) {
-          reject(new Error('Unauthorized'))
-        } else if (response.statusCode === 404) {
-          reject(new Error('URL is Incorrect'))
-        } else if (response.statusCode >= 400) {
-          appLogger.log(body)
-          reject(new Error('Server Error'))
+        if (!error) {
+          if (response.statusCode === 401) {
+            reject(new Error('Unauthorized'))
+          } else if (response.statusCode === 404) {
+            reject(new Error('URL is Incorrect'))
+          } else if (response.statusCode >= 400) {
+            appLogger.log(body)
+            reject(new Error('Server Error'))
+          } else {
+            resolve(body)
+          }
         } else {
-          resolve(body)
+          appLogger.log('Test Error: ' + error)
+          if (response && response.statusCode) {
+            appLogger.log(response.statusCode)
+          }
+          reject(error)
         }
       })
     } else {

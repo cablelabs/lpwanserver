@@ -95,25 +95,21 @@ NetworkProtocolAccess.prototype.getProtocol = function (network) {
 NetworkProtocolAccess.prototype.test = function (network, loginData) {
   var me = this
   return new Promise(async function (resolve, reject) {
-    try {
-      var proto = await me.getProtocol(network)
-      proto.api.test(network, loginData)
-        .then((body) => {
-          appLogger.log(body)
-          network.securityData.authorized = true
-          network.securityData.message = 'Ok'
-          me.modelAPI.networks.updateNetwork(network)
-          resolve()
-        }).catch((err) => {
-          appLogger.log('Connect failure with' + network.name + ': ' + err)
-          network.securityData.authorized = false
-          network.securityData.message = err
-          me.modelAPI.networks.updateNetwork(network)
-          reject(err)
-        })
-    } catch (err) {
-      reject(err)
-    }
+    var proto = await me.getProtocol(network)
+    proto.api.test(network, loginData)
+      .then((body) => {
+        appLogger.log(body)
+        network.securityData.authorized = true
+        network.securityData.message = 'Ok'
+        me.modelAPI.networks.updateNetwork(network)
+        resolve()
+      }).catch((err) => {
+        appLogger.log('Connect failure with' + network.name + ': ' + err)
+        network.securityData.authorized = false
+        network.securityData.message = err
+        me.modelAPI.networks.updateNetwork(network)
+        reject(err)
+      })
   })
 }
 
