@@ -90,6 +90,37 @@ NetworkProtocolAccess.prototype.getProtocol = function (network) {
  *
  * @param network
  * @param loginData
+ * @returns {Promise<any>}
+ */
+NetworkProtocolAccess.prototype.test = function (network, loginData) {
+  var me = this
+  return new Promise(async function (resolve, reject) {
+    try {
+      var proto = await me.getProtocol(network)
+      proto.api.test(network, loginData)
+        .then((body) => {
+          appLogger.log(body)
+          network.securityData.authorized = true
+          network.securityData.message = 'Ok'
+          me.modelAPI.networks.updateNetwork(network)
+          resolve()
+        }).catch((err) => {
+          appLogger.log('Connect failure with' + network.name + ': ' + err)
+          network.securityData.authorized = false
+          network.securityData.message = err
+          me.modelAPI.networks.updateNetwork(network)
+          reject(err)
+        })
+    } catch (err) {
+      reject(err)
+    }
+  })
+}
+
+/**
+ *
+ * @param network
+ * @param loginData
  * @returns {Promise<any>} - Key, token, or connection data required to access the network
  */
 NetworkProtocolAccess.prototype.connect = function (network, loginData) {

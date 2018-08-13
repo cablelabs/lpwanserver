@@ -101,7 +101,7 @@ module.exports.getDeviceAccessAccount = async function (dataAPI, network, device
  * @returns {Promise<*>} - Loriot account information
  */
 module.exports.getDeviceProfileAccessAccount = async function (dataAPI, network, deviceId) {
-  let co = await dataAPI.getCompanyByDeviceProfileId(deviceId)
+  let co = await dataAPI.ggetApplicationsetCompanyByDeviceProfileId(deviceId)
   return getCompanyAccount(dataAPI, network, co.id, false)
 }
 
@@ -114,9 +114,50 @@ module.exports.getDeviceProfileAccessAccount = async function (dataAPI, network,
 module.exports.connect = function (network, loginData) {
   return new Promise(function (resolve, reject) {
     if (loginData.apiKey) {
-      resolve(loginData.apiKey)
+      resolve(loginData)
     } else {
       reject(new Error('No token'))
+    }
+  })
+}
+
+/**
+ * Test the network to vergetApplicationsify it connects
+ * @param network
+ */
+module.exports.test = function (network, loginData) {
+  return new Promise(function (resolve, reject) {
+    appLogger.log(network.securityData)
+    if (network.securityData.authorized) {
+      let options = {}
+      options.method = 'GET'
+      options.url = network.baseUrl + '/1/nwk/apps'
+      options.headers = {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + network.securityData.apikey
+      }
+      options.agentOptions = {
+        'secureProtocol': 'TLSv1_2_method',
+        'rejectUnauthorized': false
+      }
+      options.json = true
+      request(options, function (error, response, body) {
+        if (error) {
+          appLogger.log('Error on get application: ' + error)
+          reject(error)
+        } else if (response.statusCode === 401) {
+          reject(new Error('Unauthorized'))
+        } else if (response.statusCode === 404) {
+          reject(new Error('URL is Incorrect'))
+        } else if (response.statusCode >= 400) {
+          appLogger.log(body)
+          reject(new Error('Server Error'))
+        } else {
+          resolve(body)
+        }
+      })
+    } else {
+      reject(new Error('Not Authorized'))
     }
   })
 }
@@ -218,7 +259,7 @@ module.exports.pullApplications = function (sessionData, network, companyMap, dp
     let applicationMap = []
     let options = {}
     options.method = 'GET'
-    options.url = network.baseUrl + '/applications' + '?limit=9999&offset=0'
+    options.url = network.baseUrl + '/1/nwk/apps' + '?limit=9999&offset=0'
     options.headers = {
       'Content-Type': 'application/json',
       'Authorization': 'Bearer ' + sessionData.connection
@@ -289,7 +330,7 @@ module.exports.addApplication = function (sessionData, network, applicationId, d
     // Set up the request options.
     let options = {}
     options.method = 'POST'
-    options.url = network.baseUrl + '/applications'
+    options.url = network.baseUrl + '/1/nwk/apps'
     options.headers = {
       'Content-Type': 'application/json',
       'Authorization': 'Bearer ' + sessionData.connection
@@ -353,6 +394,12 @@ module.exports.getApplications = function (sessionData, network, dataAPI) {
       if (error) {
         dataAPI.addLog(network, 'Error on get application: ' + error)
         reject(error)
+      } else if (response.statusCode === 401) {
+        reject(new Error('Unauthorized'))
+      } else if (response.statusCode === 404) {
+        reject(new Error('URL is Incorrect'))
+      } else if (response.statusCode >= 400) {
+        reject(new Error('Server Error'))
       } else {
         dataAPI.addLog(network, response.headers)
         dataAPI.addLog(network, body)
@@ -429,7 +476,7 @@ module.exports.updateApplication = function (sessionData, network, applicationId
     // Set up the request options.
     let options = {}
     options.method = 'PUT'
-    options.url = network.baseUrl + '/applications/' + appNetworkId
+    options.url = network.baseUrl + '/1/nwk/apps/' + appNetworkId
     options.headers = {
       'Content-Type': 'application/json',
       'Authorization': 'Bearer ' + sessionData.connection
@@ -523,7 +570,7 @@ module.exports.deleteApplication = function (sessionData, network, applicationId
     // Set up the request options.
     let options = {}
     options.method = 'DELETE'
-    options.url = network.baseUrl + '/applications/' + appNetworkId
+    options.url = network.baseUrl + '/1/nwk/apps/' + appNetworkId
     options.headers = {
       'Content-Type': 'application/json',
       'Authorization': 'Bearer ' + sessionData.connection
@@ -622,7 +669,7 @@ module.exports.startApplication = function (sessionData, network, applicationId,
         makeApplicationDataKey(applicationId, 'appNwkId'))
       let options = {}
       options.method = 'POST'
-      options.url = network.baseUrl + '/applications/' + appNwkId + '/integrations/http'
+      options.url = network.baseUrl + '/1/nwk/apps/' + appNwkId + '/integrations/http'
       options.headers = {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ' + sessionData.connection
@@ -689,7 +736,7 @@ module.exports.stopApplication = function (sessionData, network, applicationId, 
     // Kill the Forwarding with LoRa App Server
     let options = {}
     options.method = 'DELETE'
-    options.url = network.baseUrl + '/applications/' + appNwkId + '/integrations/http'
+    options.url = network.baseUrl + '/1/nwk/apps/' + appNwkId + '/integrations/http'
     options.headers = {
       'Content-Type': 'application/json',
       'Authorization': 'Bearer ' + sessionData.connection
@@ -803,7 +850,7 @@ module.exports.pullDevices = function (sessionData, network, companyId, dpMap, r
     let deviceMap = []
     let options = {}
     options.method = 'GET'
-    options.url = network.baseUrl + '/applications/' + remoteApplicationId + '/devices' + '?limit=9999&offset=0'
+    options.url = network.baseUrl + '/1/nwk/apps/' + remoteApplicationId + '/devices' + '?limit=9999&offset=0'
     options.headers = {
       'Content-Type': 'application/json',
       'Authorization': 'Bearer ' + sessionData.connection
@@ -1607,7 +1654,7 @@ function getApplicationById (network, applicationId, connection, dataAPI) {
   return new Promise(async function (resolve, reject) {
     let options = {}
     options.method = 'GET'
-    options.url = network.baseUrl + '/applications/' + applicationId
+    options.url = network.baseUrl + '/1/nwk/apps/' + applicationId
     options.headers = {
       'Content-Type': 'application/json',
       'Authorization': 'Bearer ' + connection

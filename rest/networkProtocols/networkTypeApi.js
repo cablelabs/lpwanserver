@@ -468,4 +468,16 @@ NetworkTypeApi.prototype.connect = function (network, loginData) {
   })
 }
 
+NetworkTypeApi.prototype.test = function (network, loginData) {
+  return new Promise(async function (resolve, reject) {
+    protos.test(network, loginData)
+      .then(() => {
+        resolve()
+      })
+      .catch((err) => {
+        reject(err)
+      })
+  })
+}
+
 module.exports = NetworkTypeApi

@@ -374,6 +374,23 @@ exports.initialize = function (app, server) {
     })
   })
 
+  app.get('/api/networks/:networkId/test', [restServer.isLoggedIn,
+    restServer.fetchCompany,
+    restServer.isAdmin],
+  function (req, res, next) {
+    var networkId = parseInt(req.params.networkId)
+    modelAPI.networks.retrieveNetwork(networkId)
+      .then((network) => {
+        modelAPI.networkTypeAPI.test(network, network.securityData).then(() => {
+          restServer.respond(res, 200, {status: 'success'})
+        })
+      })
+      .catch((err) => {
+        appLogger.log(err)
+        restServer.respond(res, err)
+      })
+  })
+
   app.get('/api/oauth/callback', [],
     function (req, res, next) {
       restServer.respondJson(res, 200, {})
