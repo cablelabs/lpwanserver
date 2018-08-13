@@ -1,3 +1,4 @@
+/* eslint-disable handle-callback-err */
 var assert = require('assert')
 var chai = require('chai')
 var chaiHttp = require('chai-http')
@@ -9,8 +10,8 @@ var server = chai.request(app).keepOpen()
 
 var npId1
 var npId2
-const NUMBER_PROTOCOLS = 6
-const NUMBER_PROTOCOL_HANDLERS = 6
+const NUMBER_PROTOCOLS = 4
+const NUMBER_PROTOCOL_HANDLERS = 4
 
 describe('NetworkProtocols', function () {
   var adminToken
@@ -27,7 +28,7 @@ describe('NetworkProtocols', function () {
     }
     server
       .post('/api/sessions')
-      .send({ 'login_username': 'admin', 'login_password': 'password' })
+      .send({'login_username': 'admin', 'login_password': 'password'})
       .end(function (err, res) {
         if (err) {
           return done(err)
@@ -38,7 +39,7 @@ describe('NetworkProtocols', function () {
 
     server
       .post('/api/sessions')
-      .send({ 'login_username': 'clAdmin', 'login_password': 'password' })
+      .send({'login_username': 'clAdmin', 'login_password': 'password'})
       .end(function (err, res) {
         if (err) {
           return done(err)
@@ -49,7 +50,7 @@ describe('NetworkProtocols', function () {
 
     server
       .post('/api/sessions')
-      .send({ 'login_username': 'clUser', 'login_password': 'password' })
+      .send({'login_username': 'clUser', 'login_password': 'password'})
       .end(function (err, res) {
         if (err) {
           return done(err)
@@ -67,24 +68,14 @@ describe('NetworkProtocols', function () {
         .set('Content-Type', 'application/json')
         .set('Accept', 'application/json')
         .end(function (err, res) {
-          res.should.have.status(200)
-          let body = JSON.parse(res.text)
-          body.should.have.length(4)
-          done()
-        })
-    })
-  })
-
-  describe('POST /api/networkProtocols', function () {
-    it('should return 403 (forbidden) on user', function (done) {
-      server
-        .post('/api/passwordPolicies')
-        .set('Authorization', 'Bearer ' + userToken)
-        .set('Content-Type', 'application/json')
-        .send({ 'name': 'LoRa Open Source', 'networkTypeId': 1, 'protocolHandler': 'LoRaOpenSource.js' })
-        .end(function (err, res) {
-          res.should.have.status(403)
-          done()
+          if (err) {
+            done(err)
+          } else {
+            res.should.have.status(200)
+            let body = JSON.parse(res.text)
+            body.should.have.length(NUMBER_PROTOCOLS)
+            done()
+          }
         })
     })
 
@@ -93,49 +84,20 @@ describe('NetworkProtocols', function () {
         .post('/api/networkProtocols')
         .set('Authorization', 'Bearer ' + coAdminToken)
         .set('Content-Type', 'application/json')
-        .send({ 'name': 'LoRa Open Source', 'networkTypeId': 1, 'protocolHandler': 'LoRaOpenSource.js' })
+        .send({'name': 'LoRa Open Source', 'networkTypeId': 1, 'protocolHandler': 'LoRaOpenSource.js'})
         .end(function (err, res) {
           res.should.have.status(403)
           done()
         })
     })
-
-    it('should return 200 on creating new network protocol with admin account #1', function (done) {
-      server
-        .post('/api/networkProtocols')
-        .set('Authorization', 'Bearer ' + adminToken)
-        .set('Content-Type', 'application/json')
-        .send({ 'name': 'LoRa Open Source', 'networkTypeId': 1, 'protocolHandler': 'LoRaOpenSource.js' })
-        .end(function (err, res) {
-          res.should.have.status(200)
-          var ret = JSON.parse(res.text)
-          npId1 = ret.id
-          done()
-        })
-    })
-
-    it('should return 200 on creating new network protocol with admin account #2', function (done) {
-      server
-        .post('/api/networkProtocols')
-        .set('Authorization', 'Bearer ' + adminToken)
-        .set('Content-Type', 'application/json')
-        .send({ 'name': 'T-Mobile NB-IoT', 'networkTypeId': 2, 'protocolHandler': 'TMobileNBIoT.js' })
-        .end(function (err, res) {
-          res.should.have.status(200)
-          var ret = JSON.parse(res.text)
-          npId2 = ret.id
-          done()
-        })
-    })
   })
   describe('GET /api/networkProtocols', function () {
-    it('should return 200 with 3 protocols on coAdmin', function (done) {
+    it('should return 200 with 4 protocols on coAdmin', function (done) {
       server
         .get('/api/networkProtocols')
         .set('Authorization', 'Bearer ' + coAdminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {
-            console.log(res)
           res.should.have.status(200)
           var result = JSON.parse(res.text)
           result.records.should.be.instanceof(Array)
@@ -145,7 +107,7 @@ describe('NetworkProtocols', function () {
         })
     })
 
-    it('should return 200 with 2 protocols on user', function (done) {
+    it('should return 200 with 4 protocols on user', function (done) {
       server
         .get('/api/networkProtocols')
         .set('Authorization', 'Bearer ' + userToken)
@@ -160,7 +122,7 @@ describe('NetworkProtocols', function () {
         })
     })
 
-    it('should return 200 with 2 protocols on admin', function (done) {
+    it('should return 200 with 4 protocols on admin', function (done) {
       server
         .get('/api/networkProtocols')
         .set('Authorization', 'Bearer ' + adminToken)
@@ -177,7 +139,7 @@ describe('NetworkProtocols', function () {
 
     it('should return 200 with 1 protocol search NB-IoT', function (done) {
       server
-        .get('/api/networkProtocols?search=%NB-IoT%')
+        .get('/api/networkProtocols?search=%TMobileNBIoT%')
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {
@@ -186,6 +148,22 @@ describe('NetworkProtocols', function () {
           result.records.should.be.instanceof(Array)
           result.records.should.have.length(1)
           result.totalCount.should.equal(1)
+          npId2 = result.records[0].id
+          done()
+        })
+    })
+    it('should return 200 with 1 protocol search LoraOS ', function (done) {
+      server
+        .get('/api/networkProtocols?search=Lora Open Source')
+        .set('Authorization', 'Bearer ' + adminToken)
+        .set('Content-Type', 'application/json')
+        .end(function (err, res) {
+          res.should.have.status(200)
+          var result = JSON.parse(res.text)
+          result.records.should.be.instanceof(Array)
+          result.records.should.have.length(1)
+          result.totalCount.should.equal(1)
+          npId1 = result.records[0].id
           done()
         })
     })
@@ -292,7 +270,7 @@ describe('NetworkProtocols', function () {
     })
   })
 
-  describe('DELETE /api/networkProtocols', function () {
+  describe.skip('DELETE /api/networkProtocols', function () {
     it('should return 204 on admin', function (done) {
       server
         .delete('/api/networkProtocols/' + npId1)

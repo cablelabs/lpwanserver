@@ -5,7 +5,7 @@
   "private": true,
   "scripts": {
     "start": "node ./bin/rest",
-    "mocha": "export NODE_ENV=local;mocah",
+    "mocha": "export NODE_ENV=local;mocha",
     "ttn-test": "export NODE_ENV=ttn-unit;mocha test/ttn-unit",
     "loriot-test": "export NODE_ENV=loriot-unit;mocha test/loriot-unit",
     "test": "./test.sh",

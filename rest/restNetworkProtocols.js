@@ -64,6 +64,9 @@ exports.initialize = function (app, server) {
       if (req.query.search) {
         options.search = req.query.search
       }
+      if (req.query.networkTypeId) {
+        options.networkTypeId = req.query.networkTypeId
+      }
       modelAPI.networkProtocols.retrieveNetworkProtocols(options).then(function (nps) {
         // restServer.respondJson(res, null, nps)
         restServer.respond(res, 200, nps)
@@ -94,7 +97,6 @@ exports.initialize = function (app, server) {
      */
   app.get('/api/networkProtocols/:id', [restServer.isLoggedIn],
     function (req, res, next) {
-      var id = req.params.id
       modelAPI.networkProtocols.retrieveNetworkProtocol(parseInt(req.params.id)).then(function (np) {
         // restServer.respondJson(res, null, np)
         restServer.respond(res, 200, np)
@@ -131,32 +133,36 @@ exports.initialize = function (app, server) {
     restServer.fetchCompany,
     restServer.isAdminCompany],
   function (req, res, next) {
-    var rec = req.body
-    // You can't specify an id.
-    if (rec.id) {
-      restServer.respond(res, 400, "Cannot specify the networkProtocol's id in create")
-      return
+    let methodNotAllowed = {
+      error: 'POST to /api/networkProtocols is not allowed.  Please see documentation for more details.'
     }
-
-    // Verify that required fields exist.
-    if (!rec.name || !rec.networkTypeId || !rec.protocolHandler) {
-      restServer.respond(res, 400, 'Missing required data')
-      return
-    }
-
-    // Do the add.
-    modelAPI.networkProtocols.createNetworkProtocol(
-      rec.name,
-      rec.networkTypeId,
-      rec.protocolHandler).then(function (rec) {
-      var send = {}
-      send.id = rec.id
-      restServer.respondJson(res, 200, send)
-    })
-      .catch(function (err) {
-        appLogger.log(err)
-        restServer.respond(res, err)
-      })
+    restServer.respond(res, 405, methodNotAllowed)
+    // var rec = req.body
+    // // You can't specify an id.
+    // if (rec.id) {
+    //   restServer.respond(res, 400, "Cannot specify the networkProtocol's id in create")
+    //   return
+    // }
+    //
+    // // Verify that required fields exist.
+    // if (!rec.name || !rec.networkTypeId || !rec.protocolHandler) {
+    //   restServer.respond(res, 400, 'Missing required data')
+    //   return
+    // }
+    //
+    // // Do the add.
+    // modelAPI.networkProtocols.createNetworkProtocol(
+    //   rec.name,
+    //   rec.networkTypeId,
+    //   rec.protocolHandler).then(function (rec) {
+    //   var send = {}
+    //   send.id = rec.id
+    //   restServer.respondJson(res, 200, send)
+    // })
+    //   .catch(function (err) {
+    //     appLogger.log(err)
+    //     restServer.respond(res, err)
+    //   })
   })
 
   /**
@@ -213,7 +219,8 @@ exports.initialize = function (app, server) {
         }
       }
 
-      // Ready.  DO we have anything to actually change?
+      // Ready.  DO we have        appLogger.log(nps)
+ anything to actually change?
       if (changed == 0) {
         // No changes.  But returning 304 apparently causes Apache to strip
         // CORS info, causing the browser to throw a fit.  So just say,
@@ -251,14 +258,18 @@ exports.initialize = function (app, server) {
     restServer.fetchCompany,
     restServer.isAdminCompany],
   function (req, res, next) {
-    var id = parseInt(req.params.id)
-    modelAPI.networkProtocols.deleteNetworkProtocol(id).then(function () {
-      restServer.respond(res, 204)
-    })
-      .catch(function (err) {
-        appLogger.log('Error deleting network protocol ' + id + ': ' + err)
-        restServer.respond(res, err)
-      })
+    let methodNotAllowed = {
+      error: 'DELETE to /api/networkProtocols is not allowed.  Please see documentation for more details.'
+    }
+    restServer.respond(res, 405, methodNotAllowed)
+    // var id = parseInt(req.params.id)
+    // modelAPI.networkProtocols.deleteNetworkProtocol(id).then(function () {
+    //   restServer.respond(res, 204)
+    // })
+    //   .catch(function (err) {
+    //     appLogger.log('Error deleting network protocol ' + id + ': ' + err)
+    //     restServer.respond(res, err)
+    //   })
   })
 
   /**

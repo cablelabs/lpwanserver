@@ -24,10 +24,10 @@ NetworkProtocol.prototype.retrieveNetworkProtocols = async function (options) {
 }
 
 NetworkProtocol.prototype.retrieveNetworkProtocol = async function (id) {
-    let rec = await this.impl.retrieveNetworkProtocol(id)
-    let handler = require('../networkProtocols/' + rec.protocolHandler)
-    rec.metaData = handler.metaData
-    return rec
+  let rec = await this.impl.retrieveNetworkProtocol(id)
+  let handler = require('../networkProtocols/' + rec.protocolHandler)
+  rec.metaData = handler.metaData
+  return rec
 }
 
 NetworkProtocol.prototype.createNetworkProtocol = function (name, networkTypeId, protocolHandler) {

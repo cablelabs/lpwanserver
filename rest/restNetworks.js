@@ -87,7 +87,7 @@ exports.initialize = function (app, server) {
     }
     modelAPI.networks.retrieveNetworks(options).then(function (networks) {
       // Remove sensitive data for non-admin users.
-      if (req.company.type != modelAPI.companies.COMPANY_ADMIN) {
+      if (req.company.type !== modelAPI.companies.COMPANY_ADMIN) {
         for (var i = 0; i < networks.records.length; ++i) {
           delete networks.records[ i ].securityData
         }
@@ -132,7 +132,7 @@ exports.initialize = function (app, server) {
     var id = parseInt(req.params.id)
     modelAPI.networks.retrieveNetwork(id).then(function (network) {
       // Remove sensitive data for non-admin users.
-      if (req.company.type != modelAPI.companies.COMPANY_ADMIN) {
+      if (req.company.type !== modelAPI.companies.COMPANY_ADMIN) {
         delete network.securityData
       }
       restServer.respond(res, 200, network)
@@ -261,6 +261,7 @@ exports.initialize = function (app, server) {
       restServer.respond(res, 204)
     })
       .catch(function (err) {
+        appLogger.log(err)
         restServer.respond(res, err)
       })
     // We'll start by getting the network, as a read is much less expensive than
