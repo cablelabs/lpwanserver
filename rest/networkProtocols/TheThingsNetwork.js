@@ -165,7 +165,7 @@ module.exports.connect = function (network, loginData) {
       options.json = {
         grant_type: 'authorization_code',
         code: loginData.code,
-        redirect_url: 'https://mercury.schrimpsher.com:3200/api/oauth/callback'
+        redirect_url: 'http://localhost:3000/admin/networks/oauth'
       }
       appLogger.log(options)
       request(options, function (error, response, body) {
@@ -194,7 +194,7 @@ module.exports.connect = function (network, loginData) {
       options.json = {
         grant_type: 'refresh_token',
         refresh_token: loginData.refresh_token,
-        redirect_url: 'https://mercury.schrimpsher.com:3200/api/oauth/callback'
+        redirect_url: 'http://localhost:3000/admin/networks/oauth'
       }
       console.log(options)
       request(options, function (error, response, body) {
