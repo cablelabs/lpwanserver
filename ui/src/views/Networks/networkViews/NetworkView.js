@@ -27,7 +27,7 @@ function NetworkView(props) {
   const routeTo = pathOr(noop, ['history', 'push'], props);
 
   return (
-    <div className='flex-row-sb fs-xs'>
+    <div className='flex-row jc-sb fs-xs'>
       <div className='w-min-200 fs-sm'
       >{network.name}</div>
       <label>

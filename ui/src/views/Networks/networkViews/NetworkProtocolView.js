@@ -27,7 +27,7 @@ export default function NetworkProtocolView(props) {
   const brdTop = first ? 'brd-top':'';
   return (
     <div className={`pad-v-10 brd-bot ${brdTop}`}>
-      <div className={`flex-row-sb`}>
+      <div className={`flex-row jc-sb`}>
         <div className='fs-md'>{name}</div>
         <Link to={`/admin/network`}>
           <button type="button" className="btn btn-default btn-sm">Create</button>

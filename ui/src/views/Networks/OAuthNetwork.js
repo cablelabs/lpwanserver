@@ -28,7 +28,7 @@ class OAuthNetwork extends Component {
     super(props);
 
     const targetNetworkId = sessionStore.getSetting('oauthNetworkTarget');
-    const queryParams = qs.parse(pathOr('', [ 'location', 'search' ], props));
+    const queryParams = qs.parse(pathOr({}, [ 'location', 'search' ], props));
     const oauthStartTime = Number(sessionStore.getSetting('oauthStartTime'));
     const elapsedTime = Date.now() - oauthStartTime;
 
@@ -38,18 +38,15 @@ class OAuthNetwork extends Component {
     // TODO: test the time out
     if (elapsedTime <= oauthTimeout) {
       handleOauthReturn(targetNetworkId,queryParams)
-        .then(({ network, networkProtocol }) => {
-          const networkName = propOr('?', 'name', network);
-          const protocolName = propOr('?', 'name', networkProtocol);
-          console.log(`Authorization of network '${protocolName}' ${networkName} succeeded`);
-          // Tell edit screen we're good.
-          props.history.push(`/admin/network/${targetNetworkId}?oauthStatus=success`);
-        })
-        .catch( err => {
-          // Tell edit screen we had an issue.
-          console.log("Error being reported");
-          props.history.push(`/admin/network/${targetNetworkId}?oauthStatus=fail&oauthError=${encodeURIComponent(err.message)}`);
-        });
+      .then(({ network, networkProtocol }) => {
+        // Tell edit screen we're good.
+        props.history.push(`/admin/network/${targetNetworkId}?oauthStatus=success`);
+      })
+      .catch( err => {
+        // Tell edit screen we had an issue.
+        console.log("Error being reported");
+        props.history.push(`/admin/network/${targetNetworkId}?oauthStatus=fail&oauthError=${encodeURIComponent(err.message)}`);
+      });
     }
     else {
       props.history.push(`/admin/network/${targetNetworkId}?oauthStatus=fail&oauthError=${encodeURIComponent('Error: Timeout.  Error_description: Authorization attempt timed out.  Please try again')}`);
@@ -57,8 +54,9 @@ class OAuthNetwork extends Component {
   }
 
   // We just store the OAuth code and redirect - nothing to render.
+  // TODO: would be nice to put a spinner here
   render() {
-      return (<div>OAuthNetwork: You should never see this</div>);
+      return (<div></div>);
   }
 }
 
@@ -70,9 +68,11 @@ export default withRouter(OAuthNetwork);
 //******************************************************************************
 
 async function handleOauthReturn(targetNetworkId, queryParams) {
+
   const network = await networkStore.getNetwork(targetNetworkId);
   const networkProtocol = network && network.networkProtocolId ?
     await networkProtocolStore.getNetworkProtocol(network.networkProtocolId) : null;
+
   if ( isNil(network) || isNil(networkProtocol))
     throw new Error(`Unable to fetch network/networkProtocol data during oauth for network ${targetNetworkId}`);
 
@@ -95,9 +95,7 @@ async function handleOauthReturn(targetNetworkId, queryParams) {
 
    // Oauth failed
    else {
-     throw new Error(
-       keys(errorParams).reduce((emsg, ekey)=>
-        `${emsg} ${capitalize(ekey)}: ${removeUnderscores(errorParams[ekey])}.`,'')
-     );
+     throw new Error( keys(errorParams).reduce((emsg, ekey, i)=>
+        `${emsg} ${removeUnderscores(capitalize(errorParams[ekey]))}.`,''));
    }
  }

@@ -104,15 +104,20 @@ input[type=number] {
 }
 
 /* additional colors */
-.txt-color-alt {
-  color: #009688;
-}
+.txt-color-alt { color: #009688; }
+.txt-color-lite { color: #9E9E9E; }
 
 
 /* some general util classes */
 
 .d-flex { display: flex; }
 .jc-sb { justify-content: space-between }
+.jc-fe { justify-content: flex-end }
+
+.flex-row {
+  display: flex;
+  align-items: center;
+}
 
 .flex-row-sb {
   display: flex;
@@ -128,26 +133,40 @@ input[type=number] {
 
 .brd-top { border-top: 1px solid #dddddd; }
 .brd-bot { border-bottom: 1px solid #dddddd; }
+.brd-horiz {
+  border-top: 1px solid #dddddd;
+  border-bottom: 1px solid #dddddd;
+}
 
 .mrg-10  { margin: 10px }
 .mrg-h-10  { margin: 0px 10px }
+.mrg-b-5 { margin-bottom: 5px }
 .mrg-b-10 { margin-bottom: 10px }
+.mrg-b-20 { margin-bottom: 20px }
 .mrg-r-10 { margin-right: 10px }
 .mrg-r-20 { margin-right: 20px }
 .mrg-t-10 { margin-top: 10px }
 .mrg-t-20 { margin-top: 20px }
 .mrg-t-30 { margin-top: 30px }
 .mrg-t-5 { margin-top: 5px }
+.mrg-l-10 { margin-left: 10px }
+.mrg-v-15 { margin: 15px 0px }
+.mrg-v-20 { margin: 20px 0px }
 
 .pad-10   { padding: 10px }
-.pad-t-10 { padding-top: 15px }
-.pad-b-10 { padding-bottom: 15px }
+.pad-t-10 { padding-top: 10px }
+.pad-t-15 { padding-top: 15px }
+.pad-t-20 { padding-top: 20px }
+.pad-b-10 { padding-bottom: 10px }
 .pad-v-10 { padding: 10px 0px }
 .pad-r-15 { padding-right: 15 }
 
 .bgc-gry-lt { background-color: #FAFAFA }
 
 .w-min-200 { min-width: 200px }
+.w-350 { width: 350px }
+
+.lh-compress { line-height: 1.2 }
 
 .xbox-small {
   transform: scale(0.6);
