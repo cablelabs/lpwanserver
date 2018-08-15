@@ -172,7 +172,7 @@ input[type=number] {
 .lh-compress { line-height: 1.2 }
 .ta-rt { text-align: right }
 .xbox-small {
-  transform: scale(0.6);
+  transform: scale(0.7);
 }
 
 .cur-ptr { cursor: pointer }
