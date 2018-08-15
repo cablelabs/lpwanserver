@@ -155,7 +155,6 @@ exports.initialize = function (app, server) {
         let temp = {
           authorized: network.securityData.authorized
         }
-        appLogger.log(network)
         if (network.securityData.clientId) {
           temp.clientId = network.securityData.clientId
           temp.clientSecret = network.securityData.clientSecret
@@ -238,11 +237,26 @@ exports.initialize = function (app, server) {
       rec.networkTypeId,
       rec.networkProtocolId,
       rec.baseUrl,
-      rec.securityData).then(function (rec) {
-      var send = {}
-      send.id = rec.id
-      restServer.respondJson(res, 200, send)
-    })
+      rec.securityData)
+      .then(function (rec) {
+        modelAPI.networks.retrieveNetwork(rec.id)
+          .then((network) => {
+            let temp = {
+              authorized: network.securityData.authorized
+            }
+            if (network.securityData.clientId) {
+              temp.clientId = network.securityData.clientId
+              temp.clientSecret = network.securityData.clientSecret
+            } else if (network.securityData.apikey) {
+              temp.apikey = network.securityData.apikey
+            } else if (network.securityData.username) {
+              temp.username = network.securityData.username
+              temp.password = network.securityData.password
+            }
+            network.securityData = temp
+            restServer.respond(res, 201, network)
+          })
+      })
       .catch(function (err) {
         appLogger.log('Error creating network' + err)
         restServer.respond(res, err)
@@ -289,9 +303,26 @@ exports.initialize = function (app, server) {
   function (req, res, next) {
     var data = req.body
     data.id = parseInt(req.params.id)
-    modelAPI.networks.updateNetwork(data).then(function (rec) {
-      restServer.respond(res, 204)
-    })
+    modelAPI.networks.updateNetwork(data)
+      .then(function (rec) {
+        modelAPI.networks.retrieveNetwork(rec.id)
+          .then((network) => {
+            let temp = {
+              authorized: network.securityData.authorized
+            }
+            if (network.securityData.clientId) {
+              temp.clientId = network.securityData.clientId
+              temp.clientSecret = network.securityData.clientSecret
+            } else if (network.securityData.apikey) {
+              temp.apikey = network.securityData.apikey
+            } else if (network.securityData.username) {
+              temp.username = network.securityData.username
+              temp.password = network.securityData.password
+            }
+            network.securityData = temp
+            restServer.respond(res, 200, network)
+          })
+      })
       .catch(function (err) {
         appLogger.log(err)
         restServer.respond(res, err)
