@@ -37,17 +37,6 @@ module.exports = {
           required: true,
           placeholder: 'e.g. ZDTXlylatAHYPDBOXx...',
           oauthQueryParameter: ''
-        },
-        {
-          name: 'code',
-          desc: 'The accessCode returned after authorizing LPWan with TTN',
-          help: '',
-          type: 'readOnly',
-          label: 'Access Code',
-          value: '',
-          required: false,
-          placeholder: 'e.g. DWYDC9ALpFbKCNe...',
-          oauthQueryParameter: 'code'
         }
       ],
       oauthRequestUrlQueryParams: [
@@ -57,9 +46,13 @@ module.exports = {
           value: 'code'
         },
         {
-          name: 'cliend_id',
+          name: 'client_id',
           valueSource: 'protocolHandlerNetworkField',
           protocolHandlerNetworkField: 'clientId'
+        },
+        {
+          name: 'redirect_uri',
+          valueSource: 'frontEndOauthReturnUri'
         }
       ],
       oauthResponseUrlQueryParams: [ 'code' ],

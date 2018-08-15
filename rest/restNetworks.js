@@ -88,8 +88,25 @@ exports.initialize = function (app, server) {
     modelAPI.networks.retrieveNetworks(options).then(function (networks) {
       // Remove sensitive data for non-admin users.
       if (req.company.type !== modelAPI.companies.COMPANY_ADMIN) {
-        for (var i = 0; i < networks.records.length; ++i) {
+        for (let i = 0; i < networks.records.length; ++i) {
           delete networks.records[ i ].securityData
+        }
+      } else {
+        for (let i = 0; i < networks.records.length; ++i) {
+          let temp = {
+            authorized: networks.records[i].securityData.authorized
+          }
+          appLogger.log(networks.records[i])
+          if (networks.records[i].securityData.clientId) {
+            temp.clientId = networks.records[i].securityData.clientId
+            temp.clientSecret = networks.records[i].securityData.clientSecret
+          } else if (networks.records[i].securityData.apikey) {
+            temp.apikey = networks.records[i].securityData.apikey
+          } else if (networks.records[i].securityData.username) {
+            temp.username = networks.records[i].securityData.username
+            temp.password = networks.records[i].securityData.password
+          }
+          networks.records[i].securityData = temp
         }
       }
       restServer.respond(res, 200, networks)
@@ -134,6 +151,21 @@ exports.initialize = function (app, server) {
       // Remove sensitive data for non-admin users.
       if (req.company.type !== modelAPI.companies.COMPANY_ADMIN) {
         delete network.securityData
+      } else {
+        let temp = {
+          authorized: network.securityData.authorized
+        }
+        appLogger.log(network)
+        if (network.securityData.clientId) {
+          temp.clientId = network.securityData.clientId
+          temp.clientSecret = network.securityData.clientSecret
+        } else if (network.securityData.apikey) {
+          temp.apikey = network.securityData.apikey
+        } else if (network.securityData.username) {
+          temp.username = network.securityData.username
+          temp.password = network.securityData.password
+        }
+        network.securityData = temp
       }
       restServer.respond(res, 200, network)
     })

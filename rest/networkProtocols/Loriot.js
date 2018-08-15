@@ -113,7 +113,7 @@ module.exports.getDeviceProfileAccessAccount = async function (dataAPI, network,
  */
 module.exports.connect = function (network, loginData) {
   return new Promise(function (resolve, reject) {
-    if (loginData.apiKey) {
+    if (loginData.apikey) {
       resolve(loginData)
     } else {
       reject(new Error('No token'))
@@ -1550,7 +1550,7 @@ module.exports.pushDeviceProfile = function (sessionData, network, deviceProfile
  */
 async function getCompanyAccount (dataAPI, network, companyId, generateIfMissing) {
   let secData = network.securityData
-  if (!secData || !secData.apiKey) {
+  if (!secData || !secData.apikey) {
     appLogger.log('Network security data is incomplete for ' + network.name)
     dataAPI.addLog(network, 'Network security data is incomplete for ' + network.name)
     return null
