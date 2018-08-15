@@ -135,6 +135,22 @@ exports.initialize = function (app, server) {
       if (req.company.type !== modelAPI.companies.COMPANY_ADMIN) {
         delete network.securityData
       }
+      else {
+        let temp = {
+          authorized: network.securityData.authorized
+        }
+        appLogger.log(network)
+        if (network.securityData.username) {
+          temp.username = network.securityData.username
+          temp.password = network.securityData.password
+        } else if (network.securityData.clientId) {
+          temp.clientId = network.securityData.clientId
+          temp.clientSecret = network.securityData.clientSecret
+        } else if (network.securityData.apikey) {
+          temp.apikey = network.securityData.apikey
+        }
+        network.securityData = temp
+      }
       restServer.respond(res, 200, network)
     })
       .catch(function (err) {
