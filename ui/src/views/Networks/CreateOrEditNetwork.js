@@ -2,6 +2,7 @@ import React, {Component} from "react";
 import PT from 'prop-types';
 import { withRouter } from 'react-router-dom';
 import { propOr, pathOr, lensPath, lensProp, append, set, pick, view, merge } from 'ramda';
+import qs from 'query-string';
 import { dispatchError } from '../../utils/errorUtils';
 import { viewOr } from 'ramda-adjunct';
 import sessionStore from "../../stores/SessionStore";
@@ -10,9 +11,10 @@ import networkProtocolStore from "../../stores/NetworkProtocolStore";
 import networkProviderStore from "../../stores/NetworkProviderStore";
 import networkStore from "../../stores/NetworkStore";
 import { inputEventToValue, fieldSpecsToValues } from '../../utils/inputUtils';
-import { idxById } from '../../utils/objectListUtils';
+import { idxById, removeByPropVal } from '../../utils/objectListUtils';
 import { navigateToExernalUrl } from '../../utils/navUtils';
 import NetworkForm from '../../components/NetworkForm';
+import ConfirmationDialog from '../../components/ConfirmationDialog';
 
 //******************************************************************************
 // The interface
@@ -54,14 +56,26 @@ class CreateOrEditNetwork extends Component {
       networkTypes: [],
       networkProtocols: [],
       networkProviders: [],
+      oauthSuccessModalOpen: false,
+      oauthFailureModalOpen: false,
+      oauthErrorMessages: [],
+      submitMessage: ''
     };
 
     this.onSubmit = this.onSubmit.bind(this);
     this.onChange = this.onChange.bind(this);
     this.onDelete = this.onDelete.bind(this);
+    this.gotoListPage = this.gotoListPage.bind(this);
+    this.oauthSuccess = this.oauthSuccess.bind(this);
+    this.oauthFailure = this.oauthFailure.bind(this);
+    this.oauthNotify = this.oauthNotify.bind(this);
+    this.oauthSuccessClose = this.oauthSuccessClose.bind(this);
+    this.oauthFailureClose = this.oauthFailureClose.bind(this);
+    this.oauthNotifyClose = this.oauthNotifyClose.bind(this);
   }
 
   componentDidMount() {
+
     const { isNew, networkId } = this.props;
 
     fetchNetworkInfo(!isNew && networkId)
@@ -70,23 +84,69 @@ class CreateOrEditNetwork extends Component {
       const defaultIdLens = lensPath([ 0, 'id' ]);
       const protocolLens = lensPath([0, 'metaData', 'protocolHandlerNetworkFields']);
 
+      const queryParams = qs.parse(pathOr({}, [ 'location', 'search' ],  this.props));
+
+      const networkTypeIdforNew = isNew ? Number(propOr(
+          view(defaultIdLens, networkTypes),
+          'networkTypeId', queryParams)) : null;
+
+      const networkProtocolIdforNew = isNew ? Number(propOr(
+          view(defaultIdLens, networkProtocols),
+          'networkProtocolId', queryParams)) : null;
+
       const networkData = isNew ?
       {
         name: '',
-        networkProviderId: view(defaultIdLens, networkProviders),
-        networkTypeId: view(defaultIdLens, networkTypes),
-        networkProtocolId: view(defaultIdLens, networkProtocols),
+        networkProviderId: -1, // for now, not providing network provider
+        networkTypeId: networkTypeIdforNew,
+        networkProtocolId: networkProtocolIdforNew,
         baseUrl: '',
         securityData: fieldSpecsToValues(viewOr({}, protocolLens, networkProtocols)),
       }
       : pick(networkProps, network);
 
+      // Add a field to compare the original securityData to any changes when
+      // we go to submit - may require a new OAuth call.
+      networkData.origSecurityData = networkData.securityData;
       this.setState({
         network, networkTypes, networkProtocols, networkProviders, ...networkData
       });
+
+      // Lets see if we are coming back from an oauth
+      const oauthStatus = propOr('', 'oauthStatus', queryParams);
+      if ( oauthStatus ) {
+
+        const authorized = pathOr(false, ['securityData', 'authorized'], networkData);
+        const oauthErrorMessage = propOr('', 'oauthError', queryParams);
+        const serverNoauthReason = 'Server was not able to contact network'; // coming soon : pathOr(false, ['securityData', 'message'], networkData);
+        const networkProtocolName = getCurrentProtocolName(propOr(-1, 'id', network), networkProtocols);
+
+        if ( oauthStatus === 'success' && authorized ) {
+          this.oauthSuccess();
+        }
+
+        else if ( oauthStatus === 'success' && !authorized ) {
+          this.oauthFailure([
+            `Your authorization information was valid, but lpwan server was not able to connect to the ${networkProtocolName} server`,
+            serverNoauthReason ]);
+        }
+
+        else if ( oauthStatus === 'fail' && !authorized ) {
+          this.oauthFailure([
+            `Your ${networkProtocolName} authorization information was not valid`,
+            oauthErrorMessage ]);
+        }
+
+        else if ( oauthStatus === 'fail' && authorized ) {
+          this.oauthFailure([
+            `Your authorization information seemed to be invalid, but you appear to be authorized`,
+            'This is an abnormal state.  It is advised that you reauthorize with this network by re-entering your authorizaion information',
+            oauthErrorMessage ]);
+        }
+      }
     })
     .catch(err => dispatchError(
-      `Error retriving information while trying to ${isNew?'create':'edit'} ` +
+      `Error retrieving information while trying to ${isNew?'create':'edit'} ` +
       `network ${isNew?'':networkId}: ${err}`
     ));
   }
@@ -110,7 +170,7 @@ class CreateOrEditNetwork extends Component {
     e.preventDefault();
 
     const { isNew } = this.props;
-    const { networkProtocols=[], networkProtocolId, securityData={} } = this.state;
+    const { networkProtocols=[], networkProtocolId, securityData={}, origSecurityData={} } = this.state;
 
     // only get security fields needed for finally selected protocol
     const securityProps = getCurrentSecurityProps(networkProtocolId, networkProtocols);
@@ -126,19 +186,14 @@ class CreateOrEditNetwork extends Component {
 
       // We get back the networkId on create, but not on update.
       const networkId = isNew ? newNetworkId : pathOr(-1, ['network', 'id'], this.state);
-      const networkProtocolIndex = idxById(networkProtocolId, networkProtocols);
-      // TODO: For determining if we should do OAuth processing:
-      // Also check to see if code is NOT there.  If we have a code, we
-      // should be OK. (Maybe authTokens OR code).  Implies auth failure on back
-      // end should clear these fields.  I think there is an "EmailSiteAdmin"
-      // function that should probably be used in this case.
-      // SPS: I am thinking that we have createNetwork/updateNetwork return the full object 
-      // contiaing the results of the operation, then we can check returnedNetwork.securityData.authorized
-      // to see if we can skip OAUTH
-      const oauthUrl = pathOr('', [networkProtocolIndex, 'metaData', 'oauthUrl'], networkProtocols);
-      if ( oauthUrl) {
-        const thisServer = process.env.REACT_APP_PUBLIC_BASE_URL;
-        const oauthRedirect =  makeOauthRedirectUrl(thisServer, securityData, oauthUrl);
+      const oauthUrl = getCurrentProtocolOauthUrl(networkProtocolId, networkProtocols);
+      const authorized =  pathOr(false, ['network', 'securityData', 'authorized'], this.state);
+      const securityDataChanged = JSON.stringify(securityData) !== JSON.stringify(origSecurityData);
+
+      // redirect to oauth page if needed
+      if (oauthUrl && (!authorized || securityDataChanged)) {
+        const protocolMetaData = getCurrentProtocolMetaData(networkProtocolId, networkProtocols);
+        const oauthRedirect =  makeOauthRedirectUrl(protocolMetaData, securityData,);
         sessionStore.putSetting('oauthNetworkTarget', networkId);
         sessionStore.putSetting('oauthStartTime', Date.now());
         navigateToExernalUrl(oauthRedirect);
@@ -146,10 +201,17 @@ class CreateOrEditNetwork extends Component {
       else {
         this.props.history.push('/admin/networks');
       }
+    })
+
+    // the create/update failed
+    .catch( err => {
+      // ** JIM **
+      // can you finish this.  We may need to check w Dan to see what error codes he is returning
     });
   }
 
   onDelete(e) {
+
     e.preventDefault();
     const { network={} } = this.state;
 
@@ -162,18 +224,74 @@ class CreateOrEditNetwork extends Component {
     }
   }
 
-  render() {
+  gotoListPage() {
+    this.props.history.push('/admin/networks');
+  }
 
-    const { networkTypes=[], networkProtocols=[], networkProviders=[] } = this.state;
+  oauthSuccess() {
+    this.setState({oauthSuccessModalOpen: true});
+  }
+
+  oauthSuccessClose() {
+    this.setState({oauthSuccessModalOpen: false});
+  }
+
+  oauthFailure(messages) {
+      this.setState({oauthFailureModalOpen: true, oauthErrorMessages: messages});
+    }
+
+  oauthFailureClose() {
+    this.setState({oauthFailureModalOpen: false, oauthErrorMessages: []});
+  }
+
+  oauthNotify() {
+    this.setState({oauthNotifyModalOpen: true});
+  }
+
+  oauthNotifyClose() {
+    this.setState({oauthNotifyModalOpen: false});
+  }
+
+  setOauthErrorMessages(messages) {
+    this.setState({ oauthErrorMessages : messages });
+  }
+
+ render() {
+
+    const { networkProtocolId, networkProtocols=[], } = this.state;
+
     const { isNew } = this.props;
     const { onChange, onSubmit, onDelete } = this;
     const networkData = pick(networkProps, this.state);
+    const networkProtocolName = getCurrentProtocolName(networkProtocolId, networkProtocols);
+    const networkProtocolFields = getCurrentProtocolFields(networkProtocolId, networkProtocols);
 
     return (
-      <NetworkForm
-        {...{ isNew, networkData, networkTypes, networkProtocols, networkProviders }}
-        {...{ onChange, onSubmit, onDelete }}
+      <div>
+        <NetworkForm
+          {...{ onChange, onSubmit, onDelete }}
+          {...{ isNew, networkProtocolName, networkProtocolFields, networkData }}
+        />
+
+      <ConfirmationDialog
+        open={this.state.oauthSuccessModalOpen}
+        title='Network Succesfully Authorized'
+        subTitle={`You are authorized with ${networkProtocolName}, and will now be able to add applications and devices`}
+        confButtons={[{ label: 'OK', className: 'btn-primary', onClick: this.gotoListPage }]}
       />
+
+      <ConfirmationDialog
+        open={this.state.oauthFailureModalOpen}
+        title='Authorization Failed'
+        subTitle='You may continue editing the network, discard it, or save the information you entered without network authorization'
+        text={this.state.oauthErrorMessages||[]}
+        confButtons={[
+          { label: 'Discard Network', className: 'btn-danger', onClick: this.onDelete, },
+          { label: 'Continue Editing', className: 'btn-default', onClick: this.oauthFailureClose, },
+          { label: 'Save', className: 'btn-default', onClick: this.gotoListPage, },
+        ]}
+      />
+      </div>
     );
   }
 }
@@ -190,8 +308,27 @@ CreateOrEditNetwork.defaultProps = defaultProps;
 
 function getCurrentProtocolFields(networkProtocolId=0, networkProtocols=[] ) {
   const networkProtocolIndex = idxById(networkProtocolId, networkProtocols);
-  return pathOr([],
+
+  const fields = pathOr([],
     [networkProtocolIndex, 'metaData', 'protocolHandlerNetworkFields'], networkProtocols);
+
+  // TODO: temporary until code is out of the fields
+  return removeByPropVal('name', 'code', fields);
+}
+
+function getCurrentProtocolMetaData(networkProtocolId=0, networkProtocols=[] ) {
+  const networkProtocolIndex = idxById(networkProtocolId, networkProtocols);
+  return pathOr({}, [networkProtocolIndex, 'metaData'], networkProtocols);
+}
+
+function getCurrentProtocolOauthUrl(networkProtocolId=0, networkProtocols=[] ) {
+  const networkProtocolIndex = idxById(networkProtocolId, networkProtocols);
+  return pathOr('', [networkProtocolIndex, 'metaData', 'oauthUrl'],  networkProtocols);
+}
+
+function getCurrentProtocolName(networkProtocolId=0, networkProtocols=[] ) {
+  const networkProtocolIndex = idxById(networkProtocolId, networkProtocols);
+  return pathOr('', [ networkProtocolIndex, 'name', ],  networkProtocols);
 }
 
 function getCurrentSecurityProps(networkProtocolId, networkProtocols) {
@@ -205,28 +342,44 @@ function getCurrentSecurityDefaults(networkProtocolId, networkProtocols) {
   return fieldSpecsToValues(protoFields);
 }
 
-function makeOauthRedirectUrl(thisServer, securityData, oauthUrl) {
+function makeOauthRedirectUrl(protocolMetaData, securityData) {
 
-  // TODO: get this from proto metadata eventually
-  const queryParams = [
-    { name: 'client_id', value: securityData.clientId },
-    { name: 'response_type', value: 'code' },
-  ];
+  const oauthUrl = propOr('', 'oauthUrl', protocolMetaData);
+  if ( !oauthUrl ) return '';
 
-  // TODO: make returnPath config param?
-  const returnPath = 'admin/networks/oauth';
-  const redirectParam = { name: 'redirect_uri', value: `${thisServer}/${returnPath}` };
-  return ([...queryParams, redirectParam]).reduce((urlAccum, curParam, i) =>
-    `${urlAccum}${i>0 ? '&':'?'}${curParam.name}=${curParam.value}`,`${oauthUrl}`);
+  const thisServer = process.env.REACT_APP_PUBLIC_BASE_URL;
+  const frontEndOauthReturnUri = `${thisServer}/admin/networks/oauth`;
+  const queryParams = propOr([], 'oauthRequestUrlQueryParams', protocolMetaData);
+
+  // TEMP until added to back end
+  const qps = [...queryParams, { name: 'redirect_uri', valueSource: 'frontEndOauthReturnUri' }];
+
+  const queryParamString = qps.reduce((qpStr, qp, i)=>
+    `${qpStr}${i>0 ? '&':'?'}${makeQueryParam(qp, securityData, frontEndOauthReturnUri)}`, '');
+
+  return `${oauthUrl}${queryParamString}`;
 }
 
-// pass in networkId of undefined, null, or false to skip network fetch
+function makeQueryParam(qeuryParamSpec={}, securityData={}, frontEndOauthReturnUri ) {
+  const { name, valueSource, value, protocolHandlerNetworkField } = qeuryParamSpec;
+
+  // TODO temp until fixed
+  const tempName = name === 'cliend_id' ? 'client_id' : name;
+
+  const queryValue =
+    valueSource === 'value' ? value :
+    valueSource === 'protocolHandlerNetworkField' ? securityData[protocolHandlerNetworkField] :
+    valueSource === 'frontEndOauthReturnUri' ? frontEndOauthReturnUri : 'unknown value source';
+  return `${tempName}=${queryValue}`;
+}
+
+// pass in falsey networkId skip network fetch
 async function fetchNetworkInfo(networkId) {
 
   const networkTypes = networkTypeStore.getNetworkTypes();
   const networkProtocols = networkProtocolStore.getNetworkProtocols();
   const networkProviders = networkProviderStore.getNetworkProviders();
-  const network = networkId ? networkStore.getNetwork(networkId) : Promise.resolve(null);
+  const network = networkId ? networkStore.getNetwork(networkId) : Promise.resolve({});
 
   return {
     networkTypes: await networkTypes,

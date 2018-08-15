@@ -1,7 +1,7 @@
 import React from 'react';
 import PT from 'prop-types';
 import { isNotArray } from 'ramda-adjunct';
-import FetchNetworkProtocols from '../../components/fetch/FetchNetworkProtocols';
+import FetchNetworkProtocols from '../../../components/fetch/FetchNetworkProtocols';
 import NetworkProtocolView from './NetworkProtocolView';
 
 //******************************************************************************
@@ -20,20 +20,22 @@ NetworkTypeView.defaultProps = {
 // NetworkTypeView
 //******************************************************************************
 
-export default function NetworkTypeView({networkType}) {
+export default function NetworkTypeView(props) {
+  const { networkType, first } = props;
   const { id, name } = networkType;
+  const mrgTop = first ? '' : 'mrg-t-30';
   return (
     <div>
-      <div className='txt-color-alt fs-s mb-5'>
+      <div className={`txt-color-alt fs-xs ${mrgTop}`}>
         {name||'?'} Networks
       </div>
       <FetchNetworkProtocols
-        filter={np=>np.networkTypeId===id}
-        render={ networkProtocol =>
-          isNotArray(networkProtocol) ? <div></div> :
-          networkProtocol.map((networkProtocol,key) =>
-            <NetworkProtocolView {...{networkProtocol, key}}
-              first={key===0}
+        filter={np=>np.networkTypeId===id} render={ networkProtocols =>
+          isNotArray(networkProtocols) ?
+          <div></div> :
+          networkProtocols.map((networkProtocol,key) =>
+            <NetworkProtocolView
+              {...{networkProtocol, key}} first={key===0}
             />
         )}/>
     </div>
