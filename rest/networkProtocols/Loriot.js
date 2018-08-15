@@ -122,7 +122,7 @@ module.exports.connect = function (network, loginData) {
 }
 
 /**
- * Test the network to vergetApplicationsify it connects
+ * Test the network to verify it connects
  * @param network
  */
 module.exports.test = function (network, loginData) {
