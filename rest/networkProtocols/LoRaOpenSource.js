@@ -57,6 +57,56 @@ module.exports.register = async function (networkProtocols) {
   })
 }
 
+
+/**
+ * Test the network to verify it functions correctly.
+ *
+ * @param network - network to test
+ * @param loginData - credentials
+ * @returns {Promise<any>}
+ */
+module.exports.test = function (network, loginData) {
+  return new Promise(function (resolve, reject) {
+    appLogger.log(network.securityData)
+    if (network.securityData.authorized) {
+      let options = {}
+      options.method = 'GET'
+      options.url = network.baseUrl + '/applications'
+      options.headers = {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + network.securityData.access_token
+      }
+      options.agentOptions = {
+        'secureProtocol': 'TLSv1_2_method',
+        'rejectUnauthorized': false
+      }
+      options.json = true
+      request(options, function (error, response, body) {
+        if (!error) {
+          if (response.statusCode === 401) {
+            reject(new Error('Unauthorized'))
+          } else if (response.statusCode === 404) {
+            reject(new Error('URL is Incorrect'))
+          } else if (response.statusCode >= 400) {
+            appLogger.log(body)
+            reject(new Error('Server Error'))
+          } else {
+            resolve(body)
+          }
+        } else {
+          appLogger.log('Test Error: ' + error)
+          if (response && response.statusCode) {
+            appLogger.log(response.statusCode)
+          }
+          reject(error)
+        }
+      })
+    } else {
+      reject(new Error('Not Authorized'))
+    }
+  })
+}
+
 //* *****************************************************************************
 // Maps the standard remote network API to the LoRaOpenSource server.
 // This is a cross-platform API that must remain consistent.
