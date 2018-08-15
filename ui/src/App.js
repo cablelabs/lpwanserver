@@ -25,8 +25,7 @@ import CreateNetworkProvider from "./views/NetworkProviders/CreateNetworkProvide
 import ListNetworkProtocols from "./views/NetworkProtocols/ListNetworkProtocols";
 import NetworkProtocolLayout from "./views/NetworkProtocols/NetworkProtocolLayout";
 import CreateNetworkProtocol from "./views/NetworkProtocols/CreateNetworkProtocol";
-import ListNetworksOld from "./views/Networks/ListNetworksOld";
-import ListNetworks2 from "./views/Networks/ListNetworks2";
+import ListNetworks from "./views/Networks/ListNetworks";
 import NetworkLayout from "./views/Networks/NetworkLayout";
 import OAuthNetwork from "./views/Networks/OAuthNetwork";
 import ListReportingProtocols from "./views/ReportingProtocols/ListReportingProtocols";
@@ -82,8 +81,7 @@ class Layout extends Component {
             <Route exact path="/admin/networkProtocol/:networkProtocolID" component={NetworkProtocolLayout}/>
             <Route exact path="/admin/networkProtocols" component={ListNetworkProtocols}/>
             <Route exact path="/admin/networkProtocol" component={CreateNetworkProtocol}/>
-            <Route exact path="/admin/networks-old" component={ListNetworksOld}/>
-            <Route exact path="/admin/networks" component={ListNetworks2}/>
+            <Route exact path="/admin/networks" component={ListNetworks}/>
             <Route exact path="/admin/network/:networkID" component={NetworkLayout}/>
             <Route exact path="/admin/network" component={NetworkLayout}/>
             <Route exact path="/admin/networks/oauth" component={OAuthNetwork}/>
