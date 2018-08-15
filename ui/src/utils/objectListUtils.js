@@ -1,4 +1,5 @@
-import { curry, propEq, find, findIndex } from 'ramda';
+import { curry, propEq, find, findIndex, filter } from 'ramda';
+import { propNotEq } from 'ramda-adjunct';
 
 //******************************************************************************
 // Utils dealing with lists of objects
@@ -21,6 +22,13 @@ export const containesByPropVal = curry((propName, propVal, objList) =>
 // '' -> '' -> [{}] -> {}
 export const findByPropVal = curry((propName, propVal, objList) =>
   find(propEq(propName, propVal),objList));
+
+
+  // return list with all objects that have obj[propName]===propVal removed
+  // '' -> [{}] -> [{}]
+export const removeByPropVal = curry((propName, propVal, objList) =>
+  filter(propNotEq(propName, propVal),objList));
+
 
 //******************************************************************************
 // Utils dealing with lists of objects with 'id' prop
