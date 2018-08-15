@@ -22,14 +22,17 @@ NetworkProtocolView.defaultProps = {
 //******************************************************************************
 
 export default function NetworkProtocolView(props) {
+
   const { first, networkProtocol } = props;
-  const { id, name } = networkProtocol;
+  const { id, name, networkTypeId } = networkProtocol;
   const brdTop = first ? 'brd-top':'';
+  const createQueryParams = `?networkTypeId=${networkTypeId}&networkProtocolId=${id}`;
+
   return (
     <div className={`pad-v-10 brd-bot ${brdTop}`}>
       <div className={`flex-row jc-sb`}>
         <div className='fs-md'>{name}</div>
-        <Link to={`/admin/network`}>
+        <Link to={`/admin/network${createQueryParams}`}>
           <button type="button" className="btn btn-default btn-sm">Create</button>
         </Link>
       </div>

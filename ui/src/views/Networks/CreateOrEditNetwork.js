@@ -11,7 +11,7 @@ import networkProtocolStore from "../../stores/NetworkProtocolStore";
 import networkProviderStore from "../../stores/NetworkProviderStore";
 import networkStore from "../../stores/NetworkStore";
 import { inputEventToValue, fieldSpecsToValues } from '../../utils/inputUtils';
-import { idxById } from '../../utils/objectListUtils';
+import { idxById, removeByPropVal } from '../../utils/objectListUtils';
 import { navigateToExernalUrl } from '../../utils/navUtils';
 import NetworkForm from '../../components/NetworkForm';
 import ConfirmationDialog from '../../components/ConfirmationDialog';
@@ -59,6 +59,7 @@ class CreateOrEditNetwork extends Component {
       oauthSuccessModalOpen: false,
       oauthFailureModalOpen: false,
       oauthErrorMessages: [],
+      submitMessage: ''
     };
 
     this.onSubmit = this.onSubmit.bind(this);
@@ -83,12 +84,22 @@ class CreateOrEditNetwork extends Component {
       const defaultIdLens = lensPath([ 0, 'id' ]);
       const protocolLens = lensPath([0, 'metaData', 'protocolHandlerNetworkFields']);
 
+      const queryParams = qs.parse(pathOr({}, [ 'location', 'search' ],  this.props));
+
+      const networkTypeIdforNew = isNew ? Number(propOr(
+          view(defaultIdLens, networkTypes),
+          'networkTypeId', queryParams)) : null;
+
+      const networkProtocolIdforNew = isNew ? Number(propOr(
+          view(defaultIdLens, networkProtocols),
+          'networkProtocolId', queryParams)) : null;
+
       const networkData = isNew ?
       {
         name: '',
-        networkProviderId: view(defaultIdLens, networkProviders),
-        networkTypeId: view(defaultIdLens, networkTypes),
-        networkProtocolId: view(defaultIdLens, networkProtocols),
+        networkProviderId: -1, // for now, not providing network provider
+        networkTypeId: networkTypeIdforNew,
+        networkProtocolId: networkProtocolIdforNew,
         baseUrl: '',
         securityData: fieldSpecsToValues(viewOr({}, protocolLens, networkProtocols)),
       }
@@ -102,10 +113,7 @@ class CreateOrEditNetwork extends Component {
       });
 
       // Lets see if we are coming back from an oauth
-      const queryParams = qs.parse(pathOr({}, [ 'location', 'search' ],  this.props));
       const oauthStatus = propOr('', 'oauthStatus', queryParams);
-
-      // Are we coming back from an oauth?
       if ( oauthStatus ) {
 
         const authorized = pathOr(false, ['securityData', 'authorized'], networkData);
@@ -195,7 +203,7 @@ class CreateOrEditNetwork extends Component {
       }
     })
 
-    // the create/edit failed
+    // the create/update failed
     .catch( err => {
       // ** JIM **
       // can you finish this.  We may need to check w Dan to see what error codes he is returning
@@ -221,27 +229,27 @@ class CreateOrEditNetwork extends Component {
   }
 
   oauthSuccess() {
-      this.setState({oauthSuccessModalOpen: true});
+    this.setState({oauthSuccessModalOpen: true});
   }
 
   oauthSuccessClose() {
-      this.setState({oauthSuccessModalOpen: false});
+    this.setState({oauthSuccessModalOpen: false});
   }
 
   oauthFailure(messages) {
-        this.setState({oauthFailureModalOpen: true, oauthErrorMessages: messages});
+      this.setState({oauthFailureModalOpen: true, oauthErrorMessages: messages});
     }
 
   oauthFailureClose() {
-      this.setState({oauthFailureModalOpen: false, oauthFailureReason: ''});
+    this.setState({oauthFailureModalOpen: false, oauthErrorMessages: []});
   }
 
   oauthNotify() {
-      this.setState({oauthNotifyModalOpen: true});
+    this.setState({oauthNotifyModalOpen: true});
   }
 
   oauthNotifyClose() {
-      this.setState({oauthNotifyModalOpen: false});
+    this.setState({oauthNotifyModalOpen: false});
   }
 
   setOauthErrorMessages(messages) {
@@ -250,22 +258,24 @@ class CreateOrEditNetwork extends Component {
 
  render() {
 
-    const { networkTypes=[], networkProtocolId, networkProtocols=[], networkProviders=[] } = this.state;
+    const { networkProtocolId, networkProtocols=[], } = this.state;
+
     const { isNew } = this.props;
     const { onChange, onSubmit, onDelete } = this;
     const networkData = pick(networkProps, this.state);
     const networkProtocolName = getCurrentProtocolName(networkProtocolId, networkProtocols);
+    const networkProtocolFields = getCurrentProtocolFields(networkProtocolId, networkProtocols);
 
     return (
       <div>
         <NetworkForm
-          {...{ isNew, networkData, networkTypes, networkProtocols, networkProviders }}
           {...{ onChange, onSubmit, onDelete }}
+          {...{ isNew, networkProtocolName, networkProtocolFields, networkData }}
         />
 
       <ConfirmationDialog
         open={this.state.oauthSuccessModalOpen}
-        title='Network Succesfully Created'
+        title='Network Succesfully Authorized'
         subTitle={`You are authorized with ${networkProtocolName}, and will now be able to add applications and devices`}
         confButtons={[{ label: 'OK', className: 'btn-primary', onClick: this.gotoListPage }]}
       />
@@ -298,8 +308,12 @@ CreateOrEditNetwork.defaultProps = defaultProps;
 
 function getCurrentProtocolFields(networkProtocolId=0, networkProtocols=[] ) {
   const networkProtocolIndex = idxById(networkProtocolId, networkProtocols);
-  return pathOr([],
+
+  const fields = pathOr([],
     [networkProtocolIndex, 'metaData', 'protocolHandlerNetworkFields'], networkProtocols);
+
+  // TODO: temporary until code is out of the fields
+  return removeByPropVal('name', 'code', fields);
 }
 
 function getCurrentProtocolMetaData(networkProtocolId=0, networkProtocols=[] ) {
@@ -345,7 +359,6 @@ function makeOauthRedirectUrl(protocolMetaData, securityData) {
 
   return `${oauthUrl}${queryParamString}`;
 }
-
 
 function makeQueryParam(qeuryParamSpec={}, securityData={}, frontEndOauthReturnUri ) {
   const { name, valueSource, value, protocolHandlerNetworkField } = qeuryParamSpec;

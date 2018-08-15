@@ -74,7 +74,9 @@ class Navbar extends Component {
             <ul className="nav navbar-nav navbar-right">
 
                 <li className={this.state.isGlobalAdmin === true ? "" : "hidden"}><a href="/admin/companies">Companies</a></li>
+                <li className={this.state.isGlobalAdmin === true ? "" : "hidden"}><a href="/admin/networks">Networks</a></li>
 
+                { /*
                 <li className={"dropdown " + (this.state.isGlobalAdmin === true ? "" : "hidden") + (this.state.networkDropdownOpen ? "open" : "")}>
                     <a onClick={this.networkToggleDropdown} className="dropdown-toggle">Networks <span className="caret" /></a>
                     <ul className="dropdown-menu" onClick={this.networkToggleDropdown}>
@@ -82,9 +84,8 @@ class Navbar extends Component {
                   <li><a href={`/admin/networkProviders`}>Network Providers</a></li>
                   <li><a href={`/admin/networkProtocols`}>Network Protocols</a></li>
                   <li><a href={`/admin/networks`}>Networks</a></li>
-                  <li><a href={`/admin/networks2`}>Networks 2</a></li>
                 </ul>
-               </li>
+               </li> */ }
 
                <li className={this.state.isGlobalAdmin === true ? "" : "hidden"}><a href="/admin/reportingProtocols">Application Reporting Protocols</a></li>
 

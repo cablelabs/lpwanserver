@@ -111,8 +111,10 @@ input[type=number] {
 /* some general util classes */
 
 .d-flex { display: flex; }
-.jc-sb { justify-content: space-between }
-.jc-fe { justify-content: flex-end }
+.jc-sb { justify-content: space-between !important}
+.jc-fe { justify-content: flex-end !important}
+.ai-fs { align-items: flex-start !important}
+.ac-fs { align-content: flex-start !important}
 
 .flex-row {
   display: flex;
@@ -164,10 +166,11 @@ input[type=number] {
 .bgc-gry-lt { background-color: #FAFAFA }
 
 .w-min-200 { min-width: 200px }
+.w-max-200 { max-width: 200px }
 .w-350 { width: 350px }
 
 .lh-compress { line-height: 1.2 }
-
+.ta-rt { text-align: right }
 .xbox-small {
   transform: scale(0.6);
 }

@@ -42,7 +42,7 @@ export default function ConfirmationDialog(props) {
         <div className='fs-xs lh-compress txt-color-lite'>{subTitle}</div>
         { text && <div className='brd-horiz mrg-v-15 pad-t-15 pad-b-10'>
           {arrayify(text).map((t,i)=>
-            <div className='text-danger fs-s lh-compress mrg-b-5' key={i}>
+            <div className='text-danger fs-s lh-compress mrg-b-10' key={i}>
              {t}
             </div>)}
          </div>

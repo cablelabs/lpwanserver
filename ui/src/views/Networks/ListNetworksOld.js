@@ -21,7 +21,7 @@ class NetworkRow extends Component {
   }
 }
 
-class ListNetworks extends Component {
+class ListNetworksOld extends Component {
   constructor() {
     super();
 
@@ -110,4 +110,4 @@ class ListNetworks extends Component {
 }
 
 //
-export default ListNetworks;
+export default ListNetworksOld;
