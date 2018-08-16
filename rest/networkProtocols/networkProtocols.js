@@ -101,13 +101,11 @@ NetworkProtocolAccess.prototype.test = function (network, loginData) {
         appLogger.log(body)
         network.securityData.authorized = true
         network.securityData.message = 'Ok'
-        me.modelAPI.networks.updateNetwork(network)
         resolve()
       }).catch((err) => {
         appLogger.log('Connect failure with' + network.name + ': ' + err)
         network.securityData.authorized = false
         network.securityData.message = err
-        me.modelAPI.networks.updateNetwork(network)
         reject(err)
       })
   })

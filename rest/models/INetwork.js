@@ -72,18 +72,91 @@ Network.prototype.createNetwork = function (name, networkProviderId, networkType
         securityData.authorized = false
         securityData = dataAPI.hide(null, securityData, k)
       }
-      let ret = await me.impl.createNetwork(name,
+      let record = await me.impl.createNetwork(name,
         networkProviderId,
         networkTypeId,
         networkProtocolId,
         baseUrl,
         securityData)
-      await dataAPI.putProtocolDataForKey(ret.id,
+      await dataAPI.putProtocolDataForKey(record.id,
         networkProtocolId,
-        genKey(ret.id),
+        genKey(record.id),
         k)
-
-      resolve(ret)
+      record = await modelAPI.networks.retrieveNetwork(record.id)
+      if (record.securityData) {
+        if (record.securityData.username || record.securityData.code || record.securityData.apikey) {
+          if (!record.securityData.authorized) {
+            modelAPI.networkTypeAPI.connect(record, record.securityData)
+              .then((connection) => {
+                appLogger.log(connection)
+                if (connection instanceof Object) {
+                  for (var prop in connection) {
+                    record.securityData[prop] = connection[prop]
+                  }
+                }
+                else {
+                  record.securityData.access_token = connection
+                }
+                record.securityData.authorized = true
+                modelAPI.networkTypeAPI.test(record, record.securityData)
+                  .then(() => {
+                    appLogger.log('Test Success ' + record.name)
+                    record.securityData.authorized = true
+                    record.securityData.message = 'ok'
+                    record.securityData = dataAPI.hide(null,
+                      record.securityData,
+                      k)
+                    me.impl.updateNetwork(record)
+                      .then((rec) => {
+                        resolve(rec)
+                      })
+                      .catch((err) => {
+                        reject(err)
+                      })
+                  })
+                  .catch((err) => {
+                    appLogger.log('Test of ' + record.name + ': ' + err)
+                    record.securityData.authorized = false
+                    record.securityData.message = err.toString()
+                    record.securityData = dataAPI.hide(null,
+                      record.securityData,
+                      k)
+                    me.impl.updateNetwork(record)
+                      .then((rec) => {
+                        resolve(rec)
+                      })
+                      .catch((err) => {
+                        reject(err)
+                      })
+                  })
+              })
+              .catch((err) => {
+                appLogger.log('Connection of ' + record.name + ' Failed: ' + err)
+                record.securityData.authorized = false
+                record.securityData.message = err.toString()
+                record.securityData = dataAPI.hide(null,
+                  record.securityData,
+                  k)
+                me.impl.updateNetwork(record)
+                  .then((rec) => {
+                    resolve(rec)
+                  })
+                  .catch((err) => {
+                    reject(err)
+                  })
+              })
+          }
+          else {
+            resolve(record)
+          }
+        }
+        else {
+          resolve(record)
+        }
+      }
+      else {
+        resolve(record)
+      }
     }
     catch (err) {
       reject(err)
@@ -112,48 +185,78 @@ Network.prototype.updateNetwork = function (record) {
           k)
       }
       if (record.securityData) {
-        if (!record.securityData.authorized) {
-          modelAPI.networkTypeAPI.connect(record, record.securityData)
-            .then((connection) => {
-              if (connection instanceof Object) {
-                for (var prop in connection) {
-                  record.securityData[prop] = connection[prop]
+        if (record.securityData.username || record.securityData.code || record.securityData.apikey) {
+          if (!record.securityData.authorized) {
+            modelAPI.networkTypeAPI.connect(record, record.securityData)
+              .then((connection) => {
+                if (connection instanceof Object) {
+                  for (var prop in connection) {
+                    record.securityData[prop] = connection[prop]
+                  }
                 }
-              }
-              else {
-                record.securityData.access_token = connection
-              }
-              modelAPI.networkTypeAPI.test(record, record.securityData)
-                .then(() => {
-                  record.securityData.authorized = true
-                  record.securityData.message = 'ok'
-                  record.securityData = dataAPI.hide(null,
-                    record.securityData,
-                    k)
-                  me.impl.updateNetwork(record)
-                    .then((rec) => {
-                      resolve(rec)
-                    })
-                    .catch((err) => {
-                      reject(err)
-                    })
-                })
-                .catch((err) => {
-                  appLogger.log('Test of ' + record.name + ': ' + err)
-                  record.securityData.authorized = false
-                  record.securityData.message = err.toString()
-                  me.impl.updateNetwork(record)
-                    .then((rec) => {
-                      resolve(rec)
-                    })
-                    .catch((err) => {
-                      reject(err)
-                    })
-                })
-            })
-            .catch((err) => {
-              reject(err)
-            })
+                else {
+                  record.securityData.access_token = connection
+                }
+                record.securityData.authorized = true
+                modelAPI.networkTypeAPI.test(record, record.securityData)
+                  .then(() => {
+                    record.securityData.authorized = true
+                    record.securityData.message = 'ok'
+                    record.securityData = dataAPI.hide(null,
+                      record.securityData,
+                      k)
+                    me.impl.updateNetwork(record)
+                      .then((rec) => {
+                        resolve(rec)
+                      })
+                      .catch((err) => {
+                        reject(err)
+                      })
+                  })
+                  .catch((err) => {
+                    appLogger.log('Test of ' + record.name + ': ' + err)
+                    record.securityData.authorized = false
+                    record.securityData.message = err.toString()
+                    record.securityData = dataAPI.hide(null,
+                      record.securityData,
+                      k)
+                    me.impl.updateNetwork(record)
+                      .then((rec) => {
+                        resolve(rec)
+                      })
+                      .catch((err) => {
+                        reject(err)
+                      })
+                  })
+              })
+              .catch((err) => {
+                appLogger.log('Connection of ' + record.name + ' Failed: ' + err)
+                record.securityData.authorized = false
+                record.securityData.message = err.toString()
+                record.securityData = dataAPI.hide(null,
+                  record.securityData,
+                  k)
+                me.impl.updateNetwork(record)
+                  .then((rec) => {
+                    resolve(rec)
+                  })
+                  .catch((err) => {
+                    reject(err)
+                  })
+              })
+          }
+          else {
+            record.securityData = dataAPI.hide(null,
+              record.securityData,
+              k)
+            me.impl.updateNetwork(record)
+              .then((rec) => {
+                resolve(rec)
+              })
+              .catch((err) => {
+                reject(err)
+              })
+          }
         }
         else {
           record.securityData = dataAPI.hide(null,
