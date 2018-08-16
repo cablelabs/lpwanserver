@@ -42,7 +42,7 @@ export default function NetworkForm(props) {
   const { networkData, networkProtocolName, networkProtocolFields } = props;
   const { securityData={} }  = networkData;
 
-  const panelHeading = isNew ? 'Create Network' : 'Editing Network';
+  const panelHeading = isNew ? `Create ${networkProtocolName} Network` : 'Editing Network';
 
   return(
     <div className="panel panel-default">
