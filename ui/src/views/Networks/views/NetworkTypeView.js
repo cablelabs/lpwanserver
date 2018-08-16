@@ -26,7 +26,7 @@ export default function NetworkTypeView(props) {
   const mrgTop = first ? '' : 'mrg-t-30';
   return (
     <div>
-      <div className={`txt-color-alt fs-xs ${mrgTop}`}>
+      <div className={`txt-color-alt fs-sm ${mrgTop}`}>
         {name||'?'} Networks
       </div>
       <FetchNetworkProtocols
