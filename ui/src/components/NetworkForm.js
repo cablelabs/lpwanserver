@@ -1,6 +1,7 @@
 import React from 'react';
 import PT from 'prop-types';
 import { noop } from 'ramda-adjunct';
+import { arrayify } from '../utils/generalUtils';
 import DynamicForm from './DynamicForm';
 import FormInput from './FormInput';
 
@@ -15,13 +16,13 @@ NetworkForm.propTypes = {
   networkProtocolFields: PT.arrayOf(PT.object),
   onDelete: PT.func,
   onSubmit: PT.func,
-  submitMessage: PT.string, // if provided will be displayed next to submit button
+  submitText: PT.oneOfType([PT.string, PT.arrayOf(PT.string)]),
+    // single message, or array of messages to be dispayed on seperate lines
   onChange: PT.func,
     // called on change to any field. sig: onChange(path, fieldName, e)
   path: PT.arrayOf(PT.string),
     // path to supply to onChange()
     // tells parent component where in an object the fields are being set
-
 };
 
 NetworkForm.defaultProps = {
@@ -38,7 +39,7 @@ NetworkForm.defaultProps = {
 
 export default function NetworkForm(props) {
 
-  const { isNew, path, submitMessage, onChange, onSubmit, onDelete } = props;
+  const { isNew, path, submitText, onChange, onSubmit, onDelete } = props;
   const { networkData, networkProtocolName, networkProtocolFields } = props;
   const { securityData={} }  = networkData;
 
@@ -91,13 +92,15 @@ export default function NetworkForm(props) {
           }
 
           <div className='flex-row jc-fe ac-fs ai-fs'>
-            { submitMessage &&
-              <div className = 'fs-xs mrg-r-10 txt-color-lite w-max-200 ta-rt lh-compress'>
-                { submitMessage }
+            { submitText &&
+              <div className = 'fs-xs mrg-r-10 txt-color-alt generateSubmitMessage ta-rt lh-compress'>
+                { arrayify(submitText).map((msg,i)=>
+                <div className='mrg-b-5' key={i}>{ msg }</div>)}
               </div>
             }
-            <div>
-              <button type="submit" className="btn btn-primary">Submit</button>
+          <div>
+          <button type="submit" className="btn btn-primary">Submit</button>
+
             </div>
           </div>
         </div>

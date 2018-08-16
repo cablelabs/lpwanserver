@@ -166,7 +166,7 @@ input[type=number] {
 .bgc-gry-lt { background-color: #FAFAFA }
 
 .w-min-200 { min-width: 200px }
-.w-max-200 { max-width: 200px }
+.generateSubmitMessage { max-width: 300px }
 .w-350 { width: 350px }
 
 .lh-compress { line-height: 1.2 }

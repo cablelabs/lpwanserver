@@ -33,7 +33,6 @@ const defaultProps = {
 const networkProps =
   [ 'id', 'name', 'networkProviderId', 'networkTypeId', 'networkProtocolId', 'baseUrl' , 'securityData' ];
 
-
 class CreateOrEditNetwork extends Component {
 
   static contextTypes = {
@@ -53,12 +52,10 @@ class CreateOrEditNetwork extends Component {
       securityData: {},
       // bookkeeping
       networkProtocol: {},
+      authNeeded: false,
       successModalOpen: false,
       failureModalOpen: false,
       modalErrorMessages: [],
-      submitMessage: '',
-
-      // experimental
       dirtyFields: {}
     };
 
@@ -110,11 +107,12 @@ class CreateOrEditNetwork extends Component {
       // are just lumping the url in the security data STRICTLY FOR
       // COMPARISON PURPOSES ONLY.
       const securityProps = getSecurityProps(networkProtocol);
-
       const securityDataToCheck = pick(securityProps, networkData.securityData);
       networkData.authData = clone(securityDataToCheck);
       networkData.authData.baseUrl = clone(networkData.baseUrl);
-      this.setState({ networkProtocol,  ...networkData });
+
+      const authNeeded = isNew;
+      this.setState({ authNeeded, networkProtocol,  ...networkData });
 
       // Lets see if we are coming back from an oauth
       const oauthStatus = propOr('', 'oauthStatus', queryParams);
@@ -158,19 +156,18 @@ class CreateOrEditNetwork extends Component {
   onChange(path, field, e) {
     const value = inputEventToValue(e);
     const { dirtyFields={}, networkProtocol={} } = this.state;
+    const { isNew } = this.props;
+
     const fieldLens = lensPath([...path, field]);
     const pendingDirtyFields = set(fieldLens, true, dirtyFields);
 
     const securityProps = getSecurityProps(networkProtocol);
-    const reauth = reAuthNeeded(securityProps, pendingDirtyFields);
-    console.log('reauth: ', reauth);
+    const authNeeded = isNew || reAuthNeeded(securityProps, pendingDirtyFields);
 
     this.setState({
       ...set(fieldLens, value, this.state),
-      dirtyFields: pendingDirtyFields,
+      authNeeded, dirtyFields: pendingDirtyFields,
     });
-
-
   }
 
   onSubmit(e) {
@@ -263,21 +260,19 @@ class CreateOrEditNetwork extends Component {
 
   render() {
 
-    // console.log('~~> render()');
-    // console.log('this.state.dirtyFields', JSON.stringify(this.state.dirtyFields,null,2));
-
-    const { networkProtocol, } = this.state;
+    const { networkProtocol, authNeeded } = this.state;
     const { isNew } = this.props;
     const { onChange, onSubmit, onDelete } = this;
 
     const networkData = pick(networkProps, this.state);
     const networkProtocolName = propOr('-error-', 'name', networkProtocol);
     const networkProtocolFields = getNetworkFields(networkProtocol);
+    const submitText = generateSubmitText(isNew, authNeeded, networkProtocolName);
 
     return (
       <div>
         <NetworkForm
-          {...{ onChange, onSubmit, onDelete }}
+          {...{ onChange, onSubmit, onDelete, submitText }}
           {...{ isNew, networkProtocolName, networkProtocolFields, networkData }}
         />
 
@@ -357,6 +352,17 @@ function reAuthNeeded(securityProps, dirtyFields) {
 function securityPropsDirty(securityProps, dirtyFields) {
   return securityProps.reduce((dirty,securityProp) =>
     dirty || pathOr(false, [ 'securityData', securityProp ], dirtyFields),false);
+}
+
+function generateSubmitText(isNew, authNeeded, networkProtocolName) {
+  return isNew ? [
+    `You will be authorized with the ${networkProtocolName} provider.`,
+    'You may be directed to provide appropriate credentials.'
+  ] :
+  authNeeded ? [
+    `${networkProtocolName} authoriztion information changed. You will be re-authorized  with the ${networkProtocolName} provider.`,
+    'You may be directed to provide appropriate credentials.'
+  ] : '';
 }
 
 
