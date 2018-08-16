@@ -2,14 +2,14 @@ import React from 'react';
 import { isNotArray } from 'ramda-adjunct';
 import BreadCrumbs from '../../components/BreadCrumbs';
 import FetchNetworkTypes from '../../components/fetch/FetchNetworkTypes';
-import NetworkTypeView from './networkViews/NetworkTypeView';
+import NetworkTypeView from './views/NetworkTypeView';
 
 
 export default function ListNetworks() {
 
   const breadCrumbs = [
     { to: `/`, text: 'Home' },
-    { to: `/admin/networks2`, text: 'Networks' },
+    { to: `/admin/networks`, text: 'Networks' },
   ];
 
   return(
@@ -26,6 +26,5 @@ export default function ListNetworks() {
          )
       }/>
     </div>
-
   );
 }

@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import PT from 'prop-types';
 import { isNotArray } from 'ramda-adjunct';
 import FetchNetworks from '../../../components/fetch/FetchNetworks';
-import NetworkView from './NetworkView';
+import NetworkContainer from '../containers/NetworkContainer';
 //******************************************************************************
 // Interface
 //******************************************************************************
@@ -31,7 +31,7 @@ export default function NetworkProtocolView(props) {
   return (
     <div className={`pad-v-10 brd-bot ${brdTop}`}>
       <div className={`flex-row jc-sb`}>
-        <div className='fs-md'>{name}</div>
+        <div className='fs-lg'>{name}</div>
         <Link to={`/admin/network${createQueryParams}`}>
           <button type="button" className="btn btn-default btn-sm">Create</button>
         </Link>
@@ -42,7 +42,7 @@ export default function NetworkProtocolView(props) {
           <div></div> :
           <div className={'bgc-gry-lt inner-shadow pad-10 mrg-t-20'}> {
             networks.map((network,key) =>
-              <NetworkView {...{ network, key }}/>)}
+              <NetworkContainer {...{ network, key }}/>)}
           </div>
         }/>
     </div>
