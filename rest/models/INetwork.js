@@ -35,7 +35,8 @@ Network.prototype.retrieveNetworks = function (options) {
       };
 
       resolve(ret)
-    } catch (err) {
+    }
+    catch (err) {
       reject(err)
     }
   })
@@ -54,7 +55,8 @@ Network.prototype.retrieveNetwork = function (id) {
         ret.securityData = await dataAPI.access(ret, ret.securityData, k)
       }
       resolve(ret)
-    } catch (err) {
+    }
+    catch (err) {
       reject(err)
     }
   })
@@ -82,7 +84,8 @@ Network.prototype.createNetwork = function (name, networkProviderId, networkType
         k)
 
       resolve(ret)
-    } catch (err) {
+    }
+    catch (err) {
       reject(err)
     }
   })
@@ -99,7 +102,7 @@ Network.prototype.updateNetwork = function (record) {
         old.networkProtocolId,
         genKey(record.id))
 
-      if (record.networkProtocolId) {
+      if (record.networkProtocolId !== old.networkProtocolId) {
         await dataAPI.deleteProtocolDataForKey(record.id,
           old.networkProtocolId,
           genKey(record.id))
@@ -109,37 +112,50 @@ Network.prototype.updateNetwork = function (record) {
           k)
       }
       if (record.securityData) {
-        if (record.securityData.code) {
+        if (!record.securityData.authorized) {
           modelAPI.networkTypeAPI.connect(record, record.securityData)
             .then((connection) => {
               if (connection instanceof Object) {
                 for (var prop in connection) {
                   record.securityData[prop] = connection[prop]
                 }
-              } else {
+              }
+              else {
                 record.securityData.access_token = connection
               }
-              record.securityData.authorized = true
-              record.securityData = dataAPI.hide(null,
-                record.securityData,
-                k)
-              me.impl.updateNetwork(record)
-                .then((rec) => {
-                  resolve(rec)
+              modelAPI.networkTypeAPI.test(record, record.securityData)
+                .then(() => {
+                  record.securityData.authorized = true
+                  record.securityData.message = 'ok'
+                  record.securityData = dataAPI.hide(null,
+                    record.securityData,
+                    k)
+                  me.impl.updateNetwork(record)
+                    .then((rec) => {
+                      resolve(rec)
+                    })
+                    .catch((err) => {
+                      reject(err)
+                    })
                 })
                 .catch((err) => {
-                  reject(err)
+                  appLogger.log('Test of ' + record.name + ': ' + err)
+                  record.securityData.authorized = false
+                  record.securityData.message = err.toString()
+                  me.impl.updateNetwork(record)
+                    .then((rec) => {
+                      resolve(rec)
+                    })
+                    .catch((err) => {
+                      reject(err)
+                    })
                 })
             })
             .catch((err) => {
               reject(err)
             })
-        } else {
-          if (record.securityData.access_token || record.securityData.apikey) {
-            record.securityData.authorized = true
-          } else {
-            record.securityData.authorized = false
-          }
+        }
+        else {
           record.securityData = dataAPI.hide(null,
             record.securityData,
             k)
@@ -151,7 +167,8 @@ Network.prototype.updateNetwork = function (record) {
               reject(err)
             })
         }
-      } else {
+      }
+      else {
         me.impl.updateNetwork(record)
           .then((rec) => {
             resolve(rec)
@@ -160,7 +177,8 @@ Network.prototype.updateNetwork = function (record) {
             reject(err)
           })
       }
-    } catch (err) {
+    }
+    catch (err) {
       reject(err)
     }
   })
@@ -177,7 +195,8 @@ Network.prototype.deleteNetwork = function (id) {
         genKey(id))
       let ret = await me.impl.deleteNetwork(id)
       resolve(ret)
-    } catch (err) {
+    }
+    catch (err) {
       reject(err)
     }
   })
@@ -201,7 +220,8 @@ Network.prototype.pullNetwork = function (networkId) {
       let result = await modelAPI.networkProtocolAPI.pullNetwork(npda, network, modelAPI)
       appLogger.log('Success pulling from Network : ' + networkId)
       resolve(result)
-    } catch (err) {
+    }
+    catch (err) {
       appLogger.log('Error pulling from Network : ' + networkId + ' ' + err)
       reject(err)
     }
