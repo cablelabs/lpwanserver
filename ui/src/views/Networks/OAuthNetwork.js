@@ -19,6 +19,19 @@ const oauthTimeout = Number(process.env.REACT_APP_OAUTH_TIMEOUT * 60 * 1000);
 // The Component
 //******************************************************************************
 
+// Notes
+// * we get here after returning from entering oauth credientials with a 3rd party
+// * if oauth fails, nothing sent to backend, and we send error information to Network component
+// * if oauth succeeds, we pull info from the return URI and PUT those changes to the server
+//   - server tests connection with supplied oauth info, which may succeed or fail
+//   - server attempts to update Network info in the DB based on the PUT
+//   - server returns success (200) if new info is succesfully saved to DB, even if auth test fails
+//   - if the server auth test was not succesful, then network.securityData.authorized will be false
+// * We redirect to Network component, with the following info sent as query parans
+//   - oauthStatus=success|fail (tells if oauth login was succesful)
+//   - oauthError=`errorMsg`  // for reporting oauthErrors
+//   - serverError=`errorMsg` // for reporting server errors, which might occur even if oauth is succeseful
+
 class OAuthNetwork extends Component {
   static contextTypes = {
     router: PropTypes.object.isRequired
@@ -50,18 +63,22 @@ class OAuthNetwork extends Component {
 
       // Oauth succeeded
       if (isEmpty(errorParams)) {
+
+        // send oauth info to server
         updateNetworkWithOauthInfo(network, networkProtocol, queryParams)
 
-        // Everyting worked
+        // Network was succesfully updated
         .then(() => {
-          console.log('OAuthNetwork: oauth success, BE test success');
+          console.log('OAuthNetwork: oauth success, network updated on BE');
           props.history.push(`/admin/network/${targetNetworkId}?oauthStatus=success`);
         })
 
-        // Oauth worked, but server could not complete authorization.  Let netowrk page construct error message
+        // Oauth worked, but server was not able to update/create network
         .catch(() => {
-          console.log('OAuthNetwork: oauth success, BE test failed');
-          props.history.push(`/admin/network/${targetNetworkId}?oauthStatus=success`);
+          console.log('OAuthNetwork: oauth success, but BE create/update network failed');
+          // hmmm, should we report ouath success, but create/update failure?
+          const errorMsg = 'Server was not able to create/update the network';
+          props.history.push(`/admin/network/${targetNetworkId}?oauthStatus=success&serverError=${errorMsg}`);
         });
       }
 

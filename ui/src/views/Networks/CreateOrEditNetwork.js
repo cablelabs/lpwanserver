@@ -76,6 +76,11 @@ class CreateOrEditNetwork extends Component {
 
   componentDidMount() {
 
+    // NOTES: we may be here because
+    // * startint to create a new network
+    // * starting to edit an existing network
+    // * returing from ouath attempt on a network create/update
+
     const { isNew, networkId } = this.props;
 
     fetchNetworkInfo(!isNew && networkId)
@@ -116,10 +121,11 @@ class CreateOrEditNetwork extends Component {
       const oauthStatus = propOr('', 'oauthStatus', queryParams);
       if ( oauthStatus ) {
 
+        const networkProtocolName = getCurrentProtocolName(propOr(-1, 'id', network), networkProtocols);
         const authorized = pathOr(false, ['securityData', 'authorized'], networkData);
         const oauthErrorMessage = propOr('', 'oauthError', queryParams);
+        const serverErrorMessage = propOr('', 'serverError', queryParams);
         const serverNoauthReason = 'Server was not able to contact network'; // coming soon : pathOr(false, ['securityData', 'message'], networkData);
-        const networkProtocolName = getCurrentProtocolName(propOr(-1, 'id', network), networkProtocols);
 
         if ( oauthStatus === 'success' && authorized ) {
           this.oauthSuccess();
@@ -128,7 +134,7 @@ class CreateOrEditNetwork extends Component {
         else if ( oauthStatus === 'success' && !authorized ) {
           this.oauthFailure([
             `Your authorization information was valid, but lpwan server was not able to connect to the ${networkProtocolName} server`,
-            serverNoauthReason ]);
+            serverErrorMessage, serverNoauthReason ]);
         }
 
         else if ( oauthStatus === 'fail' && !authorized ) {
@@ -208,6 +214,8 @@ class CreateOrEditNetwork extends Component {
         //   (1) network is still authorized
         //   (2) network is still unauthorized
 
+      // ** JIM **  this needs some work
+
         this.oauthSuccess();
       }
     })
@@ -217,8 +225,7 @@ class CreateOrEditNetwork extends Component {
       console.log('create update failed: ', e);
       // if we get here, the create/update failed,
 
-      // ** JIM **
-      // can you finish this.  We may need to check w Dan to see what error codes he is returning
+      // ** JIM **  this needs some work
     });
   }
 
