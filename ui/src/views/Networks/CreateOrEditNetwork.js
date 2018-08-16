@@ -1,14 +1,11 @@
 import React, {Component} from "react";
 import PT from 'prop-types';
 import { withRouter } from 'react-router-dom';
-import { propOr, pathOr, lensPath, lensProp, append, set, pick, view, merge, clone, equals } from 'ramda';
+import { propOr, pathOr, lensPath, append, set, pick, clone, equals } from 'ramda';
 import qs from 'query-string';
 import { dispatchError } from '../../utils/errorUtils';
-import { viewOr } from 'ramda-adjunct';
 import sessionStore from "../../stores/SessionStore";
-import networkTypeStore from "../../stores/NetworkTypeStore";
 import networkProtocolStore from "../../stores/NetworkProtocolStore";
-import networkProviderStore from "../../stores/NetworkProviderStore";
 import networkStore from "../../stores/NetworkStore";
 import { inputEventToValue, fieldSpecsToValues } from '../../utils/inputUtils';
 import { idxById } from '../../utils/objectListUtils';
@@ -47,15 +44,13 @@ class CreateOrEditNetwork extends Component {
     super(props, ...rest);
 
     this.state = {
-
-      // pending fields for network being created/editied, and which change as user inputs info
+      // pending values for network being created/updated.
       name: '',
       networkProviderId: 0,
       networkTypeId: 0,
       networkProtocolId: 0,
       baseUrl: '',
       securityData: {},
-
       // bookkeeping
       networkProtocol: {},
       successModalOpen: false,
@@ -63,8 +58,8 @@ class CreateOrEditNetwork extends Component {
       modalErrorMessages: [],
       submitMessage: '',
 
-      // obsolete
-      network: {}, // replace with networkId ????
+      // experimental
+      dirtyFields: {}
     };
 
     this.onSubmit = this.onSubmit.bind(this);
@@ -80,8 +75,6 @@ class CreateOrEditNetwork extends Component {
   }
 
   componentDidMount() {
-
-    console.log('~~> CreateOrEditNW: componentDidMount()');
 
     // NOTES: we may be here because
     // * starting to create a new network
@@ -121,7 +114,7 @@ class CreateOrEditNetwork extends Component {
       const securityDataToCheck = pick(securityProps, networkData.securityData);
       networkData.authData = clone(securityDataToCheck);
       networkData.authData.baseUrl = clone(networkData.baseUrl);
-      this.setState({ network, networkProtocol,  ...networkData });
+      this.setState({ networkProtocol,  ...networkData });
 
       // Lets see if we are coming back from an oauth
       const oauthStatus = propOr('', 'oauthStatus', queryParams);
@@ -164,15 +157,25 @@ class CreateOrEditNetwork extends Component {
 
   onChange(path, field, e) {
     const value = inputEventToValue(e);
+    const { dirtyFields={}, networkProtocol={} } = this.state;
     const fieldLens = lensPath([...path, field]);
-    this.setState(set(fieldLens, value, this.state));
+    const pendingDirtyFields = set(fieldLens, true, dirtyFields);
+
+    const securityProps = getSecurityProps(networkProtocol);
+    const reauth = reAuthNeeded(securityProps, pendingDirtyFields);
+    console.log('reauth: ', reauth);
+
+    this.setState({
+      ...set(fieldLens, value, this.state),
+      dirtyFields: pendingDirtyFields,
+    });
+
+
   }
 
   onSubmit(e) {
 
-    console.log('~~> onSubmit()');
     e.preventDefault();
-
     const { isNew } = this.props;
     const { networkProtocol, securityData={}, authData={}, baseUrl } = this.state;
 
@@ -239,95 +242,72 @@ class CreateOrEditNetwork extends Component {
   }
 
   onDelete(e) {
-
     e.preventDefault();
-    const { network={} } = this.state;
-
+    const { networkId } = this.props;
     //eslint-disable-next-line
-    if (network.id && confirm("Are you sure you want to delete this network?")) {
-      networkStore.deleteNetwork(network.id ).then( (responseData) => {
-        this.props.history.push('/admin/networks');
-      })
+    if (networkId && confirm("Are you sure you want to delete this network?")) {
+      networkStore.deleteNetwork(networkId)
+      .then( (responseData) => {this.props.history.push('/admin/networks');})
       .catch( (err) => { alert( "Delete failed:" + err ); } );
     }
   }
 
-  gotoListPage() {
-    this.props.history.push('/admin/networks');
-  }
+  gotoListPage = () => this.props.history.push('/admin/networks');
+  successModal = () => this.setState({successModalOpen: true});
+  successModalClose = () => this.setState({successModalOpen: false});
+  failureModal = messages => this.setState({failureModalOpen: true, modalErrorMessages: messages});
+  failureModalClose = () => this.setState({failureModalOpen: false, modalErrorMessages: []});
+  oauthNotify = () => this.setState({oauthNotifyModalOpen: true});
+  oauthNotifyClose = () => this.setState({oauthNotifyModalOpen: false});
+  setModalErrorMessages = messages => this.setState({ modalErrorMessages : messages });
 
-  successModal() {
-    this.setState({successModalOpen: true});
-  }
+  render() {
 
-  successModalClose() {
-    this.setState({successModalOpen: false});
-  }
+    // console.log('~~> render()');
+    // console.log('this.state.dirtyFields', JSON.stringify(this.state.dirtyFields,null,2));
 
-  failureModal(messages) {
-      this.setState({failureModalOpen: true, modalErrorMessages: messages});
-    }
+    const { networkProtocol, } = this.state;
+    const { isNew } = this.props;
+    const { onChange, onSubmit, onDelete } = this;
 
-  failureModalClose() {
-    this.setState({failureModalOpen: false, modalErrorMessages: []});
-  }
+    const networkData = pick(networkProps, this.state);
+    const networkProtocolName = propOr('-error-', 'name', networkProtocol);
+    const networkProtocolFields = getNetworkFields(networkProtocol);
 
-  oauthNotify() {
-    this.setState({oauthNotifyModalOpen: true});
-  }
+    return (
+      <div>
+        <NetworkForm
+          {...{ onChange, onSubmit, onDelete }}
+          {...{ isNew, networkProtocolName, networkProtocolFields, networkData }}
+        />
 
-  oauthNotifyClose() {
-    this.setState({oauthNotifyModalOpen: false});
-  }
-
-  setModalErrorMessages(messages) {
-    this.setState({ modalErrorMessages : messages });
-  }
-
- render() {
-
-  const { networkProtocol, } = this.state;
-  const { isNew } = this.props;
-  const { onChange, onSubmit, onDelete } = this;
-
-  const networkData = pick(networkProps, this.state);
-  const networkProtocolName = propOr('-error-', 'name', networkProtocol);
-  const networkProtocolFields = getNetworkFields(networkProtocol);
-
-  return (
-    <div>
-      <NetworkForm
-        {...{ onChange, onSubmit, onDelete }}
-        {...{ isNew, networkProtocolName, networkProtocolFields, networkData }}
+      <ConfirmationDialog
+        open={this.state.successModalOpen}
+        title='Network Succesfully Authorized'
+        subTitle={`You are authorized with ${networkProtocolName}, and will now be able to add applications and devices`}
+        confButtons={[{ label: 'OK', className: 'btn-primary', onClick: this.gotoListPage }]}
       />
 
-    <ConfirmationDialog
-      open={this.state.successModalOpen}
-      title='Network Succesfully Authorized'
-      subTitle={`You are authorized with ${networkProtocolName}, and will now be able to add applications and devices`}
-      confButtons={[{ label: 'OK', className: 'btn-primary', onClick: this.gotoListPage }]}
-    />
-
-    <ConfirmationDialog
-      open={this.state.failureModalOpen}
-      title='Authorization Failed'
-      subTitle='You may continue editing the network, discard it, or save the information you entered without network authorization'
-      text={this.state.modalErrorMessages||[]}
-      confButtons={[
-        { label: 'Discard Network', className: 'btn-danger', onClick: this.onDelete, },
-        { label: 'Continue Editing', className: 'btn-default', onClick: this.failureModalClose, },
-        { label: 'Save', className: 'btn-default', onClick: this.gotoListPage, },
-      ]}
-    />
-    </div>
-  );}
+      <ConfirmationDialog
+        open={this.state.failureModalOpen}
+        title='Authorization Failed'
+        subTitle='You may continue editing the network, discard it, or save the information you entered without network authorization'
+        text={this.state.modalErrorMessages||[]}
+        confButtons={[
+          { label: 'Discard Network', className: 'btn-danger', onClick: this.onDelete, },
+          { label: 'Continue Editing', className: 'btn-default', onClick: this.failureModalClose, },
+          { label: 'Save', className: 'btn-default', onClick: this.gotoListPage, },
+        ]}
+      />
+      </div>
+    );
+  }
 }
 
 export default withRouter(CreateOrEditNetwork);
 
 CreateOrEditNetwork.propTypes = propTypes;
 CreateOrEditNetwork.defaultProps = defaultProps;
-
 
 //******************************************************************************
 // Helper Functions
@@ -369,6 +349,17 @@ async function fetchNetworkInfo(networkId) {
   };
 }
 
+function reAuthNeeded(securityProps, dirtyFields) {
+  return propOr(false, 'baseUrl', dirtyFields) ||
+         securityPropsDirty(securityProps, dirtyFields);
+}
+
+function securityPropsDirty(securityProps, dirtyFields) {
+  return securityProps.reduce((dirty,securityProp) =>
+    dirty || pathOr(false, [ 'securityData', securityProp ], dirtyFields),false);
+}
+
+
 function getProtocol(networkProtocolId, networkProtocols) {
   const networkProtocolIndex = idxById(networkProtocolId, networkProtocols);
   return networkProtocols[networkProtocolIndex];
@@ -385,6 +376,6 @@ function getSecurityProps(networkProtocol) {
 }
 
 function getSecurityDefaults(networkProtocol) {
-  const protoFields = getNetworkFields(networkProtocol);
-  return fieldSpecsToValues(protoFields);
+  const networkFields = getNetworkFields(networkProtocol);
+  return fieldSpecsToValues(networkFields);
 }
