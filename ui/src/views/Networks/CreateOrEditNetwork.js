@@ -11,7 +11,7 @@ import networkProtocolStore from "../../stores/NetworkProtocolStore";
 import networkProviderStore from "../../stores/NetworkProviderStore";
 import networkStore from "../../stores/NetworkStore";
 import { inputEventToValue, fieldSpecsToValues } from '../../utils/inputUtils';
-import { idxById, removeByPropVal } from '../../utils/objectListUtils';
+import { idxById } from '../../utils/objectListUtils';
 import { navigateToExernalUrl } from '../../utils/navUtils';
 import NetworkForm from '../../components/NetworkForm';
 import ConfirmationDialog from '../../components/ConfirmationDialog';
@@ -87,12 +87,12 @@ class CreateOrEditNetwork extends Component {
       const queryParams = qs.parse(pathOr({}, [ 'location', 'search' ],  this.props));
 
       const networkTypeIdforNew = isNew ? Number(propOr(
-          view(defaultIdLens, networkTypes),
-          'networkTypeId', queryParams)) : null;
+        view(defaultIdLens, networkTypes),
+        'networkTypeId', queryParams)) : null;
 
       const networkProtocolIdforNew = isNew ? Number(propOr(
-          view(defaultIdLens, networkProtocols),
-          'networkProtocolId', queryParams)) : null;
+        view(defaultIdLens, networkProtocols),
+        'networkProtocolId', queryParams)) : null;
 
       const networkData = isNew ?
       {
@@ -172,9 +172,11 @@ class CreateOrEditNetwork extends Component {
     const { isNew } = this.props;
     const { networkProtocols=[], networkProtocolId, securityData={}, origSecurityData={} } = this.state;
 
-    // only get security fields needed for finally selected protocol
+    const securityDataChanged = JSON.stringify(securityData) !== JSON.stringify(origSecurityData);
     const securityProps = getCurrentSecurityProps(networkProtocolId, networkProtocols);
-    const securityDataToSubmit = pick(securityProps, securityData);
+    const securityDataToSubmit = securityDataChanged ?
+      pick(securityProps, securityData) :
+      { ...pick(securityProps, securityData), authorized: false };
 
     const mutateMethod = isNew ? 'createNetwork' : 'updateNetwork';
     networkStore[mutateMethod]({
@@ -182,13 +184,12 @@ class CreateOrEditNetwork extends Component {
       securityData: securityDataToSubmit
     })
 
-    .then( newNetworkId => {
+    .then( network => {
 
-      // We get back the networkId on create, but not on update.
-      const networkId = isNew ? newNetworkId : pathOr(-1, ['network', 'id'], this.state);
+      const networkId = propOr(-1, 'id', network);
       const oauthUrl = getCurrentProtocolOauthUrl(networkProtocolId, networkProtocols);
-      const authorized =  pathOr(false, ['network', 'securityData', 'authorized'], this.state);
-      const securityDataChanged = JSON.stringify(securityData) !== JSON.stringify(origSecurityData);
+      const wasAuthorized = pathOr(false, ['network', 'securityData', 'authorized'], this.state);
+      const authorized =  pathOr(false, ['securityData', 'authorized'], network);
 
       // redirect to oauth page if needed
       if (oauthUrl && (!authorized || securityDataChanged)) {
@@ -199,12 +200,23 @@ class CreateOrEditNetwork extends Component {
         navigateToExernalUrl(oauthRedirect);
       }
       else {
-        this.props.history.push('/admin/networks');
+        // We are here because oauth not required and either
+        // SECURITY DATA WAS CHANGED and
+        //   (1) network was authroized but now is not
+        //   (2) network was not authorized, but now it is
+        // SECURITY DATA WAS NOT CHANGED
+        //   (1) network is still authorized
+        //   (2) network is still unauthorized
+
+        this.oauthSuccess();
       }
     })
 
     // the create/update failed
     .catch( err => {
+      console.log('create update failed: ', e);
+      // if we get here, the create/update failed,
+
       // ** JIM **
       // can you finish this.  We may need to check w Dan to see what error codes he is returning
     });
@@ -308,12 +320,8 @@ CreateOrEditNetwork.defaultProps = defaultProps;
 
 function getCurrentProtocolFields(networkProtocolId=0, networkProtocols=[] ) {
   const networkProtocolIndex = idxById(networkProtocolId, networkProtocols);
-
-  const fields = pathOr([],
+  return pathOr([],
     [networkProtocolIndex, 'metaData', 'protocolHandlerNetworkFields'], networkProtocols);
-
-  // TODO: temporary until code is out of the fields
-  return removeByPropVal('name', 'code', fields);
 }
 
 function getCurrentProtocolMetaData(networkProtocolId=0, networkProtocols=[] ) {
@@ -351,10 +359,7 @@ function makeOauthRedirectUrl(protocolMetaData, securityData) {
   const frontEndOauthReturnUri = `${thisServer}/admin/networks/oauth`;
   const queryParams = propOr([], 'oauthRequestUrlQueryParams', protocolMetaData);
 
-  // TEMP until added to back end
-  const qps = [...queryParams, { name: 'redirect_uri', valueSource: 'frontEndOauthReturnUri' }];
-
-  const queryParamString = qps.reduce((qpStr, qp, i)=>
+  const queryParamString = queryParams.reduce((qpStr, qp, i)=>
     `${qpStr}${i>0 ? '&':'?'}${makeQueryParam(qp, securityData, frontEndOauthReturnUri)}`, '');
 
   return `${oauthUrl}${queryParamString}`;
@@ -363,14 +368,11 @@ function makeOauthRedirectUrl(protocolMetaData, securityData) {
 function makeQueryParam(qeuryParamSpec={}, securityData={}, frontEndOauthReturnUri ) {
   const { name, valueSource, value, protocolHandlerNetworkField } = qeuryParamSpec;
 
-  // TODO temp until fixed
-  const tempName = name === 'cliend_id' ? 'client_id' : name;
-
   const queryValue =
     valueSource === 'value' ? value :
     valueSource === 'protocolHandlerNetworkField' ? securityData[protocolHandlerNetworkField] :
     valueSource === 'frontEndOauthReturnUri' ? frontEndOauthReturnUri : 'unknown value source';
-  return `${tempName}=${queryValue}`;
+  return `${name}=${queryValue}`;
 }
 
 // pass in falsey networkId skip network fetch

@@ -66,8 +66,7 @@ class NetworkStore extends EventEmitter {
             .then(checkStatus)
             .then((response) => response.json())
             .then((responseData) => {
-                // Should just be an id
-                resolve( responseData.id );
+                resolve( responseData );
             })
             .catch( function( err ) {
                 reject( err );
@@ -112,10 +111,14 @@ class NetworkStore extends EventEmitter {
                 }
             )
             .then(checkStatus)
-            .then(() => {
-                // Should just return 204
-                resolve();
+            .then((response) => response.json())
+            .then((responseData) => {
+                resolve( responseData );
             })
+            // .then(() => {
+            //     // Should just return 204
+            //     resolve();
+            // })
             .catch( function( err ) {
                 reject( err );
             });
