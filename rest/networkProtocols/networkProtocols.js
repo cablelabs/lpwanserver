@@ -132,7 +132,6 @@ NetworkProtocolAccess.prototype.connect = function (network, loginData) {
           proto.sessionData[network.id].connection = connection
           resolve(connection)
         }).catch((err) => {
-          appLogger.log('Connect failure with' + network.name + ': ' + err)
           reject(err)
         })
     } catch (err) {

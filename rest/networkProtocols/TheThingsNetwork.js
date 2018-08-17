@@ -220,7 +220,7 @@ module.exports.connect = function (network, loginData) {
           appLogger.log('Error on signin: ' + error)
           reject(error)
         }
-        else if (response.statusCode >= 400) {
+        else if (response.statusCode >= 400 || response.statusCode === 301) {
           appLogger.log('Error on signin: ' + response.statusCode + ', ' + response.body.error)
           reject(response.statusCode)
         }
