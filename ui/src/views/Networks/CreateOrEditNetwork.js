@@ -3,7 +3,7 @@ import PT from 'prop-types';
 import { withRouter } from 'react-router-dom';
 import { propOr, pathOr, lensPath, append, set, pick } from 'ramda';
 import qs from 'query-string';
-import { dispatchError } from '../../utils/errorUtils';
+import { dispatchError, errorToText } from '../../utils/errorUtils';
 import { arrayify } from '../../utils/generalUtils';
 import sessionStore from "../../stores/SessionStore";
 import networkProtocolStore from "../../stores/NetworkProtocolStore";
@@ -54,6 +54,7 @@ class CreateOrEditNetwork extends Component {
       securityData: {},
 
       // bookkeeping
+      networkId: -1, // Set when entering upon edit, or upon return from POST
       networkProtocol: {},
       authNeeded: false,
       successModalOpen: false,
@@ -107,17 +108,23 @@ class CreateOrEditNetwork extends Component {
       }
       : pick(networkProps, network);
 
+      console.log('~~> componentDidMount()');
+      console.log('isNew: ', isNew);
+      console.log('network.securityData', JSON.stringify(network.securityData,null,2));
+
       const authNeeded = isNew;
-      this.setState({ authNeeded, networkProtocol,  ...networkData });
+      const networkId = isNew ? -1 : propOr(-1, 'id', network);
+      this.setState({ networkId, authNeeded, networkProtocol,  ...networkData });
 
       // Lets see if we are coming back from an oauth
       const oauthStatus = propOr('', 'oauthStatus', queryParams);
       if ( oauthStatus ) {
 
         const authorized = pathOr(false, ['securityData', 'authorized'], networkData);
+        const serverAutMessage = pathOr(false, ['securityData', 'message'], networkData);
         const oauthErrorMessage = propOr('', 'oauthError', queryParams);
         const serverErrorMessage = propOr('', 'serverError', queryParams);
-        const serverNoauthReason = 'Server was not able to contact network'; // coming soon : pathOr(false, ['securityData', 'message'], networkData);
+
 
         if ( oauthStatus === 'success' && authorized ) {
           this.successModal();
@@ -126,7 +133,7 @@ class CreateOrEditNetwork extends Component {
         else if ( oauthStatus === 'success' && !authorized ) {
           this.failureModal([
             `Your authorization information was valid, but LPWAN server was not able to connect to the ${networkProtocolName} server`,
-            serverErrorMessage, serverNoauthReason ]);
+            serverErrorMessage, serverAutMessage ]);
         }
 
         else if ( oauthStatus === 'fail' && !authorized ) {
@@ -145,7 +152,7 @@ class CreateOrEditNetwork extends Component {
     })
     .catch(err => dispatchError(
       `Error retrieving information while trying to ${isNew?'create':'edit'} ` +
-      `network ${isNew?'':networkId}: ${err}`
+      `network ${isNew?'':networkId}: ${errorToText(err)}`
     ));
   }
 
@@ -190,9 +197,10 @@ class CreateOrEditNetwork extends Component {
       const oauthUrl = pathOr('', ['metaData', 'oauthUrl'], networkProtocol);
       const authorized = pathOr(false, ['securityData', 'authorized'], updatedNetwork);
 
+      this.setState({ networkId });
+      console.log('~~> onSubmit()');
       console.log('isNew: ', isNew);
-      console.log('authNeeded: ', authNeeded);
-      console.log('authorized: ', authorized);
+      console.log('updatedNetwork.securityData', JSON.stringify(updatedNetwork.securityData,null,2));
 
       // go to oauth page if needed
       if (oauthUrl && authNeeded) {
@@ -235,12 +243,14 @@ class CreateOrEditNetwork extends Component {
     // the create/update failed
     .catch( err => {
       // if we get here, the create/update failed,
-      this.failureModal([ `Your ${networkProtocolName} Submit failed: ${err}` ]);});
+      this.failureModal([ `Your ${networkProtocolName} Submit failed: ${errorToText(err)}` ]);});
     }
 
   onDelete(e) {
+
     e.preventDefault();
-    const { networkId } = this.props;
+    const { networkId } = this.state;
+
     //eslint-disable-next-line
     if (networkId && confirm("Are you sure you want to delete this network?")) {
       networkStore.deleteNetwork(networkId)

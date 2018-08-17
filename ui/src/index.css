@@ -172,9 +172,9 @@ input[type=number] {
 
 .w-min-200 { min-width: 200px }
 .w-max-300 { max-width: 300px }
-.w-350 { width: 350px }
 .w-200 { width: 200px }
-
+.w-350 { width: 350px }
+.w-500 { width: 450px }
 .lh-compress { line-height: 1.2 }
 .ta-rt { text-align: right }
 .xbox-small {
