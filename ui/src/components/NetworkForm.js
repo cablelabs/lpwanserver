@@ -43,7 +43,7 @@ export default function NetworkForm(props) {
   const { isNew, path, submitText, onChange, onSubmit, onDelete } = props;
   const { networkData, networkProtocolName, networkProtocolFields } = props;
   const securityData = propOr({}, 'securityData', networkData);
-  const authorized = propOr(false, 'authorized', securityData);
+  const authorized = propOr(true, 'authorized', securityData);
 
   const panelHeading = isNew ? `Create ${networkProtocolName} Network` : 'Editing Network';
 
@@ -63,7 +63,7 @@ export default function NetworkForm(props) {
       <form onSubmit={onSubmit}>
         <div className="panel-body">
 
-          {! isNew && !authorized &&
+          {!isNew && !authorized &&
             <div className='fs-sm bgc-danger txt-color-white pad-10 mrg-v-10 lh-compress'>
               <div className='fw-bold'>{`This network is not authorized with ${networkProtocolName}`}</div>
               <div>Your network security data needs to be updated</div>
