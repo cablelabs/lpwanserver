@@ -208,7 +208,7 @@ class CreateOrEditNetwork extends Component {
       // non-ouath backend auth failed
       else if (authNeeded && !authorized) {
         this.failureModal([
-          `After updating your ${networkProtocolName} authorization information, Reauthorization was failed.`,
+          `After updating your ${networkProtocolName} authorization information, Reauthorization failed.`,
           `The updated authorization information was not valid` ]);
       }
 

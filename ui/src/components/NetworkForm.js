@@ -93,7 +93,7 @@ export default function NetworkForm(props) {
 
           <div className='flex-row jc-fe ac-fs ai-fs'>
             { submitText &&
-              <div className = 'fs-xs mrg-r-10 txt-color-alt generateSubmitMessage ta-rt lh-compress'>
+              <div className = 'fs-xs mrg-r-10 txt-color-alt w-max-300 ta-rt lh-compress'>
                 { arrayify(submitText).map((msg,i)=>
                 <div className='mrg-b-5' key={i}>{ msg }</div>)}
               </div>
