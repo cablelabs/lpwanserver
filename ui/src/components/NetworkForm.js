@@ -43,7 +43,7 @@ export default function NetworkForm(props) {
   const { isNew, path, submitText, onChange, onSubmit, onDelete } = props;
   const { networkData, networkProtocolName, networkProtocolFields } = props;
   const securityData = propOr({}, 'securityData', networkData);
-  const authorized = propOr(true, 'authorized', securityData);
+  const authorized = propOr(false, 'authorized', securityData);
 
   const panelHeading = isNew ? `Create ${networkProtocolName} Network` : 'Editing Network';
 
@@ -52,7 +52,7 @@ export default function NetworkForm(props) {
 
       <div className="panel-heading d-flex jc-sb">
         <h3 className="panel-title panel-title-buttons">{panelHeading}</h3>
-        { !isNew &&
+        { !isNew && !authorized &&
         <div className="btn-group pull-right">
           <button type="button" className="btn btn-danger btn-sm margin-top-xl"
             onClick={onDelete}> Delete Network
@@ -107,9 +107,8 @@ export default function NetworkForm(props) {
                 <div className='mrg-b-5' key={i}>{ msg }</div>)}
               </div>
             }
-          <div>
-          <button type="submit" className="btn btn-primary">Submit</button>
-
+            <div>
+              <button type="submit" className="btn btn-primary">Submit</button>
             </div>
           </div>
         </div>
