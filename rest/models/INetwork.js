@@ -70,6 +70,7 @@ Network.prototype.createNetwork = function (name, networkProviderId, networkType
       let k = dataAPI.genKey()
       if (securityData) {
         securityData.authorized = false
+        securityData.message = 'Pending Authorization'
         securityData = dataAPI.hide(null, securityData, k)
       }
       let record = await me.impl.createNetwork(name,

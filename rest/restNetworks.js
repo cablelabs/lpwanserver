@@ -96,7 +96,8 @@ exports.initialize = function (app, server) {
         for (let i = 0; i < networks.records.length; ++i) {
           if (networks.records[i].securityData) {
             let temp = {
-              authorized: networks.records[i].securityData.authorized
+              authorized: networks.records[i].securityData.authorized,
+              message: networks.records[i].securityData.message
             }
             appLogger.log(networks.records[i])
             if (networks.records[i].securityData.clientId) {
@@ -159,7 +160,8 @@ exports.initialize = function (app, server) {
       }
       else {
         let temp = {
-          authorized: network.securityData.authorized
+          authorized: network.securityData.authorized,
+          message: network.securityData.message
         }
         if (network.securityData.clientId) {
           temp.clientId = network.securityData.clientId
