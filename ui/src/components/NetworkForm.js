@@ -52,7 +52,7 @@ export default function NetworkForm(props) {
 
       <div className="panel-heading d-flex jc-sb">
         <h3 className="panel-title panel-title-buttons">{panelHeading}</h3>
-        { !isNew && !authorized &&
+        { !isNew &&
         <div className="btn-group pull-right">
           <button type="button" className="btn btn-danger btn-sm margin-top-xl"
             onClick={onDelete}> Delete Network
@@ -66,7 +66,7 @@ export default function NetworkForm(props) {
           {!isNew && !authorized &&
             <div className='fs-sm bgc-danger txt-color-white pad-10 mrg-v-10 lh-compress'>
               <div className='fw-bold'>{`This network is not authorized with ${networkProtocolName}`}</div>
-              <div>Your network security data needs to be updated</div>
+              <div>Your network security data needs to be updated, or you will have to log in again</div>
             </div>
           }
 
