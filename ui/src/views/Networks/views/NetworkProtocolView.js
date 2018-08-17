@@ -1,7 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import PT from 'prop-types';
-import { isNotArray } from 'ramda-adjunct';
 import { isNonEmptyArray } from '../../../utils/generalUtils';
 import FetchNetworks from '../../../components/fetch/FetchNetworks';
 import NetworkContainer from '../containers/NetworkContainer';

@@ -63,7 +63,7 @@ export default function NetworkForm(props) {
       <form onSubmit={onSubmit}>
         <div className="panel-body">
 
-          {!authorized &&
+          {! isNew && !authorized &&
             <div className='fs-sm bgc-danger txt-color-white pad-10 mrg-v-10 lh-compress'>
               <div className='fw-bold'>{`This network is not authorized with ${networkProtocolName}`}</div>
               <div>Your network security data needs to be updated</div>

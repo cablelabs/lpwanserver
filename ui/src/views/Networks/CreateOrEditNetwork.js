@@ -1,7 +1,7 @@
 import React, {Component} from "react";
 import PT from 'prop-types';
 import { withRouter } from 'react-router-dom';
-import { propOr, pathOr, lensPath, append, set, pick, clone, equals } from 'ramda';
+import { propOr, pathOr, lensPath, append, set, pick } from 'ramda';
 import qs from 'query-string';
 import { dispatchError } from '../../utils/errorUtils';
 import { arrayify } from '../../utils/generalUtils';
