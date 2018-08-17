@@ -29,13 +29,12 @@ export default function NetworkView(props) {
   const { network={}, onToggleEnabled, onEdit } = props;
   const { name, securityData } = network;
   const authorizied = propOr(false, 'authorized', securityData);
+
   // comiing soon
   // const enabled = propOr(false, 'enabled', securityData);
 
   const statusGlyph = authorizied ?
     'glyphicon-transfer text-success' : 'glyphicon-remove-circle text-danger';
-
-
 
   return (
     <div className='flex-row jc-sb fs-xs'>
@@ -52,9 +51,3 @@ export default function NetworkView(props) {
     </div>
   );
 }
-// export default withRouter(NetworkView);
-
-// <label className='fs-sm txt-color-lite'>
-//   <input className='xbox-small'
-//   type="checkbox" checked={true} onChange={noop}/> Enabled
-// </label>

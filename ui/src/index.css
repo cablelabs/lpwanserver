@@ -104,9 +104,14 @@ input[type=number] {
 }
 
 /* additional colors */
+
 .txt-color-alt { color: #009688; }
 .txt-color-lite { color: #9E9E9E; }
+.txt-color-white { color: #FFFFFF; }
 
+
+.bgc-gry-lt { background-color: #FAFAFA }
+.bgc-danger { background-color: #E51C23 }
 
 /* some general util classes */
 
@@ -133,6 +138,7 @@ input[type=number] {
 .fs-lg  { font-size: large;   }
 .fs-xl { font-size: x-large; }
 
+.fw-bold { font-weight: bold }
 .brd-top { border-top: 1px solid #dddddd; }
 .brd-bot { border-bottom: 1px solid #dddddd; }
 .brd-horiz {
@@ -152,6 +158,7 @@ input[type=number] {
 .mrg-t-30 { margin-top: 30px }
 .mrg-t-5 { margin-top: 5px }
 .mrg-l-10 { margin-left: 10px }
+.mrg-v-10 { margin: 10px 0px }
 .mrg-v-15 { margin: 15px 0px }
 .mrg-v-20 { margin: 20px 0px }
 
@@ -163,11 +170,10 @@ input[type=number] {
 .pad-v-10 { padding: 10px 0px }
 .pad-r-15 { padding-right: 15 }
 
-.bgc-gry-lt { background-color: #FAFAFA }
-
 .w-min-200 { min-width: 200px }
-.generateSubmitMessage { max-width: 300px }
+.w-max-300 { max-width: 300px }
 .w-350 { width: 350px }
+.w-200 { width: 200px }
 
 .lh-compress { line-height: 1.2 }
 .ta-rt { text-align: right }
@@ -176,6 +182,10 @@ input[type=number] {
 }
 
 .cur-ptr { cursor: pointer }
+
+.shadow {
+   box-shadow: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
+ }
 
 .inner-shadow {
   border-radius: 3px;

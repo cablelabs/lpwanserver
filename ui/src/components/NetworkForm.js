@@ -1,5 +1,6 @@
 import React from 'react';
 import PT from 'prop-types';
+import { propOr } from 'ramda';
 import { noop } from 'ramda-adjunct';
 import { arrayify } from '../utils/generalUtils';
 import DynamicForm from './DynamicForm';
@@ -41,7 +42,8 @@ export default function NetworkForm(props) {
 
   const { isNew, path, submitText, onChange, onSubmit, onDelete } = props;
   const { networkData, networkProtocolName, networkProtocolFields } = props;
-  const { securityData={} }  = networkData;
+  const securityData = propOr({}, 'securityData', networkData);
+  const authorized = propOr(true, 'authorized', securityData);
 
   const panelHeading = isNew ? `Create ${networkProtocolName} Network` : 'Editing Network';
 
@@ -60,6 +62,13 @@ export default function NetworkForm(props) {
 
       <form onSubmit={onSubmit}>
         <div className="panel-body">
+
+          {!isNew && !authorized &&
+            <div className='fs-sm bgc-danger txt-color-white pad-10 mrg-v-10 lh-compress'>
+              <div className='fw-bold'>{`This network is not authorized with ${networkProtocolName}`}</div>
+              <div>Your network security data needs to be updated</div>
+            </div>
+          }
 
           <FormInput label='Network Name' name='name'  type='text' required
             placeholder={`e.g. 'Kyrio LoRa'`}
@@ -80,7 +89,7 @@ export default function NetworkForm(props) {
 
           { networkProtocolFields &&
             <div className="form-section-margin-top">
-              <strong>{ `${networkProtocolName} ` } network specific data</strong>
+              <strong>{ `${networkProtocolName} ` } network security data</strong>
               <DynamicForm
                 fieldSpecs={networkProtocolFields}
                 fieldValues={securityData}
@@ -93,7 +102,7 @@ export default function NetworkForm(props) {
 
           <div className='flex-row jc-fe ac-fs ai-fs'>
             { submitText &&
-              <div className = 'fs-xs mrg-r-10 txt-color-alt generateSubmitMessage ta-rt lh-compress'>
+              <div className = 'fs-xs mrg-r-10 txt-color-alt w-max-300 ta-rt lh-compress'>
                 { arrayify(submitText).map((msg,i)=>
                 <div className='mrg-b-5' key={i}>{ msg }</div>)}
               </div>

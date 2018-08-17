@@ -1,8 +1,6 @@
 import React, {Component} from "react";
 import PT from 'prop-types';
 import { withRouter } from 'react-router-dom';
-import { dispatchError } from '../../../utils/errorUtils';
-import networkStore from '../../../stores/NetworkStore';
 import NetworkView from '../views/NetworkView';
 
 //******************************************************************************

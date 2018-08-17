@@ -1,7 +1,7 @@
 import React, {Component} from "react";
 import PT from 'prop-types';
 import { withRouter } from 'react-router-dom';
-import { propOr, pathOr, lensPath, append, set, pick, clone, equals } from 'ramda';
+import { propOr, pathOr, lensPath, append, set, pick } from 'ramda';
 import qs from 'query-string';
 import { dispatchError } from '../../utils/errorUtils';
 import { arrayify } from '../../utils/generalUtils';
@@ -190,6 +190,10 @@ class CreateOrEditNetwork extends Component {
       const oauthUrl = pathOr('', ['metaData', 'oauthUrl'], networkProtocol);
       const authorized = pathOr(false, ['securityData', 'authorized'], updatedNetwork);
 
+      console.log('isNew: ', isNew);
+      console.log('authNeeded: ', authNeeded);
+      console.log('authorized: ', authorized);
+
       // go to oauth page if needed
       if (oauthUrl && authNeeded) {
         const oauthRedirect = makeOauthRedirectUrl(networkProtocol, securityData,);
@@ -199,16 +203,26 @@ class CreateOrEditNetwork extends Component {
       }
 
       // non-ouath backend auth succeeded
-      else if (authNeeded && authorized) {
-        this.successModal(
-          `After updating your ${networkProtocolName} authorization information, Reauthorization was succeseful.`
-        );
+      else if (isNew && authorized) {
+        this.successModal();
       }
 
-      // non-ouath backend auth failed
-      else if (authNeeded && !authorized) {
+      // non-ouath backend auth succeeded
+      else if ( !isNew && authNeeded && authorized) {
+        this.successModal([
+          `After updating your ${networkProtocolName} authorization information, authorization was succeseful.`]);
+      }
+
+      // non-ouath backend auth failed for new network
+      else if (isNew && !authorized) {
         this.failureModal([
-          `After updating your ${networkProtocolName} authorization information, Reauthorization was failed.`,
+          `Your ${networkProtocolName} authorization information was not valid`,]);
+      }
+
+      // non-ouath backend auth failed for updated network
+      else if (!isNew && authNeeded && !authorized) {
+        this.failureModal([
+          `After updating your ${networkProtocolName} authorization information, authorization failed.`,
           `The updated authorization information was not valid` ]);
       }
 
@@ -216,33 +230,13 @@ class CreateOrEditNetwork extends Component {
       else {
         this.props.history.push('/admin/networks');
       }
-
-      // // Not OAuth, but check to see if we should have tried a
-      // // "regular" auth to the remote network.
-      // else if (authNeeded) {
-      //   if (authorized) {
-      //   }
-      //   else {
-      //     // Message: Changed auth, failed!
-      //     this.failureModal([
-      //       `Your ${networkProtocolName} authorization information was not valid` ]);
-      //   }
-      // }
-      // else if (!authorized) {
-      //   // Message: Auth not changed, but not authorized!
-      //   this.failureModal([
-      //     `Your ${networkProtocolName} authorization information is no longer valid` ]);
-      // }
     })
 
     // the create/update failed
     .catch( err => {
-      console.log('create update failed: ', e);
       // if we get here, the create/update failed,
-      this.failureModal([
-        `Your ${networkProtocolName} Submit failed: ${err}` ]);
-    });
-  }
+      this.failureModal([ `Your ${networkProtocolName} Submit failed: ${err}` ]);});
+    }
 
   onDelete(e) {
     e.preventDefault();
@@ -286,6 +280,7 @@ class CreateOrEditNetwork extends Component {
         open={this.state.successModalOpen}
         title='Network Succesfully Authorized'
         subTitle={`You are authorized with ${networkProtocolName}, and will now be able to add applications and devices`}
+        text={this.state.authSuccessMessages||[]} textClass='txt-color-alt'
         confButtons={[{ label: 'OK', className: 'btn-primary', onClick: this.gotoListPage }]}
       />
 
@@ -293,7 +288,7 @@ class CreateOrEditNetwork extends Component {
         open={this.state.failureModalOpen}
         title='Authorization Failed'
         subTitle='You may continue editing the network, discard it, or save the information you entered without network authorization'
-        text={this.state.authErrorMessages||[]}
+        text={this.state.authErrorMessages||[]} textClass='text-danger'
         confButtons={[
           { label: 'Discard Network', className: 'btn-danger', onClick: this.onDelete, },
           { label: 'Continue Editing', className: 'btn-default', onClick: this.failureModalClose, },

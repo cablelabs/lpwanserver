@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import PT from 'prop-types';
-import { isNotArray } from 'ramda-adjunct';
+import { isNonEmptyArray } from '../../../utils/generalUtils';
 import FetchNetworks from '../../../components/fetch/FetchNetworks';
 import NetworkContainer from '../containers/NetworkContainer';
 //******************************************************************************
@@ -30,21 +30,22 @@ export default function NetworkProtocolView(props) {
 
   return (
     <div className={`pad-v-10 brd-bot ${brdTop}`}>
-      <div className={`flex-row jc-sb`}>
-        <div className='fs-lg'>{name}</div>
-        <Link to={`/admin/network${createQueryParams}`}>
-          <button type="button" className="btn btn-default btn-sm">Create</button>
-        </Link>
-      </div>
-      <FetchNetworks
-        filter={np=>np.networkProtocolId===id} render={ networks =>
-          isNotArray(networks) || networks.length===0 ?
-          <div></div> :
-          <div className={'bgc-gry-lt inner-shadow pad-10 mrg-t-20'}> {
-            networks.map((network,key) =>
-              <NetworkContainer {...{ network, key }}/>)}
+      <FetchNetworks filter={np=>np.networkProtocolId===id} render={ networks =>
+        <div>
+          <div className={`flex-row jc-sb`}>
+            <div className='fs-lg w-min-200'>{name}</div>
+            { !isNonEmptyArray(networks) && <div>No Loriot Netowrks</div>}
+            <Link to={`/admin/network${createQueryParams}`}>
+              <button type="button" className="btn btn-default btn-sm">Create</button>
+            </Link>
           </div>
-        }/>
+          { isNonEmptyArray(networks) &&
+            <div className={'bgc-gry-lt inner-shadow pad-10 mrg-t-20'}> {
+              networks.map((network,key) =>
+                <NetworkContainer {...{ network, key }}/>)}
+            </div>}
+        </div>
+      }/>
     </div>
   );
 }
