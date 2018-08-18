@@ -134,18 +134,15 @@ Network.prototype.createNetwork = function (name, networkProviderId, networkType
               .catch((err) => {
                 appLogger.log('Connection of ' + record.name + ' Failed: ' + err)
                 let errorMessage = {}
-                if (err === 301) {
+                if (err === 301 || err === 405 || err === 404) {
                   errorMessage = new Error('Invalid URI to the ' + record.name + ' Network: "' + record.baseUrl + '"')
                 }
                 else if (err === 401) {
                   errorMessage = new Error('Authentication not recognized for the ' + record.name + ' Network')
                 }
-                else if (err === 404) {
-                  errorMessage = new Error('Invalid URI to the ' + record.name + ' Network: "' + record.baseUrl + '"')
-                }
                 else {
                   errorMessage = new Error('Server Error on ' + record.name + ' Network:')
-                }
+-                }
                 record.securityData.authorized = false
                 record.securityData.message = errorMessage.toString()
                 record.securityData = dataAPI.hide(null,
@@ -245,8 +242,18 @@ Network.prototype.updateNetwork = function (record) {
               })
               .catch((err) => {
                 appLogger.log('Connection of ' + record.name + ' Failed: ' + err)
+                let errorMessage = {}
+                if (err === 301 || err === 405 || err === 404) {
+                  errorMessage = new Error('Invalid URI to the ' + record.name + ' Network: "' + record.baseUrl + '"')
+                }
+                else if (err === 401) {
+                  errorMessage = new Error('Authentication not recognized for the ' + record.name + ' Network')
+                }
+                else {
+                  errorMessage = new Error('Server Error on ' + record.name + ' Network:')
+                }
                 record.securityData.authorized = false
-                record.securityData.message = err.toString()
+                record.securityData.message = errorMessage.toString()
                 record.securityData = dataAPI.hide(null,
                   record.securityData,
                   k)
