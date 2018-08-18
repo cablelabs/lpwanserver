@@ -18,7 +18,7 @@ module.exports = {
       protocolHandlerNetworkFields: [
         {
           name: 'clientId',
-          description: 'The client id chosen when registering LPWan',
+          description: 'The client id chosen when registering the LPWan',
           help: '',
           type: 'string',
           label: 'Client ID',
@@ -29,7 +29,7 @@ module.exports = {
         },
         {
           name: 'clientSecret',
-          description: 'The client secret provided when registering LPWan',
+          description: 'The client secret provided when registering the LPWan',
           help: '',
           type: 'string',
           label: 'Client Secret',
