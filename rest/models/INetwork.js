@@ -71,6 +71,7 @@ Network.prototype.createNetwork = function (name, networkProviderId, networkType
       if (securityData) {
         securityData.authorized = false
         securityData.message = 'Pending Authorization'
+        securityData.enabled = true
         securityData = dataAPI.hide(null, securityData, k)
       }
       let record = await me.impl.createNetwork(name,
@@ -142,7 +143,7 @@ Network.prototype.createNetwork = function (name, networkProviderId, networkType
                 }
                 else {
                   errorMessage = new Error('Server Error on ' + record.name + ' Network:')
--                }
+                }
                 record.securityData.authorized = false
                 record.securityData.message = errorMessage.toString()
                 record.securityData = dataAPI.hide(null,
@@ -185,6 +186,10 @@ Network.prototype.updateNetwork = function (record) {
         record.id,
         old.networkProtocolId,
         genKey(record.id))
+
+      if (record.securityData && !record.securityData.enabled) {
+        record.securityData.enabled = true
+      }
 
       if (record.networkProtocolId !== old.networkProtocolId) {
         await dataAPI.deleteProtocolDataForKey(record.id,
