@@ -34,11 +34,11 @@ export default function NetworkView(props) {
   // const enabled = propOr(false, 'enabled', securityData);
 
   const statusGlyph = authorizied ?
-    'glyphicon-transfer text-success' : 'glyphicon-remove-circle text-danger';
+    'glyphicon-transfer text-success' : 'glyphicon-exclamation-sign text-danger';
 
   return (
     <div className='flex-row jc-sb fs-xs'>
-      <div className='w-min-200 fs-md'>{name}</div>
+      <div className='w-min-300 fs-md'>{name}</div>
       <div className='cur-ptr fs-sm' onClick={onToggleEnabled}>
         <input className='xbox-small' type="checkbox" checked={true} onChange={noop}/>
         Enabled

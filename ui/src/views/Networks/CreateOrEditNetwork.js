@@ -1,7 +1,7 @@
 import React, {Component} from "react";
 import PT from 'prop-types';
 import { withRouter } from 'react-router-dom';
-import { propOr, pathOr, lensPath, append, set, pick } from 'ramda';
+import { propOr, pathOr, lensPath, append, set, pick, pathEq } from 'ramda';
 import qs from 'query-string';
 import { dispatchError, errorToText } from '../../utils/errorUtils';
 import { arrayify } from '../../utils/generalUtils';
@@ -56,7 +56,8 @@ class CreateOrEditNetwork extends Component {
       // bookkeeping
       networkId: -1, // Set when entering upon edit, or upon return from POST
       networkProtocol: {},
-      authNeeded: false,
+      authNeeded: false,          // T if new, unauthorized, or security field changed on existing NW
+      securityDataChanged: false, // T if security field changed on existing NW (false in all other cases)
       successModalOpen: false,
       failureModalOpen: false,
       authErrorMessages: [],
@@ -112,7 +113,7 @@ class CreateOrEditNetwork extends Component {
       console.log('isNew: ', isNew);
       console.log('network.securityData', JSON.stringify(network.securityData,null,2));
 
-      const authNeeded = isNew;
+      const authNeeded = isNew || !pathEq([ 'securityData', 'authorized' ], true, networkData);
       const networkId = isNew ? -1 : propOr(-1, 'id', network);
       this.setState({ networkId, authNeeded, networkProtocol,  ...networkData });
 
@@ -121,10 +122,9 @@ class CreateOrEditNetwork extends Component {
       if ( oauthStatus ) {
 
         const authorized = pathOr(false, ['securityData', 'authorized'], networkData);
-        const serverAutMessage = pathOr(false, ['securityData', 'message'], networkData);
+        const serverAutMessage = pathOr('', ['securityData', 'message'], networkData);
         const oauthErrorMessage = propOr('', 'oauthError', queryParams);
         const serverErrorMessage = propOr('', 'serverError', queryParams);
-
 
         if ( oauthStatus === 'success' && authorized ) {
           this.successModal();
@@ -159,16 +159,19 @@ class CreateOrEditNetwork extends Component {
   onChange(path, field, e) {
 
     const value = inputEventToValue(e);
-    const { dirtyFields={}, networkProtocol={} } = this.state;
+    const { dirtyFields={}, networkProtocol={}, authNeeded } = this.state;
     const { isNew } = this.props;
 
     const fieldLens = lensPath([...path, field]);
     const pendingDirtyFields = set(fieldLens, true, dirtyFields);
-    const authNeeded = isNew || reAuthNeeded(networkProtocol, pendingDirtyFields);
+    const pendingSecurityDataChanged = hasSecurityDataChanged(networkProtocol, pendingDirtyFields);
+    const pendingAuthNeeded = isNew || authNeeded || pendingSecurityDataChanged;
 
     this.setState({
       ...set(fieldLens, value, this.state),
-      authNeeded, dirtyFields: pendingDirtyFields,
+      authNeeded: pendingAuthNeeded,
+      securityDataChanged: pendingSecurityDataChanged,
+      dirtyFields: pendingDirtyFields,
     });
   }
 
@@ -215,19 +218,19 @@ class CreateOrEditNetwork extends Component {
         this.successModal();
       }
 
-      // non-ouath backend auth succeeded
+      // non-ouath backend conneciton test succeeded
       else if ( !isNew && authNeeded && authorized) {
         this.successModal([
           `After updating your ${networkProtocolName} authorization information, authorization was succeseful.`]);
       }
 
-      // non-ouath backend auth failed for new network
+      // non-ouath backend conneciton test failed for new network
       else if (isNew && !authorized) {
         this.failureModal([
           `Your ${networkProtocolName} authorization information was not valid`,]);
       }
 
-      // non-ouath backend auth failed for updated network
+      // non-ouath backend conneciton test failed for updated network
       else if (!isNew && authNeeded && !authorized) {
         this.failureModal([
           `After updating your ${networkProtocolName} authorization information, authorization failed.`,
@@ -242,7 +245,6 @@ class CreateOrEditNetwork extends Component {
 
     // the create/update failed
     .catch( err => {
-      // if we get here, the create/update failed,
       this.failureModal([ `Your ${networkProtocolName} Submit failed: ${errorToText(err)}` ]);});
     }
 
@@ -270,14 +272,14 @@ class CreateOrEditNetwork extends Component {
 
   render() {
 
-    const { networkProtocol, authNeeded } = this.state;
+    const { networkProtocol, authNeeded, securityDataChanged } = this.state;
     const { isNew } = this.props;
     const { onChange, onSubmit, onDelete } = this;
 
     const networkData = pick(networkProps, this.state);
     const networkProtocolName = propOr('-error-', 'name', networkProtocol);
     const networkProtocolFields = getNetworkFields(networkProtocol);
-    const submitText = generateSubmitText(isNew, authNeeded, networkProtocolName);
+    const submitText = generateSubmitText(authNeeded, securityDataChanged, networkProtocolName);
 
     return (
       <div>
@@ -355,7 +357,7 @@ async function fetchNetworkInfo(networkId) {
   };
 }
 
-function reAuthNeeded(networkProtocol, dirtyFields) {
+function hasSecurityDataChanged(networkProtocol, dirtyFields) {
   const securityProps = getSecurityProps(networkProtocol);
   return (
     propOr(false, 'baseUrl', dirtyFields) ||
@@ -368,13 +370,13 @@ function securityPropsDirty(securityProps, dirtyFields) {
     dirty || pathOr(false, [ 'securityData', securityProp ], dirtyFields),false);
 }
 
-function generateSubmitText(isNew, authNeeded, networkProtocolName) {
-  return isNew ? [
-    `You will be authorized with the ${networkProtocolName} provider.`,
+function generateSubmitText(authNeeded, securityDataChanged, networkProtocolName) {
+  return securityDataChanged ? [
+    `${networkProtocolName} authoriztion information changed. You will be re-authorized  with the ${networkProtocolName} provider.`,
     'You may be directed to provide appropriate credentials.'
   ] :
   authNeeded ? [
-    `${networkProtocolName} authoriztion information changed. You will be re-authorized  with the ${networkProtocolName} provider.`,
+    `You will be authorized with the ${networkProtocolName} provider.`,
     'You may be directed to provide appropriate credentials.'
   ] : '';
 }
