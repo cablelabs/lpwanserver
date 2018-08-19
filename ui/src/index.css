@@ -171,6 +171,7 @@ input[type=number] {
 .pad-r-15 { padding-right: 15 }
 
 .w-min-200 { min-width: 200px }
+.w-min-300 { min-width: 300px }
 .w-max-300 { max-width: 300px }
 .w-200 { width: 200px }
 .w-350 { width: 350px }

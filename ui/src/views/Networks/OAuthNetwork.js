@@ -1,6 +1,3 @@
-// TODO:
-// * get the units for time out straight and consitent here, and in .env file
-
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { withRouter } from 'react-router-dom';
@@ -11,9 +8,10 @@ import { dispatchError } from '../../utils/errorUtils';
 import networkStore from '../../stores/NetworkStore';
 import networkProtocolStore from '../../stores/NetworkProtocolStore';
 import sessionStore from '../../stores/SessionStore';
+import { getSecurityProps } from '../../utils/protocolUtils';
 
 // Values from env is in minutes.  Change to milliseconds.
-const oauthTimeout = Number(process.env.REACT_APP_OAUTH_TIMEOUT * 60 * 1000);
+const oauthTimeout = Number(process.env.REACT_APP_OAUTH_TIMEOUT) * 60 * 1000;
 
 //******************************************************************************
 // The Component
@@ -40,18 +38,22 @@ class OAuthNetwork extends Component {
   constructor(props) {
     super(props);
 
+    const oauthMode = sessionStore.getSetting('oauthMode');
     const targetNetworkId = sessionStore.getSetting('oauthNetworkTarget');
-    const queryParams = qs.parse(pathOr({}, [ 'location', 'search' ], props));
     const oauthStartTime = Number(sessionStore.getSetting('oauthStartTime'));
+
+    const queryParams = qs.parse(pathOr({}, [ 'location', 'search' ], props));
     const elapsedTime = Date.now() - oauthStartTime;
 
     sessionStore.removeSetting('oauthNetworkTarget');
     sessionStore.removeSetting('oauthStartTime');
+    sessionStore.removeSetting('oauthMode');
 
-    // TODO: test the time out
+    const networkPath = `/admin/network/${targetNetworkId}?oauthMode=${oauthMode}`;
+
     if (elapsedTime > oauthTimeout) {
       const errMsg = encodeURIComponent('Authorization attempt timed out.  Please try again');
-      return props.history.push(`/admin/network/${targetNetworkId}?oauthStatus=fail&oauthError=${errMsg}`);
+      return props.history.push(`${networkPath}&oauthStatus=fail&oauthError=${errMsg}`);
     }
 
     fetchNetworkInfo(targetNetworkId)
@@ -69,31 +71,26 @@ class OAuthNetwork extends Component {
 
         // Network was succesfully updated
         .then(() => {
-          console.log('OAuthNetwork: oauth success, network updated on BE');
-          props.history.push(`/admin/network/${targetNetworkId}?oauthStatus=success`);
+          props.history.push(`${networkPath}&oauthStatus=success`);
         })
 
         // Oauth worked, but server was not able to update/create network
         .catch(() => {
-          console.log('OAuthNetwork: oauth success, but BE create/update network failed');
-          // hmmm, should we report ouath success, but create/update failure?
           const errorMsg = 'Server was not able to create/update the network';
-          props.history.push(`/admin/network/${targetNetworkId}?oauthStatus=success&serverError=${errorMsg}`);
+          props.history.push(`${networkPath}&oauthStatus=success&serverError=${errorMsg}`);
         });
       }
 
       // Oauth failed
       else {
-        console.log('OAuthNetwork: oauth fail');
         const errMsg = keys(errorParams).reduce((emsg, ekey, i) => `${emsg} ${removeUnderscores(capitalize(errorParams[ekey]))}.`,'');
-        props.history.push(`/admin/network/${targetNetworkId}?oauthStatus=fail&oauthError=${encodeURIComponent(errMsg)}`);
+        props.history.push(`${networkPath}&oauthStatus=fail&oauthError=${encodeURIComponent(errMsg)}`);
       }
     })
 
     // Failed to fetch network and/or networkProtocol, can't continue oauth.
     // Report the error and go to network list
     .catch(e=>{
-      console.log('OAuthNetwork: post oauth network fetch fail');
       const errMsg = e && e.message ? e.message : e;
       dispatchError(`Authorizaiton failed, LPWAN network errer. ${errMsg}`);
       props.history.push('/admin/networks');
@@ -128,16 +125,22 @@ async function fetchNetworkInfo(networkId) {
 // updates network with oauth info, throws error if update is not succesful
 async function updateNetworkWithOauthInfo(network, networkProtocol, queryParams) {
 
+  const { securityData={} } = network;
+  const securityProps = getSecurityProps(networkProtocol);
+
   // see if we are supposed to send antyhing onto the server
   const reponseParamList = pathOr([], [ 'metaData', 'oauthResponseUrlQueryParams' ], networkProtocol);
   const responseParams = pick(reponseParamList, queryParams);
 
-  const securityData = {
-    ...propOr({}, 'securityData', network),
+  const updatedSecrityData = {
+    ...pick(securityProps, securityData),
     ...responseParams
   };
 
   return isEmpty(responseParams) ?
     network :
-    await networkStore.updateNetwork({ ...network, securityData });
+    await networkStore.updateNetwork({
+      ...network,
+      securityData: updatedSecrityData
+  });
 }

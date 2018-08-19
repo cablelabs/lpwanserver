@@ -1,6 +1,6 @@
 import React from 'react';
 import PT from 'prop-types';
-import { propOr } from 'ramda';
+import { propOr, isEmpty } from 'ramda';
 import { noop } from 'ramda-adjunct';
 import { arrayify } from '../utils/generalUtils';
 import DynamicForm from './DynamicForm';
@@ -45,7 +45,7 @@ export default function NetworkForm(props) {
   const securityData = propOr({}, 'securityData', networkData);
   const authorized = propOr(false, 'authorized', securityData);
 
-  const panelHeading = isNew ? `Create ${networkProtocolName} Network` : 'Editing Network';
+  const panelHeading = isNew ? `Create ${networkProtocolName} Network` : `Editing ${networkProtocolName} Network`;
 
   return(
     <div className="panel panel-default">
@@ -63,10 +63,10 @@ export default function NetworkForm(props) {
       <form onSubmit={onSubmit}>
         <div className="panel-body">
 
-          {!isNew && !authorized &&
+          {!isNew && !authorized && !isEmpty(securityData) &&
             <div className='fs-sm bgc-danger txt-color-white pad-10 mrg-v-10 lh-compress'>
               <div className='fw-bold'>{`This network is not authorized with ${networkProtocolName}`}</div>
-              <div>Your network security data needs to be updated, or you will have to log in again</div>
+              <div>Your network security data should be updated</div>
             </div>
           }
 

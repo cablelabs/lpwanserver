@@ -32,7 +32,7 @@ export default function NetworkProtocolView(props) {
     <div className={`pad-v-10 brd-bot ${brdTop}`}>
       <FetchNetworks filter={np=>np.networkProtocolId===id} render={ networks =>
         <div>
-          <div className='flex-row jc-sb' style={{  }}>
+          <div className='flex-row jc-sb'>
             <div className='fs-lg w-min-200'>{name}</div>
             {/* !isNonEmptyArray(networks) && <div>{`No ${name} Netowrks`}</div> - address alignemnt issue*/ }
             <Link to={`/admin/network${createQueryParams}`}>
