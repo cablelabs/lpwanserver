@@ -1,6 +1,9 @@
 import React, {Component} from "react";
 import PT from 'prop-types';
+import { pathOr, propOr } from 'ramda';
 import { withRouter } from 'react-router-dom';
+import { dispatchError } from '../../../utils/errorUtils';
+import networkStore from "../../../stores/NetworkStore";
 import NetworkView from '../views/NetworkView';
 
 //******************************************************************************
@@ -37,11 +40,19 @@ class Network extends Component {
   }
 
   onToggleEnabled() {
-    console.log('~~> onToggleEnabled()');
-    // networkStore.getNetwork(this.props.networkId)
-    // .then( network => this.setState({network}))
-    // .catch(dispatchError);
+    const network = propOr({}, 'network', this.state);
+    const securityData = propOr({}, 'securityData', network);
+    const currentlyEnabled = propOr(false, 'enabled', securityData);
 
+    const securityDataModifications = {
+       ...securityData,
+       enabled: !currentlyEnabled
+    };
+    const networkModifications = {...network, securityData: securityDataModifications};
+
+    network && networkStore.updateNetwork(networkModifications)
+    .then(udpatedNetwork => this.setState({ network: udpatedNetwork }))
+    .catch(e=>dispatchError(e));
   }
 
   onEdit() {
