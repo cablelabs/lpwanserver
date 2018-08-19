@@ -45,7 +45,7 @@ export default function NetworkForm(props) {
   const securityData = propOr({}, 'securityData', networkData);
   const authorized = propOr(false, 'authorized', securityData);
 
-  const panelHeading = isNew ? `Create ${networkProtocolName} Network` : 'Editing Network';
+  const panelHeading = isNew ? `Create ${networkProtocolName} Network` : `Editing ${networkProtocolName} Network`;
 
   return(
     <div className="panel panel-default">

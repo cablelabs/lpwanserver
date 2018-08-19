@@ -12,6 +12,7 @@ import ListApplications from "./views/Applications/ListApplications";
 import CreateApplication from "./views/Applications/CreateApplication";
 import CreateDevice from "./views/Devices/CreateDevice";
 import Errors from "./components/Errors";
+import ReMount from "./components/ReMount";
 import CreateUser from "./views/auth/CreateUser";
 import ListCompanies from "./views/Companies/ListCompanies";
 import CompanyLayout from "./views/Companies/CompanyLayout";
@@ -26,7 +27,7 @@ import ListNetworkProtocols from "./views/NetworkProtocols/ListNetworkProtocols"
 import NetworkProtocolLayout from "./views/NetworkProtocols/NetworkProtocolLayout";
 import CreateNetworkProtocol from "./views/NetworkProtocols/CreateNetworkProtocol";
 import ListNetworks from "./views/Networks/ListNetworks";
-import NetworkLayout from "./views/Networks/NetworkLayout";
+import CreateOrEditNetowrk from "./views/Networks/CreateOrEditNetwork";
 import OAuthNetwork from "./views/Networks/OAuthNetwork";
 import ListReportingProtocols from "./views/ReportingProtocols/ListReportingProtocols";
 import ReportingProtocolLayout from "./views/ReportingProtocols/ReportingProtocolLayout";
@@ -35,7 +36,6 @@ import CreateDeviceProfile from "./views/DeviceProfiles/CreateDeviceProfile";
 import DeviceProfileLayout from "./views/DeviceProfiles/DeviceProfileLayout";
 import ErrorStore from "./stores/ErrorStore";
 import PullNetworks from "./views/ImportExport/PullNetworks";
-//import ApplicationStore from "./stores/ApplicationStore";
 
 // styling
 import 'codemirror/lib/codemirror.css';
@@ -61,6 +61,7 @@ class Layout extends Component {
             <Errors/>
             <Route exact path="/login" component={Login}/>
             <Route exact path="/" component={ListApplications}/>
+            <Route exact path="/remount" component={ReMount}/>
             <Route exact path="/applications" component={ListApplications}/>
             <Route exact path="/applications/:applicationID" component={ApplicationLayout}/>
             <Route exact path="/users" component={ListApplications}/>
@@ -82,8 +83,8 @@ class Layout extends Component {
             <Route exact path="/admin/networkProtocols" component={ListNetworkProtocols}/>
             <Route exact path="/admin/networkProtocol" component={CreateNetworkProtocol}/>
             <Route exact path="/admin/networks" component={ListNetworks}/>
-            <Route exact path="/admin/network/:networkID" component={NetworkLayout}/>
-            <Route exact path="/admin/network" component={NetworkLayout}/>
+            <Route exact path="/admin/network/:networkID" component={CreateOrEditNetowrk}/>
+            <Route exact path="/admin/network" component={CreateOrEditNetowrk}/>
             <Route exact path="/admin/networks/oauth" component={OAuthNetwork}/>
             <Route exact path="/admin/pull/:networkID" component={PullNetworks}/>
             <Route exact path="/admin/reportingProtocol/:reportingProtocolID" component={ReportingProtocolLayout}/>
@@ -98,8 +99,4 @@ class Layout extends Component {
   }
 }
 
-//<Route exact path="/applications" component={ApplicationLayout
-///applications/:applicationID
-//<Errors />
-//
 export default Layout;

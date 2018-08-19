@@ -18,7 +18,7 @@ const defaultProps = {
 // The Container
 //******************************************************************************
 
-class NetworkContainer extends Component {
+class Network extends Component {
 
   static contextTypes = {
     router: PT.object.isRequired
@@ -60,6 +60,6 @@ class NetworkContainer extends Component {
   }
 }
 
-export default withRouter(NetworkContainer);
-NetworkContainer.propTypes = propTypes;
-NetworkContainer.defaultProps = defaultProps;
+export default withRouter(Network);
+Network.propTypes = propTypes;
+Network.defaultProps = defaultProps;

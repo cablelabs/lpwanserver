@@ -8,6 +8,7 @@ import { dispatchError } from '../../utils/errorUtils';
 import networkStore from '../../stores/NetworkStore';
 import networkProtocolStore from '../../stores/NetworkProtocolStore';
 import sessionStore from '../../stores/SessionStore';
+import { getSecurityProps } from '../../utils/protocolUtils';
 
 // Values from env is in minutes.  Change to milliseconds.
 const oauthTimeout = Number(process.env.REACT_APP_OAUTH_TIMEOUT) * 60 * 1000;
@@ -37,17 +38,22 @@ class OAuthNetwork extends Component {
   constructor(props) {
     super(props);
 
+    const oauthMode = sessionStore.getSetting('oauthMode');
     const targetNetworkId = sessionStore.getSetting('oauthNetworkTarget');
-    const queryParams = qs.parse(pathOr({}, [ 'location', 'search' ], props));
     const oauthStartTime = Number(sessionStore.getSetting('oauthStartTime'));
+
+    const queryParams = qs.parse(pathOr({}, [ 'location', 'search' ], props));
     const elapsedTime = Date.now() - oauthStartTime;
 
     sessionStore.removeSetting('oauthNetworkTarget');
     sessionStore.removeSetting('oauthStartTime');
+    sessionStore.removeSetting('oauthMode');
+
+    const networkPath = `/admin/network/${targetNetworkId}?oauthMode=${oauthMode}`;
 
     if (elapsedTime > oauthTimeout) {
       const errMsg = encodeURIComponent('Authorization attempt timed out.  Please try again');
-      return props.history.push(`/admin/network/${targetNetworkId}?oauthStatus=fail&oauthError=${errMsg}`);
+      return props.history.push(`${networkPath}&oauthStatus=fail&oauthError=${errMsg}`);
     }
 
     fetchNetworkInfo(targetNetworkId)
@@ -65,20 +71,20 @@ class OAuthNetwork extends Component {
 
         // Network was succesfully updated
         .then(() => {
-          props.history.push(`/admin/network/${targetNetworkId}?oauthStatus=success`);
+          props.history.push(`${networkPath}&oauthStatus=success`);
         })
 
         // Oauth worked, but server was not able to update/create network
         .catch(() => {
           const errorMsg = 'Server was not able to create/update the network';
-          props.history.push(`/admin/network/${targetNetworkId}?oauthStatus=success&serverError=${errorMsg}`);
+          props.history.push(`${networkPath}&oauthStatus=success&serverError=${errorMsg}`);
         });
       }
 
       // Oauth failed
       else {
         const errMsg = keys(errorParams).reduce((emsg, ekey, i) => `${emsg} ${removeUnderscores(capitalize(errorParams[ekey]))}.`,'');
-        props.history.push(`/admin/network/${targetNetworkId}?oauthStatus=fail&oauthError=${encodeURIComponent(errMsg)}`);
+        props.history.push(`${networkPath}&oauthStatus=fail&oauthError=${encodeURIComponent(errMsg)}`);
       }
     })
 
@@ -119,16 +125,22 @@ async function fetchNetworkInfo(networkId) {
 // updates network with oauth info, throws error if update is not succesful
 async function updateNetworkWithOauthInfo(network, networkProtocol, queryParams) {
 
+  const { securityData={} } = network;
+  const securityProps = getSecurityProps(networkProtocol);
+
   // see if we are supposed to send antyhing onto the server
   const reponseParamList = pathOr([], [ 'metaData', 'oauthResponseUrlQueryParams' ], networkProtocol);
   const responseParams = pick(reponseParamList, queryParams);
 
-  const securityData = {
-    ...propOr({}, 'securityData', network),
+  const updatedSecrityData = {
+    ...pick(securityProps, securityData),
     ...responseParams
   };
 
   return isEmpty(responseParams) ?
     network :
-    await networkStore.updateNetwork({ ...network, securityData });
+    await networkStore.updateNetwork({
+      ...network,
+      securityData: updatedSecrityData
+  });
 }
