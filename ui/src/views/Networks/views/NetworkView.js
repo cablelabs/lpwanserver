@@ -29,6 +29,8 @@ export default function NetworkView(props) {
   const { network={}, onToggleEnabled, onEdit } = props;
   const { name, securityData } = network;
   const authorizied = propOr(false, 'authorized', securityData);
+  const enabled = propOr(false, 'enabled', securityData);
+
 
   // comiing soon
   // const enabled = propOr(false, 'enabled', securityData);
@@ -40,7 +42,7 @@ export default function NetworkView(props) {
     <div className='flex-row jc-sb fs-xs'>
       <div className='w-min-300 fs-md'>{name}</div>
       <div className='cur-ptr fs-sm' onClick={onToggleEnabled}>
-        <input className='xbox-small' type="checkbox" checked={true} onChange={noop}/>
+        <input className='xbox-small' type="checkbox" checked={enabled} onChange={noop}/>
         Enabled
       </div>
       <div className={`glyphicon fs-md ${statusGlyph}`} />
