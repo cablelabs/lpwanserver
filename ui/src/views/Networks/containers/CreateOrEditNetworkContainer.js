@@ -297,6 +297,7 @@ class CreateOrEditNetworkContainer extends Component {
   oauthNotifyClose = () => this.setState({oauthNotifyModalOpen: false});
   setModalErrorMessages = messages => this.setState({ authErrorMessages : messages });
   continueEditing = networkId => this.props.history.push(`/remount?to=/admin/network/${networkId}`);
+    // remount so that we get all latest info from backend, and corrrect incoming state
 
   render() {
 

@@ -44,6 +44,7 @@ export default function NetworkForm(props) {
   const { networkData, networkProtocolName, networkProtocolFields } = props;
   const securityData = propOr({}, 'securityData', networkData);
   const authorized = propOr(false, 'authorized', securityData);
+  const serverAuthMessage = propOr('', 'message', securityData);
 
   const panelHeading = isNew ? `Create ${networkProtocolName} Network` : `Editing ${networkProtocolName} Network`;
 
@@ -66,7 +67,8 @@ export default function NetworkForm(props) {
           {!isNew && !authorized && !isEmpty(securityData) &&
             <div className='fs-sm bgc-danger txt-color-white pad-10 mrg-v-10 lh-compress'>
               <div className='fw-bold'>{`This network is not authorized with ${networkProtocolName}`}</div>
-              <div>Your network security data should be updated</div>
+              <div>Your network security data will need to be updated</div>
+              { serverAuthMessage && <div>{serverAuthMessage}</div>}
             </div>
           }
 
