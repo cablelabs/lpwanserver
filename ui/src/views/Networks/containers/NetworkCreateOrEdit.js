@@ -29,13 +29,13 @@ const defaultProps = {
 };
 
 //******************************************************************************
-// CreateOrEditNetworkContainer container
+// NetworkCreateOrEdit container
 //******************************************************************************
 
 const networkProps =
   [ 'id', 'name', 'networkProviderId', 'networkTypeId', 'networkProtocolId', 'baseUrl' , 'securityData' ];
 
-class CreateOrEditNetworkContainer extends Component {
+class NetworkCreateOrEdit extends Component {
 
   static contextTypes = {
     router: PT.object.isRequired
@@ -80,7 +80,6 @@ class CreateOrEditNetworkContainer extends Component {
     this.oauthNotifyClose = this.oauthNotifyClose.bind(this);
   }
 
-  componentWillUnmount = () => console.log('... unmounting');
   componentDidMount() {
 
     // NOTES: we may be here because
@@ -112,10 +111,6 @@ class CreateOrEditNetworkContainer extends Component {
         securityData: getSecurityDefaults(networkProtocol),
       }
       : pick(networkProps, network);
-
-      console.log('~~> CreateOrEditNetworkContainer::componentDidMount()');
-      console.log('isNew: ', isNew);
-      console.log('network.securityData', JSON.stringify(network.securityData,null,2));
 
       const authNeeded = isNew || !pathEq([ 'securityData', 'authorized' ], true, networkData);
       const networkId = isNew ? -1 : propOr(-1, 'id', network);
@@ -198,9 +193,6 @@ class CreateOrEditNetworkContainer extends Component {
     const { isNew } = this.props;
     const { networkProtocol, securityData={}, authNeeded } = this.state;
 
-    console.log('~~> CreateOrEditNetworkContainer::onSubmit()');
-    console.log('isNew: ', isNew);
-
     const networkProtocolName = propOr('-error-', 'name', networkProtocol);
     const securityProps = getSecurityProps(networkProtocol);
 
@@ -213,8 +205,6 @@ class CreateOrEditNetworkContainer extends Component {
       securityData: securityDataToSubmit
     });
 
-    console.log('pendingNetwork', JSON.stringify(pendingNetwork,null,2));
-
     const mutateMethod = isNew ? 'createNetwork' : 'updateNetwork';
     networkStore[mutateMethod](pendingNetwork)
 
@@ -226,9 +216,6 @@ class CreateOrEditNetworkContainer extends Component {
       const serverAuthMessage = pathOr('', ['securityData', 'message'], updatedNetwork);
 
       this.setState({ networkId });
-      console.log('... onSubmit().then');
-      console.log('isNew: ', isNew);
-      console.log('updatedNetwork.securityData', JSON.stringify(updatedNetwork.securityData,null,2));
 
       // go to oauth page if needed
       if (oauthUrl && authNeeded) {
@@ -278,7 +265,7 @@ class CreateOrEditNetworkContainer extends Component {
 
     e.preventDefault();
     const { networkId } = this.state;
-    !networkId && console.warn('CreateOrEditNetworkContainer: attempted to delete network w/o ID');
+    !networkId && console.warn('NetworkCreateOrEdit: attempted to delete network w/o ID');
 
     //eslint-disable-next-line
     if (networkId && confirm("Are you sure you want to delete this network?")) {
@@ -341,10 +328,10 @@ class CreateOrEditNetworkContainer extends Component {
   }
 }
 
-export default withRouter(CreateOrEditNetworkContainer);
+export default withRouter(NetworkCreateOrEdit);
 
-CreateOrEditNetworkContainer.propTypes = propTypes;
-CreateOrEditNetworkContainer.defaultProps = defaultProps;
+NetworkCreateOrEdit.propTypes = propTypes;
+NetworkCreateOrEdit.defaultProps = defaultProps;
 
 //******************************************************************************
 // Helper Functions

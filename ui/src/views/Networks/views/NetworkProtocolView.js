@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import PT from 'prop-types';
 import { isNonEmptyArray } from '../../../utils/generalUtils';
 import FetchNetworks from '../../../components/fetch/FetchNetworks';
-import NetworkContainer from '../containers/NetworkContainer';
+import Network from '../containers/Network';
 //******************************************************************************
 // Interface
 //******************************************************************************
@@ -42,7 +42,7 @@ export default function NetworkProtocolView(props) {
           { isNonEmptyArray(networks) &&
             <div className={'bgc-gry-lt inner-shadow pad-10 mrg-t-20'}> {
               networks.map((network,key) =>
-                <NetworkContainer {...{ network, key }}/>)}
+                <Network {...{ network, key }}/>)}
             </div>}
         </div>
       }/>

@@ -2,7 +2,7 @@ import React from 'react';
 import { withRouter } from 'react-router-dom';
 import { path, propOr } from 'ramda';
 import BreadCrumbs from '../../components/BreadCrumbs';
-import CreateOrEditNetworkContainer from './containers/CreateOrEditNetworkContainer';
+import NetworkCreateOrEdit from './containers/NetworkCreateOrEdit';
 import FetchNetworks from '../../components/fetch/FetchNetworks';
 import FetchNothing from '../../components/fetch/FetchNothing';
 
@@ -27,7 +27,7 @@ function CreateOrEditNetowrk(props) {
          />;
       }}
       />
-      <CreateOrEditNetworkContainer
+      <NetworkCreateOrEdit
         {...{ isNew, networkId }}
       />
     </div>
