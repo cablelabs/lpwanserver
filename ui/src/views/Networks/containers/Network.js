@@ -11,7 +11,8 @@ import NetworkView from '../views/NetworkView';
 //******************************************************************************
 
 const propTypes = {
-  network: PT.object.isRequired
+  network: PT.object.isRequired,
+  networkProtocolName: PT.string, // protocol for this network
 };
 
 const defaultProps = {
@@ -64,6 +65,7 @@ class Network extends Component {
     return (
       <NetworkView
         network={this.state.network}
+        networkProtocolName={this.props.networkProtocolName}
         onToggleEnabled={this.onToggleEnabled}
         onEdit={this.onEdit}
       />
