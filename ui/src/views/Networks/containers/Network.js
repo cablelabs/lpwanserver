@@ -1,6 +1,6 @@
 import React, {Component} from "react";
 import PT from 'prop-types';
-import { pathOr, propOr } from 'ramda';
+import { propOr } from 'ramda';
 import { withRouter } from 'react-router-dom';
 import { dispatchError } from '../../../utils/errorUtils';
 import networkStore from "../../../stores/NetworkStore";
