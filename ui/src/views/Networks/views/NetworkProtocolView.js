@@ -27,6 +27,7 @@ export default function NetworkProtocolView(props) {
   const { id, name, networkTypeId } = networkProtocol;
   const brdTop = first ? 'brd-top':'';
   const createQueryParams = `?networkTypeId=${networkTypeId}&networkProtocolId=${id}`;
+  const networkProtocolName = name;
 
   return (
     <div className={`pad-v-10 brd-bot ${brdTop}`}>
@@ -42,7 +43,7 @@ export default function NetworkProtocolView(props) {
           { isNonEmptyArray(networks) &&
             <div className={'bgc-gry-lt inner-shadow pad-10 mrg-t-20'}> {
               networks.map((network,key) =>
-                <Network {...{ network, key }}/>)}
+                <Network {...{ network, networkProtocolName, key }}/>)}
             </div>}
         </div>
       }/>

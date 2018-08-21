@@ -110,7 +110,8 @@ input[type=number] {
 .txt-color-white { color: #FFFFFF; }
 
 
-.bgc-gry-lt { background-color: #FAFAFA }
+.bgc-gry-lt { background-color: #FAFAFA !important}
+.bgc-gry-dark { background-color: #666666 !important}
 .bgc-danger { background-color: #E51C23 }
 
 /* some general util classes */
@@ -183,6 +184,10 @@ input[type=number] {
 }
 
 .cur-ptr { cursor: pointer }
+
+.opacity-1 {
+  opacity: 1 !important;
+}
 
 .shadow {
    box-shadow: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
