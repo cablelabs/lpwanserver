@@ -12,8 +12,8 @@ export const getNetworkFields = networkProtocol =>
 
 export const getSecurityProps = networkProtocol => {
   const protoFields = getNetworkFields(networkProtocol);
-  return protoFields.reduce((propAccum,curField)=>
-    curField.name ? append( curField.name, propAccum) : propAccum, []);
+  return protoFields.reduce((propAccum,curField)=>                 // always send authorized flag
+    curField.name ? append( curField.name, propAccum) : propAccum, ['authorized']);
 };
 
 export const getSecurityDefaults = networkProtocol => {
