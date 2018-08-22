@@ -13,6 +13,11 @@ module.exports = {
   metaData:
     {
       protocolHandlerName: 'TheThingsNetwork',
+      version:
+        {
+          versionText: 'Version 2.0',
+          versionValue: '2.0'
+        },
       networkType: 'Lora',
       oauthUrl: 'https://account.thethingsnetwork.org/users/authorize',
       protocolHandlerNetworkFields: [

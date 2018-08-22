@@ -19,7 +19,7 @@ module.exports.metaData =
     version:
       {
         versionText: 'Version 2.0',
-        versionValue: 'v2.0'
+        versionValue: '2.0'
       },
     networkType: 'Lora',
     oauthUrl: '',
@@ -72,7 +72,6 @@ module.exports.register = async function (networkProtocols) {
       .catch(err => {
         console.log(err)
       })
-
   })
 }
 
@@ -212,7 +211,7 @@ module.exports.getDeviceProfileAccessAccount = async function (dataAPI, network,
 // The company admin account data for the company on the network, used to set up
 // applications and devices.  If the account data does not exist, this code
 // can optionally generate it.
-async function getCompanyAccount(dataAPI, network, companyId, generateIfMissing) {
+async function getCompanyAccount (dataAPI, network, companyId, generateIfMissing) {
   // Obtain the security data from the protocol storage in the dataAPI, then
   // access it for the user.
   var srd
@@ -285,30 +284,30 @@ async function getCompanyAccount(dataAPI, network, companyId, generateIfMissing)
   return secData
 };
 
-function makeNetworkDataKey(networkId, dataName) {
+function makeNetworkDataKey (networkId, dataName) {
   return 'nwk:' + networkId + '/' + dataName
 }
 
-function makeCompanyDataKey(companyId, dataName) {
+function makeCompanyDataKey (companyId, dataName) {
   return 'co:' + companyId + '/' + dataName
 }
 
-function makeApplicationDataKey(applicationId, dataName) {
+function makeApplicationDataKey (applicationId, dataName) {
   return 'app:' + applicationId + '/' + dataName
 }
 
-function makeDeviceDataKey(deviceId, dataName) {
+function makeDeviceDataKey (deviceId, dataName) {
   return 'dev:' + deviceId + '/' + dataName
 }
 
-function makeDeviceProfileDataKey(deviceProfileId, dataName) {
+function makeDeviceProfileDataKey (deviceProfileId, dataName) {
   return 'dp:' + deviceProfileId + '/' + dataName
 }
 
 // Creating a ServiceProfile requires a NetworkServerId.  However, that's pretty
 // esoteric concept for general application management, so we provide this
 // method that will get a network server id from the LoRa system.
-function getANetworkServerID(network, connection) {
+function getANetworkServerID (network, connection) {
   appLogger.log('LoRaOpenSource: getANetworkServerID')
   return new Promise(async function (resolve, reject) {
     // Set up the request options.
@@ -357,7 +356,7 @@ function getANetworkServerID(network, connection) {
 }
 
 // Get the NetworkServer using the Service Profile a ServiceProfile.
-function getNetworkServerById(network, networkServerId, connection, dataAPI) {
+function getNetworkServerById (network, networkServerId, connection, dataAPI) {
   appLogger.log('LoRaOpenSource: getNetworkServerForRemoteOrganization')
   return new Promise(async function (resolve, reject) {
     // Set up the request options.
@@ -399,7 +398,7 @@ function getNetworkServerById(network, networkServerId, connection, dataAPI) {
 };
 
 // Get the NetworkServer using the Service Profile a ServiceProfile.
-function getDeviceProfileById(network, dpId, connection, dataAPI) {
+function getDeviceProfileById (network, dpId, connection, dataAPI) {
   appLogger.log('LoRaOpenSource: getDeviceProfileById')
   return new Promise(async function (resolve, reject) {
     // Set up the request options.
@@ -443,7 +442,7 @@ function getDeviceProfileById(network, dpId, connection, dataAPI) {
 };
 
 // Get the NetworkServer using the Service Profile a ServiceProfile.
-function getDeviceById(network, deviceId, connection, dataAPI) {
+function getDeviceById (network, deviceId, connection, dataAPI) {
   appLogger.log('LoRaOpenSource: getDeviceProfileById')
   return new Promise(async function (resolve, reject) {
     // Set up the request options.
@@ -485,7 +484,7 @@ function getDeviceById(network, deviceId, connection, dataAPI) {
 };
 
 // Get the NetworkServer using the Service Profile a ServiceProfile.
-function getServiceProfileById(network, serviceProfileId, connection, dataAPI) {
+function getServiceProfileById (network, serviceProfileId, connection, dataAPI) {
   appLogger.log('LoRaOpenSource: getServiceProfileById')
   return new Promise(async function (resolve, reject) {
     // Set up the request options.
@@ -527,7 +526,7 @@ function getServiceProfileById(network, serviceProfileId, connection, dataAPI) {
 }
 
 // Get the NetworkServer using the Service Profile a ServiceProfile.
-function getApplicationById(network, applicationId, connection, dataAPI) {
+function getApplicationById (network, applicationId, connection, dataAPI) {
   appLogger.log('LoRaOpenSource: getApplicationById')
   return new Promise(async function (resolve, reject) {
     // Set up the request options.
@@ -570,7 +569,7 @@ function getApplicationById(network, applicationId, connection, dataAPI) {
 }
 
 // Get the Service Profile a for a Remote Org.
-function getServiceProfileForOrg(network, orgId, companyId, connection, dataAPI) {
+function getServiceProfileForOrg (network, orgId, companyId, connection, dataAPI) {
   appLogger.log('LoRaOpenSource: getNetworkServerForRemoteOrganization')
   return new Promise(async function (resolve, reject) {
     var spOptions = {}
@@ -631,7 +630,7 @@ function getServiceProfileForOrg(network, orgId, companyId, connection, dataAPI)
 // Creating a DeviceProfile requires a NetworkServerId.  However, you can't get
 // data from that table in LoRa if you aren't a Global Admin.  So get the
 // company's ServiceProfile and get it from that.
-function getANetworkServerIDFromServiceProfile(network, connection, coId, dataAPI) {
+function getANetworkServerIDFromServiceProfile (network, connection, coId, dataAPI) {
   return new Promise(async function (resolve, reject) {
     var coSPId
     try {
@@ -1349,7 +1348,7 @@ module.exports.pullCompanies = function (sessionData, network, dataAPI, modelAPI
                 add()
               }
 
-              function add() {
+              function add () {
                 currentConnections += 1
                 appLogger.log('Added ' + org.name)
                 me.addRemoteCompany(sessionData, org, network, dataAPI, modelAPI)
@@ -1596,10 +1595,10 @@ module.exports.addRemoteCompany = function (sessionData, remoteOrganization, net
     if (isNewNTL) {
       // 3.  Setup protocol data
       await
-        dataAPI.putProtocolDataForKey(network.id,
-          network.networkProtocolId,
-          makeCompanyDataKey(existingCompany.id, 'coNwkId'),
-          remoteOrganization.id)
+      dataAPI.putProtocolDataForKey(network.id,
+        network.networkProtocolId,
+        makeCompanyDataKey(existingCompany.id, 'coNwkId'),
+        remoteOrganization.id)
       var networkCoId = remoteOrganization.id
 
       // We will need an admin user for this company.
@@ -1613,7 +1612,7 @@ module.exports.addRemoteCompany = function (sessionData, remoteOrganization, net
 
       // Get/generate the company username/password
       var creds = await
-        getCompanyAccount(dataAPI, network, existingCompany.id, true)
+      getCompanyAccount(dataAPI, network, existingCompany.id, true)
 
       userOptions.json = {
         'username': creds.username,
@@ -1655,7 +1654,7 @@ module.exports.addRemoteCompany = function (sessionData, remoteOrganization, net
               ': ' + response.statusCode +
               ' (Server message: ' + response.body.error + ')')
             reject(response.statusCode)
-            return;
+            return
             remoteDeviceId
           }
         }

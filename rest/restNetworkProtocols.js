@@ -67,8 +67,36 @@ exports.initialize = function (app, server) {
       if (req.query.networkTypeId) {
         options.networkTypeId = req.query.networkTypeId
       }
-      modelAPI.networkProtocols.retrieveNetworkProtocols(options).then(function (nps) {
-        // restServer.respondJson(res, null, nps)
+      modelAPI.networkProtocols.retrieveNetworkProtocols(options).then(function (recs) {
+        let nps = {
+          totalCount: recs.totalCount,
+          records: []
+        }
+        let len = recs.records.length
+        for (let i = 0; i < len; i++) {
+          let rec = recs.records[i]
+          let found = false
+          let counter = 0
+          while (!found && counter < nps.records.length) {
+            if (nps.records[counter].name === rec.name) {
+              found = true
+              nps.records[counter].versions.push(rec)
+            }
+            else {
+              counter++
+            }
+          }
+          // Not found
+          if (!found) {
+            nps.records.push({
+              name: rec.name,
+              masterProtocol: rec.masterProtocol,
+              networkTypeId: rec.networkTypeId,
+              versions: [rec]
+            })
+          }
+        }
+        console.log(JSON.stringify(nps))
         restServer.respond(res, 200, nps)
       })
         .catch(function (err) {

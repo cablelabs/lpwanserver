@@ -13,6 +13,11 @@ module.exports = {
   metaData:
     {
       protocolHandlerName: 'Loriot',
+      version:
+        {
+          versionText: 'Version 1.0',
+          versionValue: '1.0'
+        },
       networkType: 'Lora',
       oauthUrl: '',
       protocolHandlerNetworkFields: [

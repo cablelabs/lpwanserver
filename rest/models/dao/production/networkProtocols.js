@@ -50,7 +50,17 @@ exports.upsertNetworkProtocol = function (np) {
           oldNp = oldNp.records[0]
           resolve(me.updateNetworkProtocol(np))
         } else {
-          resolve(me.createNetworkProtocol(np.name, np.networkTypeId, np.protocolHandler, np.networkProtocolVersion, np.masterProtocol))
+          me.createNetworkProtocol(np.name, np.networkTypeId, np.protocolHandler, np.networkProtocolVersion, np.masterProtocol)
+            .then(record => {
+              console.log(record)
+              if (!record.masterProtocol) {
+                record.masterProtocol = record.id
+                resolve(me.updateNetworkProtocol(record))
+              }
+              else {
+                resolve(record)
+              }
+            })
         }
       })
       .catch((err) => {

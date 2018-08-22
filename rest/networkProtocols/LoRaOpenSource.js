@@ -16,6 +16,11 @@ module.exports.activeApplicationNetworkProtocols = {}
 module.exports.metaData =
   {
     protocolHandlerName: 'Lora Open Source',
+    version:
+      {
+        versionText: 'Version 1.0',
+        versionValue: '1.0'
+      },
     networkType: 'Lora',
     oauthUrl: '',
     protocolHandlerNetworkFields: [
