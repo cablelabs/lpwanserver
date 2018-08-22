@@ -72,7 +72,8 @@ module.exports.register = function (networkProtocols) {
     let me = {
       name: 'The Things Network',
       networkTypeId: 1,
-      protocolHandler: 'TheThingsNetwork.js'
+      protocolHandler: 'TheThingsNetwork.js',
+      networkProtocolVersion: '2.0'
     }
     await networkProtocols.upsertNetworkProtocol(me)
     resolve()

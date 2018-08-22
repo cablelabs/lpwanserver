@@ -20,13 +20,15 @@ var httpError = require('http-errors')
 //                   protocol api for this specific protocol.
 //
 // Returns the promise that will execute the create.
-exports.createNetworkProtocol = function (name, networkTypeId, protocolHandler) {
+exports.createNetworkProtocol = function (name, networkTypeId, protocolHandler, version, masterProtocol) {
   return new Promise(function (resolve, reject) {
     // Create the user record.
     var np = {}
     np.name = name
     np.networkTypeId = networkTypeId
     np.protocolHandler = protocolHandler
+    if (version) np.networkProtocolVersion = version
+    if (masterProtocol) np.masterProtocol = masterProtocol
 
     // OK, save it!
     db.insertRecord('networkProtocols', np, function (err, record) {
@@ -42,15 +44,13 @@ exports.createNetworkProtocol = function (name, networkTypeId, protocolHandler) 
 exports.upsertNetworkProtocol = function (np) {
   let me = this
   return new Promise(function (resolve, reject) {
-    me.retrieveNetworkProtocols({ search: np.name })
+    me.retrieveNetworkProtocols({ search: np.name, networkProtocolVersion: np.networkProtocolVersion })
       .then((oldNp) => {
         if (oldNp.totalCount > 0) {
           oldNp = oldNp.records[0]
-          console.log('Updating ' + oldNp.name)
           resolve(me.updateNetworkProtocol(np))
         } else {
-          console.log('Creating ' + np.name)
-          resolve(me.createNetworkProtocol(np.name, np.networkTypeId, np.protocolHandler))
+          resolve(me.createNetworkProtocol(np.name, np.networkTypeId, np.protocolHandler, np.networkProtocolVersion, np.masterProtocol))
         }
       })
       .catch((err) => {
@@ -143,6 +143,7 @@ exports.retrieveAllNetworkProtocols = function () {
  */
 exports.retrieveNetworkProtocols = function (options) {
   return new Promise(function (resolve, reject) {
+    console.log(options)
     var sql = 'select * from networkProtocols'
     var sqlTotalCount = 'select count(id) as count from networkProtocols'
     var needsAnd = false
@@ -154,6 +155,15 @@ exports.retrieveNetworkProtocols = function (options) {
       if (options.search) {
         sql += ' name like ' + db.sqlValue(options.search)
         sqlTotalCount += ' name like ' + db.sqlValue(options.search)
+        needsAnd = true
+      }
+      if (options.networkProtocolVersion) {
+        if (needsAnd) {
+          sql += ' and'
+          sqlTotalCount += ' and'
+        }
+        sql += ' networkProtocolVersion like ' + db.sqlValue(options.networkProtocolVersion)
+        sqlTotalCount += ' networkProtocolVersion like ' + db.sqlValue(options.networkProtocolVersion)
         needsAnd = true
       }
       if (options.networkTypeId) {
@@ -172,6 +182,7 @@ exports.retrieveNetworkProtocols = function (options) {
         sql += ' offset ' + db.sqlValue(options.offset)
       }
     }
+    console.log(sql)
     db.select(sql, function (err, rows) {
       if (err) {
         reject(err)

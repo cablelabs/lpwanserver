@@ -16,6 +16,11 @@ module.exports.activeApplicationNetworkProtocols = {}
 module.exports.metaData =
   {
     protocolHandlerName: 'Lora Open Source',
+    version:
+      {
+        versionText: 'Version 2.0',
+        versionValue: 'v2.0'
+      },
     networkType: 'Lora',
     oauthUrl: '',
     protocolHandlerNetworkFields: [
@@ -45,16 +50,29 @@ module.exports.metaData =
   }
 
 module.exports.register = async function (networkProtocols) {
-  appLogger.log('LoraOpenSource:register')
+  appLogger.log('Lora Open Source 2:register')
   return new Promise(async function (resolve, reject) {
     let me = {
       name: 'Lora Open Source',
       networkTypeId: 1,
-      protocolHandler: 'LoRaOpenSource.js',
-      networkProtocolVersion: '1.0'
+      protocolHandler: 'LoRaOpenSource_2.js',
+      networkProtocolVersion: '2.0'
     }
-    await networkProtocols.upsertNetworkProtocol(me)
-    resolve()
+    networkProtocols.retrieveNetworkProtocols({search: me.name, networkProtocolVersion: '1.0'})
+      .then(master => {
+        me.masterProtocol = master.records[0].id
+        networkProtocols.upsertNetworkProtocol(me)
+          .then(() => {
+            resolve()
+          })
+          .catch(err => {
+            reject(err)
+          })
+      })
+      .catch(err => {
+        console.log(err)
+      })
+
   })
 }
 
@@ -130,9 +148,11 @@ module.exports.getCompanyAccessAccount = async function (dataAPI, network) {
     dataAPI.addLog(network, 'Network security data is incomplete for ' + network.name)
     return null
   }
-  return { username: secData.username,
+  return {
+    username: secData.username,
     password: secData.password,
-    admin: true }
+    admin: true
+  }
 }
 
 // The login account data needed to manipulate applications.  For LoRa Open
@@ -192,7 +212,7 @@ module.exports.getDeviceProfileAccessAccount = async function (dataAPI, network,
 // The company admin account data for the company on the network, used to set up
 // applications and devices.  If the account data does not exist, this code
 // can optionally generate it.
-async function getCompanyAccount (dataAPI, network, companyId, generateIfMissing) {
+async function getCompanyAccount(dataAPI, network, companyId, generateIfMissing) {
   // Obtain the security data from the protocol storage in the dataAPI, then
   // access it for the user.
   var srd
@@ -220,7 +240,7 @@ async function getCompanyAccount (dataAPI, network, companyId, generateIfMissing
       uname += 'admin'
       var pass = await dataAPI.genPass()
       kd = await dataAPI.genKey()
-      secData = { 'username': uname, 'password': pass }
+      secData = {'username': uname, 'password': pass}
       srd = dataAPI.hide(network, secData, kd)
       appLogger.log(uname)
       appLogger.log(pass)
@@ -243,7 +263,7 @@ async function getCompanyAccount (dataAPI, network, companyId, generateIfMissing
       dataAPI.addLog(network, JSON.stringify(err))
       dataAPI.addLog(network,
         'LoraOS: Company security data is missing for company id ' +
-                            companyId)
+        companyId)
       return null
     }
   }
@@ -258,37 +278,37 @@ async function getCompanyAccount (dataAPI, network, companyId, generateIfMissing
   if (!secData.username || !secData.password) {
     dataAPI.addLog(network,
       'Company security data is incomplete for company id ' +
-                        companyId)
+      companyId)
     return null
   }
 
   return secData
 };
 
-function makeNetworkDataKey (networkId, dataName) {
+function makeNetworkDataKey(networkId, dataName) {
   return 'nwk:' + networkId + '/' + dataName
 }
 
-function makeCompanyDataKey (companyId, dataName) {
+function makeCompanyDataKey(companyId, dataName) {
   return 'co:' + companyId + '/' + dataName
 }
 
-function makeApplicationDataKey (applicationId, dataName) {
+function makeApplicationDataKey(applicationId, dataName) {
   return 'app:' + applicationId + '/' + dataName
 }
 
-function makeDeviceDataKey (deviceId, dataName) {
+function makeDeviceDataKey(deviceId, dataName) {
   return 'dev:' + deviceId + '/' + dataName
 }
 
-function makeDeviceProfileDataKey (deviceProfileId, dataName) {
+function makeDeviceProfileDataKey(deviceProfileId, dataName) {
   return 'dp:' + deviceProfileId + '/' + dataName
 }
 
 // Creating a ServiceProfile requires a NetworkServerId.  However, that's pretty
 // esoteric concept for general application management, so we provide this
 // method that will get a network server id from the LoRa system.
-function getANetworkServerID (network, connection) {
+function getANetworkServerID(network, connection) {
   appLogger.log('LoRaOpenSource: getANetworkServerID')
   return new Promise(async function (resolve, reject) {
     // Set up the request options.
@@ -296,11 +316,14 @@ function getANetworkServerID (network, connection) {
     options.method = 'GET'
     // options.url = network.baseUrl + "/network-servers?limit=1&offset=0";
     options.url = network.baseUrl + '/network-servers?limit=20&offset=0'
-    options.headers = { 'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + connection }
+    options.headers = {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + connection
+    }
     options.agentOptions = {
       'secureProtocol': 'TLSv1_2_method',
-      'rejectUnauthorized': false }
+      'rejectUnauthorized': false
+    }
 
     request(options, async function (error, response, body) {
       if (error || response.statusCode >= 400) {
@@ -311,8 +334,8 @@ function getANetworkServerID (network, connection) {
         else {
           var bodyObj = JSON.parse(response.body)
           dataAPI.addLog(network, 'Error on get Network Server: ' +
-                                  bodyObj.error +
-                                   ' (' + response.statusCode + ')')
+            bodyObj.error +
+            ' (' + response.statusCode + ')')
           dataAPI.addLog(network, 'Request data = ' + JSON.stringify(options))
           reject(response.statusCode)
         }
@@ -327,25 +350,28 @@ function getANetworkServerID (network, connection) {
           return
         }
         appLogger.log(nsList)
-        resolve(nsList[ 0 ].id)
+        resolve(nsList[0].id)
       }
     })
   })
 }
 
 // Get the NetworkServer using the Service Profile a ServiceProfile.
-function getNetworkServerById (network, networkServerId, connection, dataAPI) {
+function getNetworkServerById(network, networkServerId, connection, dataAPI) {
   appLogger.log('LoRaOpenSource: getNetworkServerForRemoteOrganization')
   return new Promise(async function (resolve, reject) {
     // Set up the request options.
     var options = {}
     options.method = 'GET'
     options.url = network.baseUrl + '/network-servers/' + networkServerId
-    options.headers = { 'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + connection }
+    options.headers = {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + connection
+    }
     options.agentOptions = {
       'secureProtocol': 'TLSv1_2_method',
-      'rejectUnauthorized': false }
+      'rejectUnauthorized': false
+    }
 
     request(options, async function (error, response, body) {
       if (error || response.statusCode >= 400) {
@@ -356,8 +382,8 @@ function getNetworkServerById (network, networkServerId, connection, dataAPI) {
         else {
           var bodyObj = JSON.parse(response.body)
           dataAPI.addLog(network, 'Error on get Network Server: ' +
-                        bodyObj.error +
-                        ' (' + response.statusCode + ')')
+            bodyObj.error +
+            ' (' + response.statusCode + ')')
           dataAPI.addLog(network, 'Request data = ' + JSON.stringify(options))
           reject(response.statusCode)
         }
@@ -373,18 +399,21 @@ function getNetworkServerById (network, networkServerId, connection, dataAPI) {
 };
 
 // Get the NetworkServer using the Service Profile a ServiceProfile.
-function getDeviceProfileById (network, dpId, connection, dataAPI) {
+function getDeviceProfileById(network, dpId, connection, dataAPI) {
   appLogger.log('LoRaOpenSource: getDeviceProfileById')
   return new Promise(async function (resolve, reject) {
     // Set up the request options.
     var options = {}
     options.method = 'GET'
     options.url = network.baseUrl + '/device-profiles/' + dpId
-    options.headers = { 'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + connection }
+    options.headers = {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + connection
+    }
     options.agentOptions = {
       'secureProtocol': 'TLSv1_2_method',
-      'rejectUnauthorized': false }
+      'rejectUnauthorized': false
+    }
     appLogger.log(options)
     request(options, async function (error, response, body) {
       if (error || response.statusCode >= 400) {
@@ -397,8 +426,8 @@ function getDeviceProfileById (network, dpId, connection, dataAPI) {
           appLogger.log(bodyObj)
           appLogger.log(options)
           dataAPI.addLog(network, 'Error on get Device Profile: ' +
-                        bodyObj.error +
-                        ' (' + response.statusCode + ')')
+            bodyObj.error +
+            ' (' + response.statusCode + ')')
           dataAPI.addLog(network, 'Request data = ' + JSON.stringify(options))
           reject(response.statusCode)
         }
@@ -414,18 +443,21 @@ function getDeviceProfileById (network, dpId, connection, dataAPI) {
 };
 
 // Get the NetworkServer using the Service Profile a ServiceProfile.
-function getDeviceById (network, deviceId, connection, dataAPI) {
+function getDeviceById(network, deviceId, connection, dataAPI) {
   appLogger.log('LoRaOpenSource: getDeviceProfileById')
   return new Promise(async function (resolve, reject) {
     // Set up the request options.
     var options = {}
     options.method = 'GET'
     options.url = network.baseUrl + '/devices/' + deviceId
-    options.headers = { 'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + connection }
+    options.headers = {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + connection
+    }
     options.agentOptions = {
       'secureProtocol': 'TLSv1_2_method',
-      'rejectUnauthorized': false }
+      'rejectUnauthorized': false
+    }
     appLogger.log(options)
     request(options, async function (error, response, body) {
       if (error || response.statusCode >= 400) {
@@ -436,8 +468,8 @@ function getDeviceById (network, deviceId, connection, dataAPI) {
         else {
           var bodyObj = JSON.parse(response.body)
           dataAPI.addLog(network, 'Error on get Device: ' +
-                        bodyObj.error +
-                        ' (' + response.statusCode + ')')
+            bodyObj.error +
+            ' (' + response.statusCode + ')')
           dataAPI.addLog(network, 'Request data = ' + JSON.stringify(options))
           reject(response.statusCode)
         }
@@ -453,18 +485,21 @@ function getDeviceById (network, deviceId, connection, dataAPI) {
 };
 
 // Get the NetworkServer using the Service Profile a ServiceProfile.
-function getServiceProfileById (network, serviceProfileId, connection, dataAPI) {
+function getServiceProfileById(network, serviceProfileId, connection, dataAPI) {
   appLogger.log('LoRaOpenSource: getServiceProfileById')
   return new Promise(async function (resolve, reject) {
     // Set up the request options.
     var options = {}
     options.method = 'GET'
     options.url = network.baseUrl + '/service-profiles/' + serviceProfileId
-    options.headers = { 'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + connection }
+    options.headers = {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + connection
+    }
     options.agentOptions = {
       'secureProtocol': 'TLSv1_2_method',
-      'rejectUnauthorized': false }
+      'rejectUnauthorized': false
+    }
 
     request(options, async function (error, response, body) {
       if (error || response.statusCode >= 400) {
@@ -475,8 +510,8 @@ function getServiceProfileById (network, serviceProfileId, connection, dataAPI) 
         else {
           var bodyObj = JSON.parse(response.body)
           dataAPI.addLog(network, 'Error on get Service Profile: ' +
-                        bodyObj.error +
-                        ' (' + response.statusCode + ')')
+            bodyObj.error +
+            ' (' + response.statusCode + ')')
           dataAPI.addLog(network, 'Request data = ' + JSON.stringify(options))
           reject(response.statusCode)
         }
@@ -492,18 +527,21 @@ function getServiceProfileById (network, serviceProfileId, connection, dataAPI) 
 }
 
 // Get the NetworkServer using the Service Profile a ServiceProfile.
-function getApplicationById (network, applicationId, connection, dataAPI) {
+function getApplicationById(network, applicationId, connection, dataAPI) {
   appLogger.log('LoRaOpenSource: getApplicationById')
   return new Promise(async function (resolve, reject) {
     // Set up the request options.
     var options = {}
     options.method = 'GET'
     options.url = network.baseUrl + '/applications/' + applicationId
-    options.headers = { 'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + connection }
+    options.headers = {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + connection
+    }
     options.agentOptions = {
       'secureProtocol': 'TLSv1_2_method',
-      'rejectUnauthorized': false }
+      'rejectUnauthorized': false
+    }
 
     appLogger.log(options)
     request(options, async function (error, response, body) {
@@ -515,8 +553,8 @@ function getApplicationById (network, applicationId, connection, dataAPI) {
         else {
           var bodyObj = JSON.parse(response.body)
           dataAPI.addLog(network, 'Error on get Application: ' +
-                        bodyObj.error +
-                        ' (' + response.statusCode + ')')
+            bodyObj.error +
+            ' (' + response.statusCode + ')')
           dataAPI.addLog(network, 'Request data = ' + JSON.stringify(options))
           reject(response.statusCode)
         }
@@ -532,7 +570,7 @@ function getApplicationById (network, applicationId, connection, dataAPI) {
 }
 
 // Get the Service Profile a for a Remote Org.
-function getServiceProfileForOrg (network, orgId, companyId, connection, dataAPI) {
+function getServiceProfileForOrg(network, orgId, companyId, connection, dataAPI) {
   appLogger.log('LoRaOpenSource: getNetworkServerForRemoteOrganization')
   return new Promise(async function (resolve, reject) {
     var spOptions = {}
@@ -556,7 +594,7 @@ function getServiceProfileForOrg (network, orgId, companyId, connection, dataAPI
         }
         else {
           dataAPI.addLog(network, 'Error getting Service Profile: ' + response.statusCode +
-                        ' (Server message: ' + response.body.error + ')')
+            ' (Server message: ' + response.body.error + ')')
           reject(response.statusCode)
         }
       }
@@ -593,7 +631,7 @@ function getServiceProfileForOrg (network, orgId, companyId, connection, dataAPI
 // Creating a DeviceProfile requires a NetworkServerId.  However, you can't get
 // data from that table in LoRa if you aren't a Global Admin.  So get the
 // company's ServiceProfile and get it from that.
-function getANetworkServerIDFromServiceProfile (network, connection, coId, dataAPI) {
+function getANetworkServerIDFromServiceProfile(network, connection, coId, dataAPI) {
   return new Promise(async function (resolve, reject) {
     var coSPId
     try {
@@ -687,9 +725,9 @@ module.exports.connect = function (network, loginData) {
     var options = {}
     options.method = 'POST'
     options.url = network.baseUrl + '/internal/login'
-    options.headers = { 'Content-Type': 'application/json' }
+    options.headers = {'Content-Type': 'application/json'}
     options.json = loginData
-    options.agentOptions = { 'secureProtocol': 'TLSv1_2_method', 'rejectUnauthorized': false }
+    options.agentOptions = {'secureProtocol': 'TLSv1_2_method', 'rejectUnauthorized': false}
     request(options, function (error, response, body) {
       if (error) {
         appLogger.log('Error on signin: ' + error)
@@ -759,8 +797,10 @@ module.exports.addCompany = function (sessionData, network, companyId, dataAPI) 
     var options = {}
     options.method = 'POST'
     options.url = network.baseUrl + '/organizations'
-    options.headers = { 'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + sessionData.connection }
+    options.headers = {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + sessionData.connection
+    }
     // No need to allow gateways on organizations we create (may be changed
     // locally by network admin, and that's fine - just start w/o gateways).
     options.json = {
@@ -770,7 +810,8 @@ module.exports.addCompany = function (sessionData, network, companyId, dataAPI) 
     }
     options.agentOptions = {
       'secureProtocol': 'TLSv1_2_method',
-      'rejectUnauthorized': false }
+      'rejectUnauthorized': false
+    }
 
     request(options, async function (error, response, body) {
       if (error || response.statusCode >= 400) {
@@ -780,7 +821,7 @@ module.exports.addCompany = function (sessionData, network, companyId, dataAPI) 
         }
         else {
           dataAPI.addLog(network, 'Error on create company ' + company.name +
-                                    ': ' + response.statusCode)
+            ': ' + response.statusCode)
           reject(response.statusCode)
         }
       }
@@ -797,8 +838,10 @@ module.exports.addCompany = function (sessionData, network, companyId, dataAPI) 
           var userOptions = {}
           userOptions.method = 'POST'
           userOptions.url = network.baseUrl + '/users'
-          userOptions.headers = { 'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + sessionData.connection }
+          userOptions.headers = {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + sessionData.connection
+          }
 
           // Get/generate the company username/password
           var creds = await getCompanyAccount(dataAPI, network, companyId, true)
@@ -827,16 +870,16 @@ module.exports.addCompany = function (sessionData, network, companyId, dataAPI) 
             if (error || response.statusCode >= 400) {
               if (error) {
                 dataAPI.addLog(network, 'Error creating ' + company.name +
-                                                 "'s admin user " + userOptions.json.username +
-                                                 ': ' + error)
+                  "'s admin user " + userOptions.json.username +
+                  ': ' + error)
                 reject(error)
                 return
               }
               else {
                 dataAPI.addLog(network, 'Error creating ' + company.name +
-                                                 "'s admin user " + userOptions.json.username +
-                                                 ': ' + response.statusCode +
-                                                 ' (Server message: ' + response.body.error + ')')
+                  "'s admin user " + userOptions.json.username +
+                  ': ' + response.statusCode +
+                  ' (Server message: ' + response.body.error + ')')
                 reject(response.statusCode)
                 return
               }
@@ -855,8 +898,10 @@ module.exports.addCompany = function (sessionData, network, companyId, dataAPI) 
             var spOptions = {}
             spOptions.method = 'POST'
             spOptions.url = network.baseUrl + '/service-profiles'
-            spOptions.headers = { 'Content-Type': 'application/json',
-              'Authorization': 'Bearer ' + sessionData.connection }
+            spOptions.headers = {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer ' + sessionData.connection
+            }
 
             spOptions.json = {
               'name': 'defaultForLPWANServer',
@@ -888,7 +933,7 @@ module.exports.addCompany = function (sessionData, network, companyId, dataAPI) 
                 }
                 else {
                   dataAPI.addLog(network, 'Error creating default Service Profile: ' + response.statusCode +
-                                                     ' (Server message: ' + response.body.error + ')')
+                    ' (Server message: ' + response.body.error + ')')
                   reject(response.statusCode)
                 }
               }
@@ -947,7 +992,7 @@ module.exports.getCompany = function (sessionData, network, companyId, dataAPI) 
     catch (err) {
       // No data.
       dataAPI.addLog(network, 'Company ' + company.name +
-                            ' does not have a key for the remote network.  Company has not yet been created.')
+        ' does not have a key for the remote network.  Company has not yet been created.')
       reject(err)
     }
 
@@ -955,11 +1000,14 @@ module.exports.getCompany = function (sessionData, network, companyId, dataAPI) 
     var options = {}
     options.method = 'GET'
     options.url = network.baseUrl + '/organizations/' + coid
-    options.headers = { 'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + sessionData.connection }
+    options.headers = {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + sessionData.connection
+    }
     options.agentOptions = {
       'secureProtocol': 'TLSv1_2_method',
-      'rejectUnauthorized': false }
+      'rejectUnauthorized': false
+    }
 
     request(options, function (error, response, body) {
       if (error) {
@@ -999,7 +1047,7 @@ module.exports.updateCompany = function (sessionData, network, companyId, dataAP
     catch (err) {
       // No data.
       dataAPI.addLog(network, 'Company ' + company.name +
-                            ' does not have a key for the remote network.  Company has not yet been created.')
+        ' does not have a key for the remote network.  Company has not yet been created.')
       reject(err)
     }
 
@@ -1007,20 +1055,24 @@ module.exports.updateCompany = function (sessionData, network, companyId, dataAP
     var options = {}
     options.method = 'PUT'
     options.url = network.baseUrl + '/organizations/' + coid
-    options.headers = { 'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + sessionData.connection }
+    options.headers = {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + sessionData.connection
+    }
     options.json = {
       'name': company.name,
       'displayName': company.name,
-      'organizationID': coid }
+      'organizationID': coid
+    }
     options.agentOptions = {
       'secureProtocol': 'TLSv1_2_method',
-      'rejectUnauthorized': false }
+      'rejectUnauthorized': false
+    }
 
     request(options, function (error, response, body) {
       if (error) {
         dataAPI.addLog(network, 'Error updating company ' + company.name +
-                                ': ' + error)
+          ': ' + error)
         reject(error)
       }
       else {
@@ -1060,7 +1112,7 @@ module.exports.deleteCompany = function (sessionData, network, companyId, dataAP
     catch (err) {
       // No data.
       dataAPI.addLog(network, 'Company ' + companyId +
-                            ' does not have a key for the remote network.  Company has not yet been created.')
+        ' does not have a key for the remote network.  Company has not yet been created.')
       reject(err)
       return
     }
@@ -1069,11 +1121,14 @@ module.exports.deleteCompany = function (sessionData, network, companyId, dataAP
     var userOptions = {}
     userOptions.method = 'DELETE'
     userOptions.url = network.baseUrl + '/users/' + userId
-    userOptions.headers = { 'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + sessionData.connection }
+    userOptions.headers = {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + sessionData.connection
+    }
     userOptions.agentOptions = {
       'secureProtocol': 'TLSv1_2_method',
-      'rejectUnauthorized': false }
+      'rejectUnauthorized': false
+    }
     request(userOptions, function (error, response, body) {
       if (error) {
         dataAPI.addLog(network, "Error on delete company's admin user: " + error)
@@ -1084,11 +1139,14 @@ module.exports.deleteCompany = function (sessionData, network, companyId, dataAP
         var options = {}
         options.method = 'DELETE'
         options.url = network.baseUrl + '/organizations/' + coid
-        options.headers = { 'Content-Type': 'application/json',
-          'Authorization': 'Bearer ' + sessionData.connection }
+        options.headers = {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + sessionData.connection
+        }
         options.agentOptions = {
           'secureProtocol': 'TLSv1_2_method',
-          'rejectUnauthorized': false }
+          'rejectUnauthorized': false
+        }
 
         request(options, async function (error, response, body) {
           if (error) {
@@ -1247,11 +1305,14 @@ module.exports.pullCompanies = function (sessionData, network, dataAPI, modelAPI
     let options = {}
     options.method = 'GET'
     options.url = network.baseUrl + '/organizations' + '?limit=9999&offset=0'
-    options.headers = { 'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + sessionData.connection }
+    options.headers = {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + sessionData.connection
+    }
     options.agentOptions = {
       'secureProtocol': 'TLSv1_2_method',
-      'rejectUnauthorized': false }
+      'rejectUnauthorized': false
+    }
 
     appLogger.log(options)
     request(options, function (error, response, body) {
@@ -1288,7 +1349,7 @@ module.exports.pullCompanies = function (sessionData, network, dataAPI, modelAPI
                 add()
               }
 
-              function add () {
+              function add() {
                 currentConnections += 1
                 appLogger.log('Added ' + org.name)
                 me.addRemoteCompany(sessionData, org, network, dataAPI, modelAPI)
@@ -1535,10 +1596,10 @@ module.exports.addRemoteCompany = function (sessionData, remoteOrganization, net
     if (isNewNTL) {
       // 3.  Setup protocol data
       await
-      dataAPI.putProtocolDataForKey(network.id,
-        network.networkProtocolId,
-        makeCompanyDataKey(existingCompany.id, 'coNwkId'),
-        remoteOrganization.id)
+        dataAPI.putProtocolDataForKey(network.id,
+          network.networkProtocolId,
+          makeCompanyDataKey(existingCompany.id, 'coNwkId'),
+          remoteOrganization.id)
       var networkCoId = remoteOrganization.id
 
       // We will need an admin user for this company.
@@ -1552,7 +1613,7 @@ module.exports.addRemoteCompany = function (sessionData, remoteOrganization, net
 
       // Get/generate the company username/password
       var creds = await
-      getCompanyAccount(dataAPI, network, existingCompany.id, true)
+        getCompanyAccount(dataAPI, network, existingCompany.id, true)
 
       userOptions.json = {
         'username': creds.username,
@@ -1579,22 +1640,23 @@ module.exports.addRemoteCompany = function (sessionData, remoteOrganization, net
         if (error || (response.statusCode >= 400 && response.statusCode != 409)) {
           if (error) {
             dataAPI.addLog(network, 'Error creating ' + existingCompany.name +
-                            "'s admin user " + userOptions.json.username +
-                            ': ' + error)
+              "'s admin user " + userOptions.json.username +
+              ': ' + error)
             appLogger.log(error)
             reject(error)
           }
           else {
             dataAPI.addLog(network, 'Error creating ' + existingCompany.name +
-                            "'s admin user " + userOptions.json.username +
-                            ': ' + response.statusCode +
-                            ' (Server message: ' + response.body.error + ')')
+              "'s admin user " + userOptions.json.username +
+              ': ' + response.statusCode +
+              ' (Server message: ' + response.body.error + ')')
             appLogger.log('Error creating ' + existingCompany.name +
-                            "'s admin user " + userOptions.json.username +
-                            ': ' + response.statusCode +
-                            ' (Server message: ' + response.body.error + ')')
+              "'s admin user " + userOptions.json.username +
+              ': ' + response.statusCode +
+              ' (Server message: ' + response.body.error + ')')
             reject(response.statusCode)
-            return; remoteDeviceId
+            return;
+            remoteDeviceId
           }
         }
         else {
@@ -1824,15 +1886,19 @@ module.exports.addApplication = function (sessionData, network, applicationId, d
     var options = {}
     options.method = 'POST'
     options.url = network.baseUrl + '/applications'
-    options.headers = { 'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + sessionData.connection }
+    options.headers = {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + sessionData.connection
+    }
     options.json = {
       'name': application.name,
       'organizationID': coNetworkId,
-      'serviceProfileID': coSPId }
+      'serviceProfileID': coSPId
+    }
     options.agentOptions = {
       'secureProtocol': 'TLSv1_2_method',
-      'rejectUnauthorized': false }
+      'rejectUnauthorized': false
+    }
 
     // Optional data
     if (applicationData && applicationData.networkSettings) {
@@ -1898,11 +1964,14 @@ module.exports.getApplication = function (sessionData, network, applicationId, d
     var options = {}
     options.method = 'GET'
     options.url = network.baseUrl + '/applications/' + appNetworkId
-    options.headers = { 'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + sessionData.connection }
+    options.headers = {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + sessionData.connection
+    }
     options.agentOptions = {
       'secureProtocol': 'TLSv1_2_method',
-      'rejectUnauthorized': false }
+      'rejectUnauthorized': false
+    }
 
     request(options, function (error, response, body) {
       if (error) {
@@ -1947,8 +2016,10 @@ module.exports.updateApplication = function (sessionData, network, applicationId
     var options = {}
     options.method = 'PUT'
     options.url = network.baseUrl + '/applications/' + appNetworkId
-    options.headers = { 'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + sessionData.connection }
+    options.headers = {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + sessionData.connection
+    }
     options.json = {
       'id': appNetworkId,
       'name': application.name,
@@ -1960,7 +2031,8 @@ module.exports.updateApplication = function (sessionData, network, applicationId
     }
     options.agentOptions = {
       'secureProtocol': 'TLSv1_2_method',
-      'rejectUnauthorized': false }
+      'rejectUnauthorized': false
+    }
 
     // Optional data
     if (applicationData && applicationData.networkSettings) {
@@ -2043,11 +2115,14 @@ module.exports.deleteApplication = function (sessionData, network, applicationId
     var options = {}
     options.method = 'DELETE'
     options.url = network.baseUrl + '/applications/' + appNetworkId
-    options.headers = { 'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + sessionData.connection }
+    options.headers = {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + sessionData.connection
+    }
     options.agentOptions = {
       'secureProtocol': 'TLSv1_2_method',
-      'rejectUnauthorized': false }
+      'rejectUnauthorized': false
+    }
 
     request(options, async function (error, response, body) {
       if (error) {
@@ -2140,7 +2215,7 @@ module.exports.startApplication = function (sessionData, network, applicationId,
       var reportingAPI = await dataAPI.getReportingAPIByApplicationId(applicationId)
 
       // Link the reporting API to the application and network.
-      activeApplicationNetworkProtocols[ '' + applicationId + ':' + network.id ] = reportingAPI
+      activeApplicationNetworkProtocols['' + applicationId + ':' + network.id] = reportingAPI
 
       // Set up the Forwarding with LoRa App Server
       var appNwkId = await dataAPI.getProtocolDataForKey(
@@ -2150,11 +2225,14 @@ module.exports.startApplication = function (sessionData, network, applicationId,
       var options = {}
       options.method = 'POST'
       options.url = network.baseUrl + '/applications/' + appNwkId + '/integrations/http'
-      options.headers = { 'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + sessionData.connection }
+      options.headers = {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + sessionData.connection
+      }
       options.agentOptions = {
         'secureProtocol': 'TLSv1_2_method',
-        'rejectUnauthorized': false }
+        'rejectUnauthorized': false
+      }
       options.json = {}
       options.json.dataUpURL = nconf.get('base_url') + deliveryURL
 
@@ -2171,7 +2249,8 @@ module.exports.startApplication = function (sessionData, network, applicationId,
     catch (err) {
       dataAPI.addLog(network, 'Error on add application data reporting: ' + err)
       reject(err)
-    };
+    }
+    ;
   })
 }
 
@@ -2188,10 +2267,10 @@ module.exports.startApplication = function (sessionData, network, applicationId,
 module.exports.stopApplication = function (sessionData, network, applicationId, dataAPI) {
   return new Promise(async function (resolve, reject) {
     // Can't delete if not running on the network.
-    if (activeApplicationNetworkProtocols[ '' + applicationId + ':' + network.id ] === undefined) {
+    if (activeApplicationNetworkProtocols['' + applicationId + ':' + network.id] === undefined) {
       // We don't think the app is running on this network.
       dataAPI.addLog(network, 'Application ' + applicationId +
-                            ' is not running on network ' + network.id)
+        ' is not running on network ' + network.id)
       reject(404)
       return
     }
@@ -2204,10 +2283,10 @@ module.exports.stopApplication = function (sessionData, network, applicationId, 
     }
     catch (err) {
       dataAPI.addLog(network, 'Cannot delete application data forwarding for application ' +
-                            applicationId +
-                            ' and network ' +
-                            network.name +
-                            ': ' + err)
+        applicationId +
+        ' and network ' +
+        network.name +
+        ': ' + err)
       reject(err)
       return
     }
@@ -2216,11 +2295,14 @@ module.exports.stopApplication = function (sessionData, network, applicationId, 
     var options = {}
     options.method = 'DELETE'
     options.url = network.baseUrl + '/applications/' + appNwkId + '/integrations/http'
-    options.headers = { 'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + sessionData.connection }
+    options.headers = {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + sessionData.connection
+    }
     options.agentOptions = {
       'secureProtocol': 'TLSv1_2_method',
-      'rejectUnauthorized': false }
+      'rejectUnauthorized': false
+    }
     request(options, function (error, response, body) {
       if (error) {
         dataAPI.addLog(network, 'Error on delete application notification: ' + error)
@@ -2228,7 +2310,7 @@ module.exports.stopApplication = function (sessionData, network, applicationId, 
       }
       else {
         // Clear the api entry.
-        delete activeApplicationNetworkProtocols[ '' + applicationId + ':' + network.id ]
+        delete activeApplicationNetworkProtocols['' + applicationId + ':' + network.id]
 
         // Return success.
         resolve()
@@ -2248,13 +2330,13 @@ module.exports.stopApplication = function (sessionData, network, applicationId, 
 module.exports.passDataToApplication = function (network, applicationId, data, dataAPI) {
   return new Promise(async function (resolve, reject) {
     // Get the reporting API, reject data if not running.
-    var reportingAPI = activeApplicationNetworkProtocols[ '' + applicationId + ':' + network.id ]
+    var reportingAPI = activeApplicationNetworkProtocols['' + applicationId + ':' + network.id]
 
     if (!reportingAPI) {
       appLogger.log('Rejecting received data from networkId ' + network.id +
-                           ' for applicationId ' + applicationId +
-                           '. The appliction is not in a running state.  Data = ' +
-                           JSON.stringify(data))
+        ' for applicationId ' + applicationId +
+        '. The appliction is not in a running state.  Data = ' +
+        JSON.stringify(data))
       reject('Application not running')
       return
     }
@@ -2270,9 +2352,9 @@ module.exports.passDataToApplication = function (network, applicationId, data, d
           'dev:%/devNwkId',
           data.devEUI)
         if (recs && (recs.length > 0)) {
-          let splitOnSlash = recs[ 0 ].dataIdentifier.split('/')
+          let splitOnSlash = recs[0].dataIdentifier.split('/')
           let splitOnColon = splitOnSlash[0].split(':')
-          deviceId = parseInt(splitOnColon[ 1 ])
+          deviceId = parseInt(splitOnColon[1])
 
           let device = await dataAPI.getDeviceById(deviceId)
           data.deviceInfo = {}
@@ -2336,8 +2418,10 @@ module.exports.addDeviceProfile = function (sessionData, network, deviceProfileI
       var options = {}
       options.method = 'POST'
       options.url = network.baseUrl + '/device-profiles'
-      options.headers = { 'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + sessionData.connection }
+      options.headers = {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + sessionData.connection
+      }
       options.json = {
         'name': deviceProfile.name,
         'networkServerID': networkServerId,
@@ -2352,7 +2436,8 @@ module.exports.addDeviceProfile = function (sessionData, network, deviceProfileI
       }
       options.agentOptions = {
         'secureProtocol': 'TLSv1_2_method',
-        'rejectUnauthorized': false }
+        'rejectUnauthorized': false
+      }
 
       // Optional data
       if (deviceProfile.networkSettings) {
@@ -2478,11 +2563,14 @@ module.exports.getDeviceProfile = function (sessionData, network, deviceProfileI
     var options = {}
     options.method = 'GET'
     options.url = network.baseUrl + '/device-profiles/' + dpNetworkId
-    options.headers = { 'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + sessionData.connection }
+    options.headers = {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + sessionData.connection
+    }
     options.agentOptions = {
       'secureProtocol': 'TLSv1_2_method',
-      'rejectUnauthorized': false }
+      'rejectUnauthorized': false
+    }
     request(options, function (error, response, body) {
       if (error || response.statusCode >= 400) {
         if (error) {
@@ -2540,14 +2628,18 @@ module.exports.updateDeviceProfile = function (sessionData, network, deviceProfi
     var options = {}
     options.method = 'PUT'
     options.url = network.baseUrl + '/device-profiles/' + dpNetworkId
-    options.headers = { 'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + sessionData.connection }
+    options.headers = {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + sessionData.connection
+    }
     options.json = {
       'name': deviceProfile.name,
-      'organizationID': coNetworkId }
+      'organizationID': coNetworkId
+    }
     options.agentOptions = {
       'secureProtocol': 'TLSv1_2_method',
-      'rejectUnauthorized': false }
+      'rejectUnauthorized': false
+    }
 
     // Optional data
     if (deviceProfile.networkSettings) {
@@ -2671,11 +2763,14 @@ module.exports.deleteDeviceProfile = function (sessionData, network, deviceProfi
     var options = {}
     options.method = 'DELETE'
     options.url = network.baseUrl + '/device-profiles/' + dpNetworkId
-    options.headers = { 'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + sessionData.connection }
+    options.headers = {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + sessionData.connection
+    }
     options.agentOptions = {
       'secureProtocol': 'TLSv1_2_method',
-      'rejectUnauthorized': false }
+      'rejectUnauthorized': false
+    }
 
     request(options, function (error, response, body) {
       if (error || response.statusCode >= 400) {
@@ -2796,8 +2891,10 @@ module.exports.addDevice = function (sessionData, network, deviceId, dataAPI) {
     var options = {}
     options.method = 'POST'
     options.url = network.baseUrl + '/devices'
-    options.headers = { 'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + sessionData.connection }
+    options.headers = {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + sessionData.connection
+    }
     options.json = {
       'applicationID': appNwkId,
       'description': device.name,
@@ -2837,7 +2934,7 @@ module.exports.addDevice = function (sessionData, network, deviceId, dataAPI) {
         if (!devpro.networkSettings.supportsJoin) {
           // This is the ABP path.
           options.url = network.baseUrl + '/devices/' +
-                                  dntl.networkSettings.devEUI + '/activate'
+            dntl.networkSettings.devEUI + '/activate'
           options.json = {
             'devEUI': dntl.networkSettings.devEUI,
             'devAddr': dntl.networkSettings.devAddr,
@@ -2846,14 +2943,14 @@ module.exports.addDevice = function (sessionData, network, deviceId, dataAPI) {
             'fCntUp': dntl.networkSettings.fCntUp,
             'fCntDown': dntl.networkSettings.fCntDown,
             'skipFCntCheck':
-                                dntl.networkSettings.skipFCntCheck
+            dntl.networkSettings.skipFCntCheck
           }
           appLogger.log('options.json = ' + JSON.stringify(options.json))
         }
         else {
           // This is the OTAA path.
           options.url = network.baseUrl + '/devices/' +
-                                  dntl.networkSettings.devEUI + '/keys'
+            dntl.networkSettings.devEUI + '/keys'
           options.json = {
             'devEUI': dntl.networkSettings.devEUI,
             'deviceKeys': {
@@ -2910,11 +3007,14 @@ module.exports.getDevice = function (sessionData, network, deviceId, dataAPI) {
     var options = {}
     options.method = 'GET'
     options.url = network.baseUrl + '/devices/' + devNetworkId
-    options.headers = { 'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + sessionData.connection }
+    options.headers = {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + sessionData.connection
+    }
     options.agentOptions = {
       'secureProtocol': 'TLSv1_2_method',
-      'rejectUnauthorized': false }
+      'rejectUnauthorized': false
+    }
 
     request(options, function (error, response, body) {
       if (error || response.statusCode >= 400) {
@@ -3071,11 +3171,14 @@ module.exports.deleteDevice = function (sessionData, network, deviceId, dataAPI)
     var options = {}
     options.method = 'DELETE'
     options.url = network.baseUrl + '/devices/' + devNetworkId
-    options.headers = { 'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + sessionData.connection }
+    options.headers = {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + sessionData.connection
+    }
     options.agentOptions = {
       'secureProtocol': 'TLSv1_2_method',
-      'rejectUnauthorized': false }
+      'rejectUnauthorized': false
+    }
 
     request(options, async function (error, response, body) {
       if (error || response.statusCode >= 400) {

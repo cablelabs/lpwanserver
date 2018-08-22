@@ -37,7 +37,8 @@ module.exports.register = function (networkProtocols) {
     let me = {
       name: 'Loriot',
       networkTypeId: 1,
-      protocolHandler: 'Loriot.js'
+      protocolHandler: 'Loriot.js',
+      networkProtocolVersion: '1.0'
     }
     await networkProtocols.upsertNetworkProtocol(me)
     resolve()
