@@ -13,6 +13,11 @@ module.exports = {
   metaData:
     {
       protocolHandlerName: 'TMobileNBIoT',
+      version:
+        {
+          versionText: 'Version 1.0',
+          versionValue: '1.0'
+        },
       networkType: 'NBIoT',
       oauthUrl: '',
       protocolHandlerNetworkFields: [
@@ -33,7 +38,8 @@ module.exports.register = function (networkProtocols) {
     let me = {
       name: 'TMobileNBIoT',
       networkTypeId: 2,
-      protocolHandler: 'TMobileNBIoT.js'
+      protocolHandler: 'TMobileNBIoT.js',
+      networkProtocolVersion: '1.0'
     }
     await networkProtocols.upsertNetworkProtocol(me)
     resolve()

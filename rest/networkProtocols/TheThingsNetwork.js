@@ -13,6 +13,11 @@ module.exports = {
   metaData:
     {
       protocolHandlerName: 'TheThingsNetwork',
+      version:
+        {
+          versionText: 'Version 2.0',
+          versionValue: '2.0'
+        },
       networkType: 'Lora',
       oauthUrl: 'https://account.thethingsnetwork.org/users/authorize',
       protocolHandlerNetworkFields: [
@@ -72,7 +77,8 @@ module.exports.register = function (networkProtocols) {
     let me = {
       name: 'The Things Network',
       networkTypeId: 1,
-      protocolHandler: 'TheThingsNetwork.js'
+      protocolHandler: 'TheThingsNetwork.js',
+      networkProtocolVersion: '2.0'
     }
     await networkProtocols.upsertNetworkProtocol(me)
     resolve()
