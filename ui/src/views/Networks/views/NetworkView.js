@@ -10,7 +10,7 @@ import ReactTooltip from 'react-tooltip';
 
 NetworkView.propTypes = {
   network: PT.object, // the network to dislpay
-  networkProtocolName: PT.string, // protocol for this network
+  networkProtocol: PT.object.isRequired, // protocol for this network
   onEdit: PT.func, // called when edit button hit
   onToggleEnabled: PT.func, // called when network enabled/disabled.  Sig: onEnable(true|false)
 };
@@ -27,11 +27,12 @@ NetworkView.defaultProps = {
 
 export default function NetworkView(props) {
 
-  const { network={}, networkProtocolName, onToggleEnabled, onEdit } = props;
+  const { network={}, networkProtocol, onToggleEnabled, onEdit } = props;
   const { id='no-id', name, securityData } = network;
   const authorizied = propOr(false, 'authorized', securityData);
   const message = propOr('', 'message', securityData);
   const enabled = propOr(false, 'enabled', securityData);
+  const { networkProtocolName } = propOr('', 'name', networkProtocol);
 
   const ConnectedTooltip = authorizied ? IsConnectedTooltip : IsNotConnectedTooltip;
   const statusGlyph = authorizied ?
@@ -68,7 +69,7 @@ export default function NetworkView(props) {
 // array of messages as children, each entry shown on seperate line
 function Tooltip({name, type, children, className}) {
   return (
-    <ReactTooltip id={name} type={type} effect='solid' className={`lh-compress opacity-1 ${className?className:''}`}>
+    <ReactTooltip id={name} type={type} effect='solid' className={`lh-compress opaque ${className?className:''}`}>
       { children.map((msg, i)=><div key={i}>{msg}</div>) }
     </ReactTooltip>
   );

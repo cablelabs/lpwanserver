@@ -151,6 +151,7 @@ input[type=number] {
 .mrg-h-10  { margin: 0px 10px }
 .mrg-b-5 { margin-bottom: 5px }
 .mrg-b-10 { margin-bottom: 10px }
+.mrg-b-15 { margin-bottom: 15px }
 .mrg-b-20 { margin-bottom: 20px }
 .mrg-r-10 { margin-right: 10px }
 .mrg-r-20 { margin-right: 20px }
@@ -185,7 +186,7 @@ input[type=number] {
 
 .cur-ptr { cursor: pointer }
 
-.opacity-1 {
+.opaque {
   opacity: 1 !important;
 }
 
