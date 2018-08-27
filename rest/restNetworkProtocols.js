@@ -46,6 +46,66 @@ exports.initialize = function (app, server) {
      *      Type that the Network Protocol uses for data input.
      * @apiVersion 0.1.0
      */
+  // app.get('/api/networkProtocols', [restServer.isLoggedIn],
+  //   function (req, res, next) {
+  //     var options = {}
+  //     if (req.query.limit) {
+  //       var limitInt = parseInt(req.query.limit)
+  //       if (!isNaN(limitInt)) {
+  //         options.limit = limitInt
+  //       }
+  //     }
+  //     if (req.query.offset) {
+  //       var offsetInt = parseInt(req.query.offset)
+  //       if (!isNaN(offsetInt)) {
+  //         options.offset = offsetInt
+  //       }
+  //     }
+  //     if (req.query.search) {
+  //       options.search = req.query.search
+  //     }
+  //     if (req.query.networkTypeId) {
+  //       options.networkTypeId = req.query.networkTypeId
+  //     }
+  //     modelAPI.networkProtocols.retrieveNetworkProtocols(options).then(function (recs) {
+  //       let nps = {
+  //         totalCount: recs.totalCount,
+  //         records: []
+  //       }
+  //       let len = recs.records.length
+  //       for (let i = 0; i < len; i++) {
+  //         let rec = recs.records[i]
+  //         let found = false
+  //         let counter = 0
+  //         while (!found && counter < nps.records.length) {
+  //           if (nps.records[counter].name === rec.name) {
+  //             found = true
+  //             nps.records[counter].versions.push(rec)
+  //           }
+  //           else {
+  //             counter++
+  //           }
+  //         }
+  //         // Not found
+  //         if (!found) {
+  //           nps.records.push({
+  //             name: rec.name,
+  //             masterProtocol: rec.masterProtocol,
+  //             networkTypeId: rec.networkTypeId,
+  //             versions: [rec]
+  //           })
+  //         }
+  //       }
+  //       console.log(JSON.stringify(nps))
+  //       restServer.respond(res, 200, nps)
+  //     })
+  //       .catch(function (err) {
+  //         appLogger.log('Error getting networkProtocols: ' + err)
+  //         restServer.respond(res, err)
+  //       })
+  //   })
+
+  // old code
   app.get('/api/networkProtocols', [restServer.isLoggedIn],
     function (req, res, next) {
       var options = {}
@@ -67,36 +127,8 @@ exports.initialize = function (app, server) {
       if (req.query.networkTypeId) {
         options.networkTypeId = req.query.networkTypeId
       }
-      modelAPI.networkProtocols.retrieveNetworkProtocols(options).then(function (recs) {
-        let nps = {
-          totalCount: recs.totalCount,
-          records: []
-        }
-        let len = recs.records.length
-        for (let i = 0; i < len; i++) {
-          let rec = recs.records[i]
-          let found = false
-          let counter = 0
-          while (!found && counter < nps.records.length) {
-            if (nps.records[counter].name === rec.name) {
-              found = true
-              nps.records[counter].versions.push(rec)
-            }
-            else {
-              counter++
-            }
-          }
-          // Not found
-          if (!found) {
-            nps.records.push({
-              name: rec.name,
-              masterProtocol: rec.masterProtocol,
-              networkTypeId: rec.networkTypeId,
-              versions: [rec]
-            })
-          }
-        }
-        console.log(JSON.stringify(nps))
+      modelAPI.networkProtocols.retrieveNetworkProtocols(options).then(function (nps) {
+        // restServer.respondJson(res, null, nps)
         restServer.respond(res, 200, nps)
       })
         .catch(function (err) {
@@ -253,7 +285,8 @@ exports.initialize = function (app, server) {
         // CORS info, causing the browser to throw a fit.  So just say,
         // "Yeah, we did that.  Really.  Trust us."
         restServer.respond(res, 204)
-      } else {
+      }
+      else {
         // Do the update.
         modelAPI.networkProtocols.updateNetworkProtocol(data).then(function (rec) {
           restServer.respond(res, 204)
@@ -322,7 +355,8 @@ exports.initialize = function (app, server) {
                     fileList[onefile] === 'protocoltemplate.js' ||
                     fileList[onefile] === 'README.txt'
         ) {
-        } else {
+        }
+        else {
           let temp = {
             id: fileList[onefile],
             name: fileList[onefile].split('.')[0]
