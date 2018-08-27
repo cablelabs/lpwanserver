@@ -15,7 +15,7 @@ module.exports = {}
 module.exports.activeApplicationNetworkProtocols = {}
 module.exports.metaData =
   {
-    protocolHandlerName: 'Lora Open Source',
+    protocolHandlerName: 'Lora Open Source 2.0',
     version:
       {
         versionText: 'Version 2.0',
@@ -53,7 +53,7 @@ module.exports.register = async function (networkProtocols) {
   appLogger.log('Lora Open Source 2:register')
   return new Promise(async function (resolve, reject) {
     let me = {
-      name: 'Lora Open Source',
+      name: 'Lora Open Source 2.0',
       networkTypeId: 1,
       protocolHandler: 'LoRaOpenSource_2.js',
       networkProtocolVersion: '2.0'
@@ -70,7 +70,14 @@ module.exports.register = async function (networkProtocols) {
           })
       })
       .catch(err => {
-        console.log(err)
+        //No master
+        networkProtocols.upsertNetworkProtocol(me)
+          .then(() => {
+            resolve()
+          })
+          .catch(err => {
+            reject(err)
+          })
       })
   })
 }
