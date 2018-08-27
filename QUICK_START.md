@@ -196,3 +196,5 @@ Create a Company
   - Email: **fake@email.com**
   - Lora Enabled: **checked**
   - LoRaWAN Region: **US915**
+
+If the company was succesfully created, this confirms that the app and all of the servers are communicating properly
