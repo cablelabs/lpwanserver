@@ -346,6 +346,14 @@ exports.initialize = function (app, server) {
       return
     }
 
+    if (!rec.securityData) {
+      rec.securityData = {
+        authorized: false,
+        message: 'Pending Authorization',
+        enabled: false
+      }
+    }
+
     // Do the add.
     modelAPI.networks.createNetwork(
       rec.name,
