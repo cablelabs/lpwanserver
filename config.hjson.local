@@ -34,6 +34,7 @@
     // URL settings
     ////////////////////////////////////////////////////////////
     // The numeric IP address to bind the server's listener to.
+    // Not being used
     bind_address: "127.0.0.1"
 
     // The port to bind the listener to.
