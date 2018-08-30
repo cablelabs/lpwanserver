@@ -4,105 +4,103 @@
 // those operations.  This module also manages the login sessions and
 // permissions required to execute the various operations.
 
-var express = require('express');
-var http = require( 'http' );
-var https = require('https');
-var cors = require('cors');
-var path = require('path');
-var cookieParser = require('cookie-parser');
-var bodyParser = require('body-parser');
-var session = require('express-session');
-var fs = require( 'fs' );
-var server = require( './rest/restServer.js' );
-var appLogger = require( './rest/lib/appLogger.js' );
+var express = require('express')
+var http = require('http')
+var https = require('https')
+var cors = require('cors')
+var path = require('path')
+var cookieParser = require('cookie-parser')
+var bodyParser = require('body-parser')
+var session = require('express-session')
+var fs = require('fs')
+var server = require('./rest/restServer.js')
+var appLogger = require('./rest/lib/appLogger.js')
 
 // Catch unhandled promise rejections.
-process.on( 'unhandledRejection', (reason, p) => {
-    console.log( 'Unhandled Promise Rejection at: Promise ', p, ' reason: ', reason );
-    console.log( 'Stack:', reason.stack );
+process.on('unhandledRejection', (reason, p) => {
+  appLogger.log('Unhandled Promise Rejection at: Promise ', p, ' reason: ', reason)
+  appLogger.log('Stack:', reason.stack)
   // application specific logging, throwing an error, or other logic here
-});
+})
 
 // Set up config data access.
-var nconf = require('nconf');
+var nconf = require('nconf')
 // Priority order for settings: command line, environment vars,
 // the file config.js at the project root directory.
-nconf.argv().env();
+nconf.argv().env()
 var environment = '.' + nconf.get('NODE_ENV') || 'production'
-nconf.file( { file: 'config.hjson' + environment , format: require('hjson') } );
+nconf.file({ file: 'config.hjson' + environment, format: require('hjson') })
 
-console.log('config.hjson' + environment)
+appLogger.log('config.hjson' + environment)
 
 // Create the REST application.
-var app = express();
+var app = express()
 
 // Load the port binding info.
-var ipBindAddress = nconf.get( "bind_address" );
-var ipPort = nconf.get( "port" );
+var ipBindAddress = nconf.get('bind_address')
+var ipPort = nconf.get('port')
 
 // Load the ssl config
-var sslkeyName = nconf.get( "ssl_key_file" );
-var sslcertName = nconf.get( "ssl_cert_file" );
+var sslkeyName = nconf.get('ssl_key_file')
+var sslcertName = nconf.get('ssl_cert_file')
 
-console.log(sslkeyName);
-console.log(sslcertName);
+if (sslkeyName) appLogger.log(sslkeyName)
+if (sslcertName) appLogger.log(sslcertName)
 
-if ( sslkeyName && sslcertName ){
-    // Load the files
-    var sslcert = fs.readFileSync( sslcertName );
-    var sslkey = fs.readFileSync( sslkeyName );
-    // Set up an SSL connection
-    var sslOpts = {
-        key: sslkey,
-        cert: sslcert,
-    };
-    https.createServer( sslOpts, app ).listen({
-        host: ipBindAddress,
-        port: ipPort,
-        exclusive: true,
-    });
-    console.log( "REST https server starting on port " + ipPort );
+if (sslkeyName && sslcertName) {
+  // Load the files
+  var sslcert = fs.readFileSync(sslcertName)
+  var sslkey = fs.readFileSync(sslkeyName)
+  // Set up an SSL connection
+  var sslOpts = {
+    key: sslkey,
+    cert: sslcert
+  }
+  https.createServer(sslOpts, app).listen({
+    host: ipBindAddress,
+    port: ipPort,
+    exclusive: true
+  })
+  appLogger.log('REST https server starting on port ' + ipPort)
 }
 else {
-    http.createServer( app ).listen({
-        host: ipBindAddress,
-        port: ipPort,
-        exclusive: true,
-    });
-    console.log( "REST http server starting on port " + ipPort );
-    console.log( "WARNING: INSECURE CONNECTION" );
-
+  http.createServer(app).listen({
+    host: ipBindAddress,
+    port: ipPort,
+    exclusive: true
+  })
+  appLogger.log('REST http server starting on port ' + ipPort)
+  appLogger.log('WARNING: INSECURE CONNECTION')
 }
 
-
-app.on('error', onError);
-app.on('listening', onListening);
+app.on('error', onError)
+app.on('listening', onListening)
 
 /**
  * Event listener for HTTP server "error" event.
  */
 
-function onError(error) {
+function onError (error) {
   if (error.syscall !== 'listen') {
-    throw error;
+    throw error
   }
 
   var bind = typeof port === 'string'
     ? 'Pipe ' + port
-    : 'Port ' + port;
+    : 'Port ' + port
 
   // handle specific listen errors with friendly messages
   switch (error.code) {
     case 'EACCES':
-      console.error(bind + ' requires elevated privileges');
-      process.exit(1);
-      break;
+      console.error(bind + ' requires elevated privileges')
+      process.exit(1)
+      break
     case 'EADDRINUSE':
-      console.error(bind + ' is already in use');
-      process.exit(1);
-      break;
+      console.error(bind + ' is already in use')
+      process.exit(1)
+      break
     default:
-      throw error;
+      throw error
   }
 }
 
@@ -110,51 +108,50 @@ function onError(error) {
  * Event listener for HTTP server "listening" event.
  */
 
-function onListening() {
-  var addr = server.address();
+function onListening () {
+  var addr = server.address()
   var bind = typeof addr === 'string'
     ? 'pipe ' + addr
-    : 'port ' + addr.port;
-  debug('Listening on ' + bind);
+    : 'port ' + addr.port
+  debug('Listening on ' + bind)
 }
 
 // NOTE: if we didn't set up ssl endpoint above,
 
 // Add a logger if enabled.
-appLogger.initRESTCallLogger( app );
+appLogger.initRESTCallLogger(app)
 
 // Add the body parser.
-app.use( bodyParser.json() );
-app.use( bodyParser.urlencoded( { extended: false } ) );
+app.use(bodyParser.json())
+app.use(bodyParser.urlencoded({ extended: false }))
 
 // Add a cookie parser.
-app.use( cookieParser() );
+app.use(cookieParser())
 
 // Add the cors manager
-var whitelistStr = nconf.get( "cors_whitelist" );
-var whitelistRegExp = [];
-for ( var i = 0; i < whitelistStr.length; ++i ) {
-    whitelistRegExp[ i ] = new RegExp( whitelistStr[ i ] );
+var whitelistStr = nconf.get('cors_whitelist')
+var whitelistRegExp = []
+for (var i = 0; i < whitelistStr.length; ++i) {
+  whitelistRegExp[ i ] = new RegExp(whitelistStr[ i ])
 }
 var corsOptions = {
-    origin: function (origin, callback) {
-        // Walk the list of regular expressions.
-        for ( var i = 0; i < whitelistRegExp.length; ++i ) {
-            // If we match, we're good.
-            if ( whitelistRegExp[ i ].test( origin ) ) {
-                callback(null, true);
-                return;
-            }
-        }
-        callback( new Error( 'Not allowed by CORS settings' ) );
+  origin: function (origin, callback) {
+    // Walk the list of regular expressions.
+    for (var i = 0; i < whitelistRegExp.length; ++i) {
+      // If we match, we're good.
+      if (whitelistRegExp[ i ].test(origin)) {
+        callback(null, true)
+        return
+      }
     }
+    callback(new Error('Not allowed by CORS settings'))
+  }
 }
 
-app.use( cors( corsOptions ) );
+app.use(cors(corsOptions))
 
 // Initialize the application support interfaces.  We pass in the
 // application so we can add functions and API endpoints.
-var restServer = new server.RestServer( app );
+var restServer = new server.RestServer(app)
 
-
-module.exports = app;
+module.exports = app

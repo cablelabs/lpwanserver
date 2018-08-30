@@ -1,17 +1,17 @@
 // Logging
-var appLogger = require( "./lib/appLogger.js" );
+var appLogger = require('./lib/appLogger.js')
 
-var restServer;
-var modelAPI;
+var restServer
+var modelAPI
 
-exports.initialize = function( app, server ) {
-    restServer = server;
-    modelAPI = server.modelAPI;
+exports.initialize = function (app, server) {
+  restServer = server
+  modelAPI = server.modelAPI
 
-    /*********************************************************************
+  /*********************************************************************
     * Companies API
     ********************************************************************/
-    /**
+  /**
      * Gets the companies available for access by the calling admin account.
      *
      * @api {get} /api/companies Get Companies
@@ -43,60 +43,61 @@ exports.initialize = function( app, server ) {
      * @apiSuccess {String} object.records.type "admin" or "vendor"
      * @apiVersion 0.1.0
      */
-    app.get('/api/companies', [restServer.isLoggedIn,
-                               restServer.fetchCompany,
-                               restServer.isAdmin],
-                              function(req, res, next) {
-        var options = {};
+  app.get('/api/companies', [restServer.isLoggedIn,
+    restServer.fetchCompany,
+    restServer.isAdmin],
+  function (req, res, next) {
+    var options = {}
 
-        if ( req.company.type != modelAPI.companies.COMPANY_ADMIN ) {
-            // Must be company admin.  Can only get their own company, so just
-            // give that.
-            modelAPI.companies.retrieveCompany( req.company.id ).then( function( co ) {
-                if ( co ) {
-                    co['type'] = modelAPI.companies.reverseTypes[co['type']];
-                    // Return the company as a single element array to keep in line
-                    // with the multiple company return from this method.
-                     restServer.respondJson( res, null, { totalCount: 1, records: [ co ] } );
-                }
-                else {
-                     restServer.respond( res, httpError.NotFound );
-                }
-            })
-            .catch( function( err ) {
-                 restServer.respond( res, err );
-            });
-            return;
+    if (req.company.type !== modelAPI.companies.COMPANY_ADMIN) {
+      // Must be company admin.  Can only get their own company, so just
+      // give that.
+      modelAPI.companies.retrieveCompany(req.company.id).then(function (co) {
+        if (co) {
+          co['type'] = modelAPI.companies.reverseTypes[co['type']]
+          // Return the company as a single element array to keep in line
+          // with the multiple company return from this method.
+          restServer.respond(res, 200, { totalCount: 1, records: [ co ] })
         }
+        else {
+          restServer.respond(res, httpError.NotFound)
+        }
+      })
+        .catch(function (err) {
+          restServer.respond(res, err)
+        })
+      return
+    }
 
-        if ( req.query.limit ) {
-            var limitInt = parseInt( req.query.limit );
-            if ( !isNaN( limitInt ) ) {
-                options.limit = limitInt;
-            }
-        }
-        if ( req.query.offset ) {
-            var offsetInt = parseInt( req.query.offset );
-            if ( !isNaN( offsetInt ) ) {
-                options.offset = offsetInt;
-            }
-        }
-        if ( req.query.search ) {
-            options.search = req.query.search;
-        }
-        modelAPI.companies.retrieveCompanies( options ).then( function( cos ) {
-             for (var i = 0; i < cos.records.length; i++) {
-                 cos.records[i].type = modelAPI.companies.reverseTypes[cos.records[i].type];
-             }
-              restServer.respondJson( res, null, cos );
-         })
-         .catch( function( err ) {
-             appLogger.log( "Error getting companies: " + err );
-              restServer.respond( res, err );
-         });
-    });
+    if (req.query.limit) {
+      var limitInt = parseInt(req.query.limit)
+      if (!isNaN(limitInt)) {
+        options.limit = limitInt
+      }
+    }
+    if (req.query.offset) {
+      var offsetInt = parseInt(req.query.offset)
+      if (!isNaN(offsetInt)) {
+        options.offset = offsetInt
+      }
+    }
+    if (req.query.search) {
+      options.search = req.query.search
+    }
+    modelAPI.companies.retrieveCompanies(options).then(function (cos) {
+      for (var i = 0; i < cos.records.length; i++) {
+        cos.records[i].type = modelAPI.companies.reverseTypes[cos.records[i].type]
+      }
+      appLogger.log(cos)
+      restServer.respond(res, 200, cos, true)
+    })
+      .catch(function (err) {
+        appLogger.log('Error getting companies: ' + err)
+        restServer.respond(res, err)
+      })
+  })
 
-    /**
+  /**
      * @apiDescription Gets the company record with the specified id.
      *
      * @api {get} /api/companies/:id Get Company
@@ -112,26 +113,26 @@ exports.initialize = function( app, server ) {
      * @apiSuccess {String} object.type "admin" or "vendor"
      * @apiVersion 0.1.0
      */
-    app.get('/api/companies/:id', [restServer.isLoggedIn,
-                                   restServer.fetchCompany],
-                                  function(req, res, next) {
-        var id = req.params.id;
-        if ( ( req.company.type != modelAPI.companies.COMPANY_ADMIN ) &&
-             ( req.company.id != id ) ) {
-             restServer.respond( res, 403 );
-             return;
-        }
-        modelAPI.companies.retrieveCompany( parseInt( req.params.id ) ).then( function( co ) {
-            co['type'] = modelAPI.companies.reverseTypes[co['type']];
-            restServer.respondJson( res, null, co );
-         })
-         .catch( function( err ) {
-             appLogger.log( "Error getting company " + req.params.id + ": " + err );
-             restServer.respond( res, err );
-         });
-    });
+  app.get('/api/companies/:id', [restServer.isLoggedIn,
+    restServer.fetchCompany],
+  function (req, res, next) {
+    var id = req.params.id
+    if ((req.company.type != modelAPI.companies.COMPANY_ADMIN) &&
+             (req.company.id != id)) {
+      restServer.respond(res, 403)
+      return
+    }
+    modelAPI.companies.retrieveCompany(parseInt(req.params.id)).then(function (co) {
+      co['type'] = modelAPI.companies.reverseTypes[co['type']]
+      restServer.respondJson(res, null, co)
+    })
+      .catch(function (err) {
+        appLogger.log('Error getting company ' + req.params.id + ': ' + err)
+        restServer.respond(res, err)
+      })
+  })
 
-    /**
+  /**
      * @apiDescription Creates a new company record.
      *
      * @api {post} /api/companies Create Company
@@ -149,46 +150,46 @@ exports.initialize = function( app, server ) {
      * @apiSuccess {Number} id The new Company's id.
      * @apiVersion 0.1.0
      */
-    app.post('/api/companies', [restServer.isLoggedIn,
-                                restServer.fetchCompany,
-                                restServer.isAdminCompany],
-                               function(req, res, next) {
-        var rec = req.body;
-        // You can't specify an id.
-        if ( rec.id ) {
-             restServer.respond( res, 400, "Cannot specify the company's id in create" );
-            return;
-        }
+  app.post('/api/companies', [restServer.isLoggedIn,
+    restServer.fetchCompany,
+    restServer.isAdminCompany],
+  function (req, res, next) {
+    var rec = req.body
+    // You can't specify an id.
+    if (rec.id) {
+      restServer.respond(res, 400, "Cannot specify the company's id in create")
+      return
+    }
 
-        // Verify that required fields exist.
-        if ( !rec.name || !rec.type ) {
-             restServer.respond( res, 400, "Missing required data" );
-        }
+    // Verify that required fields exist.
+    if (!rec.name || !rec.type) {
+      restServer.respond(res, 400, 'Missing required data')
+    }
 
-        // Convert the type from string to number.
-        var newtype = modelAPI.companies.types[ req.body.type ];
-        if ( newtype ) {
-            rec.type = newtype;
-        }
-        else {
-            // Bad type, bad request.
-             restServer.respond( res, 400, "Invalid type: " + req.body.type );
-            return;
-        }
+    // Convert the type from string to number.
+    var newtype = modelAPI.companies.types[ req.body.type ]
+    if (newtype) {
+      rec.type = newtype
+    }
+    else {
+      // Bad type, bad request.
+      restServer.respond(res, 400, 'Invalid type: ' + req.body.type)
+      return
+    }
 
-        // Do the add.
-        modelAPI.companies.createCompany( rec.name,
-                                            rec.type ).then( function ( rec ) {
-            var send = {};
-            send.id = rec.id;
-             restServer.respondJson( res, 200, send );
-        })
-        .catch( function( err ) {
-             restServer.respond( res, err );
-        });
-    });
+    // Do the add.
+    modelAPI.companies.createCompany(rec.name,
+      rec.type).then(function (rec) {
+      var send = {}
+      send.id = rec.id
+      restServer.respondJson(res, 200, send)
+    })
+      .catch(function (err) {
+        restServer.respond(res, err)
+      })
+  })
 
-    /**
+  /**
      * @apiDescription Updates the company record with the specified id.
      *
      * @api {put} /api/companies/:id Update Company
@@ -206,68 +207,67 @@ exports.initialize = function( app, server ) {
      *      }
      * @apiVersion 0.1.0
      */
-    app.put('/api/companies/:id', [restServer.isLoggedIn,
-                                   restServer.fetchCompany,
-                                   restServer.isAdmin],
-                                  function(req, res, next) {
-        var data = {};
-        data.id = parseInt( req.params.id );
-        // We'll start by getting the company, as a read is much less expensive
-        // than a write, and then we'll be able to tell if anything really
-        // changed before we even try to write.
-        modelAPI.companies.retrieveCompany( req.params.id ).then( function( company ) {
-            // Fields that may exist in the request body that anyone (with permissions)
-            // can change.  Make sure they actually differ, though.
-            var changed = 0;
-            if ( ( req.body.name ) &&
-                 ( req.body.name != company.name ) ) {
-                data.name = req.body.name;
-                ++changed;
-            }
+  app.put('/api/companies/:id', [restServer.isLoggedIn,
+    restServer.fetchCompany,
+    restServer.isAdmin],
+  function (req, res, next) {
+    var data = {}
+    data.id = parseInt(req.params.id)
+    // We'll start by getting the company, as a read is much less expensive
+    // than a write, and then we'll be able to tell if anything really
+    // changed before we even try to write.
+    modelAPI.companies.retrieveCompany(req.params.id).then(function (company) {
+      // Fields that may exist in the request body that anyone (with permissions)
+      // can change.  Make sure they actually differ, though.
+      var changed = 0
+      if ((req.body.name) &&
+                 (req.body.name != company.name)) {
+        data.name = req.body.name
+        ++changed
+      }
 
-            if ( req.body.type ) {
-                var type = modelAPI.companies.types[ req.body.type ];
-                if ( type != company.type ) {
-                    data.type = type;
-                    ++changed;
-                }
-            }
+      if (req.body.type) {
+        var type = modelAPI.companies.types[ req.body.type ]
+        if (type != company.type) {
+          data.type = type
+          ++changed
+        }
+      }
 
-            // In order to update a company record, the logged in user must
-            // either be part of the admin company, or a company admin for the
-            // company.
-            if ( ( req.company.type != modelAPI.companies.COMPANY_ADMIN ) &&
-                 ( req.user.companyId != data.id ) ) {
-                // Nope.  Not allowed.
-                 restServer.respond( res, 403 );
-                return;
-            }
+      // In order to update a company record, the logged in user must
+      // either be part of the admin company, or a company admin for the
+      // company.
+      if ((req.company.type != modelAPI.companies.COMPANY_ADMIN) &&
+                 (req.user.companyId != data.id)) {
+        // Nope.  Not allowed.
+        restServer.respond(res, 403)
+        return
+      }
 
-            // Ready.  DO we have anything to actually change?
-            if ( 0 == changed ) {
-                // No changes.  But returning 304 apparently causes Apache to strip
-                // CORS info, causing the browser to throw a fit.  So just say,
-                // "Yeah, we did that.  Really.  Trust us."
-                restServer.respond( res, 204 );
-            }
-            else {
-                // Do the update.
-                modelAPI.companies.updateCompany( data ).then( function ( rec ) {
-                     restServer.respond( res, 204 );
-                })
-                .catch( function( err ) {
-                     restServer.respond( res, err );
-                });
-            }
+      // Ready.  DO we have anything to actually change?
+      if (changed == 0) {
+        // No changes.  But returning 304 apparently causes Apache to strip
+        // CORS info, causing the browser to throw a fit.  So just say,
+        // "Yeah, we did that.  Really.  Trust us."
+        restServer.respond(res, 204)
+      }
+      else {
+        // Do the update.
+        modelAPI.companies.updateCompany(data).then(function (rec) {
+          restServer.respond(res, 204)
+        })
+          .catch(function (err) {
+            restServer.respond(res, err)
+          })
+      }
+    })
+      .catch(function (err) {
+        appLogger.log('Error getting company ' + req.body.name + ': ' + err)
+        restServer.respond(res, err)
+      })
+  })
 
-         })
-         .catch( function( err ) {
-             appLogger.log( "Error getting company " + req.body.name + ": " + err );
-              restServer.respond( res, err );
-         });
-    });
-
-    /**
+  /**
      * @apiDescription Deletes the company record with the specified id.
      *
      * @api {delete} /api/companies/:id Delete Company
@@ -278,17 +278,17 @@ exports.initialize = function( app, server ) {
      * @apiParam (URL Parameters) {Number} id The Company's id
      * @apiVersion 0.1.0
      */
-    app.delete('/api/companies/:id', [restServer.isLoggedIn,
-                                      restServer.fetchCompany,
-                                      restServer.isAdminCompany],
-                                     function(req, res, next) {
-        var id = parseInt( req.params.id );
-        modelAPI.companies.deleteCompany( id ).then( function( ) {
-            restServer.respond( res, 204 );
-        })
-        .catch( function( err ) {
-            appLogger.log( "Error deleting company " + id + ": " + err );
-            restServer.respond( res, err );
-        });
-    });
+  app.delete('/api/companies/:id', [restServer.isLoggedIn,
+    restServer.fetchCompany,
+    restServer.isAdminCompany],
+  function (req, res, next) {
+    var id = parseInt(req.params.id)
+    modelAPI.companies.deleteCompany(id).then(function () {
+      restServer.respond(res, 204)
+    })
+      .catch(function (err) {
+        appLogger.log('Error deleting company ' + id + ': ' + err)
+        restServer.respond(res, err)
+      })
+  })
 }

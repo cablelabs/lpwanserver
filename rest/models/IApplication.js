@@ -119,7 +119,7 @@ Application.prototype.deleteApplication = function (id) {
         await modelAPI.devices.deleteDevice(recs[ i ].id)
       }
     } catch (err) {
-      console.log("Error deleting application's devices: ",
+      appLogger.log("Error deleting application's devices: ",
         err)
     }
     try {
@@ -130,7 +130,7 @@ Application.prototype.deleteApplication = function (id) {
         await modelAPI.applicationNetworkTypeLinks.deleteApplicationNetworkTypeLink(recs[ i ].id)
       }
     } catch (err) {
-      console.log("Error deleting application's networkTypeLinks: ",
+      appLogger.log("Error deleting application's networkTypeLinks: ",
         err)
     }
 
