@@ -8,10 +8,10 @@ var express = require('express');
 var http = require( 'http' );
 var https = require('https');
 var cors = require('cors');
-var path = require('path');
+// var path = require('path');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
-var session = require('express-session');
+// var session = require('express-session');
 var fs = require( 'fs' );
 var server = require( './rest/restServer.js' );
 var appLogger = require( './rest/lib/appLogger.js' );
@@ -37,7 +37,6 @@ console.log('config.hjson' + environment)
 var app = express();
 
 // Load the port binding info.
-var ipBindAddress = nconf.get( "bind_address" );
 var ipPort = nconf.get( "port" );
 
 // Load the ssl config
@@ -57,7 +56,6 @@ if ( sslkeyName && sslcertName ){
         cert: sslcert,
     };
     https.createServer( sslOpts, app ).listen({
-        host: ipBindAddress,
         port: ipPort,
         exclusive: true,
     });
@@ -65,15 +63,12 @@ if ( sslkeyName && sslcertName ){
 }
 else {
     http.createServer( app ).listen({
-        host: ipBindAddress,
         port: ipPort,
         exclusive: true,
     });
     console.log( "REST http server starting on port " + ipPort );
     console.log( "WARNING: INSECURE CONNECTION" );
-
 }
-
 
 app.on('error', onError);
 app.on('listening', onListening);
