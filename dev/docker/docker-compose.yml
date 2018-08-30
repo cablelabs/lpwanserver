@@ -1,0 +1,72 @@
+version: '3'
+
+services:
+  rest:
+    build:
+      context: ../../.
+      dockerfile: dev/docker/Dockerfile.rest
+    image: lpwanserver-rest-dev
+    links:
+      - loraserver
+      - lora_appserver
+    depends_on:
+      - loraserver
+      - lora_appserver
+    environment:
+      - NODE_ENV=local
+      - PORT=3200
+    volumes:
+      - ../..:/usr/src/app
+    ports:
+      - '3200:3200'
+  
+  ui:
+    build:
+      context: ./../..
+      dockerfile: dev/docker/Dockerfile.ui
+    image: lpwanserver-ui-dev
+    environment:
+      - NODE_ENV=development
+    volumes:
+      - ../../ui:/usr/src/app
+    ports:
+      - '3000:3000'
+
+  loraserver:
+    image: loraserver/loraserver:2
+    depends_on:
+      - postgresql
+      - redis
+      - mosquitto
+    volumes:
+      - ../configuration/loraserver:/etc/loraserver
+
+  lora_appserver:
+    image: loraserver/lora-app-server:2
+    depends_on:
+      - postgresql
+      - redis
+      - mosquitto
+    ports:
+      - 8080:8080
+    volumes:
+      - ../configuration/lora-app-server:/etc/lora-app-server
+  
+  postgresql:
+    image: postgres:9.6-alpine
+    ports:
+      - 5432
+    volumes:
+      - ../configuration/postgresql/initdb:/docker-entrypoint-initdb.d
+
+  redis:
+    ports:
+      - 6379
+    image: redis:4-alpine
+    volumes:
+      - ../../data/redis:/data
+
+  mosquitto:
+    image: eclipse-mosquitto
+    ports:
+      - 1883:1883

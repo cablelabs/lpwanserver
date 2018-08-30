@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+
+# Run docker-compose with development configuration
+docker-compose -f dev/docker/docker-compose.yml up --build
