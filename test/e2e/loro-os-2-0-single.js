@@ -10,7 +10,7 @@ var request = require('request')
 chai.use(chaiHttp)
 var server = chai.request(app).keepOpen()
 
-describe('E2E Test for Single LoraOS 1.0', function () {
+describe('E2E Test for Single LoraOS 2.0', function () {
   var adminToken
   var userId
   var userToken
@@ -45,7 +45,7 @@ describe('E2E Test for Single LoraOS 1.0', function () {
         .post('/api/users')
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
-        .send({'username': 'bobmouse', 'password': 'mousetrap', 'role': 'user', 'companyId': 2})
+        .send({'username': 'bobmouse2', 'password': 'mousetrap', 'role': 'user', 'companyId': 2})
         .end(function (err, res) {
           if (err) done(err)
           res.should.have.status(200)
@@ -65,7 +65,7 @@ describe('E2E Test for Single LoraOS 1.0', function () {
           if (err) done(err)
           res.should.have.status(200)
           var userObj = JSON.parse(res.text)
-          userObj.username.should.equal('bobmouse')
+          userObj.username.should.equal('bobmouse2')
           userObj.role.should.equal('user')
           done()
         })
@@ -73,7 +73,7 @@ describe('E2E Test for Single LoraOS 1.0', function () {
     it('Application User Login to LPWan Server', (done) => {
       server
         .post('/api/sessions')
-        .send({'login_username': 'bobmouse', 'login_password': 'mousetrap'})
+        .send({'login_username': 'bobmouse2', 'login_password': 'mousetrap'})
         .end(function (err, res) {
           if (err) done(err)
           res.should.have.status(200)
@@ -83,9 +83,9 @@ describe('E2E Test for Single LoraOS 1.0', function () {
     })
   })
   describe('Setup Network', function () {
-    it('Verify LoraOS 1.0 Protocol Exists', (done) => {
+    it('Verify LoraOS 2.0 Protocol Exists', (done) => {
       server
-        .get('/api/networkProtocols?search=Lora Open Source&networkProtocolVersion=1.0')
+        .get('/api/networkProtocols?search=Lora Open Source&networkProtocolVersion=2.0')
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {
@@ -97,21 +97,22 @@ describe('E2E Test for Single LoraOS 1.0', function () {
           result.records.should.have.length(1)
           result.totalCount.should.equal(1)
           result.records[0].should.have.property('networkProtocolVersion')
-          result.records[0].networkProtocolVersion.should.equal('1.0')
+          result.records[0].networkProtocolVersion.should.equal('2.0')
           loraProtocolId = result.records[0].id
+          appLogger.log(loraProtocolId)
           done()
         })
     })
-    it('Create the Local LoraOS 1.0 Network', (done) => {
+    it('Create the Local LoraOS 2.0 Network', (done) => {
       server
         .post('/api/networks')
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .send({
-          'name': 'LocalLoraOS1_0',
+          'name': 'LocalLoraOS2_0',
           'networkProviderId': -1,
           'networkTypeId': 1,
-          'baseUrl': 'https://localhost:8081/api',
+          'baseUrl': 'https://localhost:8080/api',
           'networkProtocolId': loraProtocolId,
           'securityData': {authorized: false, 'username': 'admin', 'password': 'admin'}
         })
@@ -137,8 +138,8 @@ describe('E2E Test for Single LoraOS 1.0', function () {
           if (err) done(err)
           res.should.have.status(200)
           var network = JSON.parse(res.text)
-          network.name.should.equal('LocalLoraOS1_0')
-          network.baseUrl.should.equal('https://localhost:8081/api')
+          network.name.should.equal('LocalLoraOS2_0')
+          network.baseUrl.should.equal('https://localhost:8080/api')
           network.securityData.authorized.should.equal(true)
           network.securityData.message.should.equal('ok')
           done()
@@ -187,7 +188,7 @@ describe('E2E Test for Single LoraOS 1.0', function () {
           var applications = JSON.parse(res.text)
           applications.should.have.property('totalCount')
           applications.should.have.property('records')
-          applications.totalCount.should.equal(1)
+          applications.totalCount.should.equal(2)
           applications.records[0].name.should.equal('TestApplication')
           applications.records[0].description.should.equal('CableLabs Test Application')
           applicationId = applications.records[0].id
@@ -196,16 +197,13 @@ describe('E2E Test for Single LoraOS 1.0', function () {
     })
     it('Verify the Test Application NTL was Created', function (done) {
       let expected = {
-        'totalCount': 1,
-        'records': [{
-          'id': 1,
-          'applicationId': 1,
-          'networkTypeId': 1,
-          'networkSettings': {'payloadCodec': '', 'payloadDecoderScript': '', 'payloadEncoderScript': ''}
-        }]
+        'id': 2,
+        'applicationId': 2,
+        'networkTypeId': 1,
+        'networkSettings': {'payloadCodec': '', 'payloadDecoderScript': '', 'payloadEncoderScript': ''}
       }
       server
-        .get('/api/applicationNetworkTypeLinks')
+        .get('/api/applicationNetworkTypeLinks/2')
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {
@@ -213,9 +211,7 @@ describe('E2E Test for Single LoraOS 1.0', function () {
           res.should.have.status(200)
           res.should.have.property('text')
           var applications = JSON.parse(res.text)
-          applications.should.have.property('totalCount')
-          applications.should.have.property('records')
-          applications.totalCount.should.equal(1)
+
           appLogger.log(applications)
           applications.should.eql(expected)
           done()
@@ -223,39 +219,39 @@ describe('E2E Test for Single LoraOS 1.0', function () {
     })
     it('Verify the Test1 Device Profile was Created', function (done) {
       let expected = {
-        'totalCount': 1,
-        'records': [{
-          'id': 1,
-          'networkTypeId': 1,
-          'companyId': 2,
-          'name': 'TestDevice',
-          'networkSettings': {
-            'deviceProfileID': '20234419-79e2-468b-89df-024dd65caba4',
-            'supportsClassB': false,
-            'classBTimeout': 0,
-            'pingSlotPeriod': 0,
-            'pingSlotDR': 0,
-            'pingSlotFreq': 0,
-            'supportsClassC': false,
-            'classCTimeout': 0,
-            'macVersion': '1.0.0',
-            'regParamsRevision': 'A',
-            'rxDelay1': 0,
-            'rxDROffset1': 0,
-            'rxDataRate2': 0,
-            'rxFreq2': 0,
-            'factoryPresetFreqs': [],
-            'maxEIRP': 0,
-            'maxDutyCycle': 0,
-            'supportsJoin': false,
-            'rfRegion': 'US902',
-            'supports32bitFCnt': false
-          },
-          'description': 'Device Profile managed by LPWAN Server, perform changes via LPWAN'
-        }]
+        'id': 2,
+        'networkTypeId': 1,
+        'companyId': 2,
+        'name': 'TestDevice2',
+        'networkSettings': {
+          'id': '699da70b-da10-473b-991b-eee6b71071be',
+          'supportsClassB': false,
+          'classBTimeout': 0,
+          'pingSlotPeriod': 0,
+          'pingSlotDR': 0,
+          'pingSlotFreq': 0,
+          'supportsClassC': false,
+          'classCTimeout': 0,
+          'macVersion': '1.0.0',
+          'regParamsRevision': 'A',
+          'rxDelay1': 0,
+          'rxDROffset1': 0,
+          'rxDataRate2': 0,
+          'rxFreq2': 0,
+          'factoryPresetFreqs': [],
+          'maxEIRP': 0,
+          'name': 'TestDevice2',
+          'networkServerID': '1',
+          'organizationID': '2',
+          'maxDutyCycle': 0,
+          'supportsJoin': false,
+          'rfRegion': 'US902',
+          'supports32BitFCnt': false
+        },
+        'description': 'Device Profile managed by LPWAN Server, perform changes via LPWAN'
       }
       server
-        .get('/api/deviceProfiles')
+        .get('/api/deviceProfiles/2')
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {
@@ -263,26 +259,21 @@ describe('E2E Test for Single LoraOS 1.0', function () {
           res.should.have.status(200)
           res.should.have.property('text')
           let deviceProfiles = JSON.parse(res.text)
-          deviceProfiles.should.have.property('totalCount')
-          deviceProfiles.should.have.property('records')
-          deviceProfiles.totalCount.should.equal(1)
           deviceProfiles.should.eql(expected)
           done()
         })
     })
     it('Verify the Test Device was Created', function (done) {
       let expected = {
-        'totalCount': 1,
-        'records': [{
-          'id': 1,
-          'applicationId': 1,
-          'name': 'TestDevice',
-          'deviceModel': null,
-          'description': 'Test Device for E2E'
-        }]
+        'id': 2,
+        'applicationId': 2,
+        'name': 'TestDevice2',
+        'deviceModel': null,
+        'description': 'Test Device for E2E',
+        networks: [1]
       }
       server
-        .get('/api/devices')
+        .get('/api/devices/2')
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {
@@ -290,9 +281,6 @@ describe('E2E Test for Single LoraOS 1.0', function () {
           res.should.have.status(200)
           res.should.have.property('text')
           let devices = JSON.parse(res.text)
-          devices.should.have.property('totalCount')
-          devices.should.have.property('records')
-          devices.totalCount.should.equal(1)
           appLogger.log(devices)
           devices.should.eql(expected)
           done()
@@ -300,27 +288,21 @@ describe('E2E Test for Single LoraOS 1.0', function () {
     })
     it('Verify the Test Device NTL was Created', function (done) {
       let expected = {
-        'totalCount': 1,
-        'records': [{
-          'id': 1,
-          'deviceId': 1,
-          'networkTypeId': 1,
-          'deviceProfileId': 1,
-          'networkSettings': {
-            'devEUI': '1234567890123456',
-            'name': 'TestDevice',
-            'applicationID': '1',
-            'description': 'Test Device for E2E',
-            'deviceProfileID': '20234419-79e2-468b-89df-024dd65caba4',
-            'deviceStatusBattery': 256,
-            'deviceStatusMargin': 256,
-            'lastSeenAt': '',
-            'skipFCntCheck': false
-          }
-        }]
+        'id': 2,
+        'deviceId': 2,
+        'networkTypeId': 1,
+        deviceProfileId: 2,
+        'networkSettings': {
+          'devEUI': '8484932090909090',
+          'name': 'TestDevice2',
+          'applicationID': '1',
+          'description': 'Test Device for E2E',
+          'deviceProfileID': '699da70b-da10-473b-991b-eee6b71071be',
+          'skipFCntCheck': false
+        }
       }
       server
-        .get('/api/deviceNetworkTypeLinks')
+        .get('/api/deviceNetworkTypeLinks/2')
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {
@@ -328,9 +310,6 @@ describe('E2E Test for Single LoraOS 1.0', function () {
           res.should.have.status(200)
           res.should.have.property('text')
           var devices = JSON.parse(res.text)
-          devices.should.have.property('totalCount')
-          devices.should.have.property('records')
-          devices.totalCount.should.equal(1)
           appLogger.log(devices)
           devices.should.eql(expected)
           done()
@@ -338,7 +317,7 @@ describe('E2E Test for Single LoraOS 1.0', function () {
     })
   })
   describe('LPWAN Server modifies any existing application “Integrations” to point to LPWAN Server', function () {
-    let baseUrl = 'https://localhost:8081/api'
+    let baseUrl = 'https://localhost:8080/api'
     let loraKey = ''
     it('Get Lora Session', function (done) {
       var options = {}
@@ -383,9 +362,11 @@ describe('E2E Test for Single LoraOS 1.0', function () {
           done(error)
         }
         else {
-          let integration = JSON.parse(body)
-          integration.should.have.property('dataUpURL')
-          integration.dataUpURL.should.equal('http://localhost:3200/api/ingest/1/1')
+          let integrationWrapper = JSON.parse(body)
+          appLogger.log(integrationWrapper)
+          let integration = integrationWrapper.integration
+          integration.should.have.property('uplinkDataURL')
+          integration.uplinkDataURL.should.equal('http://localhost:3200/api/ingest/2/2')
           done()
         }
       })
@@ -409,7 +390,7 @@ describe('E2E Test for Single LoraOS 1.0', function () {
         })
     })
   })
-  describe('At this point, you should be able to view all of the applications and devices from the LoraOS 1.0 Server.', function () {
+  describe('At this point, you should be able to view all of the applications and devices from the LoraOS 2.0 Server.', function () {
     it('Verify the Test Application Exists on LPWan', function (done) {
       server
         .get('/api/applications')
@@ -422,48 +403,48 @@ describe('E2E Test for Single LoraOS 1.0', function () {
           var applications = JSON.parse(res.text)
           applications.should.have.property('totalCount')
           applications.should.have.property('records')
-          applications.totalCount.should.equal(1)
+          applications.totalCount.should.equal(2)
           applications.records[0].name.should.equal('TestApplication')
           applications.records[0].description.should.equal('CableLabs Test Application')
           applicationId = applications.records[0].id
           done()
         })
     })
-    it('Verify the Test1 Device Exists on LPWan', function (done) {
+    it('Verify the Test 1 and 2 Device Profile Exists on LPWan', function (done) {
       let expected = {
-        'totalCount': 1,
-        'records': [{
-          'id': 1,
-          'networkTypeId': 1,
-          'companyId': 2,
-          'name': 'TestDevice',
-          'networkSettings': {
-            'deviceProfileID': '20234419-79e2-468b-89df-024dd65caba4',
-            'supportsClassB': false,
-            'classBTimeout': 0,
-            'pingSlotPeriod': 0,
-            'pingSlotDR': 0,
-            'pingSlotFreq': 0,
-            'supportsClassC': false,
-            'classCTimeout': 0,
-            'macVersion': '1.0.0',
-            'regParamsRevision': 'A',
-            'rxDelay1': 0,
-            'rxDROffset1': 0,
-            'rxDataRate2': 0,
-            'rxFreq2': 0,
-            'factoryPresetFreqs': [],
-            'maxEIRP': 0,
-            'maxDutyCycle': 0,
-            'supportsJoin': false,
-            'rfRegion': 'US902',
-            'supports32bitFCnt': false
-          },
-          'description': 'Device Profile managed by LPWAN Server, perform changes via LPWAN'
-        }]
+        id: 2,
+        'networkTypeId': 1,
+        'companyId': 2,
+        'name': 'TestDevice2',
+        'networkSettings': {
+          'id': '699da70b-da10-473b-991b-eee6b71071be',
+          'supportsClassB': false,
+          'classBTimeout': 0,
+          'pingSlotPeriod': 0,
+          'pingSlotDR': 0,
+          'pingSlotFreq': 0,
+          'supportsClassC': false,
+          'classCTimeout': 0,
+          'macVersion': '1.0.0',
+          'regParamsRevision': 'A',
+          'rxDelay1': 0,
+          'rxDROffset1': 0,
+          'rxDataRate2': 0,
+          'rxFreq2': 0,
+          'factoryPresetFreqs': [],
+          'maxEIRP': 0,
+          'name': 'TestDevice2',
+          'networkServerID': '1',
+          'organizationID': '2',
+          'maxDutyCycle': 0,
+          'supportsJoin': false,
+          'rfRegion': 'US902',
+          'supports32BitFCnt': false
+        },
+        'description': 'Device Profile managed by LPWAN Server, perform changes via LPWAN'
       }
       server
-        .get('/api/deviceProfiles')
+        .get('/api/deviceProfiles/2')
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {
@@ -471,26 +452,21 @@ describe('E2E Test for Single LoraOS 1.0', function () {
           res.should.have.status(200)
           res.should.have.property('text')
           let deviceProfiles = JSON.parse(res.text)
-          deviceProfiles.should.have.property('totalCount')
-          deviceProfiles.should.have.property('records')
-          deviceProfiles.totalCount.should.equal(1)
           deviceProfiles.should.eql(expected)
           done()
         })
     })
     it('Verify the Test Device Exists on LPWan', function (done) {
       let expected = {
-        'totalCount': 1,
-        'records': [{
-          'id': 1,
-          'applicationId': 1,
-          'name': 'TestDevice',
-          'deviceModel': null,
-          'description': 'Test Device for E2E'
-        }]
+        'id': 2,
+        'applicationId': 2,
+        'name': 'TestDevice2',
+        'deviceModel': null,
+        'description': 'Test Device for E2E',
+        networks: [1]
       }
       server
-        .get('/api/devices')
+        .get('/api/devices/2')
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {
@@ -498,9 +474,6 @@ describe('E2E Test for Single LoraOS 1.0', function () {
           res.should.have.status(200)
           res.should.have.property('text')
           let devices = JSON.parse(res.text)
-          devices.should.have.property('totalCount')
-          devices.should.have.property('records')
-          devices.totalCount.should.equal(1)
           appLogger.log(devices)
           devices.should.eql(expected)
           done()
