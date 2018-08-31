@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+cp -r ./test/e2e/docker/data_bkp ./test/e2e/docker/data
+# Run docker-compose with development configuration
+docker-compose -f ./test/e2e/docker/docker-compose.yml up
+
+#npm run e2e
+
