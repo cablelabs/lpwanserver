@@ -17,7 +17,8 @@
     "lint": "eslint rest/",
     "doc": "jsdoc -r ./rest -d ./docs",
     "mac": "export NODE_ENV=mac;npm start",
-    "dev": "npm install && NODE_ENV=local nodemon --watch rest ./bin/rest"
+    "dev": "npm install && NODE_ENV=local nodemon --watch rest ./bin/rest",
+    "e2e-docker": "./test/e2e/startLoraOS"
   },
   "dependencies": {
     "async": "~2.0.1",
