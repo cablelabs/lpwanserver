@@ -73,7 +73,7 @@ NetworkProtocolAccess.prototype.getProtocol = function (network) {
         networkProtocolMap[id]['api'] = require('./' + np.protocolHandler)
         resolve(networkProtocolMap[id])
       } catch (err) {
-        console.log('Failed to load network protocol code ' + np.protocolHandler)
+        appLogger.log('Failed to load network protocol code ' + np.protocolHandler)
         reject(err)
       }
     } else {

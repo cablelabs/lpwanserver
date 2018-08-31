@@ -219,10 +219,10 @@ ApplicationNetworkTypeLink.prototype.pullApplicationNetworkTypeLink = function (
             //     //see if it exists first
             //     let existingCompany = await modelAPI.companies.retrieveCompanies({search: company.name});
             //     if (existingCompany.totalCount > 0) {
-            //         console.log(company.name + ' already exists');
+            //         appLogger.log(company.name + ' already exists');
             //     }
             //     else
-            //         console.log('creating ' + company.name);
+            //         appLogger.log('creating ' + company.name);
             //         modelAPI.companies.createCompany(company.name, modelAPI.companies.COMPANY_VENDOR);
             //     }
             // }

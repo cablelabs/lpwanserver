@@ -46,7 +46,42 @@ exports.initialize = function (app, server) {
      *      Type that the Network Protocol uses for data input.
      * @apiVersion 0.1.0
      */
+
   app.get('/api/networkProtocols', [restServer.isLoggedIn],
+    function (req, res, next) {
+      var options = {}
+      if (req.query.limit) {
+        var limitInt = parseInt(req.query.limit)
+        if (!isNaN(limitInt)) {
+          options.limit = limitInt
+        }
+      }
+      if (req.query.offset) {
+        var offsetInt = parseInt(req.query.offset)
+        if (!isNaN(offsetInt)) {
+          options.offset = offsetInt
+        }
+      }
+      if (req.query.search) {
+        options.search = req.query.search
+      }
+      if (req.query.networkTypeId) {
+        options.networkTypeId = req.query.networkTypeId
+      }
+      if (req.query.networkProtocolVersion) {
+        options.networkProtocolVersion = req.query.networkProtocolVersion
+      }
+      modelAPI.networkProtocols.retrieveNetworkProtocols(options).then(function (nps) {
+        // restServer.respondJson(res, null, nps)
+        restServer.respond(res, 200, nps)
+      })
+        .catch(function (err) {
+          appLogger.log('Error getting networkProtocols: ' + err)
+          restServer.respond(res, err)
+        })
+    })
+
+  app.get('/api/networkProtocols/group', [restServer.isLoggedIn],
     function (req, res, next) {
       var options = {}
       if (req.query.limit) {
@@ -104,8 +139,6 @@ exports.initialize = function (app, server) {
           restServer.respond(res, err)
         })
     })
-
-
 
   /**
      * @apiDescription Gets the Network Protocol record with the specified id.

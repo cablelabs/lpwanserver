@@ -1,5 +1,6 @@
 // Configuration access.
 var nconf = require('nconf')
+const appLogger = require('../lib/appLogger')
 
 //* *****************************************************************************
 // The NetworkProtocol interface.
@@ -12,7 +13,7 @@ function NetworkProtocol () {
 
 NetworkProtocol.prototype.retrieveNetworkProtocols = async function (options) {
   let recs = await this.impl.retrieveNetworkProtocols(options)
-  console.log(recs)
+  appLogger.log(recs)
   let len = recs.records.length
   for (let i = 0; i < len; i++) {
     let rec = recs.records[i]

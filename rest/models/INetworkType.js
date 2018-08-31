@@ -1,5 +1,6 @@
 // Configuration access.
 var nconf = require('nconf');
+const appLogger = require('../lib/appLogger')
 
 // Error reporting
 var httpError = require( 'http-errors' );
@@ -72,7 +73,7 @@ NetworkType.prototype.retrieveNetworkType = function( id ) {
     var me = this;
     return new Promise( function( resolve, reject ) {
         var ret = me.reverseTypes[ id ];
-        console.log(me.reverseTypes)
+        appLogger.log(me.reverseTypes)
         if ( ret ) {
             // Build this simple record rather than doing a database hit or a
             // linear search through the cached records.

@@ -1,5 +1,6 @@
 // Database implementation.
 var db = require('../../../lib/dbsqlite.js')
+const appLogger = require('../../../lib/appLogger')
 
 // Error reporting
 var httpError = require('http-errors')
@@ -52,7 +53,7 @@ exports.upsertNetworkProtocol = function (np) {
         } else {
           me.createNetworkProtocol(np.name, np.networkTypeId, np.protocolHandler, np.networkProtocolVersion, np.masterProtocol)
             .then(record => {
-              console.log(record)
+              appLogger.log(record)
               if (!record.masterProtocol) {
                 record.masterProtocol = record.id
                 resolve(me.updateNetworkProtocol(record))
@@ -153,7 +154,7 @@ exports.retrieveAllNetworkProtocols = function () {
  */
 exports.retrieveNetworkProtocols = function (options) {
   return new Promise(function (resolve, reject) {
-    console.log(options)
+    appLogger.log(options)
     var sql = 'select * from networkProtocols'
     var sqlTotalCount = 'select count(id) as count from networkProtocols'
     var needsAnd = false
@@ -192,7 +193,7 @@ exports.retrieveNetworkProtocols = function (options) {
         sql += ' offset ' + db.sqlValue(options.offset)
       }
     }
-    console.log(sql)
+    appLogger.log(sql)
     db.select(sql, function (err, rows) {
       if (err) {
         reject(err)

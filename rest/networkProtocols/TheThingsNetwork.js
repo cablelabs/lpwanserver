@@ -253,7 +253,7 @@ module.exports.connect = function (network, loginData) {
         refresh_token: loginData.refresh_token,
         redirect_url: 'http://localhost:3000/admin/networks/oauth'
       }
-      console.log(options)
+      appLogger.log(options)
       request(options, function (error, response, body) {
         if (error) {
           appLogger.log('Error on signin: ' + error)
@@ -548,7 +548,7 @@ module.exports.getApplications = function (sessionData, network, dataAPI) {
       'rejectUnauthorized': false
     }
     options.json = true
-    console.log(options)
+    appLogger.log(options)
     request(options, function (error, response, body) {
       if (error) {
         dataAPI.addLog(network, 'Error on get application: ' + error)

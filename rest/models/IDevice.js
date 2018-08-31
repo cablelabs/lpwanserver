@@ -83,7 +83,7 @@ Device.prototype.deleteDevice = function( id ) {
             }
         }
         catch ( err ) {
-            console.log( "Error deleting device-dependant networkTypeLinks: ",
+            appLogger.log( "Error deleting device-dependant networkTypeLinks: ",
                          err );
         }
 
