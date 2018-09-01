@@ -192,91 +192,63 @@ module.exports.disconnect = function (connection) {
   })
 }
 
+
 /**
- * @desc Fetches application and device data from the Loriot Network
+ * Pull remote resources on Lora 1.0 Server
  *
- * @param sessionData - The session information for the user, including the
- *               connection data for the remote system.
- * @param network - The networks record for the network that uses this
- *               protocol.
- * @param companyId - The id for the local company data, for which the remote data
- *               will be retrieved.
- * @param dataAPI - Gives access to the data records and error tracking for the
- *               operation.
- *
- * @returns {Promise<?>} - Empty promise means remote records were loaded locally.
+ * @param sessionData
+ * @param network
+ * @param dataAPI
+ * @param modelAPI
+ * @returns {Promise<any>}
  */
 module.exports.pullNetwork = function (sessionData, network, dataAPI, modelAPI) {
   let me = this
   return new Promise(async function (resolve, reject) {
-    me.pullCompanies(sessionData, network, dataAPI, modelAPI)
-      .then((companyMap) => {
-        appLogger.log('Success in pulling organizations from ' + network.name)
-        appLogger.log(companyMap)
-        me.pullDeviceProfiles(sessionData, network, companyMap, dataAPI, modelAPI)
-          .then((dpMap) => {
-            appLogger.log('Success in pulling device profiles from ' + network.name)
-            appLogger.log(dpMap)
+    let promiseList = []
+    promiseList.push(me.pullApplications(sessionData, network, modelAPI, dataAPI))
 
-            me.pullApplications(sessionData, network, companyMap, dpMap, dataAPI, modelAPI)
-              .then((applicationMap) => {
-                appLogger.log('Success in pulling applications from ' + network.name)
-                appLogger.log(applicationMap)
-                // me.pullDevices(sessionData, network, companyMap, applicationMap, dpMap, dataAPI, modelAPI)
-                //     .then((result) => {
-                //         appLogger.log('Success in pulling devices from ' + network.name);
-                //         appLogger.log(result);
-                //         resolve();
-                //     })
-                //     .catch((err) => {
-                //         appLogger.log('Failed to pull devices from ' + network.name);
-                //         reject(err);
-                //     })
-                resolve()
-              })
-              .catch((err) => {
-                appLogger.log('Failed to pull applications from ' + network.name)
-                reject(err)
-              })
+    Promise.all(promiseList)
+      .then(pulledResources => {
+        appLogger.log(pulledResources)
+        let devicePromistList = []
+        for (let index in pulledResources[0]) {
+          devicePromistList.push(me.pullDevices(sessionData, network, pulledResources[0][index].remoteApplication, pulledResources[0][index].localApplication, {}, modelAPI, dataAPI))
+          // devicePromistList.push(me.pullIntegrations(sessionData, network, pulledResources[1][index].remoteApplication, pulledResources[1][index].localApplication, pulledResources[0], modelAPI, dataAPI))
+        }
+        Promise.all(devicePromistList)
+          .then((devices) => {
+            appLogger.log(devices)
+            resolve()
           })
-          .catch((err) => {
-            appLogger.log('Failed to pull device profiles from ' + network.name)
+          .catch(err => {
+            appLogger.log(err)
             reject(err)
           })
       })
-      .catch((err) => {
-        appLogger.log('Failed to pull organizations from ' + network.name)
+      .catch(err => {
+        appLogger.log(err)
         reject(err)
       })
   })
 }
 
 /**
- * Application CRUD Operations
- */
-
-/**
- * @desc Fetches application data from the Loriot Network
+ * Pull remote resources on Lora 1.0 Server
  *
- * @param sessionData - The session information for the user, including the
- *               connection data for the remote system.
- * @param network - The networks record for the network that uses this
- *               protocol.
+ * @param sessionData
+ * @param network
  * @param companyMap
- * @param dpMap
- * @param dataAPI - Gives access to the data records and error tracking for the
- *               operation.
+ * @param dataAPI
  * @param modelAPI
- *
- * @returns {Promise<?>} - Empty promise means remote records were loaded locally.
+ * @returns {Promise<any>}
  */
-module.exports.pullApplications = function (sessionData, network, companyMap, dpMap, dataAPI, modelAPI) {
-  let counter = 0
+module.exports.pullDeviceProfiles = function (sessionData, network, modelAPI) {
+  let me = this
   return new Promise(async function (resolve, reject) {
-    let applicationMap = []
     let options = {}
     options.method = 'GET'
-    options.url = network.baseUrl + '/1/nwk/apps' + '?limit=9999&offset=0'
+    options.url = network.baseUrl + '/device-profiles' + '?limit=9999&offset=0'
     options.headers = {
       'Content-Type': 'application/json',
       'Authorization': 'Bearer ' + sessionData.connection
@@ -289,41 +261,354 @@ module.exports.pullApplications = function (sessionData, network, companyMap, dp
     appLogger.log(options)
     request(options, function (error, response, body) {
       if (error) {
-        dataAPI.addLog(network, 'Error pulling applications from network ' + network.name + ': ' + error)
+        appLogger.log('Error pulling device profiles from network ' + network.name + ': ' + error)
         reject(error)
       }
       else {
         body = JSON.parse(body)
-        dataAPI.addLog(network, body)
-        if (body.totalCount === 0) {
-          appLogger.log('No apps')
-          appLogger.log(body)
-          resolve(applicationMap)
+        appLogger.log(body)
+
+        let deviceProfiles = body.result
+        let promiseList = []
+        for (let index in deviceProfiles) {
+          let dp = deviceProfiles[index]
+          promiseList.push(me.addRemoteDeviceProfile(sessionData, dp, network, modelAPI))
         }
-        else {
-          let apps = body.result
-          appLogger.log(body)
-          counter = apps.length
-          for (let index in apps) {
-            let app = apps[index]
-            appLogger.log('Added ' + app.name)
-            addRemoteApplication(sessionData, app, network, companyMap, dpMap, dataAPI, modelAPI)
-              .then((applicationId) => {
-                counter = counter - 1
-                applicationMap.push({remoteApplicationId: app.id, applicationId: applicationId})
-                if (counter <= 0) {
-                  resolve(applicationMap)
-                }
-              })
-              .catch((error) => {
-                reject(error)
-              })
-          }
-        }
+        Promise.all(promiseList)
+          .then((devices) => {
+            resolve(devices)
+          })
+          .catch(err => {
+            appLogger.log(err)
+            reject(err)
+          })
       }
     })
   })
 }
+
+module.exports.addRemoteDeviceProfile = function (sessionData, limitedRemoteDeviceProfile, network, modelAPI) {
+  return new Promise(async function (resolve, reject) {
+    getDeviceProfileById(network, limitedRemoteDeviceProfile.id, sessionData.connection)
+      .then((remoteDeviceProfileWrapper) => {
+        let remoteDeviceProfile = remoteDeviceProfileWrapper.deviceProfile
+        appLogger.log('Adding ' + remoteDeviceProfile.name)
+        appLogger.log(remoteDeviceProfile)
+        appLogger.log(modelAPI)
+        modelAPI.deviceProfiles.retrieveDeviceProfiles({search: remoteDeviceProfile.name})
+          .then(existingDeviceProfile => {
+            appLogger.log(existingDeviceProfile)
+            if (existingDeviceProfile.totalCount > 0) {
+              existingDeviceProfile = existingDeviceProfile.records[0]
+              appLogger.log(existingDeviceProfile.name + ' already exists')
+              resolve({
+                localDeviceProfile: existingDeviceProfile.id,
+                remoteDeviceProfile: remoteDeviceProfile.id
+              })
+            }
+            else {
+              appLogger.log('creating ' + remoteDeviceProfile.name)
+              appLogger.log(remoteDeviceProfile)
+              modelAPI.deviceProfiles.createRemoteDeviceProfile(network.networkTypeId, 2,
+                remoteDeviceProfile.name, 'Device Profile managed by LPWAN Server, perform changes via LPWAN',
+                remoteDeviceProfile)
+                .then((existingDeviceProfile) => {
+                  appLogger.log('Created ' + existingDeviceProfile.name)
+                  resolve({
+                    localDeviceProfile: existingDeviceProfile.id,
+                    remoteDeviceProfile: remoteDeviceProfile.id
+                  })
+                })
+                .catch((error) => {
+                  appLogger.log(error)
+                  reject(error)
+                })
+            }
+          })
+          .catch((error) => {
+            appLogger.log(error)
+            reject(error)
+          })
+      })
+      .catch((error) => {
+        appLogger.log(error)
+        reject(error)
+      })
+  })
+}
+
+/**
+ * Pull remote applications on Lora 1.0 Server
+ * @param sessionData
+ * @param network
+ * @param companyMap
+ * @param dpMap
+ * @param dataAPI
+ * @param modelAPI
+ * @returns {Promise<any>}
+ */
+module.exports.pullApplications = function (sessionData, network, modelAPI, dataAPI) {
+  return new Promise(async function (resolve, reject) {
+    let options = {}
+    options.url = network.baseUrl + '/1/nwk/apps'
+    options.headers = {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + sessionData.connection.apikey
+    }
+    options.agentOptions = {
+      'secureProtocol': 'TLSv1_2_method',
+      'rejectUnauthorized': false
+    }
+
+    appLogger.log(options)
+    request(options, function (error, response, body) {
+      if (error) {
+        appLogger.log('Error pulling applications from network ' + network.name + ': ' + error)
+        reject(error)
+      }
+      else {
+        body = JSON.parse(body)
+        let apps = body.apps
+        appLogger.log(apps)
+        let promiseList = []
+        for (let index in apps) {
+          let app = apps[index]
+          promiseList.push(addRemoteApplication(sessionData, app, network, modelAPI, dataAPI))
+        }
+        Promise.all(promiseList)
+          .then((apps) => {
+            resolve(apps)
+          })
+          .catch(err => {
+            appLogger.log(err)
+            reject(err)
+          })
+      }
+    })
+  })
+}
+
+function addRemoteApplication (sessionData, remoteApplication, network, modelAPI, dataAPI) {
+  let me = this
+  return new Promise(async function (resolve, reject) {
+    remoteApplication.hexId = remoteApplication._id.toString(16).toUpperCase()
+    appLogger.log('Adding ' + remoteApplication.name)
+    appLogger.log(remoteApplication)
+    let existingApplication = await modelAPI.applications.retrieveApplications({search: remoteApplication.name})
+    appLogger.log(existingApplication)
+    if (existingApplication.totalCount > 0) {
+      existingApplication = existingApplication.records[0]
+      appLogger.log(existingApplication.name + ' already exists')
+    }
+    else {
+      appLogger.log('creating ' + remoteApplication.name)
+      existingApplication = await modelAPI.applications.createApplication(remoteApplication.name, remoteApplication.name, 2, 1, 'http://set.me.to.your.real.url:8888')
+      appLogger.log('Created ' + existingApplication.name)
+    }
+
+    let existingApplicationNTL = await modelAPI.applicationNetworkTypeLinks.retrieveApplicationNetworkTypeLinks({applicationId: existingApplication.id})
+    if (existingApplicationNTL.totalCount > 0) {
+      appLogger.log(existingApplication.name + ' link already exists')
+    }
+    else {
+      appLogger.log('creating Network Link for ' + existingApplication.name)
+
+      let networkSettings = JSON.parse(JSON.stringify(remoteApplication))
+      existingApplicationNTL = await modelAPI.applicationNetworkTypeLinks.createRemoteApplicationNetworkTypeLink(existingApplication.id, network.networkTypeId, networkSettings, existingApplication.companyId)
+      appLogger.log(existingApplicationNTL)
+      await dataAPI.putProtocolDataForKey(network.id,
+        network.networkProtocolId,
+        makeApplicationDataKey(existingApplication.id, 'appNwkId'),
+        remoteApplication.hexId)
+      resolve({localApplication: existingApplication.id, remoteApplication: remoteApplication.hexId})
+    }
+  })
+}
+
+/**
+ * Pull remote devices on Lora 1.0 Server
+ * @param sessionData
+ * @param network
+ * @param companyId
+ * @param dpMap
+ * @param remoteApplicationId
+ * @param applicationId
+ * @param dataAPI
+ * @param modelAPI
+ * @returns {Promise<any>}
+ */
+module.exports.pullDevices = function (sessionData, network, remoteApplicationId, localApplicationId, dpMap, modelAPI, dataAPI) {
+  return new Promise(async function (resolve, reject) {
+    let options = {}
+    options.method = 'GET'
+    options.url = network.baseUrl + '/1/nwk/app/' + remoteApplicationId  + '/devices'
+    options.headers = {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + sessionData.connection.apikey
+    }
+    options.agentOptions = {
+      'secureProtocol': 'TLSv1_2_method',
+      'rejectUnauthorized': false
+    }
+
+    appLogger.log(options)
+    request(options, function (error, response, body) {
+      if (error) {
+        appLogger.log('Error pulling devices from network ' + network.name + ': ' + error)
+        reject(error)
+      }
+      else {
+        body = JSON.parse(body)
+        let devices = body.devices
+        appLogger.log(devices)
+        let promiseList = []
+        for (let index in devices) {
+          let device = devices[index]
+          promiseList.push(addRemoteDevice(sessionData, device, network, localApplicationId, dpMap, modelAPI, dataAPI))
+        }
+        Promise.all(promiseList)
+          .then((devices) => {
+            resolve(devices)
+          })
+          .catch(err => {
+            appLogger.log(err)
+            reject(err)
+          })
+      }
+    })
+  })
+}
+
+function addRemoteDevice (sessionData, remoteDevice, network, applicationId, dpMap, modelAPI, dataAPI) {
+  return new Promise(async function (resolve, reject){
+    appLogger.log('Adding ' + remoteDevice.deveui)
+    appLogger.log(remoteDevice)
+    let existingDevice = await modelAPI.devices.retrieveDevices({search: remoteDevice.deveui})
+    appLogger.log(existingDevice)
+    if (existingDevice.totalCount > 0) {
+      existingDevice = existingDevice.records[0]
+      appLogger.log(existingDevice.name + ' already exists')
+    }
+    else {
+      appLogger.log('creating ' + remoteDevice.deveui)
+      existingDevice = await modelAPI.devices.createDevice(remoteDevice.deveui, remoteDevice.description, applicationId)
+      appLogger.log('Created ' + existingDevice.name)
+    }
+
+    let existingDeviceNTL = await modelAPI.deviceNetworkTypeLinks.retrieveDeviceNetworkTypeLinks({deviceId: existingDevice.id})
+    if (existingDeviceNTL.totalCount > 0) {
+      appLogger.log(existingDevice.name + ' link already exists')
+    }
+    else {
+      appLogger.log('creating Network Link for ' + existingDevice.name)
+      existingDeviceNTL = await modelAPI.deviceNetworkTypeLinks.createRemoteDeviceNetworkTypeLink(existingDevice.id, network.networkTypeId, -1, remoteDevice, 2)
+      appLogger.log(existingDeviceNTL)
+      dataAPI.putProtocolDataForKey(network.id,
+        network.networkProtocolId,
+        makeDeviceDataKey(existingDevice.id, 'devNwkId'),
+        remoteDevice.deveui)
+    }
+    resolve({localDevice: existingDevice.id, remoteDevice: remoteDevice.deveui})
+
+  })
+}
+
+/**
+ * Set integrations on Lora 1.0 Server to LPWan and update baseUrl for LPWan
+ * @param sessionData
+ * @param network
+ * @param remoteApplicationId
+ * @param localApplicationId
+ * @param dpMap
+ * @param modelAPI
+ * @param dataAPI
+ * @returns {Promise<any>}
+ */
+module.exports.pullIntegrations = function (sessionData, network, remoteApplicationId, localApplicationId, dpMap, modelAPI, dataAPI) {
+  return new Promise(async function (resolve, reject) {
+    let options = {}
+    options.method = 'GET'
+    options.url = network.baseUrl + '/applications/' + remoteApplicationId + '/integrations/http' + '?limit=9999&offset=0'
+    options.headers = {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + sessionData.connection
+    }
+    options.agentOptions = {
+      'secureProtocol': 'TLSv1_2_method',
+      'rejectUnauthorized': false
+    }
+    appLogger.log(options)
+    request(options, function (error, response, body) {
+        if (error) {
+          appLogger.log('Error pulling integrations from network ' + network.name + ': ' + error)
+          reject(error)
+        }
+        else {
+          let integrationWrapper = JSON.parse(body)
+          let integration = integrationWrapper.integration
+          appLogger.log(integration)
+          var deliveryURL = 'api/ingest/' + localApplicationId + '/' + network.id
+          var reportingUrl = nconf.get('base_url') + deliveryURL
+
+          if (integration.uplinkDataURL === reportingUrl) {
+            resolve()
+          }
+          else {
+            modelAPI.applications.retrieveApplication(localApplicationId)
+              .then(appToUpdate => {
+                appToUpdate.baseUrl = integration.uplinkDataURL
+                appLogger.log(appToUpdate)
+                delete appToUpdate.networks
+                modelAPI.applications.updateApplication(appToUpdate)
+                  .then(result => {
+                    appLogger.log(result)
+                    let options2 = {}
+                    options2.method = 'PUT'
+                    options2.url = network.baseUrl + '/applications/' + remoteApplicationId + '/integrations/http'
+                    options2.headers = {
+                      'Content-Type': 'application/json',
+                      'Authorization': 'Bearer ' + sessionData.connection
+                    }
+                    options2.agentOptions = {
+                      'secureProtocol': 'TLSv1_2_method',
+                      'rejectUnauthorized': false
+                    }
+                    options2.json = {
+                      integration: {
+                        ackNotificationURL: reportingUrl,
+                        uplinkDataURL: reportingUrl,
+                        errorNotificationURL: reportingUrl,
+                        applicationID: remoteApplicationId,
+                        joinNotificationURL: reportingUrl
+                      }
+                    }
+                    appLogger.log(options2)
+                    request(options2, function (error, response, body) {
+                      if (error) {
+                        appLogger.log('Error updating integrations from network ' + network.name + ': ' + error)
+                        reject(error)
+                      }
+                      else {
+                        resolve()
+                      }
+                    })
+                  })
+                  .catch(err => {
+                    appLogger.log(err)
+                    reject(err)
+                  })
+              })
+              .catch(err => {
+                appLogger.log(err)
+                reject(err)
+              })
+          }
+        }
+      }
+    )
+  })
+}
+
 
 /**
  * @desc Add a new application to the Loriot network
@@ -343,7 +628,7 @@ module.exports.addApplication = function (sessionData, network, applicationId, d
       application = await dataAPI.getApplicationById(applicationId)
     }
     catch (err) {
-      dataAPI.addLog(network, 'Failed to get required data for addApplication: ' + err)
+      appLogger.log( 'Failed to get required data for addApplication: ' + err)
       reject(err)
       return
     }
@@ -366,11 +651,11 @@ module.exports.addApplication = function (sessionData, network, applicationId, d
     request(options, async function (error, response, body) {
       if (error || response.statusCode >= 400) {
         if (error) {
-          dataAPI.addLog(network, 'Error on create application: ' + error)
+          appLogger.log( 'Error on create application: ' + error)
           reject(error)
         }
         else {
-          dataAPI.addLog(network, 'Error on create application: ' + JSON.stringify(body) + '(' + response.statusCode + ')')
+          appLogger.log( 'Error on create application: ' + JSON.stringify(body) + '(' + response.statusCode + ')')
           reject(response.statusCode)
         }
       }
@@ -415,7 +700,7 @@ module.exports.getApplications = function (sessionData, network, dataAPI) {
 
     request(options, function (error, response, body) {
       if (error) {
-        dataAPI.addLog(network, 'Error on get application: ' + error)
+        appLogger.log( 'Error on get application: ' + error)
         reject(error)
       }
       else if (response.statusCode === 401) {
@@ -428,8 +713,8 @@ module.exports.getApplications = function (sessionData, network, dataAPI) {
         reject(new Error('Server Error'))
       }
       else {
-        dataAPI.addLog(network, response.headers)
-        dataAPI.addLog(network, body)
+        appLogger.log( response.headers)
+        appLogger.log( body)
         resolve(body)
       }
     })
@@ -467,7 +752,7 @@ module.exports.getApplication = function (sessionData, network, applicationId, d
 
     request(options, function (error, response, body) {
       if (error) {
-        dataAPI.addLog(network, 'Error on get application: ' + error)
+        appLogger.log( 'Error on get application: ' + error)
         reject(error)
       }
       else {
@@ -568,7 +853,7 @@ module.exports.updateApplication = function (sessionData, network, applicationId
 
     request(options, function (error, response, body) {
       if (error) {
-        dataAPI.addLog(network, 'Error on update application: ' + error)
+        appLogger.log( 'Error on update application: ' + error)
         reject(error)
       }
       else {
@@ -611,7 +896,7 @@ module.exports.deleteApplication = function (sessionData, network, applicationId
 
     request(options, async function (error, response, body) {
       if (error) {
-        dataAPI.addLog(network, 'Error on delete application: ' + error)
+        appLogger.log( 'Error on delete application: ' + error)
         reject(error)
       }
       else {
@@ -717,7 +1002,7 @@ module.exports.startApplication = function (sessionData, network, applicationId,
 
       request(options, function (error, response, body) {
         if (error) {
-          dataAPI.addLog(network, 'Error on add application data reporting: ' + error)
+          appLogger.log( 'Error on add application data reporting: ' + error)
           reject(error)
         }
         else {
@@ -726,7 +1011,7 @@ module.exports.startApplication = function (sessionData, network, applicationId,
       })
     }
     catch (err) {
-      dataAPI.addLog(network, 'Error on add application data reporting: ' + err)
+      appLogger.log( 'Error on add application data reporting: ' + err)
       reject(err)
     }
     ;
@@ -749,7 +1034,7 @@ module.exports.stopApplication = function (sessionData, network, applicationId, 
     // Can't delete if not running on the network.
     if (this.activeApplicationNetworkProtocols['' + applicationId + ':' + network.id] === undefined) {
       // We don't think the app is running on this network.
-      dataAPI.addLog(network, 'Application ' + applicationId +
+      appLogger.log( 'Application ' + applicationId +
         ' is not running on network ' + network.id)
       reject(new Error('Application ' + applicationId +
         ' is not running on network ' + network.id))
@@ -762,7 +1047,7 @@ module.exports.stopApplication = function (sessionData, network, applicationId, 
         makeApplicationDataKey(applicationId, 'appNwkId'))
     }
     catch (err) {
-      dataAPI.addLog(network, 'Cannot delete application data forwarding for application ' +
+      appLogger.log( 'Cannot delete application data forwarding for application ' +
         applicationId +
         ' and network ' +
         network.name +
@@ -784,7 +1069,7 @@ module.exports.stopApplication = function (sessionData, network, applicationId, 
     }
     request(options, function (error, response, body) {
       if (error) {
-        dataAPI.addLog(network, 'Error on delete application notification: ' + error)
+        appLogger.log( 'Error on delete application notification: ' + error)
         reject(error)
       }
       else {
@@ -865,79 +1150,6 @@ module.exports.passDataToApplication = function (network, applicationId, data, d
  * Device CRUD Operations
  */
 
-/**
- * @desc Fetches device data from the Loriot Network
- *
- * @param sessionData - The session information for the user, including the
- *               connection data for the remote system.
- * @param network - The networks record for the network that uses this
- *               protocol.
- * @param companyId - The id for the local company data, for which the remote data
- *               will be retrieved.
- * @param dpMap
- * @param remoteApplicationId
- * @param applicationId
- * @param dataAPI - Gives access to the data records and error tracking for the
- *               operation.
- * @param modelAPI
- *
- * @returns {Promise<?>} - Empty promise means remote records were loaded locally.
- */
-module.exports.pullDevices = function (sessionData, network, companyId, dpMap, remoteApplicationId, applicationId, dataAPI, modelAPI) {
-  let counter = 0
-  return new Promise(async function (resolve, reject) {
-    let deviceMap = []
-    let options = {}
-    options.method = 'GET'
-    options.url = network.baseUrl + '/1/nwk/apps/' + remoteApplicationId + '/devices' + '?limit=9999&offset=0'
-    options.headers = {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + sessionData.connection
-    }
-    options.agentOptions = {
-      'secureProtocol': 'TLSv1_2_method',
-      'rejectUnauthorized': false
-    }
-
-    appLogger.log(options)
-    request(options, function (error, response, body) {
-      if (error) {
-        dataAPI.addLog(network, 'Error pulling devices from network ' + network.name + ': ' + error)
-        reject(error)
-      }
-      else {
-        appLogger.log(body)
-        body = JSON.parse(body)
-        dataAPI.addLog(network, body)
-        if (body.totalCount === 0) {
-          appLogger.log('No devices')
-          appLogger.log(body)
-          resolve(deviceMap)
-        }
-        else {
-          let devices = body.result
-          appLogger.log(body)
-          counter = devices.length
-          for (let index in devices) {
-            let device = devices[index]
-            appLogger.log('Added ' + device.name)
-            addRemoteDevice(sessionData, device, network, companyId, dpMap, remoteApplicationId, applicationId, dataAPI, modelAPI)
-              .then((deviceId) => {
-                counter = counter - 1
-                deviceMap.push({remoteDeviceId: device.id, deviceId: deviceId})
-                if (counter <= 0) {
-                  resolve(deviceMap)
-                }
-              })
-              .catch((error) => {
-                reject(error)
-              })
-          }
-        }
-      }
-    })
-  })
-}
 
 /**
  * @desc Add a new device to the Loriot network
@@ -961,7 +1173,7 @@ module.exports.addDevice = function (sessionData, network, deviceId, dataAPI) {
       dntl = await dataAPI.getDeviceNetworkType(deviceId, network.networkTypeId)
       devpro = await dataAPI.getDeviceProfileById(dntl.deviceProfileId)
       if (!dntl.networkSettings || !dntl.networkSettings.devEUI) {
-        dataAPI.addLog(network, 'deviceNetworkTypeLink MUST have networkSettings which MUST have devEUI')
+        appLogger.log( 'deviceNetworkTypeLink MUST have networkSettings which MUST have devEUI')
         reject(new Error('deviceNetworkTypeLink MUST have networkSettings which MUST have devEUI'))
         return
       }
@@ -975,7 +1187,7 @@ module.exports.addDevice = function (sessionData, network, deviceId, dataAPI) {
         makeDeviceProfileDataKey(dntl.deviceProfileId, 'dpNwkId'))
     }
     catch (err) {
-      dataAPI.addLog(network, 'Error getting data for remote network: ' + err)
+      appLogger.log( 'Error getting data for remote network: ' + err)
       reject(err)
       return
     }
@@ -1006,11 +1218,11 @@ module.exports.addDevice = function (sessionData, network, deviceId, dataAPI) {
     request(options, function (error, response, body) {
       if (error || response.statusCode >= 400) {
         if (error) {
-          dataAPI.addLog(network, 'Error on create device: ' + error)
+          appLogger.log( 'Error on create device: ' + error)
           reject(error)
         }
         else {
-          dataAPI.addLog(network, 'Error on create device (' + response.statusCode + '): ' + body.error)
+          appLogger.log( 'Error on create device (' + response.statusCode + '): ' + body.error)
           reject(response.statusCode)
         }
       }
@@ -1053,10 +1265,10 @@ module.exports.addDevice = function (sessionData, network, deviceId, dataAPI) {
         request(options, function (error, response, body) {
           if (error || response.statusCode >= 400) {
             if (error) {
-              dataAPI.addLog(network, 'Error on create device keys: ' + error)
+              appLogger.log( 'Error on create device keys: ' + error)
             }
             else {
-              dataAPI.addLog(network, 'Error on create device keys (' + response.statusCode + '): ' + body.error)
+              appLogger.log( 'Error on create device keys (' + response.statusCode + '): ' + body.error)
             }
             resolve(dntl.networkSettings.devEUI)
           }
@@ -1102,11 +1314,11 @@ module.exports.getDevice = function (sessionData, network, deviceId, dataAPI) {
       request(options, function (error, response, body) {
         if (error || response.statusCode >= 400) {
           if (error) {
-            dataAPI.addLog(network, 'Error on get device: ' + error)
+            appLogger.log( 'Error on get device: ' + error)
             reject(error)
           }
           else {
-            dataAPI.addLog(network, 'Error on get device (' + response.statusCode + '): ' + body.error)
+            appLogger.log( 'Error on get device (' + response.statusCode + '): ' + body.error)
             reject(response.statusCode)
           }
         }
@@ -1157,7 +1369,7 @@ module.exports.updateDevice = function (sessionData, network, deviceId, dataAPI)
         makeDeviceProfileDataKey(dp.id, 'dpNwkId'))
     }
     catch (err) {
-      dataAPI.addLog(network, 'Failed to get supporting data for updateDevice: ' + err)
+      appLogger.log( 'Failed to get supporting data for updateDevice: ' + err)
       reject(err)
       return
     }
@@ -1185,12 +1397,12 @@ module.exports.updateDevice = function (sessionData, network, deviceId, dataAPI)
       if (error || response.statusCode >= 400) {
         if (error) {
           appLogger.log('Error on update device: ' + error)
-          dataAPI.addLog(network, 'Error on update device: ' + error)
+          appLogger.log( 'Error on update device: ' + error)
           reject(error)
         }
         else {
           appLogger.log('Error on update device (' + response.statusCode + '): ' + body.error)
-          dataAPI.addLog(network, 'Error on update device (' + response.statusCode + '): ' + body.error)
+          appLogger.log( 'Error on update device (' + response.statusCode + '): ' + body.error)
           reject(response.statusCode)
         }
       }
@@ -1206,10 +1418,10 @@ module.exports.updateDevice = function (sessionData, network, deviceId, dataAPI)
         request(options, function (error, response, body) {
           if (error || response.statusCode >= 400) {
             if (error) {
-              dataAPI.addLog(network, 'Error on update device keys: ' + error)
+              appLogger.log( 'Error on update device keys: ' + error)
             }
             else {
-              dataAPI.addLog(network, 'Error on update device keys (' + response.statusCode + '): ' + body.error)
+              appLogger.log( 'Error on update device keys (' + response.statusCode + '): ' + body.error)
             }
             resolve()
           }
@@ -1243,7 +1455,7 @@ module.exports.deleteDevice = function (sessionData, network, deviceId, dataAPI)
     }
     catch (err) {
       // Can't delete without the remote ID.
-      dataAPI.addLog(network, "Failed to get remote network's device ID: " + err)
+      appLogger.log( "Failed to get remote network's device ID: " + err)
       reject(err)
       return
     }
@@ -1264,11 +1476,11 @@ module.exports.deleteDevice = function (sessionData, network, deviceId, dataAPI)
     request(options, async function (error, response, body) {
       if (error || response.statusCode >= 400) {
         if (error) {
-          dataAPI.addLog(network, 'Error on delete device: ' + error)
+          appLogger.log( 'Error on delete device: ' + error)
           reject(error)
         }
         else {
-          dataAPI.addLog(network, 'Error on delete device (' + response.statusCode + '): ' + body.error)
+          appLogger.log( 'Error on delete device (' + response.statusCode + '): ' + body.error)
           reject(response.statusCode)
         }
       }
@@ -1281,7 +1493,7 @@ module.exports.deleteDevice = function (sessionData, network, deviceId, dataAPI)
             makeDeviceDataKey(deviceId, 'devNwkId'))
         }
         catch (err) {
-          dataAPI.addLog(network, "Failed to delete remote network's device ID: " + err)
+          appLogger.log( "Failed to delete remote network's device ID: " + err)
         }
 
         // Devices have a separate API for appkeys...
@@ -1289,10 +1501,10 @@ module.exports.deleteDevice = function (sessionData, network, deviceId, dataAPI)
         request(options, function (error, response, body) {
           if (error || response.statusCode >= 400) {
             if (error) {
-              dataAPI.addLog(network, 'Error on delete device keys: ' + error)
+              appLogger.log( 'Error on delete device keys: ' + error)
             }
             else {
-              dataAPI.addLog(network, 'Error on delete device keys (' + response.statusCode + '): ' + body.error)
+              appLogger.log( 'Error on delete device keys (' + response.statusCode + '): ' + body.error)
             }
             resolve()
           }
@@ -1368,7 +1580,7 @@ module.exports.addCompany = function (sessionData, network, companyId, dataAPI) 
   appLogger.log('Loriot: addCompany')
   appLogger.log('Companies are not supported by Loriot')
   let error = new Error('Companies are not supported by Loriot')
-  dataAPI.addLog(network, 'Error on Add Companies: ' + error)
+  appLogger.log( 'Error on Add Companies: ' + error)
   return (error)
 }
 
@@ -1385,7 +1597,7 @@ module.exports.getCompany = function (sessionData, network, companyId, dataAPI) 
   appLogger.log('Loriot: getCompany')
   appLogger.log('Companies are not supported by Loriot')
   let error = new Error('Companies are not supported by Loriot')
-  dataAPI.addLog(network, 'Error on Get Companies: ' + error)
+  appLogger.log( 'Error on Get Companies: ' + error)
   return (error)
 }
 
@@ -1402,7 +1614,7 @@ module.exports.updateCompany = function (sessionData, network, companyId, dataAP
   appLogger.log('Loriot: updateCompany')
   appLogger.log('Companies are not supported by Loriot')
   let error = new Error('Companies are not supported by Loriot')
-  dataAPI.addLog(network, 'Error on Update Companies: ' + error)
+  appLogger.log( 'Error on Update Companies: ' + error)
   return (error)
 }
 
@@ -1419,7 +1631,7 @@ module.exports.deleteCompany = function (sessionData, network, companyId, dataAP
   appLogger.log('Loriot: deleteCompany')
   appLogger.log('Companies are not supported by Loriot')
   let error = new Error('Companies are not supported by Loriot')
-  dataAPI.addLog(network, 'Error on Delete Companies: ' + error)
+  appLogger.log( 'Error on Delete Companies: ' + error)
   return (error)
 }
 
@@ -1436,7 +1648,7 @@ module.exports.pushCompany = function (sessionData, network, companyId, dataAPI)
   appLogger.log('Loriot: getCompany')
   appLogger.log('Companies are not supported by Loriot')
   let error = new Error('Companies are not supported by Loriot')
-  dataAPI.addLog(network, 'Error on Get Companies: ' + error)
+  appLogger.log( 'Error on Get Companies: ' + error)
   return (error)
 }
 
@@ -1453,26 +1665,10 @@ module.exports.addRemoteCompany = function (sessionData, remoteOrganization, net
   appLogger.log('Loriot: addRemoteCompany')
   appLogger.log('Companies are not supported by Loriot')
   let error = new Error('Companies are not supported by Loriot')
-  dataAPI.addLog(network, 'Error on Add Remote Companies: ' + error)
+  appLogger.log( 'Error on Add Remote Companies: ' + error)
   return (error)
 }
 
-/**
- * Companies are not supported by Loriot
- *
- * @param sessionData
- * @param network
- * @param dataAPI
- * @param modelAPI
- * @returns {Error}
- */
-module.exports.pullCompanies = function (sessionData, network, dataAPI, modelAPI) {
-  appLogger.log('Loriot: pullCompany')
-  appLogger.log('Companies are not supported by Loriot')
-  let error = new Error('Companies are not supported by Loriot')
-  dataAPI.addLog(network, 'Error on Pull Companies: ' + error)
-  return (error)
-}
 
 /**
  * Device Profiles are not supported by Loriot
@@ -1489,24 +1685,7 @@ module.exports.addRemoteDeviceProfile = function (sessionData, limitedRemoteDevi
   appLogger.log('Loriot: addRemoteDeviceProfile')
   appLogger.log('Device Profiles are not supported by Loriot')
   let error = new Error('Device Profiles are not supported by Loriot')
-  dataAPI.addLog(network, 'Error on addRemoteDeviceProfile: ' + error)
-  return (error)
-}
-
-/**
- * Device Profiles are not supported by Loriot
- * @param sessionData
- * @param network
- * @param companyMap
- * @param dataAPI
- * @param modelAPI
- * @returns {Error}
- */
-module.exports.pullDeviceProfiles = function (sessionData, network, companyMap, dataAPI, modelAPI) {
-  appLogger.log('Loriot: pullDeviceProfiles')
-  appLogger.log('Device Profiles are not supported by Loriot')
-  let error = new Error('Device Profiles are not supported by Loriot')
-  dataAPI.addLog(network, 'Error on pullDeviceProfiles: ' + error)
+  appLogger.log( 'Error on addRemoteDeviceProfile: ' + error)
   return (error)
 }
 
@@ -1523,7 +1702,7 @@ module.exports.addDeviceProfile = function (sessionData, network, deviceProfileI
   appLogger.log('Loriot: addDeviceProfile')
   appLogger.log('Device Profiles are not supported by Loriot')
   let error = new Error('Device Profiles are not supported by Loriot')
-  dataAPI.addLog(network, 'Error on addDeviceProfile: ' + error)
+  appLogger.log( 'Error on addDeviceProfile: ' + error)
   return (error)
 }
 
@@ -1539,7 +1718,7 @@ module.exports.getDeviceProfile = function (sessionData, network, deviceProfileI
   appLogger.log('Loriot: getDeviceProfile')
   appLogger.log('Device Profiles are not supported by Loriot')
   let error = new Error('Device Profiles are not supported by Loriot')
-  dataAPI.addLog(network, 'Error on getDeviceProfile: ' + error)
+  appLogger.log( 'Error on getDeviceProfile: ' + error)
   return (error)
 }
 
@@ -1555,7 +1734,7 @@ module.exports.updateDeviceProfile = function (sessionData, network, deviceProfi
   appLogger.log('Loriot: updateDeviceProfile')
   appLogger.log('Device Profiles are not supported by Loriot')
   let error = new Error('Device Profiles are not supported by Loriot')
-  dataAPI.addLog(network, 'Error on updateDeviceProfile: ' + error)
+  appLogger.log( 'Error on updateDeviceProfile: ' + error)
   return (error)
 }
 
@@ -1571,7 +1750,7 @@ module.exports.deleteDeviceProfile = function (sessionData, network, deviceProfi
   appLogger.log('Loriot: deleteDeviceProfile')
   appLogger.log('Device Profiles are not supported by Loriot')
   let error = new Error('Device Profiles are not supported by Loriot')
-  dataAPI.addLog(network, 'Error on deleteDeviceProfile: ' + error)
+  appLogger.log( 'Error on deleteDeviceProfile: ' + error)
   return (error)
 }
 
@@ -1587,7 +1766,7 @@ module.exports.pushDeviceProfile = function (sessionData, network, deviceProfile
   appLogger.log('Loriot: pushDeviceProfile')
   appLogger.log('Device Profiles are not supported by Loriot')
   let error = new Error('Device Profiles are not supported by Loriot')
-  dataAPI.addLog(network, 'Error on pushDeviceProfile: ' + error)
+  appLogger.log( 'Error on pushDeviceProfile: ' + error)
   return (error)
 }
 
@@ -1611,7 +1790,7 @@ async function getCompanyAccount (dataAPI, network, companyId, generateIfMissing
   let secData = network.securityData
   if (!secData || !secData.apikey) {
     appLogger.log('Network security data is incomplete for ' + network.name)
-    dataAPI.addLog(network, 'Network security data is incomplete for ' + network.name)
+    appLogger.log( 'Network security data is incomplete for ' + network.name)
     return null
   }
   return secData
@@ -1686,15 +1865,15 @@ function getDeviceById (network, deviceId, connection, dataAPI) {
     }
     request(options, async function (error, response, body) {
       if (error) {
-        dataAPI.addLog(network, 'Error on get Device: ' + error)
+        appLogger.log( 'Error on get Device: ' + error)
         reject(error)
       }
       else if (response.statusCode >= 400) {
         let bodyObj = JSON.parse(response.body)
-        dataAPI.addLog(network, 'Error on get Device: ' +
+        appLogger.log( 'Error on get Device: ' +
           bodyObj.error +
           ' (' + response.statusCode + ')')
-        dataAPI.addLog(network, 'Request data = ' + JSON.stringify(options))
+        appLogger.log( 'Request data = ' + JSON.stringify(options))
         reject(response.statusCode)
       }
       else {
@@ -1715,32 +1894,33 @@ function getDeviceById (network, deviceId, connection, dataAPI) {
  * @param dataAPI
  * @returns {Promise<Application>}
  */
-function getApplicationById (network, applicationId, connection, dataAPI) {
+function getApplicationById (network, applicationId, connection) {
   appLogger.log('Loriot: getApplicationById')
   return new Promise(async function (resolve, reject) {
     let options = {}
     options.method = 'GET'
-    options.url = network.baseUrl + '/1/nwk/apps/' + applicationId
+    options.url = network.baseUrl + '/1/nwk/app/' + applicationId
     options.headers = {
       'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + connection
+      'Authorization': 'Bearer ' + connection.apikey
     }
     options.agentOptions = {
       'secureProtocol': 'TLSv1_2_method',
       'rejectUnauthorized': false
     }
 
+    appLogger.log(options)
     request(options, async function (error, response, body) {
       if (error) {
-        dataAPI.addLog(network, 'Error on get Application: ' + error)
+        appLogger.log( 'Error on get Application: ' + error)
         reject(error)
       }
       else if (response.statusCode >= 400) {
         let bodyObj = JSON.parse(response.body)
-        dataAPI.addLog(network, 'Error on get Application: ' +
+        appLogger.log( 'Error on get Application: ' +
           bodyObj.error +
           ' (' + response.statusCode + ')')
-        dataAPI.addLog(network, 'Request data = ' + JSON.stringify(options))
+        appLogger.log( 'Request data = ' + JSON.stringify(options))
         reject(response.statusCode)
       }
       else {
@@ -1752,118 +1932,4 @@ function getApplicationById (network, applicationId, connection, dataAPI) {
   })
 }
 
-/**
- * @desc Adds or updates a local application based on what is fetched from the network application manager.
- *
- * @access private
- *
- * @param sessionData
- * @param limitedRemoteApplication
- * @param network
- * @param companyMap
- * @param dpMap
- * @param dataAPI
- * @param modelAPI
- * @returns {Promise<string>} - Local application id
- */
-function addRemoteApplication (sessionData, limitedRemoteApplication, network, companyMap, dpMap, dataAPI, modelAPI) {
-  let me = this
-  return new Promise(async function (resolve, reject) {
-    let remoteApplication = await getApplicationById(network, limitedRemoteApplication.id, sessionData.connection, dataAPI)
-    appLogger.log('Adding ' + remoteApplication.name)
-    appLogger.log(remoteApplication)
-    let existingApplication = await modelAPI.applications.retrieveApplications({search: remoteApplication.name})
-    appLogger.log(existingApplication)
-    if (existingApplication.totalCount > 0) {
-      existingApplication = existingApplication.records[0]
-      appLogger.log(existingApplication.name + ' already exists')
-    }
-    else {
-      appLogger.log('creating ' + remoteApplication.name)
-      let company = companyMap.find(o => o.organizationId === remoteApplication.organizationID)
-      appLogger.log(company)
-      appLogger.log(companyMap)
-      existingApplication = await modelAPI.applications.createApplication(remoteApplication.name, remoteApplication.description, company.companyId, 1, 'http://set.me.to.your.real.url:8888')
-      appLogger.log('Created ' + existingApplication.name)
-    }
 
-    let existingApplicationNTL = await modelAPI.applicationNetworkTypeLinks.retrieveApplicationNetworkTypeLinks({applicationId: existingApplication.id})
-    if (existingApplicationNTL.totalCount > 0) {
-      appLogger.log(existingApplication.name + ' link already exists')
-    }
-    else {
-      appLogger.log('creating Network Link for ' + existingApplication.name)
-      let networkSettings = {
-        payloadCodec: remoteApplication.payloadCodec,
-        payloadDecoderScript: remoteApplication.payloadDecoderScript,
-        payloadEncoderScript: remoteApplication.payloadEncoderScript
-      }
-      existingApplicationNTL = await modelAPI.applicationNetworkTypeLinks.createRemoteApplicationNetworkTypeLink(existingApplication.id, network.networkTypeId, networkSettings, existingApplication.companyId)
-      appLogger.log(existingApplicationNTL)
-      await dataAPI.putProtocolDataForKey(network.id,
-        network.networkProtocolId,
-        makeApplicationDataKey(existingApplication.id, 'appNwkId'),
-        remoteApplication.id)
-    }
-    me.pullDevices(sessionData, network, existingApplication.companyId, dpMap, remoteApplication.id, existingApplication.id, dataAPI, modelAPI)
-      .then((result) => {
-        appLogger.log('Success in pulling devices from ' + network.name)
-        appLogger.log(result)
-        resolve(existingApplication.id)
-      })
-      .catch((err) => {
-        appLogger.log('Failed to pull devices from ' + network.name)
-        reject(err)
-      })
-  })
-}
-
-/**
- * @desc Adds or updates a local device based on what is fetched from the network application manager.
- *
- * @access private
- *
- * @param sessionData
- * @param limitedRemoteApplication
- * @param network
- * @param companyMap
- * @param dpMap
- * @param dataAPI
- * @param modelAPI
- * @returns {Promise<string>} - Local application id
- */
-function addRemoteDevice (sessionData, limitedRemoteDevice, network, companyId, dpMap, remoteApplicationId, applicationId, dataAPI, modelAPI) {
-  return new Promise(async function (resolve, reject) {
-    let remoteDevice = await getDeviceById(network, limitedRemoteDevice.devEUI, sessionData.connection, dataAPI)
-    appLogger.log('Adding ' + remoteDevice.name)
-    appLogger.log(remoteDevice)
-    let deviceProfile = dpMap.find(o => o.remoteDeviceProfileId === remoteDevice.deviceProfileID)
-    appLogger.log(deviceProfile)
-    let existingDevice = await modelAPI.devices.retrieveDevices({search: remoteDevice.name})
-    appLogger.log(existingDevice)
-    if (existingDevice.totalCount > 0) {
-      existingDevice = existingDevice.records[0]
-      appLogger.log(existingDevice.name + ' already exists')
-    }
-    else {
-      appLogger.log('creating ' + remoteDevice.name)
-      existingDevice = await modelAPI.devices.createDevice(remoteDevice.name, remoteDevice.description, applicationId)
-      appLogger.log('Created ' + existingDevice.name)
-    }
-
-    let existingDeviceNTL = await modelAPI.deviceNetworkTypeLinks.retrieveDeviceNetworkTypeLinks({deviceId: existingDevice.id})
-    if (existingDeviceNTL.totalCount > 0) {
-      appLogger.log(existingDevice.name + ' link already exists')
-    }
-    else {
-      appLogger.log('creating Network Link for ' + existingDevice.name)
-      existingDeviceNTL = await modelAPI.deviceNetworkTypeLinks.createRemoteDeviceNetworkTypeLink(existingDevice.id, network.networkTypeId, deviceProfile.deviceProfileId, remoteDevice, companyId)
-      appLogger.log(existingDeviceNTL)
-      dataAPI.putProtocolDataForKey(network.id,
-        network.networkProtocolId,
-        makeDeviceDataKey(existingDevice.id, 'devNwkId'),
-        remoteDevice.devEUI)
-    }
-    resolve(existingDevice.id)
-  })
-}
