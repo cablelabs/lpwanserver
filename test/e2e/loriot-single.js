@@ -17,15 +17,11 @@ describe.only('E2E Test for Single Loriot', function () {
   var loraProtocolId
   var networkId
   var applicationId
+  var baseUrl = 'https://us1.loriot.io'
 
   before((done) => {
     setup.start()
-      .then(() => {
-        done()
-      })
-      .catch((err) => {
-        done(err)
-      })
+      .then(done, done)
   })
   describe('Verify Login and Administration of Users Works', function () {
     it('Admin Login to LPWan Server', (done) => {
@@ -190,22 +186,78 @@ describe.only('E2E Test for Single Loriot', function () {
           var applications = JSON.parse(res.text)
           applications.should.have.property('totalCount')
           applications.should.have.property('records')
-          applications.totalCount.should.equal(2)
-          applications.records[0].name.should.equal('TestApplication')
-          applications.records[0].description.should.equal('CableLabs Test Application')
+          applications.totalCount.should.equal(1)
+          applications.records[0].name.should.equal('ApiTest')
+          applications.records[0].description.should.equal('ApiTest')
           applicationId = applications.records[0].id
           done()
         })
     })
     it('Verify the Test Application NTL was Created', function (done) {
       let expected = {
-        'id': 2,
-        'applicationId': 2,
-        'networkTypeId': 1,
-        'networkSettings': {'payloadCodec': '', 'payloadDecoderScript': '', 'payloadEncoderScript': ''}
+        'applicationId': 1,
+        'id': 1,
+        'networkSettings': {
+          '_id': 3195929586,
+          'accessRights': [
+            {
+              'appServer': true,
+              'data': true,
+              'devProvisioning': true,
+              'token': '60cdd88e0e3b1fb2113791c58bb86878'
+            },
+            {
+              'appServer': true,
+              'data': true,
+              'devProvisioning': true,
+              'token': '2978dcb86393676e0c83607d2e218c3c'
+            }
+          ],
+          'canotaa': true,
+          'cansend': true,
+          'cfgDevBase': {
+            'adr': true,
+            'adrFix': null,
+            'adrMax': null,
+            'adrMin': null,
+            'devclass': 'A',
+            'dutycycle': 0,
+            'rxw': 1,
+            'seqdnreset': true,
+            'seqrelax': true
+          },
+          'clientsLimit': 10,
+          'created': '2018-06-28T16:27:19.980Z',
+          'deviceLimit': 10,
+          'devices': 1,
+          'downloads': {
+            'json': 2
+          },
+          'hexId': 'BE7E03F2',
+          'joinServer': null,
+          'masterkey': 'kTcgTMkHQtShPY2j3VJ22A==',
+          'name': 'ApiTest',
+          'odataenc': 'hex',
+          'ogwinfo': 'rssi',
+          'orx': true,
+          'osetup': {
+            'auth': '',
+            'url': 'http://localhost:3200/api/ingest/1/1'
+          },
+          'output': 'httppush',
+          'overbosity': 'full',
+          'owneremail': 'd.malas@cablelabs.com',
+          'ownerid': 248,
+          'publishAppSKey': false,
+          'suspended': false,
+          'tier': 2,
+          'tierStr': 'PoC'
+        },
+        'networkTypeId': 1
       }
+
       server
-        .get('/api/applicationNetworkTypeLinks/2')
+        .get('/api/applicationNetworkTypeLinks/1')
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {
@@ -219,63 +271,17 @@ describe.only('E2E Test for Single Loriot', function () {
           done()
         })
     })
-    it('Verify the Test1 Device Profile was Created', function (done) {
-      let expected = {
-        'id': 2,
-        'networkTypeId': 1,
-        'companyId': 2,
-        'name': 'TestDevice2',
-        'networkSettings': {
-          'id': '699da70b-da10-473b-991b-eee6b71071be',
-          'supportsClassB': false,
-          'classBTimeout': 0,
-          'pingSlotPeriod': 0,
-          'pingSlotDR': 0,
-          'pingSlotFreq': 0,
-          'supportsClassC': false,
-          'classCTimeout': 0,
-          'macVersion': '1.0.0',
-          'regParamsRevision': 'A',
-          'rxDelay1': 0,
-          'rxDROffset1': 0,
-          'rxDataRate2': 0,
-          'rxFreq2': 0,
-          'factoryPresetFreqs': [],
-          'maxEIRP': 0,
-          'name': 'TestDevice2',
-          'networkServerID': '1',
-          'organizationID': '2',
-          'maxDutyCycle': 0,
-          'supportsJoin': false,
-          'rfRegion': 'US902',
-          'supports32BitFCnt': false
-        },
-        'description': 'Device Profile managed by LPWAN Server, perform changes via LPWAN'
-      }
-      server
-        .get('/api/deviceProfiles/2')
-        .set('Authorization', 'Bearer ' + adminToken)
-        .set('Content-Type', 'application/json')
-        .end(function (err, res) {
-          if (err) done(err)
-          res.should.have.status(200)
-          res.should.have.property('text')
-          let deviceProfiles = JSON.parse(res.text)
-          deviceProfiles.should.eql(expected)
-          done()
-        })
-    })
     it('Verify the Test Device was Created', function (done) {
       let expected = {
-        'id': 2,
-        'applicationId': 2,
-        'name': 'TestDevice2',
+        'id': 1,
+        'applicationId': 1,
+        'name': '0080000004001546',
         'deviceModel': null,
-        'description': 'Test Device for E2E',
+        'description': null,
         networks: [1]
       }
       server
-        .get('/api/devices/2')
+        .get('/api/devices/1')
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {
@@ -290,21 +296,46 @@ describe.only('E2E Test for Single Loriot', function () {
     })
     it('Verify the Test Device NTL was Created', function (done) {
       let expected = {
-        'id': 2,
-        'deviceId': 2,
-        'networkTypeId': 1,
-        deviceProfileId: 2,
+        'deviceId': 1,
+        'deviceProfileId': -1,
+        'id': 1,
         'networkSettings': {
-          'devEUI': '8484932090909090',
-          'name': 'TestDevice2',
-          'applicationID': '1',
-          'description': 'Test Device for E2E',
-          'deviceProfileID': '699da70b-da10-473b-991b-eee6b71071be',
-          'skipFCntCheck': false
-        }
+          '_id': '0080000004001546',
+          'adr': true,
+          'adrCnt': 0,
+          'adrFix': null,
+          'adrMax': null,
+          'adrMin': null,
+          'appeui': 'BE7E0000000003F2',
+          'bat': null,
+          'createdAt': '2018-07-20T18:32:11.557Z',
+          'description': null,
+          'devSnr': null,
+          'devaddr': '002AF013',
+          'devclass': 'A',
+          'deveui': '0080000004001546',
+          'dutycycle': 0,
+          'packetLimit': null,
+          'rx1': {
+            'delay': 1000000,
+            'offset': 0
+          },
+          'rxrate': null,
+          'rxw': 1,
+          'seqdn': 0,
+          'seqdnreset': true,
+          'seqno': -1,
+          'seqq': 0,
+          'seqrelax': true,
+          'subscription': 2,
+          'txrate': null,
+          'title': '00-80-00-00-04-00-15-46'
+        },
+        'networkTypeId': 1
       }
+
       server
-        .get('/api/deviceNetworkTypeLinks/2')
+        .get('/api/deviceNetworkTypeLinks/1')
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {
@@ -318,63 +349,37 @@ describe.only('E2E Test for Single Loriot', function () {
         })
     })
   })
-  describe.skip('LPWAN Server modifies any existing application “Integrations” to point to LPWAN Server', function () {
-    let baseUrl = 'https://localhost:8080/api'
-    let loraKey = ''
-    it('Get Lora Session', function (done) {
-      var options = {}
-      options.method = 'POST'
-      options.url = baseUrl + '/internal/login'
-      options.headers = {'Content-Type': 'application/json'}
-      options.json = {username: 'admin', password: 'admin'}
-      options.agentOptions = {'secureProtocol': 'TLSv1_2_method', 'rejectUnauthorized': false}
-      request(options, function (error, response, body) {
-        if (error) {
-          appLogger.log('Error on signin: ' + error)
-          done(error)
-        }
-        else if (response.statusCode >= 400 || response.statusCode === 301) {
-          appLogger.log('Error on signin: ' + response.statusCode + ', ' + response.body.error)
-          done(response.statusCode)
-        }
-        else if (!body.jwt) {
-          done(new Error('No token'))
-        }
-        else {
-          loraKey = body.jwt
-          done()
-        }
-      })
-    })
+  describe('LPWAN Server modifies any existing application “Integrations” to point to LPWAN Server', function () {
     it('Verify the Lora Server Application Integration was set to LPWan Server', function (done) {
       let options = {}
-      options.method = 'GET'
-      options.url = baseUrl + '/applications/' + 1 + '/integrations/http'
+      options.url = baseUrl + '/1/nwk/apps'
       options.headers = {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + loraKey
+        'Authorization': 'Bearer ' + process.env.LORIOT_KEY
       }
       options.agentOptions = {
         'secureProtocol': 'TLSv1_2_method',
         'rejectUnauthorized': false
       }
+
       appLogger.log(options)
       request(options, function (error, response, body) {
         if (error) {
           done(error)
         }
         else {
-          let integrationWrapper = JSON.parse(body)
-          appLogger.log(integrationWrapper)
-          let integration = integrationWrapper.integration
-          integration.should.have.property('uplinkDataURL')
-          integration.uplinkDataURL.should.equal('http://localhost:3200/api/ingest/2/2')
+          body = JSON.parse(body)
+          body.apps.should.have.length(1)
+          let app = body.apps[0]
+          app.osetup.url.should.equal('http://localhost:3200/api/ingest/1/1')
           done()
         }
       })
     })
   })
-  describe.skip('Validate LPWAN Server application integrations are maintained for outbound from LPWAN Server', function () {
+  describe.skip('Validate LPWAN Server application integrations are maintained for outbound from LPWAN Server' +
+    'Note: Loriot does not support updating httppush from the API.  So the application PUSH URL will need' +
+    'to be entered manually.', function () {
     it('Verify the Test Application Integration was Updated', function (done) {
       server
         .get('/api/applications/' + applicationId)
@@ -392,7 +397,7 @@ describe.only('E2E Test for Single Loriot', function () {
         })
     })
   })
-  describe.skip('At this point, you should be able to view all of the applications and devices from the Loriot Server.', function () {
+  describe('At this point, you should be able to view all of the applications and devices from the Loriot Server.', function () {
     it('Verify the Test Application Exists on LPWan', function (done) {
       server
         .get('/api/applications')
@@ -405,70 +410,24 @@ describe.only('E2E Test for Single Loriot', function () {
           var applications = JSON.parse(res.text)
           applications.should.have.property('totalCount')
           applications.should.have.property('records')
-          applications.totalCount.should.equal(2)
-          applications.records[0].name.should.equal('TestApplication')
-          applications.records[0].description.should.equal('CableLabs Test Application')
+          applications.totalCount.should.equal(1)
+          applications.records[0].name.should.equal('ApiTest')
+          applications.records[0].description.should.equal('ApiTest')
           applicationId = applications.records[0].id
-          done()
-        })
-    })
-    it('Verify the Test 1 and 2 Device Profile Exists on LPWan', function (done) {
-      let expected = {
-        id: 2,
-        'networkTypeId': 1,
-        'companyId': 2,
-        'name': 'TestDevice2',
-        'networkSettings': {
-          'id': '699da70b-da10-473b-991b-eee6b71071be',
-          'supportsClassB': false,
-          'classBTimeout': 0,
-          'pingSlotPeriod': 0,
-          'pingSlotDR': 0,
-          'pingSlotFreq': 0,
-          'supportsClassC': false,
-          'classCTimeout': 0,
-          'macVersion': '1.0.0',
-          'regParamsRevision': 'A',
-          'rxDelay1': 0,
-          'rxDROffset1': 0,
-          'rxDataRate2': 0,
-          'rxFreq2': 0,
-          'factoryPresetFreqs': [],
-          'maxEIRP': 0,
-          'name': 'TestDevice2',
-          'networkServerID': '1',
-          'organizationID': '2',
-          'maxDutyCycle': 0,
-          'supportsJoin': false,
-          'rfRegion': 'US902',
-          'supports32BitFCnt': false
-        },
-        'description': 'Device Profile managed by LPWAN Server, perform changes via LPWAN'
-      }
-      server
-        .get('/api/deviceProfiles/2')
-        .set('Authorization', 'Bearer ' + adminToken)
-        .set('Content-Type', 'application/json')
-        .end(function (err, res) {
-          if (err) done(err)
-          res.should.have.status(200)
-          res.should.have.property('text')
-          let deviceProfiles = JSON.parse(res.text)
-          deviceProfiles.should.eql(expected)
           done()
         })
     })
     it('Verify the Test Device Exists on LPWan', function (done) {
       let expected = {
-        'id': 2,
-        'applicationId': 2,
-        'name': 'TestDevice2',
+        'id': 1,
+        'applicationId': 1,
+        'name': '0080000004001546',
         'deviceModel': null,
-        'description': 'Test Device for E2E',
+        'description': null,
         networks: [1]
       }
       server
-        .get('/api/devices/2')
+        .get('/api/devices/1')
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {

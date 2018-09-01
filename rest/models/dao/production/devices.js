@@ -176,6 +176,15 @@ exports.retrieveDevices = function( options ) {
                     sqlTotalCount += " d.name like " + db.sqlValue( options.search );
                     needsAnd = true;
                 }
+                if ( options.devEUI ) {
+                  if ( needsAnd ) {
+                    sql += " and";
+                    sqlTotalCount += " and";
+                  }
+                  sql += " d.applicationId = " + db.sqlValue( options.applicationId );
+                  sqlTotalCount += " d.applicationId = " + db.sqlValue( options.applicationId );
+                  needsAnd = true;
+                }
                 if ( options.applicationId ) {
                     if ( needsAnd ) {
                         sql += " and";
