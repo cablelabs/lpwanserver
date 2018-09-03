@@ -10,14 +10,14 @@ var request = require('request')
 chai.use(chaiHttp)
 var server = chai.request(app).keepOpen()
 
-describe('E2E Test for Single Loriot', function () {
+describe.only('E2E Test for Single TTN', function () {
   var adminToken
   var userId
   var userToken
   var loraProtocolId
   var networkId
   var applicationId
-  var baseUrl = 'https://us1.loriot.io'
+  var baseUrl = 'https://account.thethingsnetwork.org'
 
   before((done) => {
     setup.start()
@@ -41,7 +41,7 @@ describe('E2E Test for Single Loriot', function () {
         .post('/api/users')
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
-        .send({'username': 'bobmouse3', 'password': 'mousetrap', 'role': 'user', 'companyId': 2})
+        .send({'username': 'bobmouse4', 'password': 'mousetrap', 'role': 'user', 'companyId': 2})
         .end(function (err, res) {
           if (err) done(err)
           res.should.have.status(200)
@@ -61,7 +61,7 @@ describe('E2E Test for Single Loriot', function () {
           if (err) done(err)
           res.should.have.status(200)
           var userObj = JSON.parse(res.text)
-          userObj.username.should.equal('bobmouse3')
+          userObj.username.should.equal('bobmouse4')
           userObj.role.should.equal('user')
           done()
         })
@@ -69,7 +69,7 @@ describe('E2E Test for Single Loriot', function () {
     it('Application User Login to LPWan Server', (done) => {
       server
         .post('/api/sessions')
-        .send({'login_username': 'bobmouse3', 'login_password': 'mousetrap'})
+        .send({'login_username': 'bobmouse4', 'login_password': 'mousetrap'})
         .end(function (err, res) {
           if (err) done(err)
           res.should.have.status(200)
@@ -79,9 +79,9 @@ describe('E2E Test for Single Loriot', function () {
     })
   })
   describe('Setup Network', function () {
-    it('Verify Loriot Protocol Exists', (done) => {
+    it('Verify TTN Protocol Exists', (done) => {
       server
-        .get('/api/networkProtocols?search=Loriot')
+        .get('/api/networkProtocols?search=The Things Network')
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {
@@ -93,26 +93,34 @@ describe('E2E Test for Single Loriot', function () {
           result.records.should.have.length(1)
           result.totalCount.should.equal(1)
           result.records[0].should.have.property('networkProtocolVersion')
-          result.records[0].networkProtocolVersion.should.equal('1.0')
+          result.records[0].networkProtocolVersion.should.equal('2.0')
           loraProtocolId = result.records[0].id
           appLogger.log(loraProtocolId)
           done()
         })
     })
-    it('Create the Local Loriot Network', (done) => {
-      let key = process.env.LORIOT_KEY
-      should.exist(key)
+    it('Create the Local TTN Network', (done) => {
       server
         .post('/api/networks')
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .send({
-          'name': 'LocalLoriot',
+          'name': 'LocalTTN',
           'networkProviderId': -1,
           'networkTypeId': 1,
-          'baseUrl': 'https://us1.loriot.io',
+          'baseUrl': 'https://account.thethingsnetwork.org',
           'networkProtocolId': loraProtocolId,
-          'securityData': {authorized: false, apikey: process.env.LORIOT_KEY}
+          'securityData': {
+            authorized: true,
+            message: 'ok',
+            'token_type': 'bearer',
+            'refresh_token': 'i9xYij39Fgb-yG_yGSp9lbHoU7od9tyXEWQwJafEqtA',
+            'access_token': 'eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiI1YjJhN2IyMTZhNDFhZTAwMzBhOTExZWQiLCJpc3MiOiJ0dG4tYWNjb3VudC12MiIsImlhdCI6MTUzNTkxMzE3OCwidHlwZSI6InVzZXIiLCJjbGllbnQiOiJscHdhbi10ZXN0Iiwic2NvcGUiOlsicHJvZmlsZSIsImFwcHMiLCJjb21wb25lbnRzIiwiZ2F0ZXdheXMiXSwiaW50ZXJjaGFuZ2VhYmxlIjp0cnVlLCJ1c2VybmFtZSI6ImRzY2hyaW1wc2hlcnIiLCJlbWFpbCI6ImQuc2NocmltcHNoZXJAY2FibGVsYWJzLmNvbSIsImNyZWF0ZWQiOiIyMDE4LTA2LTIwVDE2OjA0OjQ5Ljc2N1oiLCJuYW1lIjp7ImZpcnN0IjoiRGFuIiwibGFzdCI6IlNjaHJpbXBzaGVyIn0sInZhbGlkIjp0cnVlLCJfaWQiOiI1YjJhN2IyMTZhNDFhZTAwMzBhOTExZWQiLCJleHAiOjE1MzU5MTY4Mzh9.uiIL7OfDFtGPUYm76JAS-g8uh71VCfF9L8ZdckKstmoT1sq-WKezL7uccdKOrsVO2kcq9EBueH80-1KCutAddqcKeul0Q-hUThhmc_vyauDWSUEaIknaVX5tqN-Dr3mSottEN0nphtpyW1ok70Yb_-u158NPDWTOKUNoN9nnX0Om9exwcf152DinSWUvuYugMDWR2muLgEd8KcKZiTxITr69ay32uF3NNxuouWvvEKGlEJbgwji6sFFNZrBUClRTsAqLVzIjo4NZk5I8HlK6RiQmhYbusghcz9lE6EsGOpnVPFEcL8P-x_ikI8NdAsm7a3kA-TXw2W3Tv-DK0bTUXHgrR8uuoCSyvQj6wauTYRLlSENpdfSBCbnXeizhjFEqpKTdSlny8OcPVtQJugkz2-MNtsIRcVJGHDyjrdo6tRRP5v2jEZPBfRFPBCShQyoNMcruU2HNurn5GyaAo0uZLYM0aDWhrLCJQGPYEzd3AxvaKNMbToUyqBmbu5bA8yFMW9CePcXBX3S3bfakhdtSWvb7LoyDk2f5mKTRiEALEco1yKSBxXepHxQhp7iRxyTeoRTwNN49smL-SMA12U6RQ4zfXkyh5Ocy7iltU4IlsnMqdHejOpUnIl6QQG29s0bZTLLyaTPdJePMCOt4iF191C1tO07S-r39q5YNsFtEqA8',
+            'expires_in': 3600,
+            'clientId': 'lpwan-test',
+            'clientSecret': 'aOQCcwUgfq9PjBQUanlj5xRG2RTZcFbNkRcSrMsnq9wg5LH-Svw0f-5p',
+            'redirect_uri': 'https://mercury.schrimpsher.com:3200/api/oauth/callback'
+          }
         })
         .end(function (err, res) {
           if (err) done(err)
@@ -136,8 +144,8 @@ describe('E2E Test for Single Loriot', function () {
           if (err) done(err)
           res.should.have.status(200)
           var network = JSON.parse(res.text)
-          network.name.should.equal('LocalLoriot')
-          network.baseUrl.should.equal('https://us1.loriot.io')
+          network.name.should.equal('LocalTTN')
+          network.baseUrl.should.equal('https://account.thethingsnetwork.org')
           network.securityData.authorized.should.equal(true)
           network.securityData.message.should.equal('ok')
           done()
@@ -187,77 +195,13 @@ describe('E2E Test for Single Loriot', function () {
           applications.should.have.property('totalCount')
           applications.should.have.property('records')
           applications.totalCount.should.equal(1)
-          applications.records[0].name.should.equal('ApiTest')
-          applications.records[0].description.should.equal('ApiTest')
           applicationId = applications.records[0].id
           done()
         })
     })
     it('Verify the Test Application NTL was Created', function (done) {
-      let expected = {
-        'applicationId': 1,
-        'id': 1,
-        'networkSettings': {
-          '_id': 3195929586,
-          'accessRights': [
-            {
-              'appServer': true,
-              'data': true,
-              'devProvisioning': true,
-              'token': '60cdd88e0e3b1fb2113791c58bb86878'
-            },
-            {
-              'appServer': true,
-              'data': true,
-              'devProvisioning': true,
-              'token': '2978dcb86393676e0c83607d2e218c3c'
-            }
-          ],
-          'canotaa': true,
-          'cansend': true,
-          'cfgDevBase': {
-            'adr': true,
-            'adrFix': null,
-            'adrMax': null,
-            'adrMin': null,
-            'devclass': 'A',
-            'dutycycle': 0,
-            'rxw': 1,
-            'seqdnreset': true,
-            'seqrelax': true
-          },
-          'clientsLimit': 10,
-          'created': '2018-06-28T16:27:19.980Z',
-          'deviceLimit': 10,
-          'devices': 1,
-          'downloads': {
-            'json': 2
-          },
-          'hexId': 'BE7E03F2',
-          'joinServer': null,
-          'masterkey': 'kTcgTMkHQtShPY2j3VJ22A==',
-          'name': 'ApiTest',
-          'odataenc': 'hex',
-          'ogwinfo': 'rssi',
-          'orx': true,
-          'osetup': {
-            'auth': '',
-            'url': 'http://localhost:3200/api/ingest/1/1'
-          },
-          'output': 'httppush',
-          'overbosity': 'full',
-          'owneremail': 'd.malas@cablelabs.com',
-          'ownerid': 248,
-          'publishAppSKey': false,
-          'suspended': false,
-          'tier': 2,
-          'tierStr': 'PoC'
-        },
-        'networkTypeId': 1
-      }
-
       server
-        .get('/api/applicationNetworkTypeLinks/1')
+        .get('/api/applicationNetworkTypeLinks/' + applicationId)
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {
@@ -265,19 +209,17 @@ describe('E2E Test for Single Loriot', function () {
           res.should.have.status(200)
           res.should.have.property('text')
           var applications = JSON.parse(res.text)
-
           appLogger.log(applications)
-          applications.should.eql(expected)
           done()
         })
     })
     it('Verify the Test Device was Created', function (done) {
       let expected = {
         'id': 1,
-        'applicationId': 1,
-        'name': '0080000004001546',
+        'applicationId': applicationId,
+        'name': '1234567890987654',
         'deviceModel': null,
-        'description': null,
+        'description': 'Test Weather Device',
         networks: [1]
       }
       server
@@ -296,42 +238,30 @@ describe('E2E Test for Single Loriot', function () {
     })
     it('Verify the Test Device NTL was Created', function (done) {
       let expected = {
-        'deviceId': 1,
-        'deviceProfileId': -1,
         'id': 1,
+        'deviceId': 1,
+        'networkTypeId': 1,
+        'deviceProfileId': -1,
         'networkSettings': {
-          '_id': '0080000004001546',
-          'adr': true,
-          'adrCnt': 0,
-          'adrFix': null,
-          'adrMax': null,
-          'adrMin': null,
-          'appeui': 'BE7E0000000003F2',
-          'bat': null,
-          'createdAt': '2018-07-20T18:32:11.557Z',
-          'description': null,
-          'devSnr': null,
-          'devaddr': '002AF013',
-          'devclass': 'A',
-          'deveui': '0080000004001546',
-          'dutycycle': 0,
-          'packetLimit': null,
-          'rx1': {
-            'delay': 1000000,
-            'offset': 0
+          'app_id': 'cable-labs-prototype',
+          'dev_id': 'cl-weather-station',
+          'lorawan_device': {
+            'app_eui': '70B3D57ED000FEEA',
+            'dev_eui': '1234567890987654',
+            'app_id': 'cable-labs-prototype',
+            'dev_id': 'cl-weather-station',
+            'dev_addr': '',
+            'nwk_s_key': '',
+            'app_s_key': '',
+            'app_key': '21124307FD27462856CC7A67799FFEB9',
+            'uses32_bit_f_cnt': true,
+            'activation_constraints': 'local'
           },
-          'rxrate': null,
-          'rxw': 1,
-          'seqdn': 0,
-          'seqdnreset': true,
-          'seqno': -1,
-          'seqq': 0,
-          'seqrelax': true,
-          'subscription': 2,
-          'txrate': null,
-          'title': '00-80-00-00-04-00-15-46'
-        },
-        'networkTypeId': 1
+          'latitude': 34.74164,
+          'longitude': -86.69502,
+          'altitude': 183,
+          'description': 'Test Weather Device'
+        }
       }
 
       server
@@ -349,13 +279,13 @@ describe('E2E Test for Single Loriot', function () {
         })
     })
   })
-  describe('LPWAN Server modifies any existing application “Integrations” to point to LPWAN Server', function () {
+  describe.skip('LPWAN Server modifies any existing application “Integrations” to point to LPWAN Server', function () {
     it('Verify the Lora Server Application Integration was set to LPWan Server', function (done) {
       let options = {}
       options.url = baseUrl + '/1/nwk/apps'
       options.headers = {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + process.env.LORIOT_KEY
+        'Authorization': 'Bearer ' + process.env.TTN_KEY
       }
       options.agentOptions = {
         'secureProtocol': 'TLSv1_2_method',
@@ -377,9 +307,7 @@ describe('E2E Test for Single Loriot', function () {
       })
     })
   })
-  describe.skip('Validate LPWAN Server application integrations are maintained for outbound from LPWAN Server' +
-    'Note: Loriot does not support updating httppush from the API.  So the application PUSH URL will need' +
-    'to be entered manually.', function () {
+  describe.skip('Validate LPWAN Server application integrations are maintained for outbound from LPWAN Server', function () {
     it('Verify the Test Application Integration was Updated', function (done) {
       server
         .get('/api/applications/' + applicationId)
@@ -397,7 +325,7 @@ describe('E2E Test for Single Loriot', function () {
         })
     })
   })
-  describe('At this point, you should be able to view all of the applications and devices from the Loriot Server.', function () {
+  describe.skip('At this point, you should be able to view all of the applications and devices from the TTN Server.', function () {
     it('Verify the Test Application Exists on LPWan', function (done) {
       server
         .get('/api/applications')

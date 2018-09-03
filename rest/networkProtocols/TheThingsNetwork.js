@@ -93,6 +93,7 @@ module.exports.register = function (networkProtocols) {
  * @returns {Promise<any>}
  */
 module.exports.test = function (network, loginData) {
+  let me = this
   return new Promise(function (resolve, reject) {
     appLogger.log(network.securityData)
     if (network.securityData.authorized) {
@@ -108,10 +109,13 @@ module.exports.test = function (network, loginData) {
         'rejectUnauthorized': false
       }
       options.json = true
+      appLogger.log(options)
       request(options, function (error, response, body) {
+        appLogger.log(error)
+        appLogger.log(body)
         if (!error) {
           if (response.statusCode === 401) {
-            reject(new Error('Unauthorized'))
+             reject(new Error('Unauthorized'))
           }
           else if (response.statusCode === 404) {
             reject(new Error('URL is Incorrect'))
@@ -200,6 +204,84 @@ module.exports.getDeviceProfileAccessAccount = async function (dataAPI, network,
   return getCompanyAccount(dataAPI, network, co.id, false)
 }
 
+
+function authorizeWithCode(network, loginData) {
+  return new Promise(function (resolve, reject) {
+    let options = {}
+    options.method = 'POST'
+    options.url = network.baseUrl + '/users/token'
+    let auth = Buffer.from(loginData.clientId + ':' + loginData.clientSecret).toString('base64')
+    options.headers = {'Content-Type': 'application/json', 'Authorization': 'Basic ' + auth}
+    options.json = {
+      grant_type: 'authorization_code',
+      code: loginData.code,
+      redirect_url: 'http://localhost:3000/admin/networks/oauth'
+    }
+    appLogger.log(options)
+    request(options, function (error, response, body) {
+      if (error) {
+        appLogger.log('Error on signin: ' + error)
+        reject(error)
+      }
+      else if (response.statusCode >= 400 || response.statusCode === 301) {
+        appLogger.log('Error on signin: ' + response.statusCode + ', ' + response.body.error)
+        reject(response.statusCode)
+      }
+      else {
+        appLogger.log(body)
+        var token = body.access_token
+        body.username = 'TTNUser'
+        if (token) {
+          resolve(body)
+        }
+        else {
+          reject(new Error('No token'))
+        }
+      }
+    })
+  })
+}
+
+
+function authorizeWithRefreshToken(network, loginData) {
+  return new Promise(function (resolve, reject) {
+    let options = {}
+    options.method = 'POST'
+    options.url = network.baseUrl + '/users/token'
+    let auth = Buffer.from(loginData.clientId + ':' + loginData.clientSecret).toString('base64')
+    options.headers = {'Content-Type': 'application/json', 'Authorization': 'Basic ' + auth}
+    options.json = {
+      grant_type: 'refresh_token',
+      refresh_token: loginData.refresh_token,
+      redirect_url: loginData.redirect_uri
+    }
+    appLogger.log(options)
+    request(options, function (error, response, body) {
+      if (error) {
+        appLogger.log('Error on signin: ' + error)
+        reject(error)
+      }
+      else if (response.statusCode >= 400) {
+        appLogger.log('Error on signin: ' + response.statusCode + ', ' + response.body.error)
+        reject(response.statusCode)
+      }
+      else {
+        appLogger.log(body)
+        var token = body.access_token
+        body.username = 'TTNUser'
+        if (token) {
+          resolve(body)
+        }
+        else {
+          reject(new Error('No token'))
+        }
+      }
+    })
+  })
+}
+
+
+
 /**
  * Connect with the remote The Things Network network
  * @param network - The networks record for the The Things Network network
@@ -208,75 +290,29 @@ module.exports.getDeviceProfileAccessAccount = async function (dataAPI, network,
  */
 module.exports.connect = function (network, loginData) {
   appLogger.log('Inside TTN connect')
+  let me = this
   return new Promise(function (resolve, reject) {
-    let options = {}
-    if (loginData.code) {
-      options.method = 'POST'
-      options.url = network.baseUrl + '/users/token'
-      let auth = Buffer.from(loginData.clientId + ':' + loginData.clientSecret).toString('base64')
-      options.headers = { 'Content-Type': 'application/json', 'Authorization': 'Basic ' + auth }
-      options.json = {
-        grant_type: 'authorization_code',
-        code: loginData.code,
-        redirect_url: 'http://localhost:3000/admin/networks/oauth'
-      }
-      appLogger.log(options)
-      request(options, function (error, response, body) {
-        if (error) {
-          appLogger.log('Error on signin: ' + error)
-          reject(error)
-        }
-        else if (response.statusCode >= 400 || response.statusCode === 301) {
-          appLogger.log('Error on signin: ' + response.statusCode + ', ' + response.body.error)
-          reject(response.statusCode)
-        }
-        else {
-          appLogger.log(body)
-          var token = body.access_token
-          body.username = 'TTNUser'
-          if (token) {
-            resolve(body)
-          }
-          else {
-            reject(new Error('No token'))
-          }
-        }
-      })
-    }
-    else if (loginData.refresh_token) {
-      options.method = 'POST'
-      options.url = network.baseUrl + '/users/token'
-      let auth = Buffer.from(loginData.clientId + ':' + loginData.clientSecret).toString('base64')
-      options.headers = { 'Content-Type': 'application/json', 'Authorization': 'Basic ' + auth }
-      options.json = {
-        grant_type: 'refresh_token',
-        refresh_token: loginData.refresh_token,
-        redirect_url: 'http://localhost:3000/admin/networks/oauth'
-      }
-      appLogger.log(options)
-      request(options, function (error, response, body) {
-        if (error) {
-          appLogger.log('Error on signin: ' + error)
-          reject(error)
-        }
-        else if (response.statusCode >= 400) {
-          appLogger.log('Error on signin: ' + response.statusCode + ', ' + response.body.error)
-          reject(response.statusCode)
-        }
-        else {
-          var token = body.access_token
-          body.username = 'TTNUser'
-          if (token) {
-            resolve(body)
-          }
-          else {
-            reject(new Error('No token'))
-          }
-        }
-      })
+    if (network.securityData.authorized) {
+      appLogger.log('Should be authorized')
+      me.test(network, loginData)
+        .then(body=> {
+          resolve(loginData)
+        })
+        .catch(err =>{
+          appLogger.log('Access Token is expired, refreshing')
+          return authorizeWithRefreshToken(network, loginData)
+        })
     }
     else {
-      reject(new Error('LPWan does not have credentials for TTN'))
+      if (loginData.refresh_token) {
+        return authorizeWithRefreshToken(network, loginData)
+      }
+      else if (loginData.code) {
+          return(authorizeWithCode(network, loginData))
+      }
+      else {
+        reject(new Error('LPWan does not have credentials for TTN'))
+      }
     }
   })
 }
@@ -295,90 +331,59 @@ module.exports.disconnect = function (connection) {
 }
 
 /**
- * @desc Fetches application and device data from the The Things Network Network
+ * Pull remote resources on TTN v2.0 Server
  *
- * @param sessionData - The session information for the user, including the
- *               connection data for the remote system.
- * @param network - The networks record for the network that uses this
- *               protocol.
- * @param companyId - The id for the local company data, for which the remote data
- *               will be retrieved.
- * @param dataAPI - Gives access to the data records and error tracking for the
- *               operation.
- *
- * @returns {Promise<?>} - Empty promise means remote records were loaded locally.
+ * @param sessionData
+ * @param network
+ * @param dataAPI
+ * @param modelAPI
+ * @returns {Promise<any>}
  */
 module.exports.pullNetwork = function (sessionData, network, dataAPI, modelAPI) {
   let me = this
   return new Promise(async function (resolve, reject) {
-    me.pullCompanies(sessionData, network, dataAPI, modelAPI)
-      .then((companyMap) => {
-        appLogger.log('Success in pulling organizations from ' + network.name)
-        appLogger.log(companyMap)
-        me.pullDeviceProfiles(sessionData, network, companyMap, dataAPI, modelAPI)
-          .then((dpMap) => {
-            appLogger.log('Success in pulling device profiles from ' + network.name)
-            appLogger.log(dpMap)
+    let promiseList = []
+    promiseList.push(me.pullApplications(sessionData, network, modelAPI, dataAPI))
 
-            me.pullApplications(sessionData, network, companyMap, dpMap, dataAPI, modelAPI)
-              .then((applicationMap) => {
-                appLogger.log('Success in pulling applications from ' + network.name)
-                appLogger.log(applicationMap)
-                // me.pullDevices(sessionData, network, companyMap, applicationMap, dpMap, dataAPI, modelAPI)
-                //     .then((result) => {
-                //         appLogger.log('Success in pulling devices from ' + network.name);
-                //         appLogger.log(result);
-                //         resolve();
-                //     })
-                //     .catch((err) => {
-                //         appLogger.log('Failed to pull devices from ' + network.name);
-                //         reject(err);
-                //     })
-                resolve()
-              })
-              .catch((err) => {
-                appLogger.log('Failed to pull applications from ' + network.name)
-                reject(err)
-              })
+    Promise.all(promiseList)
+      .then(pulledResources => {
+        appLogger.log(pulledResources)
+        let devicePromistList = []
+        for (let index in pulledResources[0]) {
+           devicePromistList.push(me.pullDevices(sessionData, network, pulledResources[0][index].remoteApplication, pulledResources[0][index].localApplication, {}, modelAPI, dataAPI))
+          // devicePromistList.push(me.pullIntegrations(sessionData, network, pulledResources[1][index].remoteApplication, pulledResources[1][index].localApplication, pulledResources[0], modelAPI, dataAPI))
+        }
+        Promise.all(devicePromistList)
+          .then((devices) => {
+            appLogger.log(devices)
+            resolve()
           })
-          .catch((err) => {
-            appLogger.log('Failed to pull device profiles from ' + network.name)
+          .catch(err => {
+            appLogger.log(err)
             reject(err)
           })
       })
-      .catch((err) => {
-        appLogger.log('Failed to pull organizations from ' + network.name)
+      .catch(err => {
+        appLogger.log(err)
         reject(err)
       })
   })
 }
 
 /**
- * Application CRUD Operations
- */
-
-/**
- * @desc Fetches application data from the The Things Network Network
- *
- * @param sessionData - The session information for the user, including the
- *               connection data for the remote system.
- * @param network - The networks record for the network that uses this
- *               protocol.
+ * Pull remote applications on Lora 1.0 Server
+ * @param sessionData
+ * @param network
  * @param companyMap
  * @param dpMap
- * @param dataAPI - Gives access to the data records and error tracking for the
- *               operation.
+ * @param dataAPI
  * @param modelAPI
- *
- * @returns {Promise<?>} - Empty promise means remote records were loaded locally.
+ * @returns {Promise<any>}
  */
-module.exports.pullApplications = function (sessionData, network, companyMap, dpMap, dataAPI, modelAPI) {
-  let counter = 0
+module.exports.pullApplications = function (sessionData, network, modelAPI, dataAPI) {
   return new Promise(async function (resolve, reject) {
-    let applicationMap = []
     let options = {}
-    options.method = 'GET'
-    options.url = network.baseUrl + '/applications' + '?limit=9999&offset=0'
+    options.url = network.baseUrl + '/api/v2/applications'
     options.headers = {
       'Content-Type': 'application/json',
       'Authorization': 'Bearer ' + sessionData.connection.access_token
@@ -391,39 +396,155 @@ module.exports.pullApplications = function (sessionData, network, companyMap, dp
     appLogger.log(options)
     request(options, function (error, response, body) {
       if (error) {
-        dataAPI.addLog(network, 'Error pulling applications from network ' + network.name + ': ' + error)
+        appLogger.log('Error pulling applications from network ' + network.name + ': ' + error)
+        reject(error)
+      }
+      else {
+        let apps = JSON.parse(body)
+        appLogger.log(apps)
+        let promiseList = []
+        if (!network.securityData.appKeys) network.securityData.appKeys = []
+        for (let index in apps) {
+          let app = apps[index]
+          network.securityData.appKeys.push({app: app.id, key: app.access_keys[0].key})
+          promiseList.push(addRemoteApplication(sessionData, app, network, modelAPI, dataAPI))
+        }
+        Promise.all(promiseList)
+          .then((apps) => {
+            resolve(apps)
+          })
+          .catch(err => {
+            appLogger.log(err)
+            reject(err)
+          })
+      }
+    })
+  })
+}
+
+function addRemoteApplication (sessionData, remoteApplication, network, modelAPI, dataAPI) {
+  let me = this
+  return new Promise(async function (resolve, reject) {
+    appLogger.log('Adding ' + remoteApplication.name)
+    let existingApplication = await modelAPI.applications.retrieveApplications({search: remoteApplication.name})
+    appLogger.log(existingApplication)
+    if (existingApplication.totalCount > 0) {
+      existingApplication = existingApplication.records[0]
+      appLogger.log(existingApplication.name + ' already exists')
+    }
+    else {
+      appLogger.log('creating ' + remoteApplication.name)
+      existingApplication = await modelAPI.applications.createApplication(remoteApplication.name, remoteApplication.name, 2, 1, 'http://set.me.to.your.real.url:8888')
+      appLogger.log('Created ' + existingApplication.name)
+    }
+
+    let existingApplicationNTL = await modelAPI.applicationNetworkTypeLinks.retrieveApplicationNetworkTypeLinks({applicationId: existingApplication.id})
+    if (existingApplicationNTL.totalCount > 0) {
+      appLogger.log(existingApplication.name + ' link already exists')
+    }
+    else {
+      appLogger.log('creating Network Link for ' + existingApplication.name)
+
+      let networkSettings = JSON.parse(JSON.stringify(remoteApplication))
+      existingApplicationNTL = await modelAPI.applicationNetworkTypeLinks.createRemoteApplicationNetworkTypeLink(existingApplication.id, network.networkTypeId, networkSettings, existingApplication.companyId)
+      appLogger.log(existingApplicationNTL)
+      await dataAPI.putProtocolDataForKey(network.id,
+        network.networkProtocolId,
+        makeApplicationDataKey(existingApplication.id, 'appNwkId'),
+        remoteApplication.id)
+      resolve({localApplication: existingApplication.id, remoteApplication: remoteApplication.id})
+    }
+  })
+}
+
+
+/**
+ * Pull remote devices from a TTN server
+ * @param sessionData
+ * @param network
+ * @param companyId
+ * @param dpMap
+ * @param remoteApplicationId
+ * @param applicationId
+ * @param dataAPI
+ * @param modelAPI
+ * @returns {Promise<any>}
+ */
+module.exports.pullDevices = function (sessionData, network, remoteApplicationId, localApplicationId, dpMap, modelAPI, dataAPI) {
+  return new Promise(async function (resolve, reject) {
+    let options = {}
+    options.method = 'GET'
+    let key = network.securityData.appKeys.filter(obj => obj.app == remoteApplicationId);
+    appLogger.log(key[0])
+    options.url = 'http://us-west.thethings.network:8084/applications/' + remoteApplicationId +'/devices'
+    options.headers = {
+      'Content-Type': 'application/json',
+      'Authorization': 'Key ' + key[0].key
+    }
+    options.agentOptions = {
+      'secureProtocol': 'TLSv1_2_method',
+      'rejectUnauthorized': false
+    }
+
+    appLogger.log(options)
+    request(options, function (error, response, body) {
+      if (error) {
+        appLogger.log('Error pulling devices from network ' + network.name + ': ' + error)
         reject(error)
       }
       else {
         body = JSON.parse(body)
-        dataAPI.addLog(network, body)
-        if (body.totalCount === 0) {
-          appLogger.log('No apps')
-          appLogger.log(body)
-          resolve(applicationMap)
+        let devices = body.devices
+        appLogger.log(body)
+        let promiseList = []
+        for (let index in devices) {
+          let device = devices[index]
+          promiseList.push(addRemoteDevice(sessionData, device, network, localApplicationId, dpMap, modelAPI, dataAPI))
         }
-        else {
-          let apps = body.result
-          appLogger.log(body)
-          counter = apps.length
-          for (let index in apps) {
-            let app = apps[index]
-            appLogger.log('Added ' + app.name)
-            addRemoteApplication(sessionData, app, network, companyMap, dpMap, dataAPI, modelAPI)
-              .then((applicationId) => {
-                counter = counter - 1
-                applicationMap.push({remoteApplicationId: app.id, applicationId: applicationId})
-                if (counter <= 0) {
-                  resolve(applicationMap)
-                }
-              })
-              .catch((error) => {
-                reject(error)
-              })
-          }
-        }
+        Promise.all(promiseList)
+          .then((devices) => {
+            resolve(devices)
+          })
+          .catch(err => {
+            appLogger.log(err)
+            reject(err)
+          })
       }
     })
+  })
+}
+
+function addRemoteDevice (sessionData, remoteDevice, network, applicationId, dpMap, modelAPI, dataAPI) {
+  return new Promise(async function (resolve, reject){
+    appLogger.log('Adding ' + remoteDevice.deveui)
+    appLogger.log(remoteDevice)
+    let existingDevice = await modelAPI.devices.retrieveDevices({search: remoteDevice.lorawan_device.dev_eui})
+    appLogger.log(existingDevice)
+    if (existingDevice.totalCount > 0) {
+      existingDevice = existingDevice.records[0]
+      appLogger.log(existingDevice.name + ' already exists')
+    }
+    else {
+      appLogger.log('creating ' + remoteDevice.lorawan_device.dev_eui)
+      existingDevice = await modelAPI.devices.createDevice(remoteDevice.lorawan_device.dev_eui, remoteDevice.description, applicationId)
+      appLogger.log('Created ' + existingDevice.name)
+    }
+
+    let existingDeviceNTL = await modelAPI.deviceNetworkTypeLinks.retrieveDeviceNetworkTypeLinks({deviceId: existingDevice.id})
+    if (existingDeviceNTL.totalCount > 0) {
+      appLogger.log(existingDevice.name + ' link already exists')
+    }
+    else {
+      appLogger.log('creating Network Link for ' + existingDevice.name)
+      existingDeviceNTL = await modelAPI.deviceNetworkTypeLinks.createRemoteDeviceNetworkTypeLink(existingDevice.id, network.networkTypeId, -1, remoteDevice, 2)
+      appLogger.log(existingDeviceNTL)
+      dataAPI.putProtocolDataForKey(network.id,
+        network.networkProtocolId,
+        makeDeviceDataKey(existingDevice.id, 'devNwkId'),
+        remoteDevice.dev_id)
+    }
+    resolve({localDevice: existingDevice.id, remoteDevice: remoteDevice.dev_id})
+
   })
 }
 
@@ -950,80 +1071,6 @@ module.exports.passDataToApplication = function (network, applicationId, data, d
 /**
  * Device CRUD Operations
  */
-
-/**
- * @desc Fetches device data from the The Things Network Network
- *
- * @param sessionData - The session information for the user, including the
- *               connection data for the remote system.
- * @param network - The networks record for the network that uses this
- *               protocol.
- * @param companyId - The id for the local company data, for which the remote data
- *               will be retrieved.
- * @param dpMap
- * @param remoteApplicationId
- * @param applicationId
- * @param dataAPI - Gives access to the data records and error tracking for the
- *               operation.
- * @param modelAPI
- *
- * @returns {Promise<?>} - Empty promise means remote records were loaded locally.
- */
-module.exports.pullDevices = function (sessionData, network, companyId, dpMap, remoteApplicationId, applicationId, dataAPI, modelAPI) {
-  let counter = 0
-  return new Promise(async function (resolve, reject) {
-    let deviceMap = []
-    let options = {}
-    options.method = 'GET'
-    options.url = network.baseUrl + '/applications/' + remoteApplicationId + '/devices' + '?limit=9999&offset=0'
-    options.headers = {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + sessionData.connection.access_token
-    }
-    options.agentOptions = {
-      'secureProtocol': 'TLSv1_2_method',
-      'rejectUnauthorized': false
-    }
-
-    appLogger.log(options)
-    request(options, function (error, response, body) {
-      if (error) {
-        dataAPI.addLog(network, 'Error pulling devices from network ' + network.name + ': ' + error)
-        reject(error)
-      }
-      else {
-        appLogger.log(body)
-        body = JSON.parse(body)
-        dataAPI.addLog(network, body)
-        if (body.totalCount === 0) {
-          appLogger.log('No devices')
-          appLogger.log(body)
-          resolve(deviceMap)
-        }
-        else {
-          let devices = body.result
-          appLogger.log(body)
-          counter = devices.length
-          for (let index in devices) {
-            let device = devices[index]
-            appLogger.log('Added ' + device.name)
-            addRemoteDevice(sessionData, device, network, companyId, dpMap, remoteApplicationId, applicationId, dataAPI, modelAPI)
-              .then((deviceId) => {
-                counter = counter - 1
-                deviceMap.push({remoteDeviceId: device.id, deviceId: deviceId})
-                if (counter <= 0) {
-                  resolve(deviceMap)
-                }
-              })
-              .catch((error) => {
-                reject(error)
-              })
-          }
-        }
-      }
-    })
-  })
-}
 
 /**
  * @desc Add a new device to the The Things Network network
@@ -1835,121 +1882,5 @@ function getApplicationById (network, applicationId, connection, dataAPI) {
         resolve(res)
       }
     })
-  })
-}
-
-/**
- * @desc Adds or updates a local application based on what is fetched from the network application manager.
- *
- * @access private
- *
- * @param sessionData
- * @param limitedRemoteApplication
- * @param network
- * @param companyMap
- * @param dpMap
- * @param dataAPI
- * @param modelAPI
- * @returns {Promise<string>} - Local application id
- */
-function addRemoteApplication (sessionData, limitedRemoteApplication, network, companyMap, dpMap, dataAPI, modelAPI) {
-  let me = this
-  return new Promise(async function (resolve, reject) {
-    let remoteApplication = await getApplicationById(network, limitedRemoteApplication.id, sessionData.connection, dataAPI)
-    appLogger.log('Adding ' + remoteApplication.name)
-    appLogger.log(remoteApplication)
-    let existingApplication = await modelAPI.applications.retrieveApplications({search: remoteApplication.name})
-    appLogger.log(existingApplication)
-    if (existingApplication.totalCount > 0) {
-      existingApplication = existingApplication.records[0]
-      appLogger.log(existingApplication.name + ' already exists')
-    }
-    else {
-      appLogger.log('creating ' + remoteApplication.name)
-      let company = companyMap.find(o => o.organizationId === remoteApplication.organizationID)
-      appLogger.log(company)
-      appLogger.log(companyMap)
-      existingApplication = await modelAPI.applications.createApplication(remoteApplication.name, remoteApplication.description, company.companyId, 1, 'http://set.me.to.your.real.url:8888')
-      appLogger.log('Created ' + existingApplication.name)
-    }
-
-    let existingApplicationNTL = await modelAPI.applicationNetworkTypeLinks.retrieveApplicationNetworkTypeLinks({applicationId: existingApplication.id})
-    if (existingApplicationNTL.totalCount > 0) {
-      appLogger.log(existingApplication.name + ' link already exists')
-    }
-    else {
-      appLogger.log('creating Network Link for ' + existingApplication.name)
-      let networkSettings = {
-        payloadCodec: remoteApplication.payloadCodec,
-        payloadDecoderScript: remoteApplication.payloadDecoderScript,
-        payloadEncoderScript: remoteApplication.payloadEncoderScript
-      }
-      existingApplicationNTL = await modelAPI.applicationNetworkTypeLinks.createRemoteApplicationNetworkTypeLink(existingApplication.id, network.networkTypeId, networkSettings, existingApplication.companyId)
-      appLogger.log(existingApplicationNTL)
-      await dataAPI.putProtocolDataForKey(network.id,
-        network.networkProtocolId,
-        makeApplicationDataKey(existingApplication.id, 'appNwkId'),
-        remoteApplication.id)
-    }
-    me.pullDevices(sessionData, network, existingApplication.companyId, dpMap, remoteApplication.id, existingApplication.id, dataAPI, modelAPI)
-      .then((result) => {
-        appLogger.log('Success in pulling devices from ' + network.name)
-        appLogger.log(result)
-        resolve(existingApplication.id)
-      })
-      .catch((err) => {
-        appLogger.log('Failed to pull devices from ' + network.name)
-        reject(err)
-      })
-  })
-}
-
-/**
- * @desc Adds or updates a local device based on what is fetched from the network application manager.
- *
- * @access private
- *
- * @param sessionData
- * @param limitedRemoteApplication
- * @param network
- * @param companyMap
- * @param dpMap
- * @param dataAPI
- * @param modelAPI
- * @returns {Promise<string>} - Local application id
- */
-function addRemoteDevice (sessionData, limitedRemoteDevice, network, companyId, dpMap, remoteApplicationId, applicationId, dataAPI, modelAPI) {
-  return new Promise(async function (resolve, reject) {
-    let remoteDevice = await getDeviceById(network, limitedRemoteDevice.devEUI, sessionData.connection, dataAPI)
-    appLogger.log('Adding ' + remoteDevice.name)
-    appLogger.log(remoteDevice)
-    let deviceProfile = dpMap.find(o => o.remoteDeviceProfileId === remoteDevice.deviceProfileID)
-    appLogger.log(deviceProfile)
-    let existingDevice = await modelAPI.devices.retrieveDevices({search: remoteDevice.name})
-    appLogger.log(existingDevice)
-    if (existingDevice.totalCount > 0) {
-      existingDevice = existingDevice.records[0]
-      appLogger.log(existingDevice.name + ' already exists')
-    }
-    else {
-      appLogger.log('creating ' + remoteDevice.name)
-      existingDevice = await modelAPI.devices.createDevice(remoteDevice.name, remoteDevice.description, applicationId)
-      appLogger.log('Created ' + existingDevice.name)
-    }
-
-    let existingDeviceNTL = await modelAPI.deviceNetworkTypeLinks.retrieveDeviceNetworkTypeLinks({deviceId: existingDevice.id})
-    if (existingDeviceNTL.totalCount > 0) {
-      appLogger.log(existingDevice.name + ' link already exists')
-    }
-    else {
-      appLogger.log('creating Network Link for ' + existingDevice.name)
-      existingDeviceNTL = await modelAPI.deviceNetworkTypeLinks.createRemoteDeviceNetworkTypeLink(existingDevice.id, network.networkTypeId, deviceProfile.deviceProfileId, remoteDevice, companyId)
-      appLogger.log(existingDeviceNTL)
-      dataAPI.putProtocolDataForKey(network.id,
-        network.networkProtocolId,
-        makeDeviceDataKey(existingDevice.id, 'devNwkId'),
-        remoteDevice.devEUI)
-    }
-    resolve(existingDevice.id)
   })
 }

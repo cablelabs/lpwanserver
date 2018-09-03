@@ -192,7 +192,6 @@ module.exports.disconnect = function (connection) {
   })
 }
 
-
 /**
  * Pull remote resources on Lora 1.0 Server
  *
