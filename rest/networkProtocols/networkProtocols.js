@@ -1,6 +1,7 @@
 // General libraries in use in this module.
 var appLogger = require('../lib/appLogger.js')
 const fs = require('fs')
+const assert = require('assert')
 
 // ******************************************************************************
 // Defines the generic cross-network API, and manages the network protocols
@@ -16,8 +17,10 @@ var networkProtocolMap
 
 // Constructor - gets the database API for the networkProtocols
 function NetworkProtocolAccess (dataModel) {
-  this.npAPI = dataModel.networkProtocols
-  this.modelAPI = dataModel
+  if (dataModel) {
+    if (dataModel.networkProtocols) this.npAPI = dataModel.networkProtocols
+    this.modelAPI = dataModel
+  }
   clearProtocolMap()
 }
 
@@ -36,7 +39,8 @@ NetworkProtocolAccess.prototype.register = function () {
       fileList[onefile] === 'protocoltemplate.js' ||
       fileList[onefile] === 'README.txt'
     ) {
-    } else {
+    }
+    else {
       let handler = fileList[onefile].split('.')[0]
       let proto = require('./' + handler)
       proto.register(this.npAPI)
@@ -65,18 +69,21 @@ NetworkProtocolAccess.prototype.getProtocol = function (network) {
   return new Promise(async function (resolve, reject) {
     var id = network.id
     if (!networkProtocolMap[id]) {
-      try {
-        // We'll need the protocol for the network.
-        var np = await me.npAPI.retrieveNetworkProtocol(network.networkProtocolId)
-        networkProtocolMap[id] = {}
-        networkProtocolMap[id]['sessionData'] = {}
-        networkProtocolMap[id]['api'] = require('./' + np.protocolHandler)
-        resolve(networkProtocolMap[id])
-      } catch (err) {
-        appLogger.log('Failed to load network protocol code ' + np.protocolHandler)
-        reject(err)
-      }
-    } else {
+      // We'll need the protocol for the network.
+      me.npAPI.retrieveNetworkProtocol(network.networkProtocolId)
+        .then(np => {
+          networkProtocolMap[id] = {}
+          networkProtocolMap[id]['sessionData'] = {}
+          networkProtocolMap[id]['api'] = require('./' + np.protocolHandler)
+          resolve(networkProtocolMap[id])
+        })
+        .catch(err => {
+          appLogger.log(err)
+          appLogger.log('Failed to load network protocol code ')
+          reject(err)
+        })
+    }
+    else {
       resolve(networkProtocolMap[id])
     }
   })
@@ -134,7 +141,8 @@ NetworkProtocolAccess.prototype.connect = function (network, loginData) {
         }).catch((err) => {
           reject(err)
         })
-    } catch (err) {
+    }
+    catch (err) {
       reject(err)
     }
   })
@@ -194,7 +202,8 @@ NetworkProtocolAccess.prototype.sessionWrapper = function (network, loginData, p
 
       // Worked, great, done.
       resolve(id)
-    } catch (err) {
+    }
+    catch (err) {
       // Failed, but why?
       if (err === 401) {
         try {
@@ -210,14 +219,16 @@ NetworkProtocolAccess.prototype.sessionWrapper = function (network, loginData, p
           }
           network.securityData.authorized = true
           me.modelAPI.networks.updateNetwork(network)
-        } catch (err) {
+        }
+        catch (err) {
           // Error again, just report
           appLogger.log('Access failure with ' + network.name + ': ' + err)
           network.securityData.authorized = false
           me.modelAPI.networks.updateNetwork(network)
           reject(err)
         }
-      } else {
+      }
+      else {
         // Error, but not session expired. Just report.
         reject(err)
       }
@@ -392,7 +403,8 @@ NetworkProtocolAccess.prototype.addApplication = function (dataAPI, network, app
 
       // Get the credentials for accessing the application.
       var loginData = await netProto.api.getApplicationAccessAccount(dataAPI, network, applicationId)
-    } catch (err) {
+    }
+    catch (err) {
       reject(err)
       return
     }
@@ -541,7 +553,8 @@ NetworkProtocolAccess.prototype.startApplication = function (dataAPI, network, a
       var netProto = await me.getProtocol(network)
 
       var loginData = await netProto.api.getApplicationAccessAccount(dataAPI, network, applicationId)
-    } catch (err) {
+    }
+    catch (err) {
       dataAPI.addLog(network, 'Could not get start app supporting data:' + err)
       reject(err)
       return
@@ -583,7 +596,8 @@ NetworkProtocolAccess.prototype.stopApplication = function (dataAPI, network, ap
       appLogger.log(netProto)
 
       var loginData = await netProto.api.getApplicationAccessAccount(dataAPI, network, applicationId)
-    } catch (err) {
+    }
+    catch (err) {
       dataAPI.addLog(network, 'Could not get stop app supporting data:' + err)
       reject(err)
       return
@@ -630,7 +644,8 @@ NetworkProtocolAccess.prototype.addDevice = function (dataAPI, network, deviceId
 
       // Get the credentials for accessing the device.
       loginData = await netProto.api.getDeviceAccessAccount(dataAPI, network, deviceId)
-    } catch (err) {
+    }
+    catch (err) {
       dataAPI.addLog(network, 'Failed to get suuport data for addDevice: ' + err)
       reject(err)
       return
@@ -676,7 +691,8 @@ NetworkProtocolAccess.prototype.pushDevice = function (dataAPI, network, deviceI
         dataAPI.addLog(network, 'Failed to get support login for pushDevice')
         reject(new Error('Failed to get support login for pushDevice'))
       }
-    } catch (err) {
+    }
+    catch (err) {
       dataAPI.addLog(network, 'Failed to get support data for pushDevice: ' + err)
       reject(err)
     }
@@ -744,7 +760,8 @@ NetworkProtocolAccess.prototype.deleteDevice = function (dataAPI, network, devic
       var netProto = await me.getProtocol(network)
 
       loginData = await netProto.api.getDeviceAccessAccount(dataAPI, network, deviceId)
-    } catch (err) {
+    }
+    catch (err) {
       dataAPI.addLog(network, 'Failed to get suuport data for deleteDevice: ' + err)
       reject(err)
       return
