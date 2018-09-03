@@ -146,195 +146,197 @@ describe('E2E Test for Single LoraOS 1.0', function () {
     })
   })
   describe('After “authorized” network, automatically pulls the devices & applications', function () {
-    it('Pull Applications, Device Profiles, Integrations, and Devices', function (done) {
-      server
-        .post('/api/networks/' + networkId + '/pull')
-        .set('Authorization', 'Bearer ' + adminToken)
-        .set('Content-Type', 'application/json')
-        .end(function (err, res) {
-          if (err) done(err)
-          res.should.have.status(200)
-          done()
-        })
-    })
-    it('Verify the Cablelabs Organization was Created', function (done) {
-      server
-        .get('/api/companies')
-        .set('Authorization', 'Bearer ' + adminToken)
-        .set('Content-Type', 'application/json')
-        .end(function (err, res) {
-          if (err) done(err)
-          res.should.have.status(200)
-          res.should.have.property('text')
-          var companies = JSON.parse(res.text)
-          companies.should.have.property('totalCount')
-          companies.should.have.property('records')
-          companies.totalCount.should.equal(2)
-          companies.records[0].name.should.equal('cl-admin')
-          companies.records[1].name.should.equal('cablelabs')
-          done()
-        })
-    })
-    it('Verify the Test Application was Created', function (done) {
-      server
-        .get('/api/applications')
-        .set('Authorization', 'Bearer ' + adminToken)
-        .set('Content-Type', 'application/json')
-        .end(function (err, res) {
-          if (err) done(err)
-          res.should.have.status(200)
-          res.should.have.property('text')
-          var applications = JSON.parse(res.text)
-          applications.should.have.property('totalCount')
-          applications.should.have.property('records')
-          applications.totalCount.should.equal(1)
-          applications.records[0].name.should.equal('TestApplication')
-          applications.records[0].description.should.equal('CableLabs Test Application')
-          applicationId = applications.records[0].id
-          done()
-        })
-    })
-    it('Verify the Test Application NTL was Created', function (done) {
-      let expected = {
-        'totalCount': 1,
-        'records': [{
-          'id': 1,
-          'applicationId': 1,
-          'networkTypeId': 1,
-          'networkSettings': {'payloadCodec': '', 'payloadDecoderScript': '', 'payloadEncoderScript': ''}
-        }]
-      }
-      server
-        .get('/api/applicationNetworkTypeLinks')
-        .set('Authorization', 'Bearer ' + adminToken)
-        .set('Content-Type', 'application/json')
-        .end(function (err, res) {
-          if (err) done(err)
-          res.should.have.status(200)
-          res.should.have.property('text')
-          var applications = JSON.parse(res.text)
-          applications.should.have.property('totalCount')
-          applications.should.have.property('records')
-          applications.totalCount.should.equal(1)
-          appLogger.log(applications)
-          applications.should.eql(expected)
-          done()
-        })
-    })
-    it('Verify the Test1 Device Profile was Created', function (done) {
-      let expected = {
-        'totalCount': 1,
-        'records': [{
-          'id': 1,
-          'networkTypeId': 1,
-          'companyId': 2,
-          'name': 'TestDevice',
-          'networkSettings': {
-            'deviceProfileID': '20234419-79e2-468b-89df-024dd65caba4',
-            'supportsClassB': false,
-            'classBTimeout': 0,
-            'pingSlotPeriod': 0,
-            'pingSlotDR': 0,
-            'pingSlotFreq': 0,
-            'supportsClassC': false,
-            'classCTimeout': 0,
-            'macVersion': '1.0.0',
-            'regParamsRevision': 'A',
-            'rxDelay1': 0,
-            'rxDROffset1': 0,
-            'rxDataRate2': 0,
-            'rxFreq2': 0,
-            'factoryPresetFreqs': [],
-            'maxEIRP': 0,
-            'maxDutyCycle': 0,
-            'supportsJoin': false,
-            'rfRegion': 'US902',
-            'supports32bitFCnt': false
-          },
-          'description': 'Device Profile managed by LPWAN Server, perform changes via LPWAN'
-        }]
-      }
-      server
-        .get('/api/deviceProfiles')
-        .set('Authorization', 'Bearer ' + adminToken)
-        .set('Content-Type', 'application/json')
-        .end(function (err, res) {
-          if (err) done(err)
-          res.should.have.status(200)
-          res.should.have.property('text')
-          let deviceProfiles = JSON.parse(res.text)
-          deviceProfiles.should.have.property('totalCount')
-          deviceProfiles.should.have.property('records')
-          deviceProfiles.totalCount.should.equal(1)
-          deviceProfiles.should.eql(expected)
-          done()
-        })
-    })
-    it('Verify the Test Device was Created', function (done) {
-      let expected = {
-        'totalCount': 1,
-        'records': [{
-          'id': 1,
-          'applicationId': 1,
-          'name': 'TestDevice',
-          'deviceModel': null,
-          'description': 'Test Device for E2E'
-        }]
-      }
-      server
-        .get('/api/devices')
-        .set('Authorization', 'Bearer ' + adminToken)
-        .set('Content-Type', 'application/json')
-        .end(function (err, res) {
-          if (err) done(err)
-          res.should.have.status(200)
-          res.should.have.property('text')
-          let devices = JSON.parse(res.text)
-          devices.should.have.property('totalCount')
-          devices.should.have.property('records')
-          devices.totalCount.should.equal(1)
-          appLogger.log(devices)
-          devices.should.eql(expected)
-          done()
-        })
-    })
-    it('Verify the Test Device NTL was Created', function (done) {
-      let expected = {
-        'totalCount': 1,
-        'records': [{
-          'id': 1,
-          'deviceId': 1,
-          'networkTypeId': 1,
-          'deviceProfileId': 1,
-          'networkSettings': {
-            'devEUI': '1234567890123456',
+    describe('Lora 1.0', function () {
+      it('Pull Applications, Device Profiles, Integrations, and Devices', function (done) {
+        server
+          .post('/api/networks/' + networkId + '/pull')
+          .set('Authorization', 'Bearer ' + adminToken)
+          .set('Content-Type', 'application/json')
+          .end(function (err, res) {
+            if (err) done(err)
+            res.should.have.status(200)
+            done()
+          })
+      })
+      it('Verify the Cablelabs Organization was Created', function (done) {
+        server
+          .get('/api/companies')
+          .set('Authorization', 'Bearer ' + adminToken)
+          .set('Content-Type', 'application/json')
+          .end(function (err, res) {
+            if (err) done(err)
+            res.should.have.status(200)
+            res.should.have.property('text')
+            var companies = JSON.parse(res.text)
+            companies.should.have.property('totalCount')
+            companies.should.have.property('records')
+            companies.totalCount.should.equal(2)
+            companies.records[0].name.should.equal('cl-admin')
+            companies.records[1].name.should.equal('cablelabs')
+            done()
+          })
+      })
+      it('Verify the Test Application was Created', function (done) {
+        server
+          .get('/api/applications')
+          .set('Authorization', 'Bearer ' + adminToken)
+          .set('Content-Type', 'application/json')
+          .end(function (err, res) {
+            if (err) done(err)
+            res.should.have.status(200)
+            res.should.have.property('text')
+            var applications = JSON.parse(res.text)
+            applications.should.have.property('totalCount')
+            applications.should.have.property('records')
+            applications.totalCount.should.equal(1)
+            applications.records[0].name.should.equal('TestApplication')
+            applications.records[0].description.should.equal('CableLabs Test Application')
+            applicationId = applications.records[0].id
+            done()
+          })
+      })
+      it('Verify the Test Application NTL was Created', function (done) {
+        let expected = {
+          'totalCount': 1,
+          'records': [{
+            'id': 1,
+            'applicationId': 1,
+            'networkTypeId': 1,
+            'networkSettings': {'payloadCodec': '', 'payloadDecoderScript': '', 'payloadEncoderScript': ''}
+          }]
+        }
+        server
+          .get('/api/applicationNetworkTypeLinks')
+          .set('Authorization', 'Bearer ' + adminToken)
+          .set('Content-Type', 'application/json')
+          .end(function (err, res) {
+            if (err) done(err)
+            res.should.have.status(200)
+            res.should.have.property('text')
+            var applications = JSON.parse(res.text)
+            applications.should.have.property('totalCount')
+            applications.should.have.property('records')
+            applications.totalCount.should.equal(1)
+            appLogger.log(applications)
+            applications.should.eql(expected)
+            done()
+          })
+      })
+      it('Verify the Test1 Device Profile was Created', function (done) {
+        let expected = {
+          'totalCount': 1,
+          'records': [{
+            'id': 1,
+            'networkTypeId': 1,
+            'companyId': 2,
             'name': 'TestDevice',
-            'applicationID': '1',
-            'description': 'Test Device for E2E',
-            'deviceProfileID': '20234419-79e2-468b-89df-024dd65caba4',
-            'deviceStatusBattery': 256,
-            'deviceStatusMargin': 256,
-            'lastSeenAt': '',
-            'skipFCntCheck': false
-          }
-        }]
-      }
-      server
-        .get('/api/deviceNetworkTypeLinks')
-        .set('Authorization', 'Bearer ' + adminToken)
-        .set('Content-Type', 'application/json')
-        .end(function (err, res) {
-          if (err) done(err)
-          res.should.have.status(200)
-          res.should.have.property('text')
-          var devices = JSON.parse(res.text)
-          devices.should.have.property('totalCount')
-          devices.should.have.property('records')
-          devices.totalCount.should.equal(1)
-          appLogger.log(devices)
-          devices.should.eql(expected)
-          done()
-        })
+            'networkSettings': {
+              'deviceProfileID': '20234419-79e2-468b-89df-024dd65caba4',
+              'supportsClassB': false,
+              'classBTimeout': 0,
+              'pingSlotPeriod': 0,
+              'pingSlotDR': 0,
+              'pingSlotFreq': 0,
+              'supportsClassC': false,
+              'classCTimeout': 0,
+              'macVersion': '1.0.0',
+              'regParamsRevision': 'A',
+              'rxDelay1': 0,
+              'rxDROffset1': 0,
+              'rxDataRate2': 0,
+              'rxFreq2': 0,
+              'factoryPresetFreqs': [],
+              'maxEIRP': 0,
+              'maxDutyCycle': 0,
+              'supportsJoin': false,
+              'rfRegion': 'US902',
+              'supports32bitFCnt': false
+            },
+            'description': 'Device Profile managed by LPWAN Server, perform changes via LPWAN'
+          }]
+        }
+        server
+          .get('/api/deviceProfiles')
+          .set('Authorization', 'Bearer ' + adminToken)
+          .set('Content-Type', 'application/json')
+          .end(function (err, res) {
+            if (err) done(err)
+            res.should.have.status(200)
+            res.should.have.property('text')
+            let deviceProfiles = JSON.parse(res.text)
+            deviceProfiles.should.have.property('totalCount')
+            deviceProfiles.should.have.property('records')
+            deviceProfiles.totalCount.should.equal(1)
+            deviceProfiles.should.eql(expected)
+            done()
+          })
+      })
+      it('Verify the Test Device was Created', function (done) {
+        let expected = {
+          'totalCount': 1,
+          'records': [{
+            'id': 1,
+            'applicationId': 1,
+            'name': 'TestDevice',
+            'deviceModel': null,
+            'description': 'Test Device for E2E'
+          }]
+        }
+        server
+          .get('/api/devices')
+          .set('Authorization', 'Bearer ' + adminToken)
+          .set('Content-Type', 'application/json')
+          .end(function (err, res) {
+            if (err) done(err)
+            res.should.have.status(200)
+            res.should.have.property('text')
+            let devices = JSON.parse(res.text)
+            devices.should.have.property('totalCount')
+            devices.should.have.property('records')
+            devices.totalCount.should.equal(1)
+            appLogger.log(devices)
+            devices.should.eql(expected)
+            done()
+          })
+      })
+      it('Verify the Test Device NTL was Created', function (done) {
+        let expected = {
+          'totalCount': 1,
+          'records': [{
+            'id': 1,
+            'deviceId': 1,
+            'networkTypeId': 1,
+            'deviceProfileId': 1,
+            'networkSettings': {
+              'devEUI': '1234567890123456',
+              'name': 'TestDevice',
+              'applicationID': '1',
+              'description': 'Test Device for E2E',
+              'deviceProfileID': '20234419-79e2-468b-89df-024dd65caba4',
+              'deviceStatusBattery': 256,
+              'deviceStatusMargin': 256,
+              'lastSeenAt': '',
+              'skipFCntCheck': false
+            }
+          }]
+        }
+        server
+          .get('/api/deviceNetworkTypeLinks')
+          .set('Authorization', 'Bearer ' + adminToken)
+          .set('Content-Type', 'application/json')
+          .end(function (err, res) {
+            if (err) done(err)
+            res.should.have.status(200)
+            res.should.have.property('text')
+            var devices = JSON.parse(res.text)
+            devices.should.have.property('totalCount')
+            devices.should.have.property('records')
+            devices.totalCount.should.equal(1)
+            appLogger.log(devices)
+            devices.should.eql(expected)
+            done()
+          })
+      })
     })
   })
   describe('LPWAN Server modifies any existing application “Integrations” to point to LPWAN Server', function () {
