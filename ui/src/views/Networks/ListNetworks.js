@@ -19,15 +19,14 @@ export default class ListNetworks extends React.Component {
       <div>
         <BreadCrumbs trail={breadCrumbs}/>
         <FetchNetworkTypes
-         render={ networkTypes =>
-           isNotArray(networkTypes) ?
-           <div></div> :
-           networkTypes.map((networkType,key) =>
-             <NetworkType
-               {...{networkType, key}} first={key===0}
-             />
-           )
-        }/>
+          render={ networkTypes =>
+            isNotArray(networkTypes) ?
+            <div></div> :
+            networkTypes.map((x, i) =>
+              <NetworkType networkType={x} key={x.id} first={i===0} />
+            )
+          }
+        />
       </div>
     );
   }

@@ -40,8 +40,9 @@ export default function NetworkProtocolView(props) {
       </div>
       { isNonEmptyArray(networks) &&
       <div className={'bgc-gry-lt inner-shadow pad-10 mrg-t-20'}>
-        {networks.map(network => (
-        <Network {...{ network, networkProtocolName }} key={network.id} /> ))}
+        {networks.map(network =>
+          <Network {...{ network, networkProtocolName }} key={network.id} />
+        )}
       </div> }
     </div>
   );
