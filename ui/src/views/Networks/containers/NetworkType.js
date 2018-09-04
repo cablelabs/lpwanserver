@@ -5,7 +5,7 @@ import networkGroupStore from "../../../stores/NetworkGroupStore";
 import flyd from 'flyd'
 
 //******************************************************************************
-// NetworkTypeView
+// NetworkType
 //******************************************************************************
 
 export default class NetworkType extends React.Component {
@@ -14,6 +14,7 @@ export default class NetworkType extends React.Component {
     this.state = { groups: [] }
   }
   componentDidMount () {
+    // listen to flyd stream and update react state
     flyd.on(
       groups => this.setState({ groups }),
       networkGroupStore.groupsByNetworkTypeId(this.props.networkType.id)
