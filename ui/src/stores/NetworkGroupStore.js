@@ -23,7 +23,11 @@ class NetworkGroupStore extends EventEmitter {
           headers: sessionStore.getHeader()
         }
         const response = await fetch(url, opts).then(checkStatus).then(x => x.json())
-        if (response) this.groupPage(response)
+        if (!response) return
+        response.records.forEach(
+          record => record.networks.sort((a,b) => b.networkProtocolId < a.networkProtocolId)
+        )
+        this.groupPage(response)
       } catch (e) {
         errorHandler(e)
         throw e
