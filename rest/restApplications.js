@@ -95,6 +95,9 @@ exports.initialize = function (app, server) {
     if (req.query.reportingProtocolId) {
       options.reportingProtocolId = req.query.reportingProtocolId
     }
+    if (req.query.networkProtocolId) {
+      options.networkProtocolId = req.query.networkProtocolId
+    }
     modelAPI.applications.retrieveApplications(options).then(function (cos) {
       restServer.respondJson(res, null, cos)
     })

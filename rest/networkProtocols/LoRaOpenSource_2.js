@@ -1344,7 +1344,7 @@ module.exports.addRemoteDeviceProfile = function (sessionData, limitedRemoteDevi
               appLogger.log(remoteDeviceProfile)
               modelAPI.deviceProfiles.createRemoteDeviceProfile(network.networkTypeId, 2,
                 remoteDeviceProfile.name, 'Device Profile managed by LPWAN Server, perform changes via LPWAN',
-                remoteDeviceProfile)
+                remoteDeviceProfileWrapper)
                 .then((existingDeviceProfile) => {
                   appLogger.log('Created ' + existingDeviceProfile.name)
                   resolve({
