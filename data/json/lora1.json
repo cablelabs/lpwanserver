@@ -1,0 +1,75 @@
+[
+  {
+    "application": {
+      "description": "string",
+      "id": "string",
+      "name": "string",
+      "organizationID": "string",
+      "payloadCodec": "string",
+      "payloadDecoderScript": "string",
+      "payloadEncoderScript": "string",
+      "serviceProfileID": "string"
+    }
+  },
+  {
+    "deviceProfile": {
+    "createdAt": "string",
+    "deviceProfile": {
+      "classBTimeout": 0,
+      "classCTimeout": 0,
+      "deviceProfileID": "string",
+      "factoryPresetFreqs": [
+        0
+      ],
+      "macVersion": "string",
+      "maxDutyCycle": 0,
+      "maxEIRP": 0,
+      "pingSlotDR": 0,
+      "pingSlotFreq": 0,
+      "pingSlotPeriod": 0,
+      "regParamsRevision": "string",
+      "rfRegion": "string",
+      "rxDROffset1": 0,
+      "rxDataRate2": 0,
+      "rxDelay1": 0,
+      "rxFreq2": 0,
+      "supports32bitFCnt": true,
+      "supportsClassB": true,
+      "supportsClassC": true,
+      "supportsJoin": true
+    },
+    "name": "string",
+    "networkServerID": "string",
+    "organizationID": "string",
+    "updatedAt": "string"
+    }
+  },
+  {
+    "device": {
+      "applicationID": "string",
+      "description": "string",
+      "devEUI": "string",
+      "deviceProfileID": "string",
+      "deviceStatusBattery": 0,
+      "deviceStatusMargin": 0,
+      "lastSeenAt": "string",
+      "name": "string",
+      "skipFCntCheck": true
+    }
+  },
+  {
+    "integrations": {
+      "ackNotificationURL": "string",
+      "dataUpURL": "string",
+      "errorNotificationURL": "string",
+      "headers": [
+        {
+          "key": "string",
+          "value": "string"
+        }
+      ],
+      "id": "string",
+      "joinNotificationURL": "string"
+    }
+  }
+]

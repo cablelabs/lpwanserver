@@ -51,6 +51,7 @@
     "serve-favicon": "^2.5.0",
     "session-file-store": "^0.2.1",
     "sqlite3": "^4.0.2",
+    "winston": "^3.1.0",
     "ws": "^1.1.5"
   },
   "devDependencies": {

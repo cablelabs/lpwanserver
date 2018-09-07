@@ -280,12 +280,15 @@ NetworkProtocolDataAccess.prototype.getCompanyNetworkType = function( companyId,
         try {
             var cnt = me.companyNetworkTypeCache[ "" + companyId + ":" + networkTypeId ];
             if ( cnt ) {
+              appLogger.log('In cache')
                 resolve( cnt );
             }
             else {
+              appLogger.log('Not in Cache')
                 var cntls = await modelAPI.companyNetworkTypeLinks.retrieveCompanyNetworkTypeLinks( { "companyId": companyId, "networkTypeId": networkTypeId } );
+                appLogger.log(cntls)
                 me.companyNetworkTypeCache[ "" + companyId + ":" + networkTypeId ] = cntls[ 0 ];
-                resolve( cntls[ 0 ] );
+                resolve( cntls.records[ 0 ] );
             }
         }
         catch( err ) {

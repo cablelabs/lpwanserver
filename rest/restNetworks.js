@@ -507,19 +507,19 @@ exports.initialize = function (app, server) {
   })
 
   app.post('/api/networks/:networkId/push', [restServer.isLoggedIn,
-      restServer.fetchCompany,
-      restServer.isAdmin],
-    function (req, res, next) {
-      var networkId = parseInt(req.params.networkId)
-      // If the caller is a global admin, or the device is part of the company
-      // admin's company, we can push.
-      modelAPI.networks.pushNetwork(networkId).then(function (ret) {
-        restServer.respondJson(res, 200, ret)
-      }).catch(function (err) {
-        appLogger.log('Error pulling from network ' + networkId + ': ' + err)
-        restServer.respond(res, err)
-      })
+    restServer.fetchCompany,
+    restServer.isAdmin],
+  function (req, res, next) {
+    var networkId = parseInt(req.params.networkId)
+    // If the caller is a global admin, or the device is part of the company
+    // admin's company, we can push.
+    modelAPI.networks.pushNetwork(networkId).then(function (ret) {
+      restServer.respondJson(res, 200, ret)
+    }).catch(function (err) {
+      appLogger.log('Error pushing to networks: ' + err)
+      restServer.respond(res, err)
     })
+  })
 
   app.get('/api/networks/:networkId/test', [restServer.isLoggedIn,
     restServer.fetchCompany,
