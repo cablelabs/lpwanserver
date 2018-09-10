@@ -1,13 +1,15 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import PT from 'prop-types';
+import { propOr } from 'ramda';
 import { isNonEmptyArray } from '../../../utils/generalUtils';
 import Network from '../containers/Network';
+import networkStore from "../../../stores/NetworkStore";
+import connect from '../../../utils/connectStore'
 
 //******************************************************************************
 // Interface
 //******************************************************************************
-
 NetworkProtocolView.propTypes = {
   networkProtocol: PT.object, // the network protocol to dislpay
   first: PT.bool              // is this the first entry in a list?
@@ -20,14 +22,16 @@ NetworkProtocolView.defaultProps = {
 //******************************************************************************
 // NetworkProtocolView
 //******************************************************************************
-
-export default function NetworkProtocolView(props) {
-
-  const { first, networkProtocol } = props;
-  const { id, name, networkTypeId, networks } = networkProtocol;
+function NetworkProtocolView (props) {
+  const { first, networkProtocol, networks } = props;
+  const { name, networkTypeId } = networkProtocol;
+    // For network create default to master protocol
+  // const protocolIds = propOr([], 'versions', networkProtocol).map(proto=>proto.id);
+  const defaultProtocolId = propOr('', 'masterProtocol', networkProtocol);
+  const createQueryParams = `?networkTypeId=${networkTypeId}&networkProtocolId=${defaultProtocolId}`;
   const brdTop = first ? 'brd-top':'';
-  const createQueryParams = `?networkTypeId=${networkTypeId}&networkProtocolId=${id}`;
-  const networkProtocolName = name;
+
+  console.log('networkProtocol', networkProtocol)
 
   return (
     <div className={`pad-v-10 brd-bot ${brdTop}`}>
@@ -41,9 +45,15 @@ export default function NetworkProtocolView(props) {
       { isNonEmptyArray(networks) &&
       <div className={'bgc-gry-lt inner-shadow pad-10 mrg-t-20'}>
         {networks.map(network =>
-          <Network {...{ network, networkProtocolName }} key={network.id} />
+          <Network {...{ network, networkProtocol }} key={network.id} />
         )}
       </div> }
     </div>
   );
 }
+
+export default connect({
+  state: {
+    networks: props => networkStore.networksByMasterProtocol(props.networkProtocol.masterProtocol)
+  }
+})(NetworkProtocolView)

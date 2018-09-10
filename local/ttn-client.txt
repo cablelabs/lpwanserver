@@ -1,0 +1,5 @@
+name=lpwanserver-test-client
+uri=http://localhost:3000/admin/networks/oauth
+secret=nm-MwQmMZAjGGjPrJI-xE7BfXzdtJibEP0_4G92dKeT7OWKKHi161Pi8
+scope=[profile gateways apps components]
+grants=[authorization_code refresh_token]

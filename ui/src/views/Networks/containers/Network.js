@@ -12,7 +12,7 @@ import NetworkView from '../views/NetworkView';
 
 const propTypes = {
   network: PT.object.isRequired,
-  networkProtocolName: PT.string, // protocol for this network
+  networkProtocol: PT.object.isRequired, // protocol for this network
 };
 
 const defaultProps = {
@@ -57,13 +57,11 @@ class Network extends Component {
   }
 
   render() {
+    const { network } = this.state;
+    const { networkProtocol } = this.props;
+    const { onEdit, onToggleEnabled } = this;
     return (
-      <NetworkView
-        network={this.state.network}
-        networkProtocolName={this.props.networkProtocolName}
-        onToggleEnabled={this.onToggleEnabled}
-        onEdit={this.onEdit}
-      />
+      <NetworkView {...{ network, networkProtocol, onEdit, onToggleEnabled }}/>
     );
   }
 }

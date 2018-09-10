@@ -1,177 +1,99 @@
 import sessionStore, {rest_url} from "./SessionStore";
-import {checkStatus, errorHandler} from "./helpers";
+import {errorHandler, fetchJson, paginationQuery} from "./helpers";
 import {EventEmitter} from "events";
-
+import Collection from './collection'
+import flyd from 'flyd'
+import { omit } from 'ramda'
 
 class NetworkStore extends EventEmitter {
-    getNetworks( pageSize, offset ) {
-        return new Promise( function( resolve, reject ) {
-            let header = sessionStore.getHeader();
+  constructor () {
+    super()
+    this.baseUrl = `${rest_url}/api/networks`
 
-            let options = "";
+    // state
+    this.networks = new Collection()
+    this.networkPage = flyd.stream({ totalCount: 0, records: [] })
+    this.groups = new Collection({ idKey: 'masterProtocol' })
 
-            if ( pageSize || offset ) {
-                options += "?";
-                if ( pageSize ) {
-                    options += "limit=" + pageSize;
-                    if ( offset ) {
-                        options += "&";
-                    }
-                }
-                if ( offset ) {
-                    options += "offset=" + offset;
-                }
-            }
-
-            fetch( rest_url + "/api/networks" + options,
-                   {
-                       method: "GET",
-                       credentials: 'same-origin',
-                       headers: header,
-                       'Accept': 'application/json',
-                       'Content-Type': 'application/json'
-            })
-            .then(checkStatus)
-            .then((response) => response.json())
-            .then((responseData) => {
-                if (!responseData) {
-                    resolve({ totalCount: 0, records: [] });
-                }
-                else {
-                    // console.log(responseData);
-                    resolve(responseData);
-                }
-            })
-            .catch( err => {
-                errorHandler( err );
-                reject( err );
-            });
-        });
-    }
-
-    // createNetwork( name, networkProviderId, networkTypeId, networkProtocolId, baseUrl, securityData  ) {
-    createNetwork( rec ) {
-        return new Promise( function( resolve, reject ) {
-            let header = sessionStore.getHeader();
-            fetch(rest_url + "/api/networks",
-                {
-                    method: "POST",
-                    credentials: 'same-origin',
-                    headers: header,
-                    body: JSON.stringify( rec ),
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
-                }
-            )
-            .then(checkStatus)
-            .then((response) => response.json())
-            .then((responseData) => {
-                resolve( responseData );
-            })
-            .catch( function( err ) {
-                reject( err );
-            });
-        });
-    }
-
-    getNetwork( id ) {
-        return new Promise( function( resolve, reject ) {
-            let header = sessionStore.getHeader();
-            fetch(rest_url + "/api/networks/" + id,
-                {
-                    method: "GET",
-                    credentials: 'same-origin',
-                    headers: header,
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
-                }
-            )
-            .then(checkStatus)
-            .then((response) => response.json())
-            .then((responseData) => {
-                resolve( responseData );
-            })
-            .catch( function( err ) {
-                reject( err );
-            });
-        });
-    }
-
-    updateNetwork( updatedRec ) {
-        return new Promise( function( resolve, reject ) {
-            let header = sessionStore.getHeader();
-            fetch(rest_url + "/api/networks/" + updatedRec.id,
-                {
-                    method: "PUT",
-                    credentials: 'same-origin',
-                    headers: header,
-                    body: JSON.stringify( updatedRec ),
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
-                }
-            )
-            .then(checkStatus)
-            .then((response) => response.json())
-            .then((responseData) => {
-                resolve( responseData );
-            })
-            // .then(() => {
-            //     // Should just return 204
-            //     resolve();
-            // })
-            .catch( function( err ) {
-                reject( err );
-            });
-        });
-    }
-
-    deleteNetwork( id ) {
-        return new Promise( function( resolve, reject ) {
-            let header = sessionStore.getHeader();
-            fetch(rest_url + "/api/networks/" + id,
-                {
-                    method: "DELETE",
-                    credentials: 'same-origin',
-                    headers: header,
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
-                }
-            )
-            .then(checkStatus)
-            .then(() => {
-                // Should just return 204
-                resolve();
-            })
-            .catch( function( err ) {
-                reject( err );
-            });
-        });
-    }
-
-    pullNetwork( id ) {
-        return new Promise( function( resolve, reject ) {
-            let header = sessionStore.getHeader();
-            fetch(rest_url + "/api/networks/" + id + "/pull",
-                {
-                    method: "POST",
-                    credentials: 'same-origin',
-                    headers: header,
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
-                }
-            )
-                .then(checkStatus)
-                .then(() => {
-                    // Should just return 200
-                    resolve();
-                })
-                .catch( function( err ) {
-                    reject( err );
-                });
-        });
-    }
+    // computed state
+    this.groupsByNetworkTypeId = this.groups.filter('networkTypeId')
+    this.networksByMasterProtocol = this.networks.filter(
+      'masterProtocol',
+      (a,b) => b.networkProtocolId < a.networkProtocolId
+    )
   }
 
-  const networkStore = new NetworkStore();
+  // actions
+  async getNetworks( pageSize, offset ) {
+    const pgQuery = paginationQuery(pageSize, offset);
+    const url = `${this.baseUrl}${pgQuery ? '?' : ''}${pgQuery}`
+    try {
+      const response = await fetchJson(url, { headers: sessionStore.getHeader() })
+      if (!response) return
+      this.networkPage(response)
+      this.networks.insert(response.records)
+      return response
+    } catch (err) {
+      errorHandler(err)
+      throw err
+    }
+  }
+  async getNetworkGroups() {
+    try {
+      const response = await fetchJson(`${this.baseUrl}/group`, {
+        headers: sessionStore.getHeader()
+      })
+      if (!response) return
+      response.records.forEach(record => {
+        this.networks.insert(record.networks.map(x => ({ ...x, masterProtocol: record.masterProtocol })))
+      })
+      this.groups.insert(response.records.map(x => omit(['networks'], x)))
+    } catch (e) {
+      errorHandler(e)
+      throw e
+    }
+  }
+  async createNetwork (rec) {
+    const response = await fetchJson(this.baseUrl, {
+      method: 'post',
+      headers: sessionStore.getHeader(),
+      body: JSON.stringify(rec)
+    })
+    this.networks.insert(response)
+    return response
+  }
+  async getNetwork (id) {
+    const response = await fetchJson(`${this.baseUrl}/${id}`, {
+      headers: sessionStore.getHeader()
+    })
+    this.networks.insert(response)
+    return response
+  }
+  async updateNetwork (rec) {
+    const response = await fetchJson(`${this.baseUrl}/${rec.id}`, {
+      method: 'put',
+      headers: sessionStore.getHeader(),
+      body: JSON.stringify(rec)
+    })
+    this.networks.insert(response)
+    return response
+  }
+  async deleteNetwork (id) {
+    await fetchJson(`${this.baseUrl}/${id}`, {
+      method: 'delete',
+      headers: sessionStore.getHeader(),
+    })
+    return
+  }
+  async pullNetwork (id) {
+    await fetchJson(`${this.baseUrl}/${id}/pull`, {
+      method: 'post',
+      headers: sessionStore.getHeader()
+    })
+    return
+  }
+}
 
-  export default networkStore;
+const networkStore = new NetworkStore();
+
+export default networkStore;

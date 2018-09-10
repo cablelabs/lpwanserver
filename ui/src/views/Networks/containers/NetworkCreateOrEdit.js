@@ -9,9 +9,12 @@ import sessionStore from "../../../stores/SessionStore";
 import networkProtocolStore from "../../../stores/NetworkProtocolStore";
 import networkStore from "../../../stores/NetworkStore";
 import { inputEventToValue } from '../../../utils/inputUtils';
-import { getProtocol, getNetworkFields, getSecurityProps, getSecurityDefaults
-  } from '../../../utils/protocolUtils';
 import { navigateToExernalUrl } from '../../../utils/navUtils';
+import { findByPropVal } from '../../../utils/objectListUtils';
+import {
+  getProtocol, versionsFromProtocolSet, getProtocolSet,
+  getSecurityProps, getSecurityDefaults, getProtocolVersionInfo
+  } from '../../../utils/protocolUtils';
 import NetworkForm from '../../../components/NetworkForm';
 import ConfirmationDialog from '../../../components/ConfirmationDialog';
 
@@ -32,8 +35,10 @@ const defaultProps = {
 // NetworkCreateOrEdit container
 //******************************************************************************
 
-const networkProps =
-  [ 'id', 'name', 'networkProviderId', 'networkTypeId', 'networkProtocolId', 'baseUrl' , 'securityData' ];
+const networkProps = [
+  'id', 'name', 'networkProviderId', 'networkTypeId',
+  'networkProtocolId', /* 'networkProtocolVersion', */ 'baseUrl', 'securityData'
+];
 
 class NetworkCreateOrEdit extends Component {
 
@@ -57,6 +62,8 @@ class NetworkCreateOrEdit extends Component {
       // bookkeeping
       networkId: -1, // Set when entering upon edit, or upon return from POST
       networkProtocol: {},
+      networkProtocolSet: [],
+      networkProtocolVersion: {},
       authNeeded: false,
         // T if new, unauthorized, or security field changed on existing NW
       securityDataChanged: false,
@@ -94,19 +101,25 @@ class NetworkCreateOrEdit extends Component {
 
       const queryParams = qs.parse(pathOr({}, [ 'location', 'search' ],  this.props));
 
-      const networkTypeIdforNew = Number(propOr(-1,'networkTypeId', queryParams));
-      const networkProtocolIdforNew = Number(propOr(-1, 'networkProtocolId', queryParams));
+      const typeId = isNew ?
+        Number(propOr(-1,'networkTypeId', queryParams)) :
+        propOr(-1, 'networkTypeId', network);
 
-      const networkProtocolId = propOr(-1, 'networkProtocolId', network);
-      const networkProtocol = getProtocol(isNew ? networkProtocolIdforNew : networkProtocolId, networkProtocols);
+      const protocolId = isNew ?
+        Number(propOr(-1, 'networkProtocolId', queryParams)) :
+        propOr(-1, 'networkProtocolId', network);
+
+      const networkProtocolSet =  getProtocolSet(typeId, protocolId, networkProtocols);
+      const networkProtocol = getProtocol(typeId, protocolId, networkProtocols);
       const networkProtocolName = propOr('-error-', 'name', networkProtocol);
+      const networkProtocolVersion = getProtocolVersionInfo(typeId, protocolId, networkProtocolSet, network );
 
       const networkData = isNew ?
       {
         name: '',
         networkProviderId: -1, // for now, not providing network provider
-        networkTypeId: networkTypeIdforNew,
-        networkProtocolId: networkProtocolIdforNew,
+        networkTypeId: typeId,
+        networkProtocolId: protocolId,
         baseUrl: '',
         securityData: getSecurityDefaults(networkProtocol),
       }
@@ -114,7 +127,7 @@ class NetworkCreateOrEdit extends Component {
 
       const authNeeded = isNew || !pathEq([ 'securityData', 'authorized' ], true, networkData);
       const networkId = isNew ? -1 : propOr(-1, 'id', network);
-      this.setState({ networkId, authNeeded, networkProtocol,  ...networkData });
+      this.setState({ networkId, authNeeded, networkProtocol, networkProtocolVersion, networkProtocolSet, ...networkData });
 
       // Lets see if we are coming back from an oauth
       const oauthStatus = propOr('', 'oauthStatus', queryParams);
@@ -170,14 +183,26 @@ class NetworkCreateOrEdit extends Component {
 
   onChange(path, field, e) {
 
+    console.log('~~> onChange(): ', field);
+
     const value = inputEventToValue(e);
-    const { dirtyFields={}, networkProtocol={}, authNeeded } = this.state;
+    const { dirtyFields={}, networkProtocol={}, networkProtocolVersion, networkProtocolSet, authNeeded } = this.state;
     const { isNew } = this.props;
 
     const fieldLens = lensPath([...path, field]);
     const pendingDirtyFields = set(fieldLens, true, dirtyFields);
     const pendingSecurityDataChanged = hasSecurityDataChanged(networkProtocol, pendingDirtyFields);
     const pendingAuthNeeded = isNew || authNeeded || pendingSecurityDataChanged;
+    const pendingNetworkProtocolVersion = field === 'networkProtocolVersion' ?
+      findByPropVal('', '', pathOr([],[], networkProtocolSet)) :
+      networkProtocolVersion;
+
+      // // '' -> a -> [{}] -> {}
+      // export const findByPropVal = curry((propName, propVal, objList) =>
+
+
+    console.log('networkProtocolSet: ', networkProtocolSet);
+    console.log('pendingNetworkProtocolVersion: ', pendingNetworkProtocolVersion);
 
     this.setState({
       ...set(fieldLens, value, this.state),
@@ -288,20 +313,21 @@ class NetworkCreateOrEdit extends Component {
 
   render() {
 
-    const { networkProtocol, authNeeded, securityDataChanged, networkId } = this.state;
+    const { networkProtocol, networkProtocolSet, networkProtocolVersion, authNeeded, securityDataChanged, networkId } = this.state;
     const { isNew } = this.props;
     const { onChange, onSubmit, onDelete } = this;
 
     const networkData = pick(networkProps, this.state);
     const networkProtocolName = propOr('-error-', 'name', networkProtocol);
-    const networkProtocolFields = getNetworkFields(networkProtocol);
+    const networkProtocolVersionList = versionsFromProtocolSet(networkProtocolSet);
+
     const submitText = generateSubmitText(isNew, authNeeded, securityDataChanged, networkProtocolName);
 
     return (
       <div>
         <NetworkForm
-          {...{ onChange, onSubmit, onDelete, submitText }}
-          {...{ isNew, networkProtocolName, networkProtocolFields, networkData }}
+          {...{ onChange, onSubmit, onDelete }}
+          {...{ isNew, submitText, networkProtocol, networkProtocolVersion, networkProtocolVersionList, networkData }}
         />
 
       <ConfirmationDialog
