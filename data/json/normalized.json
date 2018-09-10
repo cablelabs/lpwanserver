@@ -57,7 +57,7 @@
       "devEUI": "string",
       "deviceProfileID": "string",
       "name": "string",
-      "skipFCntCheck": true
+      "skipFCntCheck": true,
       "deviceStatusBattery": 0,
       "deviceStatusMargin": 0,
       "lastSeenAt": "2018-09-05T05:28:09.738Z"

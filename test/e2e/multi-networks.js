@@ -336,7 +336,24 @@ describe.only('E2E Test for Multiple Networks', function () {
           'applicationId': 1,
           'networkTypeId': 1,
           networkSettings: {
-
+            'canotaa': true,
+            'cansend': true,
+            'clientsLimit': null,
+            'description': 'CableLabs Test Application',
+            'deviceLimit': null,
+            'devices': null,
+            'id': '27',
+            'joinServer': null,
+            'name': 'BobMouseTrapLv1',
+            'ogwinfo': null,
+            'organizationID': '56',
+            'orx': true,
+            'overbosity': null,
+            'payloadCodec': '',
+            'payloadDecoderScript': '',
+            'payloadEncoderScript': '',
+            'serviceProfileID': '8ea5916b-70d0-4e9c-a4f4-1e07981d41be',
+            'suspended': false
           }
         }
         should.exist(lora.loraV1.apps[0].appId)
@@ -381,6 +398,7 @@ describe.only('E2E Test for Multiple Networks', function () {
             var applications = JSON.parse(res.text)
             applications.should.have.property('totalCount')
             applications.should.have.property('records')
+            appLogger.log(applications, 'error')
             // applications.totalCount.should.equal(2)
             let application = {}
             for (let index = 0; index < applications.records.length; index++) {
@@ -407,7 +425,27 @@ describe.only('E2E Test for Multiple Networks', function () {
           'id': 2,
           'applicationId': 2,
           'networkTypeId': 1,
-          'networkSettings': {'payloadCodec': '', 'payloadDecoderScript': '', 'payloadEncoderScript': ''}
+          'networkSettings': {
+            'canotaa': true,
+            'cansend': true,
+            'clientsLimit': null,
+            'description': 'CableLabs Test Application',
+            'deviceLimit': null,
+            'devices': null,
+            'id': '2',
+            'joinServer': null,
+            'name': 'BobMouseTrapLv2',
+            'ogwinfo': null,
+            'organizationID': '10',
+            'orx': true,
+            'overbosity': null,
+            'payloadCodec': '',
+            'payloadDecoderScript': '',
+            'payloadEncoderScript': '',
+            'serviceProfileID': 'de9d9f33-26ab-43b3-9088-d65801240e0e',
+            'suspended': false
+
+          }
         }
         appLogger.log(lora.loraV2)
         should.exist(lora.loraV2.apps[0].appId)
@@ -462,7 +500,7 @@ describe.only('E2E Test for Multiple Networks', function () {
             'factoryPresetFreqs': [],
             'maxEIRP': 0,
             'maxDutyCycle': 0,
-            'supportsJoin': false,
+            'supportsJoin': true,
             'rfRegion': 'US902',
             'supports32bitFCnt': false
           },
@@ -492,7 +530,7 @@ describe.only('E2E Test for Multiple Networks', function () {
             deviceProfile.name.should.equal('BobMouseTrapDeviceProfileLv1')
             deviceProfile.networkSettings.name.should.equal('BobMouseTrapDeviceProfileLv1')
             deviceProfile.networkSettings.networkServerID.should.equal('5')
-            deviceProfile.networkSettings.organizationID.should.equal('2')
+            deviceProfile.networkSettings.organizationID.should.equal('56')
             lora.loraV1.apps[0].deviceProfileIds.push(deviceProfile.id)
             done()
           })
@@ -531,6 +569,7 @@ describe.only('E2E Test for Multiple Networks', function () {
           })
       })
       it('Verify the Test Device NTL was Created', function (done) {
+        appLogger.log(lora, 'info')
         let expected = {
           'id': 1,
           'deviceId': lora.loraV1.apps[0].deviceIds[0],
@@ -539,9 +578,9 @@ describe.only('E2E Test for Multiple Networks', function () {
           'networkSettings': {
             'devEUI': '1234567890123456',
             'name': 'BobMouseTrapDeviceLv1',
-            'applicationID': '2',
+            'applicationID': '27',
             'description': 'Test Device for E2E',
-            'deviceProfileID': 'da2c61af-4d85-4057-a734-2e97a5afb25a',
+            'deviceProfileID': 'c86725a2-bd60-4a8b-8f2d-0840a38853ad',
             'deviceStatusBattery': 256,
             'deviceStatusMargin': 256,
             'lastSeenAt': '',
@@ -582,7 +621,7 @@ describe.only('E2E Test for Multiple Networks', function () {
           'companyId': 2,
           'name': 'BobMouseTrapDeviceProfileLv2',
           'networkSettings': {
-            'id': 'c504e774-4c3d-483e-ad0a-8550ce2caf0e',
+            'id': '9dd538e8-a231-4a35-8823-eecbffb9d4a9',
             'supportsClassB': false,
             'classBTimeout': 0,
             'pingSlotPeriod': 0,
@@ -600,11 +639,10 @@ describe.only('E2E Test for Multiple Networks', function () {
             'maxEIRP': 0,
             'name': 'BobMouseTrapDeviceProfileLv2',
             'networkServerID': '1',
-            'organizationID': '1',
+            'organizationID': '10',
             'maxDutyCycle': 0,
-            'supportsJoin': false,
-            'rfRegion': 'US902',
-            'supports32BitFCnt': false
+            'supportsJoin': true,
+            'rfRegion': 'US902'
           },
           'description': 'Device Profile managed by LPWAN Server, perform changes via LPWAN'
         }
@@ -672,12 +710,15 @@ describe.only('E2E Test for Multiple Networks', function () {
           'networkTypeId': 1,
           deviceProfileId: 2,
           'networkSettings': {
-            'devEUI': '8484932090909090',
+            'devEUI': '1122334455667788',
             'name': 'BobMouseTrapDeviceLv2',
-            'applicationID': '1',
+            'applicationID': '2',
             'description': 'Test Device for E2E',
-            'deviceProfileID': 'c504e774-4c3d-483e-ad0a-8550ce2caf0e',
-            'skipFCntCheck': false
+            'deviceProfileID': '9dd538e8-a231-4a35-8823-eecbffb9d4a9',
+            'skipFCntCheck': false,
+            'deviceStatusBattery': 256,
+            'deviceStatusMargin': 256,
+            'lastSeenAt': null
           }
         }
         server

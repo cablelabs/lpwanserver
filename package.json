@@ -18,7 +18,7 @@
     "doc": "jsdoc -r ./rest -d ./docs",
     "mac": "export NODE_ENV=mac;npm start",
     "dev": "npm install && NODE_ENV=local nodemon --watch rest ./bin/rest",
-    "e2e-docker": "./test/e2e/startLoraOS"
+    "e2e-docker": "export NODE_ENV=e2e; ./test/e2e/startLoraOS"
   },
   "dependencies": {
     "async": "~2.0.1",

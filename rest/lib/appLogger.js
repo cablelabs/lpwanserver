@@ -10,7 +10,7 @@ exports.logger = winston.createLogger({
     new winston.transports.File({
       format: winston.format.combine(
         winston.format.timestamp(),
-        winston.format.json()),
+        winston.format.simple()),
       filename: 'lpwan.log',
       level: 'info'
     })
@@ -45,15 +45,15 @@ exports.log = function (msg, level) {
                          file + ':' +
                          line + ': '
 
-      if (level) this.logger.log(level, header, msg)
+      if (level) this.logger.log(level, header + ':  ' + msg + "\n")
       else this.logger.info(header, msg)
     }
     else {
-      if (level) this.logger.log(level, header, msg)
+      if (level) this.logger.log(level, header + ':  ' + msg +"\n")
       this.logger.info('Message', msg)
     }
     if (typeof msg === 'object') {
-      console.log(header + JSON.stringify(msg))
+      console.log(header + JSON.stringify(msg) + "\n")
     }
     else {
       console.log(header +
