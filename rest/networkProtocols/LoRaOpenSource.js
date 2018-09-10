@@ -428,8 +428,7 @@ function getDeviceProfileById (network, dpId, connection, dataAPI) {
   })
 };
 
-// Get the NetworkServer using the Service Profile a ServiceProfile.
-function getDeviceById (network, deviceId, connection) {
+function getRemoteDeviceById (network, deviceId, connection) {
   appLogger.log('LoRaOpenSource: getDeviceProfileById')
   return new Promise(async function (resolve, reject) {
     // Set up the request options.
@@ -1814,7 +1813,7 @@ module.exports.pullDevices = function (sessionData, network, remoteApplicationId
 
 function addRemoteDevice (sessionData, limitedRemoteDevice, network, applicationId, dpMap, modelAPI, dataAPI) {
   return new Promise(async function (resolve, reject) {
-    let remoteDevice = await getDeviceById(network, limitedRemoteDevice.devEUI, sessionData.connection, dataAPI)
+    let remoteDevice = await getRemoteDeviceById(network, limitedRemoteDevice.devEUI, sessionData.connection, dataAPI)
     appLogger.log('Adding ' + remoteDevice.name)
     appLogger.log(remoteDevice)
     let deviceProfile = dpMap.find(o => o.remoteDeviceProfile == remoteDevice.deviceProfileID)
@@ -2780,16 +2779,17 @@ module.exports.deleteDeviceProfile = function (sessionData, network, deviceProfi
 // device.  The promise returns the id of the created device to be added to the
 // deviceNetworkTypeLinks record by the caller.
 module.exports.addDevice = function (sessionData, network, deviceId, dataAPI) {
+  appLogger.log('Adding Device ' + deviceId + ' to Lora V1 Network')
   return new Promise(async function (resolve, reject) {
     var device
     var dntl
-    var devpro
+    var deviceProfile
     var appNwkId
     var dpNwkId
     try {
       device = await dataAPI.getDeviceById(deviceId)
       dntl = await dataAPI.getDeviceNetworkType(deviceId, network.networkTypeId)
-      devpro = await dataAPI.getDeviceProfileById(dntl.deviceProfileId)
+      deviceProfile = await dataAPI.getDeviceProfileById(dntl.deviceProfileId)
       if (!dntl.networkSettings || !dntl.networkSettings.devEUI) {
         appLogger.log('deviceNetworkTypeLink MUST have networkSettings which MUST have devEUI')
         reject(400)
@@ -2804,6 +2804,7 @@ module.exports.addDevice = function (sessionData, network, deviceId, dataAPI) {
         network.networkProtocolId,
         makeDeviceProfileDataKey(dntl.deviceProfileId, 'dpNwkId'))
 
+      let loraV1Device = deNormalizeDeviceData(dntl.networkSettings)
       // Set up the request options.
       var options = {}
       options.method = 'POST'
@@ -2814,20 +2815,18 @@ module.exports.addDevice = function (sessionData, network, deviceId, dataAPI) {
       }
       options.json = {
         'applicationID': appNwkId,
-        'description': device.name,
-        'devEUI': dntl.networkSettings.devEUI,
+        'description': loraV1Device.description,
+        'devEUI': loraV1Device.devEUI,
         'deviceProfileID': dpNwkId,
-        'name': device.name
+        'name': loraV1Device.name,
+        'skipFCntCheck': loraV1Device.skipFCntCheck
       }
-
       options.agentOptions = {
         'secureProtocol': 'TLSv1_2_method',
         'rejectUnauthorized': false
       }
 
-      // Optional data
-      var devNS = dntl.networkSettings
-
+      appLogger.log(options, 'info')
       request(options, function (error, response, body) {
         if (error || response.statusCode >= 400) {
           if (error) {
@@ -2846,46 +2845,38 @@ module.exports.addDevice = function (sessionData, network, deviceId, dataAPI) {
             makeDeviceDataKey(device.id, 'devNwkId'),
             options.json.devEUI)
 
+          appLogger.log(loraV1Device, 'info')
+
           // Devices have to do a second call to set up either the
           // Application Key (OTAA) or the Keys for ABP.
-          if (devpro.networkSettings.supportsJoin && devNS.deviceKeys) {
-            appLogger.log(devNS)
+          if (deviceProfile.networkSettings.supportsJoin && loraV1Device.deviceKeys) {
             // This is the OTAA path.
             options.url = network.baseUrl + '/devices/' +
-              dntl.networkSettings.devEUI + '/keys'
+              loraV1Device.devEUI + '/keys'
             options.json = {
-              'devEUI': dntl.networkSettings.devEUI,
-              'deviceKeys': {
-                'appKey': devNS.deviceKeys.appKey
-              }
+              devEUI: loraV1Device.devEUI,
+              deviceKeys: loraV1Device.deviceKeys
             }
           }
-          else if (devNS.deviceKeys) {
+          else if (loraV1Device.deviceActivation) {
             // This is the ABP path.
             options.url = network.baseUrl + '/devices/' +
-              dntl.networkSettings.devEUI + '/activate'
-            options.json = {
-              'devEUI': devNS.devEUI,
-              'devAddr': devNS.deviceKeys.devAddr,
-              'nwkSKey': devNS.deviceKeys.nwkSKey,
-              'appSKey': devNS.deviceKeys.appSKey,
-              'fCntUp': devNS.deviceKeys.fCntUp,
-              'fCntDown': devNS.deviceKeys.fCntDown,
-              'skipFCntCheck': devNS.deviceKeys.skipFCntCheck
-            }
+              loraV1Device.devEUI + '/activate'
+            options.json = loraV1Device.deviceActivation
             appLogger.log('options.json = ' + JSON.stringify(options.json))
           }
           else {
+            appLogger.log('Remote Device ' + loraV1Device.name + ' does not have authentication parameters')
             resolve(dntl.networkSettings.devEUI)
             return
           }
           request(options, function (error, response, body) {
             if (error || response.statusCode >= 400) {
               if (error) {
-                appLogger.log('Error on create device keys: ' + error)
+                appLogger.log('Error on create device keys/activation: ' + error)
               }
               else {
-                appLogger.log('Error on create device keys (' + response.statusCode + '): ' + body.error)
+                appLogger.log('Error on create device keys/activation (' + response.statusCode + '): ' + body.error)
               }
               resolve(dntl.networkSettings.devEUI)
             }
@@ -3290,4 +3281,92 @@ function deNormalizeDeviceProfileData (remoteDeviceProfile, networkServerId, org
     organizationID: organizationId
   }
   return loraV1DeviceProfileData
+}
+
+function normalizeDeviceData (remoteDevice) {
+  /*
+      "applicationID": "string",
+      "description": "string",
+      "devEUI": "string",
+      "deviceProfileID": "string",
+      "deviceStatusBattery": 0,
+      "deviceStatusMargin": 0,
+      "lastSeenAt": "string",
+      "name": "string",
+      "skipFCntCheck": true
+   */
+  let normalized = {
+    applicationID: remoteDevice.applicationID,
+    description: remoteDevice.description,
+    devEUI: remoteDevice.devEUI,
+    deviceProfileID: remoteDevice.deviceProfileID,
+    name: remoteDevice.name,
+    skipFCntCheck: remoteDevice.skipFCntCheck,
+    deviceStatusBattery: remoteDevice.deviceStatusBattery,
+    deviceStatusMargin: remoteDevice.deviceStatusMargin,
+    lastSeenAt: remoteDevice.lastSeenAt
+  }
+  if (remoteDevice.deviceKeys) {
+    normalized.deviceKeys = {
+      appKey: remoteDevice.deviceKeys.appKey,
+      devEUI: remoteDevice.deviceKeys.devEUI,
+      nwkKey: remoteDevice.deviceKeys.nwkKey
+    }
+  }
+  if (remoteDevice.deviceActivation) {
+    normalized.deviceActivation = {
+      aFCntDown: remoteDevice.deviceActivation.aFCntDown,
+      appSKey: remoteDevice.deviceActivation.appSKey,
+      devAddr: remoteDevice.deviceActivation.devAddr,
+      devEUI: remoteDevice.deviceActivation.devEUI,
+      fCntUp: remoteDevice.deviceActivation.fCntUp,
+      fNwkSIntKey: remoteDevice.deviceActivation.fNwkSIntKey,
+      nFCntDown: remoteDevice.deviceActivation.nFCntDown,
+      nwkSEncKey: remoteDevice.deviceActivation.nwkSEncKey,
+      sNwkSIntKey: remoteDevice.deviceActivation.sNwkSIntKey
+    }
+  }
+  return normalized
+}
+
+function deNormalizeDeviceData (remoteDevice) {
+  /*
+      "applicationID": "string",
+      "description": "string",
+      "devEUI": "string",
+      "deviceProfileID": "string",
+      "deviceStatusBattery": 0,
+      "deviceStatusMargin": 0,
+      "lastSeenAt": "string",
+      "name": "string",
+      "skipFCntCheck": true
+   */
+  let loraV1DeviceData = {
+    applicationID: remoteDevice.applicationID,
+    description: remoteDevice.description,
+    devEUI: remoteDevice.devEUI,
+    deviceProfileID: remoteDevice.deviceProfileID,
+    name: remoteDevice.name,
+    skipFCntCheck: remoteDevice.skipFCntCheck,
+    deviceStatusBattery: remoteDevice.deviceStatusBattery,
+    deviceStatusMargin: remoteDevice.deviceStatusMargin,
+    lastSeenAt: remoteDevice.lastSeenAt
+  }
+  if (remoteDevice.deviceKeys) {
+    loraV1DeviceData.deviceKeys = {
+      appKey: remoteDevice.deviceKeys.appKey
+    }
+  }
+  if (remoteDevice.deviceActivation) {
+    loraV1DeviceData.deviceActivation = {
+      appSKey: remoteDevice.deviceActivation.appSKey,
+      devAddr: remoteDevice.deviceActivation.devAddr,
+      devEUI: remoteDevice.deviceActivation.devEUI,
+      fCntDown: remoteDevice.deviceActivation.aFCntDown,
+      fCntUp: remoteDevice.deviceActivation.fCntUp,
+      nwkSKey: remoteDevice.deviceActivation.nwkSEncKey,
+      skipFCntCheck: false
+    }
+  }
+  return loraV1DeviceData
 }

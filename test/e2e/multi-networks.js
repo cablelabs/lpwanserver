@@ -641,7 +641,7 @@ describe.only('E2E Test for Multiple Networks', function () {
             'networkServerID': '1',
             'organizationID': '10',
             'maxDutyCycle': 0,
-            'supportsJoin': true,
+            'supportsJoin': false,
             'rfRegion': 'US902'
           },
           'description': 'Device Profile managed by LPWAN Server, perform changes via LPWAN'
@@ -718,7 +718,18 @@ describe.only('E2E Test for Multiple Networks', function () {
             'skipFCntCheck': false,
             'deviceStatusBattery': 256,
             'deviceStatusMargin': 256,
-            'lastSeenAt': null
+            'lastSeenAt': null,
+            'deviceActivation': {
+              'aFCntDown': 0,
+              'appSKey': '204bc999b089983dceaef567d111722c',
+              'devAddr': '013ac7fe',
+              'devEUI': '',
+              'fCntUp': 0,
+              'fNwkSIntKey': 'a27bd1658d6ae4ed8d4e6d35a4857960',
+              'nFCntDown': 0,
+              'nwkSEncKey': 'a27bd1658d6ae4ed8d4e6d35a4857960',
+              'sNwkSIntKey': 'a27bd1658d6ae4ed8d4e6d35a4857960'
+            }
           }
         }
         server
