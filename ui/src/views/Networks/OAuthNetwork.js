@@ -73,13 +73,11 @@ class OAuthNetwork extends Component {
 
         // Network was succesfully updated
         .then(() => {
-          console.log('SUCCESS')
           props.history.push(`${networkPath}&oauthStatus=success`);
         })
 
         // Oauth worked, but server was not able to update/create network
         .catch(() => {
-          console.log('FAILURE')
           const errorMsg = 'Server was not able to create/update the network';
           props.history.push(`${networkPath}&oauthStatus=success&serverError=${errorMsg}`);
         });

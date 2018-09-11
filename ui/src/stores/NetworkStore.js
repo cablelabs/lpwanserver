@@ -73,7 +73,6 @@ class NetworkStore extends EventEmitter {
     return response
   }
   async updateNetwork (rec) {
-    console.log('updateNetwork', rec)
     const response = await fetchJson(`${this.baseUrl}/${rec.id}`, {
       method: 'put',
       headers: sessionStore.getHeader(),
