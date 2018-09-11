@@ -30,12 +30,6 @@ class NetworkProtocolStore extends EventEmitter {
         headers: sessionStore.getHeader()
       })
       if (!response || !response.records) return []
-      // start remove
-      response.records = response.records.map(x => {
-        if (x.id === 5) return { ...x, masterProtocol: 3 }
-        return x
-      })
-      // end remove
       this.protocols.insert(response.records)
       return response
     } catch (err) {

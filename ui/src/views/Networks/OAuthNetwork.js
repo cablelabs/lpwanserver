@@ -42,8 +42,6 @@ class OAuthNetwork extends Component {
     const targetNetworkId = sessionStore.getSetting('oauthNetworkTarget');
     const oauthStartTime = Number(sessionStore.getSetting('oauthStartTime'));
 
-    console.log('outhSessionSettings', oauthMode, targetNetworkId, oauthStartTime)
-
     const queryParams = qs.parse(pathOr({}, [ 'location', 'search' ], props));
     const elapsedTime = Date.now() - oauthStartTime;
 

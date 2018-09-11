@@ -25,13 +25,9 @@ NetworkProtocolView.defaultProps = {
 function NetworkProtocolView (props) {
   const { first, networkProtocol, networks } = props;
   const { name, networkTypeId } = networkProtocol;
-    // For network create default to master protocol
-  // const protocolIds = propOr([], 'versions', networkProtocol).map(proto=>proto.id);
   const masterProtocol = propOr('', 'masterProtocol', networkProtocol);
   const createQueryParams = `?networkTypeId=${networkTypeId}&masterProtocol=${masterProtocol}`;
   const brdTop = first ? 'brd-top':'';
-
-  // console.log('networkProtocol', networkProtocol)
 
   return (
     <div className={`pad-v-10 brd-bot ${brdTop}`}>
