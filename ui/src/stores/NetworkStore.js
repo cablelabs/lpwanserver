@@ -45,7 +45,10 @@ class NetworkStore extends EventEmitter {
       })
       if (!response) return
       response.records.forEach(record => {
-        this.networks.insert(record.networks.map(x => ({ ...x, masterProtocol: record.masterProtocol })))
+        this.networks.insert(record.networks.map(x => ({
+          ...x,
+          masterProtocol: record.masterProtocol
+        })))
       })
       this.groups.insert(response.records.map(x => omit(['networks'], x)))
     } catch (e) {
@@ -70,6 +73,7 @@ class NetworkStore extends EventEmitter {
     return response
   }
   async updateNetwork (rec) {
+    console.log('updateNetwork', rec)
     const response = await fetchJson(`${this.baseUrl}/${rec.id}`, {
       method: 'put',
       headers: sessionStore.getHeader(),

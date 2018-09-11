@@ -62,11 +62,6 @@ export default function NetworkForm(props) {
 
   const panelHeading = isNew ? `Create ${networkProtocolName} Network` : `Editing ${networkProtocolName} Network`;
 
-
-  console.log('~~> NetworkForm()');
-  console.log('networkProtocolVersion', JSON.stringify(networkProtocolVersion,null,2));
-  console.log('networkProtocolVersionList: ', networkProtocolVersionList);
-
   return(
     <div className='panel panel-default'>
 
@@ -97,8 +92,11 @@ export default function NetworkForm(props) {
             </div>
           }
 
-          { isArray(networkProtocolVersionList) && networkProtocolVersionList.length > 1 &&
-            <FormSelect label={`${networkProtocolName} Version`} id='networkProtocolVersion' required
+          { isNew && isArray(networkProtocolVersionList) && networkProtocolVersionList.length > 1 &&
+            <FormSelect
+              label={`${networkProtocolName} Version`}
+              id='networkProtocolVersion'
+              required
               selectProps={{ textProp: 'versionText', valueProp:'versionValue' }}
               selectList={networkProtocolVersionList}
               value={networkProtocolVersionValue}

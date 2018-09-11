@@ -1,163 +1,80 @@
 import sessionStore, {rest_url} from "./SessionStore";
-import {checkStatus, errorHandler} from "./helpers";
+import {errorHandler, fetchJson} from "./helpers";
 import {EventEmitter} from "events";
-
+import Collection from './collection'
 
 class NetworkProtocolStore extends EventEmitter {
-
-    getNetworkProtocolHandlers() {
-        return new Promise( function( resolve, reject ) {
-            let header = sessionStore.getHeader();
-
-            fetch( rest_url + "/api/networkProtocolHandlers",
-                {
-                    method: "GET",
-                    credentials: 'same-origin',
-                    headers: header,
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
-                })
-                .then(checkStatus)
-                .then((response) => response.json())
-                .then((responseData) => {
-                    if (!responseData) {
-                        resolve([]);
-                    }
-                    else {
-                       resolve(responseData);
-                    }
-                })
-                .catch( err => {
-                    errorHandler( err );
-                    reject( err );
-                });
-        });
+  constructor () {
+    super()
+    this.baseUrl = `${rest_url}/api/networkProtocols`
+    this.protocols = new Collection()
+    this.protocolHandlers = new Collection()
+  }
+  async getNetworkProtocolHandlers () {
+    const url = `${rest_url}/api/networkProtocolHandlers`
+    try {
+      const response = await fetchJson(url, {
+        headers: sessionStore.getHeader()
+      })
+      if (!response || !response.records) return []
+      this.protocolHandlers.insert(response.records)
+      return response
+    } catch (err) {
+      errorHandler(err)
+      throw err
     }
-
-  getNetworkProtocols() {
-      return new Promise( function( resolve, reject ) {
-          let header = sessionStore.getHeader();
-
-          fetch( rest_url + "/api/networkProtocols",
-                 {
-                     method: "GET",
-                     credentials: 'same-origin',
-                     headers: header,
-                     'Accept': 'application/json',
-                     'Content-Type': 'application/json'
-          })
-          .then(checkStatus)
-          .then((response) => response.json())
-          .then((responseData) => {
-              if (!responseData) {
-                  resolve([]);
-              }
-              else {
-                  resolve(responseData);
-              }
-          })
-          .catch( err => {
-              errorHandler( err );
-              reject( err );
-          });
-      });
   }
-
-  createNetworkProtocol( name, protocolHandler, networkTypeId ) {
-      return new Promise( function( resolve, reject ) {
-          let header = sessionStore.getHeader();
-          let rec = {
-                      name: name,
-                      protocolHandler: protocolHandler,
-                      networkTypeId: networkTypeId
-                    };
-          fetch(rest_url + "/api/networkProtocols",
-              {
-                  method: "POST",
-                  credentials: 'same-origin',
-                  headers: header,
-                  body: JSON.stringify( rec ),
-                  'Accept': 'application/json',
-                  'Content-Type': 'application/json'
-              }
-          )
-          .then(checkStatus)
-          .then((response) => response.json())
-          .then((responseData) => {
-              // Should just be an id
-              resolve( responseData.id );
-          })
-          .catch( function( err ) {
-              reject( err );
-          });
-      });
+  async getNetworkProtocols () {
+    try {
+      const response = await fetchJson(this.baseUrl, {
+        headers: sessionStore.getHeader()
+      })
+      if (!response || !response.records) return []
+      // start remove
+      response.records = response.records.map(x => {
+        if (x.id === 5) return { ...x, masterProtocol: 3 }
+        return x
+      })
+      // end remove
+      this.protocols.insert(response.records)
+      return response
+    } catch (err) {
+      errorHandler(err)
+      throw err
+    }
   }
-
-  getNetworkProtocol( id ) {
-      return new Promise( function( resolve, reject ) {
-          let header = sessionStore.getHeader();
-          fetch(rest_url + "/api/networkProtocols/" + id,
-              {
-                  method: "GET", credentials: 'same-origin', headers: header,
-                  'Accept': 'application/json', 'Content-Type': 'application/json'
-              }
-          )
-          .then(checkStatus)
-          .then((response) => response.json())
-          .then((responseData) => {
-              resolve( responseData );
-          })
-          .catch( function( err ) {
-              reject( err );
-          });
-      });
+  async createNetworkProtocol (name, protocolHandler, networkTypeId) {
+    const rec = { name, protocolHandler, networkTypeId }
+    const response = await fetchJson(this.baseUrl, {
+      method: 'post',
+      headers: sessionStore.getHeader(),
+      body: JSON.stringify(rec)
+    })
+    this.protocols.insert(response)
+    return response.id
   }
-
-  updateNetworkProtocol( updatedRec ) {
-      return new Promise( function( resolve, reject ) {
-          let header = sessionStore.getHeader();
-          fetch(rest_url + "/api/networkProtocols/" + updatedRec.id,
-              {
-                  method: "PUT",
-                  credentials: 'same-origin',
-                  headers: header,
-                  body: JSON.stringify( updatedRec ),
-                  'Accept': 'application/json',
-                  'Content-Type': 'application/json'
-              }
-          )
-          .then(checkStatus)
-          .then(() => {
-              // Should just return 204
-              resolve();
-          })
-          .catch( function( err ) {
-              reject( err );
-          });
-      });
+  async getNetworkProtocol (id) {
+    const response = await fetchJson(`${this.baseUrl}/${id}`, {
+      headers: sessionStore.getHeader()
+    })
+    this.protocols.insert(response)
+    return response
   }
-
-  deleteNetworkProtocol( id ) {
-      return new Promise( function( resolve, reject ) {
-          let header = sessionStore.getHeader();
-          fetch(rest_url + "/api/networkProtocols/" + id,
-              {
-                  method: "DELETE",
-                  credentials: 'same-origin',
-                  headers: header,
-                  'Accept': 'application/json',
-                  'Content-Type': 'application/json'
-              }
-          )
-          .then(checkStatus)
-          .then(() => {
-              // Should just return 204
-              resolve();
-          })
-          .catch( function( err ) {
-              reject( err );
-          });
-      });
+  async updateNetworkProtocol (rec) {
+    const response = await fetchJson(`${this.baseUrl}/${rec.id}`, {
+      method: 'put',
+      headers: sessionStore.getHeader(),
+      body: JSON.stringify(rec)
+    })
+    this.protocols.insert(response)
+    return
+  }
+  async deleteNetworkProtocol (id) {
+    await fetchJson(`${this.baseUrl}/${id}`, {
+      method: 'delete',
+      headers: sessionStore.getHeader(),
+    })
+    return
   }
 }
 

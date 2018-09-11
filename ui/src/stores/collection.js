@@ -1,5 +1,5 @@
 import flyd from 'flyd'
-import { findIndex, find, filter } from 'ramda'
+import { findIndex, find } from 'ramda'
 
 export default class Collection {
 	constructor ({ idKey = 'id' } = {}) {
@@ -18,32 +18,27 @@ export default class Collection {
 	  this.records(records)
 	}
 	findOne (val, prop) {
-		return flyd.combine(
-			xs => find(x => x[prop || this.idKey] === val, xs()),
-      [this.records]
+		if (!prop) prop = this.idKey
+		return flyd.map(
+			// used == instead of === because many IDs are ints.  change to === when IDs are strings.
+			// eslint-disable-next-line
+			find(x => x[prop] == val),
+      this.records
     )
 	}
+	// filter returns a stream of functions, curried to filter/sort on a prop
 	filter (prop, sortFn) {
-		// return flyd.combine(
-		// 	xs => vals => {
-		// 		if (!Array.isArray(vals)) vals = [vals]
-		// 		const result = xs().filter(x => vals.indexOf(x[prop]) > -1)
-		// 	  if (sortFn) result.sort(sortFn)
-		// 		return result
-		// 	},
-		//   [this.records]
-		// )
-
-		return vals => {
-			if (!Array.isArray(vals)) vals = [vals]
-			const _filter = filter(x => vals.indexOf(x[prop]) > -1)
-			return flyd.combine(
-				xs => {
-					const result = _filter(xs())
-					
-				},
-				[this.records]
-			)
-		}
+		return flyd.map(
+			xs => vals => {
+				if (!Array.isArray(vals)) vals = [vals]
+				const result = xs.filter(x => vals.indexOf(x[prop]) > -1)
+			  if (sortFn) result.sort(sortFn)
+				return result
+			},
+		  this.records
+		)
+	}
+	getAll () {
+		return this.records
 	}
 }

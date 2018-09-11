@@ -42,6 +42,8 @@ class OAuthNetwork extends Component {
     const targetNetworkId = sessionStore.getSetting('oauthNetworkTarget');
     const oauthStartTime = Number(sessionStore.getSetting('oauthStartTime'));
 
+    console.log('outhSessionSettings', oauthMode, targetNetworkId, oauthStartTime)
+
     const queryParams = qs.parse(pathOr({}, [ 'location', 'search' ], props));
     const elapsedTime = Date.now() - oauthStartTime;
 
@@ -66,16 +68,20 @@ class OAuthNetwork extends Component {
       // Oauth succeeded
       if (isEmpty(errorParams)) {
 
+
+
         // send oauth info to server
         updateNetworkWithOauthInfo(network, networkProtocol, queryParams)
 
         // Network was succesfully updated
         .then(() => {
+          console.log('SUCCESS')
           props.history.push(`${networkPath}&oauthStatus=success`);
         })
 
         // Oauth worked, but server was not able to update/create network
         .catch(() => {
+          console.log('FAILURE')
           const errorMsg = 'Server was not able to create/update the network';
           props.history.push(`${networkPath}&oauthStatus=success&serverError=${errorMsg}`);
         });

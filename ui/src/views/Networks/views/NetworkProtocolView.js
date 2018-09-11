@@ -27,11 +27,11 @@ function NetworkProtocolView (props) {
   const { name, networkTypeId } = networkProtocol;
     // For network create default to master protocol
   // const protocolIds = propOr([], 'versions', networkProtocol).map(proto=>proto.id);
-  const defaultProtocolId = propOr('', 'masterProtocol', networkProtocol);
-  const createQueryParams = `?networkTypeId=${networkTypeId}&networkProtocolId=${defaultProtocolId}`;
+  const masterProtocol = propOr('', 'masterProtocol', networkProtocol);
+  const createQueryParams = `?networkTypeId=${networkTypeId}&masterProtocol=${masterProtocol}`;
   const brdTop = first ? 'brd-top':'';
 
-  console.log('networkProtocol', networkProtocol)
+  // console.log('networkProtocol', networkProtocol)
 
   return (
     <div className={`pad-v-10 brd-bot ${brdTop}`}>
@@ -54,6 +54,9 @@ function NetworkProtocolView (props) {
 
 export default connect({
   state: {
-    networks: props => networkStore.networksByMasterProtocol(props.networkProtocol.masterProtocol)
+    networks: {
+      stream: () => networkStore.networksByMasterProtocol,
+      map: (fn, props) => fn && fn(props.networkProtocol.masterProtocol)
+    }
   }
 })(NetworkProtocolView)

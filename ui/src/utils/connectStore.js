@@ -5,28 +5,26 @@ export default function connect (opts) {
 	return component => class extends React.Component {
 		constructor (props, ...rest) {
 			super(props, ...rest)
-
 			this.keys = Object.keys(opts.state)
-			this.parentStreams = this.buildParentStreams(props)
 			this.state = this.buildInitialState()
 		}
-		buildParentStreams (props) {
-			return this.keys.reduce((acc, x) => {
-				acc[x] = opts.state[x](props)
-				return acc
-			}, {})
+		getStreamValue(val, map) {
+			return map ? map(val, this.props) : val
 		}
 		buildInitialState () {
-			return this.keys.reduce((acc, x) => {
-				acc[x] = this.parentStreams[x]()
+			const { props, keys } = this
+			return keys.reduce((acc, x) => {
+				const { map, stream } = opts.state[x]
+				acc[x] = map ? map(stream(props)(), props) : stream(props)()
 				return acc
 			}, {})
 		}
 		componentDidMount () {
 			this.streams = this.keys.reduce((acc, x) => {
+				const { map, stream } = opts.state[x]
 				acc.push(flyd.on(
-					y => this.setState({ [x]: y }),
-					this.parentStreams[x]
+					y => this.setState({ [x]: map ? map(y, this.props) : y }),
+					stream(this.props)
 				))
 				return acc
 			}, [])

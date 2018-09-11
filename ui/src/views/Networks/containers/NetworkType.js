@@ -36,6 +36,9 @@ export function NetworkType (props) {
 
 export default connect({
   state: {
-    groups: props => networkStore.groupsByNetworkTypeId(props.networkType.id)
+    groups: {
+      stream: () => networkStore.groupsByNetworkTypeId,
+      map: (fn, props) => fn(props.networkType.id)
+    }
   }
 })(NetworkType)
