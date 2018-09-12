@@ -64,3 +64,18 @@ export function remoteErrorDisplay( returnedRec ) {
         }
     }
 }
+
+export function fetchJson (url, opts) {
+  opts.headers.Accept = 'application/json'
+  opts.headers['Content-Type'] = 'application/json'
+  return fetch(url, opts)
+    .then(checkStatus)
+    .then(x => x.json())
+}
+
+export function paginationQuery (pageSize, offset) {
+  let result = ''
+  if (pageSize) result += `limit=${pageSize}${offset ? '&' : ''}`
+  if (offset) result += `offset=${offset}`
+  return result
+}

@@ -66,6 +66,8 @@ class OAuthNetwork extends Component {
       // Oauth succeeded
       if (isEmpty(errorParams)) {
 
+
+
         // send oauth info to server
         updateNetworkWithOauthInfo(network, networkProtocol, queryParams)
 

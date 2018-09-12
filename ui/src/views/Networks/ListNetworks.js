@@ -3,7 +3,7 @@ import { isNotArray } from 'ramda-adjunct';
 import BreadCrumbs from '../../components/BreadCrumbs';
 import FetchNetworkTypes from '../../components/fetch/FetchNetworkTypes';
 import NetworkType from './containers/NetworkType';
-import networkGroupStore from "../../stores/NetworkGroupStore";
+import networkStore from "../../stores/NetworkStore";
 
 const breadCrumbs = [
   { to: `/`, text: 'Home' },
@@ -12,7 +12,7 @@ const breadCrumbs = [
 
 export default class ListNetworks extends React.Component {
   componentDidMount () {
-    networkGroupStore.getNetworkGroups()
+    networkStore.getNetworkGroups()
   }
   render () {
     return(

@@ -1,20 +1,28 @@
 import React from 'react';
 import PT from 'prop-types';
 import { propOr, isEmpty } from 'ramda';
-import { noop } from 'ramda-adjunct';
+import { noop, isArray } from 'ramda-adjunct';
 import { arrayify } from '../utils/generalUtils';
+import { getNetworkFields } from '../utils/protocolUtils';
 import DynamicForm from './DynamicForm';
 import FormInput from './FormInput';
+import FormSelect from './FormSelect';
 
 //******************************************************************************
 // Interface
 //******************************************************************************
 
+const versionShape = {
+  versionText: PT.string.isRequired, // For presentation to user
+  versionValue: PT.string.isRequired, // Value to send to back end
+};
+
 NetworkForm.propTypes = {
   isNew: PT.bool,
   networkData: PT.object.isRequired,
-  networkProtocolName: PT.string,
-  networkProtocolFields: PT.arrayOf(PT.object),
+  networkProtocol: PT.object.isRequired,
+  networkProtocolVersion: PT.object,
+  networkProtocolVersionList: PT.arrayOf(PT.shape(versionShape)),
   onDelete: PT.func,
   onSubmit: PT.func,
   submitText: PT.oneOfType([PT.string, PT.arrayOf(PT.string)]),
@@ -40,29 +48,35 @@ NetworkForm.defaultProps = {
 
 export default function NetworkForm(props) {
 
-  const { isNew, path, submitText, onChange, onSubmit, onDelete } = props;
-  const { networkData, networkProtocolName, networkProtocolFields } = props;
+  const { isNew, networkData={}, path, submitText, onChange, onSubmit, onDelete } = props;
+  const { networkProtocol={}, networkProtocolVersion, networkProtocolVersionList=[] } = props;
+
   const securityData = propOr({}, 'securityData', networkData);
   const authorized = propOr(false, 'authorized', securityData);
   const serverAuthMessage = propOr('', 'message', securityData);
 
+  const networkProtocolName = propOr('', 'name', networkProtocol);
+  const networkProtocolFields = getNetworkFields(networkProtocol);
+  const networkProtocolVersionText = propOr('', 'versionText', networkProtocolVersion);
+  const networkProtocolVersionValue = propOr('', 'versionValue', networkProtocolVersion);
+
   const panelHeading = isNew ? `Create ${networkProtocolName} Network` : `Editing ${networkProtocolName} Network`;
 
   return(
-    <div className="panel panel-default">
+    <div className='panel panel-default'>
 
-      <div className="panel-heading d-flex jc-sb">
-        <h3 className="panel-title panel-title-buttons">{panelHeading}</h3>
+      <div className='panel-heading d-flex jc-sb'>
+        <h3 className='panel-title panel-title-buttons'>{panelHeading}</h3>
         { !isNew &&
-        <div className="btn-group pull-right">
-          <button type="button" className="btn btn-danger btn-sm margin-top-xl"
+        <div className='btn-group pull-right'>
+          <button type='button' className='btn btn-danger btn-sm margin-top-xl'
             onClick={onDelete}> Delete Network
           </button>
         </div> }
       </div>
 
       <form onSubmit={onSubmit}>
-        <div className="panel-body">
+        <div className='panel-body'>
 
           {!isNew && !authorized && !isEmpty(securityData) &&
             <div className='fs-sm bgc-danger txt-color-white pad-10 mrg-v-10 lh-compress'>
@@ -70,6 +84,25 @@ export default function NetworkForm(props) {
               <div>Your network security data will need to be updated</div>
               { serverAuthMessage && <div>{serverAuthMessage}</div>}
             </div>
+          }
+
+          { isArray(networkProtocolVersionList) && networkProtocolVersionList.length === 1 &&
+            <div className='mrg-b-15 txt-color-alt'>
+              {`${networkProtocolName} ${networkProtocolVersionText}`}
+            </div>
+          }
+
+          { isNew && isArray(networkProtocolVersionList) && networkProtocolVersionList.length > 1 &&
+            <FormSelect
+              label={`${networkProtocolName} Version`}
+              id='networkProtocolVersion'
+              required
+              selectProps={{ textProp: 'versionText', valueProp:'versionValue' }}
+              selectList={networkProtocolVersionList}
+              value={networkProtocolVersionValue}
+              onChange={e=>onChange(path, 'networkProtocolVersion', e)}
+              description={`Specifies which version of ${networkProtocolName} will be used`}
+            />
           }
 
           <FormInput label='Network Name' name='name'  type='text' required
@@ -90,7 +123,7 @@ export default function NetworkForm(props) {
           />
 
           { networkProtocolFields &&
-            <div className="form-section-margin-top">
+            <div className='form-section-margin-top'>
               <strong>{ `${networkProtocolName} ` } network security data</strong>
               <DynamicForm
                 fieldSpecs={networkProtocolFields}
@@ -110,7 +143,7 @@ export default function NetworkForm(props) {
               </div>
             }
             <div>
-              <button type="submit" className="btn btn-primary">Submit</button>
+              <button type='submit' className='btn btn-primary'>Submit</button>
             </div>
           </div>
         </div>

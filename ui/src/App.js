@@ -83,8 +83,7 @@ class Layout extends Component {
             <Route exact path="/admin/networkProtocols" component={ListNetworkProtocols}/>
             <Route exact path="/admin/networkProtocol" component={CreateNetworkProtocol}/>
             <Route exact path="/admin/networks" component={ListNetworks}/>
-            <Route exact path="/admin/network/:networkID" component={CreateOrEditNetowrk}/>
-            <Route exact path="/admin/network" component={CreateOrEditNetowrk}/>
+            <Route exact path="/admin/network/:networkID?" component={CreateOrEditNetowrk}/>
             <Route exact path="/admin/networks/oauth" component={OAuthNetwork}/>
             <Route exact path="/admin/pull/:networkID" component={PullNetworks}/>
             <Route exact path="/admin/reportingProtocol/:reportingProtocolID" component={ReportingProtocolLayout}/>
