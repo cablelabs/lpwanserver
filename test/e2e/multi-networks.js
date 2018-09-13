@@ -10,7 +10,7 @@ var request = require('request')
 chai.use(chaiHttp)
 var server = chai.request(app).keepOpen()
 
-describe.only('E2E Test for Multiple Networks', function () {
+describe.only('E2E Test for Multiple Networks', () => {
   var adminToken
   var userId
   var userToken
@@ -47,7 +47,7 @@ describe.only('E2E Test for Multiple Networks', function () {
         done(err)
       })
   })
-  describe('Verify Login and Administration of Users Works', function () {
+  describe('Verify Login and Administration of Users Works', () => {
     it('Admin Login to LPWan Server', (done) => {
       server
         .post('/api/sessions')
@@ -103,8 +103,8 @@ describe.only('E2E Test for Multiple Networks', function () {
         })
     })
   })
-  describe('Setup Networks', function () {
-    describe('Setup Lora 1.0 Network', function () {
+  describe('Setup Networks', () => {
+    describe('Setup Lora 1.0 Network', () => {
       it('Verify LoraOS 1.0 Protocol Exists', (done) => {
         server
           .get('/api/networkProtocols?search=Lora Open Source&networkProtocolVersion=1.0')
@@ -168,7 +168,7 @@ describe.only('E2E Test for Multiple Networks', function () {
           })
       })
     })
-    describe('Setup Lora 2.0 Network', function () {
+    describe('Setup Lora 2.0 Network', () => {
       it('Verify LoraOS 2.0 Protocol Exists', (done) => {
         server
           .get('/api/networkProtocols?search=Lora Open Source&networkProtocolVersion=2.0')
@@ -233,9 +233,9 @@ describe.only('E2E Test for Multiple Networks', function () {
       })
     })
   })
-  describe('After “authorized” network, automatically pulls the devices & applications', function () {
-    describe('Lora 1.0', function () {
-      it('Pull Applications, Device Profiles, Integrations, and Devices', function (done) {
+  describe('After “authorized” network, automatically pulls the devices & applications', () => {
+    describe('Lora 1.0', () => {
+      it('Pull Applications, Device Profiles, Integrations, and Devices', (done) => {
         server
           .post('/api/networks/' + lora.loraV1.networkId + '/pull')
           .set('Authorization', 'Bearer ' + adminToken)
@@ -246,7 +246,7 @@ describe.only('E2E Test for Multiple Networks', function () {
             done()
           })
       })
-      it('Verify the Cablelabs Organization was Created', function (done) {
+      it('Verify the Cablelabs Organization was Created', (done) => {
         server
           .get('/api/companies')
           .set('Authorization', 'Bearer ' + adminToken)
@@ -265,8 +265,8 @@ describe.only('E2E Test for Multiple Networks', function () {
           })
       })
     })
-    describe('Lora 2.0', function () {
-      it('Pull Applications, Device Profiles, Integrations, and Devices', function (done) {
+    describe('Lora 2.0', () => {
+      it('Pull Applications, Device Profiles, Integrations, and Devices', (done) => {
         server
           .post('/api/networks/' + lora.loraV2.networkId + '/pull')
           .set('Authorization', 'Bearer ' + adminToken)
@@ -277,7 +277,7 @@ describe.only('E2E Test for Multiple Networks', function () {
             done()
           })
       })
-      it('Verify the Cablelabs Organization was Created', function (done) {
+      it('Verify the Cablelabs Organization was Created', (done) => {
         server
           .get('/api/companies')
           .set('Authorization', 'Bearer ' + adminToken)
@@ -296,8 +296,8 @@ describe.only('E2E Test for Multiple Networks', function () {
           })
       })
     })
-    describe('Lora 1.0 Application Verification', function () {
-      it('Verify the Test Application was Created', function (done) {
+    describe('Lora 1.0 Application Verification', () => {
+      it('Verify the Test Application was Created', (done) => {
         server
           .get('/api/applications')
           .set('Authorization', 'Bearer ' + adminToken)
@@ -330,7 +330,7 @@ describe.only('E2E Test for Multiple Networks', function () {
             done()
           })
       })
-      it('Verify the Test Application NTL was Created', function (done) {
+      it('Verify the Test Application NTL was Created', (done) => {
         let expected = {
           'id': 1,
           'applicationId': 1,
@@ -385,8 +385,8 @@ describe.only('E2E Test for Multiple Networks', function () {
           })
       })
     })
-    describe('Lora 2.0 Application Verification', function () {
-      it('Verify the Test Application was Created', function (done) {
+    describe('Lora 2.0 Application Verification', () => {
+      it('Verify the Test Application was Created', (done) => {
         server
           .get('/api/applications')
           .set('Authorization', 'Bearer ' + adminToken)
@@ -420,7 +420,7 @@ describe.only('E2E Test for Multiple Networks', function () {
             done()
           })
       })
-      it('Verify the Test Application NTL was Created', function (done) {
+      it('Verify the Test Application NTL was Created', (done) => {
         let expected = {
           'id': 2,
           'applicationId': 2,
@@ -475,8 +475,8 @@ describe.only('E2E Test for Multiple Networks', function () {
           })
       })
     })
-    describe('Lora 1.0 Device Verification', function () {
-      it('Verify the Test1 Device Profile was Created', function (done) {
+    describe('Lora 1.0 Device Verification', () => {
+      it('Verify the Test1 Device Profile was Created', (done) => {
         let expected = {
           'id': 1,
           'networkTypeId': 1,
@@ -535,7 +535,7 @@ describe.only('E2E Test for Multiple Networks', function () {
             done()
           })
       })
-      it('Verify the Test Device was Created', function (done) {
+      it('Verify the Test Device was Created', (done) => {
         let expected = {
           'id': 1,
           'applicationId': lora.loraV1.apps[0].appId,
@@ -568,7 +568,7 @@ describe.only('E2E Test for Multiple Networks', function () {
             done()
           })
       })
-      it('Verify the Test Device NTL was Created', function (done) {
+      it('Verify the Test Device NTL was Created', (done) => {
         appLogger.log(lora, 'info')
         let expected = {
           'id': 1,
@@ -622,8 +622,8 @@ describe.only('E2E Test for Multiple Networks', function () {
           })
       })
     })
-    describe('Lora 2.0 Device Verification', function () {
-      it('Verify the Test1 Device Profile was Created', function (done) {
+    describe('Lora 2.0 Device Verification', () => {
+      it('Verify the Test1 Device Profile was Created', (done) => {
         let expected = {
           'id': 2,
           'networkTypeId': 1,
@@ -679,7 +679,7 @@ describe.only('E2E Test for Multiple Networks', function () {
             done()
           })
       })
-      it('Verify the Test Device was Created', function (done) {
+      it('Verify the Test Device was Created', (done) => {
         let expected = {
           'id': 2,
           'applicationId': lora.loraV2.apps[0].appId,
@@ -712,7 +712,7 @@ describe.only('E2E Test for Multiple Networks', function () {
             done()
           })
       })
-      it('Verify the Test Device NTL was Created', function (done) {
+      it('Verify the Test Device NTL was Created', (done) => {
         let expected = {
           'id': 2,
           'deviceId': lora.loraV2.apps[0].deviceIds[0],
@@ -768,9 +768,9 @@ describe.only('E2E Test for Multiple Networks', function () {
       })
     })
   })
-  describe('Sync with each network server the current state of devices', function () {
-    describe('Push Lora 1.0 Network', function () {
-      it('Push Applications, Device Profiles, Integrations, and Devices', function (done) {
+  describe('Sync with each network server the current state of devices', () => {
+    describe('Push Lora 1.0 Network', () => {
+      it('Push Applications, Device Profiles, Integrations, and Devices', (done) => {
         server
           .post('/api/networks/' + lora.loraV1.networkId + '/push')
           .set('Authorization', 'Bearer ' + adminToken)
@@ -782,8 +782,8 @@ describe.only('E2E Test for Multiple Networks', function () {
           })
       })
     })
-    describe('Push Lora 2.0 Network', function () {
-      it('Push Applications, Device Profiles, Integrations, and Devices', function (done) {
+    describe('Push Lora 2.0 Network', () => {
+      it('Push Applications, Device Profiles, Integrations, and Devices', (done) => {
         server
           .post('/api/networks/' + lora.loraV2.networkId + '/push')
           .set('Authorization', 'Bearer ' + adminToken)
