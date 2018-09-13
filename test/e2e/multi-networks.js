@@ -584,7 +584,16 @@ describe.only('E2E Test for Multiple Networks', function () {
             'deviceStatusBattery': 256,
             'deviceStatusMargin': 256,
             'lastSeenAt': '',
-            'skipFCntCheck': false
+            'skipFCntCheck': false,
+            'deviceActivation': {
+              'aFCntDown': 0,
+              'appSKey': '9a6c5d6e9d4bcde4fe489d477e942b03',
+              'devAddr': '017b45d9',
+              'fCntUp': 0,
+              'nwkSEncKey': '33d579ae37f41205ee66e2e03a8a2356',
+              'fNwkSIntKey': '33d579ae37f41205ee66e2e03a8a2356',
+              'sNwkSIntKey': '33d579ae37f41205ee66e2e03a8a2356'
+            }
           }
         }
         server
@@ -764,6 +773,19 @@ describe.only('E2E Test for Multiple Networks', function () {
       it('Push Applications, Device Profiles, Integrations, and Devices', function (done) {
         server
           .post('/api/networks/' + lora.loraV1.networkId + '/push')
+          .set('Authorization', 'Bearer ' + adminToken)
+          .set('Content-Type', 'application/json')
+          .end(function (err, res) {
+            if (err) done(err)
+            res.should.have.status(200)
+            done()
+          })
+      })
+    })
+    describe('Push Lora 2.0 Network', function () {
+      it('Push Applications, Device Profiles, Integrations, and Devices', function (done) {
+        server
+          .post('/api/networks/' + lora.loraV2.networkId + '/push')
           .set('Authorization', 'Bearer ' + adminToken)
           .set('Content-Type', 'application/json')
           .end(function (err, res) {

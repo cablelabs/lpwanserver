@@ -432,7 +432,7 @@ function getRemoteDeviceById (network, deviceId, connection) {
   appLogger.log('LoRaOpenSource: getDeviceProfileById')
   return new Promise(async function (resolve, reject) {
     // Set up the request options.
-    var options = {}
+    let options = {}
     options.method = 'GET'
     options.url = network.baseUrl + '/devices/' + deviceId
     options.headers = {
@@ -461,44 +461,95 @@ function getRemoteDeviceById (network, deviceId, connection) {
       }
       else {
         var device = JSON.parse(body)
-        // Get the device Keys
-        options = {}
-        options.method = 'GET'
-        options.url = network.baseUrl + '/devices/' + deviceId + '/keys'
-        options.headers = {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ' + connection
+        appLogger.log(device, 'info')
+        resolve(device)
+      }
+    })
+  })
+};
+
+function getRemoteDeviceKey (network, device, connection) {
+  appLogger.log('LoRaOpenSource: getRemoteDeviceKey', 'info')
+  return new Promise(async function (resolve, reject) {
+    let options = {}
+    options.method = 'GET'
+    options.url = network.baseUrl + '/devices/' + device.device.devEUI + '/keys'
+    options.headers = {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + connection
+    }
+    options.agentOptions = {
+      'secureProtocol': 'TLSv1_2_method',
+      'rejectUnauthorized': false
+    }
+    appLogger.log(options)
+    request(options, async function (error, response, body) {
+      if (error || response.statusCode >= 400) {
+        if (error) {
+          appLogger.log('Error on get Device Keys: ' + error)
+          reject(error)
         }
-        options.agentOptions = {
-          'secureProtocol': 'TLSv1_2_method',
-          'rejectUnauthorized': false
+        else if (response.statusCode === 404) {
+          appLogger.log('Device does not have a key', 'info')
+          resolve(device)
         }
-        appLogger.log(options)
-        request(options, async function (error, response, body) {
-          if (error || response.statusCode >= 400) {
-            if (error) {
-              appLogger.log('Error on get Device Keys: ' + error)
-              reject(error)
-            }
-            else if (response.statusCode === 404) {
-              appLogger.log('Device does not have a key', 'info')
-              resolve(device)
-            }
-            else {
-              var bodyObj = JSON.parse(response.body)
-              appLogger.log('Error on get Device Keys: ' +
-                bodyObj.error +
-                ' (' + response.statusCode + ')')
-              appLogger.log('Request data = ' + JSON.stringify(options))
-              reject(response.statusCode)
-            }
-          }
-          else {
-            let keys = JSON.parse(body)
-            device.deviceKeys = keys.deviceKeys
-            resolve(device)
-          }
-        })
+        else {
+          var bodyObj = JSON.parse(response.body)
+          appLogger.log('Error on get Device Keys: ' +
+            bodyObj.error +
+            ' (' + response.statusCode + ')')
+          appLogger.log('Request data = ' + JSON.stringify(options))
+          reject(response.statusCode)
+        }
+      }
+      else {
+        let keys = JSON.parse(body)
+        device.device.deviceKeys = keys.deviceKeys
+        resolve(device)
+      }
+    })
+  })
+};
+
+function getRemoteDeviceActivation (network, device, connection) {
+  appLogger.log('LoRaOpenSource: getRemoteDeviceActivation', 'info')
+  return new Promise(async function (resolve, reject) {
+    let options = {}
+    options.method = 'GET'
+    options.url = network.baseUrl + '/devices/' + device.devEUI + '/activation'
+    options.headers = {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + connection
+    }
+    options.agentOptions = {
+      'secureProtocol': 'TLSv1_2_method',
+      'rejectUnauthorized': false
+    }
+    appLogger.log(options)
+    request(options, async function (error, response, body) {
+      if (error || response.statusCode >= 400) {
+        if (error) {
+          appLogger.log('Error on get Device Keys: ' + error)
+          reject(error)
+        }
+        else if (response.statusCode === 404) {
+          appLogger.log('Device does not have a key', 'info')
+          resolve(device)
+        }
+        else {
+          var bodyObj = JSON.parse(response.body)
+          appLogger.log('Error on get Device Keys: ' +
+            bodyObj.error +
+            ' (' + response.statusCode + ')')
+          appLogger.log('Request data = ' + JSON.stringify(options))
+          reject(response.statusCode)
+        }
+      }
+      else {
+        let keys = JSON.parse(body)
+        appLogger.log(keys, 'info')
+        device.deviceActivation = keys
+        resolve(device)
       }
     })
   })
@@ -906,6 +957,7 @@ module.exports.addCompany = function (sessionData, network, companyId, dataAPI) 
               }
             }
             else {
+              appLogger.log(body)
               // Save the user ID from the remote network.
               await dataAPI.putProtocolDataForKey(network.id,
                 network.networkProtocolId,
@@ -1357,7 +1409,7 @@ module.exports.pushDeviceProfile = function (sessionData, network, deviceProfile
   })
 }
 
-module.exports.pushDevices = function (sessionData, network, modelAPI, dataAPI, applicationMap, dpMap) {
+module.exports.pushDevices = function (sessionData, network, modelAPI, dataAPI) {
   let me = this
   return new Promise(async function (resolve, reject) {
     let existingDevices = await modelAPI.devices.retrieveDevices()
@@ -1634,9 +1686,6 @@ module.exports.addRemoteDeviceProfile = function (sessionData, limitedRemoteDevi
             }
             else {
               appLogger.log('creating ' + remoteDeviceProfile.name)
-              // let networkSettings = {
-              //   deviceProfile: remoteDeviceProfile.deviceProfile
-              // }
               let networkSpecificDeviceProfileInformation = normalizeDeviceProfileData(remoteDeviceProfile)
               appLogger.log(networkSpecificDeviceProfileInformation, 'error')
               modelAPI.deviceProfiles.createRemoteDeviceProfile(network.networkTypeId, 2,
@@ -1752,8 +1801,8 @@ function addRemoteApplication (sessionData, limitedRemoteApplication, network, m
         network.networkProtocolId,
         makeApplicationDataKey(existingApplication.id, 'appNwkId'),
         remoteApplication.id)
-      resolve({localApplication: existingApplication.id, remoteApplication: remoteApplication.id})
     }
+    resolve({localApplication: existingApplication.id, remoteApplication: remoteApplication.id})
   })
 }
 
@@ -1816,8 +1865,15 @@ function addRemoteDevice (sessionData, limitedRemoteDevice, network, application
     let remoteDevice = await getRemoteDeviceById(network, limitedRemoteDevice.devEUI, sessionData.connection, dataAPI)
     appLogger.log('Adding ' + remoteDevice.name)
     appLogger.log(remoteDevice)
-    let deviceProfile = dpMap.find(o => o.remoteDeviceProfile == remoteDevice.deviceProfileID)
-    appLogger.log(deviceProfile)
+    let deviceProfileId = dpMap.find(o => o.remoteDeviceProfile === remoteDevice.deviceProfileID)
+    let deviceProfile = await dataAPI.getDeviceProfileById(deviceProfileId.localDeviceProfile)
+    if (deviceProfile.supportsJoin) {
+      remoteDevice = await getRemoteDeviceKey(network, remoteDevice, sessionData.connection)
+    }
+    else {
+      remoteDevice = await getRemoteDeviceActivation(network, remoteDevice, sessionData.connection)
+    }
+
     let existingDevice = await modelAPI.devices.retrieveDevices({search: remoteDevice.name})
     appLogger.log(existingDevice)
     if (existingDevice.totalCount > 0) {
@@ -1836,7 +1892,9 @@ function addRemoteDevice (sessionData, limitedRemoteDevice, network, application
     }
     else {
       appLogger.log('creating Network Link for ' + existingDevice.name)
-      existingDeviceNTL = await modelAPI.deviceNetworkTypeLinks.createRemoteDeviceNetworkTypeLink(existingDevice.id, network.networkTypeId, deviceProfile.localDeviceProfile, remoteDevice, 2)
+      let normalizedDeviceSettings = normalizeDeviceData(remoteDevice)
+      appLogger.log(normalizedDeviceSettings, 'info')
+      existingDeviceNTL = await modelAPI.deviceNetworkTypeLinks.createRemoteDeviceNetworkTypeLink(existingDevice.id, network.networkTypeId, deviceProfileId.localDeviceProfile, normalizedDeviceSettings, 2)
       appLogger.log(existingDeviceNTL)
     }
     dataAPI.putProtocolDataForKey(network.id,
@@ -3247,7 +3305,7 @@ function normalizeDeviceProfileData (remoteDeviceProfile) {
     supports32BitFCnt: remoteDeviceProfile.deviceProfile.supports32bitFCnt,
     supportsClassB: remoteDeviceProfile.deviceProfile.supportsClassB,
     supportsClassC: remoteDeviceProfile.deviceProfile.supportsClassC,
-    supportsJoin: true
+    supportsJoin: remoteDeviceProfile.deviceProfile.supportsJoin
   }
   return normalized
 }
@@ -3313,17 +3371,25 @@ function normalizeDeviceData (remoteDevice) {
       nwkKey: remoteDevice.deviceKeys.nwkKey
     }
   }
+  /*
+  "devEUI": "",
+  "appSKey": "string",
+  "devAddr": "string",
+  "fCntDown": 0,
+  "fCntUp": 0,
+  "nwkSKey": "string",
+  "skipFCntCheck": true
+   */
   if (remoteDevice.deviceActivation) {
     normalized.deviceActivation = {
-      aFCntDown: remoteDevice.deviceActivation.aFCntDown,
+      devEUI: remoteDevice.deviceActivation.devEUI,
       appSKey: remoteDevice.deviceActivation.appSKey,
       devAddr: remoteDevice.deviceActivation.devAddr,
-      devEUI: remoteDevice.deviceActivation.devEUI,
+      aFCntDown: remoteDevice.deviceActivation.fCntDown,
       fCntUp: remoteDevice.deviceActivation.fCntUp,
-      fNwkSIntKey: remoteDevice.deviceActivation.fNwkSIntKey,
-      nFCntDown: remoteDevice.deviceActivation.nFCntDown,
-      nwkSEncKey: remoteDevice.deviceActivation.nwkSEncKey,
-      sNwkSIntKey: remoteDevice.deviceActivation.sNwkSIntKey
+      nwkSEncKey: remoteDevice.deviceActivation.nwkSKey,
+      sNwkSIntKey: remoteDevice.deviceActivation.nwkSKey,
+      fNwkSIntKey: remoteDevice.deviceActivation.nwkSKey
     }
   }
   return normalized
