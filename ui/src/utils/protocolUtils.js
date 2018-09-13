@@ -1,8 +1,5 @@
-import {
-  pathOr, propOr, append, flatten, pipe, map,
-  filter, reduce, reduced, curry, isNil, isEmpty
-} from 'ramda';
-import { findById, containesById } from './objectListUtils';
+import { pathOr, propOr, append } from 'ramda';
+import { findById } from './objectListUtils';
 import { fieldSpecsToValues } from './inputUtils';
 
 //******************************************************************************
