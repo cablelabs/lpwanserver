@@ -41,11 +41,11 @@ class SessionStore extends EventEmitter {
     }
 
     putSetting(key, value) {
-      const user = JSON.parse( sessionStorage.getItem( "user" ));
-      const lens = lensPath(["settings", key]);
-      user && sessionStorage.setItem( "user",
-        JSON.stringify(lensSet(lens, value, user)));
-
+      const lens = lensPath(["settings", key])
+      const user = lensSet(lens, value, JSON.parse(
+        sessionStorage.getItem('user') || '{}'
+      ))
+      sessionStorage.setItem('user', JSON.stringify(user))
     }
 
     removeSetting(key) {

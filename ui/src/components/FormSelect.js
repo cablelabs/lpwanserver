@@ -6,8 +6,8 @@ import PT from 'prop-types';
 //******************************************************************************
 
 const selectPropsShape = {
-  text: PT.string.isRequred, // prop on objects in select list to use for select list text
-  value: PT.string.isRequred,   // prop on objects in select list to use for select list value
+  textProp: PT.string.isRequred,  // prop on objects in select list to use for select list text
+  valueProp: PT.string.isRequred, // prop on objects in select list to use for select list value
 };
 
 FormSelect.propTypes = {
@@ -33,16 +33,18 @@ FormSelect.defaultProps = {
 
 
 export default function FormSelect(props) {
+
   const { id, label, description, required, } = props;
   const { value, selectList=[], selectProps={}, onChange, } = props;
+  const { textProp, valueProp } = selectProps;
 
   return (
     <div className="form-group">
       <label className="control-label" htmlFor={id}>{label}</label>
       <select className="form-control" {...{ id, required, value, onChange }}>
         { selectList.map( (listEntry, i) =>
-          <option key={i} value={listEntry[selectProps.value]}>
-            {listEntry[selectProps.text]}
+          <option key={i} value={listEntry[valueProp]}>
+            {listEntry[textProp]}
           </option>
         )}
       </select>

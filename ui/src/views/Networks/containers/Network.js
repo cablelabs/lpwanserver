@@ -1,6 +1,6 @@
 import React, {Component} from "react";
 import PT from 'prop-types';
-import { propOr } from 'ramda';
+import { assocPath, pathOr } from 'ramda';
 import { withRouter } from 'react-router-dom';
 import { dispatchError } from '../../../utils/errorUtils';
 import networkStore from "../../../stores/NetworkStore";
@@ -12,7 +12,7 @@ import NetworkView from '../views/NetworkView';
 
 const propTypes = {
   network: PT.object.isRequired,
-  networkProtocolName: PT.string, // protocol for this network
+  networkProtocol: PT.object.isRequired, // protocol for this network
 };
 
 const defaultProps = {
@@ -36,24 +36,19 @@ class Network extends Component {
   }
 
   componentDidMount() {
-    const { network={} } = this.props;
-    this.setState({network});
+    this.setState({ network: this.props.network || {} });
   }
 
   onToggleEnabled() {
-    const network = propOr({}, 'network', this.state);
-    const securityData = propOr({}, 'securityData', network);
-    const currentlyEnabled = propOr(false, 'enabled', securityData);
-
-    const securityDataModifications = {
-       ...securityData,
-       enabled: !currentlyEnabled
-    };
-    const networkModifications = {...network, securityData: securityDataModifications};
-
-    network && networkStore.updateNetwork(networkModifications)
-    .then(udpatedNetwork => this.setState({ network: udpatedNetwork }))
-    .catch(e=>dispatchError(e));
+    const enabledPath = ['securityData', 'enabled']
+    const network = assocPath(
+      enabledPath,
+      !pathOr(false, enabledPath, this.state.network),
+      this.state.network
+    )
+    networkStore.updateNetwork(network)
+      .then(x => this.setState({ network: x }))
+      .catch(e=>dispatchError(e));
   }
 
   onEdit() {
@@ -62,13 +57,11 @@ class Network extends Component {
   }
 
   render() {
+    const { network } = this.state;
+    const { networkProtocol } = this.props;
+    const { onEdit, onToggleEnabled } = this;
     return (
-      <NetworkView
-        network={this.state.network}
-        networkProtocolName={this.props.networkProtocolName}
-        onToggleEnabled={this.onToggleEnabled}
-        onEdit={this.onEdit}
-      />
+      <NetworkView {...{ network, networkProtocol, onEdit, onToggleEnabled }}/>
     );
   }
 }
