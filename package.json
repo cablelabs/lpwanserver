@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node ./bin/rest",
     "mocha": "export NODE_ENV=local;mocha",
-    "e2e": "cp data/test.sqlite3.testSuiteStartingDB test/e2e/lpwanserver.sqlite3;export NODE_ENV=e2e; mocha test/e2e --exit",
+    "e2e": "cp data/test.sqlite3.testSuiteStartingDB test/e2e/lpwanserver.sqlite3;export NODE_ENV=e2e; mocha test/e2e --exit --bail",
     "e2e-log": "cp data/test.sqlite3.testSuiteStartingDB test/e2e/lpwanserver.sqlite3;export NODE_ENV=e2e-log; mocha test/e2e --exit",
     "ttn-test": "export NODE_ENV=ttn-unit;mocha test/ttn-unit",
     "loriot-test": "export NODE_ENV=loriot-unit;mocha test/loriot-unit",
@@ -18,7 +18,7 @@
     "doc": "jsdoc -r ./rest -d ./docs",
     "mac": "export NODE_ENV=mac;npm start",
     "dev": "npm install && NODE_ENV=local nodemon --watch rest ./bin/rest",
-    "e2e-docker": "./test/e2e/startLoraOS"
+    "e2e-docker": "export NODE_ENV=e2e; ./bin/e2e"
   },
   "dependencies": {
     "async": "~2.0.1",
@@ -51,6 +51,7 @@
     "serve-favicon": "^2.5.0",
     "session-file-store": "^0.2.1",
     "sqlite3": "^4.0.2",
+    "winston": "^3.1.0",
     "ws": "^1.1.5"
   },
   "devDependencies": {

@@ -1,0 +1,81 @@
+[
+  {
+    "application": {
+      "_id": 3195929586,
+      "name": "ApiTest",
+      "ownerid": 248,
+      "created": "2018-06-28T16:27:19.980Z",
+      "tier": 2,
+      "tierStr": "PoC",
+      "devices": 1,
+      "deviceLimit": 10,
+      "output": "httppush",
+      "osetup": {
+        "url": "http://localhost:3200/api/ingest/1/1",
+        "auth": ""
+      },
+      "overbosity": "full",
+      "ogwinfo": "rssi",
+      "orx": true,
+      "cansend": true,
+      "canotaa": true,
+      "suspended": false,
+      "clientsLimit": 10,
+      "joinServer": null,
+      "publishAppSKey": false
+    }
+  },
+  {
+    "deviceProfile": {
+    }
+  },
+  {
+    "device":{
+      "_id": "0080000004001546",
+      "title": "00-80-00-00-04-00-15-46",
+      "description": null,
+      "appeui": "BE7E0000000003F2",
+      "deveui": "0080000004001546",
+      "devaddr": "002AF013",
+      "nwkskey": "93AA920D2CDC0F093109D5884E1E6030",
+      "appskey": "7D39F3447CAD6D8EBCD32D0DB73E1E4D",
+      "appkey": "84BC34D6D609B02102596AD77A4F988E",
+      "seqno": -1,
+      "seqdn": 0,
+      "seqq": 0,
+      "adrCnt": 0,
+      "subscription": 2,
+      "txrate": null,
+      "rxrate": null,
+      "devclass": "A",
+      "rxw": 1,
+      "rx1": {
+        "delay": 1000000,
+        "offset": 0
+      },
+      "dutycycle": 0,
+      "adr": true,
+      "adrMin": null,
+      "adrMax": null,
+      "adrFix": null,
+      "seqrelax": true,
+      "seqdnreset": true,
+      "createdAt": "2018-07-20T18:32:11.557Z",
+      "bat": null,
+      "devSnr": null,
+      "packetLimit": null
+    }
+  },
+  {
+    "integrations": {
+      "output": "httppush",
+      "osetup": {
+        "url": "http://localhost:3200/api/ingest/1/1",
+        "auth": ""
+      },
+      "overbosity": "full",
+      "ogwinfo": "rssi",
+      "orx": true
+    }
+  }
+]

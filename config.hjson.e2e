@@ -9,7 +9,7 @@
     //log_format_morgan: dev
 
     // General log settings.  Enable logs in general.
-    //logging_enabled: true
+    logging_enabled: true
 
     // Add headers of timestamps and file and line number. (Make false for
     // production where this is added by the system anyway.)

@@ -8,7 +8,7 @@ logs
 # Runtime data
 pids
 *.pid
-*.seed
+# *.seed
 *.sqlite3
 data/deviceSchemas
 data/redis

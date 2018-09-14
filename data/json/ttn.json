@@ -1,0 +1,51 @@
+[
+  {
+    "application":{
+      "app_id": "some-app-id",
+      "converter": "function Converter(decoded, port) {...",
+      "decoder": "function Decoder(bytes, port) {...",
+      "encoder": "Encoder(object, port) {...",
+      "payload_format": "",
+      "register_on_join_access_key": "",
+      "validator": "Validator(converted, port) {..."
+    }
+  },
+  {
+    "deviceProfile": {}
+  },
+  {
+    "device": {
+      "altitude": 0,
+      "app_id": "some-app-id",
+      "attributes": {
+        "key": "",
+        "value": ""
+      },
+      "description": "Some description of the device",
+      "dev_id": "some-dev-id",
+      "latitude": 52.375,
+      "longitude": 4.887,
+      "lorawan_device": {
+        "activation_constraints": "local",
+        "app_eui": "0102030405060708",
+        "app_id": "some-app-id",
+        "app_key": "01020304050607080102030405060708",
+        "app_s_key": "01020304050607080102030405060708",
+        "dev_addr": "01020304",
+        "dev_eui": "0102030405060708",
+        "dev_id": "some-dev-id",
+        "disable_f_cnt_check": false,
+        "f_cnt_down": 0,
+        "f_cnt_up": 0,
+        "last_seen": 0,
+        "nwk_s_key": "01020304050607080102030405060708",
+        "uses32_bit_f_cnt": true
+      }
+    }
+  },
+  {
+    "integrations": {
+
+    }
+  }
+]

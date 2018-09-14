@@ -340,6 +340,27 @@ Network.prototype.pullNetwork = function (networkId) {
   })
 }
 
+Network.prototype.pushNetwork = function (networkId) {
+  let me = this
+  return new Promise(async function (resolve, reject) {
+    try {
+      appLogger.log(networkId)
+      let network = await me.retrieveNetwork(networkId)
+      let networkType = await modelAPI.networkTypes.retrieveNetworkTypes(network.networkTypeId)
+      var npda = new NetworkProtocolDataAccess(modelAPI, 'Push Network')
+      npda.initLog(networkType, network)
+      appLogger.log(network)
+      let result = await modelAPI.networkProtocolAPI.pushNetwork(npda, network, modelAPI)
+      appLogger.log('Success pushing to Network : ' + networkId)
+      resolve(result)
+    }
+    catch (err) {
+      appLogger.log('Error pushing to Network : ' + networkId + ' ' + err)
+      reject(err)
+    }
+  })
+}
+
 const genKey = function (networkId) {
   return 'nk' + networkId
 }
