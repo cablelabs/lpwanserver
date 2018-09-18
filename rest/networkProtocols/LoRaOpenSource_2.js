@@ -56,11 +56,32 @@ module.exports.register = async function (networkProtocols) {
       name: 'Lora Open Source',
       networkTypeId: 1,
       protocolHandler: 'LoRaOpenSource_2.js',
-      networkProtocolVersion: '2.0',
-      masterProtocol: 1
+      networkProtocolVersion: '2.0'
     }
-    await networkProtocols.upsertNetworkProtocol(me)
-    resolve()
+    setTimeout(function() {
+      networkProtocols.retrieveNetworkProtocols({search: me.name, networkProtocolVersion: '1.0'})
+        .then(master => {
+          console.log('Found Master')
+          me.masterProtocol = master.records[0].id
+          networkProtocols.upsertNetworkProtocol(me)
+            .then(() => {
+              resolve()
+            })
+            .catch(err => {
+              reject(err)
+            })
+        })
+        .catch(err => {
+          //No master
+          networkProtocols.upsertNetworkProtocol(me)
+            .then(() => {
+              resolve()
+            })
+            .catch(err => {
+              reject(err)
+            })
+        })
+    }, 1000)
   })
 }
 
