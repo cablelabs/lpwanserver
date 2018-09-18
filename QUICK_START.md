@@ -58,10 +58,11 @@ password: password
 * Click on the `CREATE` button next to the Lora Open Source entry
 * Fill in the form as shown below, and hit `SUBMIT`
   - Network Name: **Lora NW**
-  - Network Base URL: **https://lora_appserver:8080/api**
+  - Network Base URL: **https://appserver:8080/api**
   - Username: **admin**
   - Password: **admin**
 * **lora_appserver** in the URL comes from the service name in `/docker/dev/docker-compose.yml`
+* Use the port exposed by the docker image (8080), not the port on localhost.  So use 8080 for both Lora app servers.
 
 #### Create a Company
 * Click the `Companies` link in the top navigation bar
