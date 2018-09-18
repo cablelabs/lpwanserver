@@ -28,27 +28,19 @@ sudo chmod 755 bin/*
 
 `./bin/init-db`
 
+### Build UI server image
+
+Clone the [web-client](https://github.com/cablelabs/lpwanserver-web-client) repo
+and follow the README instructions to build a docker image to serve the UI. (build && package)
+
 ### Start development environment
 
-#### Terminal Tab 1
-
 Run `./bin/dev`.
-This script spins up docker-compose.
-The docker-compose file `/dev/docker/docker-compose.yml` coordinates running the UI development
-server, the Lora Servers, and the Lora Server dependencies (postgresql, redis, mosquitto).
+The docker-compose file `/dev/docker/docker-compose.yml` coordinates running the lpwanserver
+and all service dependencies.
 
-The UI uses [webpack-dev-server](https://github.com/webpack/webpack-dev-server) so any code changes show immediately in the browser.
-
-The UI server runs on `http://localhost:3000`
-
-#### Terminal Tab 2
-
-Run `npm run dev`.
-This starts LPWAN Server. It runs separately to enable it to contact the Lora Servers on localhost.
-LPWAN Server uses [nodemon](https://github.com/remy/nodemon) in development,
-so any code changes will restart the server.
-
-LPWAN Server runs on `http://localhost:3200`
+The UI is available at `https://localhost:3000`.
+LPWAN Server is available at `https://localhost:3200`
 
 ### Open the UI in a browser
 
@@ -66,9 +58,10 @@ password: password
 * Click on the `CREATE` button next to the Lora Open Source entry
 * Fill in the form as shown below, and hit `SUBMIT`
   - Network Name: **Lora NW**
-  - Network Base URL: **https://localhost:8080/api**
+  - Network Base URL: **https://lora_appserver:8080/api**
   - Username: **admin**
   - Password: **admin**
+* **lora_appserver** in the URL comes from the service name in `/docker/dev/docker-compose.yml`
 
 #### Create a Company
 * Click the `Companies` link in the top navigation bar

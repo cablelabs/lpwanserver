@@ -1,9 +1,9 @@
-FROM node:latest
+FROM node:8
 
 WORKDIR /usr/src/app
 
-ENV HOST=0.0.0.0
+ENV PORT=3200
 
-EXPOSE 3000
+EXPOSE 3200
 
 CMD ["npm", "run", "dev"]
