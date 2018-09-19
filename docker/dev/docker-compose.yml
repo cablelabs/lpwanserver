@@ -1,17 +1,28 @@
 version: '3'
 
 services:
-  ui:
+  rest:
     build:
-      context: ./../..
-      dockerfile: docker/dev/Dockerfile.ui
-    image: lpwanserver-ui-dev
+      context: ../..
+      dockerfile: docker/dev/Dockerfile.rest
+    image: lpwanserver/lpwanserver-dev
+    depends_on:
+      - loraserver
+      - appserver
+      - loraserver1
+      - appserver1
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=local
+      - PORT=3200
     volumes:
-      - ../../ui:/usr/src/app
+      - ../..:/usr/src/app
     ports:
-      - '3000:3000'
+      - '3200:3200'
+      
+  ui:
+    image: lpwanserver/lpwanserver-web-client:latest
+    ports:
+      - '3000:80'
 
   loraserver:
     image: loraserver/loraserver:2
@@ -21,8 +32,17 @@ services:
       - mosquitto
     volumes:
       - ../configuration/loraserver:/etc/loraserver
+  
+  loraserver1:
+    image: loraserver/loraserver:1
+    depends_on:
+      - postgresql
+      - redis
+      - mosquitto
+    volumes:
+      - ../configuration/loraserver_1:/etc/loraserver
 
-  lora_appserver:
+  appserver:
     image: loraserver/lora-app-server:2
     depends_on:
       - postgresql
@@ -32,6 +52,24 @@ services:
       - 8080:8080
     volumes:
       - ../configuration/lora-app-server:/etc/lora-app-server
+
+  appserver1:
+    image: loraserver/lora-app-server:1
+    depends_on:
+      - postgresql
+      - redis
+      - mosquitto
+    ports:
+      - 8081:8080
+    volumes:
+      - ../configuration/lora-app-server_1:/etc/lora-app-server
+
+  gatewaybridge:
+    image: loraserver/lora-gateway-bridge:latest
+    ports:
+      - 1700:1700/udp
+    volumes:
+      - ../configuration/lora-gateway-bridge:/etc/lora-gateway-bridge
   
   postgresql:
     image: postgres:9.6-alpine
