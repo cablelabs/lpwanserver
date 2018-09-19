@@ -17,7 +17,7 @@
     "lint": "eslint rest/",
     "doc": "jsdoc -r ./rest -d ./docs",
     "mac": "export NODE_ENV=mac;npm start",
-    "dev": "npm install && NODE_ENV=local nodemon --watch rest ./bin/rest",
+    "dev": "NODE_ENV=local nodemon --watch rest ./bin/rest",
     "e2e-docker": "export NODE_ENV=e2e; ./bin/e2e",
     "package": "node bin/package.js"
   },

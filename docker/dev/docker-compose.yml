@@ -1,29 +1,11 @@
 version: '3'
 
 services:
-  rest:
-    build:
-      context: ../..
-      dockerfile: docker/dev/Dockerfile.rest
-    image: lpwanserver/lpwanserver-dev
-    depends_on:
-      - loraserver
-      - appserver
-      - loraserver1
-      - appserver1
-    environment:
-      - NODE_ENV=local
-      - PORT=3200
-    volumes:
-      - ../..:/usr/src/app
-    ports:
-      - '3200:3200'
-      
   ui:
     image: lpwanserver/lpwanserver-web-client:latest
     ports:
       - '3000:80'
-
+      
   loraserver:
     image: loraserver/loraserver:2
     depends_on:
