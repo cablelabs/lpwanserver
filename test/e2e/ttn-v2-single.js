@@ -1,7 +1,9 @@
+// eslint-disable-next-line no-unused-vars
 var assert = require('assert')
 var chai = require('chai')
 var chaiHttp = require('chai-http')
 var app = require('../../restApp.js')
+// eslint-disable-next-line no-unused-vars
 var should = chai.should()
 var setup = require('./setup.js')
 var appLogger = require('../../rest/lib/appLogger.js')
@@ -74,6 +76,7 @@ describe('E2E Test for Single TTN', function () {
           if (err) done(err)
           res.should.have.status(200)
           userToken = res.text
+          userToken.should.not.equal(null)
           done()
         })
     })
@@ -100,28 +103,27 @@ describe('E2E Test for Single TTN', function () {
         })
     })
     it('Create the Local TTN Network', (done) => {
+      let body = {
+        'name': 'LocalTTN',
+        'networkProviderId': -1,
+        'networkTypeId': 1,
+        'baseUrl': 'https://account.thethingsnetwork.org',
+        'networkProtocolId': loraProtocolId,
+        'securityData': {
+          authorized: true,
+          message: 'ok',
+          'token_type': 'bearer',
+          'refresh_token': 'EVJn366LdRBljTPA_5E9GHed6YNUIoQamwNmPsKMh6U',
+          'access_token': 'eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiI1YjJhN2IyMTZhNDFhZTAwMzBhOTExZWQiLCJpc3MiOiJ0dG4tYWNjb3VudC12MiIsImlhdCI6MTUzNzU0MTU2OCwidHlwZSI6InVzZXIiLCJjbGllbnQiOiJscHdhbi10ZXN0Iiwic2NvcGUiOlsicHJvZmlsZSIsImFwcHMiLCJjb21wb25lbnRzIiwiZ2F0ZXdheXMiXSwiaW50ZXJjaGFuZ2VhYmxlIjp0cnVlLCJ1c2VybmFtZSI6ImRzY2hyaW1wc2hlcnIiLCJlbWFpbCI6ImQuc2NocmltcHNoZXJAY2FibGVsYWJzLmNvbSIsImNyZWF0ZWQiOiIyMDE4LTA2LTIwVDE2OjA0OjQ5Ljc2N1oiLCJuYW1lIjp7ImZpcnN0IjoiRGFuIiwibGFzdCI6IlNjaHJpbXBzaGVyIn0sInZhbGlkIjp0cnVlLCJfaWQiOiI1YjJhN2IyMTZhNDFhZTAwMzBhOTExZWQiLCJleHAiOjE1Mzc1NDUyMjh9.ChaZqhGYfsVu_xwUEvj5jddVGbGZnoeMoz2kftG3tVXYgc5n_EeU4xVYmwr8yiSmWrb0XRlPps6uBKPaXOiXg7SfS4ywQOBPtqdUNU0RMcNe0k5nV3P2JrTYEOBBxH-m7kAJMS_r6aRqFAphXfNuRd2MjXoMb0zCf0I94KCwaulRWznhnzrMdIzeNDI_JpLdx4jKQkKTKkIhArqIViI8eBnKgloIPbbaVYKIsraRuOoax72mktH58dw_5PVF8HRM469DP-jEIBnmCQ0yTl4kmS7Fjb8bS4sCyBq1EtM_1S5eCzQAzuLkdvkgHWQ7uRXba0hxpIwIF4PKMoAmr2j5ea-8nKkvx0kmdRXvf4moWoGSRTp0CkWNXtpAGBQHKzjP6oK6Z2MWyBbSLd1Rp51vJD1frd98z4nyzz3qIe_WolIlOqCxfZtHYSp9soeka40gHylhM2oR2Z47Y5245jPUn9RxQA4VnLfAoYyyT7lxG2QoRmAyr7sIuoZZ9XwcGKZKuXgzjPmbwQkzS8VpBHxlq48CN4UuWjteJvHuocoynh9Y_fDHTmiTNWc-rnadSw3JREtej9MAe-JDSHaXFX0KN_IN46yK5UVXooG7UG70Uo6C--F3VxE9WkHyAG22K0ATei_kUwpzRI-u7T7DcNspn4ypsl9642vmdtDdLYbxHDg',
+          'expires_in': 3600
+        }
+      }
+      console.log(body)
       server
         .post('/api/networks')
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
-        .send({
-          'name': 'LocalTTN',
-          'networkProviderId': -1,
-          'networkTypeId': 1,
-          'baseUrl': 'https://account.thethingsnetwork.org',
-          'networkProtocolId': loraProtocolId,
-          'securityData': {
-            authorized: true,
-            message: 'ok',
-            'token_type': 'bearer',
-            'refresh_token': 'i9xYij39Fgb-yG_yGSp9lbHoU7od9tyXEWQwJafEqtA',
-            'access_token': 'eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiI1YjJhN2IyMTZhNDFhZTAwMzBhOTExZWQiLCJpc3MiOiJ0dG4tYWNjb3VudC12MiIsImlhdCI6MTUzNTkxMzE3OCwidHlwZSI6InVzZXIiLCJjbGllbnQiOiJscHdhbi10ZXN0Iiwic2NvcGUiOlsicHJvZmlsZSIsImFwcHMiLCJjb21wb25lbnRzIiwiZ2F0ZXdheXMiXSwiaW50ZXJjaGFuZ2VhYmxlIjp0cnVlLCJ1c2VybmFtZSI6ImRzY2hyaW1wc2hlcnIiLCJlbWFpbCI6ImQuc2NocmltcHNoZXJAY2FibGVsYWJzLmNvbSIsImNyZWF0ZWQiOiIyMDE4LTA2LTIwVDE2OjA0OjQ5Ljc2N1oiLCJuYW1lIjp7ImZpcnN0IjoiRGFuIiwibGFzdCI6IlNjaHJpbXBzaGVyIn0sInZhbGlkIjp0cnVlLCJfaWQiOiI1YjJhN2IyMTZhNDFhZTAwMzBhOTExZWQiLCJleHAiOjE1MzU5MTY4Mzh9.uiIL7OfDFtGPUYm76JAS-g8uh71VCfF9L8ZdckKstmoT1sq-WKezL7uccdKOrsVO2kcq9EBueH80-1KCutAddqcKeul0Q-hUThhmc_vyauDWSUEaIknaVX5tqN-Dr3mSottEN0nphtpyW1ok70Yb_-u158NPDWTOKUNoN9nnX0Om9exwcf152DinSWUvuYugMDWR2muLgEd8KcKZiTxITr69ay32uF3NNxuouWvvEKGlEJbgwji6sFFNZrBUClRTsAqLVzIjo4NZk5I8HlK6RiQmhYbusghcz9lE6EsGOpnVPFEcL8P-x_ikI8NdAsm7a3kA-TXw2W3Tv-DK0bTUXHgrR8uuoCSyvQj6wauTYRLlSENpdfSBCbnXeizhjFEqpKTdSlny8OcPVtQJugkz2-MNtsIRcVJGHDyjrdo6tRRP5v2jEZPBfRFPBCShQyoNMcruU2HNurn5GyaAo0uZLYM0aDWhrLCJQGPYEzd3AxvaKNMbToUyqBmbu5bA8yFMW9CePcXBX3S3bfakhdtSWvb7LoyDk2f5mKTRiEALEco1yKSBxXepHxQhp7iRxyTeoRTwNN49smL-SMA12U6RQ4zfXkyh5Ocy7iltU4IlsnMqdHejOpUnIl6QQG29s0bZTLLyaTPdJePMCOt4iF191C1tO07S-r39q5YNsFtEqA8',
-            'expires_in': 3600,
-            'clientId': 'lpwan-test',
-            'clientSecret': 'aOQCcwUgfq9PjBQUanlj5xRG2RTZcFbNkRcSrMsnq9wg5LH-Svw0f-5p',
-            'redirect_uri': 'https://mercury.schrimpsher.com:3200/api/oauth/callback'
-          }
-        })
+        .send(body)
         .end(function (err, res) {
           if (err) done(err)
           res.should.have.status(201)
@@ -325,7 +327,7 @@ describe('E2E Test for Single TTN', function () {
         })
     })
   })
-  describe.skip('At this point, you should be able to view all of the applications and devices from the TTN Server.', function () {
+  describe('At this point, you should be able to view all of the applications and devices from the TTN Server.', function () {
     it('Verify the Test Application Exists on LPWan', function (done) {
       server
         .get('/api/applications')
@@ -339,8 +341,8 @@ describe('E2E Test for Single TTN', function () {
           applications.should.have.property('totalCount')
           applications.should.have.property('records')
           applications.totalCount.should.equal(1)
-          applications.records[0].name.should.equal('ApiTest')
-          applications.records[0].description.should.equal('ApiTest')
+          applications.records[0].name.should.equal('Prototype Application for CableLabs Trial')
+          applications.records[0].description.should.equal('Prototype Application for CableLabs Trial')
           applicationId = applications.records[0].id
           done()
         })
@@ -349,9 +351,9 @@ describe('E2E Test for Single TTN', function () {
       let expected = {
         'id': 1,
         'applicationId': 1,
-        'name': '0080000004001546',
+        'name': '1234567890987654',
         'deviceModel': null,
-        'description': null,
+        'description': 'Test Weather Device',
         networks: [1]
       }
       server

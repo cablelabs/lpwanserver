@@ -115,7 +115,7 @@ module.exports.test = function (network, loginData) {
         appLogger.log(body)
         if (!error) {
           if (response.statusCode === 401) {
-             reject(new Error('Unauthorized'))
+            reject(new Error('Unauthorized'))
           }
           else if (response.statusCode === 404) {
             reject(new Error('URL is Incorrect'))
@@ -204,8 +204,7 @@ module.exports.getDeviceProfileAccessAccount = async function (dataAPI, network,
   return getCompanyAccount(dataAPI, network, co.id, false)
 }
 
-
-function authorizeWithCode(network, loginData) {
+function authorizeWithCode (network, loginData) {
   return new Promise(function (resolve, reject) {
     let options = {}
     options.method = 'POST'
@@ -242,8 +241,7 @@ function authorizeWithCode(network, loginData) {
   })
 }
 
-
-function authorizeWithRefreshToken(network, loginData) {
+function authorizeWithRefreshToken (network, loginData) {
   return new Promise(function (resolve, reject) {
     let options = {}
     options.method = 'POST'
@@ -280,8 +278,6 @@ function authorizeWithRefreshToken(network, loginData) {
   })
 }
 
-
-
 /**
  * Connect with the remote The Things Network network
  * @param network - The networks record for the The Things Network network
@@ -295,10 +291,10 @@ module.exports.connect = function (network, loginData) {
     if (network.securityData.authorized) {
       appLogger.log('Should be authorized')
       me.test(network, loginData)
-        .then(body=> {
+        .then(body => {
           resolve(loginData)
         })
-        .catch(err =>{
+        .catch(err => {
           appLogger.log('Access Token is expired, refreshing')
           return authorizeWithRefreshToken(network, loginData)
         })
@@ -308,7 +304,7 @@ module.exports.connect = function (network, loginData) {
         return authorizeWithRefreshToken(network, loginData)
       }
       else if (loginData.code) {
-          return(authorizeWithCode(network, loginData))
+        return (authorizeWithCode(network, loginData))
       }
       else {
         reject(new Error('LPWan does not have credentials for TTN'))
@@ -350,7 +346,7 @@ module.exports.pullNetwork = function (sessionData, network, dataAPI, modelAPI) 
         appLogger.log(pulledResources)
         let devicePromistList = []
         for (let index in pulledResources[0]) {
-           devicePromistList.push(me.pullDevices(sessionData, network, pulledResources[0][index].remoteApplication, pulledResources[0][index].localApplication, {}, modelAPI, dataAPI))
+          devicePromistList.push(me.pullDevices(sessionData, network, pulledResources[0][index].remoteApplication, pulledResources[0][index].localApplication, {}, modelAPI, dataAPI))
           // devicePromistList.push(me.pullIntegrations(sessionData, network, pulledResources[1][index].remoteApplication, pulledResources[1][index].localApplication, pulledResources[0], modelAPI, dataAPI))
         }
         Promise.all(devicePromistList)
@@ -457,7 +453,6 @@ function addRemoteApplication (sessionData, remoteApplication, network, modelAPI
   })
 }
 
-
 /**
  * Pull remote devices from a TTN server
  * @param sessionData
@@ -474,9 +469,9 @@ module.exports.pullDevices = function (sessionData, network, remoteApplicationId
   return new Promise(async function (resolve, reject) {
     let options = {}
     options.method = 'GET'
-    let key = network.securityData.appKeys.filter(obj => obj.app == remoteApplicationId);
+    let key = network.securityData.appKeys.filter(obj => obj.app == remoteApplicationId)
     appLogger.log(key[0])
-    options.url = 'http://us-west.thethings.network:8084/applications/' + remoteApplicationId +'/devices'
+    options.url = 'http://us-west.thethings.network:8084/applications/' + remoteApplicationId + '/devices'
     options.headers = {
       'Content-Type': 'application/json',
       'Authorization': 'Key ' + key[0].key
@@ -515,7 +510,7 @@ module.exports.pullDevices = function (sessionData, network, remoteApplicationId
 }
 
 function addRemoteDevice (sessionData, remoteDevice, network, applicationId, dpMap, modelAPI, dataAPI) {
-  return new Promise(async function (resolve, reject){
+  return new Promise(async function (resolve, reject) {
     appLogger.log('Adding ' + remoteDevice.deveui)
     appLogger.log(remoteDevice)
     let existingDevice = await modelAPI.devices.retrieveDevices({search: remoteDevice.lorawan_device.dev_eui})
@@ -544,7 +539,6 @@ function addRemoteDevice (sessionData, remoteDevice, network, applicationId, dpM
         remoteDevice.dev_id)
     }
     resolve({localDevice: existingDevice.id, remoteDevice: remoteDevice.dev_id})
-
   })
 }
 

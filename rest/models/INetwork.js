@@ -87,7 +87,42 @@ Network.prototype.createNetwork = function (name, networkProviderId, networkType
         k)
       record = await modelAPI.networks.retrieveNetwork(record.id)
       if (record.securityData) {
-        if (record.securityData.authorized || record.securityData.username || record.securityData.code || record.securityData.apikey) {
+        if (record.securityData.access_token) {
+          record.securityData.authorized = true
+          record.securityData.message = 'ok'
+          modelAPI.networkTypeAPI.test(record, record.securityData)
+            .then(() => {
+              appLogger.log('Test Success ' + record.name)
+              record.securityData.authorized = true
+              record.securityData.message = 'ok'
+              record.securityData = dataAPI.hide(null,
+                record.securityData,
+                k)
+              me.impl.updateNetwork(record)
+                .then((rec) => {
+                  resolve(rec)
+                })
+                .catch((err) => {
+                  reject(err)
+                })
+            })
+            .catch((err) => {
+              appLogger.log('Test of ' + record.name + ': ' + err)
+              record.securityData.authorized = false
+              record.securityData.message = err.toString()
+              record.securityData = dataAPI.hide(null,
+                record.securityData,
+                k)
+              me.impl.updateNetwork(record)
+                .then((rec) => {
+                  resolve(rec)
+                })
+                .catch((err) => {
+                  reject(err)
+                })
+            })
+        }
+        else if (record.securityData.authorized || record.securityData.username || record.securityData.code || record.securityData.apikey) {
           modelAPI.networkTypeAPI.connect(record, record.securityData)
             .then((connection) => {
               appLogger.log(connection)
@@ -197,6 +232,42 @@ Network.prototype.updateNetwork = function (record) {
           k)
       }
       if (record.securityData) {
+        if (record.securityData.access_token) {
+          record.securityData.authorized = true
+          record.securityData.message = 'ok'
+          modelAPI.networkTypeAPI.test(record, record.securityData)
+            .then(() => {
+              appLogger.log('Test Success ' + record.name)
+              record.securityData.authorized = true
+              record.securityData.message = 'ok'
+              record.securityData = dataAPI.hide(null,
+                record.securityData,
+                k)
+              me.impl.updateNetwork(record)
+                .then((rec) => {
+                  resolve(rec)
+                })
+                .catch((err) => {
+                  reject(err)
+                })
+            })
+            .catch((err) => {
+              appLogger.log('Test of ' + record.name + ': ' + err)
+              record.securityData.authorized = false
+              record.securityData.message = err.toString()
+              record.securityData = dataAPI.hide(null,
+                record.securityData,
+                k)
+              me.impl.updateNetwork(record)
+                .then((rec) => {
+                  resolve(rec)
+                })
+                .catch((err) => {
+                  reject(err)
+                })
+            })
+        }
+        else
         if (record.securityData.authorized || record.securityData.username || record.securityData.code || record.securityData.apikey) {
           modelAPI.networkTypeAPI.connect(record, record.securityData)
             .then((connection) => {
