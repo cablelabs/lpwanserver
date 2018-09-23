@@ -12,6 +12,8 @@ var request = require('request')
 chai.use(chaiHttp)
 var server = chai.request(app).keepOpen()
 
+var request = require('request')
+
 describe('E2E Test for Single TTN', function () {
   var adminToken
   var userId
@@ -20,6 +22,7 @@ describe('E2E Test for Single TTN', function () {
   var networkId
   var applicationId
   var baseUrl = 'https://account.thethingsnetwork.org'
+  var handlerUrl = 'http://us-west.thethings.network:8084'
 
   before((done) => {
     setup.start()
@@ -103,37 +106,62 @@ describe('E2E Test for Single TTN', function () {
         })
     })
     it('Create the Local TTN Network', (done) => {
-      let body = {
-        'name': 'LocalTTN',
-        'networkProviderId': -1,
-        'networkTypeId': 1,
-        'baseUrl': 'https://account.thethingsnetwork.org',
-        'networkProtocolId': loraProtocolId,
-        'securityData': {
-          authorized: true,
-          message: 'ok',
-          'token_type': 'bearer',
-          'refresh_token': 'EVJn366LdRBljTPA_5E9GHed6YNUIoQamwNmPsKMh6U',
-          'access_token': 'eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiI1YjJhN2IyMTZhNDFhZTAwMzBhOTExZWQiLCJpc3MiOiJ0dG4tYWNjb3VudC12MiIsImlhdCI6MTUzNzU0MTU2OCwidHlwZSI6InVzZXIiLCJjbGllbnQiOiJscHdhbi10ZXN0Iiwic2NvcGUiOlsicHJvZmlsZSIsImFwcHMiLCJjb21wb25lbnRzIiwiZ2F0ZXdheXMiXSwiaW50ZXJjaGFuZ2VhYmxlIjp0cnVlLCJ1c2VybmFtZSI6ImRzY2hyaW1wc2hlcnIiLCJlbWFpbCI6ImQuc2NocmltcHNoZXJAY2FibGVsYWJzLmNvbSIsImNyZWF0ZWQiOiIyMDE4LTA2LTIwVDE2OjA0OjQ5Ljc2N1oiLCJuYW1lIjp7ImZpcnN0IjoiRGFuIiwibGFzdCI6IlNjaHJpbXBzaGVyIn0sInZhbGlkIjp0cnVlLCJfaWQiOiI1YjJhN2IyMTZhNDFhZTAwMzBhOTExZWQiLCJleHAiOjE1Mzc1NDUyMjh9.ChaZqhGYfsVu_xwUEvj5jddVGbGZnoeMoz2kftG3tVXYgc5n_EeU4xVYmwr8yiSmWrb0XRlPps6uBKPaXOiXg7SfS4ywQOBPtqdUNU0RMcNe0k5nV3P2JrTYEOBBxH-m7kAJMS_r6aRqFAphXfNuRd2MjXoMb0zCf0I94KCwaulRWznhnzrMdIzeNDI_JpLdx4jKQkKTKkIhArqIViI8eBnKgloIPbbaVYKIsraRuOoax72mktH58dw_5PVF8HRM469DP-jEIBnmCQ0yTl4kmS7Fjb8bS4sCyBq1EtM_1S5eCzQAzuLkdvkgHWQ7uRXba0hxpIwIF4PKMoAmr2j5ea-8nKkvx0kmdRXvf4moWoGSRTp0CkWNXtpAGBQHKzjP6oK6Z2MWyBbSLd1Rp51vJD1frd98z4nyzz3qIe_WolIlOqCxfZtHYSp9soeka40gHylhM2oR2Z47Y5245jPUn9RxQA4VnLfAoYyyT7lxG2QoRmAyr7sIuoZZ9XwcGKZKuXgzjPmbwQkzS8VpBHxlq48CN4UuWjteJvHuocoynh9Y_fDHTmiTNWc-rnadSw3JREtej9MAe-JDSHaXFX0KN_IN46yK5UVXooG7UG70Uo6C--F3VxE9WkHyAG22K0ATei_kUwpzRI-u7T7DcNspn4ypsl9642vmdtDdLYbxHDg',
-          'expires_in': 3600
-        }
+      let options = {
+        method: 'POST',
+        url: 'https://account.thethingsnetwork.org/users/token',
+        headers:
+          {
+            'Postman-Token': 'e525eece-fd47-46bc-89f8-cc420bba2685',
+            'Cache-Control': 'no-cache',
+            'Content-Type': 'application/json',
+            Authorization: 'Basic bHB3YW4tdGVzdC0zOmx0TVNMMGNtSVZrekJZUVpuZFo4c2x6RjM3cUxNalJtN3NYWHQ0cWNla3lDcTNZRW9MTWY5clFy'
+          },
+        body:
+          {
+            grant_type: 'password',
+            username: 'dschrimpsherr',
+            password: 'Ultimum01',
+            scope: ['apps', 'gateways', 'components', 'apps:cable-labs-prototype']
+          },
+        json: true
       }
-      console.log(body)
-      server
-        .post('/api/networks')
-        .set('Authorization', 'Bearer ' + adminToken)
-        .set('Content-Type', 'application/json')
-        .send(body)
-        .end(function (err, res) {
-          if (err) done(err)
-          res.should.have.status(201)
-          var network = JSON.parse(res.text)
-          appLogger.log(network)
-          network.securityData.authorized.should.equal(true)
-          network.securityData.message.should.equal('ok')
-          networkId = network.id
-          done()
-        })
+
+      request(options, function (error, response, body) {
+        if (error) throw new Error(error)
+
+        console.log(body)
+        let networkSettings = {
+          'name': 'LocalTTN',
+          'networkProviderId': -1,
+          'networkTypeId': 1,
+          'baseUrl': 'https://account.thethingsnetwork.org',
+          'networkProtocolId': loraProtocolId,
+          'securityData': {
+            authorized: true,
+            message: 'ok',
+            'token_type': 'bearer',
+            'refresh_token': body.refresh_token,
+            'access_token': body.access_token,
+            'expires_in': 3600
+          }
+        }
+        console.log(networkSettings)
+        server
+          .post('/api/networks')
+          .set('Authorization', 'Bearer ' + adminToken)
+          .set('Content-Type', 'application/json')
+          .send(networkSettings)
+          .end(function (err, res) {
+            if (err) done(err)
+            res.should.have.status(201)
+            var network = JSON.parse(res.text)
+            appLogger.log(network)
+            network.securityData.authorized.should.equal(true)
+            network.securityData.message.should.equal('ok')
+            networkId = network.id
+            done()
+          })
+      })
     })
 
     it('Get Network', (done) => {
@@ -341,7 +369,7 @@ describe('E2E Test for Single TTN', function () {
           applications.should.have.property('totalCount')
           applications.should.have.property('records')
           applications.totalCount.should.equal(1)
-          applications.records[0].name.should.equal('Prototype Application for CableLabs Trial')
+          applications.records[0].name.should.equal('cable-labs-prototype')
           applications.records[0].description.should.equal('Prototype Application for CableLabs Trial')
           applicationId = applications.records[0].id
           done()
