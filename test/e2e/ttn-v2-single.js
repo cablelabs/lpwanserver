@@ -142,7 +142,9 @@ describe('E2E Test for Single TTN', function () {
             'token_type': 'bearer',
             'refresh_token': body.refresh_token,
             'access_token': body.access_token,
-            'expires_in': 3600
+            'expires_in': 3600,
+            username: 'dschrimpsherr',
+            password: 'Ultimum01'
           }
         }
         console.log(networkSettings)
@@ -183,6 +185,20 @@ describe('E2E Test for Single TTN', function () {
     })
   })
   describe('After “authorized” network, automatically pulls the devices & applications', function () {
+    let expectedOTAA = {
+      'applicationId': 1,
+      'name': '00B7641AD008A5FC',
+      'deviceModel': null,
+      'description': 'TTN Device Using OTAA',
+      networks: [1]
+    }
+    let expectedABP = {
+      'applicationId': 1,
+      'name': '1234567890987654',
+      'deviceModel': null,
+      'description': 'CableLabs TTN Device ABP',
+      networks: [1]
+    }
     it('Pull Applications, Device Profiles, Integrations, and Devices', function (done) {
       server
         .post('/api/networks/' + networkId + '/pull')
@@ -243,15 +259,7 @@ describe('E2E Test for Single TTN', function () {
           done()
         })
     })
-    it('Verify the Test Device was Created', function (done) {
-      let expected = {
-        'id': 1,
-        'applicationId': applicationId,
-        'name': '1234567890987654',
-        'deviceModel': null,
-        'description': 'Test Weather Device',
-        networks: [1]
-      }
+    it('Verify the Test Device 1 was Created', function (done) {
       server
         .get('/api/devices/1')
         .set('Authorization', 'Bearer ' + adminToken)
@@ -262,38 +270,70 @@ describe('E2E Test for Single TTN', function () {
           res.should.have.property('text')
           let devices = JSON.parse(res.text)
           appLogger.log(devices)
-          devices.should.eql(expected)
+          if (devices.name === '1234567890987654') {
+            expectedABP.id = 1
+            devices.should.eql(expectedABP)
+          }
+          else {
+            expectedOTAA.id = 1
+            devices.should.eql(expectedOTAA)
+          }
           done()
         })
     })
-    it('Verify the Test Device NTL was Created', function (done) {
-      let expected = {
-        'id': 1,
-        'deviceId': 1,
-        'networkTypeId': 1,
-        'deviceProfileId': -1,
-        'networkSettings': {
-          'app_id': 'cable-labs-prototype',
-          'dev_id': 'cl-weather-station',
-          'lorawan_device': {
-            'app_eui': '70B3D57ED000FEEA',
-            'dev_eui': '1234567890987654',
-            'app_id': 'cable-labs-prototype',
-            'dev_id': 'cl-weather-station',
-            'dev_addr': '',
-            'nwk_s_key': '',
-            'app_s_key': '',
-            'app_key': '21124307FD27462856CC7A67799FFEB9',
-            'uses32_bit_f_cnt': true,
-            'activation_constraints': 'local'
-          },
-          'latitude': 34.74164,
-          'longitude': -86.69502,
-          'altitude': 183,
-          'description': 'Test Weather Device'
-        }
+    it('Verify the Test Device 2 was Created', function (done) {
+      server
+        .get('/api/devices/2')
+        .set('Authorization', 'Bearer ' + adminToken)
+        .set('Content-Type', 'application/json')
+        .end(function (err, res) {
+          if (err) done(err)
+          res.should.have.status(200)
+          res.should.have.property('text')
+          let devices = JSON.parse(res.text)
+          appLogger.log(devices)
+          if (devices.name === '1234567890987654') {
+            expectedABP.id = 2
+            devices.should.eql(expectedABP)
+          }
+          else {
+            expectedOTAA.id = 2
+            devices.should.eql(expectedOTAA)
+          }
+          done()
+        })
+    })
+    it('Verify the Test Device 1 NTL was Created', function (done) {
+      let expectedNSOTTA = {
+        'applicationID': 'cable-labs-prototype',
+        'description': 'TTN Device Using OTAA',
+        'devEUI': '00B7641AD008A5FC',
+        'deviceKeys': {
+          'appKey': '3070CF4FE37A440A58D4864CDD2D9966',
+          'devEUI': '00B7641AD008A5FC'
+        },
+        'deviceProfileID': expectedOTAA.id,
+        'deviceStatusBattery': '',
+        'deviceStatusMargin': '',
+        'name': 'cablelabs-ttn-device-join',
+        'skipFCntCheck': false
       }
-
+      let expectedNSABP = {
+        'applicationID': 'cable-labs-prototype',
+        'description': 'CableLabs TTN Device ABP',
+        'devEUI': '1234567890987654',
+        'deviceActivation': {
+          'appSKey': '15134FFB2AB2936583FCD0AAECF6559C',
+          'devAddr': '260214F3',
+          'devEUI': '1234567890987654',
+          'nwkSEncKey': '693BB52D4C24D878A01B88360F699917'
+        },
+        'deviceProfileID': expectedABP.id,
+        'deviceStatusBattery': '',
+        'deviceStatusMargin': '',
+        'name': 'cl-weather-station',
+        'skipFCntCheck': false
+      }
       server
         .get('/api/deviceNetworkTypeLinks/1')
         .set('Authorization', 'Bearer ' + adminToken)
@@ -304,7 +344,74 @@ describe('E2E Test for Single TTN', function () {
           res.should.have.property('text')
           var devices = JSON.parse(res.text)
           appLogger.log(devices)
-          devices.should.eql(expected)
+          if (devices.networkSettings.description === 'TTN Device Using OTAA') {
+            devices.deviceId.should.equal(expectedOTAA.id)
+            expectedNSOTTA.deviceProfileID = devices.deviceProfileId
+            devices.should.have.property('networkSettings')
+            devices.networkSettings.should.eql(expectedNSOTTA)
+          }
+          else {
+            devices.deviceId.should.equal(expectedABP.id)
+            expectedNSABP.deviceProfileID = devices.deviceProfileId
+            devices.should.have.property('networkSettings')
+            devices.networkSettings.should.eql(expectedNSABP)
+          }
+          done()
+        })
+    })
+    it('Verify the Test Device 2 NTL was Created', function (done) {
+      let expectedNSOTTA = {
+        'applicationID': 'cable-labs-prototype',
+        'description': 'TTN Device Using OTAA',
+        'devEUI': '00B7641AD008A5FC',
+        'deviceKeys': {
+          'appKey': '3070CF4FE37A440A58D4864CDD2D9966',
+          'devEUI': '00B7641AD008A5FC'
+        },
+        'deviceProfileID': expectedOTAA.id,
+        'deviceStatusBattery': '',
+        'deviceStatusMargin': '',
+        'name': 'cablelabs-ttn-device-join',
+        'skipFCntCheck': false
+      }
+      let expectedNSABP = {
+        'applicationID': 'cable-labs-prototype',
+        'description': 'CableLabs TTN Device ABP',
+        'devEUI': '1234567890987654',
+        'deviceActivation': {
+          'appSKey': '15134FFB2AB2936583FCD0AAECF6559C',
+          'devAddr': '260214F3',
+          'devEUI': '1234567890987654',
+          'nwkSEncKey': '693BB52D4C24D878A01B88360F699917'
+        },
+        'deviceProfileID': expectedABP.id,
+        'deviceStatusBattery': '',
+        'deviceStatusMargin': '',
+        'name': 'cl-weather-station',
+        'skipFCntCheck': false
+      }
+      server
+        .get('/api/deviceNetworkTypeLinks/2')
+        .set('Authorization', 'Bearer ' + adminToken)
+        .set('Content-Type', 'application/json')
+        .end(function (err, res) {
+          if (err) done(err)
+          res.should.have.status(200)
+          res.should.have.property('text')
+          var devices = JSON.parse(res.text)
+          appLogger.log(devices)
+          if (devices.networkSettings.description === 'TTN Device Using OTAA') {
+            devices.deviceId.should.equal(expectedOTAA.id)
+            expectedNSOTTA.deviceProfileID = devices.deviceProfileId
+            devices.should.have.property('networkSettings')
+            devices.networkSettings.should.eql(expectedNSOTTA)
+          }
+          else {
+            devices.deviceId.should.equal(expectedABP.id)
+            expectedNSABP.deviceProfileID = devices.deviceProfileId
+            devices.should.have.property('networkSettings')
+            devices.networkSettings.should.eql(expectedNSABP)
+          }
           done()
         })
     })
@@ -376,16 +483,8 @@ describe('E2E Test for Single TTN', function () {
         })
     })
     it('Verify the Test Device Exists on LPWan', function (done) {
-      let expected = {
-        'id': 1,
-        'applicationId': 1,
-        'name': '1234567890987654',
-        'deviceModel': null,
-        'description': 'Test Weather Device',
-        networks: [1]
-      }
       server
-        .get('/api/devices/1')
+        .get('/api/devices')
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {
@@ -394,7 +493,6 @@ describe('E2E Test for Single TTN', function () {
           res.should.have.property('text')
           let devices = JSON.parse(res.text)
           appLogger.log(devices)
-          devices.should.eql(expected)
           done()
         })
     })

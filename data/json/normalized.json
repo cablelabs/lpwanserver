@@ -8,6 +8,7 @@
       "payloadCodec": "string",
       "payloadDecoderScript": "string",
       "payloadEncoderScript": "string",
+      "validationScript": "string",
       "serviceProfileID": "string",
       "cansend": "boolean",
       "deviceLimit": "number",
@@ -18,7 +19,8 @@
       "canotaa": "boolean",
       "suspended": "boolean",
       "clientsLimit": "number",
-      "joinServer": "object"
+      "joinServer": "object",
+      "applicationEUI": "string"
     }
   },
   {

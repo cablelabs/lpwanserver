@@ -2,7 +2,6 @@ const request = require('request')
 const nconf = require('nconf')
 const appLogger = require('../lib/appLogger.js')
 
-
 /**********************************************************************************************************************
  * Bookeeping: Register, Test, Connect
  *********************************************************************************************************************/
@@ -370,12 +369,15 @@ module.exports.disconnect = function (connection) {
   })
 }
 
-
-function getOptions (method, url, accountServer, resource, access_token) {
+function getOptions (method, url, type, resource, access_token) {
   let middle = ''
   let authorization = ''
-  if (accountServer) {
+  if (type === 'account') {
     middle = '/api/v2'
+    authorization = 'Bearer ' + access_token
+  }
+  else if (type == 'console') {
+    middle = '/api'
     authorization = 'Bearer ' + access_token
   }
   else {
@@ -398,7 +400,6 @@ function getOptions (method, url, accountServer, resource, access_token) {
 /**********************************************************************************************************************
  * Synch Operations: Pull, Push, AddRemote*, Normalize*
  *********************************************************************************************************************/
-
 
 /**
  * Pull remote resources on TTN v2.0 Server
@@ -454,7 +455,8 @@ module.exports.pullNetwork = function (sessionData, network, dataAPI, modelAPI) 
 module.exports.pullApplications = function (sessionData, network, modelAPI, dataAPI) {
   return new Promise(async function (resolve, reject) {
     if (sessionData && sessionData.connection && sessionData.connection.access_token) {
-      let options = getOptions('GET', network.baseUrl, true, 'applications', sessionData.connection.access_token)
+      let options = getOptions('GET', 'https://console.thethingsnetwork.org', 'console', 'applications', sessionData.connection.access_token)
+      // TODO:Remove
       appLogger.log(options)
       request(options, function (error, response, body) {
         if (error) {
@@ -513,7 +515,7 @@ function addRemoteApplication (sessionData, limitedRemoteApplication, network, m
     else {
       appLogger.log('creating Network Link for ' + existingApplication.name)
       let networkSettings = JSON.parse(JSON.stringify(remoteApplication))
-      let networkSpecificApplicationInformation = normalizeApplicationData(networkSettings, limitedRemoteApplication)
+      let networkSpecificApplicationInformation = normalizeApplicationData(networkSettings, limitedRemoteApplication, network)
 
       existingApplicationNTL = await modelAPI.applicationNetworkTypeLinks.createRemoteApplicationNetworkTypeLink(existingApplication.id, network.networkTypeId, networkSpecificApplicationInformation, existingApplication.companyId)
       appLogger.log(existingApplicationNTL)
@@ -526,14 +528,13 @@ function addRemoteApplication (sessionData, limitedRemoteApplication, network, m
   })
 }
 
-
 // Get the NetworkServer using the Service Profile a ServiceProfile.
 function getApplicationById (network, remoteApplicationId, connection) {
   appLogger.log('LoRaOpenSource: getApplicationById')
   return new Promise(async function (resolve, reject) {
     let key = network.securityData.appKeys.filter(obj => obj.app == remoteApplicationId)
     appLogger.log(key)
-    let options = getOptions('GET', 'http://us-west.thethings.network:8084', false, 'applications/' + remoteApplicationId, key[0].key)
+    let options = getOptions('GET', 'http://us-west.thethings.network:8084', 'handler', 'applications/' + remoteApplicationId, key[0].key)
     appLogger.log(options)
     request(options, async function (error, response, body) {
       if (error || response.statusCode >= 400) {
@@ -542,7 +543,7 @@ function getApplicationById (network, remoteApplicationId, connection) {
           reject(error)
         }
         else {
-         appLogger.log(body)
+          appLogger.log(body)
           var bodyObj = JSON.parse(body)
           appLogger.log('Error on get Application: ' +
             bodyObj.error +
@@ -559,7 +560,6 @@ function getApplicationById (network, remoteApplicationId, connection) {
     })
   })
 }
-
 
 /**
  * Pull remote devices from a TTN server
@@ -622,6 +622,7 @@ function addRemoteDevice (sessionData, remoteDevice, network, applicationId, dpM
     appLogger.log('Adding ' + remoteDevice.deveui)
     appLogger.log(remoteDevice)
     let existingDevice = await modelAPI.devices.retrieveDevices({search: remoteDevice.lorawan_device.dev_eui})
+
     appLogger.log(existingDevice)
     if (existingDevice.totalCount > 0) {
       existingDevice = existingDevice.records[0]
@@ -634,19 +635,59 @@ function addRemoteDevice (sessionData, remoteDevice, network, applicationId, dpM
     }
 
     let existingDeviceNTL = await modelAPI.deviceNetworkTypeLinks.retrieveDeviceNetworkTypeLinks({deviceId: existingDevice.id})
+    let existingApplicationNTL = await modelAPI.applicationNetworkTypeLinks.retrieveApplicationNetworkTypeLink(applicationId)
+    console.log(existingApplicationNTL)
+
     if (existingDeviceNTL.totalCount > 0) {
       appLogger.log(existingDevice.name + ' link already exists')
     }
     else {
       appLogger.log('creating Network Link for ' + existingDevice.name)
-      existingDeviceNTL = await modelAPI.deviceNetworkTypeLinks.createRemoteDeviceNetworkTypeLink(existingDevice.id, network.networkTypeId, -1, remoteDevice, 2)
-      appLogger.log(existingDeviceNTL)
-      dataAPI.putProtocolDataForKey(network.id,
-        network.networkProtocolId,
-        makeDeviceDataKey(existingDevice.id, 'devNwkId'),
-        remoteDevice.dev_id)
+      addRemoteDeviceProfile(sessionData, remoteDevice, existingApplicationNTL, network, modelAPI, dataAPI)
+        .then(dp => {
+          appLogger.log(dp, 'info')
+          let normalizedDevice = normalizeDeviceData(remoteDevice, dp.localDeviceProfile)
+          appLogger.log(normalizedDevice)
+          modelAPI.deviceNetworkTypeLinks.createRemoteDeviceNetworkTypeLink(existingDevice.id, network.networkTypeId, dp.localDeviceProfile, normalizedDevice, 2)
+            .then(existingDeviceNTL => {
+              appLogger.log(existingDeviceNTL)
+              dataAPI.putProtocolDataForKey(network.id,
+                network.networkProtocolId,
+                makeDeviceDataKey(existingDevice.id, 'devNwkId'),
+                remoteDevice.dev_id)
+              appLogger.log({localDevice: existingDevice.id, remoteDevice: remoteDevice.dev_id})
+              resolve({localDevice: existingDevice.id, remoteDevice: remoteDevice.dev_id})
+            })
+            .catch(err => {
+              appLogger.log(err, 'error')
+              reject(err)
+            })
+        })
+        .catch(err => {
+          appLogger.log(err, 'error')
+          reject(err)
+        })
     }
-    resolve({localDevice: existingDevice.id, remoteDevice: remoteDevice.dev_id})
+  })
+}
+
+function addRemoteDeviceProfile  (sessionData, remoteDevice, application, network, modelAPI, dataAPI) {
+  return new Promise(async function (resolve, reject) {
+    let networkSpecificDeviceProfileInformation = normalizeDeviceProfileData(remoteDevice, application)
+    appLogger.log(networkSpecificDeviceProfileInformation, 'error')
+    modelAPI.deviceProfiles.createRemoteDeviceProfile(network.networkTypeId, 2,
+      networkSpecificDeviceProfileInformation.name, 'Device Profile managed by LPWAN Server, perform changes via LPWAN',
+      networkSpecificDeviceProfileInformation)
+      .then((existingDeviceProfile) => {
+        resolve({
+          localDeviceProfile: existingDeviceProfile.id,
+          remoteDeviceProfile: existingDeviceProfile.id
+        })
+      })
+      .catch((error) => {
+        appLogger.log(error)
+        reject(error)
+      })
   })
 }
 
@@ -1941,102 +1982,19 @@ function getDeviceById (network, deviceId, connection, dataAPI) {
   })
 };
 
-
-function normalizeApplicationData (remoteApplication, remoteApplicationMeta) {
-/*
-    {
-        "id": "cable-labs-prototype",
-        "name": "Prototype Application for CableLabs Trial",
-        "euis": [
-            "70B3D57ED000FEEA"
-        ],
-        "created": "2018-06-20T16:44:16.441Z",
-        "rights": [
-            "settings",
-            "delete",
-            "collaborators",
-            "devices"
-        ],
-        "collaborators": [
-            {
-                "username": "dschrimpsherr",
-                "email": "d.schrimpsher@cablelabs.com",
-                "rights": [
-                    "settings",
-                    "delete",
-                    "collaborators",
-                    "devices"
-                ]
-            }
-        ],
-        "access_keys": [
-            {
-                "name": "default key",
-                "key": "ttn-account-v2.kMyE-zi7vQXrz1kscOlA0MTNaQB6_D7elsMRG91BAjQ",
-                "_id": "5b2a84606a41ae0030a913b8",
-                "rights": [
-                    "messages:up:r",
-                    "messages:down:w",
-                    "devices"
-                ]
-            },
-            {
-                "rights": [
-                    "settings",
-                    "devices",
-                    "messages:up:r",
-                    "messages:down:w"
-                ],
-                "_id": "5b2a8c8c6a41ae0030a9154d",
-                "key": "ttn-account-v2.HgTv51zRBreL4b3d2eSolzcCdsPZqKLSrjnfEo5KgIs",
-                "name": "testlora"
-            }
-        ]
-    }
-
-    or
-
-    {
-      "app_id": "some-app-id",
-      "converter": "function Converter(decoded, port) {...",
-      "decoder": "function Decoder(bytes, port) {...",
-      "encoder": "Encoder(object, port) {...",
-      "payload_format": "",
-      "register_on_join_access_key": "",
-      "validator": "Validator(converted, port) {..."
-    }
- */
-  appLogger.log(remoteApplication, 'info')
+function normalizeApplicationData (remoteApplication, remoteApplicationMeta, network) {
+  appLogger.log(network, 'info')
   let normalized = {
     description: remoteApplicationMeta.name,
     id: remoteApplication.app_id,
     name: remoteApplicationMeta.name,
     key: remoteApplicationMeta.access_keys[1].key,
     payloadCodec: remoteApplication.payload_format,
-    payloadEncoderScript:remoteApplication.encoder,
-    payloadDecoderScript: remoteApplication.decoder
-
-
-    /*
-        description: remoteApplication.application.description,
-    id: remoteApplication.application.id,
-    name: remoteApplication.application.name,
-    organizationID: remoteApplication.application.organizationID,
-    payloadCodec: remoteApplication.application.payloadCodec,
-    payloadDecoderScript: remoteApplication.application.payloadDecoderScript,
-    payloadEncoderScript: remoteApplication.application.payloadEncoderScript,
-    serviceProfileID: remoteApplication.application.serviceProfileID,
-    cansend: true,
-    deviceLimit: null,
-    devices: null,
-    overbosity: null,
-    ogwinfo: null,
-    orx: true,
-    canotaa: true,
-    suspended: false,
-    clientsLimit: null,
-    joinServer: null
-     */
+    payloadEncoderScript: remoteApplication.encoder,
+    payloadDecoderScript: remoteApplication.decoder,
+    validationScript: remoteApplication.validator,
+    serviceProfileID: remoteApplicationMeta.handler,
+    organizationID: network.securityData.username
   }
   return normalized
 }
@@ -2056,62 +2014,63 @@ function deNormalizeApplicationData (remoteApplication, serviceProfile, organiza
   return loraV2ApplicationData
 }
 
-function normalizeDeviceProfileData (remoteDeviceProfile) {
-  /*
-  "createdAt": "2018-09-05T05:28:09.681Z",
-      "deviceProfile": {
-        "classBTimeout": 0,
-        "classCTimeout": 0,
-        "factoryPresetFreqs": [
-          0
-        ],
-        "id": "string",
-        "macVersion": "string",
-        "maxDutyCycle": 0,
-        "maxEIRP": 0,
-        "name": "string",
-        "networkServerID": "string",
-        "organizationID": "string",
-        "pingSlotDR": 0,
-        "pingSlotFreq": 0,
-        "pingSlotPeriod": 0,
-        "regParamsRevision": "string",
-        "rfRegion": "string",
-        "rxDROffset1": 0,
-        "rxDataRate2": 0,
-        "rxDelay1": 0,
-        "rxFreq2": 0,
-        "supports32BitFCnt": true,
-        "supportsClassB": true,
-        "supportsClassC": true,
-        "supportsJoin": true
-      },
-      "updatedAt": "2018-09-05T05:28:09.682Z"
-   */
+function normalizeDeviceProfileData (remoteDeviceProfile, remoteApplicationMeta) {
   let normalized = {
-    classBTimeout: remoteDeviceProfile.deviceProfile.classBTimeout,
-    classCTimeout: remoteDeviceProfile.deviceProfile.classCTimeout,
-    factoryPresetFreqs: remoteDeviceProfile.deviceProfile.factoryPresetFreqs,
-    id: remoteDeviceProfile.deviceProfile.id,
-    macVersion: remoteDeviceProfile.deviceProfile.macVersion,
-    maxDutyCycle: remoteDeviceProfile.deviceProfile.maxDutyCycle,
-    maxEIRP: remoteDeviceProfile.deviceProfile.maxEIRP,
-    name: remoteDeviceProfile.deviceProfile.name,
-    networkServerID: remoteDeviceProfile.deviceProfile.networkServerID,
-    organizationID: remoteDeviceProfile.deviceProfile.organizationID,
-    pingSlotDR: remoteDeviceProfile.deviceProfile.pingSlotDR,
-    pingSlotFreq: remoteDeviceProfile.deviceProfile.pingSlotFreq,
-    pingSlotPeriod: remoteDeviceProfile.deviceProfile.pingSlotPeriod,
-    regParamsRevision: remoteDeviceProfile.deviceProfile.regParamsRevision,
-    rfRegion: remoteDeviceProfile.deviceProfile.rfRegion,
-    rxDROffset1: remoteDeviceProfile.deviceProfile.rxDROffset1,
-    rxDataRate2: remoteDeviceProfile.deviceProfile.rxDataRate2,
-    rxDelay1: remoteDeviceProfile.deviceProfile.rxDelay1,
-    rxFreq2: remoteDeviceProfile.deviceProfile.rxFreq2,
-    supports32BitFCnt: remoteDeviceProfile.deviceProfile.supports32bitFCnt,
-    supportsClassB: remoteDeviceProfile.deviceProfile.supportsClassB,
-    supportsClassC: remoteDeviceProfile.deviceProfile.supportsClassC,
-    supportsJoin: remoteDeviceProfile.deviceProfile.supportsJoin
+    id: remoteDeviceProfile.dev_id + '-profile',
+    name: remoteDeviceProfile.description,
+    networkServerID: remoteApplicationMeta.serviceProfileID,
+    organizationID: remoteApplicationMeta.organizationID,
+    supports32BitFCnt: remoteDeviceProfile.lorawan_device.uses32_bit_f_cnt
+  }
+  if (remoteDeviceProfile.lorawan_device.activation_constraints === 'otaa' || (remoteDeviceProfile.lorawan_device.app_key !== '')) {
+    normalized.supportsJoin = true
+  }
+  else {
+    normalized.supportsJoin = false
+  }
+  switch (remoteApplicationMeta.serviceProfileID) {
+    case 'ttn-handler-us-west':
+      normalized.rfRegion = 'US902'
+      break
+    case 'ttn-handler-eu':
+      normalized.rfRegion = 'EU868'
+      break
+    case 'ttn-handler-asia-se':
+      normalized.rfRegion = 'China779'
+      break
+    case 'ttn-hanldler-brazil':
+      normalized.rfRegion = 'AS923'
+    default:
+      normalized.rfRegion = 'US902'
+  }
+
+  function filterAttributes (attributes, key) {
+    let temp = remoteDeviceProfile.attributes.filter(obj => obj.key === key)
+    if (temp && temp.length > 0) {
+      return temp[0].value
+    }
+    else {
+      return ''
+    }
+  }
+
+  if (remoteDeviceProfile.attributes && remoteDeviceProfile.attributes.length > 0) {
+    normalized.classBTimeout = filterAttributes(remoteDeviceProfile.attributes, 'classBTimeout')
+    normalized.classCTimeout = filterAttributes(remoteDeviceProfile.attributes, 'classCTimeout')
+    normalized.factoryPresetFreqs = filterAttributes(remoteDeviceProfile.attributes, 'factoryPresetFreqs')
+    normalized.macVersion = filterAttributes(remoteDeviceProfile.attributes, 'macVersion')
+    normalized.maxDutyCycle = filterAttributes(remoteDeviceProfile.attributes, 'maxDutyCycle')
+    normalized.maxEIRP = filterAttributes(remoteDeviceProfile.attributes, 'maxEIRP')
+    normalized.pingSlotDR = filterAttributes(remoteDeviceProfile.attributes, 'pingSlotDR')
+    normalized.pingSlotFreq = filterAttributes(remoteDeviceProfile.attributes, 'pingSlotFreq')
+    normalized.pingSlotPeriod = filterAttributes(remoteDeviceProfile.attributes, 'pingSlotPeriod')
+    normalized.regParamsRevision = filterAttributes(remoteDeviceProfile.attributes, 'regParamsRevision')
+    normalized.rxDROffset1 = filterAttributes(remoteDeviceProfile.attributes, 'rxDROffset1')
+    normalized.rxDataRate2 = filterAttributes(remoteDeviceProfile.attributes, 'rxDataRate2')
+    normalized.rxDelay1 = filterAttributes(remoteDeviceProfile.attributes, 'rxDelay1')
+    normalized.rxFreq2 = filterAttributes(remoteDeviceProfile.attributes, 'rxFreq2')
+    normalized.supportsClassB = filterAttributes(remoteDeviceProfile.attributes, 'supportsClassB')
+    normalized.supportsClassC = filterAttributes(remoteDeviceProfile.attributes, 'supportsClassC')
   }
   return normalized
 }
@@ -2178,64 +2137,35 @@ function deNormalizeDeviceProfileData (remoteDeviceProfile, networkServerId, org
   return loraV2DeviceProfileData
 }
 
-function normalizeDeviceData (remoteDevice) {
-  /*
-        "applicationID": "string",
-      "description": "string",
-      "devEUI": "string",
-      "deviceProfileID": "string",
-      "name": "string",
-      "skipFCntCheck": true,
-      "deviceStatusBattery": 0,
-      "deviceStatusMargin": 0,
-      "lastSeenAt": "2018-09-05T05:28:09.738Z"
-"deviceActivation": {
-    "aFCntDown": 0,
-    "appSKey": "string",
-    "devAddr": "string",
-    "devEUI": "string",
-    "fCntUp": 0,
-    "fNwkSIntKey": "string",
-    "nFCntDown": 0,
-    "nwkSEncKey": "string",
-    "sNwkSIntKey": "string"
-  }
-   "deviceKeys": {
-    "appKey": "string",
-    "devEUI": "string",
-    "nwkKey": "string"
-  }
-   */
+function normalizeDeviceData (remoteDevice, deviceProfileId) {
   let normalized = {
-    applicationID: remoteDevice.device.applicationID,
-    description: remoteDevice.device.description,
-    devEUI: remoteDevice.device.devEUI,
-    deviceProfileID: remoteDevice.device.deviceProfileID,
-    name: remoteDevice.device.name,
-    skipFCntCheck: remoteDevice.device.skipFCntCheck,
-    deviceStatusBattery: remoteDevice.deviceStatusBattery,
-    deviceStatusMargin: remoteDevice.deviceStatusMargin,
-    lastSeenAt: remoteDevice.lastSeenAt
+    applicationID: remoteDevice.app_id,
+    description: remoteDevice.description,
+    devEUI: remoteDevice.lorawan_device.dev_eui,
+    deviceProfileID: deviceProfileId,
+    name: remoteDevice.dev_id,
+    skipFCntCheck: false,
+    deviceStatusBattery:'',
+    deviceStatusMargin: '',
+    lastSeenAt: remoteDevice.lorawan_device.last_seen
   }
-  if (remoteDevice.device.deviceKeys) {
+  if (remoteDevice.lorawan_device.activation_constraints === 'otaa' || (remoteDevice.lorawan_device.app_key !== '')) {
     normalized.deviceKeys = {
-      appKey: remoteDevice.device.deviceKeys.appKey,
-      devEUI: remoteDevice.device.deviceKeys.devEUI,
-      nwkKey: remoteDevice.device.deviceKeys.nwkKey
+      appKey: remoteDevice.lorawan_device.app_key,
+      devEUI: remoteDevice.lorawan_device.dev_eui,
+      nwkKey: remoteDevice.lorawan_device.nwk_key
     }
   }
-
-  if (remoteDevice.device.deviceActivation) {
+  else {
     normalized.deviceActivation = {
-      aFCntDown: remoteDevice.device.deviceActivation.aFCntDown,
-      appSKey: remoteDevice.device.deviceActivation.appSKey,
-      devAddr: remoteDevice.device.deviceActivation.devAddr,
-      devEUI: remoteDevice.device.deviceActivation.devEUI,
-      fCntUp: remoteDevice.device.deviceActivation.fCntUp,
-      nFCntDown: remoteDevice.device.deviceActivation.nFCntDown,
-      nwkSEncKey: remoteDevice.device.deviceActivation.nwkSEncKey,
-      sNwkSIntKey: remoteDevice.device.deviceActivation.sNwkSIntKey,
-      fNwkSIntKey: remoteDevice.device.deviceActivation.fNwkSIntKey
+      aFCntDown: remoteDevice.lorawan_device.f_cnt_down,
+      appSKey: remoteDevice.lorawan_device.app_s_key,
+      devAddr: remoteDevice.lorawan_device.dev_addr,
+      devEUI: remoteDevice.lorawan_device.dev_eui,
+      fCntUp: remoteDevice.lorawan_device.f_cnt_up,
+      nFCntDown: remoteDevice.lorawan_device.f_cnt_down,
+      nwkSEncKey: remoteDevice.lorawan_device.nwk_s_key,
+      sNwkSIntKey: remoteDevice.lorawan_device.sNwkSIntKey
     }
   }
   return normalized
