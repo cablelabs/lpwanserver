@@ -411,6 +411,37 @@ Network.prototype.pullNetwork = function (networkId) {
   })
 }
 
+Network.prototype.pushNetworks = function (networkTypeId) {
+  let me = this
+  return new Promise(async function (resolve, reject) {
+    try {
+      let networks = await me.retrieveNetworks({networkTypeId: networkTypeId})
+      let networkType = await modelAPI.networkTypes.retrieveNetworkTypes(networkTypeId)
+      var npda = new NetworkProtocolDataAccess(modelAPI, 'Push Network')
+      npda.initLog(networkType, networks)
+      appLogger.log(networks)
+
+      let promiseList = []
+      for (let i = 0; i < networks.records.length; ++i) {
+        promiseList.push(modelAPI.networkProtocolAPI.pushNetwork(npda, networks.records[i], modelAPI))
+      }
+      Promise.all(promiseList)
+        .then(results => {
+          appLogger.log('Success pushing to Networks')
+          resolve()
+        })
+        .catch(err => {
+          appLogger.log('Error pushing to Networks : ' + ' ' + err)
+          reject(err)
+        })
+    }
+    catch (err) {
+      appLogger.log('Error pushing to Networks : ' + ' ' + err)
+      reject(err)
+    }
+  })
+}
+
 Network.prototype.pushNetwork = function (networkId) {
   let me = this
   return new Promise(async function (resolve, reject) {

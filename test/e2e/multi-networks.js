@@ -235,7 +235,7 @@ describe.only('E2E Test for Multiple Networks', () => {
   })
   describe('After “authorized” network, automatically pulls the devices & applications', () => {
     describe('Lora 1.0', () => {
-      it('Pull Applications, Device Profiles, Integrations, and Devices', (done) => {
+      it.skip('Pull Applications, Device Profiles, Integrations, and Devices', (done) => {
         server
           .post('/api/networks/' + lora.loraV1.networkId + '/pull')
           .set('Authorization', 'Bearer ' + adminToken)
@@ -266,7 +266,7 @@ describe.only('E2E Test for Multiple Networks', () => {
       })
     })
     describe('Lora 2.0', () => {
-      it('Pull Applications, Device Profiles, Integrations, and Devices', (done) => {
+      it.skip('Pull Applications, Device Profiles, Integrations, and Devices', (done) => {
         server
           .post('/api/networks/' + lora.loraV2.networkId + '/pull')
           .set('Authorization', 'Bearer ' + adminToken)

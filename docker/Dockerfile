@@ -14,4 +14,6 @@ COPY . .
 
 EXPOSE 3200
 
-CMD [ "node", "./bin/rest.js" ]
+ENV db_file=
+
+CMD [ "node", "./bin/rest" ]

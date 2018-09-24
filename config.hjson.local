@@ -69,7 +69,7 @@
     // The database file to use.
     // db_file: /tmp/test.sqlite3
 //    db_file: data/lpwanserver.sqlite3
-    db_file: test/e2e/lpwanserver.sqlite3
+//    db_file: test/e2e/lpwanserver.sqlite3
 
 
 
