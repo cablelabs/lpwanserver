@@ -199,7 +199,7 @@ describe('E2E Test for Single TTN', function () {
       'description': 'CableLabs TTN Device ABP',
       networks: [1]
     }
-    it('Pull Applications, Device Profiles, Integrations, and Devices', function (done) {
+    it.skip('Pull Applications, Device Profiles, Integrations, and Devices', function (done) {
       server
         .post('/api/networks/' + networkId + '/pull')
         .set('Authorization', 'Bearer ' + adminToken)

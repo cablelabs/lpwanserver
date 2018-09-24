@@ -671,7 +671,7 @@ function addRemoteDevice (sessionData, remoteDevice, network, applicationId, dpM
   })
 }
 
-function addRemoteDeviceProfile  (sessionData, remoteDevice, application, network, modelAPI, dataAPI) {
+function addRemoteDeviceProfile (sessionData, remoteDevice, application, network, modelAPI, dataAPI) {
   return new Promise(async function (resolve, reject) {
     let networkSpecificDeviceProfileInformation = normalizeDeviceProfileData(remoteDevice, application)
     appLogger.log(networkSpecificDeviceProfileInformation, 'error')
@@ -1641,11 +1641,7 @@ module.exports.pushDevice = function (sessionData, network, deviceId, dataAPI) {
  * @returns {Error}
  */
 module.exports.addCompany = function (sessionData, network, companyId, dataAPI) {
-  appLogger.log('The Things Network: addCompany')
-  appLogger.log('Companies are not supported by The Things Network')
-  let error = new Error('Companies are not supported by The Things Network')
-  dataAPI.addLog(network, 'Error on Add Companies: ' + error)
-  return (error)
+  return {}
 }
 
 /**
@@ -1658,11 +1654,7 @@ module.exports.addCompany = function (sessionData, network, companyId, dataAPI) 
  * @returns {Error}
  */
 module.exports.getCompany = function (sessionData, network, companyId, dataAPI) {
-  appLogger.log('The Things Network: getCompany')
-  appLogger.log('Companies are not supported by The Things Network')
-  let error = new Error('Companies are not supported by The Things Network')
-  dataAPI.addLog(network, 'Error on Get Companies: ' + error)
-  return (error)
+  return {}
 }
 
 /**
@@ -1675,11 +1667,7 @@ module.exports.getCompany = function (sessionData, network, companyId, dataAPI) 
  * @returns {Error}
  */
 module.exports.updateCompany = function (sessionData, network, companyId, dataAPI) {
-  appLogger.log('The Things Network: updateCompany')
-  appLogger.log('Companies are not supported by The Things Network')
-  let error = new Error('Companies are not supported by The Things Network')
-  dataAPI.addLog(network, 'Error on Update Companies: ' + error)
-  return (error)
+  return {}
 }
 
 /**
@@ -1692,11 +1680,7 @@ module.exports.updateCompany = function (sessionData, network, companyId, dataAP
  * @returns {Error}
  */
 module.exports.deleteCompany = function (sessionData, network, companyId, dataAPI) {
-  appLogger.log('The Things Network: deleteCompany')
-  appLogger.log('Companies are not supported by The Things Network')
-  let error = new Error('Companies are not supported by The Things Network')
-  dataAPI.addLog(network, 'Error on Delete Companies: ' + error)
-  return (error)
+  return {}
 }
 
 /**
@@ -1709,11 +1693,7 @@ module.exports.deleteCompany = function (sessionData, network, companyId, dataAP
  * @returns {Error}
  */
 module.exports.pushCompany = function (sessionData, network, companyId, dataAPI) {
-  appLogger.log('The Things Network: getCompany')
-  appLogger.log('Companies are not supported by The Things Network')
-  let error = new Error('Companies are not supported by The Things Network')
-  dataAPI.addLog(network, 'Error on Get Companies: ' + error)
-  return (error)
+  return {}
 }
 
 /**
@@ -1726,11 +1706,7 @@ module.exports.pushCompany = function (sessionData, network, companyId, dataAPI)
  * @returns {Error}
  */
 module.exports.addRemoteCompany = function (sessionData, remoteOrganization, network, dataAPI, modelAPI) {
-  appLogger.log('The Things Network: addRemoteCompany')
-  appLogger.log('Companies are not supported by The Things Network')
-  let error = new Error('Companies are not supported by The Things Network')
-  dataAPI.addLog(network, 'Error on Add Remote Companies: ' + error)
-  return (error)
+  return {}
 }
 
 /**
@@ -1743,47 +1719,7 @@ module.exports.addRemoteCompany = function (sessionData, remoteOrganization, net
  * @returns {Error}
  */
 module.exports.pullCompanies = function (sessionData, network, dataAPI, modelAPI) {
-  appLogger.log('The Things Network: pullCompany')
-  appLogger.log('Companies are not supported by The Things Network')
-  let error = new Error('Companies are not supported by The Things Network')
-  dataAPI.addLog(network, 'Error on Pull Companies: ' + error)
-  return (error)
-}
-
-/**
- * Device Profiles are not supported by The Things Network
- *
- * @param sessionData
- * @param limitedRemoteDeviceProfile
- * @param network
- * @param companyMap
- * @param dataAPI
- * @param modelAPI
- * @returns {Error}
- */
-module.exports.addRemoteDeviceProfile = function (sessionData, limitedRemoteDeviceProfile, network, companyMap, dataAPI, modelAPI) {
-  appLogger.log('The Things Network: addRemoteDeviceProfile')
-  appLogger.log('Device Profiles are not supported by The Things Network')
-  let error = new Error('Device Profiles are not supported by The Things Network')
-  dataAPI.addLog(network, 'Error on addRemoteDeviceProfile: ' + error)
-  return (error)
-}
-
-/**
- * Device Profiles are not supported by The Things Network
- * @param sessionData
- * @param network
- * @param companyMap
- * @param dataAPI
- * @param modelAPI
- * @returns {Error}
- */
-module.exports.pullDeviceProfiles = function (sessionData, network, companyMap, dataAPI, modelAPI) {
-  appLogger.log('The Things Network: pullDeviceProfiles')
-  appLogger.log('Device Profiles are not supported by The Things Network')
-  let error = new Error('Device Profiles are not supported by The Things Network')
-  dataAPI.addLog(network, 'Error on pullDeviceProfiles: ' + error)
-  return (error)
+  return {}
 }
 
 /**
@@ -2145,7 +2081,7 @@ function normalizeDeviceData (remoteDevice, deviceProfileId) {
     deviceProfileID: deviceProfileId,
     name: remoteDevice.dev_id,
     skipFCntCheck: false,
-    deviceStatusBattery:'',
+    deviceStatusBattery: '',
     deviceStatusMargin: '',
     lastSeenAt: remoteDevice.lorawan_device.last_seen
   }

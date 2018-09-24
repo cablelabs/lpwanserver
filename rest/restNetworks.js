@@ -382,7 +382,15 @@ exports.initialize = function (app, server) {
               temp.password = network.securityData.password
             }
             network.securityData = temp
-            restServer.respond(res, 201, network)
+
+            modelAPI.networks.pullNetwork(network.id)
+              .then(result => {
+                restServer.respond(res, 201, network)
+              })
+              .catch(err => {
+                appLogger.log('Error pulling from network ' + network.id + ': ' + err)
+                restServer.respond(res, err)
+              })
           })
       })
       .catch(function (err) {
