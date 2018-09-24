@@ -64,8 +64,7 @@
     // Create a new database at startup?
     db_create: false
     // The database file to use.
-    //db_file: data/lpwanserver.sqlite3
-    db_file: /tmp/test.sqlite3
+    db_file: test/lpwanserver.sqlite3
 
     //////////////////////////////////////////////////////////
     // CORS settings

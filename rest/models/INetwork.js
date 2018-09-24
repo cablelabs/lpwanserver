@@ -87,7 +87,42 @@ Network.prototype.createNetwork = function (name, networkProviderId, networkType
         k)
       record = await modelAPI.networks.retrieveNetwork(record.id)
       if (record.securityData) {
-        if (record.securityData.authorized || record.securityData.username || record.securityData.code || record.securityData.apikey) {
+        if (record.securityData.access_token) {
+          record.securityData.authorized = true
+          record.securityData.message = 'ok'
+          modelAPI.networkTypeAPI.test(record, record.securityData)
+            .then(() => {
+              appLogger.log('Test Success ' + record.name)
+              record.securityData.authorized = true
+              record.securityData.message = 'ok'
+              record.securityData = dataAPI.hide(null,
+                record.securityData,
+                k)
+              me.impl.updateNetwork(record)
+                .then((rec) => {
+                  resolve(rec)
+                })
+                .catch((err) => {
+                  reject(err)
+                })
+            })
+            .catch((err) => {
+              appLogger.log('Test of ' + record.name + ': ' + err)
+              record.securityData.authorized = false
+              record.securityData.message = err.toString()
+              record.securityData = dataAPI.hide(null,
+                record.securityData,
+                k)
+              me.impl.updateNetwork(record)
+                .then((rec) => {
+                  resolve(rec)
+                })
+                .catch((err) => {
+                  reject(err)
+                })
+            })
+        }
+        else if (record.securityData.authorized || record.securityData.username || record.securityData.code || record.securityData.apikey) {
           modelAPI.networkTypeAPI.connect(record, record.securityData)
             .then((connection) => {
               appLogger.log(connection)
@@ -197,6 +232,42 @@ Network.prototype.updateNetwork = function (record) {
           k)
       }
       if (record.securityData) {
+        if (record.securityData.access_token) {
+          record.securityData.authorized = true
+          record.securityData.message = 'ok'
+          modelAPI.networkTypeAPI.test(record, record.securityData)
+            .then(() => {
+              appLogger.log('Test Success ' + record.name)
+              record.securityData.authorized = true
+              record.securityData.message = 'ok'
+              record.securityData = dataAPI.hide(null,
+                record.securityData,
+                k)
+              me.impl.updateNetwork(record)
+                .then((rec) => {
+                  resolve(rec)
+                })
+                .catch((err) => {
+                  reject(err)
+                })
+            })
+            .catch((err) => {
+              appLogger.log('Test of ' + record.name + ': ' + err)
+              record.securityData.authorized = false
+              record.securityData.message = err.toString()
+              record.securityData = dataAPI.hide(null,
+                record.securityData,
+                k)
+              me.impl.updateNetwork(record)
+                .then((rec) => {
+                  resolve(rec)
+                })
+                .catch((err) => {
+                  reject(err)
+                })
+            })
+        }
+        else
         if (record.securityData.authorized || record.securityData.username || record.securityData.code || record.securityData.apikey) {
           modelAPI.networkTypeAPI.connect(record, record.securityData)
             .then((connection) => {
@@ -335,6 +406,37 @@ Network.prototype.pullNetwork = function (networkId) {
     }
     catch (err) {
       appLogger.log('Error pulling from Network : ' + networkId + ' ' + err)
+      reject(err)
+    }
+  })
+}
+
+Network.prototype.pushNetworks = function (networkTypeId) {
+  let me = this
+  return new Promise(async function (resolve, reject) {
+    try {
+      let networks = await me.retrieveNetworks({networkTypeId: networkTypeId})
+      let networkType = await modelAPI.networkTypes.retrieveNetworkTypes(networkTypeId)
+      var npda = new NetworkProtocolDataAccess(modelAPI, 'Push Network')
+      npda.initLog(networkType, networks)
+      appLogger.log(networks)
+
+      let promiseList = []
+      for (let i = 0; i < networks.records.length; ++i) {
+        promiseList.push(modelAPI.networkProtocolAPI.pushNetwork(npda, networks.records[i], modelAPI))
+      }
+      Promise.all(promiseList)
+        .then(results => {
+          appLogger.log('Success pushing to Networks')
+          resolve()
+        })
+        .catch(err => {
+          appLogger.log('Error pushing to Networks : ' + ' ' + err)
+          reject(err)
+        })
+    }
+    catch (err) {
+      appLogger.log('Error pushing to Networks : ' + ' ' + err)
       reject(err)
     }
   })

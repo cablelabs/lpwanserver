@@ -382,7 +382,23 @@ exports.initialize = function (app, server) {
               temp.password = network.securityData.password
             }
             network.securityData = temp
-            restServer.respond(res, 201, network)
+
+            modelAPI.networks.pullNetwork(network.id)
+              .then(result => {
+                appLogger.log('Success pulling from network ' + network.name)
+                modelAPI.networks.pushNetworks(network.networkTypeId)
+                  .then(ret => {
+                    appLogger.log('Success pushing to networks')
+                    restServer.respond(res, 201, network)
+                  }).catch(err => {
+                    appLogger.log('Error pushing to networks: ' + err)
+                    restServer.respond(res, err)
+                  })
+              })
+              .catch(err => {
+                appLogger.log('Error pulling from network ' + network.id + ': ' + err)
+                restServer.respond(res, err)
+              })
           })
       })
       .catch(function (err) {
@@ -451,12 +467,26 @@ exports.initialize = function (app, server) {
               temp.username = network.securityData.username
               temp.password = network.securityData.password
             }
-            network.securityData = temp
-            restServer.respond(res, 200, network)
+            modelAPI.networks.pullNetwork(network.id)
+              .then(result => {
+                appLogger.log('Success pulling from network ' + network.name)
+                modelAPI.networks.pushNetworks(network.networkTypeId)
+                  .then(ret => {
+                    appLogger.log('Success pushing to networks')
+                    restServer.respond(res, 200, network)
+                  }).catch(err => {
+                    appLogger.log('Error pushing to networks: ' + err)
+                    restServer.respond(res, err)
+                  })
+              })
+              .catch(err => {
+                appLogger.log('Error pulling from network ' + network.id + ': ' + err)
+                restServer.respond(res, err)
+              })
           })
       })
       .catch(function (err) {
-        appLogger.log(err)
+        appLogger.log('Error creating network' + err)
         restServer.respond(res, err)
       })
   })

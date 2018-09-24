@@ -2,3 +2,7 @@
 *Dockerfile*
 *docker-compose*
 node_modules
+ui
+test
+out
+.idea

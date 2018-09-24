@@ -1616,6 +1616,9 @@ module.exports.setupOrganization = function (sessionData, network, modelAPI, dat
               lora1NetworkSettings.networkId = network.id
 
               let ns = (companyNtl.networkSettings)
+              if (!Array.isArray(ns)) {
+                ns = [ns]
+              }
               ns.push(lora1NetworkSettings)
               companyNtl.networkSettings = ns
               delete companyNtl.remoteAccessLogs

@@ -1,7 +1,6 @@
 const path = require('path')
-const { promisify } = require('util')
-const exec = promisify(require('child_process').exec)
 const component =require('../component.json')
+const { execSync } = require('child_process')
 
 const atPath = (...args) => path.join(__dirname, ...args)
 
@@ -11,7 +10,7 @@ const latestImage = `${component.registry}/${component.name}:latest`
 const cwd = atPath('..')
 
 async function package () {
-  await exec(`docker build -f docker/Dockerfile -t ${image} -t ${latestImage} .`, { cwd })
+  execSync(`docker build -f docker/Dockerfile -t ${image} -t ${latestImage} .`, { cwd, stdio: 'inherit' })
   console.info('The container was successfully built.')
 }
 
