@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node ./bin/rest",
     "mocha": "export NODE_ENV=local;mocha",
-    "e2e": "cp data/test.sqlite3.testSuiteStartingDB test/e2e/lpwanserver.sqlite3;export NODE_ENV=e2e; mocha test/e2e --exit --bail",
+    "e2e": "cp data/test.sqlite3.testSuiteStartingDB test/e2e/lpwanserver.sqlite3;export NODE_ENV=e2e; mocha test/e2e --exit --bail --timeout 10000",
     "e2e-log": "cp data/test.sqlite3.testSuiteStartingDB test/e2e/lpwanserver.sqlite3;export NODE_ENV=e2e-log; mocha test/e2e --exit",
     "ttn-test": "export NODE_ENV=ttn-unit;mocha test/ttn-unit",
     "loriot-test": "export NODE_ENV=loriot-unit;mocha test/loriot-unit",
