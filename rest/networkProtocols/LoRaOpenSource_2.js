@@ -37,7 +37,7 @@ module.exports.metaData =
       },
       {
         name: 'password',
-        description: 'The password of he LoraOS admin account',
+        description: 'The password of the LoraOS admin account',
         help: '',
         type: 'password',
         label: 'Password',
