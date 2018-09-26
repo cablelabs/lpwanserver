@@ -46,6 +46,28 @@ module.exports = {
           required: true,
           placeholder: 'e.g. ZDTXlylatAHYPDBOXx...',
           oauthQueryParameter: ''
+        },
+        {
+          name: 'username',
+          description: 'The username of the TTN admin account',
+          help: '',
+          type: 'string',
+          label: 'Username',
+          value: '',
+          required: true,
+          placeholder: 'myLoraUsername',
+          oauthQueryParameter: ''
+        },
+        {
+          name: 'password',
+          description: 'The password of the TTN admin account',
+          help: '',
+          type: 'password',
+          label: 'Password',
+          value: '',
+          required: true,
+          placeholder: 'myLoraPassword',
+          oauthQueryParameter: ''
         }
       ],
       oauthRequestUrlQueryParams: [
