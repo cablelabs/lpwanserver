@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-docker system prune --force
+docker container rm docker_postgresql_1 --force
 sudo rm -rf ./data/demo_data
 sudo cp -r ./data/demo_baseline ./data/demo_data
 # cp ./data/demo_baseline/demo.sqlite3 ./data/demo.sqlite3
