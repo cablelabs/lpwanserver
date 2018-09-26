@@ -46,6 +46,28 @@ module.exports = {
           required: true,
           placeholder: 'e.g. ZDTXlylatAHYPDBOXx...',
           oauthQueryParameter: ''
+        },
+        {
+          name: 'username',
+          description: 'The username of the TTN admin account',
+          help: '',
+          type: 'string',
+          label: 'Username',
+          value: '',
+          required: true,
+          placeholder: 'myLoraUsername',
+          oauthQueryParameter: ''
+        },
+        {
+          name: 'password',
+          description: 'The password of the TTN admin account',
+          help: '',
+          type: 'password',
+          label: 'Password',
+          value: '',
+          required: true,
+          placeholder: 'myLoraPassword',
+          oauthQueryParameter: ''
         }
       ],
       oauthRequestUrlQueryParams: [
@@ -438,6 +460,12 @@ module.exports.pullNetwork = function (sessionData, network, dataAPI, modelAPI) 
         appLogger.log(err)
         reject(err)
       })
+  })
+}
+
+module.exports.pushNetwork = function (sessionData, network, dataAPI, modelAPI) {
+  return new Promise(async function (resolve, reject) {
+    resolve()
   })
 }
 
@@ -1923,7 +1951,7 @@ function normalizeApplicationData (remoteApplication, remoteApplicationMeta, net
   let normalized = {
     description: remoteApplicationMeta.name,
     id: remoteApplication.app_id,
-    name: remoteApplicationMeta.name,
+    name: remoteApplication.app_id,
     key: remoteApplicationMeta.access_keys[1].key,
     payloadCodec: remoteApplication.payload_format,
     payloadEncoderScript: remoteApplication.encoder,
@@ -1964,21 +1992,18 @@ function normalizeDeviceProfileData (remoteDeviceProfile, remoteApplicationMeta)
   else {
     normalized.supportsJoin = false
   }
-  switch (remoteApplicationMeta.serviceProfileID) {
-    case 'ttn-handler-us-west':
+
+    if (normalized.networkServerID === 'ttn-handler-us-west')
       normalized.rfRegion = 'US902'
-      break
-    case 'ttn-handler-eu':
+    else if (normalized.networkServerID === 'ttn-handler-eu')
       normalized.rfRegion = 'EU868'
-      break
-    case 'ttn-handler-asia-se':
+    else if (normalized.networkServerID === 'ttn-handler-asia-se')
       normalized.rfRegion = 'China779'
-      break
-    case 'ttn-hanldler-brazil':
+    else if (normalized.networkServerID === 'ttn-handler-brazil')
       normalized.rfRegion = 'AS923'
-    default:
+    else // default
       normalized.rfRegion = 'US902'
-  }
+
 
   function filterAttributes (attributes, key) {
     let temp = remoteDeviceProfile.attributes.filter(obj => obj.key === key)

@@ -37,7 +37,7 @@ module.exports.metaData =
       },
       {
         name: 'password',
-        description: 'The password of he LoraOS admin account',
+        description: 'The password of the LoraOS admin account',
         help: '',
         type: 'password',
         label: 'Password',
@@ -1474,6 +1474,7 @@ module.exports.pushDevice = function (sessionData, network, device, dataAPI) {
           resolve({localDevice: device.id, remoteDevice: devNetworkId})
         }
         else {
+          appLogger.log(devNetworkId + ' found for network ' + network.name + ' for device ' + device.id)
           reject(new Error('Something bad happened with the Protocol Table'))
         }
       })
@@ -2934,7 +2935,7 @@ module.exports.addDevice = function (sessionData, network, deviceId, dataAPI) {
           dataAPI.putProtocolDataForKey(network.id,
             network.networkProtocolId,
             makeDeviceDataKey(device.id, 'devNwkId'),
-            options.json.devEUI)
+            loraV2Device.device.devEUI)
 
           appLogger.log(loraV2Device, 'info')
 
