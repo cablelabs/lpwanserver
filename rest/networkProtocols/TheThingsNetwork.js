@@ -484,7 +484,6 @@ module.exports.pullApplications = function (sessionData, network, modelAPI, data
   return new Promise(async function (resolve, reject) {
     if (sessionData && sessionData.connection && sessionData.connection.access_token) {
       let options = getOptions('GET', 'https://console.thethingsnetwork.org', 'console', 'applications', sessionData.connection.access_token)
-      // TODO:Remove
       appLogger.log(options)
       request(options, function (error, response, body) {
         if (error) {
@@ -1984,7 +1983,10 @@ function normalizeDeviceProfileData (remoteDeviceProfile, remoteApplicationMeta)
     name: remoteDeviceProfile.description,
     networkServerID: remoteApplicationMeta.serviceProfileID,
     organizationID: remoteApplicationMeta.organizationID,
-    supports32BitFCnt: remoteDeviceProfile.lorawan_device.uses32_bit_f_cnt
+    supports32BitFCnt: remoteDeviceProfile.lorawan_device.uses32_bit_f_cnt,
+    macVersion: '1.0.2',
+    regParamsRevision: 'B',
+    maxEIRP: 30
   }
   if (remoteDeviceProfile.lorawan_device.activation_constraints === 'otaa' || (remoteDeviceProfile.lorawan_device.app_key !== '')) {
     normalized.supportsJoin = true
@@ -2068,7 +2070,7 @@ function deNormalizeDeviceProfileData (remoteDeviceProfile, networkServerId, org
       },
       "updatedAt": "2018-09-05T05:28:09.682Z"
    */
-  let loraV2DeviceProfileData = {
+  let ttnDeviceProfileData = {
     deviceProfile: {
       classBTimeout: remoteDeviceProfile.classBTimeout,
       classCTimeout: remoteDeviceProfile.classCTimeout,
