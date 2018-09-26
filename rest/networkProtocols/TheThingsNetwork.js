@@ -54,8 +54,8 @@ module.exports = {
           type: 'string',
           label: 'Username',
           value: '',
-          required: true,
-          placeholder: 'myLoraUsername',
+          required: false,
+          placeholder: 'myTTNUsername',
           oauthQueryParameter: ''
         },
         {
@@ -65,8 +65,8 @@ module.exports = {
           type: 'password',
           label: 'Password',
           value: '',
-          required: true,
-          placeholder: 'myLoraPassword',
+          required: false,
+          placeholder: 'myTTNPassword',
           oauthQueryParameter: ''
         }
       ],
