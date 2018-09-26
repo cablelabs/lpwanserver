@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 
+docker system prune --force
 sudo rm -rf ./data/demo_data
 sudo cp -r ./data/demo_baseline ./data/demo_data
-cp ./data/demo_baseline/demo.sqlite3 ./data/demo.sqlite3
+# cp ./data/demo_baseline/demo.sqlite3 ./data/demo.sqlite3
 
 npm run package
 
