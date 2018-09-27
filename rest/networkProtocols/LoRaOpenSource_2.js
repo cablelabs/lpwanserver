@@ -58,7 +58,7 @@ module.exports.register = async function (networkProtocols) {
       protocolHandler: 'LoRaOpenSource_2.js',
       networkProtocolVersion: '2.0'
     }
-    setTimeout(function() {
+    setTimeout(function () {
       networkProtocols.retrieveNetworkProtocols({search: me.name, networkProtocolVersion: '1.0'})
         .then(master => {
           console.log('Found Master')
@@ -72,7 +72,7 @@ module.exports.register = async function (networkProtocols) {
             })
         })
         .catch(err => {
-          //No master
+          // No master
           networkProtocols.upsertNetworkProtocol(me)
             .then(() => {
               resolve()
@@ -1577,7 +1577,7 @@ module.exports.setupOrganization = function (sessionData, network, modelAPI, dat
       else {
         body = JSON.parse(body)
         appLogger.log(body)
-        if (body.totalCount === 0) {
+        if (body.totalCount === '0') {
           appLogger.log('Adding company')
           me.addCompany(sessionData, network, company.id, dataAPI)
             .then((networkSettings) => {
