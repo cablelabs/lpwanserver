@@ -54,8 +54,8 @@ module.exports = {
           type: 'string',
           label: 'Username',
           value: '',
-          required: true,
-          placeholder: 'myLoraUsername',
+          required: false,
+          placeholder: 'myTTNUsername',
           oauthQueryParameter: ''
         },
         {
@@ -65,8 +65,8 @@ module.exports = {
           type: 'password',
           label: 'Password',
           value: '',
-          required: true,
-          placeholder: 'myLoraPassword',
+          required: false,
+          placeholder: 'myTTNPassword',
           oauthQueryParameter: ''
         }
       ],
@@ -255,13 +255,7 @@ function authorizeWithPassword (network, loginData) {
       }
       else {
         appLogger.log(body)
-        var token = body.access_token
-        if (token) {
-          resolve(body)
-        }
-        else {
-          reject(new Error('No token'))
-        }
+        resolve(body)
       }
     })
   })
@@ -347,7 +341,7 @@ function authorizeWithRefreshToken (network, loginData) {
  * @returns {Promise<BearerToken>}
  */
 module.exports.connect = function (network, loginData) {
-  appLogger.log('Inside TTN connect')
+  appLogger.log('Inside TTN connect ' + JSON.stringify(loginData))
   let me = this
   return new Promise(function (resolve, reject) {
     if (network.securityData.authorized) {
@@ -358,21 +352,25 @@ module.exports.connect = function (network, loginData) {
         })
         .catch(err => {
           appLogger.log('Access Token is expired, refreshing')
-          return authorizeWithRefreshToken(network, loginData)
+          authorizeWithRefreshToken(network, loginData).then(connection => {resolve(connection)})
+            .catch(err => reject (err))
         })
     }
     else {
       if (loginData.refresh_token) {
-        return authorizeWithRefreshToken(network, loginData)
-      }
+        authorizeWithRefreshToken(network, loginData).then(connection => {resolve(connection)})
+          .catch(err => reject (err))      }
       else if (loginData.username && loginData.password) {
-        return (authorizeWithPassword(network, loginData))
+        authorizeWithPassword(network, loginData).then(connection => {resolve(connection)})
+          .catch(err => reject (err))
       }
       else if (loginData.code) {
-        return (authorizeWithCode(network, loginData))
-      }
+        authorizeWithCode(network, loginData).then(connection => {resolve(connection)})
+          .catch(err => reject (err))      }
       else {
-        reject(new Error('LPWan does not have credentials for TTN'))
+        error = new Error('LPWan does not have credentials for TTN')
+        error.code = 42
+        reject(error)
       }
     }
   })
@@ -667,6 +665,7 @@ function addRemoteDevice (sessionData, remoteDevice, network, applicationId, dpM
 
     if (existingDeviceNTL.totalCount > 0) {
       appLogger.log(existingDevice.name + ' link already exists')
+      resolve({localDevice: existingDevice.id, remoteDevice: remoteDevice.dev_id})
     }
     else {
       appLogger.log('creating Network Link for ' + existingDevice.name)

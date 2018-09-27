@@ -365,6 +365,7 @@ exports.initialize = function (app, server) {
       .then(function (rec) {
         modelAPI.networks.retrieveNetwork(rec.id)
           .then((network) => {
+            appLogger.log(network)
             let temp = {
               authorized: network.securityData.authorized,
               message: network.securityData.message,
@@ -383,22 +384,34 @@ exports.initialize = function (app, server) {
             }
             network.securityData = temp
 
-            modelAPI.networks.pullNetwork(network.id)
-              .then(result => {
-                appLogger.log('Success pulling from network ' + network.name)
-                modelAPI.networks.pushNetworks(network.networkTypeId)
-                  .then(ret => {
-                    appLogger.log('Success pushing to networks')
+            if (network.securityData.authorized === false) {
+              restServer.respond(res, 201, network)
+            }
+            else {
+              modelAPI.networks.pullNetwork(network.id)
+                .then(result => {
+                  appLogger.log('Success pulling from network ' + network.name)
+                  modelAPI.networks.pushNetworks(network.networkTypeId)
+                    .then(ret => {
+                      appLogger.log('Success pushing to networks')
+                      restServer.respond(res, 201, network)
+                    }).catch(err => {
+                      appLogger.log('Error pushing to networks: ' + err)
+                      restServer.respond(res, err)
+                    })
+                })
+                .catch(err => {
+                  appLogger.log('Error pulling from network ' + network.id + ': ' + err)
+                  appLogger.log(network.securityData)
+                  if (!network.securityData.authorized) {
+                    network.securityData.message = 'Pending Authorization'
                     restServer.respond(res, 201, network)
-                  }).catch(err => {
-                    appLogger.log('Error pushing to networks: ' + err)
+                  }
+                  else {
                     restServer.respond(res, err)
-                  })
-              })
-              .catch(err => {
-                appLogger.log('Error pulling from network ' + network.id + ': ' + err)
-                restServer.respond(res, err)
-              })
+                  }
+                })
+            }
           })
       })
       .catch(function (err) {
@@ -467,22 +480,33 @@ exports.initialize = function (app, server) {
               temp.username = network.securityData.username
               temp.password = network.securityData.password
             }
-            modelAPI.networks.pullNetwork(network.id)
-              .then(result => {
-                appLogger.log('Success pulling from network ' + network.name)
-                modelAPI.networks.pushNetworks(network.networkTypeId)
-                  .then(ret => {
-                    appLogger.log('Success pushing to networks')
+            network.securityData = temp
+
+            if (network.securityData.authorized === false) {
+              restServer.respond(res, 200, network)
+            }
+            else {
+              modelAPI.networks.pullNetwork(network.id)
+                .then(result => {
+                  appLogger.log('Success pulling from network ' + network.name)
+                  modelAPI.networks.pushNetworks(network.networkTypeId)
+                    .then(ret => {
+                      appLogger.log('Success pushing to networks')
+                      restServer.respond(res, 200, network)
+                    }).catch(err => {
+                      appLogger.log('Error pushing to networks: ' + err)
+                      restServer.respond(res, err)
+                    })
+                })
+                .catch(err => {
+                  if (!network.securityData.authorized) {
                     restServer.respond(res, 200, network)
-                  }).catch(err => {
-                    appLogger.log('Error pushing to networks: ' + err)
+                  }
+                  else {
                     restServer.respond(res, err)
-                  })
-              })
-              .catch(err => {
-                appLogger.log('Error pulling from network ' + network.id + ': ' + err)
-                restServer.respond(res, err)
-              })
+                  }
+                })
+            }
           })
       })
       .catch(function (err) {
