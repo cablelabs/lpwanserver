@@ -70,7 +70,6 @@ function authorizeAndTest (network, modelAPI, k, me, dataAPI) {
     else {
       modelAPI.networkTypeAPI.connect(network, network.securityData)
         .then((connection) => {
-          appLogger.log(connection)
           if (connection instanceof Object) {
             for (var prop in connection) {
               network.securityData[prop] = connection[prop]
@@ -143,7 +142,7 @@ Network.prototype.createNetwork = function (name, networkProviderId, networkType
           record.securityData = dataAPI.access(null, record.securityData, k)
           authorizeAndTest(record, modelAPI, k, me, dataAPI)
             .then(finalNetwork => {
-              appLogger.log(finalNetwork)
+              appLogger.log(finalNetwork, 'debug')
               finalNetwork.securityData = dataAPI.hide(null, finalNetwork.securityData, k)
               me.impl.updateNetwork(finalNetwork)
                 .then((rec) => {
@@ -224,7 +223,6 @@ Network.prototype.pullNetwork = function (networkId) {
   let me = this
   return new Promise(async function (resolve, reject) {
     try {
-      appLogger.log(networkId)
       let network = await me.retrieveNetwork(networkId)
       if (!network.securityData.authorized) {
         reject(new Error('Network is not authorized.  Cannot pull'))

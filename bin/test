@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+docker container rm docker_postgresql_1 --force
+sudo rm -rf ./data/demo_data
+sudo cp -r ./data/demo_baseline ./data/demo_data
+# cp ./data/demo_baseline/demo.sqlite3 ./data/demo.sqlite3
+
+npm run package
+
+# Run docker-compose with development configuration
+docker-compose -f ./docker/docker-compose-test.yml up

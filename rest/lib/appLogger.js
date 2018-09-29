@@ -5,7 +5,7 @@ var stackTrace = require('stack-trace')
 var winston = require('winston')
 
 exports.logger = winston.createLogger({
-  level: 'info',
+  level: 'warn',
   transports: [
     new winston.transports.File({
       format: winston.format.combine(
@@ -52,12 +52,14 @@ exports.log = function (msg, level) {
       if (level) this.logger.log(level, header + ':  ' + msg +"\n")
       this.logger.info('Message', msg)
     }
-    if (typeof msg === 'object') {
-      console.log(header + JSON.stringify(msg) + "\n")
-    }
-    else {
-      console.log(header +
-        msg)
+    if (level === 'warn' || level === 'error') {
+      if (typeof msg === 'object') {
+        console.log(header + JSON.stringify(msg) + "\n")
+      }
+      else {
+        console.log(header +
+          msg)
+      }
     }
   }
 }

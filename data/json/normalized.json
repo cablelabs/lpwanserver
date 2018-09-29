@@ -20,7 +20,8 @@
       "suspended": "boolean",
       "clientsLimit": "number",
       "joinServer": "object",
-      "applicationEUI": "string"
+      "applicationEUI": "string",
+      "key": "string"
     }
   },
   {

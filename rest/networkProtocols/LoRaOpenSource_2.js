@@ -50,7 +50,7 @@ module.exports.metaData =
   }
 
 module.exports.register = async function (networkProtocols) {
-  appLogger.log('LoraOpenSource:register')
+  appLogger.log('LoraOpenSource:register', 'warn')
   return new Promise(async function (resolve, reject) {
     let me = {
       name: 'Lora Open Source',
@@ -1360,7 +1360,6 @@ module.exports.pushApplication = function (sessionData, network, application, da
           resolve({localApplication: application.id, remoteApplication: appNetworkId})
         }
         else {
-          console.log('WTF')
           reject(new Error('Bad things in the Protocol Table'))
         }
       })

@@ -133,8 +133,6 @@ NetworkProtocolAccess.prototype.connect = function (network, loginData) {
       var proto = await me.getProtocol(network)
       proto.api.connect(network, loginData)
         .then((connection) => {
-          appLogger.log(connection, 'info')
-          appLogger.log(connection)
           if (!proto.sessionData[network.id]) {
             proto.sessionData[network.id] = {}
           }
