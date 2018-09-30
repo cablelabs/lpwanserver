@@ -52,7 +52,7 @@ exports.log = function (msg, level) {
       if (level) this.logger.log(level, header + ':  ' + msg +"\n")
       this.logger.info('Message', msg)
     }
-    if (level === 'warn' || level === 'error') {
+    if (level === 'info' || level === 'warn' || level === 'error') {
       if (typeof msg === 'object') {
         console.log(header + JSON.stringify(msg) + "\n")
       }
