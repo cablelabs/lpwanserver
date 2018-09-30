@@ -3367,7 +3367,7 @@ function normalizeDeviceData (remoteDevice) {
     normalized.deviceKeys = {
       appKey: remoteDevice.deviceKeys.appKey,
       devEUI: remoteDevice.deviceKeys.devEUI,
-      nwkKey: remoteDevice.deviceKeys.nwkKey
+      nwkKey: remoteDevice.deviceKeys.appKey
     }
   }
   /*

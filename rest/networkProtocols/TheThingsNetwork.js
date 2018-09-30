@@ -99,7 +99,7 @@ module.exports = {
  * @returns {Promise<?>} - Empty promise means register worked
  */
 module.exports.register = function (networkProtocols) {
-  appLogger.log('TTN:register', 'warn')
+  appLogger.log('TTN:register', 'info')
   return new Promise(async function (resolve, reject) {
     let me = {
       name: 'The Things Network',
@@ -463,7 +463,7 @@ module.exports.pullNetwork = function (session, network, dataAPI, modelAPI) {
 
     Promise.all(promiseList)
       .then(pulledResources => {
-        appLogger.log(pulledResources, 'warn')
+        appLogger.log(pulledResources, 'info')
         let devicePromistList = []
         for (let index in pulledResources[0]) {
           devicePromistList.push(me.pullDevices(session, network, pulledResources[0][index].remoteApplication, pulledResources[0][index].localApplication, {}, modelAPI, dataAPI))
@@ -472,7 +472,7 @@ module.exports.pullNetwork = function (session, network, dataAPI, modelAPI) {
         Promise.all(devicePromistList)
           .then((devices) => {
             appLogger.log(devices, 'info')
-            appLogger.log('Success Pulling Network ' + network.name, 'warn')
+            appLogger.log('Success Pulling Network ' + network.name, 'info')
             resolve()
           })
           .catch(err => {
@@ -545,8 +545,8 @@ function addRemoteApplication (session, limitedRemoteApplication, network, model
       let existingApplication = await modelAPI.applications.retrieveApplications({search: normalizedApplication.name})
       if (existingApplication.totalCount > 0) {
         existingApplication = existingApplication.records[0]
-        appLogger.log(existingApplication.name + ' already exists', 'warn')
-        appLogger.log(normalizedApplication, 'warn')
+        appLogger.log(existingApplication.name + ' already exists', 'info')
+        appLogger.log(normalizedApplication, 'info')
       }
       else {
         existingApplication = await modelAPI.applications.createApplication(normalizedApplication.name, normalizedApplication.description, 2, network.networkTypeId, 'http://set.me.to.your.real.url:8888')
@@ -555,11 +555,11 @@ function addRemoteApplication (session, limitedRemoteApplication, network, model
 
       let existingApplicationNTL = await modelAPI.applicationNetworkTypeLinks.retrieveApplicationNetworkTypeLinks({applicationId: existingApplication.id})
       if (existingApplicationNTL.totalCount > 0) {
-        appLogger.log(existingApplication.name + ' link already exists', 'warn')
+        appLogger.log(existingApplication.name + ' link already exists', 'info')
       }
       else {
         existingApplicationNTL = await modelAPI.applicationNetworkTypeLinks.createRemoteApplicationNetworkTypeLink(existingApplication.id, network.networkTypeId, normalizedApplication, existingApplication.companyId)
-        appLogger.log(existingApplicationNTL, 'warn')
+        appLogger.log(existingApplicationNTL, 'info')
         let temp = await dataAPI.putProtocolDataForKey(network.id,
           network.networkProtocolId,
           makeApplicationDataKey(existingApplication.id, 'appNwkId'),
@@ -636,7 +636,7 @@ module.exports.pullDevices = function (session, network, remoteApplicationId, lo
       'rejectUnauthorized': false
     }
 
-    appLogger.log(options, 'warn')
+    appLogger.log(options, 'info')
     request(options, function (error, response, body) {
       if (error) {
         appLogger.log('Error pulling devices from network ' + network.name, 'error')
@@ -644,7 +644,7 @@ module.exports.pullDevices = function (session, network, remoteApplicationId, lo
         reject(error)
       }
       else {
-        appLogger.log(body, 'warn')
+        appLogger.log(body, 'info')
         let devices = {}
         if (typeof body === 'object') {
           devices = body.devices
@@ -766,7 +766,7 @@ module.exports.pushNetwork = function (session, network, dataAPI, modelAPI) {
         devicePromiseList.push(me.pushDevices(session, network, dataAPI, modelAPI))
         Promise.all(devicePromiseList)
           .then(pushedResource => {
-            appLogger.log('Success Pushing Network ' + network.name, 'warn')
+            appLogger.log('Success Pushing Network ' + network.name, 'info')
             appLogger.log(pushedResource, 'info')
             resolve()
           })
@@ -786,15 +786,15 @@ module.exports.pushApplications = function (session, network, dataAPI, modelAPI)
   let me = this
   return new Promise(async function (resolve, reject) {
     let existingApplications = await modelAPI.applications.retrieveApplications()
-    appLogger.log(existingApplications, 'warn')
+    appLogger.log(existingApplications, 'info')
     let promiseList = []
     for (let index = 0; index < existingApplications.records.length; index++) {
       promiseList.push(me.pushApplication(session, network, existingApplications.records[index], dataAPI, modelAPI))
     }
     Promise.all(promiseList)
       .then(pushedResources => {
-        appLogger.log('Success Pushing Applications', 'warn')
-        appLogger.log(pushedResources, 'warn')
+        appLogger.log('Success Pushing Applications', 'info')
+        appLogger.log(pushedResources, 'info')
         resolve(pushedResources)
       })
       .catch(err => {
@@ -815,7 +815,7 @@ module.exports.pushApplication = function (session, network, application, dataAP
       makeApplicationDataKey(application.id, 'appNwkId'))
       .then(appNetworkId => {
         if (appNetworkId) {
-          appLogger.log('Ignoring Application  ' + application.id + ' already on network ' + network.name + ' as ' + appNetworkId, 'warn')
+          appLogger.log('Ignoring Application  ' + application.id + ' already on network ' + network.name + ' as ' + appNetworkId, 'info')
           resolve({localApplication: application.id, remoteApplication: appNetworkId})
         }
         else {
@@ -823,10 +823,10 @@ module.exports.pushApplication = function (session, network, application, dataAP
         }
       })
       .catch(() => {
-        appLogger.log('Pushing Application ' + application.name, 'warn')
+        appLogger.log('Pushing Application ' + application.name, 'info')
         me.addApplication(session, network, application.id, dataAPI, modelAPI)
           .then((appNetworkId) => {
-            appLogger.log('Added application ' + application.id + ' to network ' + network.name, 'warn')
+            appLogger.log('Added application ' + application.id + ' to network ' + network.name, 'info')
             resolve({localApplication: application.id, remoteApplication: appNetworkId})
           })
           .catch(err => {
@@ -865,21 +865,21 @@ module.exports.pushDevice = function (sessionData, network, device, dataAPI) {
       network.networkProtocolId,
       makeDeviceDataKey(device.id, 'devNwkId'))
       .then(devNetworkId => {
-        appLogger.log('Ignoring Device  ' + device.id + ' already on network ' + network.name, 'warn')
+        appLogger.log('Ignoring Device  ' + device.id + ' already on network ' + network.name, 'info')
         if (devNetworkId) {
           resolve({localDevice: device.id, remoteDevice: devNetworkId})
         }
         else {
-          appLogger.log(devNetworkId + ' found for network ' + network.name + ' for device ' + device.id, 'warn')
+          appLogger.log(devNetworkId + ' found for network ' + network.name + ' for device ' + device.id, 'info')
           reject(new Error('Something bad happened with the Protocol Table'))
         }
       })
       .catch(() => {
-        appLogger.log('Adding Device  ' + device.id + ' to network ' + network.name, 'warn')
+        appLogger.log('Adding Device  ' + device.id + ' to network ' + network.name, 'info')
 
         me.addDevice(sessionData, network, device.id, dataAPI)
           .then((devNetworkId) => {
-            appLogger.log('Added Device  ' + device.id + ' to network ' + network.name, 'warn')
+            appLogger.log('Added Device  ' + device.id + ' to network ' + network.name, 'info')
             resolve({localDevice: device.id, remoteDevice: devNetworkId})
           })
           .catch(err => {
@@ -946,7 +946,7 @@ module.exports.addApplication = function (session, network, applicationId, dataA
       }
       else {
         try {
-          appLogger.log(body, 'warn')
+          appLogger.log(body, 'info')
           let response = {}
           if (typeof body === 'object') {
             response = body
@@ -1459,7 +1459,7 @@ function postSingleDevice (session, network, device, deviceProfile, application,
     delete ttnDevice.attributes
     let options = getOptions('POST', 'http://us-west.thethings.network:8084', 'handler', 'applications/' + ttnDevice.app_id + '/devices', session.connection.access_token)
     options.json = ttnDevice
-    appLogger.log(options, 'warn')
+    appLogger.log(options, 'info')
 
     request(options, function (error, response, body) {
       if (error || response.statusCode >= 400) {
@@ -1513,7 +1513,7 @@ module.exports.addDevice = function (session, network, deviceId, dataAPI) {
                     appLogger.log('Moment of Truth', 'error')
                     postSingleDevice(session, network, dntl, deviceProfile, applicationData, remoteApplicationId, dataAPI)
                       .then(result => {
-                        appLogger.log('Success Adding Device ' + ' to ' + network.name, 'warn')
+                        appLogger.log('Success Adding Device ' + ' to ' + network.name, 'info')
                         resolve(result)
                       }).catch(err => {
                       appLogger.log(err, 'error')
@@ -2207,11 +2207,12 @@ function normalizeDeviceData (remoteDevice, deviceProfileId) {
     deviceStatusMargin: '',
     lastSeenAt: remoteDevice.lorawan_device.last_seen
   }
+  //TTN only supports 1.0.x currently, so  nwkKey == appKey for conversion
   if (remoteDevice.lorawan_device.activation_constraints === 'otaa' || (remoteDevice.lorawan_device.app_key !== '')) {
     normalized.deviceKeys = {
       appKey: remoteDevice.lorawan_device.app_key,
       devEUI: remoteDevice.lorawan_device.dev_eui,
-      nwkKey: remoteDevice.lorawan_device.nwk_key
+      nwkKey: remoteDevice.lorawan_device.app_key
     }
   }
   else {
@@ -2223,7 +2224,8 @@ function normalizeDeviceData (remoteDevice, deviceProfileId) {
       fCntUp: remoteDevice.lorawan_device.f_cnt_up,
       nFCntDown: remoteDevice.lorawan_device.f_cnt_down,
       nwkSEncKey: remoteDevice.lorawan_device.nwk_s_key,
-      sNwkSIntKey: remoteDevice.lorawan_device.sNwkSIntKey
+      sNwkSIntKey: remoteDevice.lorawan_device.nwk_s_key,
+      fNwkSIntKey: remoteDevice.lorawan_device.nwk_s_key
     }
   }
   return normalized

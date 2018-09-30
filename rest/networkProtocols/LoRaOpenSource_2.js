@@ -125,10 +125,11 @@ module.exports.test = function (network, loginData) {
           }
         }
         else {
-          appLogger.log('Test Error: ' + error)
+          appLogger.log('Test Error: ', 'error')
           if (response && response.statusCode) {
             appLogger.log(response.statusCode)
           }
+          appLogger.log(error, 'error')
           reject(error)
         }
       })
@@ -337,7 +338,8 @@ function getANetworkServerID (network, connection) {
     request(options, async function (error, response, body) {
       if (error || response.statusCode >= 400) {
         if (error) {
-          appLogger.log('Error on get Network Server: ' + error)
+          appLogger.log('Error on get Network Server: ', 'error')
+          appLogger.log(error, 'error')
           reject(error)
         }
         else {
@@ -385,7 +387,8 @@ function getNetworkServerById (network, networkServerId, connection, dataAPI) {
     request(options, async function (error, response, body) {
       if (error || response.statusCode >= 400) {
         if (error) {
-          appLogger.log('Error on get Network Server: ' + error)
+          appLogger.log('Error on get Network Server: ', 'error')
+          appLogger.log(error, 'error')
           reject(error)
         }
         else {
@@ -422,17 +425,18 @@ function getDeviceProfileById (network, dpId, connection, dataAPI) {
       'secureProtocol': 'TLSv1_2_method',
       'rejectUnauthorized': false
     }
-    appLogger.log(options)
+    appLogger.log(options, 'warn')
     request(options, async function (error, response, body) {
       if (error || response.statusCode >= 400) {
         if (error) {
-          appLogger.log('Error on get Device Profile: ' + error)
+          appLogger.log('Error on get Device Profile: ', 'error')
+          appLogger.log(error, 'error')
           reject(error)
         }
         else {
           var bodyObj = JSON.parse(response.body)
           appLogger.log(bodyObj)
-          appLogger.log(options)
+          appLogger.log(options, 'warn')
           appLogger.log('Error on get Device Profile: ' +
             bodyObj.error +
             ' (' + response.statusCode + ')')
@@ -464,11 +468,12 @@ function getRemoteDeviceById (network, deviceId, connection) {
       'secureProtocol': 'TLSv1_2_method',
       'rejectUnauthorized': false
     }
-    appLogger.log(options)
+    appLogger.log(options, 'warn')
     request(options, async function (error, response, body) {
       if (error || response.statusCode >= 400) {
         if (error) {
-          appLogger.log('Error on get Device: ' + error)
+          appLogger.log('Error on get Device: ', 'error')
+          appLogger.log(error, 'error')
           reject(error)
         }
         else {
@@ -503,11 +508,12 @@ function getRemoteDeviceKey (network, device, connection) {
       'secureProtocol': 'TLSv1_2_method',
       'rejectUnauthorized': false
     }
-    appLogger.log(options)
+    appLogger.log(options, 'warn')
     request(options, async function (error, response, body) {
       if (error || response.statusCode >= 400) {
         if (error) {
-          appLogger.log('Error on get Device Keys: ' + error)
+          appLogger.log('Error on get Device Keys: ', 'error')
+          appLogger.log(error, 'error')
           reject(error)
         }
         else if (response.statusCode === 404) {
@@ -546,11 +552,12 @@ function getRemoteDeviceActivation (network, device, connection) {
       'secureProtocol': 'TLSv1_2_method',
       'rejectUnauthorized': false
     }
-    appLogger.log(options)
+    appLogger.log(options, 'warn')
     request(options, async function (error, response, body) {
       if (error || response.statusCode >= 400) {
         if (error) {
-          appLogger.log('Error on get Device Keys: ' + error)
+          appLogger.log('Error on get Device Keys: ', 'error')
+          appLogger.log(error, 'error')
           reject(error)
         }
         else if (response.statusCode === 404) {
@@ -595,7 +602,8 @@ function getServiceProfileById (network, serviceProfileId, connection, dataAPI) 
     request(options, async function (error, response, body) {
       if (error || response.statusCode >= 400) {
         if (error) {
-          appLogger.log('Error on get Service Profile: ' + error)
+          appLogger.log('Error on get Service Profile: ', 'error')
+          appLogger.log(error, 'error')
           reject(error)
         }
         else {
@@ -633,11 +641,12 @@ function getApplicationById (network, applicationId, connection) {
       'rejectUnauthorized': false
     }
 
-    appLogger.log(options)
+    appLogger.log(options, 'warn')
     request(options, async function (error, response, body) {
       if (error || response.statusCode >= 400) {
         if (error) {
-          appLogger.log('Error on get Application: ' + error)
+          appLogger.log('Error on get Application: ', 'error')
+          appLogger.log(error, 'error')
           reject(error)
         }
         else {
@@ -679,7 +688,8 @@ function getServiceProfileForOrg (network, orgId, companyId, connection, dataAPI
     request(spOptions, async function (error, response, body) {
       if (error || response.statusCode >= 400) {
         if (error) {
-          appLogger.log('Error getting Service Profile: ' + error)
+          appLogger.log('Error getting Service Profile: ', 'error')
+          appLogger.log(error, 'error')
           reject(error)
         }
         else {
@@ -820,7 +830,8 @@ module.exports.connect = function (network, loginData) {
     options.agentOptions = {'secureProtocol': 'TLSv1_2_method', 'rejectUnauthorized': false}
     request(options, function (error, response, body) {
       if (error) {
-        appLogger.log('Error on signin: ' + error)
+        appLogger.log('Error on signin: ', 'error')
+        appLogger.log(error, 'error')
         reject(error)
       }
       else if (response.statusCode >= 400 || response.statusCode === 301) {
@@ -909,7 +920,8 @@ module.exports.addCompany = function (sessionData, network, companyId, dataAPI) 
     request(options, async function (error, response, body) {
       if (error || response.statusCode >= 400) {
         if (error) {
-          appLogger.log('Error on create company ' + company.name + ': ' + error)
+          appLogger.log('Error on create company ' + company.name + ': ', 'error')
+          appLogger.log(error, 'error')
           reject(error)
         }
         else {
@@ -968,7 +980,8 @@ module.exports.addCompany = function (sessionData, network, companyId, dataAPI) 
               if (error) {
                 appLogger.log('Error creating ' + company.name +
                   "'s admin user " + userOptions.json.username +
-                  ': ' + error)
+                  ': ', 'error')
+                appLogger.log(error, 'error')
                 reject(error)
                 return
               }
@@ -1026,7 +1039,8 @@ module.exports.addCompany = function (sessionData, network, companyId, dataAPI) 
             request(spOptions, async function (error, response, body) {
               if (error || response.statusCode >= 400) {
                 if (error) {
-                  appLogger.log('Error creating default Service Profile: ' + error)
+                  appLogger.log('Error creating default Service Profile: ', 'error')
+                  appLogger.log(error, 'error')
                   reject(error)
                 }
                 else {
@@ -1109,7 +1123,8 @@ module.exports.getCompany = function (sessionData, network, companyId, dataAPI) 
 
     request(options, function (error, response, body) {
       if (error) {
-        appLogger.log('Error getting company ' + company.name + ': ' + error)
+        appLogger.log('Error getting company ' + company.name + ': ', 'error')
+        appLogger.log(error, 'error')
         reject(error)
       }
       else {
@@ -1170,7 +1185,8 @@ module.exports.updateCompany = function (sessionData, network, companyId, dataAP
     request(options, function (error, response, body) {
       if (error) {
         appLogger.log('Error updating company ' + company.name +
-          ': ' + error)
+          ': ', 'error')
+        appLogger.log(error, 'error')
         reject(error)
       }
       else {
@@ -1229,7 +1245,8 @@ module.exports.deleteCompany = function (sessionData, network, companyId, dataAP
     }
     request(userOptions, function (error, response, body) {
       if (error) {
-        appLogger.log("Error on delete company's admin user: " + error)
+        appLogger.log("Error on delete company's admin user: ", 'error')
+        appLogger.log(error, 'error')
         reject(error)
       }
       else {
@@ -1248,7 +1265,8 @@ module.exports.deleteCompany = function (sessionData, network, companyId, dataAP
 
         request(options, async function (error, response, body) {
           if (error) {
-            appLogger.log('Error on delete company: ' + error)
+            appLogger.log('Error on delete company: ', 'error')
+            appLogger.log(error, 'error')
             reject(error)
           }
           else {
@@ -1567,10 +1585,11 @@ module.exports.setupOrganization = function (sessionData, network, modelAPI, dat
       'rejectUnauthorized': false
     }
 
-    appLogger.log(options)
+    appLogger.log(options, 'warn')
     request(options, function (error, response, body) {
       if (error) {
-        appLogger.log('Error getting operator ' + company.name + ' from network ' + network.name + ': ' + error)
+        appLogger.log('Error getting operator ' + company.name + ' from network ' + network.name + ': ', 'error')
+        appLogger.log(error, 'error')
         reject(error)
       }
       else {
@@ -1667,10 +1686,11 @@ module.exports.pullDeviceProfiles = function (sessionData, network, modelAPI, co
       'rejectUnauthorized': false
     }
 
-    appLogger.log(options)
+    appLogger.log(options, 'warn')
     request(options, function (error, response, body) {
       if (error) {
-        appLogger.log('Error pulling device profiles from network ' + network.name + ': ' + error)
+        appLogger.log('Error pulling device profiles from network ' + network.name + ': ', 'error')
+        appLogger.log(error, 'error')
         reject(error)
       }
       else {
@@ -1741,17 +1761,20 @@ module.exports.addRemoteDeviceProfile = function (sessionData, limitedRemoteDevi
                 })
                 .catch((error) => {
                   appLogger.log(error)
+                  appLogger.log(error, 'error')
                   reject(error)
                 })
             }
           })
           .catch((error) => {
             appLogger.log(error)
+            appLogger.log(error, 'error')
             reject(error)
           })
       })
       .catch((error) => {
         appLogger.log(error)
+        appLogger.log(error, 'error')
         reject(error)
       })
   })
@@ -1780,10 +1803,11 @@ module.exports.pullApplications = function (sessionData, network, modelAPI, data
       'rejectUnauthorized': false
     }
 
-    appLogger.log(options)
+    appLogger.log(options, 'warn')
     request(options, function (error, response, body) {
       if (error) {
-        appLogger.log('Error pulling applications from network ' + network.name + ': ' + error)
+        appLogger.log('Error pulling applications from network ' + network.name + ': ', 'error')
+        appLogger.log(error, 'error')
         reject(error)
       }
       else {
@@ -1871,7 +1895,8 @@ module.exports.pullDevices = function (sessionData, network, remoteApplicationId
     appLogger.log(options, 'error')
     request(options, function (error, response, body) {
       if (error) {
-        appLogger.log('Error pulling devices from network ' + network.name + ': ' + error)
+        appLogger.log('Error pulling devices from network ' + network.name + ': ', 'error')
+        appLogger.log(error, 'error')
         reject(error)
       }
       else {
@@ -1964,15 +1989,17 @@ module.exports.pullIntegrations = function (sessionData, network, remoteApplicat
       'secureProtocol': 'TLSv1_2_method',
       'rejectUnauthorized': false
     }
-    appLogger.log(options)
+    appLogger.log(options, 'error')
     request(options, function (error, response, body) {
       if (error) {
-        appLogger.log('Error pulling integrations from network ' + network.name + ': ' + error)
+        appLogger.log('Error pulling integrations from network ' + network.name + ': ', 'error')
+        appLogger.log(error, 'error')
         reject(error)
       }
       else {
         let integration = JSON.parse(body)
-        appLogger.log(integration)
+        integration = integration.integration
+        appLogger.log(integration, 'warn')
         var deliveryURL = 'api/ingest/' + localApplicationId + '/' + network.id
         var reportingUrl = nconf.get('base_url') + deliveryURL
 
@@ -1982,12 +2009,12 @@ module.exports.pullIntegrations = function (sessionData, network, remoteApplicat
         else {
           modelAPI.applications.retrieveApplication(localApplicationId)
             .then(appToUpdate => {
-              appToUpdate.baseUrl = integration.dataUpURL
-              appLogger.log(appToUpdate)
+              appToUpdate.baseUrl = integration.uplinkDataURL
+              appLogger.log(appToUpdate, 'warn')
               delete appToUpdate.networks
               modelAPI.applications.updateApplication(appToUpdate)
                 .then(result => {
-                  appLogger.log(result)
+                  appLogger.log(result, 'warn')
                   let options2 = {}
                   options2.method = 'PUT'
                   options2.url = network.baseUrl + '/applications/' + remoteApplicationId + '/integrations/http'
@@ -2001,19 +2028,23 @@ module.exports.pullIntegrations = function (sessionData, network, remoteApplicat
                   }
 
                   options2.json = {
-                    ackNotificationURL: reportingUrl,
-                    dataUpURL: reportingUrl,
-                    errorNotificationURL: reportingUrl,
-                    id: integration.id,
-                    joinNotificationURL: reportingUrl
+                    integration: {
+                      ackNotificationURL: reportingUrl,
+                      uplinkDataURL: reportingUrl,
+                      errorNotificationURL: reportingUrl,
+                      id: integration.id,
+                      joinNotificationURL: reportingUrl
+                    }
                   }
                   appLogger.log(options2)
                   request(options2, function (error, response, body) {
                     if (error) {
-                      appLogger.log('Error updating integrations from network ' + network.name + ': ' + error)
+                      appLogger.log('Error updating integrations from network ' + network.name + ': ', 'error')
+                      appLogger.log(error, 'error')
                       reject(error)
                     }
                     else {
+                      appLogger.log('Success Setting Integrations', 'warn')
                       resolve()
                     }
                   })
@@ -2093,7 +2124,8 @@ module.exports.addApplication = function (sessionData, network, applicationId, d
       request(options, async function (error, response, body) {
         if (error || response.statusCode >= 400) {
           if (error) {
-            appLogger.log('Error on create application: ' + error)
+            appLogger.log('Error on create application: ', 'error')
+            appLogger.log(error, 'error')
             reject(error)
           }
           else {
@@ -2157,7 +2189,8 @@ module.exports.getApplication = function (sessionData, network, applicationId, d
 
     request(options, function (error, response, body) {
       if (error) {
-        appLogger.log('Error on get application: ' + error)
+        appLogger.log('Error on get application: ', 'error')
+        appLogger.log(error, 'error')
         reject(error)
       }
       else {
@@ -2257,11 +2290,12 @@ module.exports.updateApplication = function (sessionData, network, applicationId
     }
     appLogger.log(application)
     appLogger.log(applicationData)
-    appLogger.log(options)
+    appLogger.log(options, 'warn')
 
     request(options, function (error, response, body) {
       if (error) {
-        appLogger.log('Error on update application: ' + error)
+        appLogger.log('Error on update application: ', 'error')
+        appLogger.log(error, 'error')
         reject(error)
       }
       else {
@@ -2308,7 +2342,8 @@ module.exports.deleteApplication = function (sessionData, network, applicationId
 
     request(options, async function (error, response, body) {
       if (error) {
-        appLogger.log('Error on delete application: ' + error)
+        appLogger.log('Error on delete application: ', 'error')
+        appLogger.log(error, 'error')
         reject(error)
       }
       else {
@@ -2373,7 +2408,8 @@ module.exports.startApplication = function (sessionData, network, applicationId,
 
       request(options, function (error, response, body) {
         if (error) {
-          appLogger.log('Error on add application data reporting: ' + error)
+          appLogger.log('Error on add application data reporting: ', 'error')
+          appLogger.log(error, 'error')
           reject(error)
         }
         else {
@@ -2440,7 +2476,8 @@ module.exports.stopApplication = function (sessionData, network, applicationId, 
     }
     request(options, function (error, response, body) {
       if (error) {
-        appLogger.log('Error on delete application notification: ' + error)
+        appLogger.log('Error on delete application notification: ', 'error')
+        appLogger.log(error, 'error')
         reject(error)
       }
       else {
@@ -2566,11 +2603,12 @@ module.exports.addDeviceProfile = function (sessionData, network, deviceProfileI
         'rejectUnauthorized': false
       }
 
-      appLogger.log(options)
+      appLogger.log(options, 'warn')
       request(options, async function (error, response, body) {
         if (error || response.statusCode >= 400) {
           if (error) {
-            appLogger.log('Error on create deviceProfile ' + deviceProfile.name + ':  ' + error)
+            appLogger.log('Error on create deviceProfile ' + deviceProfile.name + ':  ', 'error')
+            appLogger.log(error, 'error')
             reject(error)
           }
           else {
@@ -2638,7 +2676,8 @@ module.exports.getDeviceProfile = function (sessionData, network, deviceProfileI
     request(options, function (error, response, body) {
       if (error || response.statusCode >= 400) {
         if (error) {
-          appLogger.log('Error on get deviceProfile: ' + error)
+          appLogger.log('Error on get deviceProfile: ', 'error')
+          appLogger.log(error, 'error')
           reject(error)
         }
         else {
@@ -2775,7 +2814,8 @@ module.exports.updateDeviceProfile = function (sessionData, network, deviceProfi
     request(options, function (error, response, body) {
       if (error || response.statusCode >= 400) {
         if (error) {
-          appLogger.log('Error on put deviceProfile: ' + error)
+          appLogger.log('Error on put deviceProfile: ', 'error')
+          appLogger.log(error, 'error')
           reject(error)
         }
         else {
@@ -2839,7 +2879,8 @@ module.exports.deleteDeviceProfile = function (sessionData, network, deviceProfi
     request(options, function (error, response, body) {
       if (error || response.statusCode >= 400) {
         if (error) {
-          appLogger.log('Error on delete deviceProfile: ' + error)
+          appLogger.log('Error on delete deviceProfile: ', 'error')
+          appLogger.log(error, 'error')
           reject(error)
         }
         else {
@@ -2887,7 +2928,7 @@ module.exports.addDevice = function (sessionData, network, deviceId, dataAPI) {
       dntl = await dataAPI.getDeviceNetworkType(deviceId, network.networkTypeId)
       deviceProfile = await dataAPI.getDeviceProfileById(dntl.deviceProfileId)
       if (!dntl.networkSettings || !dntl.networkSettings.devEUI) {
-        appLogger.log('deviceNetworkTypeLink MUST have networkSettings which MUST have devEUI')
+        appLogger.log('deviceNetworkTypeLink MUST have networkSettings which MUST have devEUI', 'error')
         reject(400)
         return
       }
@@ -2900,7 +2941,7 @@ module.exports.addDevice = function (sessionData, network, deviceId, dataAPI) {
         network.networkProtocolId,
         makeDeviceProfileDataKey(dntl.deviceProfileId, 'dpNwkId'))
 
-      let loraV2Device = deNormalizeDeviceData(dntl.networkSettings, appNwkId, dpNwkId)
+      let loraV2Device = deNormalizeDeviceData(dntl.networkSettings, deviceProfile.networkSettings, appNwkId, dpNwkId)
       // Set up the request options.
       var options = {}
       options.method = 'POST'
@@ -2917,60 +2958,57 @@ module.exports.addDevice = function (sessionData, network, deviceId, dataAPI) {
         'rejectUnauthorized': false
       }
 
-      appLogger.log(options, 'info')
+      appLogger.log(options, 'warn')
       request(options, function (error, response, body) {
         if (error || response.statusCode >= 400) {
           if (error) {
-            appLogger.log('Error on create device: ' + error)
+            appLogger.log('Error on create device: ', 'error')
+            appLogger.lop(error, 'error')
+            appLogger.log(error, 'error')
             reject(error)
           }
           else {
-            appLogger.log('Error on create device (' + response.statusCode + '): ' + body.error)
+            appLogger.log('Error on create device (' + response.statusCode + '): ', 'error')
+            appLogger.log(body, 'error')
             reject(response.statusCode)
           }
         }
         else {
-        // LoRa Open Source uses the DevEUI as the node id.
           dataAPI.putProtocolDataForKey(network.id,
             network.networkProtocolId,
             makeDeviceDataKey(device.id, 'devNwkId'),
             loraV2Device.device.devEUI)
 
-          appLogger.log(loraV2Device, 'info')
+          appLogger.log(loraV2Device, 'warn')
 
-          // Devices have to do a second call to set up either the
-          // Application Key (OTAA) or the Keys for ABP.
           if (deviceProfile.networkSettings.supportsJoin && loraV2Device.deviceKeys) {
-            // This is the OTAA path.
             options.url = network.baseUrl + '/devices/' +
               loraV2Device.device.devEUI + '/keys'
             options.json = {
-              devEUI: loraV2Device.devEUI,
               deviceKeys: loraV2Device.deviceKeys
             }
           }
           else if (loraV2Device.deviceActivation) {
-            // This is the ABP path.
-            options.url = network.baseUrl + '/devices/' +
-              loraV2Device.device.devEUI + '/activate'
+            options.url = network.baseUrl + '/devices/' + loraV2Device.device.devEUI + '/activate'
             options.json = {
               deviceActivation: loraV2Device.deviceActivation
             }
-            appLogger.log('options.json = ' + JSON.stringify(options))
           }
           else {
-            appLogger.log('Remote Device ' + loraV2Device.name + ' does not have authentication parameters')
+            appLogger.log('Remote Device ' + loraV2Device.name + ' does not have authentication parameters', 'error')
             resolve(dntl.networkSettings.devEUI)
             return
           }
+          appLogger.log(options, 'warn')
           request(options, function (error, response, body) {
             if (error || response.statusCode >= 400) {
               if (error) {
-                appLogger.log('Error on create device keys/activation: ' + error)
+                appLogger.log('Error on create device keys/activation: ', 'error')
+                appLogger.log(error)
               }
               else {
-                appLogger.log('Error on create device keys/activation (' + response.statusCode + '): ')
-                appLogger.log(body, 'info')
+                appLogger.log('Error on create device keys/activation (' + response.statusCode + '): ', 'error')
+                appLogger.log(body, 'error')
               }
               resolve(dntl.networkSettings.devEUI)
             }
@@ -2982,7 +3020,8 @@ module.exports.addDevice = function (sessionData, network, deviceId, dataAPI) {
       })
     }
     catch (err) {
-      appLogger.log('Error getting data for remote network: ' + err)
+      appLogger.log('Error getting data for remote network: ', 'error')
+      appLogger.log(err, 'error')
       reject(err)
     }
   })
@@ -3030,7 +3069,8 @@ module.exports.getDevice = function (sessionData, network, deviceId, dataAPI) {
     request(options, function (error, response, body) {
       if (error || response.statusCode >= 400) {
         if (error) {
-          appLogger.log('Error on get device: ' + error)
+          appLogger.log('Error on get device: ', 'error')
+          appLogger.log(error, 'error')
           reject(error)
         }
         else {
@@ -3110,8 +3150,9 @@ module.exports.updateDevice = function (sessionData, network, deviceId, dataAPI)
     request(options, function (error, response, body) {
       if (error || response.statusCode >= 400) {
         if (error) {
-          appLogger.log('Error on update device: ' + error)
-          appLogger.log('Error on update device: ' + error)
+          appLogger.log('Error on update device: ', 'error')
+          appLogger.log('Error on update device: ', 'error')
+          appLogger.log(error, 'error')
           reject(error)
         }
         else {
@@ -3132,7 +3173,7 @@ module.exports.updateDevice = function (sessionData, network, deviceId, dataAPI)
         request(options, function (error, response, body) {
           if (error || response.statusCode >= 400) {
             if (error) {
-              appLogger.log('Error on update device keys: ' + error)
+              appLogger.log('Error on update device keys: ', 'error')
             }
             else {
               appLogger.log('Error on update device keys (' + response.statusCode + '): ' + body.error)
@@ -3194,7 +3235,8 @@ module.exports.deleteDevice = function (sessionData, network, deviceId, dataAPI)
     request(options, async function (error, response, body) {
       if (error || response.statusCode >= 400) {
         if (error) {
-          appLogger.log('Error on delete device: ' + error)
+          appLogger.log('Error on delete device: ', 'error')
+          appLogger.log(error, 'error')
           reject(error)
         }
         else {
@@ -3219,7 +3261,7 @@ module.exports.deleteDevice = function (sessionData, network, deviceId, dataAPI)
         request(options, function (error, response, body) {
           if (error || response.statusCode >= 400) {
             if (error) {
-              appLogger.log('Error on delete device keys: ' + error)
+              appLogger.log('Error on delete device keys: ', 'error')
             }
             else {
               appLogger.log('Error on delete device keys (' + response.statusCode + '): ' + body.error)
@@ -3478,7 +3520,7 @@ function normalizeDeviceData (remoteDevice) {
  * @param remoteDevice
  * @returns {{device: {applicationID: (*|string), description: *, devEUI: *, deviceProfileID: *, name: *, skipFCntCheck: (*|boolean)}, deviceStatusBattery: number, deviceStatusMargin: number, lastSeenAt: (string|null)}}
  */
-function deNormalizeDeviceData (remoteDevice, appId, dpId) {
+function deNormalizeDeviceData (remoteDevice, deviceProfile, appId, dpId) {
   let loraV2DeviceData = {
     device: {
       applicationID: appId,
@@ -3490,10 +3532,19 @@ function deNormalizeDeviceData (remoteDevice, appId, dpId) {
     }
   }
   if (remoteDevice.deviceKeys) {
-    loraV2DeviceData.deviceKeys = {
-      appKey: remoteDevice.deviceKeys.appKey,
-      nwkKey: remoteDevice.deviceKeys.nwkKey,
-      devEUI: remoteDevice.deviceKeys.devEUI
+    if (deviceProfile.macVersion === '1.1.0') {
+      loraV2DeviceData.deviceKeys = {
+        appKey: remoteDevice.deviceKeys.appKey,
+        nwkKey: remoteDevice.deviceKeys.nwkKey,
+        devEUI: remoteDevice.deviceKeys.devEUI
+      }
+    }
+    else {
+      loraV2DeviceData.deviceKeys = {
+        nwkKey: remoteDevice.deviceKeys.nwkKey,
+        devEUI: remoteDevice.deviceKeys.devEUI,
+        appKey: ''
+      }
     }
   }
   if (remoteDevice.deviceActivation) {
@@ -3508,7 +3559,7 @@ function deNormalizeDeviceData (remoteDevice, appId, dpId) {
       fNwkSIntKey: remoteDevice.deviceActivation.fNwkSIntKey
     }
   }
-  appLogger.log(remoteDevice, 'info')
-  appLogger.log(loraV2DeviceData, 'info')
+  appLogger.log(remoteDevice, 'warn')
+  appLogger.log(loraV2DeviceData, 'warn')
   return loraV2DeviceData
 }
