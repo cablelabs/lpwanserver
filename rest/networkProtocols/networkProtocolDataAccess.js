@@ -248,10 +248,11 @@ NetworkProtocolDataAccess.prototype.getApplicationByDeviceId = function( devId )
     return new Promise( async function( resolve, reject ) {
         try {
             var dev = await me.getDeviceById( devId );
-            return await me.getApplicationById( dev.applicationId );
-            resolve( co );
+            var app =  await me.getApplicationById( dev.applicationId );
+            resolve( app );
         }
         catch( err ) {
+            console.log(err)
             reject( err );
         }
     });

@@ -273,10 +273,6 @@ async function getCompanyAccount (dataAPI, network, companyId, generateIfMissing
   return secData
 };
 
-function makeNetworkDataKey (networkId, dataName) {
-  return 'nwk:' + networkId + '/' + dataName
-}
-
 function makeCompanyDataKey (companyId, dataName) {
   return 'co:' + companyId + '/' + dataName
 }
