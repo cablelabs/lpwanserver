@@ -401,9 +401,14 @@ function getNetworkServerById (network, networkServerId, connection, dataAPI) {
         }
       }
       else {
-        // Convert text to JSON array, use id from first element
-        var res = JSON.parse(body)
-        appLogger.log(res)
+        let res = ''
+        if (typeof body === 'object') {
+          res = body
+        }
+        else {
+          res = JSON.parse(body)
+        }
+        appLogger.log(res, 'warn')
         resolve(res)
       }
     })
@@ -670,7 +675,7 @@ function getApplicationById (network, applicationId, connection) {
 
 // Get the Service Profile a for a Remote Org.
 function getServiceProfileForOrg (network, orgId, companyId, connection, dataAPI) {
-  appLogger.log('LoRaOpenSource: getNetworkServerForRemoteOrganization')
+  appLogger.log('LoRaOpenSource: getServiceProfileForOrg', 'debug')
   return new Promise(async function (resolve, reject) {
     var spOptions = {}
     spOptions.method = 'GET'
@@ -709,6 +714,7 @@ function getServiceProfileForOrg (network, orgId, companyId, connection, dataAPI
         }
         else {
           let serviceProfile = body.result[0]
+          appLogger.log(serviceProfile, 'warn')
           await dataAPI.putProtocolDataForKey(
             network.id,
             network.networkProtocolId,
@@ -1569,7 +1575,9 @@ module.exports.setupOrganization = function (sessionData, network, modelAPI, dat
     let companyNtl = await dataAPI.getCompanyNetworkType(company.id, network.networkTypeId)
     let lora1NetworkSettings = {network: network.id}
     if (!companyNtl) {
-      companyNtl = await modelAPI.companyNetworkTypeLinks.createRemoteCompanyNetworkTypeLink(company.id, network.networkTypeId, [])
+      companyNtl = await modelAPI.companyNetworkTypeLinks.createRemoteCompanyNetworkTypeLink(company.id, network.networkTypeId, {})
+      companyNtl.networkSettings = JSON.parse(companyNtl.networkSettings)
+
     }
     appLogger.log(company)
     appLogger.log(companyNtl)
@@ -1596,7 +1604,7 @@ module.exports.setupOrganization = function (sessionData, network, modelAPI, dat
         body = JSON.parse(body)
         appLogger.log(body)
         if (body.totalCount === '0') {
-          appLogger.log('Adding company')
+          appLogger.log('Adding company to network ', 'warn')
           me.addCompany(sessionData, network, company.id, dataAPI)
             .then((networkSettings) => {
               appLogger.log(networkSettings)
@@ -1612,39 +1620,37 @@ module.exports.setupOrganization = function (sessionData, network, modelAPI, dat
         }
         else {
           let organization = body.result[0]
+          appLogger.log('Setting up company to match network Organization', 'warn')
           getServiceProfileForOrg(network, organization.id, company.id, sessionData.connection, dataAPI)
             .then(networkSettings => {
+              appLogger.log(networkSettings, 'warn')
               dataAPI.putProtocolDataForKey(network.id,
                 network.networkProtocolId,
                 makeCompanyDataKey(company.id, 'coNwkId'),
                 organization.id)
-              dataAPI.putProtocolDataForKey(
-                network.id,
-                network.networkProtocolId,
-                makeCompanyDataKey(company.id, 'coSPId'),
-                networkSettings.serviceProfileID)
-              dataAPI.putProtocolDataForKey(
-                network.id,
-                network.networkProtocolId,
-                makeCompanyDataKey(company.id, 'coSPNwkId'),
-                networkSettings.networkServerID)
 
-              lora1NetworkSettings.serviceProfileId = networkSettings.serviceProfileID
-              lora1NetworkSettings.networkServerId = networkSettings.networkServerID
-              lora1NetworkSettings.organizationId = organization.id
-              lora1NetworkSettings.networkId = network.id
+              getNetworkServerById(network, networkSettings.networkServerID, sessionData.connection, dataAPI)
+                .then(networkServer => {
+                  appLogger.log(networkServer, 'warn')
+                  lora1NetworkSettings.serviceProfileId = networkSettings.id
+                  lora1NetworkSettings.networkServerId = networkSettings.networkServerID
+                  lora1NetworkSettings.organizationId = organization.id
+                  lora1NetworkSettings.networkId = network.id
 
-              let ns = (companyNtl.networkSettings)
-              if (!Array.isArray(ns)) {
-                ns = [ns]
-              }
-              ns.push(lora1NetworkSettings)
-              companyNtl.networkSettings = ns
-              delete companyNtl.remoteAccessLogs
-              modelAPI.companyNetworkTypeLinks.updateRemoteCompanyNetworkTypeLink(companyNtl)
-                .then((result) => {
-                  appLogger.log(companyNtl)
-                  resolve(lora1NetworkSettings)
+
+                  companyNtl.networkSettings.serviceProfile = {region: networkServer.region}
+                  companyNtl.networkSettings[network.name] = lora1NetworkSettings
+                  appLogger.log(companyNtl, 'warn')
+
+                  modelAPI.companyNetworkTypeLinks.updateRemoteCompanyNetworkTypeLink(companyNtl)
+                    .then((result) => {
+                      appLogger.log(result)
+                      resolve(lora1NetworkSettings)
+                    })
+                    .catch(err => {
+                      appLogger.log(err)
+                      reject(err)
+                    })
                 })
                 .catch(err => {
                   appLogger.log(err)
@@ -1652,7 +1658,7 @@ module.exports.setupOrganization = function (sessionData, network, modelAPI, dat
                 })
             })
             .catch(err => {
-              appLogger.log(err)
+              appLogger.log(err, 'error')
               reject(err)
             })
         }
