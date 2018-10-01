@@ -2256,6 +2256,10 @@ function deNormalizeDeviceData (localDevice, localDeviceProfile, application, re
     }
   }
 
+  if (!localDevice.lastSeenAt || localDevice.lastSeenAt === '') {
+    ttnDeviceData.lorawan_device.last_seen = 0
+  }
+
   if (localDeviceProfile.supportsJoin) {
     ttnDeviceData.lorawan_device.activation_constraints = 'otta',
     ttnDeviceData.lorawan_device.app_key = localDevice.deviceKeys.appKey

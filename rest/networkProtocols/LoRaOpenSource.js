@@ -525,7 +525,8 @@ function getRemoteDeviceActivation (network, device, connection) {
     request(options, async function (error, response, body) {
       if (error || response.statusCode >= 400) {
         if (error) {
-          appLogger.log('Error on get Device Keys: ' + error)
+          appLogger.log('Error on get Device Keys: ', 'error')
+          appLogger.log(error, 'error')
           reject(error)
         }
         else if (response.statusCode === 404) {
@@ -1516,7 +1517,8 @@ module.exports.setupOrganization = function (sessionData, network, modelAPI, dat
     let companyNtl = await dataAPI.getCompanyNetworkType(company.id, network.networkTypeId)
     let lora1NetworkSettings = {network: network.id}
     if (!companyNtl) {
-      companyNtl = await modelAPI.companyNetworkTypeLinks.createRemoteCompanyNetworkTypeLink(company.id, network.networkTypeId, [])
+      companyNtl = await modelAPI.companyNetworkTypeLinks.createRemoteCompanyNetworkTypeLink(company.id, network.networkTypeId, {})
+      companyNtl.networkSettings = JSON.parse(companyNtl.networkSettings)
     }
     appLogger.log(company)
     appLogger.log(companyNtl)
@@ -1558,39 +1560,36 @@ module.exports.setupOrganization = function (sessionData, network, modelAPI, dat
         }
         else {
           let organization = body.result[0]
+          appLogger.log('Setting up company to match network Organization', 'warn')
           getServiceProfileForOrg(network, organization.id, company.id, sessionData.connection, dataAPI)
             .then(networkSettings => {
+              appLogger.log(networkSettings, 'warn')
               dataAPI.putProtocolDataForKey(network.id,
                 network.networkProtocolId,
                 makeCompanyDataKey(company.id, 'coNwkId'),
                 organization.id)
-              dataAPI.putProtocolDataForKey(
-                network.id,
-                network.networkProtocolId,
-                makeCompanyDataKey(company.id, 'coSPId'),
-                networkSettings.serviceProfileID)
-              dataAPI.putProtocolDataForKey(
-                network.id,
-                network.networkProtocolId,
-                makeCompanyDataKey(company.id, 'coSPNwkId'),
-                networkSettings.networkServerID)
 
-              lora1NetworkSettings.serviceProfileId = networkSettings.serviceProfileID
-              lora1NetworkSettings.networkServerId = networkSettings.networkServerID
-              lora1NetworkSettings.organizationId = organization.id
-              lora1NetworkSettings.networkId = network.id
+              getNetworkServerById(network, networkSettings.networkServerID, sessionData.connection, dataAPI)
+                .then(networkServer => {
+                  appLogger.log(networkServer, 'warn')
+                  lora1NetworkSettings.serviceProfileId = networkSettings.serviceProfileID
+                  lora1NetworkSettings.networkServerId = networkSettings.networkServerID
+                  lora1NetworkSettings.organizationId = organization.id
+                  lora1NetworkSettings.networkId = network.id
 
-              let ns = (companyNtl.networkSettings)
-              if (!Array.isArray(ns)) {
-                ns = [ns]
-              }
-              ns.push(lora1NetworkSettings)
-              companyNtl.networkSettings = ns
-              delete companyNtl.remoteAccessLogs
-              modelAPI.companyNetworkTypeLinks.updateRemoteCompanyNetworkTypeLink(companyNtl)
-                .then((result) => {
-                  appLogger.log(companyNtl)
-                  resolve(lora1NetworkSettings)
+                  companyNtl.networkSettings.serviceProfile = {region: networkServer.region}
+                  companyNtl.networkSettings[network.name] = lora1NetworkSettings
+
+                  appLogger.log(companyNtl, 'warn')
+                  modelAPI.companyNetworkTypeLinks.updateRemoteCompanyNetworkTypeLink(companyNtl)
+                    .then((result) => {
+                      appLogger.log(result)
+                      resolve(lora1NetworkSettings)
+                    })
+                    .catch(err => {
+                      appLogger.log(err)
+                      reject(err)
+                    })
                 })
                 .catch(err => {
                   appLogger.log(err)
@@ -1598,7 +1597,7 @@ module.exports.setupOrganization = function (sessionData, network, modelAPI, dat
                 })
             })
             .catch(err => {
-              appLogger.log(err)
+              appLogger.log(err, 'error')
               reject(err)
             })
         }
@@ -3385,6 +3384,7 @@ function normalizeDeviceData (remoteDevice) {
       appSKey: remoteDevice.deviceActivation.appSKey,
       devAddr: remoteDevice.deviceActivation.devAddr,
       aFCntDown: remoteDevice.deviceActivation.fCntDown,
+      nFCntDown: remoteDevice.deviceActivation.fCntDown,
       fCntUp: remoteDevice.deviceActivation.fCntUp,
       nwkSEncKey: remoteDevice.deviceActivation.nwkSKey,
       sNwkSIntKey: remoteDevice.deviceActivation.nwkSKey,
