@@ -9,7 +9,7 @@ logs
 pids
 *.pid
 # *.seed
-*.sqlite3
+# *.sqlite3
 data/deviceSchemas
 data/redis
 data/postgresql
