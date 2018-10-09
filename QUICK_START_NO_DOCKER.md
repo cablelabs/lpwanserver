@@ -1,7 +1,7 @@
 # LPWAN Quick Start
 
 This guide will lead you through installation and execution of LPWAN
-working with LoRa Open Source servers configured as follows
+working with LoRa Server servers configured as follows
 
 * LoRa Server (self signed cert)
 * LoRa App Server (self signed cert)
@@ -177,9 +177,9 @@ password: password
 
 #### Test End to End Connections
 
-Create a connection to the Lora Open Source Network
+Create a connection to the LoRa Server Network
 * Click the `Networks` link in the top navigation bar
-* Click on the `CREATE` button next to the Lora Open Source entry
+* Click on the `CREATE` button next to the LoRa Server entry
 * Fill in the form as shown below, and hit `SUBMIT`
   - Network Name: **Lora NW**
   - Network Base URL: **https://localhost:8080/api**

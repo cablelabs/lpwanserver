@@ -6,7 +6,7 @@ var appLogger = require('../lib/appLogger.js')
 // var appLogger = appLogger.logger
 
 /**
- * The Lora Open Source Protocol Handler Module
+ * The LoRa Server Protocol Handler Module
  * @module networkProtocols/LoraOpenSource
  * @see module:networkProtocols/networkProtocols
  * @type {{activeApplicationNetworkProtocols: {}}}
@@ -16,7 +16,7 @@ module.exports = {}
 module.exports.activeApplicationNetworkProtocols = {}
 module.exports.metaData =
   {
-    protocolHandlerName: 'Lora Open Source',
+    protocolHandlerName: 'LoRa Server',
     version:
       {
         versionText: 'Version 1.0',
@@ -54,7 +54,7 @@ module.exports.register = async function (networkProtocols) {
   appLogger.log('LoraOpenSource:register')
   return new Promise(async function (resolve, reject) {
     let me = {
-      name: 'Lora Open Source',
+      name: 'LoRa Server',
       networkTypeId: 1,
       protocolHandler: 'LoRaOpenSource.js',
       networkProtocolVersion: '1.0'
@@ -128,7 +128,7 @@ module.exports.test = function (network, loginData) {
 // dataAPI - The API that handles common data access and manipulation functions
 //           on behalf of the protocol.
 // network - The network that we are to get the company account info for.  For
-//           LoRa Open Source, this is a global admin account.
+//           LoRa Server, this is a global admin account.
 module.exports.getCompanyAccessAccount = async function (dataAPI, network) {
   let secData = network.securityData
   if (!secData || !secData.username || !secData.password) {
@@ -149,7 +149,7 @@ module.exports.getCompanyAccessAccount = async function (dataAPI, network) {
 // dataAPI       - The API that handles common data access and manipulation
 //                 functions on behalf of the protocol.
 // network - The network that we are to get the application account info for.
-//           For LoRa Open Source, this is a company account.
+//           For LoRa Server, this is a company account.
 // applicationId - The id of the local application record, used to get to the
 //                 company.
 module.exports.getApplicationAccessAccount = async function (dataAPI, network, applicationId) {
@@ -167,7 +167,7 @@ module.exports.getApplicationAccessAccount = async function (dataAPI, network, a
 // dataAPI  - The API that handles common data access and manipulation
 //            functions on behalf of the protocol.
 // network  - The network that we are to get the application account info for.
-//            For LoRa Open Source, this is a company account.
+//            For LoRa Server, this is a company account.
 // deviceId - The id of the local device record, used to get to the
 //            company.
 module.exports.getDeviceAccessAccount = async function (dataAPI, network, deviceId) {
@@ -185,7 +185,7 @@ module.exports.getDeviceAccessAccount = async function (dataAPI, network, device
 // dataAPI         - The API that handles common data access and manipulation
 //                   functions on behalf of the protocol.
 // network         - The network that we are to get the application account info
-//                   for. For LoRa Open Source, this is a company account.
+//                   for. For LoRa Server, this is a company account.
 // deviceProfileId - The id of the local device record, used to get to the
 //                   company.
 module.exports.getDeviceProfileAccessAccount = async function (dataAPI, network, deviceId) {
@@ -2895,7 +2895,7 @@ module.exports.addDevice = function (sessionData, network, deviceId, dataAPI) {
           }
         }
         else {
-        // LoRa Open Source uses the DevEUI as the node id.
+        // LoRa Server uses the DevEUI as the node id.
           dataAPI.putProtocolDataForKey(network.id,
             network.networkProtocolId,
             makeDeviceDataKey(device.id, 'devNwkId'),

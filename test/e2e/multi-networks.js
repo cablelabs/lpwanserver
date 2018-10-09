@@ -107,7 +107,7 @@ describe.only('E2E Test for Multiple Networks', () => {
     describe('Setup Lora 1.0 Network', () => {
       it('Verify LoraOS 1.0 Protocol Exists', (done) => {
         server
-          .get('/api/networkProtocols?search=Lora Open Source&networkProtocolVersion=1.0')
+          .get('/api/networkProtocols?search=LoRa Server&networkProtocolVersion=1.0')
           .set('Authorization', 'Bearer ' + adminToken)
           .set('Content-Type', 'application/json')
           .end(function (err, res) {
@@ -171,7 +171,7 @@ describe.only('E2E Test for Multiple Networks', () => {
     describe('Setup Lora 2.0 Network', () => {
       it('Verify LoraOS 2.0 Protocol Exists', (done) => {
         server
-          .get('/api/networkProtocols?search=Lora Open Source&networkProtocolVersion=2.0')
+          .get('/api/networkProtocols?search=LoRa Server&networkProtocolVersion=2.0')
           .set('Authorization', 'Bearer ' + adminToken)
           .set('Content-Type', 'application/json')
           .end(function (err, res) {
