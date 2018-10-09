@@ -85,7 +85,7 @@ describe('E2E Test for Single LoraOS 2.0', function () {
   describe('Setup Network', function () {
     it('Verify LoraOS 2.0 Protocol Exists', (done) => {
       server
-        .get('/api/networkProtocols?search=Lora Open Source&networkProtocolVersion=2.0')
+        .get('/api/networkProtocols?search=LoRa Server&networkProtocolVersion=2.0')
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {

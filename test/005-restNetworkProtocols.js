@@ -84,7 +84,7 @@ describe('NetworkProtocols', function () {
         .post('/api/networkProtocols')
         .set('Authorization', 'Bearer ' + coAdminToken)
         .set('Content-Type', 'application/json')
-        .send({'name': 'LoRa Open Source', 'networkTypeId': 1, 'protocolHandler': 'LoRaOpenSource.js'})
+        .send({'name': 'LoRa Server', 'networkTypeId': 1, 'protocolHandler': 'LoRaOpenSource.js'})
         .end(function (err, res) {
           res.should.have.status(403)
           done()
@@ -154,7 +154,7 @@ describe('NetworkProtocols', function () {
     })
     it('should return 200 with 1 protocol search LoraOS ', function (done) {
       server
-        .get('/api/networkProtocols?search=Lora Open Source')
+        .get('/api/networkProtocols?search=LoRa Server')
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {

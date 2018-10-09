@@ -63,7 +63,7 @@ exports.getDeviceAccessAccount = async function( dataAPI, network, deviceId ) {
 // dataAPI         - The API that handles common data access and manipulation
 //                   functions on behalf of the protocol.
 // network         - The network that we are to get the application account info
-//                   for. For LoRa Open Source, this is a company account.
+//                   for. For LoRa Server, this is a company account.
 // deviceProfileId - The id of the local device record, used to get to the
 //                   company.
 //

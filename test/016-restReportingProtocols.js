@@ -80,7 +80,7 @@ describe( "ReportingProtocols", function() {
             .post('/api/passwordPolicies')
             .set('Authorization', 'Bearer ' + userToken )
             .set('Content-Type', 'application/json')
-            .send( { "name": "LoRa Open Source", "networkTypeId": 1, "protocolHandler": "LoRaOpenSource.js" } )
+            .send( { "name": "LoRa Server", "networkTypeId": 1, "protocolHandler": "LoRaOpenSource.js" } )
             .end(function(err, res){
                 res.should.have.status(403);
                 done();
@@ -92,7 +92,7 @@ describe( "ReportingProtocols", function() {
             .post('/api/reportingProtocols')
             .set('Authorization', 'Bearer ' + coAdminToken )
             .set('Content-Type', 'application/json')
-            .send( { "name": "LoRa Open Source", "networkTypeId": 1, "protocolHandler": "LoRaOpenSource.js" }  )
+            .send( { "name": "LoRa Server", "networkTypeId": 1, "protocolHandler": "LoRaOpenSource.js" }  )
             .end(function(err, res){
                 res.should.have.status(403);
                 done();
@@ -104,7 +104,7 @@ describe( "ReportingProtocols", function() {
             .post('/api/reportingProtocols')
             .set('Authorization', 'Bearer ' + adminToken )
             .set('Content-Type', 'application/json')
-            .send( { "name": "LoRa Open Source", "networkTypeId": 1, "protocolHandler": "LoRaOpenSource.js" } )
+            .send( { "name": "LoRa Server", "networkTypeId": 1, "protocolHandler": "LoRaOpenSource.js" } )
             .end(function(err, res){
                 res.should.have.status(200);
                 var ret = JSON.parse( res.text );
