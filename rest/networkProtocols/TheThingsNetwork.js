@@ -342,63 +342,29 @@ function authorizeWithRefreshToken (network, loginData) {
  * @param loginData -
  * @returns {Promise<BearerToken>}
  */
-module.exports.connect = function (network, loginData) {
+module.exports.connect = async function connect (network, loginData) {
   appLogger.log('Inside TTN connect ' + JSON.stringify(loginData))
-  let me = this
-  return new Promise(function (resolve, reject) {
-    if (network.securityData.authorized) {
-      appLogger.log('Should be authorized')
-      me.test(network, loginData)
-        .then(body => {
-          resolve(loginData)
-        })
-        .catch(err => {
-          if (loginData.refresh_token) {
-            authorizeWithRefreshToken(network, loginData).then(connection => {
-              resolve(connection)
-            })
-              .catch(err => reject(err))
-          }
-          else if (loginData.username && loginData.password) {
-            authorizeWithPassword(network, loginData).then(connection => {
-              resolve(connection)
-            })
-              .catch(err => reject(err))
-          }
-          else if (loginData.code) {
-            authorizeWithCode(network, loginData).then(connection => {
-              resolve(connection)
-            })
-              .catch(err => reject(err))
-          }
-        })
+  if (network.securityData.authorized) {
+    appLogger.log('Should be authorized')
+    try {
+      await this.test(network, loginData)
+      return loginData
+    } catch (err) {
+      appLogger.log('Authorized but test failed.  Attempting to login.')
     }
-    else {
-      if (loginData.refresh_token) {
-        authorizeWithRefreshToken(network, loginData).then(connection => {
-          resolve(connection)
-        })
-          .catch(err => reject(err))
-      }
-      else if (loginData.username && loginData.password) {
-        authorizeWithPassword(network, loginData).then(connection => {
-          resolve(connection)
-        })
-          .catch(err => reject(err))
-      }
-      else if (loginData.code) {
-        authorizeWithCode(network, loginData).then(connection => {
-          resolve(connection)
-        })
-          .catch(err => reject(err))
-      }
-      else {
-        error = new Error('LPWan does not have credentials for TTN')
-        error.code = 42
-        reject(error)
-      }
-    }
-  })
+  }
+  if (loginData.refresh_token) {
+    return authorizeWithRefreshToken(network, loginData)
+  }
+  if (loginData.username && loginData.password) {
+    return authorizeWithPassword(network, loginData)
+  }
+  if (loginData.code) {
+    return authorizeWithCode(network, loginData)
+  }
+  const error = new Error('LPWan does not have credentials for TTN')
+  error.code = 42
+  throw error
 }
 
 /**
@@ -455,36 +421,23 @@ function getOptions (method, url, type, resource, access_token) {
  * @param modelAPI - DB access
  * @returns {Promise<Empty>}
  */
-module.exports.pullNetwork = function (session, network, dataAPI, modelAPI) {
-  let me = this
-  return new Promise(async function (resolve, reject) {
-    let promiseList = []
-    promiseList.push(me.pullApplications(session, network, modelAPI, dataAPI))
-
-    Promise.all(promiseList)
-      .then(pulledResources => {
-        appLogger.log(pulledResources, 'info')
-        let devicePromistList = []
-        for (let index in pulledResources[0]) {
-          devicePromistList.push(me.pullDevices(session, network, pulledResources[0][index].remoteApplication, pulledResources[0][index].localApplication, {}, modelAPI, dataAPI))
-          // devicePromistList.push(me.pullIntegrations(session, network, pulledResources[1][index].remoteApplication, pulledResources[1][index].localApplication, pulledResources[0], modelAPI, dataAPI))
-        }
-        Promise.all(devicePromistList)
-          .then((devices) => {
-            appLogger.log(devices, 'info')
-            appLogger.log('Success Pulling Network ' + network.name, 'info')
-            resolve()
-          })
-          .catch(err => {
-            appLogger.log(err, 'error')
-            reject(err)
-          })
-      })
-      .catch(err => {
-        appLogger.log(err, 'error')
-        reject(err)
-      })
-  })
+module.exports.pullNetwork = async function pullNetwork(session, network, dataAPI, modelAPI) {
+  let promiseList = [this.pullApplications(session, network, modelAPI, dataAPI)]
+  try {
+    const pulledResources = await Promise.all(promiseList)
+    appLogger.log(pulledResources, 'info')
+    let devicePromistList = []
+    for (let index in pulledResources[0]) {
+      devicePromistList.push(this.pullDevices(session, network, pulledResources[0][index].remoteApplication, pulledResources[0][index].localApplication, {}, modelAPI, dataAPI))
+      // devicePromistList.push(this.pullIntegrations(session, network, pulledResources[1][index].remoteApplication, pulledResources[1][index].localApplication, pulledResources[0], modelAPI, dataAPI))
+    }
+    const devices = await Promise.all(devicePromistList)
+    appLogger.log(devices, 'info')
+    appLogger.log('Success Pulling Network ' + network.name, 'info')
+  } catch (err) {
+    appLogger.log(err, 'error')
+    throw err
+  }
 }
 
 /**
@@ -690,7 +643,6 @@ function addRemoteDevice (session, remoteDevice, network, applicationId, dpMap, 
 
     let existingDeviceNTL = await modelAPI.deviceNetworkTypeLinks.retrieveDeviceNetworkTypeLinks({deviceId: existingDevice.id})
     let existingApplicationNTL = await modelAPI.applicationNetworkTypeLinks.retrieveApplicationNetworkTypeLink(applicationId)
-    console.log(existingApplicationNTL)
 
     if (existingDeviceNTL.totalCount > 0) {
       appLogger.log(existingDevice.name + ' link already exists')
