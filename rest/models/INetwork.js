@@ -62,60 +62,50 @@ Network.prototype.retrieveNetwork = function (id) {
   })
 }
 
-function authorizeAndTest (network, modelAPI, k, me, dataAPI) {
-  return new Promise(async function (resolve, reject) {
-    if (network.securityData.authorized) {
-      resolve(network)
+async function authorizeAndTest (network, modelAPI, k, me, dataAPI) {
+  if (network.securityData.authorized) {
+    return network
+  }
+  try {
+    const connection = await modelAPI.networkTypeAPI.connect(network, network.securityData)
+    if (connection instanceof Object) {
+      // Object.assign(network.securityData, connection)
+      for (var prop in connection) {
+        network.securityData[prop] = connection[prop]
+      }
+    } else {
+      network.securityData.access_token = connection
+    }
+    network.securityData.authorized = true
+    try {
+      await modelAPI.networkTypeAPI.test(network, network.securityData)
+      appLogger.log('Test Success ' + network.name)
+      network.securityData.authorized = true
+      network.securityData.message = 'ok'
+    } catch (err) {
+      appLogger.log('Test of ' + network.name + ': ' + err)
+      network.securityData.authorized = false
+      network.securityData.message = err.toString()
+    } finally {
+      return network
+    }
+  } catch (err) {
+    if (err.code === 42) return network
+    appLogger.log('Connection of ' + network.name + ' Failed: ' + err)
+    let errorMessage = {}
+    if (err === 301 || err === 405 || err === 404) {
+      errorMessage = new Error('Invalid URI to the ' + network.name + ' Network: "' + network.baseUrl + '"')
+    }
+    else if (err === 401) {
+      errorMessage = new Error('Authentication not recognized for the ' + network.name + ' Network')
     }
     else {
-      modelAPI.networkTypeAPI.connect(network, network.securityData)
-        .then((connection) => {
-          if (connection instanceof Object) {
-            for (var prop in connection) {
-              network.securityData[prop] = connection[prop]
-            }
-          }
-          else {
-            network.securityData.access_token = connection
-          }
-          network.securityData.authorized = true
-          modelAPI.networkTypeAPI.test(network, network.securityData)
-            .then(() => {
-              appLogger.log('Test Success ' + network.name)
-              network.securityData.authorized = true
-              network.securityData.message = 'ok'
-              resolve(network)
-            })
-            .catch((err) => {
-              appLogger.log('Test of ' + network.name + ': ' + err)
-              network.securityData.authorized = false
-              network.securityData.message = err.toString()
-              resolve(network)
-            })
-        })
-        .catch((err) => {
-          if (err.code === 42) {
-            resolve(network)
-          }
-          else {
-            appLogger.log('Connection of ' + network.name + ' Failed: ' + err)
-            let errorMessage = {}
-            if (err === 301 || err === 405 || err === 404) {
-              errorMessage = new Error('Invalid URI to the ' + network.name + ' Network: "' + network.baseUrl + '"')
-            }
-            else if (err === 401) {
-              errorMessage = new Error('Authentication not recognized for the ' + network.name + ' Network')
-            }
-            else {
-              errorMessage = new Error('Server Error on ' + network.name + ' Network:')
-            }
-            network.securityData.authorized = false
-            network.securityData.message = errorMessage.toString()
-            resolve(network)
-          }
-        })
+      errorMessage = new Error('Server Error on ' + network.name + ' Network:')
     }
-  })
+    network.securityData.authorized = false
+    network.securityData.message = errorMessage.toString()
+    return network
+  }
 }
 
 Network.prototype.createNetwork = function (name, networkProviderId, networkTypeId, networkProtocolId, baseUrl, securityData) {
@@ -163,37 +153,17 @@ Network.prototype.createNetwork = function (name, networkProviderId, networkType
   })
 }
 
-Network.prototype.updateNetwork = function (record) {
-  let me = this
+Network.prototype.updateNetwork = async function updateNetwork (record) {
   appLogger.log(record)
-  return new Promise(async function (resolve, reject) {
-    let dataAPI = new NetworkProtocolDataAccess(modelAPI, 'INetwork Update')
-    me.retrieveNetwork(record.id)
-      .then(old => {
-        dataAPI.getProtocolDataForKey(
-          record.id,
-          old.networkProtocolId,
-          genKey(record.id))
-          .then(k => {
-            authorizeAndTest(record, modelAPI, k, me, dataAPI)
-              .then(finalNetwork => {
-                appLogger.log(finalNetwork)
-                finalNetwork.securityData = dataAPI.hide(null, finalNetwork.securityData, k)
-                me.impl.updateNetwork(finalNetwork)
-                  .then((rec) => {
-                    appLogger.log(rec)
-                    resolve(rec)
-                  })
-                  .catch((err) => {
-                    reject(err)
-                  })
-              })
-              .catch(err => {
-                reject(err)
-              })
-          })
-      })
-  })
+  let dataAPI = new NetworkProtocolDataAccess(modelAPI, 'INetwork Update')
+  const old = await this.retrieveNetwork(record.id)
+  const k = await dataAPI.getProtocolDataForKey(record.id, old.networkProtocolId, genKey(record.id))
+  const finalNetwork = await authorizeAndTest(record, modelAPI, k, me, dataAPI)
+  appLogger.log(finalNetwork)
+  finalNetwork.securityData = dataAPI.hide(null, finalNetwork.securityData, k)
+  const rec = await this.impl.updateNetwork(finalNetwork)
+  appLogger.log(rec)
+  return rec
 }
 
 Network.prototype.deleteNetwork = function (id) {
@@ -219,29 +189,24 @@ Network.prototype.deleteNetwork = function (id) {
 // networkId - the network to be pulled from.
 //
 // Returns a promise that executes the pull.
-Network.prototype.pullNetwork = function (networkId) {
-  let me = this
-  return new Promise(async function (resolve, reject) {
-    try {
-      let network = await me.retrieveNetwork(networkId)
-      if (!network.securityData.authorized) {
-        reject(new Error('Network is not authorized.  Cannot pull'))
-      }
-      else {
-        let networkType = await modelAPI.networkTypes.retrieveNetworkTypes(network.networkTypeId)
-        var npda = new NetworkProtocolDataAccess(modelAPI, 'Pull Network')
-        npda.initLog(networkType, network)
-        appLogger.log(network)
-        let result = await modelAPI.networkProtocolAPI.pullNetwork(npda, network, modelAPI)
-        appLogger.log('Success pulling from Network : ' + networkId)
-        resolve(result)
-      }
+Network.prototype.pullNetwork = async function pullNetwork (networkId) {
+  try {
+    let network = await this.retrieveNetwork(networkId)
+    if (!network.securityData.authorized) {
+      throw new Error('Network is not authorized.  Cannot pull')
     }
-    catch (err) {
-      appLogger.log('Error pulling from Network : ' + networkId + ' ' + err)
-      reject(err)
-    }
-  })
+    let networkType = await modelAPI.networkTypes.retrieveNetworkTypes(network.networkTypeId)
+    var npda = new NetworkProtocolDataAccess(modelAPI, 'Pull Network')
+    npda.initLog(networkType, network)
+    appLogger.log(network)
+    let result = await modelAPI.networkProtocolAPI.pullNetwork(npda, network, modelAPI)
+    appLogger.log('Success pulling from Network : ' + networkId)
+    return result
+  }
+  catch (err) {
+    appLogger.log('Error pulling from Network : ' + networkId + ' ' + err)
+    throw err
+  }
 }
 
 Network.prototype.pushNetworks = function (networkTypeId) {
