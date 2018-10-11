@@ -59,14 +59,15 @@ exports.initialize = function (app, server) {
     restServer.fetchCompany],
   function (req, res, next) {
     var options = {}
-    if (req.company.type != modelAPI.companies.COMPANY_ADMIN) {
+    if (req.company.type !== modelAPI.companies.COMPANY_ADMIN) {
       // If they gave a companyId, make sure it's their own.
       if (req.query.companyId) {
-        if (req.query.companyId != req.user.companyId) {
-          respond(res, 403, 'Cannot request applications for another company')
+        if (req.query.companyId !== req.user.companyId) {
+          restServer.respond(res, 403, 'Cannot request applications for another company')
           return
         }
-      } else {
+      }
+      else {
         // Force the search to be limited to the user's company
         options.companyId = req.user.companyId
       }
@@ -135,12 +136,12 @@ exports.initialize = function (app, server) {
   app.get('/api/applications/:id', [restServer.isLoggedIn,
     restServer.fetchCompany],
   function (req, res, next) {
-    var id = req.params.id
     modelAPI.applications.retrieveApplication(parseInt(req.params.id)).then(function (app) {
-      if ((req.company.type != modelAPI.companies.COMPANY_ADMIN) &&
-                 (app.companyId != req.user.companyId)) {
+      if ((req.company.type !== modelAPI.companies.COMPANY_ADMIN) &&
+                 (app.companyId !== req.user.companyId)) {
         restServer.respond(res, 403)
-      } else {
+      }
+      else {
         restServer.respondJson(res, null, app)
       }
     })
@@ -199,8 +200,8 @@ exports.initialize = function (app, server) {
     }
 
     // The user must be part of the admin group or the target company.
-    if ((modelAPI.companies.COMPANY_ADMIN != req.company.type) &&
-            (req.user.companyId != rec.companyId)) {
+    if ((modelAPI.companies.COMPANY_ADMIN !== req.company.type) &&
+            (req.user.companyId !== rec.companyId)) {
       restServer.respond(res, 403)
       return
     }
@@ -262,54 +263,55 @@ exports.initialize = function (app, server) {
     // really changed before we even try to write.
     modelAPI.applications.retrieveApplication(data.id).then(function (app) {
       // Verify that the user can make the change.
-      if ((modelAPI.companies.COMPANY_ADMIN != req.company.type) &&
-                 (req.user.companyId != app.companyId)) {
+      if ((modelAPI.companies.COMPANY_ADMIN !== req.company.type) &&
+                 (req.user.companyId !== app.companyId)) {
         restServer.respond(res, 403)
         return
       }
 
       var changed = 0
       if ((req.body.name) &&
-                 (req.body.name != app.name)) {
+                 (req.body.name !== app.name)) {
         data.name = req.body.name
         ++changed
       }
 
       if ((req.body.description) &&
-                 (req.body.description != app.description)) {
+                 (req.body.description !== app.description)) {
         data.description = req.body.description
         ++changed
       }
 
       // Can only change the companyId if an admin user.
       if ((req.body.companyId) &&
-                 (req.body.companyId != app.companyId) &&
-                 (modelAPI.companies.COMPANY_ADMIN != req.company.type)) {
+                 (req.body.companyId !== app.companyId) &&
+                 (modelAPI.companies.COMPANY_ADMIN !== req.company.type)) {
         restServer.respond(res, 400, "Cannot change application's company")
         return
       }
 
       if ((req.body.companyId) &&
-                 (req.body.companyId != app.companyId)) {
+                 (req.body.companyId !== app.companyId)) {
         data.companyId = req.body.companyId
         ++changed
       }
       if ((req.body.reportingProtocolId) &&
-                 (req.body.reportingProtocolId != app.reportingProtocolId)) {
+                 (req.body.reportingProtocolId !== app.reportingProtocolId)) {
         data.reportingProtocolId = req.body.reportingProtocolId
         ++changed
       }
       if ((req.body.baseUrl) &&
-                 (req.body.baseUrl != app.baseUrl)) {
+                 (req.body.baseUrl !== app.baseUrl)) {
         data.baseUrl = req.body.baseUrl
         ++changed
       }
-      if (changed == 0) {
+      if (changed === 0) {
         // No changes.  But returning 304 apparently causes Apache to strip
         // CORS info, causing the browser to throw a fit.  So just say,
         // "Yeah, we did that.  Really.  Trust us."
         restServer.respond(res, 204)
-      } else {
+      }
+      else {
         // Do the update.
         modelAPI.applications.updateApplication(data).then(function (rec) {
           restServer.respond(res, 204)
@@ -355,7 +357,7 @@ exports.initialize = function (app, server) {
     else {
       modelAPI.applications.retrieveApplication(req.params.id).then(function (app) {
         // Verify that the user can delete.
-        if (req.user.companyId != app.companyId) {
+        if (req.user.companyId !== app.companyId) {
           restServer.respond(res, 403)
           return
         }
@@ -406,8 +408,8 @@ exports.initialize = function (app, server) {
     else {
       modelAPI.applications.retrieveApplication(req.params.id).then(function (app) {
         // Verify that the user can start.
-        if (req.user.companyId != app.companyId) {
-          respond(res, 403)
+        if (req.user.companyId !== app.companyId) {
+          restServer.respond(res, 403)
           return
         }
         modelAPI.applications.startApplication(id).then(function (logs) {
@@ -456,9 +458,9 @@ exports.initialize = function (app, server) {
     else {
       modelAPI.applications.retrieveApplication(req.params.id).then(function (app) {
         // Verify that the user can stop this app.
-        if (req.user.companyId != app.companyId) {
-          respond(res, 403)
-          return; Stop
+        if (req.user.companyId !== app.companyId) {
+          restServer.respond(res, 403)
+          return
         }
 
         modelAPI.applications.stopApplication(id).then(function (logs) {
@@ -503,18 +505,27 @@ exports.initialize = function (app, server) {
     var networkId = parseInt(req.params.networkId)
     var data = req.body
 
-    appLogger.log('Received data from network ' + networkId +
-                       ' for application ' + applicationId +
-                       ': ' + JSON.stringify(data))
+    // make sure the network is enabled
+    modelAPI.networks.retrieveNetwork(networkId)
+      .then(network => {
+        if (network.securityData.enabled) {
+          appLogger.log('Received data from network ' + networkId +
+            ' for application ' + applicationId +
+            ': ' + JSON.stringify(data))
 
-    modelAPI.applications.passDataToApplication(applicationId, networkId,
-      data).then(function () {
-      restServer.respond(res, 200)
-    })
-      .catch(function (err) {
-        appLogger.log('Error passing data from network ' + networkId +
-                           ' to application ' + applicationId + ': ' + err)
-        restServer.respond(res, err)
+          modelAPI.applications.passDataToApplication(applicationId, networkId,
+            data).then(function () {
+            restServer.respond(res, 200)
+          })
+            .catch(function (err) {
+              appLogger.log('Error passing data from network ' + networkId +
+                ' to application ' + applicationId + ': ' + err)
+              restServer.respond(res, err)
+            })
+        }
+        else {
+          restServer.respond(res, 200)
+        }
       })
   })
 
