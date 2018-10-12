@@ -32,6 +32,7 @@ exports.initRESTCallLogger = function (app) {
 }
 
 exports.log = function (msg, level) {
+  if (!level) level = 'info'
   if (loggingEnabled) {
     var header = ''
     if (loggingHeaders) {

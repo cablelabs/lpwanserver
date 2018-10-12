@@ -53,6 +53,8 @@ Network.prototype.retrieveNetwork = function (id) {
           ret.networkProtocolId,
           genKey(id))
         ret.securityData = await dataAPI.access(ret, ret.securityData, k)
+        let networkProtocol = await modelAPI.networkProtocols.retrieveNetworkProtocol(ret.networkProtocolId)
+        ret.masterProtocol = networkProtocol.masterProtocol
       }
       resolve(ret)
     }
@@ -158,10 +160,13 @@ Network.prototype.updateNetwork = async function updateNetwork (record) {
   let dataAPI = new NetworkProtocolDataAccess(modelAPI, 'INetwork Update')
   const old = await this.retrieveNetwork(record.id)
   const k = await dataAPI.getProtocolDataForKey(record.id, old.networkProtocolId, genKey(record.id))
-  const finalNetwork = await authorizeAndTest(record, modelAPI, k, me, dataAPI)
+  const finalNetwork = await authorizeAndTest(record, modelAPI, k, this, dataAPI)
   appLogger.log(finalNetwork)
   finalNetwork.securityData = dataAPI.hide(null, finalNetwork.securityData, k)
+  let masterProtocol = finalNetwork.masterProtocol
+  delete finalNetwork.masterProtocol
   const rec = await this.impl.updateNetwork(finalNetwork)
+  rec.masterProtocol = masterProtocol
   appLogger.log(rec)
   return rec
 }
