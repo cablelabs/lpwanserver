@@ -10,7 +10,7 @@ var request = require('request')
 chai.use(chaiHttp)
 var server = chai.request(app).keepOpen()
 
-describe.only('E2E Test for Multiple Networks', () => {
+describe('E2E Test for Multiple Networks', () => {
   var adminToken
   var userId
   var userToken
