@@ -1,7 +1,9 @@
+// eslint-disable-next-line no-unused-vars
 var assert = require('assert')
 var chai = require('chai')
 var chaiHttp = require('chai-http')
 var app = require('../../restApp.js')
+// eslint-disable-next-line no-unused-vars
 var should = chai.should()
 var setup = require('./setup.js')
 var appLogger = require('../../rest/lib/appLogger.js')
@@ -10,10 +12,9 @@ var request = require('request')
 chai.use(chaiHttp)
 var server = chai.request(app).keepOpen()
 
-describe('E2E Test for Single LoraOS 2.0', function () {
+describe.only('E2E Test for Single LoraOS 2.0', function () {
   var adminToken
   var userId
-  var userToken
   var loraProtocolId
   var networkId
   var applicationId
@@ -77,7 +78,6 @@ describe('E2E Test for Single LoraOS 2.0', function () {
         .end(function (err, res) {
           if (err) done(err)
           res.should.have.status(200)
-          userToken = res.text
           done()
         })
     })
@@ -188,8 +188,8 @@ describe('E2E Test for Single LoraOS 2.0', function () {
           var applications = JSON.parse(res.text)
           applications.should.have.property('totalCount')
           applications.should.have.property('records')
-          applications.totalCount.should.equal(2)
-          applications.records[0].name.should.equal('TestApplication')
+          applications.totalCount.should.equal(1)
+          applications.records[0].name.should.equal('BobMouseTrapLv2')
           applications.records[0].description.should.equal('CableLabs Test Application')
           applicationId = applications.records[0].id
           done()
@@ -197,13 +197,36 @@ describe('E2E Test for Single LoraOS 2.0', function () {
     })
     it('Verify the Test Application NTL was Created', function (done) {
       let expected = {
-        'id': 2,
-        'applicationId': 2,
-        'networkTypeId': 1,
-        'networkSettings': {'payloadCodec': '', 'payloadDecoderScript': '', 'payloadEncoderScript': ''}
+        'totalCount': 1,
+        'records': [{
+          'id': 1,
+          'applicationId': 1,
+          'networkTypeId': 1,
+          'networkSettings': {
+            'canotaa': true,
+            'cansend': true,
+            'clientsLimit': null,
+            'description': 'CableLabs Test Application',
+            'deviceLimit': null,
+            'devices': null,
+            'id': '2',
+            'joinServer': null,
+            'name': 'BobMouseTrapLv2',
+            'ogwinfo': null,
+            'organizationID': '10',
+            'orx': true,
+            'overbosity': null,
+            'payloadCodec': '',
+            'payloadDecoderScript': '',
+            'payloadEncoderScript': '',
+            'serviceProfileID': 'de9d9f33-26ab-43b3-9088-d65801240e0e',
+            'suspended': false
+          }
+
+        }]
       }
       server
-        .get('/api/applicationNetworkTypeLinks/2')
+        .get('/api/applicationNetworkTypeLinks')
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {
@@ -219,12 +242,12 @@ describe('E2E Test for Single LoraOS 2.0', function () {
     })
     it('Verify the Test1 Device Profile was Created', function (done) {
       let expected = {
-        'id': 2,
+        'id': 1,
         'networkTypeId': 1,
         'companyId': 2,
-        'name': 'TestDevice2',
+        'name': 'BobMouseTrapDeviceProfileLv2',
         'networkSettings': {
-          'id': '699da70b-da10-473b-991b-eee6b71071be',
+          'id': '9dd538e8-a231-4a35-8823-eecbffb9d4a9',
           'supportsClassB': false,
           'classBTimeout': 0,
           'pingSlotPeriod': 0,
@@ -240,18 +263,17 @@ describe('E2E Test for Single LoraOS 2.0', function () {
           'rxFreq2': 0,
           'factoryPresetFreqs': [],
           'maxEIRP': 0,
-          'name': 'TestDevice2',
+          'name': 'BobMouseTrapDeviceProfileLv2',
           'networkServerID': '1',
-          'organizationID': '2',
+          'organizationID': '10',
           'maxDutyCycle': 0,
           'supportsJoin': false,
-          'rfRegion': 'US902',
-          'supports32BitFCnt': false
+          'rfRegion': 'US902'
         },
         'description': 'Device Profile managed by LPWAN Server, perform changes via LPWAN'
       }
       server
-        .get('/api/deviceProfiles/2')
+        .get('/api/deviceProfiles/1')
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {
@@ -265,15 +287,15 @@ describe('E2E Test for Single LoraOS 2.0', function () {
     })
     it('Verify the Test Device was Created', function (done) {
       let expected = {
-        'id': 2,
-        'applicationId': 2,
-        'name': 'TestDevice2',
+        'id': 1,
+        'applicationId': 1,
+        'name': 'BobMouseTrapDeviceLv2',
         'deviceModel': null,
         'description': 'Test Device for E2E',
         networks: [1]
       }
       server
-        .get('/api/devices/2')
+        .get('/api/devices/1')
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {
@@ -288,21 +310,24 @@ describe('E2E Test for Single LoraOS 2.0', function () {
     })
     it('Verify the Test Device NTL was Created', function (done) {
       let expected = {
-        'id': 2,
-        'deviceId': 2,
+        'id': 1,
+        'deviceId': 1,
         'networkTypeId': 1,
-        deviceProfileId: 2,
+        deviceProfileId: 1,
         'networkSettings': {
-          'devEUI': '8484932090909090',
-          'name': 'TestDevice2',
-          'applicationID': '1',
+          'devEUI': '1122334455667788',
+          'name': 'BobMouseTrapDeviceLv2',
+          'applicationID': '2',
           'description': 'Test Device for E2E',
-          'deviceProfileID': '699da70b-da10-473b-991b-eee6b71071be',
-          'skipFCntCheck': false
+          'deviceProfileID': '9dd538e8-a231-4a35-8823-eecbffb9d4a9',
+          'skipFCntCheck': false,
+          'deviceStatusBattery': 256,
+          'deviceStatusMargin': 256,
+          'lastSeenAt': null
         }
       }
       server
-        .get('/api/deviceNetworkTypeLinks/2')
+        .get('/api/deviceNetworkTypeLinks/1')
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {
@@ -366,7 +391,7 @@ describe('E2E Test for Single LoraOS 2.0', function () {
           appLogger.log(integrationWrapper)
           let integration = integrationWrapper.integration
           integration.should.have.property('uplinkDataURL')
-          integration.uplinkDataURL.should.equal('http://localhost:3200/api/ingest/2/2')
+          integration.uplinkDataURL.should.equal('http://localhost:3200/api/ingest/1/2')
           done()
         }
       })
@@ -403,8 +428,8 @@ describe('E2E Test for Single LoraOS 2.0', function () {
           var applications = JSON.parse(res.text)
           applications.should.have.property('totalCount')
           applications.should.have.property('records')
-          applications.totalCount.should.equal(2)
-          applications.records[0].name.should.equal('TestApplication')
+          applications.totalCount.should.equal(1)
+          applications.records[0].name.should.equal('BobMouseTrapLv2')
           applications.records[0].description.should.equal('CableLabs Test Application')
           applicationId = applications.records[0].id
           done()
@@ -415,7 +440,7 @@ describe('E2E Test for Single LoraOS 2.0', function () {
         id: 2,
         'networkTypeId': 1,
         'companyId': 2,
-        'name': 'TestDevice2',
+        'name': 'BobMouseTrapDeviceProfileLv2',
         'networkSettings': {
           'id': '699da70b-da10-473b-991b-eee6b71071be',
           'supportsClassB': false,
@@ -433,7 +458,7 @@ describe('E2E Test for Single LoraOS 2.0', function () {
           'rxFreq2': 0,
           'factoryPresetFreqs': [],
           'maxEIRP': 0,
-          'name': 'TestDevice2',
+          'name': 'BobMouseTrapDeviceProfileLv2',
           'networkServerID': '1',
           'organizationID': '2',
           'maxDutyCycle': 0,
@@ -458,9 +483,9 @@ describe('E2E Test for Single LoraOS 2.0', function () {
     })
     it('Verify the Test Device Exists on LPWan', function (done) {
       let expected = {
-        'id': 2,
-        'applicationId': 2,
-        'name': 'TestDevice2',
+        'id': 1,
+        'applicationId': 1,
+        'name': 'BobMouseTrapDeviceProfileLv2',
         'deviceModel': null,
         'description': 'Test Device for E2E',
         networks: [1]

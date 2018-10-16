@@ -10,7 +10,8 @@ var appLogger = require('../../rest/lib/appLogger.js')
 var request = require('request')
 
 chai.use(chaiHttp)
-var server = chai.request(app).keepOpen()
+// var server = chai.request(app).keepOpen()
+var server = request
 
 describe('E2E Test for Single LoraOS 1.0', function () {
   var adminToken

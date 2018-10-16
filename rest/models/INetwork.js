@@ -160,6 +160,7 @@ Network.prototype.updateNetwork = async function updateNetwork (record) {
   let dataAPI = new NetworkProtocolDataAccess(modelAPI, 'INetwork Update')
   const old = await this.retrieveNetwork(record.id)
   const k = await dataAPI.getProtocolDataForKey(record.id, old.networkProtocolId, genKey(record.id))
+  if (!record.securityData) record.securityData = old.securityData
   const finalNetwork = await authorizeAndTest(record, modelAPI, k, this, dataAPI)
   appLogger.log(finalNetwork)
   finalNetwork.securityData = dataAPI.hide(null, finalNetwork.securityData, k)
