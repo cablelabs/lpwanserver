@@ -8,7 +8,7 @@ install:
   - npm install
 before_script:
   - cp ./data/test.sqlite3.testSuiteStartingDB /tmp/test.sqlite3
-  - npm run pacakge
+  - npm run package
   - git clone git@github.com:cablelabs/lpwanserver-web-client.git
 script:
   - npm test
