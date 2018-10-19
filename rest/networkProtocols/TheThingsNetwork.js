@@ -16,7 +16,7 @@ async function TTNRequest (token, opts) {
     headers: {
       authorization: `Bearer ${token}`
     },
-    agentOptions = {
+    agentOptions: {
       'secureProtocol': 'TLSv1_2_method',
       'rejectUnauthorized': false
     }
