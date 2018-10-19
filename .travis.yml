@@ -1,10 +1,22 @@
-
 language: node_js
-sudo: true
+sudo: required
 node_js:
   - "8.11"
+services:
+  - docker
 install:
   - npm install
+before_script:
   - cp ./data/test.sqlite3.testSuiteStartingDB /tmp/test.sqlite3
+  - npm run package
+  - git clone https://github.com/cablelabs/lpwanserver-web-client.git
 script:
   - npm test
+  - ./lpwanserver-web-client/bin/e2e.js
+before_deploy:
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+deploy:
+  provider: script
+  script: docker push lpwanserver/lpwanserver
+  on:
+    branch: master

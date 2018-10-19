@@ -19,6 +19,7 @@ services:
   ui:
     image: lpwanserver/lpwanserver-web-client
     environment:
+      - LPWANSERVER_PROTOCOL=http
       - LPWANSERVER_HOST=rest
       - LPWANSERVER_PORT=3200
     ports:
