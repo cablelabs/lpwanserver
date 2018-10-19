@@ -21,7 +21,14 @@ async function TTNRequest (token, opts) {
       'rejectUnauthorized': false
     }
   }, opts)
-  appLogger.log(options, 'info')
+  appLogger.log(R.merge(
+    opts,
+    {
+      headers: R.merge(opts.headers, {
+        authorization: 'Bearer OMIT TOKEN IN LOG'
+      })
+    }
+  ), 'info')
   const response = await request(opts)
   if (response.statusCode === 401) throw new Error('Unauthorized')
   if (response.statusCode === 404) throw new Error('URL is Incorrect')
@@ -32,6 +39,25 @@ async function TTNRequest (token, opts) {
   appLogger.log(response.body)
   return response.body
 }
+
+async function TTNAuthenticationRequest (network, loginData, opts = {}) {
+  let auth = Buffer
+    .from(`${loginData.clientId}:${loginData.clientSecret}`)
+    .toString('base64')
+  const body = await TTNRequest(null, Object.assign({
+    method: 'POST',
+    url: `${network.baseUrl}/users/token`,
+    headers: {
+      authorization: `Basic ${auth}`
+    }
+  }, opts))
+  if (!body.access_token) {
+    throw new Error('No Token')
+  }
+  return body
+}
+
+const appRegion = R.compose(R.last, R.split('-'), x => x.handler || x.serviceProfileID)
 
 /**
  * The Things Network Protocol Handler Module
@@ -217,41 +243,19 @@ module.exports.getDeviceProfileAccessAccount = async function (dataAPI, network,
   return getCompanyAccount(dataAPI, network, co.id, false)
 }
 
-function authorizeRequestOptions (network, loginData, opts = {}) {
-  let auth = Buffer
-    .from(`${loginData.clientId}:${loginData.clientSecret}`)
-    .toString('base64')
-  return Object.assign({
-    method: 'POST',
-    url: `${network.baseUrl}/users/token`,
-    json: true,
-    resolveWithFullResponse: true,
-    headers: {
-      authorization: `Basic ${auth}`
-    }
-  }, opts)
-}
-
 async function authorizeWithPassword (network, loginData, scope) {
   if (!scope || !scope.length) {
     scope = ['apps', 'gateways', 'components', 'apps:cable-labs-prototype']
   }
-  let options = authorizeRequestOptions(network, loginData, {
-    body: {
-      grant_type: 'password',
-      username: loginData.username,
-      password: loginData.password,
-      scope
-    }
-  })
-  appLogger.log(options)
   try {
-    const response = await request(options)
-    if (response.statusCode >= 400 || response.statusCode === 301) {
-      throw new Error(response.statusCode + ', ' + response.body.error)
-    }
-    appLogger.log(response.body, 'debug')
-    return response.body
+    return TTNAuthenticationRequest(network, loginData, {
+      body: {
+        grant_type: 'password',
+        username: loginData.username,
+        password: loginData.password,
+        scope
+      }
+    })
   } catch (e) {
     appLogger.log('Error on signin: ' + e)
     throw e
@@ -259,24 +263,26 @@ async function authorizeWithPassword (network, loginData, scope) {
 }
 
 async function authorizeWithCode (network, loginData) {
-  let options = authorizeRequestOptions(network, loginData, {
-    body: {
-      grant_type: 'authorization_code',
-      code: loginData.code,
-      redirect_url: 'http://localhost:3000/admin/networks/oauth'
-    }
-  })
-  appLogger.log(options)
   try {
-    const response = await request(options)
-    if (response.statusCode >= 400 || response.statusCode === 301) {
-      throw new Error(response.statusCode + ', ' + response.body.error)
-    }
-    appLogger.log(response.body)
-    if (!response.body.access_token) {
-      throw new Error('No token')
-    }
-    return response.body
+    const body = await TTNAuthenticationRequest(network, loginData, {
+      body: {
+        grant_type: 'authorization_code',
+        code: loginData.code,
+        redirect_url: 'http://localhost:3000/admin/networks/oauth'
+      }
+    })
+    const apps = await TTNRequest(body.access_token, {
+      url: 'https://console.thethingsnetwork.org/api/applications'
+    })
+    const appScopes = apps.map(x => `apps:${x.id}`)
+    const restricted = TTNRequest(body.access_token, {
+      method: 'POST',
+      url: `${network.baseUrl}/users/restrict-token`,
+      body: {
+        scope: ['apps', ...appScopes]
+      }
+    })
+    return restricted
   } catch (e) {
     appLogger.log('Error on signin: ' + e)
     throw e
@@ -284,25 +290,16 @@ async function authorizeWithCode (network, loginData) {
 }
 
 async function authorizeWithRefreshToken (network, loginData) {
-  let options = authorizeRequestOptions(network, loginData, {
-    body: {
-      grant_type: 'refresh_token',
-      refresh_token: loginData.refresh_token,
-      redirect_url: loginData.redirect_uri
-    }
-  })
-  appLogger.log(options)
   try {
-    const response = await request(options)
-    if (response.statusCode >= 400) {
-      throw new Error(response.statusCode + ', ' + response.body.error)
-    }
-    appLogger.log(response.body)
-    if (!response.body.access_token) {
-      throw new Error('No token')
-    }
-    response.body.username = 'TTNUser'
-    return response.body
+    const body = await TTNAuthenticationRequest(network, loginData, {
+      body: {
+        grant_type: 'refresh_token',
+        refresh_token: loginData.refresh_token,
+        redirect_url: loginData.redirect_uri
+      }
+    })
+    body.username = 'TTNUser'
+    return body
   } catch (e) {
     appLogger.log('Error on signin: ' + e)
     throw e
@@ -384,9 +381,8 @@ function getOptions (method, url, type, resource, access_token) {
 module.exports.pullNetwork = async function pullNetwork(session, network, dataAPI, modelAPI) {
   try {
     const pulledResources = await this.pullApplications(session, network, modelAPI, dataAPI)
-    appLogger.log(pulledResources, 'info')
-    const devices = await Promise.all(pulledResources[0].map((x, i) => {
-      return this.pullDevice(session, network, x.remoteApplication, x.localApplication, {}, modelAPI, dataAPI)
+    const devices = await Promise.all(pulledResources.map((x, i) => {
+      return this.pullDevices(session, network, x.remoteApplication, x.localApplication, {}, modelAPI, dataAPI)
       // devicePromistList.push(this.pullIntegrations(session, network, pulledResources[1][i].remoteApplication, pulledResources[1][i].localApplication, pulledResources[0], modelAPI, dataAPI))
     }))
     appLogger.log(devices, 'info')
@@ -414,18 +410,16 @@ module.exports.pullApplications = async function pullApplications (session, netw
     throw new Error('Network ' + network.name + ' is not authorized')
   }
   try {
-    const body = await TTNRequest(access_token, {
+    const apps = await TTNRequest(access_token, {
       url: 'https://console.thethingsnetwork.org/api/applications'
     })
-    appLogger.log(body, 'info')
     let promiseList = []
     if (!network.securityData.appKeys) network.securityData.appKeys = []
-    body.forEach(app => {
+    apps.forEach(app => {
       network.securityData.appKeys.push({app: app.id, key: app.access_keys[0].key})
       promiseList.push(addRemoteApplication(session, app, network, modelAPI, dataAPI))
     })
-    await Promise.all(promiseList)
-    return body
+    return Promise.all(promiseList)
   } catch (e) {
     appLogger.log('Error pulling applications from network ' + network.name + ': ' + e)
     throw e
@@ -434,8 +428,7 @@ module.exports.pullApplications = async function pullApplications (session, netw
 
 async function addRemoteApplication (session, limitedRemoteApplication, network, modelAPI, dataAPI) {
   try {
-    let remoteApplication = await getApplicationById(network, limitedRemoteApplication.id, session.connection)
-    remoteApplication = JSON.parse(remoteApplication)
+    let remoteApplication = await getApplicationById(network, limitedRemoteApplication, session.connection)
     let normalizedApplication = normalizeApplicationData(remoteApplication, limitedRemoteApplication, network)
     let existingApplication = await modelAPI.applications.retrieveApplications({search: normalizedApplication.name})
     if (existingApplication.totalCount > 0) {
@@ -462,7 +455,7 @@ async function addRemoteApplication (session, limitedRemoteApplication, network,
         normalizedApplication.id
       )
     }
-    return { localApplication: existingApplication.id, remoteApplication: normalizedApplication.id }
+    return { localApplication: existingApplication, remoteApplication: normalizedApplication }
   }
   catch (e) {
     appLogger.log(e, 'error')
@@ -471,11 +464,19 @@ async function addRemoteApplication (session, limitedRemoteApplication, network,
 }
 
 // Get the NetworkServer using the Service Profile a ServiceProfile.
-async function getApplicationById (network, remoteApplicationId, connection) {
+async function getApplicationById (network, appOrId, connection) {
   appLogger.log('LoRaOpenSource: getApplicationById', 'debug')
+  let app = appOrId
+  let appId = typeof app === 'string' ? app : app.id
   try {
+    if (typeof app === 'string' || !app.handler) {
+      app = await TTNRequest(connection.access_token, {
+        url: `https://console.thethingsnetwork.org/api/applications/${appId}`
+      })
+    }
+    
     return TTNRequest(connection.access_token, {
-      url: `http://us-west.thethings.network:8084/applications/${remoteApplicationId}`
+      url: `http://${appRegion(app)}.thethings.network:8084/applications/${appId}`
     })
   } catch (e) {
     appLogger.log('Error on get Application: ' + e)
@@ -495,15 +496,14 @@ async function getApplicationById (network, remoteApplicationId, connection) {
  * @param modelAPI
  * @returns {Promise<any>}
  */
-module.exports.pullDevices = async function pullDevices (session, network, remoteApplicationId, localApplicationId, dpMap, modelAPI, dataAPI) {
+module.exports.pullDevices = async function pullDevices (session, network, remoteApplication, localApplication, dpMap, modelAPI, dataAPI) {
   try {
     const body = await TTNRequest(session.connection.access_token, {
-      url: 'http://us-west.thethings.network:8084/applications/' + remoteApplicationId + '/devices'
+      url: `http://${appRegion(remoteApplication)}.thethings.network:8084/applications/${remoteApplication.id}/devices`
     })
-    appLogger.log(body, 'info')
-    const { devices } = body
+    const { devices = [] } = body
     await Promise.all(devices.map(device => {
-      return addRemoteDevice(session, device, network, localApplicationId, dpMap, modelAPI, dataAPI)
+      return addRemoteDevice(session, device, network, localApplication.id, dpMap, modelAPI, dataAPI)
     }))
     return devices
   } catch (e) {
@@ -717,7 +717,6 @@ module.exports.addApplication = async function addApplication (session, network,
       url: network.baseUrl + '/applications',
       body: ttnApplication.ttnApplicationMeta
     })
-    appLogger.log(body, 'info')
     applicationData.networkSettings.applicationEUI = body.euis[0]
     appLogger.log(applicationData, 'error')
     await modelAPI.applicationNetworkTypeLinks.updateRemoteApplicationNetworkTypeLink(applicationData, 2)
