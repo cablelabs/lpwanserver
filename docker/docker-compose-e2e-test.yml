@@ -1,6 +1,15 @@
 version: '2'
 
 services:
+  e2e-test:
+    image: lpwanserver/e2e-test
+    environment:
+    - NODE_ENV=e2e
+    - PORT=3200
+    - db_file=data/demo_data/demo.sqlite3
+    ports:
+    - '3200:3200'
+
   api-test:
     image: lpwanserver/api-test
     environment:
@@ -8,7 +17,7 @@ services:
     - PORT=3200
     - db_file=data/demo_data/demo.sqlite3
     ports:
-    - '3200:3200'
+    - '3201:3200'
 
   unit:
     image: lpwanserver/test
@@ -17,7 +26,7 @@ services:
     - PORT=3200
     - db_file=data/demo_data/demo.sqlite3
     ports:
-    - '3201:3200'
+    - '3202:3200'
 
   loraserver1:
     image: loraserver/loraserver:1
