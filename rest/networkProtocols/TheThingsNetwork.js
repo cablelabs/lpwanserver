@@ -8,6 +8,31 @@ const R = require('ramda')
  * Bookeeping: Register, Test, Connect
  *********************************************************************************************************************/
 
+function tryAsync (promise) {
+  return promise.then(
+    x => ([null, x]),
+    err => ([err])
+  )
+}
+
+function checkTtnResponse ({ statusCode, body }) {
+  if (statusCode >= 200 && statusCode < 300) return
+  const throwError = msg => {
+    let error = new Error(msg)
+    error.statusCode = statusCode
+    throw error
+  }
+  switch (statusCode) {
+    case 401: return throwError('Unauthorized')
+    case 404: return throwError('URL Is Incorrect')
+    case 400:
+      appLogger.log(body)
+      return throwError('Bad Request')
+    default:
+      return throwError(statusCode)
+  }
+}
+
 async function TTNRequest (token, opts) {
   opts = Object.assign({
     method: 'GET',
@@ -30,14 +55,36 @@ async function TTNRequest (token, opts) {
     }
   ), 'info')
   const response = await request(opts)
-  if (response.statusCode === 401) throw new Error('Unauthorized')
-  if (response.statusCode === 404) throw new Error('URL is Incorrect')
-  if (response.statusCode >= 400) {
-    appLogger.log(response.body)
-    throw new Error('400')
-  }
+  checkTtnResponse(response)
   appLogger.log(response.body)
   return response.body
+}
+
+async function TTNAppRequest (network, connection, appId, opts, secondAttempt = false) {
+  if (!connection.appTokens) connection.appTokens = {}
+  if (!connection.appTokens[appId]) {
+    try {
+      const body = await TTNRequest(connection.access_token, {
+        method: 'POST',
+        url: `${network.baseUrl}/users/restrict-token`,
+        body: {
+          scope: [`apps:${appId}`]
+        }
+      })
+      connection.appTokens[appId] = body.access_token
+    } catch (err) {
+      appLogger.log(`Error fetching token for app ${appId}. ${err.message}`, err)
+      throw err
+    }
+    
+  }
+  try {
+    return TTNRequest(connection.appTokens[appId], opts)
+  } catch (err) {
+    if (secondAttempt || (err.statusCode !== 401 && error.statusCode !== 403)) throw err
+    delete connection.appTokens[appId]
+    return TTNAppRequest(network, connection, appId, opts, true)
+  }
 }
 
 async function TTNAuthenticationRequest (network, loginData, opts = {}) {
@@ -264,25 +311,13 @@ async function authorizeWithPassword (network, loginData, scope) {
 
 async function authorizeWithCode (network, loginData) {
   try {
-    const body = await TTNAuthenticationRequest(network, loginData, {
+    return TTNAuthenticationRequest(network, loginData, {
       body: {
         grant_type: 'authorization_code',
         code: loginData.code,
         redirect_url: 'http://localhost:3000/admin/networks/oauth'
       }
     })
-    const apps = await TTNRequest(body.access_token, {
-      url: 'https://console.thethingsnetwork.org/api/applications'
-    })
-    const appScopes = apps.map(x => `apps:${x.id}`)
-    const restricted = TTNRequest(body.access_token, {
-      method: 'POST',
-      url: `${network.baseUrl}/users/restrict-token`,
-      body: {
-        scope: ['apps', ...appScopes]
-      }
-    })
-    return restricted
   } catch (e) {
     appLogger.log('Error on signin: ' + e)
     throw e
@@ -413,13 +448,8 @@ module.exports.pullApplications = async function pullApplications (session, netw
     const apps = await TTNRequest(access_token, {
       url: 'https://console.thethingsnetwork.org/api/applications'
     })
-    let promiseList = []
-    if (!network.securityData.appKeys) network.securityData.appKeys = []
-    apps.forEach(app => {
-      network.securityData.appKeys.push({app: app.id, key: app.access_keys[0].key})
-      promiseList.push(addRemoteApplication(session, app, network, modelAPI, dataAPI))
-    })
-    return Promise.all(promiseList)
+    network.securityData.appKeys = apps.map(x => ({ app: x.id, key: x.access_keys[0].key }))
+    return Promise.all(apps.map(x => addRemoteApplication(session, x, network, modelAPI, dataAPI)))
   } catch (e) {
     appLogger.log('Error pulling applications from network ' + network.name + ': ' + e)
     throw e
@@ -470,12 +500,12 @@ async function getApplicationById (network, appOrId, connection) {
   let appId = typeof app === 'string' ? app : app.id
   try {
     if (typeof app === 'string' || !app.handler) {
-      app = await TTNRequest(connection.access_token, {
+      app = await TTNAppRequest(network, connection, appId, {
         url: `https://console.thethingsnetwork.org/api/applications/${appId}`
       })
     }
     
-    return TTNRequest(connection.access_token, {
+    return TTNAppRequest(network, connection, appId, {
       url: `http://${appRegion(app)}.thethings.network:8084/applications/${appId}`
     })
   } catch (e) {
@@ -498,7 +528,7 @@ async function getApplicationById (network, appOrId, connection) {
  */
 module.exports.pullDevices = async function pullDevices (session, network, remoteApplication, localApplication, dpMap, modelAPI, dataAPI) {
   try {
-    const body = await TTNRequest(session.connection.access_token, {
+    const body = await TTNAppRequest(network, session.connection, remoteApplication.id, {
       url: `http://${appRegion(remoteApplication)}.thethings.network:8084/applications/${remoteApplication.id}/devices`
     })
     const { devices = [] } = body
@@ -726,9 +756,7 @@ module.exports.addApplication = async function addApplication (session, network,
       makeApplicationDataKey(application.id, 'appNwkId'),
       body.id
     )
-    scope = ['apps', 'gateways', 'components', 'apps:' + body.id]
-    session.connection = await authorizeWithPassword(network, network.securityData, scope)
-    return this.registerApplicationWithHandler(session.connection.access_token, network, ttnApplication.ttnApplicationData, body, dataAPI)
+    return this.registerApplicationWithHandler(session.connection, network, ttnApplication.ttnApplicationData, body, dataAPI)
   } catch (err) {
     appLogger.log('Error on create application: ' + err, 'error')
     appLogger.log(err, 'error')
@@ -736,23 +764,23 @@ module.exports.addApplication = async function addApplication (session, network,
   }
 }
 
-module.exports.registerApplicationWithHandler = async function registerApplicationWithHandler (appToken, network, ttnApplication, ttnApplicationMeta, dataAPI) {
+module.exports.registerApplicationWithHandler = async function registerApplicationWithHandler (connection, network, ttnApplication, ttnApplicationMeta, dataAPI) {
   try {
-    await TTNRequest(appToken, {
+    await TTNAppRequest(network, connection, ttnApplication.app_id, {
       method: 'POST',
-      url: 'http://us-west.thethings.network:8084/applications',
+      url: `http://us-west.thethings.network:8084/applications`,
       body: { app_id: ttnApplication.app_id }
     })
-    return this.setApplication(appToken, network, ttnApplication, ttnApplicationMeta, dataAPI)
+    return this.setApplication(connection, network, ttnApplication, ttnApplicationMeta, dataAPI)
   } catch (e) {
     appLogger.log('Error on register Application: ' + e, 'error')
     throw e
   }
 }
 
-module.exports.setApplication = async function setApplication (appToken, network, ttnApplication, ttnApplicationMeta, dataAPI) {
+module.exports.setApplication = async function setApplication (connection, network, ttnApplication, ttnApplicationMeta, dataAPI) {
   try {
-    await TTNRequest(appToken, {
+    await TTNAppRequest(network, connection, ttnApplicationMeta.id, {
       method: 'PUT',
       url: `http://us-west.thethings.network:8084/applications/${ttnApplicationMeta.id}`,
       body: ttnApplication
@@ -781,7 +809,7 @@ module.exports.getApplication = async function getApplication (session, network,
       network.networkProtocolId,
       makeApplicationDataKey(applicationId, 'appNwkId')
     )
-    return TTNRequest(session.connection.access_token, true, {
+    return TTNAppRequest(network, session.connection, true, {
       url: network.baseUrl + '/applications/' + appNetworkId
     })
   } catch (e) {
@@ -879,7 +907,7 @@ module.exports.updateApplication = async function updateApplication (session, ne
     appLogger.log(application)
     appLogger.log(applicationData)
 
-    await TTNRequest(session.connection.access_token, {
+    await TTNAppRequest(network, session.connection, appNetworkId, {
       method: 'PUT',
       url: network.baseUrl + '/applications/' + appNetworkId,
       body
@@ -909,7 +937,7 @@ module.exports.deleteApplication = async function deleteApplication (session, ne
       network.networkProtocolId,
       makeApplicationDataKey(applicationId, 'appNwkId')
     )
-    await TTNRequest(session.connection.access_token, {
+    await TTNAppRequest(network, session.connection, appNetworkId, {
       method: 'DELETE',
       url: network.baseUrl + '/applications/' + appNetworkId
     })
@@ -951,7 +979,7 @@ module.exports.startApplication = async function startApplication (session, netw
       network.networkProtocolId,
       makeApplicationDataKey(applicationId, 'appNwkId')
     )
-    await TTNRequest(session.connection.access_token, {
+    await TTNAppRequest(network, session.connection, appNwkId, {
       method: 'POST',
       url: network.baseUrl + '/applications/' + appNwkId + '/integrations/http'
     })
@@ -999,7 +1027,7 @@ module.exports.stopApplication = async function stopApplication (session, networ
   }
   // Kill the Forwarding with LoRa App Server
   try {
-    await TTNRequest(session.connection.access_token, {
+    await TTNAppRequest(network, session.connection, appNwkId, {
       method: 'DELETE',
       url: network.baseUrl + '/applications/' + appNwkId + '/integrations/http'
     })
@@ -1075,9 +1103,11 @@ module.exports.passDataToApplication = function (network, applicationId, data, d
 
 async function postSingleDevice (session, network, device, deviceProfile, application, remoteApplicationId, dataAPI) {
   try {
+    console.log('******postSingleDevice******')
+    console.log(JSON.stringify(device, null, 2))
     let ttnDevice = deNormalizeDeviceData(device.networkSettings, deviceProfile.networkSettings, application.networkSettings, remoteApplicationId)
     delete ttnDevice.attributes
-    await TTNRequest(session.connection.access_token, {
+    await TTNAppRequest(network, session.connection, ttnDevice.app_id, {
       method: 'POST',
       url: `http://us-west.thethings.network:8084/applications/${ttnDevice.app_id}/devices`,
       body: ttnDevice
@@ -1095,60 +1125,51 @@ async function postSingleDevice (session, network, device, deviceProfile, applic
   }
 }
 
-module.exports.addDevice = function (session, network, deviceId, dataAPI) {
-  return new Promise(async function (resolve, reject) {
-    let promiseList = [dataAPI.getDeviceById(deviceId),
-      dataAPI.getDeviceNetworkType(deviceId, network.networkTypeId),
-      dataAPI.getDeviceProfileByDeviceIdNetworkTypeId(deviceId, network.networkTypeId),
-      dataAPI.getApplicationByDeviceId(deviceId)
-    ]
-
-    Promise.all(promiseList)
-      .then(results => {
-        let device = results[0]
-        let dntl = results[1]
-        let deviceProfile = results[2]
-        let application = results[3]
-        dataAPI.getApplicationNetworkType(application.id, network.networkTypeId)
-          .then(applicationData=> {
-            applicationData.networkSettings = JSON.parse(applicationData.networkSettings)
-            appLogger.log(applicationData, 'error')
-            dataAPI.getProtocolDataForKey(network.id, network.networkProtocolId,
-              makeApplicationDataKey(application.id, 'appNwkId'))
-              .then(remoteApplicationId => {
-                dataAPI.getProtocolDataForKey(
-                  network.id,
-                  network.networkProtocolId,
-                  makeApplicationDataKey(device.applicationId, 'appNwkId'))
-                  .then(appNwkId => {
-                    appLogger.log('Moment of Truth', 'error')
-                    postSingleDevice(session, network, dntl, deviceProfile, applicationData, remoteApplicationId, dataAPI)
-                      .then(result => {
-                        appLogger.log('Success Adding Device ' + ' to ' + network.name, 'info')
-                        resolve(result)
-                      }).catch(err => {
-                      appLogger.log(err, 'error')
-                      reject(err)
-                    })
-                  })
-              })
-              .catch(err => {
-                appLogger.log('Error fetching Remote Application Id', 'error')
-                reject(err)
-              })
-          })
-          .catch(err => {
-            appLogger.log(err, 'error')
-            appLogger.log('Could not retrieve application ntl: ', 'error')
-            reject(new Error('Could not retrieve application ntl'))
-          })
-      })
-      .catch(err => {
-        appLogger.log(err, 'error')
-        appLogger.log('Could not retrieve local device, dntl, and device profile: ', 'error')
-        reject(new Error('Could not retrieve local device, dntl, and device profile: '))
-      })
-  })
+module.exports.addDevice = async function addDevice (session, network, deviceId, dataAPI) {
+  let result
+  let promiseList = [
+    dataAPI.getDeviceById(deviceId),
+    dataAPI.getDeviceNetworkType(deviceId, network.networkTypeId),
+    dataAPI.getDeviceProfileByDeviceIdNetworkTypeId(deviceId, network.networkTypeId),
+    dataAPI.getApplicationByDeviceId(deviceId)
+  ]
+  try {
+    let [device, dntl, deviceProfile, application] = await tryAsync(Promise.all(promiseList))
+    if (result[0]) {
+      appLogger.log('Could not retrieve local device, dntl, and device profile: ', 'error')
+      throw new Error('Could not retrieve local device, dntl, and device profile: ')
+    }
+    const applicationData = await dataAPI.getApplicationNetworkType(application.id, network.networkTypeId)
+    applicationData.networkSettings = JSON.parse(applicationData.networkSettings)
+    appLogger.log(applicationData, 'error')
+    result = await tryAsync(dataAPI.getProtocolDataForKey(
+      network.id,
+      network.networkProtocolId,
+      makeApplicationDataKey(application.id, 'appNwkId')
+    ))
+    if (result[0]) {
+      appLogger.log('Error fetching Remote Application Id', 'error')
+      throw result[0]
+    }
+    const remoteApplicationId = result[1]
+    result = await tryAsync(dataAPI.getProtocolDataForKey(
+      network.id,
+      network.networkProtocolId,
+      makeApplicationDataKey(device.applicationId, 'appNwkId')
+    ))
+    if (result[0]) {
+      appLogger.log('Could not retrieve application ntl: ', 'error')
+      throw new Error('Could not retrieve application ntl')
+    }
+    const applicationData = result[1]
+    appLogger.log('Moment of Truth', 'error')
+    const postDeviceResult = await postSingleDevice(session, network, dntl, deviceProfile, applicationData, remoteApplicationId, dataAPI)
+    appLogger.log('Success Adding Device ' + ' to ' + network.name, 'info')
+    return postDeviceResult
+  } catch (err) {
+    appLogger.log(err, 'error')
+    throw err
+  }
 }
 
 /**
