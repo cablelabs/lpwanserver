@@ -1134,12 +1134,18 @@ module.exports.addDevice = async function addDevice (session, network, deviceId,
     dataAPI.getApplicationByDeviceId(deviceId)
   ]
   try {
-    let [device, dntl, deviceProfile, application] = await tryAsync(Promise.all(promiseList))
+    result = await tryAsync(Promise.all(promiseList))
     if (result[0]) {
       appLogger.log('Could not retrieve local device, dntl, and device profile: ', 'error')
       throw new Error('Could not retrieve local device, dntl, and device profile: ')
     }
-    const applicationData = await dataAPI.getApplicationNetworkType(application.id, network.networkTypeId)
+    let [device, dntl, deviceProfile, application] = result[1]
+    result = await tryAsync(dataAPI.getApplicationNetworkType(application.id, network.networkTypeId))
+    if (result[0]) {
+      appLogger.log('Could not retrieve application ntl: ', 'error')
+      throw new Error('Could not retrieve application ntl')
+    }
+    const applicationData = result[1]
     applicationData.networkSettings = JSON.parse(applicationData.networkSettings)
     appLogger.log(applicationData, 'error')
     result = await tryAsync(dataAPI.getProtocolDataForKey(
@@ -1152,16 +1158,6 @@ module.exports.addDevice = async function addDevice (session, network, deviceId,
       throw result[0]
     }
     const remoteApplicationId = result[1]
-    result = await tryAsync(dataAPI.getProtocolDataForKey(
-      network.id,
-      network.networkProtocolId,
-      makeApplicationDataKey(device.applicationId, 'appNwkId')
-    ))
-    if (result[0]) {
-      appLogger.log('Could not retrieve application ntl: ', 'error')
-      throw new Error('Could not retrieve application ntl')
-    }
-    const applicationData = result[1]
     appLogger.log('Moment of Truth', 'error')
     const postDeviceResult = await postSingleDevice(session, network, dntl, deviceProfile, applicationData, remoteApplicationId, dataAPI)
     appLogger.log('Success Adding Device ' + ' to ' + network.name, 'info')
@@ -1787,7 +1783,7 @@ function deNormalizeDeviceData (localDevice, localDeviceProfile, application, re
     ttnDeviceData.lorawan_device.activation_constraints = 'otta',
     ttnDeviceData.lorawan_device.app_key = localDevice.deviceKeys.appKey
   }
-  else {
+  else if (localDevice.deviceActivation) {
     ttnDeviceData.lorawan_device.activation_constraints = 'abp'
     ttnDeviceData.lorawan_device.app_s_key = localDevice.deviceActivation.appSKey
     ttnDeviceData.lorawan_device.nwk_s_key = localDevice.deviceActivation.nwkSEncKey
