@@ -365,6 +365,7 @@ exports.initialize = function (app, server) {
       .then(function (rec) {
         modelAPI.networks.retrieveNetwork(rec.id)
           .then((network) => {
+            appLogger.log(network)
             let temp = {
               authorized: network.securityData.authorized,
               message: network.securityData.message,
@@ -382,7 +383,35 @@ exports.initialize = function (app, server) {
               temp.password = network.securityData.password
             }
             network.securityData = temp
-            restServer.respond(res, 201, network)
+
+            if (network.securityData.authorized === false) {
+              restServer.respond(res, 201, network)
+            }
+            else {
+              modelAPI.networks.pullNetwork(network.id)
+                .then(result => {
+                  appLogger.log('Success pulling from network ' + network.name)
+                  modelAPI.networks.pushNetworks(network.networkTypeId)
+                    .then(ret => {
+                      appLogger.log('Success pushing to networks')
+                      restServer.respond(res, 201, network)
+                    }).catch(err => {
+                      appLogger.log('Error pushing to networks: ' + err)
+                      restServer.respond(res, err)
+                    })
+                })
+                .catch(err => {
+                  appLogger.log('Error pulling from network ' + network.id + ': ' + err)
+                  appLogger.log(network.securityData)
+                  if (!network.securityData.authorized) {
+                    network.securityData.message = 'Pending Authorization'
+                    restServer.respond(res, 201, network)
+                  }
+                  else {
+                    restServer.respond(res, err)
+                  }
+                })
+            }
           })
       })
       .catch(function (err) {
@@ -435,6 +464,14 @@ exports.initialize = function (app, server) {
       .then(function (rec) {
         modelAPI.networks.retrieveNetwork(rec.id)
           .then((network) => {
+            if (!network.securityData) {
+              network.securityData = {
+                authorized: false,
+                message: 'Pending Authorization',
+                enabled: false
+              }
+            }
+
             let temp = {
               authorized: network.securityData.authorized,
               message: network.securityData.message,
@@ -452,11 +489,36 @@ exports.initialize = function (app, server) {
               temp.password = network.securityData.password
             }
             network.securityData = temp
-            restServer.respond(res, 200, network)
+
+            if (network.securityData.authorized === false) {
+              restServer.respond(res, 200, network)
+            }
+            else {
+              modelAPI.networks.pullNetwork(network.id)
+                .then(result => {
+                  appLogger.log('Success pulling from network ' + network.name)
+                  modelAPI.networks.pushNetworks(network.networkTypeId)
+                    .then(ret => {
+                      appLogger.log('Success pushing to networks')
+                      restServer.respond(res, 200, network)
+                    }).catch(err => {
+                      appLogger.log('Error pushing to networks: ' + err)
+                      restServer.respond(res, err)
+                    })
+                })
+                .catch(err => {
+                  if (!network.securityData.authorized) {
+                    restServer.respond(res, 200, network)
+                  }
+                  else {
+                    restServer.respond(res, err)
+                  }
+                })
+            }
           })
       })
       .catch(function (err) {
-        appLogger.log(err)
+        appLogger.log('Error creating network' + err)
         restServer.respond(res, err)
       })
   })
@@ -507,19 +569,19 @@ exports.initialize = function (app, server) {
   })
 
   app.post('/api/networks/:networkId/push', [restServer.isLoggedIn,
-      restServer.fetchCompany,
-      restServer.isAdmin],
-    function (req, res, next) {
-      var networkId = parseInt(req.params.networkId)
-      // If the caller is a global admin, or the device is part of the company
-      // admin's company, we can push.
-      modelAPI.networks.pushNetwork(networkId).then(function (ret) {
-        restServer.respondJson(res, 200, ret)
-      }).catch(function (err) {
-        appLogger.log('Error pulling from network ' + networkId + ': ' + err)
-        restServer.respond(res, err)
-      })
+    restServer.fetchCompany,
+    restServer.isAdmin],
+  function (req, res, next) {
+    var networkId = parseInt(req.params.networkId)
+    // If the caller is a global admin, or the device is part of the company
+    // admin's company, we can push.
+    modelAPI.networks.pushNetwork(networkId).then(function (ret) {
+      restServer.respondJson(res, 200, ret)
+    }).catch(function (err) {
+      appLogger.log('Error pushing to networks: ' + err)
+      restServer.respond(res, err)
     })
+  })
 
   app.get('/api/networks/:networkId/test', [restServer.isLoggedIn,
     restServer.fetchCompany,

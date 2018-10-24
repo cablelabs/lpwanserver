@@ -70,6 +70,7 @@ NetworkProtocolAccess.prototype.getProtocol = function (network) {
     var id = network.id
     if (!networkProtocolMap[id]) {
       // We'll need the protocol for the network.
+      appLogger.log(network, 'info')
       me.npAPI.retrieveNetworkProtocol(network.networkProtocolId)
         .then(np => {
           networkProtocolMap[id] = {}
@@ -132,7 +133,6 @@ NetworkProtocolAccess.prototype.connect = function (network, loginData) {
       var proto = await me.getProtocol(network)
       proto.api.connect(network, loginData)
         .then((connection) => {
-          appLogger.log(connection)
           if (!proto.sessionData[network.id]) {
             proto.sessionData[network.id] = {}
           }

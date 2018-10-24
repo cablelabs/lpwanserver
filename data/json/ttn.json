@@ -1,0 +1,101 @@
+[
+  {
+    "application": [
+      {
+        "app_id": "some-app-id",
+        "converter": "function Converter(decoded, port) {...",
+        "decoder": "function Decoder(bytes, port) {...",
+        "encoder": "Encoder(object, port) {...",
+        "payload_format": "",
+        "register_on_join_access_key": "",
+        "validator": "Validator(converted, port) {..."
+      },
+      {
+        "id": "cable-labs-prototype",
+        "name": "Prototype Application for CableLabs Trial",
+        "euis": [
+          "70B3D57ED000FEEA"
+        ],
+        "created": "2018-06-20T16:44:16.441Z",
+        "rights": [
+          "settings",
+          "delete",
+          "collaborators",
+          "devices"
+        ],
+        "collaborators": [
+          {
+            "username": "dschrimpsherr",
+            "email": "d.schrimpsher@cablelabs.com",
+            "rights": [
+              "settings",
+              "delete",
+              "collaborators",
+              "devices"
+            ]
+          }
+        ],
+        "access_keys": [
+          {
+            "name": "default key",
+            "key": "ttn-account-v2.kMyE-zi7vQXrz1kscOlA0MTNaQB6_D7elsMRG91BAjQ",
+            "_id": "5b2a84606a41ae0030a913b8",
+            "rights": [
+              "messages:up:r",
+              "messages:down:w",
+              "devices"
+            ]
+          },
+          {
+            "rights": [
+              "settings",
+              "devices",
+              "messages:up:r",
+              "messages:down:w"
+            ],
+            "_id": "5b2a8c8c6a41ae0030a9154d",
+            "key": "ttn-account-v2.HgTv51zRBreL4b3d2eSolzcCdsPZqKLSrjnfEo5KgIs",
+            "name": "testlora"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "deviceProfile": {}
+  },
+  {
+    "device": {
+      "altitude": 0,
+      "app_id": "some-app-id",
+      "attributes": {
+        "key": "",
+        "value": ""
+      },
+      "description": "Some description of the device",
+      "dev_id": "some-dev-id",
+      "latitude": 52.375,
+      "longitude": 4.887,
+      "lorawan_device": {
+        "activation_constraints": "local",
+        "app_eui": "0102030405060708",
+        "app_id": "some-app-id",
+        "app_key": "01020304050607080102030405060708",
+        "app_s_key": "01020304050607080102030405060708",
+        "dev_addr": "01020304",
+        "dev_eui": "0102030405060708",
+        "dev_id": "some-dev-id",
+        "disable_f_cnt_check": false,
+        "f_cnt_down": 0,
+        "f_cnt_up": 0,
+        "last_seen": 0,
+        "nwk_s_key": "01020304050607080102030405060708",
+        "uses32_bit_f_cnt": true
+      }
+    }
+  },
+  {
+    "integrations": {
+    }
+  }
+]

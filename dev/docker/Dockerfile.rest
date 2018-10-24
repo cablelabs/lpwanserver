@@ -1,9 +1,0 @@
-FROM node:8
-
-WORKDIR /usr/src/app
-
-ENV PORT=3200
-
-EXPOSE 3200
-
-CMD ["npm", "run", "dev"]

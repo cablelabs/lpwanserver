@@ -32,7 +32,7 @@ INSERT INTO networkTypes ( id, name )
 
 -- Start with the LoRa networkProtocol.
 INSERT INTO networkProtocols ( id, name, protocolHandler, networkTypeId )
-    values( 1, 'LoRa Open Source', 'LoRaOpenSource.js', 1 );
+    values( 1, 'LoRa Server', 'LoRaOpenSource.js', 1 );
 
 -- Start with the POST reportingProtocol.
 INSERT INTO reportingProtocols ( id, name, protocolHandler )

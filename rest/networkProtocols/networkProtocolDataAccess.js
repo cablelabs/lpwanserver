@@ -248,10 +248,11 @@ NetworkProtocolDataAccess.prototype.getApplicationByDeviceId = function( devId )
     return new Promise( async function( resolve, reject ) {
         try {
             var dev = await me.getDeviceById( devId );
-            return await me.getApplicationById( dev.applicationId );
-            resolve( co );
+            var app =  await me.getApplicationById( dev.applicationId );
+            resolve( app );
         }
         catch( err ) {
+            console.log(err)
             reject( err );
         }
     });
@@ -280,12 +281,15 @@ NetworkProtocolDataAccess.prototype.getCompanyNetworkType = function( companyId,
         try {
             var cnt = me.companyNetworkTypeCache[ "" + companyId + ":" + networkTypeId ];
             if ( cnt ) {
+              appLogger.log('In cache')
                 resolve( cnt );
             }
             else {
+              appLogger.log('Not in Cache')
                 var cntls = await modelAPI.companyNetworkTypeLinks.retrieveCompanyNetworkTypeLinks( { "companyId": companyId, "networkTypeId": networkTypeId } );
+                appLogger.log(cntls)
                 me.companyNetworkTypeCache[ "" + companyId + ":" + networkTypeId ] = cntls[ 0 ];
-                resolve( cntls[ 0 ] );
+                resolve( cntls.records[ 0 ] );
             }
         }
         catch( err ) {

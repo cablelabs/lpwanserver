@@ -51,7 +51,8 @@ Application.prototype.retrieveApplications = function (options) {
         rec[ 'running' ] = running.has(rec.id)
       }
       resolve(recs)
-    } catch (err) {
+    }
+    catch (err) {
       reject(err)
     }
   })
@@ -69,7 +70,8 @@ Application.prototype.retrieveApplication = function (id) {
       let rec = await me.impl.retrieveApplication(id)
       rec[ 'running' ] = running.has(rec.id)
       resolve(rec)
-    } catch (err) {
+    }
+    catch (err) {
       reject(err)
     }
   })
@@ -118,7 +120,8 @@ Application.prototype.deleteApplication = function (id) {
       for (let i = 0; i < recs.length; ++i) {
         await modelAPI.devices.deleteDevice(recs[ i ].id)
       }
-    } catch (err) {
+    }
+    catch (err) {
       appLogger.log("Error deleting application's devices: ",
         err)
     }
@@ -129,7 +132,8 @@ Application.prototype.deleteApplication = function (id) {
       for (let i = 0; i < recs.length; ++i) {
         await modelAPI.applicationNetworkTypeLinks.deleteApplicationNetworkTypeLink(recs[ i ].id)
       }
-    } catch (err) {
+    }
+    catch (err) {
       appLogger.log("Error deleting application's networkTypeLinks: ",
         err)
     }
@@ -141,7 +145,8 @@ Application.prototype.deleteApplication = function (id) {
       }
       await me.impl.deleteApplication(id)
       resolve()
-    } catch (err) {
+    }
+    catch (err) {
       reject(err)
     }
   })
@@ -169,9 +174,12 @@ Application.prototype.startApplication = function (id) {
       // Generates an array of arrays of logs.
       var logs = await Promise.all(allPromises)
       logs.forEach((onePromiseLogs) => {
-        onePromiseLogs.forEach((log) => { allLogs.push(log) })
+        onePromiseLogs.forEach((log) => {
+          allLogs.push(log)
+        })
       })
-    } catch (err) {
+    }
+    catch (err) {
       allLogs.push('Failed to start application on at least one network')
     }
 
@@ -210,7 +218,8 @@ Application.prototype.stopApplication = function (id) {
             // is a reference, but we won't be using the entries
             // after this.
             allLogs[ networkId ] = networkLogs
-          } else {
+          }
+          else {
             // Add in the logs from this network.
             for (var j = 0; j < networkLogs[ networkId ].logs.length; ++j) {
               allLogs[ networkId ].logs.push(networkLogs[ networkId ].logs[ j ])
@@ -218,7 +227,8 @@ Application.prototype.stopApplication = function (id) {
           }
         }
       }
-    } catch (err) {
+    }
+    catch (err) {
       allLogs.push('Failed to stop application on at least one network')
     }
 
@@ -246,7 +256,8 @@ Application.prototype.testApplication = function (applicationId, data) {
       var reportingProto = await modelAPI.reportingProtocolAPIs.getProtocol(app)
       var response = await reportingProto.report(data, app.baseUrl, app.name)
       resolve(204)
-    } catch (err) {
+    }
+    catch (err) {
       appLogger.log('Failed test, error = ' + err)
       reject(err)
     }
@@ -269,7 +280,8 @@ Application.prototype.passDataToApplication = function (applicationId, networkId
       var dataAPI = new NetworkProtocolDataAccess(modelAPI, 'ReportingProtocol')
       await proto.api.passDataToApplication(network, applicationId, data, dataAPI)
       resolve(204)
-    } catch (err) {
+    }
+    catch (err) {
       reject(err)
     }
   })
@@ -288,7 +300,8 @@ Application.prototype.startApplications = function () {
         me.startApplication(recs.records[ i ].id)
       }
       resolve()
-    } catch (err) {
+    }
+    catch (err) {
       appLogger.log('Failed to start applications: ' + err)
       reject(err)
     }

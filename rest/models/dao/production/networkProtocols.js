@@ -45,6 +45,7 @@ exports.createNetworkProtocol = function (name, networkTypeId, protocolHandler, 
 exports.upsertNetworkProtocol = function (np) {
   let me = this
   return new Promise(function (resolve, reject) {
+    appLogger.log(np, 'error')
     me.retrieveNetworkProtocols({ search: np.name, networkProtocolVersion: np.networkProtocolVersion })
       .then((oldNp) => {
         if (oldNp.totalCount > 0) {
@@ -53,9 +54,10 @@ exports.upsertNetworkProtocol = function (np) {
         } else {
           me.createNetworkProtocol(np.name, np.networkTypeId, np.protocolHandler, np.networkProtocolVersion, np.masterProtocol)
             .then(record => {
-              appLogger.log(record)
+              appLogger.log(record, 'error')
               if (!record.masterProtocol) {
                 record.masterProtocol = record.id
+                appLogger.log('Setting Master to ' + record.masterProtocol, 'error')
                 resolve(me.updateNetworkProtocol(record))
               }
               else {

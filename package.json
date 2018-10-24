@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node ./bin/rest",
     "mocha": "export NODE_ENV=local;mocha",
-    "e2e": "cp data/test.sqlite3.testSuiteStartingDB test/e2e/lpwanserver.sqlite3;export NODE_ENV=e2e; mocha test/e2e --exit",
+    "e2e": "cp data/test.sqlite3.testSuiteStartingDB test/e2e/lpwanserver.sqlite3;export NODE_ENV=e2e; mocha test/e2e --exit --bail --timeout 10000",
     "e2e-log": "cp data/test.sqlite3.testSuiteStartingDB test/e2e/lpwanserver.sqlite3;export NODE_ENV=e2e-log; mocha test/e2e --exit",
     "ttn-test": "export NODE_ENV=ttn-unit;mocha test/ttn-unit",
     "loriot-test": "export NODE_ENV=loriot-unit;mocha test/loriot-unit",
@@ -17,8 +17,12 @@
     "lint": "eslint rest/",
     "doc": "jsdoc -r ./rest -d ./docs",
     "mac": "export NODE_ENV=mac;npm start",
-    "dev": "npm install && NODE_ENV=local nodemon --watch rest ./bin/rest",
-    "e2e-docker": "./test/e2e/startLoraOS"
+    "dev": "NODE_ENV=local nodemon --watch rest ./bin/rest",
+    "e2e-docker": "export NODE_ENV=e2e; ./bin/e2e",
+    "package": "node bin/package.js",
+    "package-test": "node bin/package-test.js",
+    "package-api-test": "node bin/package-api-test.js",
+    "e2e-ttn": "cp data/test.sqlite3.testSuiteStartingDB test/e2e/lpwanserver.sqlite3;export NODE_ENV=e2e; mocha test/e2e/ttn-v2-single --exit --bail --timeout 10000"
   },
   "dependencies": {
     "async": "~2.0.1",
@@ -47,10 +51,12 @@
     "passport": "^0.2.2",
     "passport-local": "^1.0.0",
     "pug": "^2.0.3",
-    "request": "~2.85.0",
+    "request": "^2.85.0",
     "serve-favicon": "^2.5.0",
     "session-file-store": "^0.2.1",
     "sqlite3": "^4.0.2",
+    "uuid": "^3.3.2",
+    "winston": "^3.1.0",
     "ws": "^1.1.5"
   },
   "devDependencies": {

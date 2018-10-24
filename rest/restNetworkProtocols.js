@@ -185,7 +185,7 @@ exports.initialize = function (app, server) {
      *      Type that the Network Protocol accepts as input.
      * @apiExample {json} Example body:
      *      {
-     *          "name": "LoRa Open Source",
+     *          "name": "LoRa Server",
      *          "protocolHandler": "LoRaOpenSource.js"
      *          "networkTypeId": 1
      *      }
@@ -245,7 +245,7 @@ exports.initialize = function (app, server) {
      *      Type that the Network Protocol accepts as input.
      * @apiExample {json} Example body:
      *      {
-     *          "name": "LoRa Open Source",
+     *          "name": "LoRa Server",
      *          "protocolHandler": "LoRaOpenSource.js",
      *          "networkTypeId": 1
      *      }

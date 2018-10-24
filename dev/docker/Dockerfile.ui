@@ -1,9 +1,0 @@
-FROM node:latest
-
-WORKDIR /usr/src/app
-
-ENV HOST=0.0.0.0
-
-EXPOSE 3000
-
-CMD ["npm", "run", "dev"]

@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+docker container rm docker_postgresql_1 --force
+# cp ./data/demo_baseline/demo.sqlite3 ./data/demo.sqlite3
+
+npm run package
+
+# Run docker-compose with development configuration
+docker-compose -f ./docker/docker-compose.yml up

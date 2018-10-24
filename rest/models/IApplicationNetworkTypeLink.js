@@ -109,19 +109,19 @@ ApplicationNetworkTypeLink.prototype.updateApplicationNetworkTypeLink = function
 };
 
 ApplicationNetworkTypeLink.prototype.updateRemoteApplicationNetworkTypeLink = function( applicationNetworkTypeLink, validateCompanyId ) {
-    var me = this;
-    return new Promise( async function( resolve, reject ) {
-        try {
-            var rec = await me.impl.updateApplicationNetworkTypeLink( applicationNetworkTypeLink, validateCompanyId );
-            var logs = await modelAPI.networkTypeAPI.pushApplication( rec.networkTypeId, rec.applicationId, rec.networkSettings );
-            resolve( rec );
-        }
-        catch ( err ) {
-            appLogger.log( "Error updating applicationNetworkTypeLink: " + err );
-            reject( err );
-        }
-    });
+  var me = this;
+  return new Promise( async function( resolve, reject ) {
+    try {
+      var rec = await me.impl.updateApplicationNetworkTypeLink( applicationNetworkTypeLink, validateCompanyId );
+      resolve( rec );
+    }
+    catch ( err ) {
+      appLogger.log( "Error updating applicationNetworkTypeLink: " + err );
+      reject( err );
+    }
+  });
 };
+
 
 // Delete the applicationNetworkTypeLinks record.
 //

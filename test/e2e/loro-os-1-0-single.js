@@ -1,19 +1,21 @@
+// eslint-disable-next-line no-unused-vars
 var assert = require('assert')
 var chai = require('chai')
 var chaiHttp = require('chai-http')
 var app = require('../../restApp.js')
+// eslint-disable-next-line no-unused-vars
 var should = chai.should()
 var setup = require('./setup.js')
 var appLogger = require('../../rest/lib/appLogger.js')
 var request = require('request')
 
 chai.use(chaiHttp)
-var server = chai.request(app).keepOpen()
+// var server = chai.request(app).keepOpen()
+var server = request
 
 describe('E2E Test for Single LoraOS 1.0', function () {
   var adminToken
   var userId
-  var userToken
   var loraProtocolId
   var networkId
   var applicationId
@@ -77,7 +79,6 @@ describe('E2E Test for Single LoraOS 1.0', function () {
         .end(function (err, res) {
           if (err) done(err)
           res.should.have.status(200)
-          userToken = res.text
           done()
         })
     })
@@ -85,7 +86,7 @@ describe('E2E Test for Single LoraOS 1.0', function () {
   describe('Setup Network', function () {
     it('Verify LoraOS 1.0 Protocol Exists', (done) => {
       server
-        .get('/api/networkProtocols?search=Lora Open Source&networkProtocolVersion=1.0')
+        .get('/api/networkProtocols?search=LoRa Server&networkProtocolVersion=1.0')
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {
@@ -189,7 +190,7 @@ describe('E2E Test for Single LoraOS 1.0', function () {
             applications.should.have.property('totalCount')
             applications.should.have.property('records')
             applications.totalCount.should.equal(1)
-            applications.records[0].name.should.equal('TestApplication')
+            applications.records[0].name.should.equal('BobMouseTrapLv1')
             applications.records[0].description.should.equal('CableLabs Test Application')
             applicationId = applications.records[0].id
             done()
@@ -202,7 +203,27 @@ describe('E2E Test for Single LoraOS 1.0', function () {
             'id': 1,
             'applicationId': 1,
             'networkTypeId': 1,
-            'networkSettings': {'payloadCodec': '', 'payloadDecoderScript': '', 'payloadEncoderScript': ''}
+            'networkSettings': {
+              'canotaa': true,
+              'cansend': true,
+              'clientsLimit': null,
+              'description': 'CableLabs Test Application',
+              'deviceLimit': null,
+              'devices': null,
+              'id': '27',
+              'joinServer': null,
+              'name': 'BobMouseTrapLv1',
+              'ogwinfo': null,
+              'organizationID': '56',
+              'orx': true,
+              'overbosity': null,
+              'payloadCodec': '',
+              'payloadDecoderScript': '',
+              'payloadEncoderScript': '',
+              'serviceProfileID': '8ea5916b-70d0-4e9c-a4f4-1e07981d41be',
+              'suspended': false
+            }
+
           }]
         }
         server
@@ -229,9 +250,12 @@ describe('E2E Test for Single LoraOS 1.0', function () {
             'id': 1,
             'networkTypeId': 1,
             'companyId': 2,
-            'name': 'TestDevice',
+            'name': 'BobMouseTrapDeviceProfileLv1',
             'networkSettings': {
-              'deviceProfileID': '20234419-79e2-468b-89df-024dd65caba4',
+              'id': 'c86725a2-bd60-4a8b-8f2d-0840a38853ad',
+              'name': 'BobMouseTrapDeviceProfileLv1',
+              'networkServerID': '5',
+              'organizationID': '56',
               'supportsClassB': false,
               'classBTimeout': 0,
               'pingSlotPeriod': 0,
@@ -250,7 +274,7 @@ describe('E2E Test for Single LoraOS 1.0', function () {
               'maxDutyCycle': 0,
               'supportsJoin': false,
               'rfRegion': 'US902',
-              'supports32bitFCnt': false
+              'supports32BitFCnt': false
             },
             'description': 'Device Profile managed by LPWAN Server, perform changes via LPWAN'
           }]
@@ -277,7 +301,7 @@ describe('E2E Test for Single LoraOS 1.0', function () {
           'records': [{
             'id': 1,
             'applicationId': 1,
-            'name': 'TestDevice',
+            'name': 'BobMouseTrapDeviceLv1',
             'deviceModel': null,
             'description': 'Test Device for E2E'
           }]
@@ -309,10 +333,10 @@ describe('E2E Test for Single LoraOS 1.0', function () {
             'deviceProfileId': 1,
             'networkSettings': {
               'devEUI': '1234567890123456',
-              'name': 'TestDevice',
-              'applicationID': '1',
+              'name': 'BobMouseTrapDeviceLv1',
+              'applicationID': '27',
               'description': 'Test Device for E2E',
-              'deviceProfileID': '20234419-79e2-468b-89df-024dd65caba4',
+              'deviceProfileID': 'c86725a2-bd60-4a8b-8f2d-0840a38853ad',
               'deviceStatusBattery': 256,
               'deviceStatusMargin': 256,
               'lastSeenAt': '',
@@ -370,7 +394,7 @@ describe('E2E Test for Single LoraOS 1.0', function () {
     it('Verify the Lora Server Application Integration was set to LPWan Server', function (done) {
       let options = {}
       options.method = 'GET'
-      options.url = baseUrl + '/applications/' + 1 + '/integrations/http'
+      options.url = baseUrl + '/applications/' + 27 + '/integrations/http'
       options.headers = {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ' + loraKey
@@ -386,6 +410,7 @@ describe('E2E Test for Single LoraOS 1.0', function () {
         }
         else {
           let integration = JSON.parse(body)
+          console.log(integration)
           integration.should.have.property('dataUpURL')
           integration.dataUpURL.should.equal('http://localhost:3200/api/ingest/1/1')
           done()
@@ -425,7 +450,7 @@ describe('E2E Test for Single LoraOS 1.0', function () {
           applications.should.have.property('totalCount')
           applications.should.have.property('records')
           applications.totalCount.should.equal(1)
-          applications.records[0].name.should.equal('TestApplication')
+          applications.records[0].name.should.equal('BobMouseTrapLv1')
           applications.records[0].description.should.equal('CableLabs Test Application')
           applicationId = applications.records[0].id
           done()
@@ -438,9 +463,12 @@ describe('E2E Test for Single LoraOS 1.0', function () {
           'id': 1,
           'networkTypeId': 1,
           'companyId': 2,
-          'name': 'TestDevice',
+          'name': 'BobMouseTrapDeviceProfileLv1',
           'networkSettings': {
-            'deviceProfileID': '20234419-79e2-468b-89df-024dd65caba4',
+            'id': 'c86725a2-bd60-4a8b-8f2d-0840a38853ad',
+            'name': 'BobMouseTrapDeviceProfileLv1',
+            'networkServerID': '5',
+            'organizationID': '56',
             'supportsClassB': false,
             'classBTimeout': 0,
             'pingSlotPeriod': 0,
@@ -459,7 +487,7 @@ describe('E2E Test for Single LoraOS 1.0', function () {
             'maxDutyCycle': 0,
             'supportsJoin': false,
             'rfRegion': 'US902',
-            'supports32bitFCnt': false
+            'supports32BitFCnt': false
           },
           'description': 'Device Profile managed by LPWAN Server, perform changes via LPWAN'
         }]
@@ -486,7 +514,7 @@ describe('E2E Test for Single LoraOS 1.0', function () {
         'records': [{
           'id': 1,
           'applicationId': 1,
-          'name': 'TestDevice',
+          'name': 'BobMouseTrapDeviceLv1',
           'deviceModel': null,
           'description': 'Test Device for E2E'
         }]
