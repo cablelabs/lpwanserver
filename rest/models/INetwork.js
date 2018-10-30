@@ -71,10 +71,7 @@ async function authorizeAndTest (network, modelAPI, k, me, dataAPI) {
   try {
     const connection = await modelAPI.networkTypeAPI.connect(network, network.securityData)
     if (connection instanceof Object) {
-      // Object.assign(network.securityData, connection)
-      for (var prop in connection) {
-        network.securityData[prop] = connection[prop]
-      }
+      Object.assign(network.securityData, connection)
     } else {
       network.securityData.access_token = connection
     }
