@@ -1,0 +1,6 @@
+{
+  "name": "e2e-test",
+  "registry": "lpwanserver",
+  "version": "1.0.0",
+  "build": "1"
+}

@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+npm run package-test
+
+# Run docker-compose with development configuration
+docker-compose -f ./docker/docker-compose-unit-test.yml up
+if [ "$?" -ne  0 ]
+then
+    echo 'Tests Failed'
+else
+    echo 'Tests Passed'
+fi

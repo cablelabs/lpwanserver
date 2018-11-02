@@ -1,0 +1,6 @@
+{
+  "name": "api-test",
+  "registry": "lpwanserver",
+  "version": "1.0.0",
+  "build": "1"
+}

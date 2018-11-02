@@ -464,6 +464,14 @@ exports.initialize = function (app, server) {
       .then(function (rec) {
         modelAPI.networks.retrieveNetwork(rec.id)
           .then((network) => {
+            if (!network.securityData) {
+              network.securityData = {
+                authorized: false,
+                message: 'Pending Authorization',
+                enabled: false
+              }
+            }
+
             let temp = {
               authorized: network.securityData.authorized,
               message: network.securityData.message,

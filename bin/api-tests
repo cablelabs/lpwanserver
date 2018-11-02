@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+
+npm run package-test
+npm run package-api-test
+
+# Run docker-compose with development configuration
+docker-compose -f ./docker/docker-compose-api-test.yml up
