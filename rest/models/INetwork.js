@@ -72,7 +72,8 @@ async function authorizeAndTest (network, modelAPI, k, me, dataAPI) {
     const connection = await modelAPI.networkTypeAPI.connect(network, network.securityData)
     if (connection instanceof Object) {
       Object.assign(network.securityData, connection)
-    } else {
+    }
+    else {
       network.securityData.access_token = connection
     }
     network.securityData.authorized = true
@@ -81,14 +82,17 @@ async function authorizeAndTest (network, modelAPI, k, me, dataAPI) {
       appLogger.log('Test Success ' + network.name)
       network.securityData.authorized = true
       network.securityData.message = 'ok'
-    } catch (err) {
+    }
+    catch (err) {
       appLogger.log('Test of ' + network.name + ': ' + err)
       network.securityData.authorized = false
       network.securityData.message = err.toString()
-    } finally {
+    }
+    finally {
       return network
     }
-  } catch (err) {
+  }
+  catch (err) {
     if (err.code === 42) return network
     appLogger.log('Connection of ' + network.name + ' Failed: ' + err)
     let errorMessage = {}
