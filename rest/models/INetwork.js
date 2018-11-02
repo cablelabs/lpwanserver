@@ -134,7 +134,7 @@ Network.prototype.createNetwork = function (name, networkProviderId, networkType
           record.securityData = dataAPI.access(null, record.securityData, k)
           authorizeAndTest(record, modelAPI, k, me, dataAPI)
             .then(finalNetwork => {
-              appLogger.log(finalNetwork, 'debug')
+              appLogger.log(finalNetwork, 'info')
               finalNetwork.securityData = dataAPI.hide(null, finalNetwork.securityData, k)
               me.impl.updateNetwork(finalNetwork)
                 .then((rec) => {

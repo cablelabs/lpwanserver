@@ -229,7 +229,7 @@ module.exports.getDeviceProfileAccessAccount = async function (dataAPI, network,
   return getCompanyAccount(dataAPI, network, co.id, false)
 }
 
-function authorizeWithPassword (network, loginData, scope) {
+function authorizeWithPassword (network, loginData) {
   return new Promise(function (resolve, reject) {
     let options = {}
     options.method = 'POST'
@@ -239,11 +239,13 @@ function authorizeWithPassword (network, loginData, scope) {
     options.json = {
       grant_type: 'password',
       username: loginData.username,
-      password: loginData.password,
-      scope: ['apps', 'gateways', 'components', 'apps:cable-labs-prototype']
+      password: loginData.password
     }
-    if (scope && scope.length > 0) {
-      options.json.scope = scope
+    if (!loginData.scope){
+      options.json.scope = ['apps', 'gateways', 'components']
+    }
+    else {
+      options.json.scope = loginData.scope
     }
     appLogger.log(options)
     request(options, function (error, response, body) {
@@ -352,6 +354,9 @@ module.exports.connect = async function connect (network, loginData) {
     } catch (err) {
       appLogger.log('Authorized but test failed.  Attempting to login.')
     }
+  }
+  if (!loginData.scope) {
+    loginData.scope = ['apps', 'gateways', 'components']
   }
   if (loginData.refresh_token) {
     return authorizeWithRefreshToken(network, loginData)
@@ -465,19 +470,33 @@ module.exports.pullApplications = function (session, network, modelAPI, dataAPI)
           let apps = JSON.parse(body)
           appLogger.log(apps, 'info')
           let promiseList = []
-          if (!network.securityData.appKeys) network.securityData.appKeys = []
-          for (let index in apps) {
-            let app = apps[index]
-            network.securityData.appKeys.push({app: app.id, key: app.access_keys[0].key})
-            promiseList.push(addRemoteApplication(session, app, network, modelAPI, dataAPI))
+          if (!network.securityData.scope){
+            network.securityData.scope = ['apps', 'gateways', 'components']
           }
-          Promise.all(promiseList)
-            .then((apps) => {
-              resolve(apps)
+          appLogger.log(network.securityData, 'error')
+          for (let index in apps) {
+            let newScope = 'apps:' + apps[index].id
+            network.securityData.scope.push(newScope)
+          }
+          authorizeWithPassword(network, network.securityData)
+            .then(connection => {
+              session.connection = connection
+              for (let index in apps) {
+                let app = apps[index]
+                promiseList.push(addRemoteApplication(session, app, network, modelAPI, dataAPI))
+              }
+              Promise.all(promiseList)
+                .then((apps) => {
+                  resolve(apps)
+                })
+                .catch(err => {
+                  appLogger.log(err, 'error')
+                  reject(err)
+                })
             })
             .catch(err => {
-              appLogger.log(err, 'error')
-              reject(err)
+              appLogger.log('Could not add new apps to scope', 'error')
+              reject (err)
             })
         }
       })
@@ -916,8 +935,13 @@ module.exports.addApplication = function (session, network, applicationId, dataA
             makeApplicationDataKey(application.id, 'appNwkId'),
             body.id)
 
-          scope = ['apps', 'gateways', 'components', 'apps:' + body.id]
-          session.connection = await authorizeWithPassword(network, network.securityData, scope)
+          let newScope = 'apps:' + body.id
+          if (!network.securityData.scope){
+            network.securityData.scope = ['apps', 'gateways', 'components', 'apps:cable-labs-prototype']
+          }
+          network.securityData.scope.push(newScope)
+          appLogger.log(network.securityData, 'error')
+          session.connection = await authorizeWithPassword(network, network.securityData)
           me.registerApplicationWithHandler(session.connection.access_token, network, ttnApplication.ttnApplicationData, body, dataAPI)
             .then(id => {
               resolve(id)
@@ -2216,7 +2240,7 @@ function deNormalizeDeviceData (localDevice, localDeviceProfile, application, re
     ttnDeviceData.lorawan_device.activation_constraints = 'otta',
     ttnDeviceData.lorawan_device.app_key = localDevice.deviceKeys.appKey
   }
-  else {
+  else if (localDevice.deviceActivation) {
     ttnDeviceData.lorawan_device.activation_constraints = 'abp'
     ttnDeviceData.lorawan_device.app_s_key = localDevice.deviceActivation.appSKey
     ttnDeviceData.lorawan_device.nwk_s_key = localDevice.deviceActivation.nwkSEncKey
