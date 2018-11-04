@@ -6,9 +6,9 @@ var chai = require('chai')
 var should = chai.should()
 var nconf = require('nconf')
 var TestModule = require('../../../rest/models/IUser')
-const testName = 'Network'
+const testName = 'User'
 
-describe('I Unit Tests for ' + testName, () => {
+describe('Unit Tests for ' + testName, () => {
   before('Create Network', async () => {
     nconf.overrides({
       'impl_directory': 'production'
@@ -18,5 +18,20 @@ describe('I Unit Tests for ' + testName, () => {
   it('Test Application Construction', () => {
     let testModule = new TestModule({}, {})
     should.exist(testModule)
+  })
+  it(testName + ' Empty Retrieval', (done) => {
+    let testModule = new TestModule({}, {})
+    should.exist(testModule)
+    testModule.retrieveUsers()
+      .then(actual => {
+        actual.should.have.property('totalCount')
+        actual.should.have.property('records')
+        actual.totalCount.should.equal(3)
+        actual.records.length.should.equal(3)
+        done()
+      })
+      .catch(err => {
+        done(err)
+      })
   })
 })
