@@ -346,6 +346,11 @@ exports.initialize = function (app, server) {
       return
     }
 
+    // Issue 176, Remove trailing '/' in the url if there
+    if (rec.baseUrl.charAt(rec.baseUrl.length - 1) === '/') {
+      rec.baseUrl = rec.baseUrl.substr(0, rec.baseUrl.length - 1)
+    }
+
     if (!rec.securityData) {
       rec.securityData = {
         authorized: false,
