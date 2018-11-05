@@ -152,7 +152,7 @@ describe('Networks', function () {
           'name': 'Funky network',
           'networkProviderId': 1,
           'networkTypeId': 1,
-          'baseUrl': 'https://lora_appserver1:8080/api',
+          'baseUrl': 'https://lora_appserver1:8080/api/',
           'networkProtocolId': npId1,
           'securityData': {'username': 'admin', 'password': 'admin'}
         })
@@ -160,6 +160,8 @@ describe('Networks', function () {
           res.should.have.status(201)
           var ret = JSON.parse(res.text)
           netId1 = ret.id
+          ret.should.have.property('baseUrl')
+          ret.baseUrl.should.equal('https://lora_appserver1:8080/api')
           done()
         })
     })
