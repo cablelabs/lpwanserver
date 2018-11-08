@@ -5,7 +5,7 @@
 dsn="postgres://loraserver_as_1:loraserver_as@postgresql/loraserver_as_1?sslmode=disable"
 
 [redis]
-url="redis://redis:6379"
+url="redis://redis:6379/1"
 
 [application_server.integration.mqtt]
 server="tcp://mosquitto:1883"
