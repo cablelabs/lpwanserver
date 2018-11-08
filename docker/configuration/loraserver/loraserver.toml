@@ -5,7 +5,7 @@
 dsn="postgres://loraserver_ns:loraserver_ns@postgresql/loraserver_ns?sslmode=disable"
 
 [redis]
-url="redis://redis:6379"
+url="redis://redis:6379/2"
 
 [network_server]
 net_id="ABCDEF"
