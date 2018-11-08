@@ -1440,7 +1440,6 @@ module.exports.pushDeviceProfile = function (sessionData, network, deviceProfile
           })
         }
         else {
-          appLogger.log('WTF')
           appLogger.log(dpNetworkId + '')
 
           reject(new Error('Something bad happened with the Protocol Table'))

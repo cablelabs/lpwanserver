@@ -464,6 +464,7 @@ exports.initialize = function (app, server) {
     restServer.isAdminCompany],
   function (req, res, next) {
     var data = req.body
+    var pullFlag = (data.securityData && data.securityData.authorized === false)
     data.id = parseInt(req.params.id)
     modelAPI.networks.updateNetwork(data)
       .then(function (rec) {
@@ -496,6 +497,9 @@ exports.initialize = function (app, server) {
             network.securityData = temp
 
             if (network.securityData.authorized === false) {
+              restServer.respond(res, 200, network)
+            }
+            else if (!pullFlag) {
               restServer.respond(res, 200, network)
             }
             else {
