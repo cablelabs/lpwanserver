@@ -103,7 +103,11 @@ async function TTNAuthenticationRequest (network, loginData, opts = {}) {
   return body
 }
 
-const appRegion = R.compose(R.last, R.split('-'), x => x.handler || x.serviceProfileID)
+const appRegion = R.compose(
+  R.replace('ttn-handler-', ''),
+  x => x.handler || x.serviceProfileID,
+  R.tap(x => console.log('**appRegion**', require('util').inspect(x)))
+)
 
 /**
  * The Things Network Protocol Handler Module
@@ -378,25 +382,6 @@ module.exports.connect = async function connect (network, loginData) {
  * @returns {Promise<?>} - Empty promise
  */
 module.exports.disconnect = async function (connection) {
-}
-
-function getOptions (method, url, type, resource, access_token) {
-  let middle = ''
-  if (type === 'account') middle = '/api/v2'
-  if (type === 'console') middle = '/api'
-  return {
-    method,
-    url: url + middle + '/' + resource,
-    json: true,
-    resolveWithFullResponse: true,
-    headers: {
-      'Authorization': 'Bearer ' + access_token
-    },
-    agentOptions: {
-      'secureProtocol': 'TLSv1_2_method',
-      'rejectUnauthorized': false
-    }
-  }
 }
 
 /**********************************************************************************************************************
@@ -1145,8 +1130,6 @@ module.exports.addDevice = async function addDevice (session, network, deviceId,
       throw new Error('Could not retrieve application ntl')
     }
     const applicationData = result[1]
-    applicationData.networkSettings = JSON.parse(applicationData.networkSettings)
-    appLogger.log(applicationData, 'error')
     result = await tryAsync(dataAPI.getProtocolDataForKey(
       network.id,
       network.networkProtocolId,
