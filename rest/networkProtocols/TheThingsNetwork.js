@@ -105,8 +105,8 @@ async function TTNAuthenticationRequest (network, loginData, opts = {}) {
 
 const appRegion = R.compose(
   R.replace('ttn-handler-', ''),
-  x => x.handler || x.serviceProfileID,
-  R.tap(x => console.log('**appRegion**', require('util').inspect(x)))
+  x => x.handler || x.serviceProfileID
+  // R.tap(x => console.log('**appRegion**', require('util').inspect(x)))
 )
 
 /**
