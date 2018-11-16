@@ -318,7 +318,7 @@ async function authorizeWithCode (network, loginData) {
       body: {
         grant_type: 'authorization_code',
         code: loginData.code,
-        redirect_url: 'http://localhost:3000/admin/networks/oauth'
+        redirect_url: loginData.redirect_uri
       }
     })
   } catch (e) {
