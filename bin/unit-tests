@@ -3,10 +3,6 @@
 npm run package-test
 
 # Run docker-compose with development configuration
-docker-compose -f ./docker/docker-compose-unit-test.yml up
-if [ "$?" -ne  0 ]
-then
-    echo 'Tests Failed'
-else
-    echo 'Tests Passed'
-fi
+docker-compose -f ./docker/docker-compose-unit-test.yml up \
+    --abort-on-container-exit \
+    --exit-code-from unit-test

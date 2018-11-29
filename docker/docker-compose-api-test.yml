@@ -12,15 +12,6 @@ services:
     ports:
       - '3200:3200'
 
-  unit:
-    image: lpwanserver/test
-    environment:
-      - NODE_ENV=e2e
-      - PORT=3200
-      - db_file=data/demo_data/demo.sqlite3
-    ports:
-      - '3201:3200'
-
   loraserver1:
     image: loraserver/loraserver:1
     depends_on:

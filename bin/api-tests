@@ -5,4 +5,8 @@ npm run package-test
 npm run package-api-test
 
 # Run docker-compose with development configuration
-docker-compose -f ./docker/docker-compose-api-test.yml up
+docker container rm docker_postgresql_1 --force
+
+docker-compose -f ./docker/docker-compose-api-test.yml up \
+    --abort-on-container-exit \
+    --exit-code-from api-test

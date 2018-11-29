@@ -17,4 +17,4 @@ COPY test2.0 test2.0
 EXPOSE 3200
 
 # Override the command, to run the test instead of the application
-CMD ["mocha", "./test2.0/api", "--recursive", "--reporter", "spec", "--bail", "--exit"]
+CMD ["mocha", "./test2.0/api", "--recursive", "--reporter", "spec", "--exit"]

@@ -23,7 +23,7 @@
     "package-test": "node bin/package-test.js",
     "package-api-test": "node bin/package-api-test.js",
     "package-e2e-test": "node bin/package-e2e-test.js",
-    "e2e-ttn": "cp data/test.sqlite3.testSuiteStartingDB test/e2e/lpwanserver.sqlite3;export NODE_ENV=e2e; mocha test/e2e/ttn-v2-single --exit --bail --timeout 10000"
+    "test2": "./bin/unit-tests && ./bin/api-tests"
   },
   "dependencies": {
     "async": "~2.0.1",
