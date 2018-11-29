@@ -1,0 +1,16 @@
+{
+  "name": "ttn-account-server",
+  "version": "1.0.0",
+  "description": "Minimal TTN account server for development and testing.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Nick Baroni",
+  "dependencies": {
+    "body-parser": "^1.18.3",
+    "express": "^4.16.4",
+    "jsonwebtoken": "^8.4.0",
+    "lokijs": "^1.5.5"
+  }
+}
