@@ -1,7 +1,7 @@
 version: '2'
 
 services:
-  rest:
+  unit-test:
     image: lpwanserver/test
     environment:
     - NODE_ENV=e2e
