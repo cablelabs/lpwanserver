@@ -557,10 +557,10 @@ describe('E2E Test for Multiple Networks', () => {
             applications.should.have.property('totalCount')
             applications.should.have.property('records')
             appLogger.log(applications, 'error')
-            let application = applications.records.findOne(x => x.name === 'cable-labs-prototype')
+            let application = applications.records.find(x => x.name === 'cablelabs-prototype')
             should.exist(application)
             appLogger.log(application)
-            application.name.should.equal('cable-labs-prototype')
+            application.name.should.equal('cablelabs-prototype')
             application.description.should.equal('Prototype Application for CableLabs Trial')
             lora.ttn.apps.push({
               appId: application.id,
@@ -578,9 +578,9 @@ describe('E2E Test for Multiple Networks', () => {
           'id': 3,
           'networkSettings': {
             'description': 'Prototype Application for CableLabs Trial',
-            'id': 'cable-labs-prototype',
-            'key': 'ttn-account-v2.HgTv51zRBreL4b3d2eSolzcCdsPZqKLSrjnfEo5KgIs',
-            'name': 'cable-labs-prototype',
+            'id': 'cablelabs-prototype',
+            'key': 'ttn-account-v2.oJPyRNrsSFr5ukIcN4hRQI1DPjF5LczGi_pPbF4Rmg4',
+            'name': 'cablelabs-prototype',
             'organizationID': 'dschrimpsherr',
             'payloadCodec': 'cayennelpp',
             'serviceProfileID': 'ttn-handler-us-west'
