@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-docker container rm docker_postgresql_1 --force
+docker system prune --force
 # cp ./data/demo_baseline/demo.sqlite3 ./data/demo.sqlite3
 
 npm run package
