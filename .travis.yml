@@ -9,10 +9,8 @@ install:
 before_script:
   - cp ./data/test.sqlite3.testSuiteStartingDB /tmp/test.sqlite3
   - npm run package
-  - git clone https://github.com/cablelabs/lpwanserver-web-client.git
 script:
-  - npm test
-  - ./lpwanserver-web-client/bin/e2e.js
+  - ./bin/unit-tests
 before_deploy:
   - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
 deploy:

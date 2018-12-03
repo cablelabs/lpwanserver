@@ -70,8 +70,7 @@ services:
     ports:
       - 5432
     volumes:
-      - ./configuration/postgresql/initdb:/docker-entrypoint-initdb.d
-      - ../data/demo_data/postgresql:/var/lib/postgresql/data
+      - ./configuration/postgresql/initdb-demo:/docker-entrypoint-initdb.d
 
   redis:
     ports:
