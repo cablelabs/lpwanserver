@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+docker system prune --force
+
 npm run package-test
 
 # Run docker-compose with development configuration

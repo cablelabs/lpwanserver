@@ -30,6 +30,12 @@ services:
     - NODE_ENV=e2e
     - PORT=3200
     - db_file=data/demo_data/demo.sqlite3
+    depends_on:
+    - loraserver
+    - loraserver1
+    - lora_appserver
+    - lora_appserver1
+    - postgresql
     ports:
     - '3200:3200'
 
@@ -52,3 +58,4 @@ services:
     - 8081:8080
     volumes:
     - ./configuration/lora-app-server_1:/etc/lora-app-server
+

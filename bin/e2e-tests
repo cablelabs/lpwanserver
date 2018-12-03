@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+docker system prune --force
+
 npm run package-e2e-test
 
 # Run docker-compose with development configuration
