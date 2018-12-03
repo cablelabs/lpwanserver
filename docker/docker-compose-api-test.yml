@@ -8,6 +8,7 @@ services:
       - PORT=3200
       - db_file=data/demo_data/demo.sqlite3
     depends_on:
+      - loraserver1
       - lora_appserver1
     ports:
       - '3200:3200'

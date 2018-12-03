@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+docker system prune --force
 
 npm run package-test
 npm run package-api-test

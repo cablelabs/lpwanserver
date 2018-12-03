@@ -550,19 +550,14 @@ describe('E2E Test for Multiple Networks', () => {
           .set('Authorization', 'Bearer ' + adminToken)
           .set('Content-Type', 'application/json')
           .end(function (err, res) {
-            if (err) done(err)
+            if (err) return done(err)
             res.should.have.status(200)
             res.should.have.property('text')
             var applications = JSON.parse(res.text)
             applications.should.have.property('totalCount')
             applications.should.have.property('records')
             appLogger.log(applications, 'error')
-            let application = {}
-            for (let index = 0; index < applications.records.length; index++) {
-              if (applications.records[index].name === 'cable-labs-prototype') {
-                application = applications.records[index]
-              }
-            }
+            let application = applications.records.findOne(x => x.name === 'cable-labs-prototype')
             should.exist(application)
             appLogger.log(application)
             application.name.should.equal('cable-labs-prototype')
@@ -714,7 +709,7 @@ describe('E2E Test for Multiple Networks', () => {
           'networkTypeId': 1,
           'deviceProfileId': lora.loraV1.apps[0].deviceProfileIds[0],
           'networkSettings': {
-            'devEUI': '1234567890123456',
+            'devEUI': '2345678901234567',
             'name': 'BobMouseTrapDeviceLv1',
             'applicationID': '27',
             'description': 'Test Device for E2E',
@@ -857,7 +852,7 @@ describe('E2E Test for Multiple Networks', () => {
           'networkTypeId': 1,
           deviceProfileId: 2,
           'networkSettings': {
-            'devEUI': '1122334455667788',
+            'devEUI': '2233445566778899',
             'name': 'BobMouseTrapDeviceLv2',
             'applicationID': '2',
             'description': 'Test Device for E2E',
@@ -1013,7 +1008,7 @@ describe('E2E Test for Multiple Networks', () => {
           'networkTypeId': 1,
           deviceProfileId: 2,
           'networkSettings': {
-            'devEUI': '1122334455667788',
+            'devEUI': '2233445566778899',
             'name': 'BobMouseTrapDeviceLv2',
             'applicationID': '2',
             'description': 'Test Device for E2E',
