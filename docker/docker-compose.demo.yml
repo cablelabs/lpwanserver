@@ -21,3 +21,11 @@ services:
       - LPWANSERVER_PORT=3200
     ports:
       - '3000:8080'
+
+  postgresql:
+    volumes:
+      - ./configuration/postgresql/initdb-demo:/docker-entrypoint-initdb.d
+
+  redis:
+    volumes:
+      - ../data/demo_data/redis:/data

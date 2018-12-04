@@ -1,11 +1,6 @@
 version: '2'
 
 services:
-  ui:
-    image: lpwanserver/lpwanserver-web-client
-    ports:
-      - '3000:80'
-
   loraserver:
     image: loraserver/loraserver:2
     depends_on:
@@ -18,9 +13,9 @@ services:
   loraserver1:
     image: loraserver/loraserver:1
     depends_on:
-    - postgresql
-    - redis
-    - mosquitto
+      - postgresql
+      - redis
+      - mosquitto
     volumes:
     - ./configuration/loraserver_1:/etc/loraserver
 
@@ -38,27 +33,25 @@ services:
   lora_appserver1:
     image: loraserver/lora-app-server:1
     depends_on:
-    - postgresql
-    - redis
-    - mosquitto
+      - postgresql
+      - redis
+      - mosquitto
     ports:
-    - 8081:8080
+      - 8081:8080
     volumes:
-    - ./configuration/lora-app-server_1:/etc/lora-app-server
+      - ./configuration/lora-app-server_1:/etc/lora-app-server
 
   postgresql:
     image: postgres:9.6-alpine
     ports:
       - 5432
     volumes:
-      - ./configuration/postgresql/initdb-demo:/docker-entrypoint-initdb.d
+      - ./configuration/postgresql/initdb:/docker-entrypoint-initdb.d
 
   redis:
     ports:
       - 6379
     image: redis:4-alpine
-    volumes:
-      - ../data/demo_data/redis:/data
 
   mosquitto:
     image: eclipse-mosquitto

@@ -8,4 +8,6 @@ sudo cp -r ./data/demo_baseline ./data/demo_data
 npm run package
 
 # Run docker-compose with development configuration
-docker-compose -f ./docker/docker-compose-test.yml up
+docker-compose \
+  -f ./docker/docker-compose.loraserver.yml \
+  -f ./docker/docker-compose.test.yml up
