@@ -19,8 +19,47 @@ describe('E2E Test for Creating an Application Use Case #188', () => {
   let dnlId1
   let remoteApp1
   let remoteApp2
-  let remoteDevicProfile
-  let remoteDevicProfile2
+  let remoteDeviceProfileId
+  let remoteDeviceProfileId2
+
+  const appName = 'CATA'
+  const appDescription = 'CATA Description'
+  const companyId = 2
+  const reportingProtocolId = 1
+  const baseUrl = 'http://localhost:5086'
+
+  const deviceProfile = {
+    'networkTypeId': 1,
+    'companyId': companyId,
+    'name': 'LoRaWeatherNode',
+    'description': 'GPS Node that works with LoRa',
+    'networkSettings': {
+      'name': 'LoRaWeatherNode',
+      'macVersion': '1.0.0',
+      'regParamsRevision': 'A',
+      'supportsJoin': true
+    }
+  }
+
+  const device = {
+    'applicationId': '',
+    'name': 'MGRQD003',
+    'description': 'GPS Node Model 003',
+    'deviceModel': 'Mark2'
+  }
+
+  const deviceNTL = {
+    'deviceId': '',
+    'networkTypeId': 1,
+    'deviceProfileId': '',
+    'networkSettings': {
+      'devEUI': '0080000000000102',
+      name: device.name,
+      deviceKeys: {
+        'appKey': '11223344556677889900112233445566'
+      }
+    }
+  }
 
   let lora = {
     loraV1: {
@@ -193,20 +232,19 @@ describe('E2E Test for Creating an Application Use Case #188', () => {
           })
       })
     })
-
   })
   describe('Create Application', () => {
     let application =
       {
-        'companyId': 2,
-        'name': 'MyEnterpriseApp',
-        'description': 'Ugh, enterprise apps',
-        'baseUrl': 'http://localhost:5086',
-        'reportingProtocolId': 1
+        'companyId': companyId,
+        'name': appName,
+        'description': appDescription,
+        'baseUrl': baseUrl,
+        'reportingProtocolId': reportingProtocolId
       }
     let applicationNetworkSettings = {
-      'description': 'Create-App-Test-App',
-      'name': 'CATA'
+      'description': appDescription,
+      'name': appName
     }
     it('should return 200 on admin', function (done) {
       server
@@ -218,6 +256,7 @@ describe('E2E Test for Creating an Application Use Case #188', () => {
           res.should.have.status(200)
           let ret = JSON.parse(res.text)
           appId1 = ret.id
+          device.applicationId = appId1
           done()
         })
     })
@@ -231,6 +270,19 @@ describe('E2E Test for Creating an Application Use Case #188', () => {
         .end(function (err, res) {
           res.should.have.status(200)
           let appObj = JSON.parse(res.text)
+          appObj.should.have.property('id')
+          appObj.should.have.property('companyId')
+          appObj.should.have.property('name')
+          appObj.should.have.property('description')
+          appObj.should.have.property('baseUrl')
+          appObj.should.have.property('reportingProtocolId')
+
+          appObj.companyId.should.equal(companyId)
+          appObj.name.should.equal(appName)
+          appObj.description.should.equal(appDescription)
+          appObj.baseUrl.should.equal(baseUrl)
+          appObj.reportingProtocolId.should.equal(reportingProtocolId)
+
           done()
         })
     })
@@ -261,7 +313,6 @@ describe('E2E Test for Creating an Application Use Case #188', () => {
           res.should.have.status(200)
           let appObj = JSON.parse(res.text)
           console.log(appObj)
-          remoteId = appObj.id
           done()
         })
     })
@@ -272,15 +323,7 @@ describe('E2E Test for Creating an Application Use Case #188', () => {
         .post('/api/deviceProfiles')
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
-        .send({ 'networkTypeId': 1,
-          'companyId': 2,
-          'name': 'LoRaWeatherNode',
-          'description': 'GPS Node that works with LoRa',
-          'networkSettings': {
-            'name': 'LoRaWeatherNode',
-            'macVersion': '1.0.0',
-            'regParamsRevision': 'A',
-            'supportsJoin': true }})
+        .send(deviceProfile)
         .end(function (err, res) {
           res.should.have.status(200)
           let ret = JSON.parse(res.text)
@@ -297,10 +340,10 @@ describe('E2E Test for Creating an Application Use Case #188', () => {
         .end(function (err, res) {
           res.should.have.status(200)
           let dpObj = JSON.parse(res.text)
-          dpObj.name.should.equal('LoRaWeatherNode')
-          dpObj.description.should.equal('GPS Node that works with LoRa')
-          dpObj.networkTypeId.should.equal(1)
-          dpObj.companyId.should.equal(2)
+          dpObj.name.should.equal(deviceProfile.name)
+          dpObj.description.should.equal(deviceProfile.description)
+          dpObj.networkTypeId.should.equal(deviceProfile.networkTypeId)
+          dpObj.companyId.should.equal(deviceProfile.companyId)
           done()
         })
     })
@@ -311,11 +354,9 @@ describe('E2E Test for Creating an Application Use Case #188', () => {
         .post('/api/devices')
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
-        .send({ 'applicationId': appId1,
-          'name': 'MGRQD003',
-          'description': 'GPS Node Model 003',
-          'deviceModel': 'Mark2' })
+        .send(device)
         .end(function (err, res) {
+          appLogger.log(res)
           res.should.have.status(200)
           let ret = JSON.parse(res.text)
           deviceId1 = ret.id
@@ -332,28 +373,21 @@ describe('E2E Test for Creating an Application Use Case #188', () => {
         .end(function (err, res) {
           res.should.have.status(200)
           let devObj = JSON.parse(res.text)
-          devObj.name.should.equal('MGRQD003')
-          devObj.description.should.equal('GPS Node Model 003')
-          devObj.deviceModel.should.equal('Mark2')
+          console.log(devObj)
+          devObj.name.should.equal(device.name)
+          devObj.description.should.equal(device.description)
+          devObj.deviceModel.should.equal(device.deviceModel)
           done()
         })
     })
     it('Create Device NTL', function (done) {
+      deviceNTL.deviceId = deviceId1
+      deviceNTL.deviceProfileId = dpId1
       server
         .post('/api/deviceNetworkTypeLinks')
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
-        .send({ 'deviceId': deviceId1,
-          'networkTypeId': 1,
-          'deviceProfileId': dpId1,
-          'networkSettings': {
-            'devEUI': '0080000000000102',
-            name: 'MGRQD003',
-            deviceKeys: {
-              'appKey': '11223344556677889900112233445566'
-            }
-          }
-        })
+        .send(deviceNTL)
         .end(function (err, res) {
           res.should.have.status(200)
           var dnlObj = JSON.parse(res.text)
@@ -372,8 +406,9 @@ describe('E2E Test for Creating an Application Use Case #188', () => {
         .end(function (err, res) {
           res.should.have.status(200)
           var dnlObj = JSON.parse(res.text)
-          dnlObj.deviceId.should.equal(deviceId1)
-          dnlObj.networkTypeId.should.equal(1)
+          dnlObj.deviceId.should.equal(deviceNTL.deviceId)
+          dnlObj.networkTypeId.should.equal(deviceNTL.networkTypeId)
+          dnlObj.deviceProfileId.should.equal(deviceNTL.deviceProfileId)
           done()
         })
     })
@@ -426,20 +461,11 @@ describe('E2E Test for Creating an Application Use Case #188', () => {
         else {
           let app = JSON.parse(body)
           app = app.result
-          for (i=0; i < app.length(); i++) {
-            if (app[i].name === 'CATA'){
+          for (let i = 0; i < app.length; i++) {
+            if (app[i].name === appName) {
               remoteApp1 = app[i].id
             }
           }
-          app.should.have.property('id')
-          app.should.have.property('name')
-          app.should.have.property('description')
-          app.should.have.property('organizationID')
-          app.should.have.property('serviceProfileID')
-          app.should.have.property('payloadCodec')
-          app.should.have.property('payloadEncoderScript')
-          app.should.have.property('payloadDecoderScript')
-          app.name.should.equal('CATA')
           done()
         }
       })
@@ -471,7 +497,7 @@ describe('E2E Test for Creating an Application Use Case #188', () => {
           app.should.have.property('payloadCodec')
           app.should.have.property('payloadEncoderScript')
           app.should.have.property('payloadDecoderScript')
-          app.name.should.equal('CATA')
+          app.name.should.equal(appName)
           done()
         }
       })
@@ -494,13 +520,14 @@ describe('E2E Test for Creating an Application Use Case #188', () => {
           done(error)
         }
         else {
-          let app = JSON.parse(body)
-          app.should.have.property('totalCount')
-          app.totalCount.should.equal('2')
-          app.should.have.property('result')
-          app.result.length.should.equal(2)
-          app.result[1].should.have.property('deviceProfileID')
-          remoteDevicProfile = app.result[1].deviceProfileID
+          let remoteDeviceProfile = JSON.parse(body)
+          remoteDeviceProfile = remoteDeviceProfile.result
+          console.log(remoteDeviceProfile)
+          for (let i = 0; i < remoteDeviceProfile.length; i++) {
+            if (remoteDeviceProfile[i].name === deviceProfile.name) {
+              remoteDeviceProfileId = remoteDeviceProfile[i].id
+            }
+          }
           done()
         }
       })
@@ -508,7 +535,7 @@ describe('E2E Test for Creating an Application Use Case #188', () => {
     it('Verify the Lora Server Device Profile Exists', function (done) {
       let options = {}
       options.method = 'GET'
-      options.url = baseUrl + '/device-profiles/' + remoteDevicProfile
+      options.url = baseUrl + '/device-profiles/' + remoteDeviceProfileId
       options.headers = {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ' + loraKey
@@ -525,7 +552,7 @@ describe('E2E Test for Creating an Application Use Case #188', () => {
         else {
           let app = JSON.parse(body)
           app.should.have.property('name')
-          app.name.should.equal('LoRaWeatherNode')
+          app.name.should.equal(deviceProfile.networkSettings.name)
           app.should.have.property('organizationID')
           app.should.have.property('networkServerID')
           app.should.have.property('createdAt')
@@ -533,8 +560,8 @@ describe('E2E Test for Creating an Application Use Case #188', () => {
           app.should.have.property('deviceProfile')
           app.deviceProfile.should.have.property('macVersion')
           app.deviceProfile.should.have.property('regParamsRevision')
-          app.deviceProfile.macVersion.should.equal('1.0.0')
-          app.deviceProfile.regParamsRevision.should.equal('A')
+          app.deviceProfile.macVersion.should.equal(deviceProfile.networkSettings.macVersion)
+          app.deviceProfile.regParamsRevision.should.equal(deviceProfile.networkSettings.regParamsRevision)
 
           done()
         }
@@ -543,7 +570,7 @@ describe('E2E Test for Creating an Application Use Case #188', () => {
     it('Verify the Lora Server Device Exists', function (done) {
       let options = {}
       options.method = 'GET'
-      options.url = baseUrl + '/devices/0080000000000102'
+      options.url = baseUrl + '/devices/' + deviceNTL.networkSettings.devEUI
       options.headers = {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ' + loraKey
@@ -569,9 +596,9 @@ describe('E2E Test for Creating an Application Use Case #188', () => {
           app.should.have.property('lastSeenAt')
           app.should.have.property('skipFCntCheck')
 
-          app.name.should.equal('MGRQD003')
-          app.devEUI.should.equal('0080000000000102')
-          app.deviceProfileID.should.equal(remoteDevicProfile)
+          app.name.should.equal(deviceNTL.networkSettings.name)
+          app.devEUI.should.equal(deviceNTL.networkSettings.devEUI)
+          app.deviceProfileID.should.equal(remoteDeviceProfileId)
           done()
         }
       })
@@ -608,7 +635,36 @@ describe('E2E Test for Creating an Application Use Case #188', () => {
     it('Verify the Lora Server Application Exists', function (done) {
       let options = {}
       options.method = 'GET'
-      options.url = baseUrl + '/applications/4'
+      options.url = baseUrl + '/applications?limit=100'
+      options.headers = {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + loraKey
+      }
+      options.agentOptions = {
+        'secureProtocol': 'TLSv1_2_method',
+        'rejectUnauthorized': false
+      }
+      appLogger.log(options)
+      request(options, function (error, response, body) {
+        if (error) {
+          done(error)
+        }
+        else {
+          let app = JSON.parse(body)
+          app = app.result
+          for (let i = 0; i < app.length; i++) {
+            if (app[i].name === appName) {
+              remoteApp2 = app[i].id
+            }
+          }
+          done()
+        }
+      })
+    })
+    it('Verify the Lora Server Application Exists', function (done) {
+      let options = {}
+      options.method = 'GET'
+      options.url = baseUrl + '/applications/' + remoteApp2
       options.headers = {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ' + loraKey
@@ -634,7 +690,7 @@ describe('E2E Test for Creating an Application Use Case #188', () => {
           app.should.have.property('payloadCodec')
           app.should.have.property('payloadEncoderScript')
           app.should.have.property('payloadDecoderScript')
-          app.name.should.equal('CATA')
+          app.name.should.equal(appName)
           done()
         }
       })
@@ -642,7 +698,7 @@ describe('E2E Test for Creating an Application Use Case #188', () => {
     it('Verify the Lora Server Device Profile Exists', function (done) {
       let options = {}
       options.method = 'GET'
-      options.url = baseUrl + '/device-profiles?limit=4'
+      options.url = baseUrl + '/device-profiles?limit=100'
       options.headers = {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ' + loraKey
@@ -657,13 +713,13 @@ describe('E2E Test for Creating an Application Use Case #188', () => {
           done(error)
         }
         else {
-          let app = JSON.parse(body)
-          console.log(app)
-          app.should.have.property('totalCount')
-          app.totalCount.should.equal('4')
-          app.should.have.property('result')
-          app.result.length.should.equal(4)
-          remoteDevicProfile2 = app.result[3].id
+          let remoteDeviceProfile = JSON.parse(body)
+          remoteDeviceProfile = remoteDeviceProfile.result
+          for (let i = 0; i < remoteDeviceProfile.length; i++) {
+            if (remoteDeviceProfile[i].name === deviceProfile.name) {
+              remoteDeviceProfileId2 = remoteDeviceProfile[i].id
+            }
+          }
           done()
         }
       })
@@ -671,7 +727,7 @@ describe('E2E Test for Creating an Application Use Case #188', () => {
     it('Verify the Lora Server Device Profile Exists', function (done) {
       let options = {}
       options.method = 'GET'
-      options.url = baseUrl + '/device-profiles/' + remoteDevicProfile2
+      options.url = baseUrl + '/device-profiles/' + remoteDeviceProfileId2
       options.headers = {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ' + loraKey
@@ -690,14 +746,13 @@ describe('E2E Test for Creating an Application Use Case #188', () => {
           console.log(app)
           app = app.deviceProfile
           app.should.have.property('name')
-          app.name.should.equal('LoRaWeatherNode')
+          app.name.should.equal(deviceProfile.networkSettings.name)
           app.should.have.property('organizationID')
           app.should.have.property('networkServerID')
           app.should.have.property('macVersion')
           app.should.have.property('regParamsRevision')
-          app.macVersion.should.equal('1.0.0')
-          app.regParamsRevision.should.equal('A')
-
+          app.macVersion.should.equal(deviceProfile.networkSettings.macVersion)
+          app.regParamsRevision.should.equal(deviceProfile.networkSettings.regParamsRevision)
           done()
         }
       })
@@ -705,7 +760,7 @@ describe('E2E Test for Creating an Application Use Case #188', () => {
     it('Verify the Lora Server Device Exists', function (done) {
       let options = {}
       options.method = 'GET'
-      options.url = baseUrl + '/devices/0080000000000102'
+      options.url = baseUrl + '/devices/' + deviceNTL.networkSettings.devEUI
       options.headers = {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ' + loraKey
@@ -721,23 +776,22 @@ describe('E2E Test for Creating an Application Use Case #188', () => {
         }
         else {
           let app = JSON.parse(body)
-          app.device.should.have.property('name')
-          app.device.should.have.property('devEUI')
-          app.device.should.have.property('applicationID')
-          app.device.should.have.property('description')
-          app.device.should.have.property('deviceProfileID')
+          app.should.have.property('name')
+          app.should.have.property('devEUI')
+          app.should.have.property('applicationID')
+          app.should.have.property('description')
+          app.should.have.property('deviceProfileID')
           app.should.have.property('deviceStatusBattery')
           app.should.have.property('deviceStatusMargin')
           app.should.have.property('lastSeenAt')
-          app.device.should.have.property('skipFCntCheck')
+          app.should.have.property('skipFCntCheck')
 
-          app.device.name.should.equal('MGRQD003')
-          app.device.devEUI.should.equal('0080000000000102')
-          app.device.deviceProfileID.should.equal(remoteDevicProfile2)
+          app.name.should.equal(deviceNTL.networkSettings.name)
+          app.devEUI.should.equal(deviceNTL.networkSettings.devEUI)
+          app.deviceProfileID.should.equal(remoteDeviceProfileId2)
           done()
         }
       })
     })
   })
-
 })

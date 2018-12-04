@@ -5,4 +5,5 @@ docker system prune --force
 npm run package-e2e-test
 
 # Run docker-compose with development configuration
-docker-compose -f ./docker/docker-compose-e2e-test.yml up
+docker-compose -f ./docker/docker-compose-e2e-test.yml up \
+          --abort-on-container-exit
