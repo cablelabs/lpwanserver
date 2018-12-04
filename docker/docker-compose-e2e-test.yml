@@ -1,31 +1,8 @@
 version: '2'
 
 services:
-  postgresql:
-    image: postgres:9.6-alpine
-    ports:
-    - 5432
-    volumes:
-    - ./configuration/postgresql/initdb:/docker-entrypoint-initdb.d
-    - ../data/demo_data/postgresql:/var/lib/postgresql/data
-
-  redis:
-    ports:
-    - 6379
-    image: redis:4-alpine
-    volumes:
-    - ../data/demo_data/redis:/data
-
-  mosquitto:
-    image: eclipse-mosquitto
-    ports:
-    - 1883:1883
-
   e2e-test:
     image: lpwanserver/e2e-test
-    depends_on:
-      - lora_appserver1
-      - loraserver1
     environment:
     - NODE_ENV=e2e
     - PORT=3200
@@ -39,6 +16,15 @@ services:
     ports:
     - '3200:3200'
 
+  loraserver:
+    image: loraserver/loraserver:2
+    depends_on:
+    - postgresql
+    - redis
+    - mosquitto
+    volumes:
+    - ./configuration/loraserver:/etc/loraserver
+
   loraserver1:
     image: loraserver/loraserver:1
     depends_on:
@@ -47,6 +33,17 @@ services:
     - mosquitto
     volumes:
     - ./configuration/loraserver_1:/etc/loraserver
+
+  lora_appserver:
+    image: loraserver/lora-app-server:2
+    depends_on:
+    - postgresql
+    - redis
+    - mosquitto
+    ports:
+    - 8080:8080
+    volumes:
+    - ./configuration/lora-app-server:/etc/lora-app-server
 
   lora_appserver1:
     image: loraserver/lora-app-server:1
@@ -59,3 +56,21 @@ services:
     volumes:
     - ./configuration/lora-app-server_1:/etc/lora-app-server
 
+  postgresql:
+    image: postgres:9.6-alpine
+    ports:
+    - 5432
+    volumes:
+    - ./configuration/postgresql/initdb-demo:/docker-entrypoint-initdb.d
+
+  redis:
+    ports:
+    - 6379
+    image: redis:4-alpine
+    volumes:
+    - ../data/demo_data/redis:/data
+
+  mosquitto:
+    image: eclipse-mosquitto
+    ports:
+    - 1883:1883

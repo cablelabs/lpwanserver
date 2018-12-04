@@ -1,20 +1,23 @@
-var assert = require('assert')
-var chai = require('chai')
-var chaiHttp = require('chai-http')
-var app = require('../../restApp.js')
-var should = chai.should()
-var setup = require('./setup.js')
-var appLogger = require('../../rest/lib/appLogger.js')
-var request = require('request')
+let assert = require('assert')
+let chai = require('chai')
+let chaiHttp = require('chai-http')
+let app = require('../../restApp.js')
+let should = chai.should()
+let setup = require('./setup.js')
+let appLogger = require('../../rest/lib/appLogger.js')
+let request = require('request')
 
 chai.use(chaiHttp)
-var server = chai.request(app).keepOpen()
+let server = chai.request(app).keepOpen()
 
-describe('E2E Test for Creating an Application', () => {
-  var adminToken
-  var appId1
-  var anlId1
-  var lora = {
+describe('E2E Test for Creating an Application Use Case #188', () => {
+  let adminToken
+  let appId1
+  let anlId1
+  let dpId1
+  let deviceId1
+  let dnlId1
+  let lora = {
     loraV1: {
       protocolId: '',
       networkId: '',
@@ -36,8 +39,8 @@ describe('E2E Test for Creating an Application', () => {
   before((done) => {
     setup.start()
       .then(() => {
-        // wait on the damn postgress to come up
-        setTimeout(done, 50000)
+        // wait on the  postgress to come up
+        setTimeout(done, 10000)
       })
       .catch((err) => {
         done(err)
@@ -66,7 +69,7 @@ describe('E2E Test for Creating an Application', () => {
           .end(function (err, res) {
             if (err) done(err)
             res.should.have.status(200)
-            var result = JSON.parse(res.text)
+            let result = JSON.parse(res.text)
             appLogger.log(result)
             result.records.should.be.instanceof(Array)
             result.records.should.have.length(1)
@@ -93,7 +96,7 @@ describe('E2E Test for Creating an Application', () => {
           .end(function (err, res) {
             if (err) done(err)
             res.should.have.status(201)
-            var network = JSON.parse(res.text)
+            let network = JSON.parse(res.text)
             appLogger.log(network)
             network.securityData.authorized.should.equal(true)
             network.securityData.message.should.equal('ok')
@@ -111,142 +114,9 @@ describe('E2E Test for Creating an Application', () => {
           .end(function (err, res) {
             if (err) done(err)
             res.should.have.status(200)
-            var network = JSON.parse(res.text)
+            let network = JSON.parse(res.text)
             network.name.should.equal('LocalLoraOS1_0')
             network.baseUrl.should.equal('https://lora_appserver1:8080/api')
-            network.securityData.authorized.should.equal(true)
-            network.securityData.message.should.equal('ok')
-            network.securityData.enabled.should.equal(true)
-            done()
-          })
-      })
-    })
-    describe.skip('Setup Lora 2.0 Network', () => {
-      it('Verify LoraOS 2.0 Protocol Exists', (done) => {
-        server
-          .get('/api/networkProtocols?search=LoRa Server&networkProtocolVersion=2.0')
-          .set('Authorization', 'Bearer ' + adminToken)
-          .set('Content-Type', 'application/json')
-          .end(function (err, res) {
-            if (err) done(err)
-            res.should.have.status(200)
-            var result = JSON.parse(res.text)
-            appLogger.log(result)
-            result.records.should.be.instanceof(Array)
-            result.records.should.have.length(1)
-            result.totalCount.should.equal(1)
-            result.records[0].should.have.property('networkProtocolVersion')
-            result.records[0].networkProtocolVersion.should.equal('2.0')
-            lora.loraV2.protocolId = result.records[0].id
-            done()
-          })
-      })
-      it('Create the Local LoraOS 2.0 Network', (done) => {
-        server
-          .post('/api/networks')
-          .set('Authorization', 'Bearer ' + adminToken)
-          .set('Content-Type', 'application/json')
-          .send({
-            'name': 'LocalLoraOS2_0',
-            'networkProviderId': -1,
-            'networkTypeId': 1,
-            'baseUrl': 'https://lora_appserver:8080/api',
-            'networkProtocolId': lora.loraV2.protocolId,
-            'securityData': {authorized: false, 'username': 'admin', 'password': 'admin'}
-          })
-          .end(function (err, res) {
-            if (err) done(err)
-            res.should.have.status(201)
-            var network = JSON.parse(res.text)
-            appLogger.log(network)
-            network.securityData.authorized.should.equal(true)
-            network.securityData.message.should.equal('ok')
-            lora.loraV2.networkId = network.id
-            done()
-          })
-      })
-
-      it('Get Network', (done) => {
-        server
-          .get('/api/networks/' + lora.loraV2.networkId)
-          .set('Authorization', 'Bearer ' + adminToken)
-          .set('Content-Type', 'application/json')
-          .send()
-          .end(function (err, res) {
-            if (err) done(err)
-            res.should.have.status(200)
-            var network = JSON.parse(res.text)
-            network.name.should.equal('LocalLoraOS2_0')
-            network.baseUrl.should.equal('https://lora_appserver:8080/api')
-            network.securityData.authorized.should.equal(true)
-            network.securityData.message.should.equal('ok')
-            network.securityData.enabled.should.equal(true)
-            done()
-          })
-      })
-    })
-    describe.skip('Setup TTN Network', () => {
-      it('Verify TTN Protocol Exists', (done) => {
-        server
-          .get('/api/networkProtocols?search=The Things Network&networkProtocolVersion=2.0')
-          .set('Authorization', 'Bearer ' + adminToken)
-          .set('Content-Type', 'application/json')
-          .end(function (err, res) {
-            if (err) done(err)
-            res.should.have.status(200)
-            var result = JSON.parse(res.text)
-            appLogger.log(result)
-            result.records.should.be.instanceof(Array)
-            result.records.should.have.length(1)
-            result.totalCount.should.equal(1)
-            result.records[0].should.have.property('networkProtocolVersion')
-            result.records[0].networkProtocolVersion.should.equal('2.0')
-            lora.ttn.protocolId = result.records[0].id
-            done()
-          })
-      })
-      it('Create the Local TTN 2.0 Network', (done) => {
-        server
-          .post('/api/networks')
-          .set('Authorization', 'Bearer ' + adminToken)
-          .set('Content-Type', 'application/json')
-          .send({
-            'name': 'LocalTTN',
-            'networkProviderId': -1,
-            'networkTypeId': 1,
-            'baseUrl': 'https://account.thethingsnetwork.org',
-            'networkProtocolId': lora.ttn.protocolId,
-            'securityData': {
-              authorized: false,
-              username: 'dschrimpsherr',
-              password: 'Ultimum01',
-              clientId: 'lpwan-test-3',
-              clientSecret: 'ltMSL0cmIVkzBYQZndZ8slzF37qLMjRm7sXXt4qcekyCq3YEoLMf9rQr'
-            }
-          })
-          .end(function (err, res) {
-            if (err) done(err)
-            res.should.have.status(201)
-            var network = JSON.parse(res.text)
-            appLogger.log(network)
-            network.securityData.authorized.should.equal(true)
-            network.securityData.message.should.equal('ok')
-            lora.ttn.networkId = network.id
-            done()
-          })
-      })
-      it('Get Network', (done) => {
-        server
-          .get('/api/networks/' + lora.ttn.networkId)
-          .set('Authorization', 'Bearer ' + adminToken)
-          .set('Content-Type', 'application/json')
-          .send()
-          .end(function (err, res) {
-            if (err) done(err)
-            res.should.have.status(200)
-            var network = JSON.parse(res.text)
-            network.name.should.equal('LocalTTN')
-            network.baseUrl.should.equal('https://account.thethingsnetwork.org')
             network.securityData.authorized.should.equal(true)
             network.securityData.message.should.equal('ok')
             network.securityData.enabled.should.equal(true)
@@ -276,7 +146,7 @@ describe('E2E Test for Creating an Application', () => {
         .send(application)
         .end(function (err, res) {
           res.should.have.status(200)
-          var ret = JSON.parse(res.text)
+          let ret = JSON.parse(res.text)
           appId1 = ret.id
           done()
         })
@@ -290,7 +160,7 @@ describe('E2E Test for Creating an Application', () => {
         .send()
         .end(function (err, res) {
           res.should.have.status(200)
-          var appObj = JSON.parse(res.text)
+          let appObj = JSON.parse(res.text)
           done()
         })
     })
@@ -306,7 +176,7 @@ describe('E2E Test for Creating an Application', () => {
         })
         .end(function (err, res) {
           res.should.have.status(200)
-          var ret = JSON.parse(res.text)
+          let ret = JSON.parse(res.text)
           anlId1 = ret.id
           done()
         })
@@ -319,8 +189,121 @@ describe('E2E Test for Creating an Application', () => {
         .send()
         .end(function (err, res) {
           res.should.have.status(200)
-          var appObj = JSON.parse(res.text)
+          let appObj = JSON.parse(res.text)
           console.log(appObj)
+          remoteId = appObj.id
+          done()
+        })
+    })
+  })
+  describe('Create Device Profile for Application', () => {
+    it('Create Device Profile', function (done) {
+      server
+        .post('/api/deviceProfiles')
+        .set('Authorization', 'Bearer ' + adminToken)
+        .set('Content-Type', 'application/json')
+        .send({ 'networkTypeId': 1,
+          'companyId': 2,
+          'name': 'LoRaWeatherNode',
+          'description': 'GPS Node that works with LoRa',
+          'networkSettings': {
+            'name': 'LoRaWeatherNode',
+            'macVersion': '1.0.0',
+            'regParamsRevision': 'A',
+            'supportsJoin': true }})
+        .end(function (err, res) {
+          res.should.have.status(200)
+          let ret = JSON.parse(res.text)
+          dpId1 = ret.id
+          done()
+        })
+    })
+    it('should return 200 on get', function (done) {
+      server
+        .get('/api/deviceProfiles/' + dpId1)
+        .set('Authorization', 'Bearer ' + adminToken)
+        .set('Content-Type', 'application/json')
+        .send()
+        .end(function (err, res) {
+          res.should.have.status(200)
+          let dpObj = JSON.parse(res.text)
+          dpObj.name.should.equal('LoRaWeatherNode')
+          dpObj.description.should.equal('GPS Node that works with LoRa')
+          dpObj.networkTypeId.should.equal(1)
+          dpObj.companyId.should.equal(2)
+          done()
+        })
+    })
+  })
+  describe('Create Device for Application', () => {
+    it('POST Device', function (done) {
+      server
+        .post('/api/devices')
+        .set('Authorization', 'Bearer ' + adminToken)
+        .set('Content-Type', 'application/json')
+        .send({ 'applicationId': appId1,
+          'name': 'MGRQD003',
+          'description': 'GPS Node Model 003',
+          'deviceModel': 'Mark2' })
+        .end(function (err, res) {
+          res.should.have.status(200)
+          let ret = JSON.parse(res.text)
+          deviceId1 = ret.id
+          done()
+        })
+    })
+
+    it('should return 200 on get', function (done) {
+      server
+        .get('/api/devices/' + deviceId1)
+        .set('Authorization', 'Bearer ' + adminToken)
+        .set('Content-Type', 'application/json')
+        .send()
+        .end(function (err, res) {
+          res.should.have.status(200)
+          let devObj = JSON.parse(res.text)
+          devObj.name.should.equal('MGRQD003')
+          devObj.description.should.equal('GPS Node Model 003')
+          devObj.deviceModel.should.equal('Mark2')
+          done()
+        })
+    })
+    it('Create Device NTL', function (done) {
+      server
+        .post('/api/deviceNetworkTypeLinks')
+        .set('Authorization', 'Bearer ' + adminToken)
+        .set('Content-Type', 'application/json')
+        .send({ 'deviceId': deviceId1,
+          'networkTypeId': 1,
+          'deviceProfileId': dpId1,
+          'networkSettings': {
+            'devEUI': '0080000000000102',
+            name: 'MGRQD003',
+            deviceKeys: {
+              'appKey': '11223344556677889900112233445566'
+            }
+          }
+        })
+        .end(function (err, res) {
+          res.should.have.status(200)
+          var dnlObj = JSON.parse(res.text)
+          console.log(dnlObj)
+          dnlId1 = dnlObj.id
+          done()
+        })
+    })
+
+    it('should return 200 on get', function (done) {
+      server
+        .get('/api/deviceNetworkTypeLinks/' + dnlId1)
+        .set('Authorization', 'Bearer ' + adminToken)
+        .set('Content-Type', 'application/json')
+        .send()
+        .end(function (err, res) {
+          res.should.have.status(200)
+          var dnlObj = JSON.parse(res.text)
+          dnlObj.deviceId.should.equal(deviceId1)
+          dnlObj.networkTypeId.should.equal(1)
           done()
         })
     })
@@ -329,7 +312,7 @@ describe('E2E Test for Creating an Application', () => {
     let baseUrl = 'https://lora_appserver1:8080/api'
     let loraKey = ''
     it('Get Lora Session', function (done) {
-      var options = {}
+      let options = {}
       options.method = 'POST'
       options.url = baseUrl + '/internal/login'
       options.headers = {'Content-Type': 'application/json'}
@@ -353,7 +336,7 @@ describe('E2E Test for Creating an Application', () => {
         }
       })
     })
-    it('Verify the Lora Server Application Integration was set to LPWan Server', function (done) {
+    it('Verify the Lora Server Application Exists', function (done) {
       let options = {}
       options.method = 'GET'
       options.url = baseUrl + '/applications/28'
@@ -372,7 +355,116 @@ describe('E2E Test for Creating an Application', () => {
         }
         else {
           let app = JSON.parse(body)
-          console.log(app)
+          app.should.have.property('id')
+          app.should.have.property('name')
+          app.should.have.property('description')
+          app.should.have.property('organizationID')
+          app.should.have.property('serviceProfileID')
+          app.should.have.property('payloadCodec')
+          app.should.have.property('payloadEncoderScript')
+          app.should.have.property('payloadDecoderScript')
+          app.name.should.equal('CATA')
+          done()
+        }
+      })
+    })
+    let remoteDevicProfile
+    it('Verify the Lora Server Device Profile Exists', function (done) {
+      let options = {}
+      options.method = 'GET'
+      options.url = baseUrl + '/device-profiles?limit=2'
+      options.headers = {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + loraKey
+      }
+      options.agentOptions = {
+        'secureProtocol': 'TLSv1_2_method',
+        'rejectUnauthorized': false
+      }
+      appLogger.log(options)
+      request(options, function (error, response, body) {
+        if (error) {
+          done(error)
+        }
+        else {
+          let app = JSON.parse(body)
+          app.should.have.property('totalCount')
+          app.totalCount.should.equal('2')
+          app.should.have.property('result')
+          app.result.length.should.equal(2)
+          app.result[1].should.have.property('deviceProfileID')
+          remoteDevicProfile = app.result[1].deviceProfileID
+          done()
+        }
+      })
+    })
+    it('Verify the Lora Server Device Profile Exists', function (done) {
+      let options = {}
+      options.method = 'GET'
+      options.url = baseUrl + '/device-profiles/' + remoteDevicProfile
+      options.headers = {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + loraKey
+      }
+      options.agentOptions = {
+        'secureProtocol': 'TLSv1_2_method',
+        'rejectUnauthorized': false
+      }
+      appLogger.log(options)
+      request(options, function (error, response, body) {
+        if (error) {
+          done(error)
+        }
+        else {
+          let app = JSON.parse(body)
+          app.should.have.property('name')
+          app.name.should.equal('LoRaWeatherNode')
+          app.should.have.property('organizationID')
+          app.should.have.property('networkServerID')
+          app.should.have.property('createdAt')
+          app.should.have.property('updatedAt')
+          app.should.have.property('deviceProfile')
+          app.deviceProfile.should.have.property('macVersion')
+          app.deviceProfile.should.have.property('regParamsRevision')
+          app.deviceProfile.macVersion.should.equal('1.0.0')
+          app.deviceProfile.regParamsRevision.should.equal('A')
+
+          done()
+        }
+      })
+    })
+    it('Verify the Lora Server Device Exists', function (done) {
+      let options = {}
+      options.method = 'GET'
+      options.url = baseUrl + '/devices/0080000000000102'
+      options.headers = {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + loraKey
+      }
+      options.agentOptions = {
+        'secureProtocol': 'TLSv1_2_method',
+        'rejectUnauthorized': false
+      }
+      appLogger.log(options)
+      request(options, function (error, response, body) {
+        if (error) {
+          done(error)
+        }
+        else {
+          let app = JSON.parse(body)
+          app.should.have.property('name')
+          app.should.have.property('devEUI')
+          app.should.have.property('applicationID')
+          app.should.have.property('description')
+          app.should.have.property('deviceProfileID')
+          app.should.have.property('deviceStatusBattery')
+          app.should.have.property('deviceStatusMargin')
+          app.should.have.property('lastSeenAt')
+          app.should.have.property('skipFCntCheck')
+
+          app.name.should.equal('MGRQD003')
+          app.devEUI.should.equal('0080000000000102')
+          app.deviceProfileID.should.equal(remoteDevicProfile)
           done()
         }
       })
