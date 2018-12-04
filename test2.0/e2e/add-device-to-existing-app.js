@@ -10,13 +10,17 @@ let request = require('request')
 chai.use(chaiHttp)
 let server = chai.request(app).keepOpen()
 
-describe.skip('E2E Test for Creating an Application Use Case #188', () => {
+describe('E2E Test for Creating a Device on an existing Application Use Case #190', () => {
   let adminToken
   let appId1
   let anlId1
   let dpId1
   let deviceId1
+  let deviceId2
   let dnlId1
+  let dnlId2
+  let remoteDevicProfile
+
   let lora = {
     loraV1: {
       protocolId: '',
@@ -368,7 +372,6 @@ describe.skip('E2E Test for Creating an Application Use Case #188', () => {
         }
       })
     })
-    let remoteDevicProfile
     it('Verify the Lora Server Device Profile Exists', function (done) {
       let options = {}
       options.method = 'GET'
@@ -464,6 +467,145 @@ describe.skip('E2E Test for Creating an Application Use Case #188', () => {
 
           app.name.should.equal('MGRQD003')
           app.devEUI.should.equal('0080000000000102')
+          app.deviceProfileID.should.equal(remoteDevicProfile)
+          done()
+        }
+      })
+    })
+  })
+  describe('Create 2nd Device for Application', () => {
+    it('POST Device', function (done) {
+      server
+        .post('/api/devices')
+        .set('Authorization', 'Bearer ' + adminToken)
+        .set('Content-Type', 'application/json')
+        .send({ 'applicationId': appId1,
+          'name': 'MGRQD004',
+          'description': 'GPS Node Model 004',
+          'deviceModel': 'Mark4' })
+        .end(function (err, res) {
+          res.should.have.status(200)
+          let ret = JSON.parse(res.text)
+          deviceId2 = ret.id
+          done()
+        })
+    })
+
+    it('should return 200 on get', function (done) {
+      server
+        .get('/api/devices/' + deviceId2)
+        .set('Authorization', 'Bearer ' + adminToken)
+        .set('Content-Type', 'application/json')
+        .send()
+        .end(function (err, res) {
+          res.should.have.status(200)
+          let devObj = JSON.parse(res.text)
+          devObj.name.should.equal('MGRQD004')
+          devObj.description.should.equal('GPS Node Model 004')
+          devObj.deviceModel.should.equal('Mark4')
+          done()
+        })
+    })
+    it('Create Device NTL', function (done) {
+      server
+        .post('/api/deviceNetworkTypeLinks')
+        .set('Authorization', 'Bearer ' + adminToken)
+        .set('Content-Type', 'application/json')
+        .send({ 'deviceId': deviceId2,
+          'networkTypeId': 1,
+          'deviceProfileId': dpId1,
+          'networkSettings': {
+            'devEUI': '0080000000000103',
+            name: 'MGRQD004',
+            deviceKeys: {
+              'appKey': '11223344556677889900112233447777'
+            }
+          }
+        })
+        .end(function (err, res) {
+          res.should.have.status(200)
+          var dnlObj = JSON.parse(res.text)
+          console.log(dnlObj)
+          dnlId2 = dnlObj.id
+          done()
+        })
+    })
+
+    it('should return 200 on get', function (done) {
+      server
+        .get('/api/deviceNetworkTypeLinks/' + dnlId2)
+        .set('Authorization', 'Bearer ' + adminToken)
+        .set('Content-Type', 'application/json')
+        .send()
+        .end(function (err, res) {
+          res.should.have.status(200)
+          var dnlObj = JSON.parse(res.text)
+          dnlObj.deviceId.should.equal(deviceId2)
+          dnlObj.networkTypeId.should.equal(1)
+          done()
+        })
+    })
+  })
+  describe('Verify LoRaServer V1 has 2nd Device', function () {
+    let baseUrl = 'https://lora_appserver1:8080/api'
+    let loraKey = ''
+    it('Get Lora Session', function (done) {
+      let options = {}
+      options.method = 'POST'
+      options.url = baseUrl + '/internal/login'
+      options.headers = {'Content-Type': 'application/json'}
+      options.json = {username: 'admin', password: 'admin'}
+      options.agentOptions = {'secureProtocol': 'TLSv1_2_method', 'rejectUnauthorized': false}
+      request(options, function (error, response, body) {
+        if (error) {
+          appLogger.log('Error on signin: ' + error)
+          done(error)
+        }
+        else if (response.statusCode >= 400 || response.statusCode === 301) {
+          appLogger.log('Error on signin: ' + response.statusCode + ', ' + response.body.error)
+          done(response.statusCode)
+        }
+        else if (!body.jwt) {
+          done(new Error('No token'))
+        }
+        else {
+          loraKey = body.jwt
+          done()
+        }
+      })
+    })
+
+    it('Verify the Lora Server Device Exists', function (done) {
+      let options = {}
+      options.method = 'GET'
+      options.url = baseUrl + '/devices/0080000000000103'
+      options.headers = {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + loraKey
+      }
+      options.agentOptions = {
+        'secureProtocol': 'TLSv1_2_method',
+        'rejectUnauthorized': false
+      }
+      appLogger.log(options)
+      request(options, function (error, response, body) {
+        if (error) {
+          done(error)
+        }
+        else {
+          let app = JSON.parse(body)
+          app.should.have.property('name')
+          app.should.have.property('devEUI')
+          app.should.have.property('applicationID')
+          app.should.have.property('description')
+          app.should.have.property('deviceProfileID')
+          app.should.have.property('deviceStatusBattery')
+          app.should.have.property('deviceStatusMargin')
+          app.should.have.property('lastSeenAt')
+          app.should.have.property('skipFCntCheck')
+
+          app.name.should.equal('MGRQD004')
+          app.devEUI.should.equal('0080000000000103')
           app.deviceProfileID.should.equal(remoteDevicProfile)
           done()
         }
