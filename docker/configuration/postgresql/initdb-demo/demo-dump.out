@@ -675,7 +675,7 @@ SELECT pg_catalog.setval('public.application_id_seq', 2, true);
 
 COPY public.device (dev_eui, created_at, updated_at, application_id, device_profile_id, name, description, last_seen_at, device_status_battery, device_status_margin, latitude, longitude, altitude) FROM stdin;
 \\x8484932090909090	2018-09-03 09:08:50.194747+00	2018-09-03 09:08:50.194747+00	1	c504e774-4c3d-483e-ad0a-8550ce2caf0e	BobMouseTrapDeviceLv2	Test Device for E2E	\N	\N	\N	\N	\N	\N
-\\x2233445566778899	2018-11-30 21:58:53.935556+00	2018-11-30 21:58:53.935556+00	2	9dd538e8-a231-4a35-8823-eecbffb9d4a9	BobMouseTrapDeviceLv2	Test Device for E2E	\N	\N	\N	\N	\N	\N
+\\x3344556677889900	2018-12-05 15:21:04.131894+00	2018-12-05 15:21:04.131894+00	2	9dd538e8-a231-4a35-8823-eecbffb9d4a9	BobMouseTrapDeviceLv2	Test Device for E2E	\N	\N	\N	\N	\N	\N
 \.
 
 
@@ -684,7 +684,7 @@ COPY public.device (dev_eui, created_at, updated_at, application_id, device_prof
 --
 
 COPY public.device_activation (id, created_at, dev_eui, dev_addr, app_s_key) FROM stdin;
-2	2018-11-30 21:59:16.792606+00	\\x2233445566778899	\\xf9bde723	\\x204bc999b089983dceaef567d111722c
+3	2018-12-05 15:21:29.649819+00	\\x3344556677889900	\\xf9bdf7d1	\\xe589eaba9bb9510af25640b738c71dbb
 \.
 
 
@@ -692,7 +692,7 @@ COPY public.device_activation (id, created_at, dev_eui, dev_addr, app_s_key) FRO
 -- Name: device_activation_id_seq; Type: SEQUENCE SET; Schema: public; Owner: loraserver_as
 --
 
-SELECT pg_catalog.setval('public.device_activation_id_seq', 2, true);
+SELECT pg_catalog.setval('public.device_activation_id_seq', 3, true);
 
 
 --
@@ -2175,7 +2175,7 @@ SELECT pg_catalog.setval('public.application_id_seq', 27, true);
 --
 
 COPY public.device (dev_eui, created_at, updated_at, application_id, device_profile_id, name, description, last_seen_at, device_status_battery, device_status_margin) FROM stdin;
-\\x2345678901234567	2018-11-30 22:00:16.581064+00	2018-11-30 22:00:16.581064+00	27	c86725a2-bd60-4a8b-8f2d-0840a38853ad	BobMouseTrapDeviceLv1	Test Device for E2E	\N	\N	\N
+\\x3456789012345678	2018-12-05 15:22:45.563461+00	2018-12-05 15:22:45.563461+00	27	c86725a2-bd60-4a8b-8f2d-0840a38853ad	BobMouseTrapDeviceLv1	Test Device for E2E	\N	\N	\N
 \.
 
 
@@ -2184,7 +2184,7 @@ COPY public.device (dev_eui, created_at, updated_at, application_id, device_prof
 --
 
 COPY public.device_activation (id, created_at, dev_eui, dev_addr, app_s_key, nwk_s_key) FROM stdin;
-2	2018-11-30 22:00:41.767865+00	\\x2345678901234567	\\x01674c01	\\x9a6c5d6e9d4bcde4fe489d477e942b03	\\xd203b07f64a4fe43c1d42241731e3735
+3	2018-12-05 15:23:01.637564+00	\\x3456789012345678	\\x010835f6	\\xd23aea51f16a43cdfe20b85cf23aa7ee	\\x13156cd468f3417d22d02f314c3fedcd
 \.
 
 
@@ -2192,7 +2192,7 @@ COPY public.device_activation (id, created_at, dev_eui, dev_addr, app_s_key, nwk
 -- Name: device_activation_id_seq; Type: SEQUENCE SET; Schema: public; Owner: loraserver_as_1
 --
 
-SELECT pg_catalog.setval('public.device_activation_id_seq', 2, true);
+SELECT pg_catalog.setval('public.device_activation_id_seq', 3, true);
 
 
 --
@@ -3580,7 +3580,7 @@ v1_to_v2_flush_profiles_cache	2018-08-31 16:02:54.173518+00
 
 COPY public.device (dev_eui, created_at, updated_at, device_profile_id, service_profile_id, routing_profile_id, skip_fcnt_check, reference_altitude) FROM stdin;
 \\x8484932090909090	2018-09-03 09:08:50.202011+00	2018-09-03 09:08:50.202011+00	c504e774-4c3d-483e-ad0a-8550ce2caf0e	f43dbc35-e655-429e-aec2-0b1fada82468	6d5db27e-4ce2-4b2b-b5d7-91f069397978	f	0
-\\x2233445566778899	2018-11-30 21:58:53.949242+00	2018-11-30 21:58:53.949242+00	9dd538e8-a231-4a35-8823-eecbffb9d4a9	de9d9f33-26ab-43b3-9088-d65801240e0e	6d5db27e-4ce2-4b2b-b5d7-91f069397978	f	0
+\\x3344556677889900	2018-12-05 15:21:04.135458+00	2018-12-05 15:21:04.135458+00	9dd538e8-a231-4a35-8823-eecbffb9d4a9	de9d9f33-26ab-43b3-9088-d65801240e0e	6d5db27e-4ce2-4b2b-b5d7-91f069397978	f	0
 \.
 
 
@@ -4521,7 +4521,7 @@ ALTER TABLE ONLY public.gateway_stats ALTER COLUMN id SET DEFAULT nextval('publi
 --
 
 COPY public.device (dev_eui, created_at, updated_at, device_profile_id, service_profile_id, routing_profile_id, skip_fcnt_check) FROM stdin;
-\\x2345678901234567	2018-11-30 22:00:16.595581+00	2018-11-30 22:00:16.595581+00	c86725a2-bd60-4a8b-8f2d-0840a38853ad	8ea5916b-70d0-4e9c-a4f4-1e07981d41be	6d5db27e-4ce2-4b2b-b5d7-91f069397978	f
+\\x3456789012345678	2018-12-05 15:22:45.577567+00	2018-12-05 15:22:45.577567+00	c86725a2-bd60-4a8b-8f2d-0840a38853ad	8ea5916b-70d0-4e9c-a4f4-1e07981d41be	6d5db27e-4ce2-4b2b-b5d7-91f069397978	f
 \.
 
 
