@@ -10,7 +10,7 @@
     "e2e-log": "cp data/test.sqlite3.testSuiteStartingDB test/e2e/lpwanserver.sqlite3;export NODE_ENV=e2e-log; mocha test/e2e --exit",
     "ttn-test": "export NODE_ENV=ttn-unit;mocha test/ttn-unit",
     "loriot-test": "export NODE_ENV=loriot-unit;mocha test/loriot-unit",
-    "test": "./test.sh",
+    "test": "./bin/unit-tests && ./bin/api-tests",
     "silent": "npm start > output.txt 2> error.txt",
     "localcert": "export NODE_ENV=localcert;npm start",
     "local": "export NODE_ENV=local;npm start",

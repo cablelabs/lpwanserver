@@ -14,7 +14,7 @@ services:
       - lora_appserver1
       - postgresql
     ports:
-      - '3200:3200'
+      - 3200:3200
 
   postgresql:
     volumes:
