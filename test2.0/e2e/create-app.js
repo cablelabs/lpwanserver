@@ -43,9 +43,9 @@ describe('E2E Test for Creating an Application Use Case #188', () => {
 
   const device = {
     'applicationId': '',
-    'name': 'MGRQD003',
-    'description': 'GPS Node Model 003',
-    'deviceModel': 'Mark2'
+    'name': 'CATA001',
+    'description': 'GPS Node Model 001',
+    'deviceModel': 'Mark1'
   }
 
   const deviceNTL = {
@@ -53,7 +53,7 @@ describe('E2E Test for Creating an Application Use Case #188', () => {
     'networkTypeId': 1,
     'deviceProfileId': '',
     'networkSettings': {
-      'devEUI': '0080000000000102',
+      'devEUI': '0080000000000201',
       name: device.name,
       deviceKeys: {
         'appKey': '11223344556677889900112233445566'
@@ -84,7 +84,7 @@ describe('E2E Test for Creating an Application Use Case #188', () => {
     setup.start()
       .then(() => {
         // wait on the  postgress to come up
-        setTimeout(done, 10000)
+        setTimeout(done, 100)
       })
       .catch((err) => {
         done(err)
@@ -103,7 +103,7 @@ describe('E2E Test for Creating an Application Use Case #188', () => {
         })
     })
   })
-  describe('Setup Networks', () => {
+  describe.skip('Setup Networks', () => {
     describe('Setup Lora 1.0 Network', () => {
       it('Verify LoraOS 1.0 Protocol Exists', (done) => {
         server
