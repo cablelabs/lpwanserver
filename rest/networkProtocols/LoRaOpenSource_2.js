@@ -3546,9 +3546,9 @@ function deNormalizeDeviceData (remoteDevice, deviceProfile, appId, dpId) {
     }
     else {
       loraV2DeviceData.deviceKeys = {
-        nwkKey: remoteDevice.deviceKeys.nwkKey,
+        nwkKey: remoteDevice.deviceKeys.appKey,
         devEUI: remoteDevice.deviceKeys.devEUI,
-        appKey: ''
+        appKey: remoteDevice.deviceKeys.appKey
       }
     }
   }
