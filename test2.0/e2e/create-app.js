@@ -416,7 +416,7 @@ describe('E2E Test for Creating an Application Use Case #188', () => {
   describe('Verify LoRaServer V1 has application', function () {
     let baseUrl = 'https://lora_appserver1:8080/api'
     let loraKey = ''
-    it('Get Lora Session', function (done) {
+    it('Get LoRaServer V1 Session', function (done) {
       let options = {}
       options.method = 'POST'
       options.url = baseUrl + '/internal/login'
@@ -441,7 +441,7 @@ describe('E2E Test for Creating an Application Use Case #188', () => {
         }
       })
     })
-    it('Verify the Lora Server Application Exists', function (done) {
+    it('Verify the LoRaServer V1 Application Exists', function (done) {
       let options = {}
       options.method = 'GET'
       options.url = baseUrl + '/applications?limit=100'
@@ -470,7 +470,7 @@ describe('E2E Test for Creating an Application Use Case #188', () => {
         }
       })
     })
-    it('Verify the Lora Server Application Exists', function (done) {
+    it('Verify the LoRaServer V1 Application Exists', function (done) {
       let options = {}
       options.method = 'GET'
       options.url = baseUrl + '/applications/' + remoteApp1
@@ -502,7 +502,7 @@ describe('E2E Test for Creating an Application Use Case #188', () => {
         }
       })
     })
-    it('Verify the Lora Server Device Profile Exists', function (done) {
+    it('Verify the LoRaServer V1 Device Profile Exists', function (done) {
       let options = {}
       options.method = 'GET'
       options.url = baseUrl + '/device-profiles?limit=100'
@@ -524,15 +524,16 @@ describe('E2E Test for Creating an Application Use Case #188', () => {
           remoteDeviceProfile = remoteDeviceProfile.result
           console.log(remoteDeviceProfile)
           for (let i = 0; i < remoteDeviceProfile.length; i++) {
-            if (remoteDeviceProfile[i].name === deviceProfile.name) {
-              remoteDeviceProfileId = remoteDeviceProfile[i].id
+            if (remoteDeviceProfile[i].name === deviceProfile.networkSettings.name) {
+              remoteDeviceProfileId = remoteDeviceProfile[i].deviceProfileID
             }
           }
+          remoteDeviceProfileId.should.not.equal('')
           done()
         }
       })
     })
-    it('Verify the Lora Server Device Profile Exists', function (done) {
+    it('Verify the LoRaServer V1 Device Profile Exists', function (done) {
       let options = {}
       options.method = 'GET'
       options.url = baseUrl + '/device-profiles/' + remoteDeviceProfileId
@@ -551,6 +552,7 @@ describe('E2E Test for Creating an Application Use Case #188', () => {
         }
         else {
           let app = JSON.parse(body)
+          appLogger.log(app)
           app.should.have.property('name')
           app.name.should.equal(deviceProfile.networkSettings.name)
           app.should.have.property('organizationID')
@@ -567,7 +569,7 @@ describe('E2E Test for Creating an Application Use Case #188', () => {
         }
       })
     })
-    it('Verify the Lora Server Device Exists', function (done) {
+    it('Verify the LoRaServer V1 Device Exists', function (done) {
       let options = {}
       options.method = 'GET'
       options.url = baseUrl + '/devices/' + deviceNTL.networkSettings.devEUI
@@ -607,7 +609,7 @@ describe('E2E Test for Creating an Application Use Case #188', () => {
   describe('Verify LoRaServer V2 has application', function () {
     let baseUrl = 'https://lora_appserver:8080/api'
     let loraKey = ''
-    it('Get Lora Session', function (done) {
+    it('Get LoRaServer V2 Session', function (done) {
       let options = {}
       options.method = 'POST'
       options.url = baseUrl + '/internal/login'
@@ -632,7 +634,7 @@ describe('E2E Test for Creating an Application Use Case #188', () => {
         }
       })
     })
-    it('Verify the Lora Server Application Exists', function (done) {
+    it('Verify the LoRaServer V2 Application Exists', function (done) {
       let options = {}
       options.method = 'GET'
       options.url = baseUrl + '/applications?limit=100'
@@ -661,7 +663,7 @@ describe('E2E Test for Creating an Application Use Case #188', () => {
         }
       })
     })
-    it('Verify the Lora Server Application Exists', function (done) {
+    it('Verify the LoRaServer V2 Application Exists', function (done) {
       let options = {}
       options.method = 'GET'
       options.url = baseUrl + '/applications/' + remoteApp2
@@ -695,7 +697,7 @@ describe('E2E Test for Creating an Application Use Case #188', () => {
         }
       })
     })
-    it('Verify the Lora Server Device Profile Exists', function (done) {
+    it('Verify the LoRaServer V2 Device Profile Exists', function (done) {
       let options = {}
       options.method = 'GET'
       options.url = baseUrl + '/device-profiles?limit=100'
@@ -724,7 +726,7 @@ describe('E2E Test for Creating an Application Use Case #188', () => {
         }
       })
     })
-    it('Verify the Lora Server Device Profile Exists', function (done) {
+    it('Verify the LoRaServer V2 Device Profile Exists', function (done) {
       let options = {}
       options.method = 'GET'
       options.url = baseUrl + '/device-profiles/' + remoteDeviceProfileId2
@@ -757,7 +759,7 @@ describe('E2E Test for Creating an Application Use Case #188', () => {
         }
       })
     })
-    it('Verify the Lora Server Device Exists', function (done) {
+    it('Verify the LoRaServer V2 Device Exists', function (done) {
       let options = {}
       options.method = 'GET'
       options.url = baseUrl + '/devices/' + deviceNTL.networkSettings.devEUI
@@ -776,19 +778,20 @@ describe('E2E Test for Creating an Application Use Case #188', () => {
         }
         else {
           let app = JSON.parse(body)
-          app.should.have.property('name')
-          app.should.have.property('devEUI')
-          app.should.have.property('applicationID')
-          app.should.have.property('description')
-          app.should.have.property('deviceProfileID')
+          let device = app.device
+          device.should.have.property('name')
+          device.should.have.property('devEUI')
+          device.should.have.property('applicationID')
+          device.should.have.property('description')
+          device.should.have.property('deviceProfileID')
+          device.should.have.property('skipFCntCheck')
           app.should.have.property('deviceStatusBattery')
           app.should.have.property('deviceStatusMargin')
           app.should.have.property('lastSeenAt')
-          app.should.have.property('skipFCntCheck')
 
-          app.name.should.equal(deviceNTL.networkSettings.name)
-          app.devEUI.should.equal(deviceNTL.networkSettings.devEUI)
-          app.deviceProfileID.should.equal(remoteDeviceProfileId2)
+          device.name.should.equal(deviceNTL.networkSettings.name)
+          device.devEUI.should.equal(deviceNTL.networkSettings.devEUI)
+          device.deviceProfileID.should.equal(remoteDeviceProfileId2)
           done()
         }
       })
