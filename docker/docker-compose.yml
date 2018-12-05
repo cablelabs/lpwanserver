@@ -11,7 +11,7 @@ services:
       - PORT=3200
       - db_file=data/demo_data/demo.sqlite3
     ports:
-      - '3200:3200'
+      - 3200:3200
 
   ui:
     image: lpwanserver/lpwanserver-web-client
@@ -20,4 +20,4 @@ services:
       - LPWANSERVER_HOST=rest
       - LPWANSERVER_PORT=3200
     ports:
-      - '3000:8080'
+      - 3000:8080
