@@ -1,0 +1,25 @@
+version: '2'
+
+services:
+  e2e-test:
+    image: lpwanserver/e2e-test
+    environment:
+      - NODE_ENV=e2e
+      - PORT=3200
+      - db_file=data/demo_data/demo.sqlite3
+    depends_on:
+      - loraserver
+      - loraserver1
+      - lora_appserver
+      - lora_appserver1
+      - postgresql
+    ports:
+      - 3200:3200
+
+  postgresql:
+    volumes:
+      - ./configuration/postgresql/initdb-demo:/docker-entrypoint-initdb.d
+
+  redis:
+    volumes:
+      - ../data/demo_data/redis:/data

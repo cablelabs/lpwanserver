@@ -10,7 +10,7 @@ var request = require('request')
 chai.use(chaiHttp)
 var server = chai.request(app).keepOpen()
 
-describe.skip('E2E Test for Multiple Networks', () => {
+describe('E2E Test for Multiple Networks', () => {
   var adminToken
   var userId
   var userToken
@@ -709,7 +709,7 @@ describe.skip('E2E Test for Multiple Networks', () => {
           'networkTypeId': 1,
           'deviceProfileId': lora.loraV1.apps[0].deviceProfileIds[0],
           'networkSettings': {
-            'devEUI': '2345678901234567',
+            'devEUI': '3456789012345678',
             'name': 'BobMouseTrapDeviceLv1',
             'applicationID': '27',
             'description': 'Test Device for E2E',
@@ -852,7 +852,7 @@ describe.skip('E2E Test for Multiple Networks', () => {
           'networkTypeId': 1,
           deviceProfileId: 2,
           'networkSettings': {
-            'devEUI': '2233445566778899',
+            'devEUI': '3344556677889900',
             'name': 'BobMouseTrapDeviceLv2',
             'applicationID': '2',
             'description': 'Test Device for E2E',
@@ -1008,7 +1008,7 @@ describe.skip('E2E Test for Multiple Networks', () => {
           'networkTypeId': 1,
           deviceProfileId: 2,
           'networkSettings': {
-            'devEUI': '2233445566778899',
+            'devEUI': '3344556677889900',
             'name': 'BobMouseTrapDeviceLv2',
             'applicationID': '2',
             'description': 'Test Device for E2E',

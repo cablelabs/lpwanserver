@@ -1,17 +1,14 @@
 version: '2'
 
 services:
-  api-test:
-    image: lpwanserver/api-test
-    environment:
-      - NODE_ENV=e2e
-      - PORT=3200
-      - db_file=data/demo_data/demo.sqlite3
+  loraserver:
+    image: loraserver/loraserver:2
     depends_on:
-      - loraserver1
-      - lora_appserver1
-    ports:
-      - '3200:3200'
+      - postgresql
+      - redis
+      - mosquitto
+    volumes:
+      - ./configuration/loraserver:/etc/loraserver
 
   loraserver1:
     image: loraserver/loraserver:1
@@ -20,7 +17,18 @@ services:
       - redis
       - mosquitto
     volumes:
-      - ./configuration/loraserver_1:/etc/loraserver
+    - ./configuration/loraserver_1:/etc/loraserver
+
+  lora_appserver:
+    image: loraserver/lora-app-server:2
+    depends_on:
+      - postgresql
+      - redis
+      - mosquitto
+    ports:
+      - 8080:8080
+    volumes:
+      - ./configuration/lora-app-server:/etc/lora-app-server
 
   lora_appserver1:
     image: loraserver/lora-app-server:1
@@ -38,14 +46,12 @@ services:
     ports:
       - 5432
     volumes:
-      - ./configuration/postgresql/initdb-demo:/docker-entrypoint-initdb.d
+      - ./configuration/postgresql/initdb:/docker-entrypoint-initdb.d
 
   redis:
     ports:
       - 6379
     image: redis:4-alpine
-    volumes:
-      - ../data/demo_data/redis:/data
 
   mosquitto:
     image: eclipse-mosquitto

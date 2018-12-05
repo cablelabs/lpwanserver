@@ -125,7 +125,7 @@ describe('E2E Test for Adding a Device to an Existing Application Use Case #190'
         })
     })
   })
-  describe('Setup Networks', () => {
+  describe.skip('Setup Networks', () => {
     describe('Setup Lora 1.0 Network', () => {
       it('Verify LoraOS 1.0 Protocol Exists', (done) => {
         server

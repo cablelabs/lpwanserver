@@ -1,4 +1,8 @@
 #!/usr/bin/env bash
 
+docker system prune --force
+
 # Run docker-compose with development configuration
-docker-compose -f docker/dev/docker-compose.yml up --build
+docker-compose \
+  -f ./docker/docker-compose.loraserver.yml \
+  -f ./docker/docker-compose.dev.yml up
