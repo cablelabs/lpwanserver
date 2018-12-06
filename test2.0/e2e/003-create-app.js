@@ -83,8 +83,7 @@ describe('E2E Test for Creating an Application Use Case #188', () => {
   before((done) => {
     setup.start()
       .then(() => {
-        // wait on the  postgress to come up
-        setTimeout(done, 100)
+        done()
       })
       .catch((err) => {
         done(err)

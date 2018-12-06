@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 var assert = require('assert')
 var chai = require('chai')
 var chaiHttp = require('chai-http')
@@ -9,6 +10,8 @@ var request = require('request')
 
 chai.use(chaiHttp)
 var server = chai.request(app).keepOpen()
+
+var testTTN = false
 
 describe('E2E Test for Multiple Networks', () => {
   var adminToken
@@ -41,7 +44,10 @@ describe('E2E Test for Multiple Networks', () => {
   before((done) => {
     setup.start()
       .then(() => {
-        done()
+        if (process.env.TTN === 'true') {
+          testTTN = true
+        }
+        setTimeout(done, 10000)
       })
       .catch((err) => {
         done(err)
@@ -233,73 +239,75 @@ describe('E2E Test for Multiple Networks', () => {
       })
     })
     describe('Setup TTN Network', () => {
-      it('Verify TTN Protocol Exists', (done) => {
-        server
-          .get('/api/networkProtocols?search=The Things Network&networkProtocolVersion=2.0')
-          .set('Authorization', 'Bearer ' + adminToken)
-          .set('Content-Type', 'application/json')
-          .end(function (err, res) {
-            if (err) done(err)
-            res.should.have.status(200)
-            var result = JSON.parse(res.text)
-            appLogger.log(result)
-            result.records.should.be.instanceof(Array)
-            result.records.should.have.length(1)
-            result.totalCount.should.equal(1)
-            result.records[0].should.have.property('networkProtocolVersion')
-            result.records[0].networkProtocolVersion.should.equal('2.0')
-            lora.ttn.protocolId = result.records[0].id
-            done()
-          })
-      })
-      it('Create the Local TTN 2.0 Network', (done) => {
-        server
-          .post('/api/networks')
-          .set('Authorization', 'Bearer ' + adminToken)
-          .set('Content-Type', 'application/json')
-          .send({
-            'name': 'LocalTTN',
-            'networkProviderId': -1,
-            'networkTypeId': 1,
-            'baseUrl': 'https://account.thethingsnetwork.org',
-            'networkProtocolId': lora.ttn.protocolId,
-            'securityData': {
-              authorized: false,
-              username: 'dschrimpsherr',
-              password: 'Ultimum01',
-              clientId: 'lpwan-test-3',
-              clientSecret: 'ltMSL0cmIVkzBYQZndZ8slzF37qLMjRm7sXXt4qcekyCq3YEoLMf9rQr'
-            }
-          })
-          .end(function (err, res) {
-            if (err) done(err)
-            res.should.have.status(201)
-            var network = JSON.parse(res.text)
-            appLogger.log(network)
-            network.securityData.authorized.should.equal(true)
-            network.securityData.message.should.equal('ok')
-            lora.ttn.networkId = network.id
-            done()
-          })
-      })
-      it('Get Network', (done) => {
-        server
-          .get('/api/networks/' + lora.ttn.networkId)
-          .set('Authorization', 'Bearer ' + adminToken)
-          .set('Content-Type', 'application/json')
-          .send()
-          .end(function (err, res) {
-            if (err) done(err)
-            res.should.have.status(200)
-            var network = JSON.parse(res.text)
-            network.name.should.equal('LocalTTN')
-            network.baseUrl.should.equal('https://account.thethingsnetwork.org')
-            network.securityData.authorized.should.equal(true)
-            network.securityData.message.should.equal('ok')
-            network.securityData.enabled.should.equal(true)
-            done()
-          })
-      })
+      if (testTTN) {
+        it('Verify TTN Protocol Exists', (done) => {
+          server
+            .get('/api/networkProtocols?search=The Things Network&networkProtocolVersion=2.0')
+            .set('Authorization', 'Bearer ' + adminToken)
+            .set('Content-Type', 'application/json')
+            .end(function (err, res) {
+              if (err) done(err)
+              res.should.have.status(200)
+              var result = JSON.parse(res.text)
+              appLogger.log(result)
+              result.records.should.be.instanceof(Array)
+              result.records.should.have.length(1)
+              result.totalCount.should.equal(1)
+              result.records[0].should.have.property('networkProtocolVersion')
+              result.records[0].networkProtocolVersion.should.equal('2.0')
+              lora.ttn.protocolId = result.records[0].id
+              done()
+            })
+        })
+        it('Create the Local TTN 2.0 Network', (done) => {
+          server
+            .post('/api/networks')
+            .set('Authorization', 'Bearer ' + adminToken)
+            .set('Content-Type', 'application/json')
+            .send({
+              'name': 'LocalTTN',
+              'networkProviderId': -1,
+              'networkTypeId': 1,
+              'baseUrl': 'https://account.thethingsnetwork.org',
+              'networkProtocolId': lora.ttn.protocolId,
+              'securityData': {
+                authorized: false,
+                username: 'dschrimpsherr',
+                password: 'Ultimum01',
+                clientId: 'lpwan-test-3',
+                clientSecret: 'ltMSL0cmIVkzBYQZndZ8slzF37qLMjRm7sXXt4qcekyCq3YEoLMf9rQr'
+              }
+            })
+            .end(function (err, res) {
+              if (err) done(err)
+              res.should.have.status(201)
+              var network = JSON.parse(res.text)
+              appLogger.log(network)
+              network.securityData.authorized.should.equal(true)
+              network.securityData.message.should.equal('ok')
+              lora.ttn.networkId = network.id
+              done()
+            })
+        })
+        it('Get Network', (done) => {
+          server
+            .get('/api/networks/' + lora.ttn.networkId)
+            .set('Authorization', 'Bearer ' + adminToken)
+            .set('Content-Type', 'application/json')
+            .send()
+            .end(function (err, res) {
+              if (err) done(err)
+              res.should.have.status(200)
+              var network = JSON.parse(res.text)
+              network.name.should.equal('LocalTTN')
+              network.baseUrl.should.equal('https://account.thethingsnetwork.org')
+              network.securityData.authorized.should.equal(true)
+              network.securityData.message.should.equal('ok')
+              network.securityData.enabled.should.equal(true)
+              done()
+            })
+        })
+      }
     })
   })
   describe('After “authorized” network, automatically pulls the devices & applications', () => {
@@ -344,24 +352,26 @@ describe('E2E Test for Multiple Networks', () => {
       })
     })
     describe('TTN 2.0', () => {
-      it('Verify the Cablelabs Organization was Created', (done) => {
-        server
-          .get('/api/companies')
-          .set('Authorization', 'Bearer ' + adminToken)
-          .set('Content-Type', 'application/json')
-          .end(function (err, res) {
-            if (err) done(err)
-            res.should.have.status(200)
-            res.should.have.property('text')
-            var companies = JSON.parse(res.text)
-            companies.should.have.property('totalCount')
-            companies.should.have.property('records')
-            companies.totalCount.should.equal(2)
-            companies.records[0].name.should.equal('cl-admin')
-            companies.records[1].name.should.equal('cablelabs')
-            done()
-          })
-      })
+      if (testTTN) {
+        it('Verify the Cablelabs Organization was Created', (done) => {
+          server
+            .get('/api/companies')
+            .set('Authorization', 'Bearer ' + adminToken)
+            .set('Content-Type', 'application/json')
+            .end(function (err, res) {
+              if (err) done(err)
+              res.should.have.status(200)
+              res.should.have.property('text')
+              var companies = JSON.parse(res.text)
+              companies.should.have.property('totalCount')
+              companies.should.have.property('records')
+              companies.totalCount.should.equal(2)
+              companies.records[0].name.should.equal('cl-admin')
+              companies.records[1].name.should.equal('cablelabs')
+              done()
+            })
+        })
+      }
     })
 
     describe('Lora 1.0 Application Verification', () => {
@@ -447,7 +457,7 @@ describe('E2E Test for Multiple Networks', () => {
             }
             should.exist(appNTL)
             appLogger.log(appNTL)
-            //appNTL.should.eql(expected)
+            // appNTL.should.eql(expected)
             lora.loraV1.apps[0].appNTLId = appNTL.id
             done()
           })
@@ -544,68 +554,70 @@ describe('E2E Test for Multiple Networks', () => {
       })
     })
     describe('TTN Application Verification', () => {
-      it('Verify the Test Application was Created', (done) => {
-        server
-          .get('/api/applications')
-          .set('Authorization', 'Bearer ' + adminToken)
-          .set('Content-Type', 'application/json')
-          .end(function (err, res) {
-            if (err) return done(err)
-            res.should.have.status(200)
-            res.should.have.property('text')
-            var applications = JSON.parse(res.text)
-            applications.should.have.property('totalCount')
-            applications.should.have.property('records')
-            appLogger.log(applications, 'error')
-            let application = applications.records.find(x => x.name === 'cablelabs-prototype')
-            should.exist(application)
-            appLogger.log(application)
-            application.name.should.equal('cablelabs-prototype')
-            application.description.should.equal('Prototype Application for CableLabs Trial')
-            lora.ttn.apps.push({
-              appId: application.id,
-              appNTLId: '',
-              deviceIds: [],
-              deviceProfileIds: [],
-              deviceNTLIds: []
+      if (testTTN) {
+        it('Verify the Test Application was Created', (done) => {
+          server
+            .get('/api/applications')
+            .set('Authorization', 'Bearer ' + adminToken)
+            .set('Content-Type', 'application/json')
+            .end(function (err, res) {
+              if (err) return done(err)
+              res.should.have.status(200)
+              res.should.have.property('text')
+              var applications = JSON.parse(res.text)
+              applications.should.have.property('totalCount')
+              applications.should.have.property('records')
+              appLogger.log(applications, 'error')
+              let application = applications.records.find(x => x.name === 'cablelabs-prototype')
+              should.exist(application)
+              appLogger.log(application)
+              application.name.should.equal('cablelabs-prototype')
+              application.description.should.equal('Prototype Application for CableLabs Trial')
+              lora.ttn.apps.push({
+                appId: application.id,
+                appNTLId: '',
+                deviceIds: [],
+                deviceProfileIds: [],
+                deviceNTLIds: []
+              })
+              done()
             })
-            done()
-          })
-      })
-      it('Verify the Test Application NTL was Created', (done) => {
-        let expected = {
-          'applicationId': 3,
-          'id': 3,
-          'networkSettings': {
-            'description': 'Prototype Application for CableLabs Trial',
-            'id': 'cablelabs-prototype',
-            'key': 'ttn-account-v2.oJPyRNrsSFr5ukIcN4hRQI1DPjF5LczGi_pPbF4Rmg4',
-            'name': 'cablelabs-prototype',
-            'organizationID': 'dschrimpsherr',
-            'payloadCodec': 'cayennelpp',
-            'serviceProfileID': 'ttn-handler-us-west'
-          },
-          'networkTypeId': 1
-        }
+        })
+        it('Verify the Test Application NTL was Created', (done) => {
+          let expected = {
+            'applicationId': 3,
+            'id': 3,
+            'networkSettings': {
+              'description': 'Prototype Application for CableLabs Trial',
+              'id': 'cablelabs-prototype',
+              'key': 'ttn-account-v2.oJPyRNrsSFr5ukIcN4hRQI1DPjF5LczGi_pPbF4Rmg4',
+              'name': 'cablelabs-prototype',
+              'organizationID': 'dschrimpsherr',
+              'payloadCodec': 'cayennelpp',
+              'serviceProfileID': 'ttn-handler-us-west'
+            },
+            'networkTypeId': 1
+          }
 
-        appLogger.log(lora.ttn)
-        should.exist(lora.ttn.apps[0].appId)
-        server
-          .get('/api/applicationNetworkTypeLinks/' + lora.ttn.apps[0].appId)
-          .set('Authorization', 'Bearer ' + adminToken)
-          .set('Content-Type', 'application/json')
-          .end(function (err, res) {
-            if (err) done(err)
-            res.should.have.status(200)
-            res.should.have.property('text')
-            let appNTL = JSON.parse(res.text)
-            should.exist(appNTL)
-            appLogger.log(appNTL)
-            // appNTL.should.eql(expected)
-            lora.ttn.apps[0].appNTLId = appNTL.id
-            done()
-          })
-      })
+          appLogger.log(lora.ttn)
+          should.exist(lora.ttn.apps[0].appId)
+          server
+            .get('/api/applicationNetworkTypeLinks/' + lora.ttn.apps[0].appId)
+            .set('Authorization', 'Bearer ' + adminToken)
+            .set('Content-Type', 'application/json')
+            .end(function (err, res) {
+              if (err) done(err)
+              res.should.have.status(200)
+              res.should.have.property('text')
+              let appNTL = JSON.parse(res.text)
+              should.exist(appNTL)
+              appLogger.log(appNTL)
+              // appNTL.should.eql(expected)
+              lora.ttn.apps[0].appNTLId = appNTL.id
+              done()
+            })
+        })
+      }
     })
 
     describe('Lora 1.0 Device Verification', () => {
@@ -901,162 +913,164 @@ describe('E2E Test for Multiple Networks', () => {
       })
     })
     describe('TTN Device Verification', () => {
-      it('Verify the Test1 Device Profile was Created', (done) => {
-        let expected = {
-          'id': 3,
-          'networkTypeId': 1,
-          'companyId': 2,
-          'name': 'CableLabs TTN Device ABP',
-          'networkSettings': {
-            'id': 'cl-weather-station-profile',
+      if (testTTN) {
+        it('Verify the Test1 Device Profile was Created', (done) => {
+          let expected = {
+            'id': 3,
+            'networkTypeId': 1,
+            'companyId': 2,
             'name': 'CableLabs TTN Device ABP',
-            'supportsClassB': false,
-            'classBTimeout': 0,
-            'pingSlotPeriod': 0,
-            'pingSlotDR': 0,
-            'pingSlotFreq': 0,
-            'supportsClassC': false,
-            'classCTimeout': 0,
-            'macVersion': '1.0.0',
-            'regParamsRevision': 'A',
-            'rxDelay1': 0,
-            'rxDROffset1': 0,
-            'rxDataRate2': 0,
-            'rxFreq2': 0,
-            'factoryPresetFreqs': [],
-            'maxEIRP': 0,
-            'networkServerID': 'ttn-handler-us-west',
-            'organizationID': 'dschrimpsherr',
-            'supportsJoin': false,
-            'rfRegion': 'US902'
-          },
-          'description': 'Device Profile managed by LPWAN Server, perform changes via LPWAN'
-        }
-        server
-          .get('/api/deviceProfiles')
-          .set('Authorization', 'Bearer ' + adminToken)
-          .set('Content-Type', 'application/json')
-          .end(function (err, res) {
-            if (err) done(err)
-            res.should.have.status(200)
-            res.should.have.property('text')
-            let deviceProfiles = JSON.parse(res.text)
-            deviceProfiles.should.have.property('totalCount')
-            deviceProfiles.should.have.property('records')
-            // deviceProfiles.totalCount.should.equal(2)
-            let deviceProfile1 = {}
-            let deviceProfile2 = {}
-            for (let index = 0; index < deviceProfiles.records.length; index++) {
-              if (deviceProfiles.records[index].name === 'CableLabs TTN Device ABP') {
-                deviceProfile1 = deviceProfiles.records[index]
+            'networkSettings': {
+              'id': 'cl-weather-station-profile',
+              'name': 'CableLabs TTN Device ABP',
+              'supportsClassB': false,
+              'classBTimeout': 0,
+              'pingSlotPeriod': 0,
+              'pingSlotDR': 0,
+              'pingSlotFreq': 0,
+              'supportsClassC': false,
+              'classCTimeout': 0,
+              'macVersion': '1.0.0',
+              'regParamsRevision': 'A',
+              'rxDelay1': 0,
+              'rxDROffset1': 0,
+              'rxDataRate2': 0,
+              'rxFreq2': 0,
+              'factoryPresetFreqs': [],
+              'maxEIRP': 0,
+              'networkServerID': 'ttn-handler-us-west',
+              'organizationID': 'dschrimpsherr',
+              'supportsJoin': false,
+              'rfRegion': 'US902'
+            },
+            'description': 'Device Profile managed by LPWAN Server, perform changes via LPWAN'
+          }
+          server
+            .get('/api/deviceProfiles')
+            .set('Authorization', 'Bearer ' + adminToken)
+            .set('Content-Type', 'application/json')
+            .end(function (err, res) {
+              if (err) done(err)
+              res.should.have.status(200)
+              res.should.have.property('text')
+              let deviceProfiles = JSON.parse(res.text)
+              deviceProfiles.should.have.property('totalCount')
+              deviceProfiles.should.have.property('records')
+              // deviceProfiles.totalCount.should.equal(2)
+              let deviceProfile1 = {}
+              let deviceProfile2 = {}
+              for (let index = 0; index < deviceProfiles.records.length; index++) {
+                if (deviceProfiles.records[index].name === 'CableLabs TTN Device ABP') {
+                  deviceProfile1 = deviceProfiles.records[index]
+                }
+                else if (deviceProfiles.records[index].name === 'TTN Device Using OTAA') {
+                  deviceProfile2 = deviceProfiles.records[index]
+                }
               }
-              else if (deviceProfiles.records[index].name === 'TTN Device Using OTAA') {
-                deviceProfile2 = deviceProfiles.records[index]
-              }
-            }
-            should.exist(deviceProfile1)
-            should.exist(deviceProfile2)
-            // deviceProfile.should.eql(expected)
-            lora.ttn.apps[0].deviceProfileIds.push(deviceProfile1.id)
-            lora.ttn.apps[0].deviceProfileIds.push(deviceProfile2.id)
-            done()
-          })
-      })
-      it('Verify the Test Device was Created', (done) => {
-        let expected = {
-          'id': 3,
-          'applicationId': lora.ttn.apps[0].appId,
-          'name': 'BobMouseTrapDeviceLv2',
-          'deviceModel': null,
-          'description': 'Test Device for E2E'
-        }
-        server
-          .get('/api/devices')
-          .set('Authorization', 'Bearer ' + adminToken)
-          .set('Content-Type', 'application/json')
-          .end(function (err, res) {
-            if (err) done(err)
-            res.should.have.status(200)
-            res.should.have.property('text')
-            let devices = JSON.parse(res.text)
-            devices.should.have.property('totalCount')
-            devices.should.have.property('records')
-            appLogger.log(devices)
-            // devices.totalCount.should.equal(2)
-            let device1 = {}
-            let device2 = {}
-            for (let index = 0; index < devices.records.length; index++) {
-              if (devices.records[index].name === '00B7641AD008A5FC') {
-                device1 = devices.records[index]
-              }
-              else if (devices.records[index].name === '1234567890987654') {
-                device2 = devices.records[index]
-              }
-            }
-            should.exist(device1)
-            should.exist(device2)
-            lora.ttn.apps[0].deviceIds.push(device1.id)
-            lora.ttn.apps[0].deviceIds.push(device2.id)
-
-            done()
-          })
-      })
-      it('Verify the Test Device NTL was Created', (done) => {
-        let expected = {
-          'id': 2,
-          'deviceId': lora.loraV2.apps[0].deviceIds[0],
-          'networkTypeId': 1,
-          deviceProfileId: 2,
-          'networkSettings': {
-            'devEUI': '3344556677889900',
+              should.exist(deviceProfile1)
+              should.exist(deviceProfile2)
+              // deviceProfile.should.eql(expected)
+              lora.ttn.apps[0].deviceProfileIds.push(deviceProfile1.id)
+              lora.ttn.apps[0].deviceProfileIds.push(deviceProfile2.id)
+              done()
+            })
+        })
+        it('Verify the Test Device was Created', (done) => {
+          let expected = {
+            'id': 3,
+            'applicationId': lora.ttn.apps[0].appId,
             'name': 'BobMouseTrapDeviceLv2',
-            'applicationID': '2',
-            'description': 'Test Device for E2E',
-            'deviceProfileID': '9dd538e8-a231-4a35-8823-eecbffb9d4a9',
-            'skipFCntCheck': false,
-            'deviceStatusBattery': 256,
-            'deviceStatusMargin': 256,
-            'lastSeenAt': null,
-            'deviceActivation': {
-              'aFCntDown': 0,
-              'appSKey': '204bc999b089983dceaef567d111722c',
-              'devAddr': '013ac7fe',
-              'devEUI': '',
-              'fCntUp': 0,
-              'fNwkSIntKey': 'a27bd1658d6ae4ed8d4e6d35a4857960',
-              'nFCntDown': 0,
-              'nwkSEncKey': 'a27bd1658d6ae4ed8d4e6d35a4857960',
-              'sNwkSIntKey': 'a27bd1658d6ae4ed8d4e6d35a4857960'
+            'deviceModel': null,
+            'description': 'Test Device for E2E'
+          }
+          server
+            .get('/api/devices')
+            .set('Authorization', 'Bearer ' + adminToken)
+            .set('Content-Type', 'application/json')
+            .end(function (err, res) {
+              if (err) done(err)
+              res.should.have.status(200)
+              res.should.have.property('text')
+              let devices = JSON.parse(res.text)
+              devices.should.have.property('totalCount')
+              devices.should.have.property('records')
+              appLogger.log(devices)
+              // devices.totalCount.should.equal(2)
+              let device1 = {}
+              let device2 = {}
+              for (let index = 0; index < devices.records.length; index++) {
+                if (devices.records[index].name === '00B7641AD008A5FC') {
+                  device1 = devices.records[index]
+                }
+                else if (devices.records[index].name === '1234567890987654') {
+                  device2 = devices.records[index]
+                }
+              }
+              should.exist(device1)
+              should.exist(device2)
+              lora.ttn.apps[0].deviceIds.push(device1.id)
+              lora.ttn.apps[0].deviceIds.push(device2.id)
+
+              done()
+            })
+        })
+        it('Verify the Test Device NTL was Created', (done) => {
+          let expected = {
+            'id': 2,
+            'deviceId': lora.loraV2.apps[0].deviceIds[0],
+            'networkTypeId': 1,
+            deviceProfileId: 2,
+            'networkSettings': {
+              'devEUI': '3344556677889900',
+              'name': 'BobMouseTrapDeviceLv2',
+              'applicationID': '2',
+              'description': 'Test Device for E2E',
+              'deviceProfileID': '9dd538e8-a231-4a35-8823-eecbffb9d4a9',
+              'skipFCntCheck': false,
+              'deviceStatusBattery': 256,
+              'deviceStatusMargin': 256,
+              'lastSeenAt': null,
+              'deviceActivation': {
+                'aFCntDown': 0,
+                'appSKey': '204bc999b089983dceaef567d111722c',
+                'devAddr': '013ac7fe',
+                'devEUI': '',
+                'fCntUp': 0,
+                'fNwkSIntKey': 'a27bd1658d6ae4ed8d4e6d35a4857960',
+                'nFCntDown': 0,
+                'nwkSEncKey': 'a27bd1658d6ae4ed8d4e6d35a4857960',
+                'sNwkSIntKey': 'a27bd1658d6ae4ed8d4e6d35a4857960'
+              }
             }
           }
-        }
-        server
-          .get('/api/deviceNetworkTypeLinks')
-          .set('Authorization', 'Bearer ' + adminToken)
-          .set('Content-Type', 'application/json')
-          .end(function (err, res) {
-            if (err) done(err)
-            res.should.have.status(200)
-            res.should.have.property('text')
-            let deviceNTLs = JSON.parse(res.text)
-            deviceNTLs.should.have.property('totalCount')
-            deviceNTLs.should.have.property('records')
-            appLogger.log(deviceNTLs)
+          server
+            .get('/api/deviceNetworkTypeLinks')
+            .set('Authorization', 'Bearer ' + adminToken)
+            .set('Content-Type', 'application/json')
+            .end(function (err, res) {
+              if (err) done(err)
+              res.should.have.status(200)
+              res.should.have.property('text')
+              let deviceNTLs = JSON.parse(res.text)
+              deviceNTLs.should.have.property('totalCount')
+              deviceNTLs.should.have.property('records')
+              appLogger.log(deviceNTLs)
 
-            // deviceNTLs.totalCount.should.equal(2)
-            let deviceNTL = {}
-            for (let index = 0; index < deviceNTLs.records.length; index++) {
-              if (deviceNTLs.records[index].deviceId === lora.loraV2.apps[0].deviceIds[0]) {
-                deviceNTL = deviceNTLs.records[index]
+              // deviceNTLs.totalCount.should.equal(2)
+              let deviceNTL = {}
+              for (let index = 0; index < deviceNTLs.records.length; index++) {
+                if (deviceNTLs.records[index].deviceId === lora.loraV2.apps[0].deviceIds[0]) {
+                  deviceNTL = deviceNTLs.records[index]
+                }
               }
-            }
-            should.exist(deviceNTL)
-            appLogger.log(deviceNTL)
-            // deviceNTL.should.eql(expected)
-            lora.ttn.apps[0].deviceNTLIds.push(deviceNTL.id)
-            done()
-          })
-      })
+              should.exist(deviceNTL)
+              appLogger.log(deviceNTL)
+              // deviceNTL.should.eql(expected)
+              lora.ttn.apps[0].deviceNTLIds.push(deviceNTL.id)
+              done()
+            })
+        })
+      }
     })
   })
 })
