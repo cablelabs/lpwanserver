@@ -14,10 +14,10 @@ var server = chai.request(app).keepOpen()
 var testTTN = false
 
 describe('E2E Test for Multiple Networks', () => {
-  var adminToken
-  var userId
-  var userToken
-  var lora = {
+  let adminToken
+  let userId
+  let userToken
+  let lora = {
     loraV1: {
       protocolId: '',
       networkId: '',
@@ -40,13 +40,13 @@ describe('E2E Test for Multiple Networks', () => {
 
     }
   }
+  if (process.env.TTN === 'true') {
+    testTTN = true
+  }
 
   before((done) => {
     setup.start()
       .then(() => {
-        if (process.env.TTN === 'true') {
-          testTTN = true
-        }
         setTimeout(done, 10000)
       })
       .catch((err) => {
@@ -75,7 +75,7 @@ describe('E2E Test for Multiple Networks', () => {
         .end(function (err, res) {
           if (err) done(err)
           res.should.have.status(200)
-          var ret = JSON.parse(res.text)
+          let ret = JSON.parse(res.text)
           ret.should.have.property('id')
           userId = ret.id
           done()
@@ -90,7 +90,7 @@ describe('E2E Test for Multiple Networks', () => {
         .end(function (err, res) {
           if (err) done(err)
           res.should.have.status(200)
-          var userObj = JSON.parse(res.text)
+          let userObj = JSON.parse(res.text)
           userObj.username.should.equal('bobmouse')
           userObj.role.should.equal('user')
           done()
@@ -119,7 +119,7 @@ describe('E2E Test for Multiple Networks', () => {
           .end(function (err, res) {
             if (err) done(err)
             res.should.have.status(200)
-            var result = JSON.parse(res.text)
+            let result = JSON.parse(res.text)
             appLogger.log(result)
             result.records.should.be.instanceof(Array)
             result.records.should.have.length(1)
@@ -146,7 +146,7 @@ describe('E2E Test for Multiple Networks', () => {
           .end(function (err, res) {
             if (err) done(err)
             res.should.have.status(201)
-            var network = JSON.parse(res.text)
+            let network = JSON.parse(res.text)
             appLogger.log(network)
             network.securityData.authorized.should.equal(true)
             network.securityData.message.should.equal('ok')
@@ -164,7 +164,7 @@ describe('E2E Test for Multiple Networks', () => {
           .end(function (err, res) {
             if (err) done(err)
             res.should.have.status(200)
-            var network = JSON.parse(res.text)
+            let network = JSON.parse(res.text)
             network.name.should.equal('LocalLoraOS1_0')
             network.baseUrl.should.equal('https://lora_appserver1:8080/api')
             network.securityData.authorized.should.equal(true)
@@ -183,7 +183,7 @@ describe('E2E Test for Multiple Networks', () => {
           .end(function (err, res) {
             if (err) done(err)
             res.should.have.status(200)
-            var result = JSON.parse(res.text)
+            let result = JSON.parse(res.text)
             appLogger.log(result)
             result.records.should.be.instanceof(Array)
             result.records.should.have.length(1)
@@ -210,7 +210,7 @@ describe('E2E Test for Multiple Networks', () => {
           .end(function (err, res) {
             if (err) done(err)
             res.should.have.status(201)
-            var network = JSON.parse(res.text)
+            let network = JSON.parse(res.text)
             appLogger.log(network)
             network.securityData.authorized.should.equal(true)
             network.securityData.message.should.equal('ok')
@@ -228,7 +228,7 @@ describe('E2E Test for Multiple Networks', () => {
           .end(function (err, res) {
             if (err) done(err)
             res.should.have.status(200)
-            var network = JSON.parse(res.text)
+            let network = JSON.parse(res.text)
             network.name.should.equal('LocalLoraOS2_0')
             network.baseUrl.should.equal('https://lora_appserver:8080/api')
             network.securityData.authorized.should.equal(true)
@@ -248,7 +248,7 @@ describe('E2E Test for Multiple Networks', () => {
             .end(function (err, res) {
               if (err) done(err)
               res.should.have.status(200)
-              var result = JSON.parse(res.text)
+              let result = JSON.parse(res.text)
               appLogger.log(result)
               result.records.should.be.instanceof(Array)
               result.records.should.have.length(1)
@@ -281,7 +281,7 @@ describe('E2E Test for Multiple Networks', () => {
             .end(function (err, res) {
               if (err) done(err)
               res.should.have.status(201)
-              var network = JSON.parse(res.text)
+              let network = JSON.parse(res.text)
               appLogger.log(network)
               network.securityData.authorized.should.equal(true)
               network.securityData.message.should.equal('ok')
@@ -298,7 +298,7 @@ describe('E2E Test for Multiple Networks', () => {
             .end(function (err, res) {
               if (err) done(err)
               res.should.have.status(200)
-              var network = JSON.parse(res.text)
+              let network = JSON.parse(res.text)
               network.name.should.equal('LocalTTN')
               network.baseUrl.should.equal('https://account.thethingsnetwork.org')
               network.securityData.authorized.should.equal(true)
@@ -321,7 +321,7 @@ describe('E2E Test for Multiple Networks', () => {
             if (err) done(err)
             res.should.have.status(200)
             res.should.have.property('text')
-            var companies = JSON.parse(res.text)
+            let companies = JSON.parse(res.text)
             companies.should.have.property('totalCount')
             companies.should.have.property('records')
             companies.totalCount.should.equal(2)
@@ -341,7 +341,7 @@ describe('E2E Test for Multiple Networks', () => {
             if (err) done(err)
             res.should.have.status(200)
             res.should.have.property('text')
-            var companies = JSON.parse(res.text)
+            let companies = JSON.parse(res.text)
             companies.should.have.property('totalCount')
             companies.should.have.property('records')
             companies.totalCount.should.equal(2)
@@ -362,7 +362,7 @@ describe('E2E Test for Multiple Networks', () => {
               if (err) done(err)
               res.should.have.status(200)
               res.should.have.property('text')
-              var companies = JSON.parse(res.text)
+              let companies = JSON.parse(res.text)
               companies.should.have.property('totalCount')
               companies.should.have.property('records')
               companies.totalCount.should.equal(2)
@@ -384,7 +384,7 @@ describe('E2E Test for Multiple Networks', () => {
             if (err) done(err)
             res.should.have.status(200)
             res.should.have.property('text')
-            var applications = JSON.parse(res.text)
+            let applications = JSON.parse(res.text)
             appLogger.log(applications)
             applications.should.have.property('totalCount')
             applications.should.have.property('records')
@@ -473,7 +473,7 @@ describe('E2E Test for Multiple Networks', () => {
             if (err) done(err)
             res.should.have.status(200)
             res.should.have.property('text')
-            var applications = JSON.parse(res.text)
+            let applications = JSON.parse(res.text)
             applications.should.have.property('totalCount')
             applications.should.have.property('records')
             appLogger.log(applications, 'error')
@@ -564,7 +564,7 @@ describe('E2E Test for Multiple Networks', () => {
               if (err) return done(err)
               res.should.have.status(200)
               res.should.have.property('text')
-              var applications = JSON.parse(res.text)
+              let applications = JSON.parse(res.text)
               applications.should.have.property('totalCount')
               applications.should.have.property('records')
               appLogger.log(applications, 'error')
