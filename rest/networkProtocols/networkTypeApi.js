@@ -228,12 +228,12 @@ NetworkTypeApi.prototype.addApplication = function (networkTypeId, applicationId
 //                 network.
 //
 // Returns a Promise that pushes changes to the remote network of type.
-NetworkTypeApi.prototype.pushApplication = function (networkTypeId, applicationId) {
+NetworkTypeApi.prototype.pushApplication = function (networkTypeId, application) {
   return createPromiseOperationForNetworksOfType(
     'Push Application',
     networkTypeId,
     function (npda, network) {
-      return protos.pushApplication(npda, network, applicationId)
+      return protos.pushApplication(npda, network, application)
     })
 }
 
