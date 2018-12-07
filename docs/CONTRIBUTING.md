@@ -52,6 +52,6 @@ Some useful resources to get started:
 - [LPWAN Server license][11]
 - Project [website][12]
 
-[10]: README.md
+[10]: ../README.md
 [11]: LICENSE
 [12]: http://lpwanserver.com/
