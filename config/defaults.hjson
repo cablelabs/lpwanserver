@@ -6,7 +6,7 @@
     ///////////////////////////////////////////////////////////////////////////
     // Log format for morgan.  If commented out, no API access logging is
     // performed.  Not logging can be useful for running the test scripts.
-    //log_format_morgan: dev
+    log_format_morgan: dev
 
     // General log settings.  Enable logs in general.
     logging_enabled: true
@@ -34,7 +34,7 @@
     // URL settings
     ////////////////////////////////////////////////////////////
     // The numeric IP address to bind the server's listener to.
-    bind_address: "mercury.schrimpsher.com"
+    bind_address: "127.0.0.1"
 
     // The port to bind the listener to.
     port: 3200
@@ -48,14 +48,14 @@
     // to verify user email addresses or pointers back to us for data delivery.
     // Note that this could differ from the binding port above due to
     // redirection through apache, etc.
-    base_url: http://192.168.0.146:3200/
+    base_url: http://localhost:3200/
 
     /////////////////////////////////////////////////////////////
     // The implementation of Data Access Objects to use.
     // Found in the subdirectory of rest/models/dao
     /////////////////////////////////////////////////////////////
     // The directory to grab the DAO implementations from
-    impl_directory: ../../../test/ttn-unit
+    impl_directory: production
 
     //////////////////////////////////////////////////////////
     // Database settings
@@ -64,12 +64,11 @@
     // Create a new database at startup?
     db_create: false
     // The database file to use.
-    db_file: test/lpwanserver.sqlite3
+    db_file: data/test.sqlite3.testSuiteStartingDB
 
     //////////////////////////////////////////////////////////
     // CORS settings
     //////////////////////////////////////////////////////////
     // Whitelist allowing remote access - an array of strings.
     cors_whitelist: [ '.*' ]
-
 }
