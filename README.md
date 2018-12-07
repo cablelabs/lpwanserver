@@ -20,6 +20,12 @@ guide.
 For development and customization, refer to the
 [install documentation](http://lpwanserver.com/install/).
 
+## Web Client
+
+The official LPWAN Server web client is maintained in the
+[lpwanserver-web-client](https://github.com/cablelabs/lpwanserver-web-client)
+repository.
+
 ## Contributing
 
 LPWAN Server was originally built by [CableLabs](http://cablelabs.com/), but
