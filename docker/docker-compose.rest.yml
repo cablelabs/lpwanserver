@@ -7,8 +7,7 @@ services:
       - loraserver
       - lora_appserver
     environment:
-      - NODE_ENV=local
-      - PORT=3200
+      - port=3200
     ports:
       - 3200:3200
     network_mode: host

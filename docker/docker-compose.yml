@@ -7,8 +7,7 @@ services:
       - loraserver
       - lora_appserver
     environment:
-      - NODE_ENV=local
-      - PORT=3200
+      - port=3200
       - db_file=data/demo_data/demo.sqlite3
     ports:
       - 3200:3200
