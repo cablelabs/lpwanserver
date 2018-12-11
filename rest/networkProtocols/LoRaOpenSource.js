@@ -1422,7 +1422,7 @@ module.exports.pushDevices = function (sessionData, network, modelAPI, dataAPI) 
     let existingDevices = await modelAPI.devices.retrieveDevices()
     let promiseList = []
     for (let index = 0; index < existingDevices.records.length; index++) {
-      promiseList.push(me.pushDevice(sessionData, network, existingDevices.records[index], dataAPI))
+      promiseList.push(me.pushDevice(sessionData, network, existingDevices.records[index], dataAPI, false))
     }
     Promise.all(promiseList)
       .then(pushedResources => {
@@ -1436,8 +1436,9 @@ module.exports.pushDevices = function (sessionData, network, modelAPI, dataAPI) 
   })
 }
 
-module.exports.pushDevice = function (sessionData, network, device, dataAPI) {
+module.exports.pushDevice = function (sessionData, network, device, dataAPI, update = true) {
   let me = this
+  appLogger.log('Hello?')
   return new Promise(async function (resolve, reject) {
     // See if it already exists
     dataAPI.getProtocolDataForKey(
@@ -1445,12 +1446,23 @@ module.exports.pushDevice = function (sessionData, network, device, dataAPI) {
       network.networkProtocolId,
       makeDeviceDataKey(device.id, 'devNwkId'))
       .then(devNetworkId => {
-        appLogger.log('Ignoring Device  ' + device.id + ' already on network ' + network.name)
-        if (devNetworkId) {
+        if (update && devNetworkId) {
+          appLogger.log('What I expect')
+          me.updateDevice(sessionData, network, device.id, dataAPI)
+            .then(() => {
+              resolve()
+            })
+            .catch(err => {
+              appLogger.log(err, 'error')
+              reject(err)
+            })
+        }
+        else if (devNetworkId) {
+          appLogger.log('Ignoring Device  ' + device.id + ' already on network ' + network.name)
           resolve({localDevice: device.id, remoteDevice: devNetworkId})
         }
         else {
-          reject(new Error('Something bad happened with the Protocol Table'))
+          reject(new Error('Bad things in the Protocol Table'))
         }
       })
       .catch(() => {
@@ -2876,7 +2888,7 @@ module.exports.addDevice = function (sessionData, network, deviceId, dataAPI) {
         network.networkProtocolId,
         makeDeviceProfileDataKey(dntl.deviceProfileId, 'dpNwkId'))
 
-      let loraV1Device = deNormalizeDeviceData(dntl.networkSettings)
+      let loraV1Device = deNormalizeDeviceData(dntl.networkSettings, appNwkId, dpNwkId)
       // Set up the request options.
       var options = {}
       options.method = 'POST'
@@ -2885,14 +2897,15 @@ module.exports.addDevice = function (sessionData, network, deviceId, dataAPI) {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ' + sessionData.connection
       }
-      options.json = {
-        'applicationID': appNwkId,
-        'description': loraV1Device.description,
-        'devEUI': loraV1Device.devEUI,
-        'deviceProfileID': dpNwkId,
-        'name': loraV1Device.name,
-        'skipFCntCheck': loraV1Device.skipFCntCheck
-      }
+      // options.json = {
+      //   'applicationID': appNwkId,
+      //   'description': loraV1Device.description,
+      //   'devEUI': loraV1Device.devEUI,
+      //   'deviceProfileID': dpNwkId,
+      //   'name': loraV1Device.name,
+      //   'skipFCntCheck': loraV1Device.skipFCntCheck
+      // }
+      options.json = loraV1Device
       options.agentOptions = {
         'secureProtocol': 'TLSv1_2_method',
         'rejectUnauthorized': false
@@ -3036,93 +3049,113 @@ module.exports.getDevice = function (sessionData, network, deviceId, dataAPI) {
 // networks, so logging should be done via the dataAPI.
 module.exports.updateDevice = function (sessionData, network, deviceId, dataAPI) {
   return new Promise(async function (resolve, reject) {
-    var device
-    var application
-    var devNetworkId
-    var appNetworkId
-    var dpNwkId
-    var dntl
+    let devNetworkId
+    let dntl
+    let deviceProfile
     try {
       // Get the device data.
-      device = await dataAPI.getDeviceById(deviceId)
-      let dp = await dataAPI.getDeviceProfileByDeviceIdNetworkTypeId(deviceId, network.networkTypeId)
-      dntl = await dataAPI.getDeviceNetworkType(deviceId, network.networkTypeId)
+      let device = await dataAPI.getDeviceById(deviceId)
+      appLogger.log(device)
+      dntl = await dataAPI.getDeviceNetworkType(device.id, network.networkTypeId)
+      appLogger.log(dntl)
+      deviceProfile = await dataAPI.getDeviceProfileById(dntl.deviceProfileId)
+      appLogger.log(deviceProfile)
       devNetworkId = await dataAPI.getProtocolDataForKey(
         network.id,
         network.networkProtocolId,
-        makeDeviceDataKey(deviceId, 'devNwkId'))
-      appNwkId = await dataAPI.getProtocolDataForKey(
+        makeDeviceDataKey(dntl.id, 'devNwkId'))
+      appLogger.log(devNetworkId)
+      let appNwkId = await dataAPI.getProtocolDataForKey(
         network.id,
         network.networkProtocolId,
         makeApplicationDataKey(device.applicationId, 'appNwkId'))
-      dpNwkId = await dataAPI.getProtocolDataForKey(
+      appLogger.log(appNwkId)
+      let dpNwkId = await dataAPI.getProtocolDataForKey(
         network.id,
         network.networkProtocolId,
-        makeDeviceProfileDataKey(dp.id, 'dpNwkId'))
+        makeDeviceProfileDataKey(dntl.deviceProfileId, 'dpNwkId'))
+      appLogger.log(dpNwkId)
+
+      // Set up the request options.
+      var options = {}
+      options.method = 'PUT'
+      options.url = network.baseUrl + '/devices/' + devNetworkId
+      options.headers = {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + sessionData.connection
+      }
+      // options.json = {
+      //   'applicationID': appNwkId,
+      //   'description': device.name,
+      //   'devEUI': dntl.networkSettings.devEUI,
+      //   'deviceProfileID': dpNwkId,
+      //   'name': device.name
+      // }
+      let loraV1Device = deNormalizeDeviceData(dntl.networkSettings, appNwkId, dpNwkId)
+      options.json = loraV1Device
+      options.agentOptions = {
+        'secureProtocol': 'TLSv1_2_method',
+        'rejectUnauthorized': false
+      }
+      appLogger.log(options)
+      request(options, function (error, response, body) {
+        if (error || response.statusCode >= 400) {
+          if (error) {
+            appLogger.log('Error on update device: ' + error)
+            appLogger.log('Error on update device: ' + error)
+            reject(error)
+          }
+          else {
+            appLogger.log('Error on update device (' + response.statusCode + '): ' + body.error)
+            appLogger.log('Error on update device (' + response.statusCode + '): ' + body.error)
+            reject(response.statusCode)
+          }
+        }
+        else {
+          // Devices have to do a second call to set up either the
+          // Application Key (OTAA) or the Keys for ABP.
+          if (deviceProfile.networkSettings.supportsJoin && loraV1Device.deviceKeys) {
+            // This is the OTAA path.
+            options.url = network.baseUrl + '/devices/' +
+              loraV1Device.devEUI + '/keys'
+            options.json = {
+              devEUI: loraV1Device.devEUI,
+              deviceKeys: loraV1Device.deviceKeys
+            }
+          }
+          else if (loraV1Device.deviceActivation) {
+            // This is the ABP path.
+            options.url = network.baseUrl + '/devices/' +
+              loraV1Device.devEUI + '/activate'
+            options.json = loraV1Device.deviceActivation
+            appLogger.log('options.json = ' + JSON.stringify(options.json))
+          }
+          else {
+            appLogger.log('Remote Device ' + loraV1Device.name + ' does not have authentication parameters')
+            resolve(dntl.networkSettings.devEUI)
+            return
+          }
+          request(options, function (error, response, body) {
+            if (error || response.statusCode >= 400) {
+              if (error) {
+                appLogger.log('Error on update device keys: ' + error)
+              }
+              else {
+                appLogger.log('Error on update device keys (' + response.statusCode + '): ' + body.error)
+              }
+              resolve()
+            }
+            else {
+              resolve()
+            }
+          })
+        }
+      })
     }
     catch (err) {
       appLogger.log('Failed to get supporting data for updateDevice: ' + err)
       reject(err)
-      return
     }
-
-    // Set up the request options.
-    var options = {}
-    options.method = 'PUT'
-    options.url = network.baseUrl + '/devices/' + devNetworkId
-    options.headers = {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + sessionData.connection
-    }
-    options.json = {
-      'applicationID': appNwkId,
-      'description': device.name,
-      'devEUI': dntl.networkSettings.devEUI,
-      'deviceProfileID': dpNwkId,
-      'name': device.name
-    }
-    options.agentOptions = {
-      'secureProtocol': 'TLSv1_2_method',
-      'rejectUnauthorized': false
-    }
-    request(options, function (error, response, body) {
-      if (error || response.statusCode >= 400) {
-        if (error) {
-          appLogger.log('Error on update device: ' + error)
-          appLogger.log('Error on update device: ' + error)
-          reject(error)
-        }
-        else {
-          appLogger.log('Error on update device (' + response.statusCode + '): ' + body.error)
-          appLogger.log('Error on update device (' + response.statusCode + '): ' + body.error)
-          reject(response.statusCode)
-        }
-      }
-      else {
-        // Devices have a separate API for appkeys...
-        options.url = network.baseUrl + '/devices/' + dntl.networkSettings.devEUI + '/keys'
-        options.json = {
-          'devEUI': dntl.networkSettings.devEUI,
-          'deviceKeys': {
-            'appKey': dntl.networkSettings.appKey
-          }
-        }
-        request(options, function (error, response, body) {
-          if (error || response.statusCode >= 400) {
-            if (error) {
-              appLogger.log('Error on update device keys: ' + error)
-            }
-            else {
-              appLogger.log('Error on update device keys (' + response.statusCode + '): ' + body.error)
-            }
-            resolve()
-          }
-          else {
-            resolve()
-          }
-        })
-      }
-    })
   })
 }
 
@@ -3410,7 +3443,7 @@ function normalizeDeviceData (remoteDevice) {
   return normalized
 }
 
-function deNormalizeDeviceData (remoteDevice) {
+function deNormalizeDeviceData (remoteDevice, appId, dpId) {
   /*
       "applicationID": "string",
       "description": "string",
@@ -3423,10 +3456,10 @@ function deNormalizeDeviceData (remoteDevice) {
       "skipFCntCheck": true
    */
   let loraV1DeviceData = {
-    applicationID: remoteDevice.applicationID,
+    applicationID: appId,
     description: remoteDevice.description,
     devEUI: remoteDevice.devEUI,
-    deviceProfileID: remoteDevice.deviceProfileID,
+    deviceProfileID: dpId,
     name: remoteDevice.name,
     skipFCntCheck: remoteDevice.skipFCntCheck,
     deviceStatusBattery: remoteDevice.deviceStatusBattery,

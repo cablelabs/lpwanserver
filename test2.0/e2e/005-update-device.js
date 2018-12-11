@@ -11,7 +11,7 @@ let request = require('request')
 chai.use(chaiHttp)
 let server = chai.request(app).keepOpen()
 
-describe('E2E Test for Updating an Application Use Case #189', () => {
+describe('E2E Test for Updating a Device Use Case #193', () => {
   let adminToken
   let appId1
   let anlId1
@@ -23,9 +23,8 @@ describe('E2E Test for Updating an Application Use Case #189', () => {
   let remoteDeviceProfileId
   let remoteDeviceProfileId2
 
-  const appName = 'UPAP'
-  const appDescription = 'UPAP Description'
-  const appDescriptionUpdate = 'UPAP New Description'
+  const appName = 'UPDV'
+  const appDescription = 'UPDV Description'
   const companyId = 2
   const reportingProtocolId = 1
   const baseUrl = 'http://localhost:5086'
@@ -45,7 +44,7 @@ describe('E2E Test for Updating an Application Use Case #189', () => {
 
   const device = {
     'applicationId': '',
-    'name': 'UPAP001',
+    'name': 'UPDV001',
     'description': 'Soil Node Model 001',
     'deviceModel': 'Mark1'
   }
@@ -55,10 +54,32 @@ describe('E2E Test for Updating an Application Use Case #189', () => {
     'networkTypeId': 1,
     'deviceProfileId': '',
     'networkSettings': {
-      'devEUI': '0080000000000401',
+      'devEUI': '0080000000000501',
       name: device.name,
+      description: device.description,
       deviceKeys: {
-        'appKey': '11223344556677889900112233444411'
+        'appKey': '112233445566889900112233445511'
+      }
+    }
+  }
+
+  const deviceUpdate = {
+    'applicationId': '',
+    'name': 'UPDV001',
+    'description': 'Updated Soil Node Model 001',
+    'deviceModel': 'Mark1'
+  }
+
+  const deviceNTLUpdate = {
+    'deviceId': '',
+    'networkTypeId': 1,
+    'deviceProfileId': '',
+    'networkSettings': {
+      'devEUI': '0080000000000501',
+      name: deviceUpdate.name,
+      description: deviceUpdate.description,
+      deviceKeys: {
+        'appKey': '112233445566889900112233445522'
       }
     }
   }
@@ -660,89 +681,71 @@ describe('E2E Test for Updating an Application Use Case #189', () => {
       })
     })
   })
-  describe('Update Application', () => {
-    let applicationUpdate =
-      {
-        'companyId': companyId,
-        'name': appName,
-        'description': appDescriptionUpdate,
-        'baseUrl': baseUrl,
-        'reportingProtocolId': reportingProtocolId
-      }
-    let applicationNetworkSettingsUpdate = {
-      'description': appDescriptionUpdate,
-      'name': appName
-    }
-    it('Update Application', function (done) {
+  describe('Update Device', () => {
+    it('Update Device', function (done) {
       server
-        .put('/api/applications/' + appId1)
+        .put('/api/devices/' + deviceId1)
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
-        .send(applicationUpdate)
+        .send(deviceUpdate)
         .end(function (err, res) {
           if (err) done(err)
           res.should.have.status(204)
           done()
         })
     })
-
-    it('Verify Application Updated', function (done) {
+    it('Verify Device Updated', function (done) {
       server
-        .get('/api/applications/' + appId1)
+        .get('/api/devices/' + deviceId1)
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .send()
         .end(function (err, res) {
           if (err) done(err)
           res.should.have.status(200)
-          let appObj = JSON.parse(res.text)
-          appObj.should.have.property('id')
-          appObj.should.have.property('companyId')
-          appObj.should.have.property('name')
-          appObj.should.have.property('description')
-          appObj.should.have.property('baseUrl')
-          appObj.should.have.property('reportingProtocolId')
-
-          appObj.companyId.should.equal(companyId)
-          appObj.name.should.equal(appName)
-          appObj.description.should.equal(appDescriptionUpdate)
-          appObj.baseUrl.should.equal(baseUrl)
-          appObj.reportingProtocolId.should.equal(reportingProtocolId)
-
+          let devObj = JSON.parse(res.text)
+          devObj.should.have.property('id')
+          devObj.should.have.property('name')
+          devObj.should.have.property('description')
+          devObj.should.have.property('deviceModel')
+          devObj.name.should.equal(deviceUpdate.name)
+          devObj.id.should.equal(deviceId1)
+          devObj.description.should.equal(deviceUpdate.description)
+          devObj.deviceModel.should.equal(deviceUpdate.deviceModel)
           done()
         })
     })
     it('Update Network Type Links for Application', function (done) {
       server
-        .put('/api/applicationNetworkTypeLinks/' + anlId1)
+        .put('/api/deviceNetworkTypeLinks/' + dnlId1)
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .send({
-          'networkSettings': applicationNetworkSettingsUpdate
+          'networkSettings': deviceNTLUpdate.networkSettings
         })
         .end(function (err, res) {
           if (err) done(err)
           // TODO:  Why does PUT do 200 sometimes and 204 others?
-          res.should.have.status(200)
+          res.should.have.status(204)
           done()
         })
     })
-    it('Verify Application NTL Updated', function (done) {
+    it('Verify Device NTL Updated', function (done) {
       server
-        .get('/api/applicationNetworkTypeLinks/' + anlId1)
+        .get('/api/deviceNetworkTypeLinks/' + dnlId1)
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .send()
         .end(function (err, res) {
           if (err) done(err)
           res.should.have.status(200)
-          let appObj = JSON.parse(res.text)
-          console.log(appObj)
+          let deviceNTL = JSON.parse(res.text)
+          console.log(deviceNTL)
           done()
         })
     })
   })
-  describe('Verify LoRaServer V1 has application', function () {
+  describe('Verify LoRaServer V1 has device', function () {
     let baseUrl = 'https://lora_appserver1:8080/api'
     let loraKey = ''
     it('Get LoRaServer V1 Session', function (done) {
@@ -770,10 +773,10 @@ describe('E2E Test for Updating an Application Use Case #189', () => {
         }
       })
     })
-    it('Verify the LoRaServer V1 Application Exists', function (done) {
+    it('Verify the LoRaServer V1 Device is Updated', function (done) {
       let options = {}
       options.method = 'GET'
-      options.url = baseUrl + '/applications?limit=100'
+      options.url = baseUrl + '/devices/' + deviceNTL.networkSettings.devEUI
       options.headers = {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ' + loraKey
@@ -789,45 +792,21 @@ describe('E2E Test for Updating an Application Use Case #189', () => {
         }
         else {
           let app = JSON.parse(body)
-          app = app.result
-          for (let i = 0; i < app.length; i++) {
-            if (app[i].name === appName) {
-              remoteApp1 = app[i].id
-            }
-          }
-          done()
-        }
-      })
-    })
-    it('Verify the LoRaServer V1 Application Exists', function (done) {
-      let options = {}
-      options.method = 'GET'
-      options.url = baseUrl + '/applications/' + remoteApp1
-      options.headers = {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + loraKey
-      }
-      options.agentOptions = {
-        'secureProtocol': 'TLSv1_2_method',
-        'rejectUnauthorized': false
-      }
-      appLogger.log(options)
-      request(options, function (error, response, body) {
-        if (error) {
-          done(error)
-        }
-        else {
-          let app = JSON.parse(body)
-          app.should.have.property('id')
+          appLogger.log(app)
           app.should.have.property('name')
+          app.should.have.property('devEUI')
+          app.should.have.property('applicationID')
           app.should.have.property('description')
-          app.should.have.property('organizationID')
-          app.should.have.property('serviceProfileID')
-          app.should.have.property('payloadCodec')
-          app.should.have.property('payloadEncoderScript')
-          app.should.have.property('payloadDecoderScript')
-          app.name.should.equal(appName)
-          app.description.should.equal(appDescriptionUpdate)
+          app.should.have.property('deviceProfileID')
+          app.should.have.property('deviceStatusBattery')
+          app.should.have.property('deviceStatusMargin')
+          app.should.have.property('lastSeenAt')
+          app.should.have.property('skipFCntCheck')
+
+          app.name.should.equal(deviceNTLUpdate.networkSettings.name)
+          app.description.should.equal(deviceNTLUpdate.networkSettings.description)
+          app.devEUI.should.equal(deviceNTLUpdate.networkSettings.devEUI)
+          app.deviceProfileID.should.equal(remoteDeviceProfileId)
           done()
         }
       })
@@ -861,10 +840,10 @@ describe('E2E Test for Updating an Application Use Case #189', () => {
         }
       })
     })
-    it('Verify the LoRaServer V2 Application Exists', function (done) {
+    it('Verify the LoRaServer V2 Device is Updated', function (done) {
       let options = {}
       options.method = 'GET'
-      options.url = baseUrl + '/applications?limit=100'
+      options.url = baseUrl + '/devices/' + deviceNTL.networkSettings.devEUI
       options.headers = {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ' + loraKey
@@ -880,47 +859,24 @@ describe('E2E Test for Updating an Application Use Case #189', () => {
         }
         else {
           let app = JSON.parse(body)
-          app = app.result
-          for (let i = 0; i < app.length; i++) {
-            if (app[i].name === appName) {
-              remoteApp2 = app[i].id
-            }
-          }
-          done()
-        }
-      })
-    })
-    it('Verify the LoRaServer V2 Application Exists', function (done) {
-      let options = {}
-      options.method = 'GET'
-      options.url = baseUrl + '/applications/' + remoteApp2
-      options.headers = {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + loraKey
-      }
-      options.agentOptions = {
-        'secureProtocol': 'TLSv1_2_method',
-        'rejectUnauthorized': false
-      }
-      appLogger.log(options)
-      request(options, function (error, response, body) {
-        if (error) {
-          done(error)
-        }
-        else {
-          let app = JSON.parse(body)
-          app = app.application
-          console.log(app)
-          app.should.have.property('id')
-          app.should.have.property('name')
-          app.should.have.property('description')
-          app.should.have.property('organizationID')
-          app.should.have.property('serviceProfileID')
-          app.should.have.property('payloadCodec')
-          app.should.have.property('payloadEncoderScript')
-          app.should.have.property('payloadDecoderScript')
-          app.name.should.equal(appName)
-          app.description.should.equal(appDescriptionUpdate)
+          appLogger.log(app)
+          app.should.have.property('device')
+          app.should.have.property('deviceStatusBattery')
+          app.should.have.property('deviceStatusMargin')
+          app.should.have.property('lastSeenAt')
+
+          let device = app.device
+          device.should.have.property('name')
+          device.should.have.property('devEUI')
+          device.should.have.property('applicationID')
+          device.should.have.property('description')
+          device.should.have.property('deviceProfileID')
+          device.should.have.property('skipFCntCheck')
+
+          device.name.should.equal(deviceNTLUpdate.networkSettings.name)
+          device.description.should.equal(deviceNTLUpdate.networkSettings.description)
+          device.devEUI.should.equal(deviceNTLUpdate.networkSettings.devEUI)
+          device.deviceProfileID.should.equal(remoteDeviceProfileId2)
           done()
         }
       })

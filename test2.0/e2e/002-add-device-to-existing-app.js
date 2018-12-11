@@ -62,10 +62,10 @@ describe('E2E Test for Adding a Device to an Existing Application Use Case #190'
     'networkTypeId': 1,
     'deviceProfileId': '',
     'networkSettings': {
-      'devEUI': '0080000000000101',
+      'devEUI': '0080000000000201',
       name: device.name,
       deviceKeys: {
-        'appKey': '11223344556677889900112233445566'
+        'appKey': '11223344556677889900112233442211'
       }
     }
   }
@@ -75,10 +75,10 @@ describe('E2E Test for Adding a Device to an Existing Application Use Case #190'
     'networkTypeId': 1,
     'deviceProfileId': '',
     'networkSettings': {
-      'devEUI': '0080000000000102',
+      'devEUI': '0080000000000202',
       name: device2.name,
       deviceKeys: {
-        'appKey': '11223344556677889900112233445577'
+        'appKey': '11223344556677889900112233442222'
       }
     }
   }
