@@ -1,18 +1,6 @@
-const path = require('path')
-const component =require('../component-e2e-test.json')
-const { execSync } = require('child_process')
+#!/usr/bin/env node
 
-const ROOT = path.join(__dirname, '..')
-const opts = { cwd: ROOT, stdio: 'inherit' }
+const { copyDemoData, packageE2ETest } = require('./lib/package')
 
-const image = `${component.registry}/${component.name}:${component.version}-${component.build}-rc`
-const latestImage = `${component.registry}/${component.name}:latest`
-
-async function package () {
-  execSync('rm -rf ./data/demo_data', opts)
-  execSync('cp -r ./data/demo_baseline ./data/demo_data', opts)
-  execSync(`docker build -f docker/Dockerfile.e2etest -t ${image} -t ${latestImage} .`, opts)
-  console.info('The container was successfully built.')
-}
-
-package().catch(console.error)
+copyDemoData()
+packageE2ETest()
