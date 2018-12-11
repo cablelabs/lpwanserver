@@ -436,20 +436,20 @@ NetworkProtocolAccess.prototype.addApplication = function (dataAPI, network, app
 // Returns a Promise that ostensibly connects to the remote system and updates
 // or creates the remote company.  This may or may not do as promised (haha) -
 // the implementation is completely up to the developers of the protocols.
-NetworkProtocolAccess.prototype.pushApplication = function (dataAPI, network, applicationId) {
+NetworkProtocolAccess.prototype.pushApplication = function (dataAPI, network, application) {
   var me = this
   return new Promise(async function (resolve, reject) {
     // Get the protocol for the network.
     var netProto = await me.getProtocol(network)
 
-    var loginData = await netProto.api.getApplicationAccessAccount(dataAPI, network, applicationId)
+    var loginData = await netProto.api.getApplicationAccessAccount(dataAPI, network, application.id)
     // Use a session wrapper to call the function. (Session
     // wrapper manages logging in if session was not already set
     // up or is expired)
     me.sessionWrapper(network, loginData, function (proto, sessionData) {
       return proto.api.pushApplication(sessionData,
         network,
-        applicationId,
+        application,
         dataAPI)
     }).then(function (ret) {
       resolve(ret)

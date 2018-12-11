@@ -1304,7 +1304,7 @@ module.exports.pushApplications = function (sessionData, network, modelAPI, data
     let existingApplications = await modelAPI.applications.retrieveApplications()
     let promiseList = []
     for (let index = 0; index < existingApplications.records.length; index++) {
-      promiseList.push(me.pushApplication(sessionData, network, existingApplications.records[index], dataAPI))
+      promiseList.push(me.pushApplication(sessionData, network, existingApplications.records[index], dataAPI, false))
     }
     Promise.all(promiseList)
       .then(pushedResources => {
@@ -1318,7 +1318,7 @@ module.exports.pushApplications = function (sessionData, network, modelAPI, data
   })
 }
 
-module.exports.pushApplication = function (sessionData, network, application, dataAPI) {
+module.exports.pushApplication = function (sessionData, network, application, dataAPI, update = true) {
   let me = this
   return new Promise(async function (resolve, reject) {
     // See if it already exists
@@ -1327,8 +1327,18 @@ module.exports.pushApplication = function (sessionData, network, application, da
       network.networkProtocolId,
       makeApplicationDataKey(application.id, 'appNwkId'))
       .then(appNetworkId => {
-        appLogger.log('Ignoring Application  ' + application.id + ' already on network ' + network.name)
-        if (appNetworkId) {
+        if (update && appNetworkId) {
+          me.updateApplication(sessionData, network, application.id, dataAPI)
+            .then(() => {
+              resolve()
+            })
+            .catch(err => {
+              appLogger.log(err, 'error')
+              reject(err)
+            })
+        }
+        else if (appNetworkId) {
+          appLogger.log('Ignoring Application  ' + application.id + ' already on network ' + network.name)
           resolve({localApplication: application.id, remoteApplication: appNetworkId})
         }
         else {
@@ -2143,16 +2153,20 @@ module.exports.getApplication = function (sessionData, network, applicationId, d
 module.exports.updateApplication = function (sessionData, network, applicationId, dataAPI) {
   return new Promise(async function (resolve, reject) {
     // Get the application data.
-    var application = await dataAPI.getApplicationById(applicationId)
-    var coNetworkId = await dataAPI.getProtocolDataForKey(
+    let application = await dataAPI.getApplicationById(applicationId)
+    let coNetworkId = await dataAPI.getProtocolDataForKey(
       network.id,
       network.networkProtocolId,
       makeCompanyDataKey(application.companyId, 'coNwkId'))
-    var appNetworkId = await dataAPI.getProtocolDataForKey(
+    let appNetworkId = await dataAPI.getProtocolDataForKey(
       network.id,
       network.networkProtocolId,
       makeApplicationDataKey(applicationId, 'appNwkId'))
-    var applicationData = await dataAPI.getApplicationNetworkType(applicationId, network.networkTypeId)
+    let applicationData = await dataAPI.getApplicationNetworkType(applicationId, network.networkTypeId)
+    let coSPId = await dataAPI.getProtocolDataForKey(
+      network.id,
+      network.networkProtocolId,
+      makeCompanyDataKey(application.companyId, 'coSPId'))
 
     // Set up the request options.
     var options = {}
@@ -2162,15 +2176,17 @@ module.exports.updateApplication = function (sessionData, network, applicationId
       'Content-Type': 'application/json',
       'Authorization': 'Bearer ' + sessionData.connection
     }
-    options.json = {
-      'id': appNetworkId,
-      'name': application.name,
-      'organizationID': coNetworkId,
-      'description': 'This Application is Managed by LPWanServer',
-      'payloadCodec': '',
-      'payloadDecoderScript': '',
-      'payloadEncoderScript': ''
-    }
+    // options.json = {
+    //   'id': appNetworkId,
+    //   'name': application.name,
+    //   'organizationID': coNetworkId,
+    //   'description': 'This Application is Managed by LPWanServer',
+    //   'payloadCodec': '',
+    //   'payloadDecoderScript': '',
+    //   'payloadEncoderScript': ''
+    // }
+    options.json = deNormalizeApplicationData(applicationData.networkSettings, coSPId, coNetworkId)
+
     options.agentOptions = {
       'secureProtocol': 'TLSv1_2_method',
       'rejectUnauthorized': false

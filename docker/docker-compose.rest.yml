@@ -1,0 +1,13 @@
+version: '2'
+
+services:
+  rest:
+    image: lpwanserver/lpwanserver
+    depends_on:
+      - loraserver
+      - lora_appserver
+    environment:
+      - port=3200
+    ports:
+      - 3200:3200
+    network_mode: host

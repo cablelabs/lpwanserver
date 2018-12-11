@@ -1,0 +1,16 @@
+version: '2'
+
+services:
+  ui:
+    image: lpwanserver/lpwanserver-web-client
+    ports:
+      - '3000:80'
+
+  postgresql:
+    volumes:
+      - ./configuration/postgresql/initdb-demo:/docker-entrypoint-initdb.d
+
+  redis:
+    volumes:
+      - ../data/demo_data/redis:/data
+      

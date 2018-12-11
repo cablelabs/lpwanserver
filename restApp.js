@@ -14,7 +14,8 @@ var bodyParser = require('body-parser');
 // var session = require('express-session');
 var fs = require( 'fs' );
 var server = require( './rest/restServer.js' );
-var appLogger = require( './rest/lib/appLogger.js' );
+var appLogger = require( './rest/lib/appLogger.js' )
+var nconf = require('nconf')
 
 // Catch unhandled promise rejections.
 process.on( 'unhandledRejection', (reason, p) => {
@@ -24,14 +25,8 @@ process.on( 'unhandledRejection', (reason, p) => {
 });
 
 // Set up config data access.
-var nconf = require('nconf');
-// Priority order for settings: command line, environment vars,
-// the file config.js at the project root directory.
-nconf.argv().env();
-var environment = '.' + nconf.get('NODE_ENV') || 'production'
-nconf.file( { file: 'config.hjson' + environment , format: require('hjson') } );
-
-console.log('config.hjson' + environment)
+require('./config')
+console.log('variables', nconf.get('NODE_ENV'), nconf.get('port'), nconf.get('foo'))
 
 // Create the REST application.
 var app = express();

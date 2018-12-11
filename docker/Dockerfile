@@ -12,8 +12,8 @@ RUN npm install
 # copy all project
 COPY . .
 
-EXPOSE 3200
+# see config.hjson for a description of env variables
 
-ENV db_file=
+EXPOSE 3200
 
 CMD [ "node", "./bin/rest" ]

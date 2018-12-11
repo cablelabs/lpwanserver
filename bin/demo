@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 
-docker container rm docker_postgresql_1 --force
-# cp ./data/demo_baseline/demo.sqlite3 ./data/demo.sqlite3
+docker system prune --force
 
 npm run package
 
 # Run docker-compose with development configuration
-docker-compose -f ./docker/docker-compose.yml up
+docker-compose \
+  -f ./docker/docker-compose.loraserver.yml \
+  -f ./docker/docker-compose.demo.yml up
