@@ -53,10 +53,10 @@ describe('E2E Test for Creating an Application Use Case #188', () => {
     'networkTypeId': 1,
     'deviceProfileId': '',
     'networkSettings': {
-      'devEUI': '0080000000000201',
+      'devEUI': '0080000000000301',
       name: device.name,
       deviceKeys: {
-        'appKey': '11223344556677889900112233445566'
+        'appKey': '11223344556677889900112233443311'
       }
     }
   }

@@ -678,7 +678,7 @@ NetworkProtocolAccess.prototype.addDevice = function (dataAPI, network, deviceId
 // Returns a Promise that ostensibly connects to the remote system and updates
 // or creates the remote company.  This may or may not do as promised (haha) -
 // the implementation is completely up to the developers of the protocols.
-NetworkProtocolAccess.prototype.pushDevice = function (dataAPI, network, deviceId) {
+NetworkProtocolAccess.prototype.pushDevice = function (dataAPI, network, device) {
   var me = this
   return new Promise(async function (resolve, reject) {
     var loginData
@@ -686,7 +686,7 @@ NetworkProtocolAccess.prototype.pushDevice = function (dataAPI, network, deviceI
       // Get the protocol for the network.
       var netProto = await me.getProtocol(network)
 
-      loginData = await netProto.api.getDeviceAccessAccount(dataAPI, network, deviceId)
+      loginData = await netProto.api.getDeviceAccessAccount(dataAPI, network, device.id)
       if (!loginData) {
         dataAPI.addLog(network, 'Failed to get support login for pushDevice')
         reject(new Error('Failed to get support login for pushDevice'))
@@ -703,7 +703,7 @@ NetworkProtocolAccess.prototype.pushDevice = function (dataAPI, network, deviceI
     me.sessionWrapper(network, loginData, function (proto, sessionData) {
       return proto.api.pushDevice(sessionData,
         network,
-        deviceId,
+        device,
         dataAPI)
     })
       .then(function (ret) {
