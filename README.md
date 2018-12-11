@@ -12,62 +12,24 @@ that data to a server for the application.
 
 The LPWAN Server project aslo provides a rich web application. The
 [LPWAN Server Web Client](https://github.com/cablelabs/lpwanserver-web-client)
-is the user interface that allows for easy management of LPWAN applications and 
+is the user interface that allows for easy management of LPWAN applications and
 devices via a web browser, across all LPWAN networks associated with the system.
 
 ## Getting started
 
-You'll probably want to start by reading the [LPWAN Server
-Overview](http://lpwanserver.com/overview/).
+You'll probably want to start by reading the
+[LPWAN Server Overview](http://lpwanserver.com/overview/).
 
-Then, when you're ready, clone this repo:
+The easiest way to run LPWAN Server is to follow the
+[Quickstart Docker-Compose](http://lpwanserver.com/guides/dockercompose/)
+guide.
 
-```
-$ git clone https://github.com/cablelabs/lpwanserver.git
-```
+For development and customization, refer to the
+[install documentation](https://lpwanserver.com/install/requirements/).
 
 If you're new to git and GitHub, be sure to check out the [Pro
 Git](https://git-scm.com/book/en/v2) book. [GitHub
 Help](https://help.github.com/) is also outstanding.
-
-### Install dependencies
-
-Add additional dependencies in **package.json** and **ui/package.json**.
-
-```
-npm install
-```
-
-### Data storage
-
-Copy the starting DB to correct directory.
-
-```
-cp ./data/test.sqlite3.testSuiteStartingDB /tmp/test.sqlite3
-```
-
-### Testing
-
-To test the system:
-
-```
-npm test
-```
-
-### Usage
-
-To start the REST server:
-
-```
-node bin/rest
-```
-
-To start the UI server:
-
-```
-cd ui
-npm start
-```
 
 ## Contributing
 
