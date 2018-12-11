@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-const { copyDemoData, packageE2ETests } = require('./lib/package')
+const { copyDemoData, packageE2ETest } = require('./lib/package')
 
 copyDemoData()
-packageE2ETests()
+packageE2ETest()

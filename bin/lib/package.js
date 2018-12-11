@@ -32,15 +32,15 @@ function packageRestServer () {
   execSync(`docker build -f docker/Dockerfile -t ${imageTags.releaseCandidate} -t ${imageTags.latest} .`, opts)
 }
 
-function packageTests () {
-  execSync(`docker build -f docker/Dockerfile.test -t ${imageTags.apiTest} .`, opts)
+function packageTest () {
+  execSync(`docker build -f docker/Dockerfile.test -t ${imageTags.test} .`, opts)
 }
 
-function packageApiTests () {
+function packageApiTest () {
   execSync(`docker build -f docker/Dockerfile.apitest -t ${imageTags.apiTest} .`, opts)
 }
 
-function packageE2ETests () {
+function packageE2ETest () {
   execSync(`docker build -f docker/Dockerfile.e2etest -t ${imageTags.e2eTest} .`, opts)
 }
 
@@ -48,7 +48,7 @@ module.exports = {
   imageTags,
   copyDemoData,
   packageRestServer,
-  packageTests,
-  packageApiTests,
-  packageE2ETests
+  packageTest,
+  packageApiTest,
+  packageE2ETest
 }
