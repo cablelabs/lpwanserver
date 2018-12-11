@@ -31,7 +31,7 @@ For development and customization, refer to the
 ## Contributing
 
 LPWAN Server was originally built by [CableLabs](http://cablelabs.com/), but
-we could use your help! Check out our [contributing guidelines](docs/CONTRIBUTING.md)
+we could use your help! Check out our [contributing guidelines](CONTRIBUTING.md)
 to get started.
 
 ## Other important stuff
