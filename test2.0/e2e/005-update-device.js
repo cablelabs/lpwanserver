@@ -840,10 +840,10 @@ describe('E2E Test for Updating a Device Use Case #193', () => {
         }
       })
     })
-    it('Verify the LoRaServer V2 Application Exists', function (done) {
+    it('Verify the LoRaServer V2 Device is Updated', function (done) {
       let options = {}
       options.method = 'GET'
-      options.url = baseUrl + '/applications?limit=100'
+      options.url = baseUrl + '/devices/' + deviceNTL.networkSettings.devEUI
       options.headers = {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ' + loraKey
@@ -859,47 +859,24 @@ describe('E2E Test for Updating a Device Use Case #193', () => {
         }
         else {
           let app = JSON.parse(body)
-          app = app.result
-          for (let i = 0; i < app.length; i++) {
-            if (app[i].name === appName) {
-              remoteApp2 = app[i].id
-            }
-          }
-          done()
-        }
-      })
-    })
-    it('Verify the LoRaServer V2 Application Exists', function (done) {
-      let options = {}
-      options.method = 'GET'
-      options.url = baseUrl + '/applications/' + remoteApp2
-      options.headers = {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + loraKey
-      }
-      options.agentOptions = {
-        'secureProtocol': 'TLSv1_2_method',
-        'rejectUnauthorized': false
-      }
-      appLogger.log(options)
-      request(options, function (error, response, body) {
-        if (error) {
-          done(error)
-        }
-        else {
-          let app = JSON.parse(body)
-          app = app.application
-          console.log(app)
-          app.should.have.property('id')
-          app.should.have.property('name')
-          app.should.have.property('description')
-          app.should.have.property('organizationID')
-          app.should.have.property('serviceProfileID')
-          app.should.have.property('payloadCodec')
-          app.should.have.property('payloadEncoderScript')
-          app.should.have.property('payloadDecoderScript')
-          app.name.should.equal(appName)
-          app.description.should.equal(appDescription)
+          appLogger.log(app)
+          app.should.have.property('device')
+          app.should.have.property('deviceStatusBattery')
+          app.should.have.property('deviceStatusMargin')
+          app.should.have.property('lastSeenAt')
+
+          let device = app.device
+          device.should.have.property('name')
+          device.should.have.property('devEUI')
+          device.should.have.property('applicationID')
+          device.should.have.property('description')
+          device.should.have.property('deviceProfileID')
+          device.should.have.property('skipFCntCheck')
+
+          device.name.should.equal(deviceNTLUpdate.networkSettings.name)
+          device.description.should.equal(deviceNTLUpdate.networkSettings.description)
+          device.devEUI.should.equal(deviceNTLUpdate.networkSettings.devEUI)
+          device.deviceProfileID.should.equal(remoteDeviceProfileId2)
           done()
         }
       })
