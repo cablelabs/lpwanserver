@@ -8,3 +8,9 @@ services:
     - PORT=3200
     ports:
     - '3200:3200'
+    depends_on:
+      - loraserver
+      - loraserver1
+      - lora_appserver
+      - lora_appserver1
+      - postgresql

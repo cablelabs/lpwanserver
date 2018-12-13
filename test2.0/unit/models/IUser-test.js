@@ -26,8 +26,8 @@ describe('Unit Tests for ' + testName, () => {
       .then(actual => {
         actual.should.have.property('totalCount')
         actual.should.have.property('records')
-        actual.totalCount.should.equal(3)
-        actual.records.length.should.equal(3)
+        actual.totalCount.should.equal(1)
+        actual.records.length.should.equal(1)
         done()
       })
       .catch(err => {
