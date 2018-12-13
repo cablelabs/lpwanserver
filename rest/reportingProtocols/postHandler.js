@@ -24,7 +24,7 @@ exports.report = function( dataObject, url, appName ) {
         options.headers[ 'Content-Type' ] = "application/json";
         options.headers.appid = appName;
         options.json = dataObject;
-
+        appLogger.log(options)
         request( options, function( error, response, body ) {
             if ( error ) {
                 appLogger.log( "Error reporting data (" +
@@ -35,7 +35,8 @@ exports.report = function( dataObject, url, appName ) {
                 reject( error );
             }
             else {
-                resolve( response );
+              appLogger.log(body)
+              resolve( response );
             }
         });
     });
