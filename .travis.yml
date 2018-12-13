@@ -7,7 +7,6 @@ services:
 install:
   - npm install
 before_script:
-  - cp ./data/test.sqlite3.testSuiteStartingDB /tmp/test.sqlite3
   - npm run package
 script:
   - ./bin/unit-tests
