@@ -1,0 +1,62 @@
+version: '3'
+
+services:
+  rest:
+    image: lpwanserver/lpwanserver
+    environment:
+      - port=3200
+      - db_file=data/production.sqlite3
+    ports:
+      - 3200:3200
+    networks:
+      - lpwanserver
+    volumes:
+      - "../data/production.sqlite3:/app/data/production.sqlite3:consistent"
+    deploy:
+      replicas: 1
+      # Only run on swarm manager, for access to db volume
+      placement:
+        constraints: [node.role == manager]
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 100M
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+
+  ui:
+    image: lpwanserver/lpwanserver-web-client
+    environment:
+      - LPWANSERVER_PROTOCOL=http
+      - LPWANSERVER_HOST=rest
+      - LPWANSERVER_PORT=3200
+    ports:
+      - 3000:8080
+    networks:
+      - lpwanserver
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          cpus: "0.3"
+          memory: 100M
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+
+  visualizer:
+    image: dockersamples/visualizer:stable
+    ports:
+      - "4000:8080"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    deploy:
+      placement:
+        constraints: [node.role == manager]
+    networks:
+      - lpwanserver
+
+networks:
+  lpwanserver:
+  

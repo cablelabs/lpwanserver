@@ -7,7 +7,6 @@ services:
       - NODE_ENV=e2e
       - PORT=3200
       - TTN=false
-      - db_file=data/demo_data/demo.sqlite3
     depends_on:
       - loraserver
       - loraserver1
