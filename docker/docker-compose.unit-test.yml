@@ -6,6 +6,11 @@ services:
     environment:
     - NODE_ENV=e2e
     - PORT=3200
-    - db_file=./data/test.sqlite3
     ports:
     - '3200:3200'
+    depends_on:
+      - loraserver
+      - loraserver1
+      - lora_appserver
+      - lora_appserver1
+      - postgresql

@@ -64,7 +64,7 @@
     // Create a new database at startup?
     db_create: false
     // The database file to use.
-    db_file: data/test.sqlite3.testSuiteStartingDB
+    db_file: data/demo_data/demo.sqlite3
 
     //////////////////////////////////////////////////////////
     // CORS settings

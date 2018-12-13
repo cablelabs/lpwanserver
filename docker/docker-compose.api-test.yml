@@ -6,7 +6,6 @@ services:
     environment:
       - NODE_ENV=e2e
       - PORT=3200
-      - db_file=data/demo_data/demo.sqlite3
     depends_on:
       - loraserver1
       - lora_appserver1

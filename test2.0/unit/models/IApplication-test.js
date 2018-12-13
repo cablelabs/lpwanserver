@@ -11,12 +11,7 @@ const testName = 'Application'
 
 describe('Unit Tests for ' + testName, () => {
   before('Setup ENV', async () => {
-    nconf.overrides({
-      'impl_directory': 'production',
-      'db_schema': 'data/lpwanserver.2.2.schema',
-      'db_create': false,
-      'db_file': 'data/test.sqlite3'
-    })
+    nconf.file('defaults', { file: 'config/defaults.hjson', format: require('hjson') })
     let initializer = new Initializer()
     initializer.init()
     console.log(nconf.get('impl_directory'))
