@@ -394,7 +394,7 @@ exports.initialize = function (app, server) {
           restServer.respond(res, 204)
         })
           .catch(function (err) {
-            restServer.respond(res, err)
+            restServer.respond(res, 400, err)
           })
       }
     })

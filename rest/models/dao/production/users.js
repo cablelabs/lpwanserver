@@ -310,12 +310,12 @@ exports.updateUser = function (user) {
                 resolve()
               }
               else {
-                reject(400, err)
+                reject(err)
               }
             })
           })
             .catch(function (err) {
-              reject(400, err)
+              reject(err)
             })
         }) // End of password handling promise.
       }
@@ -375,7 +375,7 @@ exports.updateUser = function (user) {
       .then(emailPost) // Post user update email verification steps.
       .catch(function (err) {
         appLogger.log('Caught update error: ' + err)
-        reject(500, err)
+        reject(err)
       })
   }) // End returned promise.
 }
