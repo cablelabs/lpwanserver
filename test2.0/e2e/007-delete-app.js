@@ -43,17 +43,17 @@ const state = {
 
 const testData = {
   ...Data.applicationTemplates.default({
-    name: 'DLDV',
+    name: 'DLAP',
     companyId: 2
   }),
   ...Data.deviceTemplates.weatherNode({
-    name: 'DLDV001',
+    name: 'DLAP001',
     companyId: 2,
-    devEUI: '0080000000000601'
+    devEUI: '0080000000000701'
   })
 }
 
-describe('E2E Test for Deleting a Device Use Case #192', () => {
+describe('E2E Test for Deleting an Application Use Case #191', () => {
   before(() => setup.start())
 
   describe('Verify Login and Administration of Users Works', () => {
@@ -757,6 +757,134 @@ describe('E2E Test for Deleting a Device Use Case #192', () => {
           response.statusCode.should.equal(404)
           done()
         }
+      })
+    })
+  })
+  describe('Delete Application', () => {
+    it('Delete Network Type Links for Application', function (done) {
+      server
+        .delete('/api/applicationNetworkTypeLinks/' + testData.appNTL.id)
+        .set('Authorization', 'Bearer ' + state.adminToken)
+        .send()
+        .end(function (err, res) {
+          res.should.have.status(200)
+          done()
+        })
+    })
+    it('should return 404 on get', function (done) {
+      server
+        .get('/api/applicationNetworkTypeLinks/' + testData.appNTL.id)
+        .set('Authorization', 'Bearer ' + state.adminToken)
+        .send()
+        .end(function (err, res) {
+          res.should.have.status(404)
+          done()
+        })
+    })
+    it('should return 204 on delete', function (done) {
+      server
+        .delete('/api/applications/' + testData.app.id)
+        .set('Authorization', 'Bearer ' + state.adminToken)
+        .send()
+        .end(function (err, res) {
+          res.should.have.status(204)
+          done()
+        })
+    })
+    it('should return 404 on get', function (done) {
+      server
+        .get('/api/applications/' + testData.app.id)
+        .set('Authorization', 'Bearer ' + state.adminToken)
+        .send()
+        .end(function (err, res) {
+          res.should.have.status(404)
+          done()
+        })
+    })
+  })
+  describe('Verify LoRaServer V1 does not have application', function () {
+    it('Verify the LoRaServer V1 Application Does Not Exist', function (done) {
+      let options = {}
+      options.method = 'GET'
+      options.url = state.lora1BaseUrl + '/applications?limit=100'
+      options.headers = {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + state.lora1Key
+      }
+      options.agentOptions = {
+        'secureProtocol': 'TLSv1_2_method',
+        'rejectUnauthorized': false
+      }
+      appLogger.log(options)
+      request(options, function (error, response, body) {
+        if (error) return done(error)
+        let apps = JSON.parse(body)
+          .result
+          .filter(x => x.id === state.remoteApp1)
+        apps.should.have.length(0)
+        done()
+      })
+    })
+    it('Verify the LoRaServer V1 Application Does Not Exist', function (done) {
+      let options = {}
+      options.method = 'GET'
+      options.url = state.lora1BaseUrl + '/applications/' + state.remoteApp1
+      options.headers = {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + state.lora1Key
+      }
+      options.agentOptions = {
+        'secureProtocol': 'TLSv1_2_method',
+        'rejectUnauthorized': false
+      }
+      appLogger.log(options)
+      request(options, function (error, res, body) {
+        if (error) return done(error)
+        res.should.have.status(404)
+        done()
+      })
+    })
+  })
+  describe('Verify LoRaServer V2 does not have application', function () {
+    it('Verify the LoRaServer V2 Application Does Not Exist', function (done) {
+      let options = {}
+      options.method = 'GET'
+      options.url = state.lora2BaseUrl + '/applications?limit=100'
+      options.headers = {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + state.lora2Key
+      }
+      options.agentOptions = {
+        'secureProtocol': 'TLSv1_2_method',
+        'rejectUnauthorized': false
+      }
+      appLogger.log(options)
+      request(options, function (error, response, body) {
+        if (error) return done(error)
+        let apps = JSON.parse(body)
+          .result
+          .filter(x => x.id === state.remoteApp1)
+        apps.should.have.length(0)
+        done()
+      })
+    })
+    it('Verify the LoRaServer V2 Application Does Not Exist', function (done) {
+      let options = {}
+      options.method = 'GET'
+      options.url = state.lora2BaseUrl + '/applications/' + state.remoteApp2
+      options.headers = {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + state.lora2Key
+      }
+      options.agentOptions = {
+        'secureProtocol': 'TLSv1_2_method',
+        'rejectUnauthorized': false
+      }
+      appLogger.log(options)
+      request(options, function (error, res, body) {
+        if (error) return done(error)
+        res.should.have.status(404)
+        done()
       })
     })
   })
