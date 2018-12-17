@@ -4,7 +4,7 @@ const hjson = require('hjson')
 // Values higher up override values beneath
 nconf
   // command line
-  .argv() 
+  .argv()
   // environment variables
   .env()
   // Selectively override defaults with {NODE_ENV}.hjson file
