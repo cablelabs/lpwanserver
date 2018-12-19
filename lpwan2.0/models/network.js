@@ -8,8 +8,8 @@ const NetworkSchema = Schema({
   credentials: Object,
   baseUrl: String,
   name: String,
-  authorized: Boolean,
-  enabled: Boolean
+  authorized: {type: Boolean, default: false},
+  enabled: {type: Boolean, default: true}
 })
 
 /* global db */
@@ -32,7 +32,41 @@ module.exports.getById = (req, res, next) => {
 module.exports.post = (req, res, next) => {
   this.NetworkModel.create(req.body, (err, network) => {
     if (err) next(err)
-    //TODO: Push and Pull occurs here
-    res.send(network)
+    // TODO: Push and Pull occurs here
+    /**
+     * Steps
+     * 1 Login & Test using Protocol Handler
+     * 2 Pull Network using Protocol Handler (normalize data)
+     * 3 Push to all other networks
+     * 4 Push to this network
+     * 5 Save everything
+     */
+    network.save(function (err, finalNetwork) {
+      if (err) return next(err)
+      res.send(finalNetwork)
+    })
+  })
+}
+
+module.exports.put = (req, res, next) => {
+  this.NetworkModel.findById(req.params.networkId, (err, network) => {
+    if (err) next(err)
+    for (let prop in req.body) {
+      network[prop] = req.body[prop]
+    }
+    network.authorized = false
+    // TODO: Push and Pull occurs here
+    /**
+     * Steps
+     * 1 Login & Test using Protocol Handler
+     * 2 Pull Network using Protocol Handler (normalize data)
+     * 3 Push to all other networks
+     * 4 Push to this network
+     * 5 Save everything
+     */
+    network.save(function (err, finalNetwork) {
+      if (err) return next(err)
+      res.send(finalNetwork)
+    })
   })
 }
