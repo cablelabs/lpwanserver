@@ -2,18 +2,9 @@
 const Schema = require('mongoose').Schema
 
 const ReportingProtocolSchema = Schema({
-  baseUrl: String,
-  reportingProtocolId: String,
-  description: String,
   name: String,
-  organizationID: String,
-  payloadCodec: String,
-  payloadDecoderScript: String,
-  payloadEncoderScript: String,
-  validationScript: String,
-  serviceProfileID: String,
-  reportingProtocolEUI: String,
-  key: String
+  handler: String,
+  version: String
 })
 
 /* global db */

@@ -1,18 +1,31 @@
 'use strict'
 const Schema = require('mongoose').Schema
 const DeviceProfileSchema = Schema({
-  baseUrl: String,
-  reportingProtocolId: String,
-  description: String,
+  classBTimeout: Number,
+  classCTimeout: Number,
+  factoryPresetFreqs: [
+    Number
+  ],
+  id: String,
+  macVersion: String,
+  maxDutyCycle: Number,
+  maxEIRP: Number,
   name: String,
+  networkServerID: String,
   organizationID: String,
-  payloadCodec: String,
-  payloadDecoderScript: String,
-  payloadEncoderScript: String,
-  validationScript: String,
-  serviceProfileID: String,
-  deviceProfileEUI: String,
-  key: String
+  pingSlotDR: Number,
+  pingSlotFreq: Number,
+  pingSlotPeriod: Number,
+  regParamsRevision: String,
+  rfRegion: String,
+  rxDROffset1: Number,
+  rxDataRate2: Number,
+  rxDelay1: Number,
+  rxFreq2: Number,
+  supports32BitFCnt: Boolean,
+  supportsClassB: Boolean,
+  supportsClassC: Boolean,
+  supportsJoin: Boolean
 })
 
 const RemoteDeviceProfileSchema = Schema({

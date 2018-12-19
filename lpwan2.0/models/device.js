@@ -2,18 +2,15 @@
 const Schema = require('mongoose').Schema
 
 const DeviceSchema = Schema({
-  baseUrl: String,
-  reportingProtocolId: String,
+  applicationID: String,
   description: String,
+  devEUI: String,
+  deviceProfileID: String,
   name: String,
-  organizationID: String,
-  payloadCodec: String,
-  payloadDecoderScript: String,
-  payloadEncoderScript: String,
-  validationScript: String,
-  serviceProfileID: String,
-  deviceEUI: String,
-  key: String
+  skipFCntCheck: Boolean,
+  deviceStatusBattery: Number,
+  deviceStatusMargin: Number,
+  lastSeenAt: Date
 })
 
 const RemoteDeviceSchema = Schema({
