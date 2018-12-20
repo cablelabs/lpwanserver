@@ -17,21 +17,21 @@ module.exports.NetworkModel = db.model('Network', NetworkSchema)
 
 module.exports.get = (req, res, next) => {
   this.NetworkModel.find({}, (err, networks) => {
-    if (err) next(err)
+    if (err) return next(err)
     res.send(networks)
   })
 }
 
 module.exports.getById = (req, res, next) => {
   this.NetworkModel.findById(req.params.networkId, (err, network) => {
-    if (err) next(err)
+    if (err) return next(err)
     res.send(network)
   })
 }
 
 module.exports.post = (req, res, next) => {
   this.NetworkModel.create(req.body, (err, network) => {
-    if (err) next(err)
+    if (err) return next(err)
     // TODO: Push and Pull occurs here
     /**
      * Steps
@@ -50,7 +50,7 @@ module.exports.post = (req, res, next) => {
 
 module.exports.put = (req, res, next) => {
   this.NetworkModel.findById(req.params.networkId, (err, network) => {
-    if (err) next(err)
+    if (err) return next(err)
     for (let prop in req.body) {
       network[prop] = req.body[prop]
     }

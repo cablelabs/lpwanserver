@@ -42,16 +42,16 @@ module.exports.RemoteDeviceProfile = db.model('RemoteDeviceProfile', RemoteDevic
 
 module.exports.get = (req, res, next) => {
   this.DeviceProfile.find({}, (err, deviceProfiles) => {
-    if (err) next(err)
+    if (err) return next(err)
     res.send(deviceProfiles)
   })
 }
 
 module.exports.getById = (req, res, next) => {
   this.DeviceProfile.findById(req.params.deviceProfileId, (err, deviceProfile) => {
-    if (err) next(err)
+    if (err) return next(err)
     this.RemoteDeviceProfile.find({localId: deviceProfile.id}, (err, remotes) => {
-      if (err) next(err)
+      if (err) return next(err)
       deviceProfile.remoteAppliations = remotes
       res.send(deviceProfile)
     })
@@ -60,14 +60,14 @@ module.exports.getById = (req, res, next) => {
 
 module.exports.post = (req, res, next) => {
   this.DeviceProfile.create(req.body, (err, deviceProfile) => {
-    if (err) next(err)
+    if (err) return next(err)
     res.send(deviceProfile)
   })
 }
 
 module.exports.postRemote = (req, res, next) => {
   this.RemoteDeviceProfile.create(req.body, (err, deviceProfile) => {
-    if (err) next(err)
+    if (err) return next(err)
     res.send(deviceProfile)
   })
 }

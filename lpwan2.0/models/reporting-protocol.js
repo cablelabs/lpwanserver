@@ -12,14 +12,14 @@ module.exports.ReportingProtocolModel = db.model('ReportingProtocol', ReportingP
 
 module.exports.get = (req, res, next) => {
   this.ReportingProtocolModel.find({}, (err, reportingProtocols) => {
-    if (err) next(err)
+    if (err) return next(err)
     res.send(reportingProtocols)
   })
 }
 
 module.exports.getById = (req, res, next) => {
   this.ReportingProtocolModel.findById(req.params.reportingProtocolId, (err, reportingProtocol) => {
-    if (err) next(err)
+    if (err) return next(err)
     res.send(reportingProtocol)
   })
 }

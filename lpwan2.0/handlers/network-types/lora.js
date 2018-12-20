@@ -47,6 +47,7 @@ module.exports.pushApplications = async (network) => {
 }
 
 module.exports.pushApplication = async (network, update = true) => {
+      // MISSING LINE OF CODE HERE
       .then(appNetworkId => {
         if (update && appNetworkId) {
           this.updateApplication(sessionData, network, application.id, dataAPI)

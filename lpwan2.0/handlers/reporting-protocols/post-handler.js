@@ -1,26 +1,20 @@
-const request = require('request')
+const request = require('request-promise-native')
 
 exports.report = async (dataObject, url, appName) => {
-  var options = {}
-  options.method = 'POST'
-  options.uri = url
-  options.headers = {}
-  options.headers[ 'Content-Type' ] = 'application/json'
-  options.headers.appid = appName
-  options.json = dataObject
+  var options = {
+    method: 'POST',
+    uri: url,
+    headers: { appId: appName },
+    body: dataObject,
+    json: true
+  }
   console.log(options)
-  request(options, function (error, response, body) {
-    if (error) {
-      console.log('Error reporting data (' +
-          JSON.stringify(dataObject) +
-          ') for ' + appName +
-          ' to ' + url +
-          ': ' + error)
-      throw (error)
-    }
-    else {
-      console.log(body)
-      return (response)
-    }
-  })
+  try {
+    const body = await request(options)
+    console.log(body)
+    return body
+  } catch (err) {
+    console.error(`Error reporting data (${JSON.stringify(dataObject)}) for ${appName} to ${url}.`)
+    throw err
+  }
 }

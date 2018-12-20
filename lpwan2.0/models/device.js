@@ -27,16 +27,16 @@ module.exports.RemoteDeviceModel = db.model('RemoteDevice', RemoteDeviceSchema)
 
 module.exports.get = (req, res, next) => {
   this.DeviceModel.find({}, (err, devices) => {
-    if (err) next(err)
+    if (err) return next(err)
     res.send(devices)
   })
 }
 
 module.exports.getById = (req, res, next) => {
   this.DeviceModel.findById(req.params.deviceId, (err, device) => {
-    if (err) next(err)
+    if (err) return next(err)
     this.RemoteDeviceModel.find({localId: device.id}, (err, remotes) => {
-      if (err) next(err)
+      if (err) return next(err)
       device.remoteAppliations = remotes
       res.send(device)
     })
@@ -45,7 +45,7 @@ module.exports.getById = (req, res, next) => {
 
 module.exports.getByApplicationId = (req, res, next) => {
   this.DeviceModel.find({applicationId: req.params.applicationId}, (err, devices) => {
-    if (err) next(err)
+    if (err) return next(err)
     let promiseList = []
     for (let index = 0; index < devices.length; index++) {
       promiseList.put(this.getRemoteDevicesByDeviceId(devices[index]))
@@ -71,14 +71,14 @@ module.exports.getRemoteDevicesByDeviceId = async (device) => {
 
 module.exports.post = (req, res, next) => {
   this.DeviceModel.create(req.body, (err, device) => {
-    if (err) next(err)
+    if (err) return next(err)
     res.send(device)
   })
 }
 
 module.exports.postRemote = (req, res, next) => {
   this.RemoteDeviceModel.create(req.body, (err, device) => {
-    if (err) next(err)
+    if (err) return next(err)
     res.send(device)
   })
 }
