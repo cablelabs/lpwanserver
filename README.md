@@ -1,6 +1,7 @@
 [![Build Status](https://travis-ci.org/cablelabs/lpwanserver.svg?branch=master)](https://travis-ci.org/cablelabs/lpwanserver)
 [![Coverage Status](https://coveralls.io/repos/github/cablelabs/lpwanserver/badge.svg?branch=master)](https://coveralls.io/github/cablelabs/lpwanserver?branch=master)
 [![dependencies Status](https://david-dm.org/cablelabs/lpwanserver/status.svg)](https://david-dm.org/cablelabs/lpwanserver)
+[![devDependencies Status](https://david-dm.org/cablelabs/lpwanserver/dev-status.svg)](https://david-dm.org/cablelabs/lpwanserver?type=dev)
 
 # LPWAN Server (lpwanserver)
 
