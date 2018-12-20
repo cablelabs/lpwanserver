@@ -11,7 +11,7 @@ global.secret = 'changeme'
 const routes = require('./routes/routes.js')
 const app = express()
 
-app.use(jwt({secret: global.secret}).unless({ path: '/users/login' }))
+app.use(jwt({secret: global.secret}).unless({path: '/users/login'}))
 app.use(function (err, req, res, next) {
   if (err.name === 'UnauthorizedError') {
     res.status(401).send('invalid token...')
