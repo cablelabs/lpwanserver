@@ -1,5 +1,7 @@
 [![Build Status](https://travis-ci.org/cablelabs/lpwanserver.svg?branch=master)](https://travis-ci.org/cablelabs/lpwanserver)
 
+[![Coverage Status](https://coveralls.io/repos/github/cablelabs/lpwanserver/badge.svg?branch=master)](https://coveralls.io/github/cablelabs/lpwanserver?branch=master)
+
 # LPWAN Server (lpwanserver)
 
 The LPWAN Server is the backend CableLabs' [LPWAN Server](http://lpwanserver.com/)
