@@ -23,13 +23,15 @@
     "package-test": "node bin/package-test.js",
     "package-api-test": "node bin/package-api-test.js",
     "package-e2e-test": "node bin/package-e2e-test.js",
-    "test2": "./bin/unit-tests && ./bin/api-tests"
+    "test2": "./bin/unit-tests && ./bin/api-tests",
+    "test-with-coverage": "istanbul cover _mocha test2.0/unit/models --report lcovonly -- -R spec && cat ./coverage/lcov.info | codacy-coverage && rm -rf ./coverage"
   },
   "dependencies": {
     "async": "~2.0.1",
     "body-parser": "^1.18.3",
     "chai": "^4.1.2",
     "chai-http": "^4.0.0",
+    "codacy-coverage": "^3.3.0",
     "connect-ensure-login": "~0.1.1",
     "cookie-parser": "~1.4.3",
     "cors": "^2.8.4",
@@ -63,14 +65,15 @@
     "ws": "^1.1.5"
   },
   "devDependencies": {
-    "coveralls": "^3.0.2",
     "eslint": "^5.2.0",
     "eslint-config-standard": "^11.0.0",
     "eslint-plugin-import": "^2.13.0",
     "eslint-plugin-node": "^7.0.1",
     "eslint-plugin-promise": "^3.8.0",
     "eslint-plugin-standard": "^3.1.0",
+    "istanbul": "^0.4.5",
     "mocha-lcov-reporter": "^1.3.0",
-    "nodemon": "^1.18.4"
+    "nodemon": "^1.18.4",
+    "nyc": "^13.1.0"
   }
 }
