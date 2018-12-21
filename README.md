@@ -42,6 +42,10 @@ LPWAN Server was originally built by [CableLabs](http://cablelabs.com/), but
 we could use your help! Check out our [contributing guidelines](CONTRIBUTING.md)
 to get started.
 
+## Sponsors
+
+[![CableLabs](https://www.loraserver.io/img/sponsors/cablelabs.png)](https://www.cablelabs.com/)
+
 ## Other important stuff
 
 We use an [Apache 2.0 License](LICENSE) for LPWAN Server.
