@@ -1,3 +1,4 @@
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/e0a465b09a834c2ca668246c6dd65cf7)](https://app.codacy.com/app/dschrimpsher/lpwanserver?utm_source=github.com&utm_medium=referral&utm_content=cablelabs/lpwanserver&utm_campaign=Badge_Grade_Dashboard)
 [![Build Status](https://travis-ci.org/cablelabs/lpwanserver.svg?branch=master)](https://travis-ci.org/cablelabs/lpwanserver)
 [![codecov](https://codecov.io/gh/cablelabs/lpwanserver/branch/master/graph/badge.svg)](https://codecov.io/gh/cablelabs/lpwanserver)
 [![dependencies Status](https://david-dm.org/cablelabs/lpwanserver/status.svg)](https://david-dm.org/cablelabs/lpwanserver)
