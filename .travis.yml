@@ -6,6 +6,7 @@ services:
   - docker
 install:
   - npm install
+  - npm install -D
 before_script:
   - npm run package
 script:
