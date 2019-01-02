@@ -2065,7 +2065,11 @@ module.exports.addApplication = function (sessionData, network, applicationId, d
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ' + sessionData.connection
       }
-      options.json = deNormalizeApplicationData(applicationData.networkSettings, coSPId, coNetworkId)
+      options.json = deNormalizeApplicationData(
+        Object.assign({}, application, applicationData.networkSettings),
+        coSPId,
+        coNetworkId
+      )
       options.agentOptions = {
         'secureProtocol': 'TLSv1_2_method',
         'rejectUnauthorized': false
