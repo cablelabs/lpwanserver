@@ -5,6 +5,7 @@ var nconf = require('nconf')
 var appLogger = require('../lib/appLogger.js')
 // Used in getting data for the reportingProtocols
 var NetworkProtocolDataAccess = require('../networkProtocols/networkProtocolDataAccess.js')
+var reportingProtocol = require('../reportingProtocols/postHandler')
 
 var modelAPI
 var expressApp
@@ -161,36 +162,38 @@ Application.prototype.deleteApplication = function (id) {
 // nodeExpressApp - The node app so we can set up a URL to get data.
 //
 // Returns a promise that performs the start.
-Application.prototype.startApplication = function (id) {
-  var me = this
-  return new Promise(async function (resolve, reject) {
-    var appLinks = await modelAPI.applicationNetworkTypeLinks.retrieveApplicationNetworkTypeLinks({ 'applicationId': id })
-    var allLogs = []
-    var allPromises = []
-    appLinks.records.forEach(async function (appLink) {
-      allPromises.push(modelAPI.networkTypeAPI.startApplication(appLink.networkTypeId, id))
-    })
-    try {
-      // Generates an array of arrays of logs.
-      var logs = await Promise.all(allPromises)
-      logs.forEach((onePromiseLogs) => {
-        onePromiseLogs.forEach((log) => {
-          allLogs.push(log)
-        })
-      })
-    }
-    catch (err) {
-      allLogs.push('Failed to start application on at least one network')
-    }
-
-    var rec = {}
-    rec.remoteAccessLogs = allLogs
-
-    // Keep track of running applications (transient property)
-    running.set(id, true)
-
-    resolve(rec)
-  })
+Application.prototype.startApplication = async function (id) {
+  // var me = this
+  // return new Promise(async function (resolve, reject) {
+  //   var appLinks = await modelAPI.applicationNetworkTypeLinks.retrieveApplicationNetworkTypeLinks({ 'applicationId': id })
+  //   var allLogs = []
+  //   var allPromises = []
+  //   appLinks.records.forEach(async function (appLink) {
+  //     allPromises.push(modelAPI.networkTypeAPI.startApplication(appLink.networkTypeId, id))
+  //   })
+  //   try {
+  //     // Generates an array of arrays of logs.
+  //     var logs = await Promise.all(allPromises)
+  //     logs.forEach((onePromiseLogs) => {
+  //       onePromiseLogs.forEach((log) => {
+  //         allLogs.push(log)
+  //       })
+  //     })
+  //   }
+  //   catch (err) {
+  //     allLogs.push('Failed to start application on at least one network')
+  //   }
+  //
+  //   var rec = {}
+  //   rec.remoteAccessLogs = allLogs
+  //
+  //   // Keep track of running applications (transient property)
+  //   running.set(id, true)
+  //
+  //   resolve(rec)
+  // })
+  running.set(id, true)
+  return ({})
 }
 
 // Stop processing data for the application.
@@ -198,48 +201,45 @@ Application.prototype.startApplication = function (id) {
 // id - the id of the application to stop processing for.
 //
 // Returns a promise that performs the stop.
-Application.prototype.stopApplication = function (id) {
-  var me = this
-  return new Promise(async function (resolve, reject) {
-    var appLinks = await modelAPI.applicationNetworkTypeLinks.retrieveApplicationNetworkTypeLinks({ 'applicationId': id })
-    var allLogs = {}
-    var allPromises = []
-    appLinks.records.forEach(async function (appLink) {
-      allPromises.push(modelAPI.networkTypeAPI.stopApplication(appLink.networkTypeId, id))
-    })
-    try {
-      // Generates an array of logs.
-      var logs = await Promise.all(allPromises)
-      for (var logSet = 0; logSet < logs.length; ++logSet) {
-        for (var networkId in logs[ logSet ]) {
-          var networkLogs = logs[ logSet ][ networkId ]
-          if (!allLogs[ networkId ]) {
-            // Not there yet.  OK to assign.  And yeah, this
-            // is a reference, but we won't be using the entries
-            // after this.
-            allLogs[ networkId ] = networkLogs
-          }
-          else {
-            // Add in the logs from this network.
-            for (var j = 0; j < networkLogs[ networkId ].logs.length; ++j) {
-              allLogs[ networkId ].logs.push(networkLogs[ networkId ].logs[ j ])
-            }
-          }
-        }
-      }
-    }
-    catch (err) {
-      allLogs.push('Failed to stop application on at least one network')
-    }
+Application.prototype.stopApplication = async function (id) {
+  // var me = this
+  // return new Promise(async function (resolve, reject) {
+  //   var appLinks = await modelAPI.applicationNetworkTypeLinks.retrieveApplicationNetworkTypeLinks({ 'applicationId': id })
+  //   var allLogs = {}
+  //   var allPromises = []
+  //   appLinks.records.forEach(async function (appLink) {
+  //     allPromises.push(modelAPI.networkTypeAPI.stopApplication(appLink.networkTypeId, id))
+  //   })
+  //   try {
+  //     // Generates an array of logs.
+  //     var logs = await Promise.all(allPromises)
+  //     for (var logSet = 0; logSet < logs.length; ++logSet) {
+  //       for (var networkId in logs[ logSet ]) {
+  //         var networkLogs = logs[ logSet ][ networkId ]
+  //         if (!allLogs[ networkId ]) {
+  //           // Not there yet.  OK to assign.  And yeah, this
+  //           // is a reference, but we won't be using the entries
+  //           // after this.
+  //           allLogs[ networkId ] = networkLogs
+  //         }
+  //         else {
+  //           // Add in the logs from this network.
+  //           for (var j = 0; j < networkLogs[ networkId ].logs.length; ++j) {
+  //             allLogs[ networkId ].logs.push(networkLogs[ networkId ].logs[ j ])
+  //           }
+  //         }
+  //       }
+  //     }
+  //   }
+  //   catch (err) {
+  //     allLogs.push('Failed to stop application on at least one network')
+  //   }
+  //
+  //   var rec = {}
+  //   rec.remoteAccessLogs = allLogs
 
-    var rec = {}
-    rec.remoteAccessLogs = allLogs
-
-    // Remove from running applications
-    running.delete(id)
-
-    resolve(rec)
-  })
+  // Remove from running applications
+  running.set(id, false)
 }
 
 // Pass data to the reporting protocol as a test.
@@ -253,8 +253,7 @@ Application.prototype.testApplication = function (applicationId, data) {
   return new Promise(async function (resolve, reject) {
     try {
       var app = await me.impl.retrieveApplication(applicationId)
-      var reportingProto = await modelAPI.reportingProtocolAPIs.getProtocol(app)
-      var response = await reportingProto.report(data, app.baseUrl, app.name)
+      var response = await reportingProtocol.report(data, app.baseUrl, app.name)
       resolve(204)
     }
     catch (err) {
@@ -272,7 +271,6 @@ Application.prototype.testApplication = function (applicationId, data) {
 //
 // Returns a promise that performs the pass.
 Application.prototype.passDataToApplication = function (applicationId, networkId, data) {
-  var me = this
   return new Promise(async function (resolve, reject) {
     try {
       var network = await modelAPI.networks.retrieveNetwork(networkId)
@@ -286,7 +284,6 @@ Application.prototype.passDataToApplication = function (applicationId, networkId
     }
   })
 }
-
 // Start all of the applications we have - intended for system bringup.
 //
 // Returns a promise that performs the start.

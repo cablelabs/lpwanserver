@@ -2539,7 +2539,7 @@ module.exports.passDataToApplication = function (network, applicationId, data, d
         ' for applicationId ' + applicationId +
         '. The appliction is not in a running state.  Data = ' +
         JSON.stringify(data))
-      reject('Application not running')
+      reject(new Error('Application not running'))
       return
     }
 

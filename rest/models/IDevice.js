@@ -1,13 +1,13 @@
-var appLogger = require( "../lib/appLogger.js" );
+const appLogger = require('../lib/appLogger.js')
 
 // Configuration access.
-var nconf = require('nconf');
+const nconf = require('nconf')
 
-var modelAPI;
-var impl;
-//******************************************************************************
+var modelAPI
+var impl
+//* *****************************************************************************
 // The Device interface.
-//******************************************************************************
+//* *****************************************************************************
 // Class constructor.
 //
 // Loads the implementation for the device interface based on the passed
@@ -16,12 +16,12 @@ var impl;
 //
 // implPath - The subdirectory to get the dao implementation from.
 //
-function Device( server ) {
-    this.impl = new require( './dao/' +
-                             nconf.get( "impl_directory" ) +
-                             '/devices.js' );
-    impl = this.impl;
-    modelAPI = server;
+function Device (server) {
+  this.impl = require('./dao/' +
+                             nconf.get('impl_directory') +
+                             '/devices.js')
+  impl = this.impl
+  modelAPI = server
 };
 
 // Retrieves a subset of the devices in the system given the options.
@@ -29,18 +29,18 @@ function Device( server ) {
 // Options include limits on the number of devices returned, the offset to
 // the first device returned (together giving a paging capability), a
 // search string on device name, an applicationId, and a deviceProfileId.
-Device.prototype.retrieveDevices = function( options ) {
-    return this.impl.retrieveDevices( options );
-};
+Device.prototype.retrieveDevices = function (options) {
+  return this.impl.retrieveDevices(options)
+}
 
 // Retrieve an device record by id.
 //
 // id - the record id of the device.
 //
 // Returns a promise that executes the retrieval.
-Device.prototype.retrieveDevice = function( id ) {
-    return this.impl.retrieveDevice( id );
-};
+Device.prototype.retrieveDevice = function (id) {
+  return this.impl.retrieveDevice(id)
+}
 
 // Create the device record.
 //
@@ -50,9 +50,9 @@ Device.prototype.retrieveDevice = function( id ) {
 // applicationId - the id of the application this device belongs to
 //
 // Returns the promise that will execute the create.
-Device.prototype.createDevice = function( name, description, applicationId, deviceModel ) {
-    return this.impl.createDevice( name, description, applicationId, deviceModel );
-};
+Device.prototype.createDevice = function (name, description, applicationId, deviceModel) {
+  return this.impl.createDevice(name, description, applicationId, deviceModel)
+}
 
 // Update the device record.
 //
@@ -60,42 +60,42 @@ Device.prototype.createDevice = function( name, description, applicationId, devi
 //          retrieval to guarantee the same record is updated.
 //
 // Returns a promise that executes the update.
-Device.prototype.updateDevice = function( record ) {
-    return this.impl.updateDevice( record );
-};
+Device.prototype.updateDevice = function (record) {
+  return this.impl.updateDevice(record)
+}
 
 // Delete the device record.
 //
 // id - the id of the device record to delete.
 //
 // Returns a promise that performs the delete.
-Device.prototype.deleteDevice = function( id ) {
-    let me = this;
-    return new Promise( async function( resolve, reject ) {
-        // Delete my deviceNetworkTypeLinks first.
-        try {
-            let dntls = await modelAPI.deviceNetworkTypeLinks.retrieveDeviceNetworkTypeLinks(
-                                                { deviceId: id } );
-            let recs = dntls.records;
-            for ( let i = 0; i < recs.length; ++i ) {
-                await modelAPI.deviceNetworkTypeLinks.deleteDeviceNetworkTypeLink(
-                                                            recs[ i ].id );
-            }
-        }
-        catch ( err ) {
-            appLogger.log( "Error deleting device-dependant networkTypeLinks: ",
-                         err );
-        }
+Device.prototype.deleteDevice = function (id) {
+  let me = this
+  return new Promise(async function (resolve, reject) {
+    // Delete my deviceNetworkTypeLinks first.
+    try {
+      let dntls = await modelAPI.deviceNetworkTypeLinks.retrieveDeviceNetworkTypeLinks(
+        { deviceId: id })
+      let recs = dntls.records
+      for (let i = 0; i < recs.length; ++i) {
+        await modelAPI.deviceNetworkTypeLinks.deleteDeviceNetworkTypeLink(
+          recs[ i ].id)
+      }
+    }
+    catch (err) {
+      appLogger.log('Error deleting device-dependant networkTypeLinks: ',
+        err)
+    }
 
-        try {
-            await me.impl.deleteDevice( id );
-            resolve();
-        }
-        catch( err ) {
-            reject( err );
-        }
-    });
-};
+    try {
+      await me.impl.deleteDevice(id)
+      resolve()
+    }
+    catch (err) {
+      reject(err)
+    }
+  })
+}
 
 // Since device access often depends on the user's company, we'll often have to
 // do a check.  But this makes the code very convoluted with promises and
@@ -107,49 +107,49 @@ Device.prototype.deleteDevice = function( id ) {
 // the REST code.  This means that the REST code can easily check ownership,
 // and it keeps all of that validation in one place, not requiring promises in
 // some cases but not others (e.g., when the user is part of an admin company).
-Device.prototype.fetchDeviceApplication = function( req, res, next ) {
-    impl.retrieveDevice( parseInt( req.params.id ) )
-    .then( function( dev ) {
-        // Save the device.
-        req.device = dev;
-        modelAPI.applications.retrieveApplication( dev.applicationId ).then( function( app ) {
-            req.application = app;
-            next();
+Device.prototype.fetchDeviceApplication = function (req, res, next) {
+  impl.retrieveDevice(parseInt(req.params.id))
+    .then(function (dev) {
+      // Save the device.
+      req.device = dev
+      modelAPI.applications.retrieveApplication(dev.applicationId).then(function (app) {
+        req.application = app
+        next()
+      })
+        .catch(function (err) {
+          if (err.status) {
+            res.status(err.status)
+          }
+          else {
+            res.status(400)
+          }
+          res.end()
         })
-        .catch( function ( err ) {
-            if ( err.status ) {
-                res.status( err.status );
-            }
-            else {
-                res.status( 400 );
-            }
-            res.end();
-        });
     })
-    .catch( function ( err ) {
-        if ( err.status ) {
-            res.status( err.status );
-        }
-        else {
-            res.status( 400 );
-        }
-        res.end();
-    });
-};
+    .catch(function (err) {
+      if (err.status) {
+        res.status(err.status)
+      }
+      else {
+        res.status(400)
+      }
+      res.end()
+    })
+}
 
 // This is similar to the previous method, except it looks for the
 // applicationId in the request body to get the application for the device we
 // want to create.
-Device.prototype.fetchApplicationForNewDevice = function( req, res, next ) {
-    modelAPI.applications.retrieveApplication( parseInt( req.body.applicationId ) )
-    .then( function( app ) {
-        req.application = app;
-        next();
+Device.prototype.fetchApplicationForNewDevice = function (req, res, next) {
+  modelAPI.applications.retrieveApplication(parseInt(req.body.applicationId))
+    .then(function (app) {
+      req.application = app
+      next()
     })
-    .catch( function ( err ) {
-        res.status( 400 );
-        res.end();
-    });
-};
+    .catch(function (err) {
+      res.status(400)
+      res.end()
+    })
+}
 
-module.exports = Device;
+module.exports = Device
