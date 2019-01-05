@@ -4,10 +4,8 @@ var assert = require('assert')
 var chai = require('chai')
 // eslint-disable-next-line no-unused-vars
 var should = chai.should()
-var nconf = require('nconf')
 var TestModule = require('../../../rest/lib/appLogger')
 const testName = 'AppLogger'
-
 
 describe('Unit Tests for ' + testName, () => {
   before('Setup ENV', async () => {

@@ -4,10 +4,8 @@ var assert = require('assert')
 var chai = require('chai')
 // eslint-disable-next-line no-unused-vars
 var should = chai.should()
-var nconf = require('nconf')
 var TestModule = require('../../../rest/lib/crypto')
 const testName = 'Crypto'
-
 
 describe('Unit Tests for ' + testName, () => {
   let temp = null
@@ -23,14 +21,14 @@ describe('Unit Tests for ' + testName, () => {
     })
   })
   it(testName + ' Verify Password', (done) => {
-    TestModule.verifyPassword('Test123', temp,(err, valid) => {
+    TestModule.verifyPassword('Test123', temp, (err, valid) => {
       if (err) done(err)
       if (!valid) done(new Error('Password Failed'))
       else done()
     })
   })
   it(testName + ' Fail to Verify Password', (done) => {
-    TestModule.verifyPassword('Test456', temp,(err, valid) => {
+    TestModule.verifyPassword('Test456', temp, (err, valid) => {
       if (err) done(err)
       if (valid) done(new Error('Password Did not fail'))
       else done()
