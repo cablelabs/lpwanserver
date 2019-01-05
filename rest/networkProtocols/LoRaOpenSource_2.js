@@ -2139,7 +2139,12 @@ module.exports.addApplication = function (sessionData, network, applicationId, d
       appLogger.log(coSPId, 'info')
       appLogger.log(coNetworkId, 'info')
 
-      options.json = deNormalizeApplicationData(applicationData.networkSettings, coSPId, coNetworkId)
+      options.json = deNormalizeApplicationData(
+        Object.assign({}, application, applicationData.networkSettings),
+        coSPId,
+        coNetworkId
+      )
+
       options.agentOptions = {
         'secureProtocol': 'TLSv1_2_method',
         'rejectUnauthorized': false
