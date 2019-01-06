@@ -62,9 +62,9 @@
     //////////////////////////////////////////////////////////
     db_schema: data/lpwanserver.2.2.schema
     // Create a new database at startup?
-    db_create: true
+    db_create: false
     // The database file to use.
-    db_file: /tmp/test.sqlite3
+    db_file: data/demo_data/demo.sqlite3
 
     //////////////////////////////////////////////////////////
     // CORS settings
