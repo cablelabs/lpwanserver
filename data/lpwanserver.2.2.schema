@@ -69,6 +69,7 @@ CREATE TABLE IF NOT EXISTS networkProtocols
   protocolHandler TEXT,
   networkTypeId   INTEGER not null references networkTypes,
   networkProtocolVersion         TEXT,
+  masterProtocol  INTEGER,
   FOREIGN KEY(masterProtocol) REFERENCES networkProtocols(id) ON DELETE set null
 );
 
@@ -106,7 +107,7 @@ create table if not exists companyNetworkTypeLinks (
     companyId INTEGER REFERENCES companies( id ) ON DELETE CASCADE NOT NULL,
     networkTypeId INTEGER REFERENCES networkTypes( id ) ON DELETE CASCADE NOT NULL,
     networkSettings TEXT,
-    UNIQUE( companyId, networkId )
+    UNIQUE( companyId, networkTypeId )
 );
 
 create table if not exists reportingProtocols (
@@ -131,7 +132,7 @@ create table if not exists applicationNetworkTypeLinks (
     applicationId INTEGER REFERENCES applications( id ) ON DELETE CASCADE NOT NULL,
     networkTypeId INTEGER REFERENCES networkTypes( id ) ON DELETE CASCADE NOT NULL,
     networkSettings TEXT,
-    UNIQUE( applicationId, networkId )
+    UNIQUE( applicationId, networkTypeId )
 );
 
 create table if not exists devices (

@@ -17,8 +17,8 @@ exports.logger = winston.createLogger({
   ]
 })
 
-var loggingEnabled
-var loggingHeaders
+exports.loggingEnabled = true
+exports.loggingHeaders = true
 
 exports.initRESTCallLogger = function (app) {
   var logFormat = nconf.get('log_format_morgan')
@@ -27,15 +27,15 @@ exports.initRESTCallLogger = function (app) {
   }
 
   // Also init whether we do general logging
-  loggingEnabled = nconf.get('logging_enabled')
-  loggingHeaders = nconf.get('logging_headers')
+  this.this.loggingEnabled = nconf.get('logging_enabled')
+  this.this.loggingHeaders = nconf.get('logging_headers')
 }
 
 exports.log = function (msg, level) {
   if (!level) level = 'info'
-  if (loggingEnabled) {
+  if (this.loggingEnabled) {
     var header = ''
-    if (loggingHeaders) {
+    if (this.loggingHeaders) {
       var date = new Date().toISOString()
       var frame = stackTrace.get()[1]
       var method = frame.getFunctionName()
