@@ -1,12 +1,12 @@
-var appLogger = require( "./lib/appLogger.js" );
-var restServer;
-var modelAPI;
+var appLogger = require('./lib/appLogger.js')
+var restServer
+var modelAPI
 
-exports.initialize = function( app, server ) {
-    restServer = server;
-    modelAPI = server.modelAPI;
+exports.initialize = function (app, server) {
+  restServer = server
+  modelAPI = server.modelAPI
 
-    /*********************************************************************
+  /*********************************************************************
      * Networks API.
      ********************************************************************
     /**
@@ -18,47 +18,47 @@ exports.initialize = function( app, server ) {
      *   from the user to create a JSON structure to including the
      *   *NetworkTypeLink record for the network.
      */
-    app.get('/api/networkProvisioningFields/:table/:networkId',
-            [restServer.isLoggedIn,
-             restServer.fetchCompany,
-             restServer.isAdmin],
-            function(req, res, next) {
-        // Convert the table name to an id
-        var tableName = req.params.table;
-        var tableId = modelAPI.networkProvisioningFields.provisioningTables[ tableName ];
-        if ( !tableId ) {
-            restServer.respond( res, 400, "Invalid table" );
-            return;
-        }
+  app.get('/api/networkProvisioningFields/:table/:networkId',
+    [restServer.isLoggedIn,
+      restServer.fetchCompany,
+      restServer.isAdmin],
+    function (req, res, next) {
+      // Convert the table name to an id
+      var tableName = req.params.table
+      var tableId = modelAPI.networkProvisioningFields.provisioningTables[ tableName ]
+      if (!tableId) {
+        restServer.respond(res, 400, 'Invalid table')
+        return
+      }
 
-        modelAPI.networkProvisioningFields.retrieveNetworkProvisioningFields( req.params.networkId, tableId ).then( function( fields ) {
-            restServer.respondJson( res, null, fields );
+      modelAPI.networkProvisioningFields.retrieveNetworkProvisioningFields(req.params.networkId, tableId).then(function (fields) {
+        restServer.respondJson(res, null, fields)
+      })
+        .catch(function (err) {
+          appLogger.log('Error getting table fields: ' + err)
+          restServer.respond(res, err)
         })
-        .catch( function( err ) {
-            appLogger.log( "Error getting table fields: " + err );
-            restServer.respond( res, err );
-        });
-    });
+    })
 
-    /**
+  /**
      * Gets the networkProvisioningField record with the specified id.
      * - Can be called by a member of the admin company
      */
-    app.get('/api/networkProvisioningFields/:id', [restServer.isLoggedIn,
-                                                   restServer.fetchCompany,
-                                                   restServer.isAdminCompany],
-                                                  function(req, res, next) {
-        var id = parseInt( req.params.id );
-        modelAPI.networkProvisioningFields.retrieveNetworkProvisioningField( id ).then( function( npf ) {
-            restServer.respondJson( res, null, npf );
-        })
-        .catch( function( err ) {
-            appLogger.log( "Error getting networkProvisioningField " + id + ": " + err );
-            restServer.respond( res, err );
-        });
-    });
+  app.get('/api/networkProvisioningFields/:id', [restServer.isLoggedIn,
+    restServer.fetchCompany,
+    restServer.isAdminCompany],
+  function (req, res, next) {
+    var id = parseInt(req.params.id)
+    modelAPI.networkProvisioningFields.retrieveNetworkProvisioningField(id).then(function (npf) {
+      restServer.respondJson(res, null, npf)
+    })
+      .catch(function (err) {
+        appLogger.log('Error getting networkProvisioningField ' + id + ': ' + err)
+        restServer.respond(res, err)
+      })
+  })
 
-    /**
+  /**
      * Creates a new networkProvisioningField record.
      * - A user with an admin company can create a networkProvisioningField.
      * - Body has a networkProtocolId (the protocol that uses this field),
@@ -82,47 +82,47 @@ exports.initialize = function( app, server ) {
      *     "provisioningTable": "companies"
      *   }
      */
-    app.post('/api/networkProvisioningFields', [restServer.isLoggedIn,
-                                                restServer.fetchCompany,
-                                                restServer.isAdminCompany],
-                                               function(req, res, next) {
-        var rec = req.body;
-        // You can't specify an id.
-        if ( rec.id ) {
-            restServer.respond( res, 400, "Cannot specify the networkProvisioningField's id in create" );
-            return;
-        }
+  app.post('/api/networkProvisioningFields', [restServer.isLoggedIn,
+    restServer.fetchCompany,
+    restServer.isAdminCompany],
+  function (req, res, next) {
+    var rec = req.body
+    // You can't specify an id.
+    if (rec.id) {
+      restServer.respond(res, 400, "Cannot specify the networkProvisioningField's id in create")
+      return
+    }
 
-        // Verify that required fields exist.
-        if ( !rec.networkProtocolId || !rec.fieldOrder || !rec.fieldName ||
-             !rec.fieldLabel || !rec.fieldType || !rec.provisioningTable ) {
-            restServer.respond( res, 400, "Missing required data" );
-            return;
-        }
+    // Verify that required fields exist.
+    if (!rec.networkProtocolId || !rec.fieldOrder || !rec.fieldName ||
+             !rec.fieldLabel || !rec.fieldType || !rec.provisioningTable) {
+      restServer.respond(res, 400, 'Missing required data')
+      return
+    }
 
-        // Convert the provisioningTable name to an id.
-        var provisioningTableId = modelAPI.networkProvisioningFields.provisioningTables[ rec.provisioningTable ];
+    // Convert the provisioningTable name to an id.
+    var provisioningTableId = modelAPI.networkProvisioningFields.provisioningTables[ rec.provisioningTable ]
 
-        // Do the add.
-        modelAPI.networkProvisioningFields.createNetworkProvisioningField(
-                                    rec.networkProtocolId,
-                                    rec.fieldOrder,
-                                    rec.fieldName,
-                                    rec.fieldLabel,
-                                    rec.fieldType,
-                                    rec.fieldSize,
-                                    rec.requiredField,
-                                    provisioningTableId ).then( function ( rec ) {
-            var send = {};
-            send.id = rec.id;
-            restServer.respondJson( res, 200, send );
-        })
-        .catch( function( err ) {
-            restServer.respond( res, err );
-        });
-    });
+    // Do the add.
+    modelAPI.networkProvisioningFields.createNetworkProvisioningField(
+      rec.networkProtocolId,
+      rec.fieldOrder,
+      rec.fieldName,
+      rec.fieldLabel,
+      rec.fieldType,
+      rec.fieldSize,
+      rec.requiredField,
+      provisioningTableId).then(function (rec) {
+      var send = {}
+      send.id = rec.id
+      restServer.respondJson(res, 200, send)
+    })
+      .catch(function (err) {
+        restServer.respond(res, err)
+      })
+  })
 
-    /**
+  /**
      * Updates the networkProvisioningField record with the specified id.
      * - Can only be called by a user who is part of an admin company.
      * - Can only change data about the field: fieldOrder, fieldName,
@@ -131,90 +131,90 @@ exports.initialize = function( app, server ) {
      *   from a UI perspective.  In those cases, delete and create with the new
      *   fields.
      */
-    app.put('/api/networkProvisioningFields/:id', [restServer.isLoggedIn,
-                                                   restServer.fetchCompany,
-                                                   restServer.isAdminCompany],
-                                                  function(req, res, next) {
-        var data = {};
-        data.id = parseInt( req.params.id );
-        // We'll start by getting the networkProvisioningField, as a read is much
-        // less expensive than a write, and then we'll be able to tell if
-        // anything really changed before we even try to write.
-        modelAPI.networkProvisioningFields.retrieveNetworkProvisioningField( data.id ).then( function( npf ) {
-            // Fields that may exist in the request body that can change.  Make
-            // sure they actually differ, though.
-            var changed = 0;
-            if ( ( req.body.fieldOrder ) &&
-                 ( req.body.fieldOrder !== npf.fieldOrder ) ) {
-                data.fieldOrder = req.body.fieldOrder;
-                ++changed;
-            }
-            if ( ( req.body.fieldName ) &&
-                 ( req.body.fieldName !== npf.fieldName ) ) {
-                data.fieldName = req.body.fieldName;
-                ++changed;
-            }
-            if ( ( req.body.fieldLabel ) &&
-                 ( req.body.fieldLabel !== npf.fieldLabel ) ) {
-                data.fieldLabel = req.body.fieldLabel;
-                ++changed;
-            }
-            if ( ( req.body.fieldType ) &&
-                 ( req.body.fieldType !== npf.fieldType ) ) {
-                data.fieldType = req.body.fieldType;
-                ++changed;
-            }
-            if ( ( req.body.fieldSize ) &&
-                 ( req.body.fieldSize !== npf.fieldSize ) ) {
-                data.fieldSize = req.body.fieldSize;
-                ++changed;
-            }
-            if ( ( req.body.requiredField ) &&
-                 ( req.body.requiredField !== npf.requiredField ) ) {
-                data.requiredField = req.body.requiredField;
-                ++changed;
-            }
+  app.put('/api/networkProvisioningFields/:id', [restServer.isLoggedIn,
+    restServer.fetchCompany,
+    restServer.isAdminCompany],
+  function (req, res, next) {
+    var data = {}
+    data.id = parseInt(req.params.id)
+    // We'll start by getting the networkProvisioningField, as a read is much
+    // less expensive than a write, and then we'll be able to tell if
+    // anything really changed before we even try to write.
+    modelAPI.networkProvisioningFields.retrieveNetworkProvisioningField(data.id).then(function (npf) {
+      // Fields that may exist in the request body that can change.  Make
+      // sure they actually differ, though.
+      var changed = 0
+      if ((req.body.fieldOrder) &&
+                 (req.body.fieldOrder !== npf.fieldOrder)) {
+        data.fieldOrder = req.body.fieldOrder
+        ++changed
+      }
+      if ((req.body.fieldName) &&
+                 (req.body.fieldName !== npf.fieldName)) {
+        data.fieldName = req.body.fieldName
+        ++changed
+      }
+      if ((req.body.fieldLabel) &&
+                 (req.body.fieldLabel !== npf.fieldLabel)) {
+        data.fieldLabel = req.body.fieldLabel
+        ++changed
+      }
+      if ((req.body.fieldType) &&
+                 (req.body.fieldType !== npf.fieldType)) {
+        data.fieldType = req.body.fieldType
+        ++changed
+      }
+      if ((req.body.fieldSize) &&
+                 (req.body.fieldSize !== npf.fieldSize)) {
+        data.fieldSize = req.body.fieldSize
+        ++changed
+      }
+      if ((req.body.requiredField) &&
+                 (req.body.requiredField !== npf.requiredField)) {
+        data.requiredField = req.body.requiredField
+        ++changed
+      }
 
-            // Ready.  DO we have anything to actually change?
-            if ( 0 === changed ) {
-                // No changes.  But returning 304 apparently causes Apache to strip
-                // CORS info, causing the browser to throw a fit.  So just say,
-                // "Yeah, we did that.  Really.  Trust us."
-                restServer.respond( res, 204 );
-            }
-            else {
-                // Do the update.
-                modelAPI.networkProvisioningFields.updateNetworkProvisioningField( data ).then( function ( rec ) {
-                    restServer.respond( res, 204 );
-                })
-                .catch( function( err ) {
-                    restServer.respond( res, err );
-                });
-            }
+      // Ready.  DO we have anything to actually change?
+      if (changed === 0) {
+        // No changes.  But returning 304 apparently causes Apache to strip
+        // CORS info, causing the browser to throw a fit.  So just say,
+        // "Yeah, we did that.  Really.  Trust us."
+        restServer.respond(res, 204)
+      }
+      else {
+        // Do the update.
+        modelAPI.networkProvisioningFields.updateNetworkProvisioningField(data).then(function (rec) {
+          restServer.respond(res, 204)
         })
-        .catch( function( err ) {
-            appLogger.log( "Error getting networkProvisioningField " + data.id + ": " + err );
-            restServer.respond( res, err );
-        });
-    });
+          .catch(function (err) {
+            restServer.respond(res, err)
+          })
+      }
+    })
+      .catch(function (err) {
+        appLogger.log('Error getting networkProvisioningField ' + data.id + ': ' + err)
+        restServer.respond(res, err)
+      })
+  })
 
-    /**
+  /**
      * Deletes the networkProvisioningField record with the specified id.
      * - Only a user with the admin company can delete a
      *   networkProvisioningField.
      */
-    app.delete('/api/networkProvisioningFields/:id',
-                [restServer.isLoggedIn,
-                 restServer.fetchCompany,
-                 restServer.isAdminCompany],
-                function(req, res, next) {
-        var id = parseInt( req.params.id );
-        modelAPI.networkProvisioningFields.deleteNetworkProvisioningField( id ).then( function( ) {
-            restServer.respond( res, 204 );
+  app.delete('/api/networkProvisioningFields/:id',
+    [restServer.isLoggedIn,
+      restServer.fetchCompany,
+      restServer.isAdminCompany],
+    function (req, res, next) {
+      var id = parseInt(req.params.id)
+      modelAPI.networkProvisioningFields.deleteNetworkProvisioningField(id).then(function () {
+        restServer.respond(res, 204)
+      })
+        .catch(function (err) {
+          appLogger.log('Error deleting networkProvisioningField ' + id + ': ' + err)
+          restServer.respond(res, err)
         })
-        .catch( function( err ) {
-            appLogger.log( "Error deleting networkProvisioningField " + id + ": " + err );
-            restServer.respond( res, err );
-        });
-    });
+    })
 }

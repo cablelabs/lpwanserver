@@ -72,14 +72,16 @@ async function TTNAppRequest (network, connection, appId, opts, secondAttempt = 
         }
       })
       connection.appTokens[appId] = body.access_token
-    } catch (err) {
+    }
+    catch (err) {
       appLogger.log(`Error fetching token for app ${appId}. ${err.message}`, err)
       throw err
     }
   }
   try {
     return TTNRequest(connection.appTokens[appId], opts)
-  } catch (err) {
+  }
+  catch (err) {
     if (secondAttempt || (err.statusCode !== 401 && error.statusCode !== 403)) throw err
     delete connection.appTokens[appId]
     return TTNAppRequest(network, connection, appId, opts, true)
@@ -217,7 +219,7 @@ module.exports.register = async function register (networkProtocols) {
  * @param loginData - credentials
  * @returns {Promise<any>}
  */
-module.exports.test = async function testNetwork(network, loginData) {
+module.exports.test = async function testNetwork (network, loginData) {
   appLogger.log(network.securityData, 'debug')
   if (!network.securityData.authorized) {
     throw new Error('Not Authorized')
@@ -226,7 +228,8 @@ module.exports.test = async function testNetwork(network, loginData) {
     return TTNRequest(network.securityData.access_token, {
       url: `${network.baseUrl}/api/v2/applications`
     })
-  } catch (err) {
+  }
+  catch (err) {
     appLogger.log('Test Error: ' + err)
     throw err
   }
@@ -306,7 +309,8 @@ async function authorizeWithPassword (network, loginData, scope) {
         scope
       }
     })
-  } catch (e) {
+  }
+  catch (e) {
     appLogger.log('Error on signin: ' + e)
     throw e
   }
@@ -321,7 +325,8 @@ async function authorizeWithCode (network, loginData) {
         redirect_url: loginData.redirect_uri
       }
     })
-  } catch (e) {
+  }
+  catch (e) {
     appLogger.log('Error on signin: ' + e)
     throw e
   }
@@ -338,7 +343,8 @@ async function authorizeWithRefreshToken (network, loginData) {
     })
     body.username = 'TTNUser'
     return body
-  } catch (e) {
+  }
+  catch (e) {
     appLogger.log('Error on signin: ' + e)
     throw e
   }
@@ -357,7 +363,8 @@ module.exports.connect = async function connect (network, loginData) {
     try {
       await this.test(network, loginData)
       return loginData
-    } catch (err) {
+    }
+    catch (err) {
       appLogger.log('Authorized but test failed.  Attempting to login.')
     }
   }
@@ -397,7 +404,7 @@ module.exports.disconnect = async function (connection) {
  * @param modelAPI - DB access
  * @returns {Promise<Empty>}
  */
-module.exports.pullNetwork = async function pullNetwork(session, network, dataAPI, modelAPI) {
+module.exports.pullNetwork = async function pullNetwork (session, network, dataAPI, modelAPI) {
   try {
     const pulledResources = await this.pullApplications(session, network, modelAPI, dataAPI)
     const devices = await Promise.all(pulledResources.map((x, i) => {
@@ -406,7 +413,8 @@ module.exports.pullNetwork = async function pullNetwork(session, network, dataAP
     }))
     appLogger.log(devices, 'info')
     appLogger.log('Success Pulling Network ' + network.name, 'info')
-  } catch (err) {
+  }
+  catch (err) {
     appLogger.log(err, 'error')
     throw err
   }
@@ -434,7 +442,8 @@ module.exports.pullApplications = async function pullApplications (session, netw
     })
     network.securityData.appKeys = apps.map(x => ({ app: x.id, key: x.access_keys[0].key }))
     return Promise.all(apps.map(x => addRemoteApplication(session, x, network, modelAPI, dataAPI)))
-  } catch (e) {
+  }
+  catch (e) {
     appLogger.log('Error pulling applications from network ' + network.name + ': ' + e)
     throw e
   }
@@ -444,7 +453,7 @@ async function addRemoteApplication (session, limitedRemoteApplication, network,
   try {
     let remoteApplication = await getApplicationById(network, limitedRemoteApplication, session.connection)
     let normalizedApplication = normalizeApplicationData(remoteApplication, limitedRemoteApplication, network)
-    let existingApplication = await modelAPI.applications.retrieveApplications({search: normalizedApplication.name})
+    let existingApplication = await modelAPI.applications.retrieveApplications({ search: normalizedApplication.name })
     if (existingApplication.totalCount > 0) {
       existingApplication = existingApplication.records[0]
       appLogger.log(existingApplication.name + ' already exists', 'info')
@@ -455,7 +464,7 @@ async function addRemoteApplication (session, limitedRemoteApplication, network,
       appLogger.log('Created ' + existingApplication.name)
     }
 
-    let existingApplicationNTL = await modelAPI.applicationNetworkTypeLinks.retrieveApplicationNetworkTypeLinks({applicationId: existingApplication.id})
+    let existingApplicationNTL = await modelAPI.applicationNetworkTypeLinks.retrieveApplicationNetworkTypeLinks({ applicationId: existingApplication.id })
     if (existingApplicationNTL.totalCount > 0) {
       appLogger.log(existingApplication.name + ' link already exists', 'info')
     }
@@ -492,7 +501,8 @@ async function getApplicationById (network, appOrId, connection) {
     return TTNAppRequest(network, connection, appId, {
       url: `http://${appRegion(app)}.thethings.network:8084/applications/${appId}`
     })
-  } catch (e) {
+  }
+  catch (e) {
     appLogger.log('Error on get Application: ' + e)
     throw e
   }
@@ -520,7 +530,8 @@ module.exports.pullDevices = async function pullDevices (session, network, remot
       return addRemoteDevice(session, device, network, localApplication.id, dpMap, modelAPI, dataAPI)
     }))
     return devices
-  } catch (e) {
+  }
+  catch (e) {
     appLogger.log('Error pulling devices from network ' + network.name, 'error')
     appLogger.log(e, 'error')
     throw e
@@ -530,7 +541,7 @@ module.exports.pullDevices = async function pullDevices (session, network, remot
 async function addRemoteDevice (session, remoteDevice, network, applicationId, dpMap, modelAPI, dataAPI) {
   appLogger.log('Adding ' + remoteDevice.deveui)
   appLogger.log(remoteDevice)
-  let existingDevice = await modelAPI.devices.retrieveDevices({search: remoteDevice.lorawan_device.dev_eui})
+  let existingDevice = await modelAPI.devices.retrieveDevices({ search: remoteDevice.lorawan_device.dev_eui })
 
   appLogger.log(existingDevice)
   if (existingDevice.totalCount > 0) {
@@ -543,7 +554,7 @@ async function addRemoteDevice (session, remoteDevice, network, applicationId, d
     appLogger.log('Created ' + existingDevice.name)
   }
 
-  let existingDeviceNTL = await modelAPI.deviceNetworkTypeLinks.retrieveDeviceNetworkTypeLinks({deviceId: existingDevice.id})
+  let existingDeviceNTL = await modelAPI.deviceNetworkTypeLinks.retrieveDeviceNetworkTypeLinks({ deviceId: existingDevice.id })
   let existingApplicationNTL = await modelAPI.applicationNetworkTypeLinks.retrieveApplicationNetworkTypeLink(applicationId)
 
   if (existingDeviceNTL.totalCount > 0) {
@@ -564,9 +575,10 @@ async function addRemoteDevice (session, remoteDevice, network, applicationId, d
       makeDeviceDataKey(existingDevice.id, 'devNwkId'),
       remoteDevice.dev_id
     )
-    appLogger.log({localDevice: existingDevice.id, remoteDevice: remoteDevice.dev_id})
+    appLogger.log({ localDevice: existingDevice.id, remoteDevice: remoteDevice.dev_id })
     return { localDevice: existingDevice.id, remoteDevice: remoteDevice.dev_id }
-  } catch (e) {
+  }
+  catch (e) {
     appLogger.log(e, 'error')
     throw e
   }
@@ -587,7 +599,8 @@ async function addRemoteDeviceProfile (session, remoteDevice, application, netwo
       localDeviceProfile: existingDeviceProfile.id,
       remoteDeviceProfile: existingDeviceProfile.id
     }
-  } catch (e) {
+  }
+  catch (e) {
     appLogger.log(e)
     throw e
   }
@@ -608,7 +621,8 @@ module.exports.pushNetwork = async function pushNetwork (session, network, dataA
     const pushedResource = await this.pushDevices(session, network, dataAPI, modelAPI)
     appLogger.log('Success Pushing Network ' + network.name, 'info')
     appLogger.log(pushedResource, 'info')
-  } catch (e) {
+  }
+  catch (e) {
     appLogger.log(e, 'error')
     throw e
   }
@@ -624,13 +638,14 @@ module.exports.pushApplications = async function pushApplications (session, netw
     appLogger.log('Success Pushing Applications', 'info')
     appLogger.log(pushedResources, 'info')
     return pushedResources
-  } catch (e) {
+  }
+  catch (e) {
     appLogger.log(e, 'error')
     throw e
   }
 }
 
-module.exports.pushApplication = async function pushApplication (session, network, application, dataAPI, modelAPI ) {
+module.exports.pushApplication = async function pushApplication (session, network, application, dataAPI, modelAPI) {
   appLogger.log(application, 'error')
   const badProtocolTableError = new Error('Bad things in the Protocol Table')
   try {
@@ -645,14 +660,16 @@ module.exports.pushApplication = async function pushApplication (session, networ
     }
     appLogger.log('Ignoring Application  ' + application.id + ' already on network ' + network.name + ' as ' + appNetworkId, 'info')
     return { localApplication: application.id, remoteApplication: appNetworkId }
-  } catch (e) {
+  }
+  catch (e) {
     if (e === badProtocolTableError) throw e
     try {
       appLogger.log('Pushing Application ' + application.name, 'info')
       const appNetworkId = await this.addApplication(session, network, application.id, dataAPI, modelAPI)
       appLogger.log('Added application ' + application.id + ' to network ' + network.name, 'info')
       return { localApplication: application.id, remoteApplication: appNetworkId }
-    } catch (err) {
+    }
+    catch (err) {
       appLogger.log(err, 'error')
       throw err
     }
@@ -667,7 +684,8 @@ module.exports.pushDevices = async function pushDevices (sessionData, network, d
     }))
     appLogger.log(pushedResources)
     return pushedResources
-  } catch (e) {
+  }
+  catch (e) {
     appLogger.log(e, 'error')
     throw e
   }
@@ -687,17 +705,18 @@ module.exports.pushDevice = async function pushDevice (sessionData, network, dev
     }
     appLogger.log(devNetworkId + ' found for network ' + network.name + ' for device ' + device.id, 'info')
     throw badProtocolTableError
-  } catch (e) {
+  }
+  catch (e) {
     if (e === badProtocolTableError) throw e
     try {
       appLogger.log('Adding Device  ' + device.id + ' to network ' + network.name, 'info')
       const devNetworkId = await this.addDevice(sessionData, network, device.id, dataAPI)
       appLogger.log('Added Device  ' + device.id + ' to network ' + network.name, 'info')
       return { localDevice: device.id, remoteDevice: devNetworkId }
-    } catch (err) {
+    }
+    catch (err) {
       appLogger.log(err, 'error')
       throw err
-
     }
   }
 }
@@ -741,7 +760,8 @@ module.exports.addApplication = async function addApplication (session, network,
       body.id
     )
     return this.registerApplicationWithHandler(session.connection, network, ttnApplication.ttnApplicationData, body, dataAPI)
-  } catch (err) {
+  }
+  catch (err) {
     appLogger.log('Error on create application: ' + err, 'error')
     appLogger.log(err, 'error')
     throw err
@@ -756,7 +776,8 @@ module.exports.registerApplicationWithHandler = async function registerApplicati
       body: { app_id: ttnApplication.app_id }
     })
     return this.setApplication(connection, network, ttnApplication, ttnApplicationMeta, dataAPI)
-  } catch (e) {
+  }
+  catch (e) {
     appLogger.log('Error on register Application: ' + e, 'error')
     throw e
   }
@@ -770,7 +791,8 @@ module.exports.setApplication = async function setApplication (connection, netwo
       body: ttnApplication
     })
     return ttnApplicationMeta.id
-  } catch (e) {
+  }
+  catch (e) {
     appLogger.log('Error on get Application: ' + e, 'error')
     throw e
   }
@@ -796,7 +818,8 @@ module.exports.getApplication = async function getApplication (session, network,
     return TTNAppRequest(network, session.connection, true, {
       url: network.baseUrl + '/applications/' + appNetworkId
     })
-  } catch (e) {
+  }
+  catch (e) {
     appLogger.log('Error on get application: ' + e, 'error')
     throw e
   }
@@ -807,7 +830,8 @@ module.exports.getApplications = async function getApplications (session, networ
     return TTNRequest(session.connection.access_token, {
       url: network.baseUrl + '/api/v2/applications'
     })
-  } catch (e) {
+  }
+  catch (e) {
     appLogger.log('Error on get application: ', 'error')
     throw e
   }
@@ -897,7 +921,8 @@ module.exports.updateApplication = async function updateApplication (session, ne
       body
     })
     return
-  } catch (e) {
+  }
+  catch (e) {
     appLogger.log('Error on update application: ', 'error')
     throw e
   }
@@ -930,7 +955,8 @@ module.exports.deleteApplication = async function deleteApplication (session, ne
       network.networkProtocolId,
       makeApplicationDataKey(applicationId, 'appNwkId')
     )
-  } catch (err) {
+  }
+  catch (err) {
     appLogger.log('Error on delete application: ', 'error')
     throw err
   }
@@ -1016,7 +1042,8 @@ module.exports.stopApplication = async function stopApplication (session, networ
       url: network.baseUrl + '/applications/' + appNwkId + '/integrations/http'
     })
     delete this.activeApplicationNetworkProtocols['' + applicationId + ':' + network.id]
-  } catch (err) {
+  }
+  catch (err) {
     appLogger.log('Error on delete application notification: ', 'error')
     throw err
   }
@@ -1103,7 +1130,8 @@ async function postSingleDevice (session, network, device, deviceProfile, applic
       ttnDevice.dev_id
     )
     return ttnDevice.dev_id
-  } catch (err) {
+  }
+  catch (err) {
     appLogger.log('Error on create device: ', 'error')
     throw err
   }
@@ -1144,7 +1172,8 @@ module.exports.addDevice = async function addDevice (session, network, deviceId,
     const postDeviceResult = await postSingleDevice(session, network, dntl, deviceProfile, applicationData, remoteApplicationId, dataAPI)
     appLogger.log('Success Adding Device ' + ' to ' + network.name, 'info')
     return postDeviceResult
-  } catch (err) {
+  }
+  catch (err) {
     appLogger.log(err, 'error')
     throw err
   }
@@ -1239,11 +1268,13 @@ module.exports.updateDevice = async function updateDevice (session, network, dev
           }
         }
       })
-    } catch (err) {
+    }
+    catch (err) {
       appLogger.log('Error on update device keys: ', 'error')
       throw err
     }
-  } catch (err) {
+  }
+  catch (err) {
     appLogger.log('Error on update device: ', 'error')
     throw err
   }
@@ -1276,7 +1307,7 @@ module.exports.deleteDevice = async function deleteDevice (session, network, dev
   try {
     await TTNRequest(session.connection.access_token, {
       method: 'DELETE',
-      url: network.baseUrl + '/devices/' + devNetworkId,
+      url: network.baseUrl + '/devices/' + devNetworkId
     })
     // Deleted device, network key is no longer valid.
     try {
@@ -1293,7 +1324,8 @@ module.exports.deleteDevice = async function deleteDevice (session, network, dev
       method: 'DELETE',
       url: network.baseUrl + '/devices/' + devNetworkId + '/keys'
     })
-  } catch (err) {
+  }
+  catch (err) {
     appLogger.log('Error on delete device: ', 'error')
     throw err
   }
@@ -1561,7 +1593,8 @@ async function getDeviceById (network, deviceId, connection, dataAPI) {
     return TTNRequest(connection, {
       url: network.baseUrl + '/devices/' + deviceId
     })
-  } catch (err) {
+  }
+  catch (err) {
     appLogger.log('Error on get Device: ', 'error')
     throw err
   }
@@ -1708,7 +1741,7 @@ function normalizeDeviceData (remoteDevice, deviceProfileId) {
     deviceStatusMargin: '',
     lastSeenAt: remoteDevice.lorawan_device.last_seen
   }
-  //TTN only supports 1.0.x currently, so  nwkKey === appKey for conversion
+  // TTN only supports 1.0.x currently, so  nwkKey === appKey for conversion
   if (remoteDevice.lorawan_device.activation_constraints === 'otaa' || (remoteDevice.lorawan_device.app_key !== '')) {
     normalized.deviceKeys = {
       appKey: remoteDevice.lorawan_device.app_key,
@@ -1776,22 +1809,22 @@ function deNormalizeDeviceData (localDevice, localDeviceProfile, application, re
   }
 
   ttnDeviceData.attributes = []
-  if (localDeviceProfile.classBTimeout) ttnDeviceData.attributes.push({key: 'classBTimeout', value: localDeviceProfile.classBTimeout})
-  if (localDeviceProfile.classCTimeout) ttnDeviceData.attributes.push({key: 'classCTimeout', value: localDeviceProfile.classCTimeout})
-  if (localDeviceProfile.factoryPresetFreqs) ttnDeviceData.attributes.push({key: 'factoryPresetFreqs', value: localDeviceProfile.factoryPresetFreqs})
-  if (localDeviceProfile.macVersion) ttnDeviceData.attributes.push({key: 'factoryPresetFreqs', value: localDeviceProfile.macVersion})
-  if (localDeviceProfile.maxDutyCycle) ttnDeviceData.attributes.push({key: 'maxDutyCycle', value: localDeviceProfile.maxDutyCycle})
-  if (localDeviceProfile.maxEIRP) ttnDeviceData.attributes.push({key: 'maxEIRP', value: localDeviceProfile.maxEIRP})
-  if (localDeviceProfile.pingSlotDR) ttnDeviceData.attributes.push({key: 'pingSlotDR', value: localDeviceProfile.pingSlotDR})
-  if (localDeviceProfile.pingSlotFreq) ttnDeviceData.attributes.push({key: 'pingSlotFreq', value: localDeviceProfile.pingSlotFreq})
-  if (localDeviceProfile.pingSlotPeriod) ttnDeviceData.attributes.push({key: 'pingSlotPeriod', value: localDeviceProfile.pingSlotPeriod})
-  if (localDeviceProfile.regParamsRevision) ttnDeviceData.attributes.push({key: 'pingSlotPeriod', value: localDeviceProfile.regParamsRevision})
-  if (localDeviceProfile.rxDROffset1) ttnDeviceData.attributes.push({key: 'rxDROffset1', value: localDeviceProfile.rxDROffset1})
-  if (localDeviceProfile.rxDataRate2) ttnDeviceData.attributes.push({key: 'rxDataRate2', value: localDeviceProfile.rxDataRate2})
-  if (localDeviceProfile.rxDelay1) ttnDeviceData.attributes.push({key: 'rxDelay1', value: localDeviceProfile.rxDelay1})
-  if (localDeviceProfile.rxFreq2) ttnDeviceData.attributes.push({key: 'rxFreq2', value: localDeviceProfile.rxFreq2})
-  if (localDeviceProfile.supportsClassB) ttnDeviceData.attributes.push({key: 'supportsClassB', value: localDeviceProfile.supportsClassB})
-  if (localDeviceProfile.supportsClassC) ttnDeviceData.attributes.push({key: 'supportsClassC', value: localDeviceProfile.supportsClassC})
+  if (localDeviceProfile.classBTimeout) ttnDeviceData.attributes.push({ key: 'classBTimeout', value: localDeviceProfile.classBTimeout })
+  if (localDeviceProfile.classCTimeout) ttnDeviceData.attributes.push({ key: 'classCTimeout', value: localDeviceProfile.classCTimeout })
+  if (localDeviceProfile.factoryPresetFreqs) ttnDeviceData.attributes.push({ key: 'factoryPresetFreqs', value: localDeviceProfile.factoryPresetFreqs })
+  if (localDeviceProfile.macVersion) ttnDeviceData.attributes.push({ key: 'factoryPresetFreqs', value: localDeviceProfile.macVersion })
+  if (localDeviceProfile.maxDutyCycle) ttnDeviceData.attributes.push({ key: 'maxDutyCycle', value: localDeviceProfile.maxDutyCycle })
+  if (localDeviceProfile.maxEIRP) ttnDeviceData.attributes.push({ key: 'maxEIRP', value: localDeviceProfile.maxEIRP })
+  if (localDeviceProfile.pingSlotDR) ttnDeviceData.attributes.push({ key: 'pingSlotDR', value: localDeviceProfile.pingSlotDR })
+  if (localDeviceProfile.pingSlotFreq) ttnDeviceData.attributes.push({ key: 'pingSlotFreq', value: localDeviceProfile.pingSlotFreq })
+  if (localDeviceProfile.pingSlotPeriod) ttnDeviceData.attributes.push({ key: 'pingSlotPeriod', value: localDeviceProfile.pingSlotPeriod })
+  if (localDeviceProfile.regParamsRevision) ttnDeviceData.attributes.push({ key: 'pingSlotPeriod', value: localDeviceProfile.regParamsRevision })
+  if (localDeviceProfile.rxDROffset1) ttnDeviceData.attributes.push({ key: 'rxDROffset1', value: localDeviceProfile.rxDROffset1 })
+  if (localDeviceProfile.rxDataRate2) ttnDeviceData.attributes.push({ key: 'rxDataRate2', value: localDeviceProfile.rxDataRate2 })
+  if (localDeviceProfile.rxDelay1) ttnDeviceData.attributes.push({ key: 'rxDelay1', value: localDeviceProfile.rxDelay1 })
+  if (localDeviceProfile.rxFreq2) ttnDeviceData.attributes.push({ key: 'rxFreq2', value: localDeviceProfile.rxFreq2 })
+  if (localDeviceProfile.supportsClassB) ttnDeviceData.attributes.push({ key: 'supportsClassB', value: localDeviceProfile.supportsClassB })
+  if (localDeviceProfile.supportsClassC) ttnDeviceData.attributes.push({ key: 'supportsClassC', value: localDeviceProfile.supportsClassC })
 
   appLogger.log(ttnDeviceData, 'info')
   return ttnDeviceData

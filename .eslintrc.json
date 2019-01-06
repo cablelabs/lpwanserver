@@ -1,9 +1,18 @@
 {
-    "extends": "standard",
-    "rules": {
-        "brace-style": ["error", "stroustrup"]
-    },
-    "env": {
-        "mocha": true
-    }
+  "extends": "standard",
+  "rules": {
+    "brace-style": [
+      "error",
+      "stroustrup"
+    ],
+    "no-unused-vars": [
+      "error",
+      {
+        "varsIgnorePattern": "should|expect|assert"
+      }
+    ]
+  },
+  "env": {
+    "mocha": true
+  }
 }

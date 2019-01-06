@@ -217,7 +217,7 @@ Network.prototype.pushNetworks = function (networkTypeId) {
   let me = this
   return new Promise(async function (resolve, reject) {
     try {
-      let networks = await me.retrieveNetworks({networkTypeId: networkTypeId})
+      let networks = await me.retrieveNetworks({ networkTypeId: networkTypeId })
       let networkType = await modelAPI.networkTypes.retrieveNetworkTypes(networkTypeId)
       var npda = new NetworkProtocolDataAccess(modelAPI, 'Push Network')
       npda.initLog(networkType, networks)

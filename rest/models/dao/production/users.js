@@ -600,8 +600,8 @@ exports.getCompanyAdmins = function (companyId) {
 // Gets the user roles from the database table
 exports.getRoles = function () {
   return [
-    {roleId: 1, name: 'user'},
-    {roleId: 2, name: 'admin'}
+    { roleId: 1, name: 'user' },
+    { roleId: 2, name: 'admin' }
   ]
   // return new Promise( function( resolve, reject ) {
   //     var sql = "select * from userRoles";

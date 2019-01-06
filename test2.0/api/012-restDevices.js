@@ -9,14 +9,12 @@ var server = chai.request(app).keepOpen()
 
 describe('Devices', function () {
   var adminToken
-  var coAdminToken
-  var userToken
 
   before('User Sessions', function (done) {
     var sessions = 0
     var waitFunc = function () {
       ++sessions
-      if (sessions >= 3) {
+      if (sessions >= 1) {
         done()
       }
     }
@@ -30,28 +28,6 @@ describe('Devices', function () {
         adminToken = res.text
         waitFunc()
       })
-
-    server
-      .post('/api/sessions')
-      .send({ 'login_username': 'clAdmin', 'login_password': 'password' })
-      .end(function (err, res) {
-        if (err) {
-          return done(err)
-        }
-        coAdminToken = res.text
-        waitFunc()
-      })
-
-    server
-      .post('/api/sessions')
-      .send({ 'login_username': 'clUser', 'login_password': 'password' })
-      .end(function (err, res) {
-        if (err) {
-          return done(err)
-        }
-        userToken = res.text
-        waitFunc()
-      })
   })
 
   var devId1
@@ -60,7 +36,7 @@ describe('Devices', function () {
     it('should return 403 (forbidden) on user', function (done) {
       server
         .post('/api/devices')
-        .set('Authorization', 'Bearer ' + userToken)
+        .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .send({ 'applicationId': 1,
           'name': 'MGPQD001',
@@ -72,10 +48,10 @@ describe('Devices', function () {
         })
     })
 
-    it('should return 200 on coAdmin', function (done) {
+    it('should return 200 on admin', function (done) {
       server
         .post('/api/devices')
-        .set('Authorization', 'Bearer ' + coAdminToken)
+        .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .send({ 'applicationId': 1,
           'name': 'MGRQD002',
@@ -125,10 +101,10 @@ describe('Devices', function () {
   })
 
   describe('GET /api/devices (search/paging)', function () {
-    it('should return 200 with 2 device on coAdmin', function (done) {
+    it('should return 200 with 2 device on admin', function (done) {
       server
         .get('/api/devices')
-        .set('Authorization', 'Bearer ' + coAdminToken)
+        .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {
           res.should.have.status(200)
@@ -143,7 +119,7 @@ describe('Devices', function () {
     it('should return 200 on user', function (done) {
       server
         .get('/api/devices')
-        .set('Authorization', 'Bearer ' + userToken)
+        .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {
           res.should.have.status(200)
@@ -218,10 +194,10 @@ describe('Devices', function () {
         })
     })
 
-    it('should return 200 with 2 device on coAdmin, search M%', function (done) {
+    it('should return 200 with 2 device on admin, search M%', function (done) {
       server
         .get('/api/devices')
-        .set('Authorization', 'Bearer ' + coAdminToken)
+        .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .query({ 'search': 'M%' })
         .end(function (err, res) {
@@ -236,10 +212,10 @@ describe('Devices', function () {
   })
 
   describe('GET /api/devices/{id}', function () {
-    it('should return 200 on coAdmin', function (done) {
+    it('should return 200 on admin', function (done) {
       server
         .get('/api/devices/' + devId2)
-        .set('Authorization', 'Bearer ' + coAdminToken)
+        .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {
           res.should.have.status(200)
@@ -250,7 +226,7 @@ describe('Devices', function () {
     it('should return 200 on user', function (done) {
       server
         .get('/api/devices/' + devId2)
-        .set('Authorization', 'Bearer ' + userToken)
+        .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {
           res.should.have.status(200)
@@ -286,10 +262,10 @@ describe('Devices', function () {
         })
     })
 
-    it('should return 200 on coAdmin getting my device', function (done) {
+    it('should return 200 on admin getting my device', function (done) {
       server
         .get('/api/devices/' + devId1)
-        .set('Authorization', 'Bearer ' + coAdminToken)
+        .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {
           res.should.have.status(200)
@@ -300,7 +276,7 @@ describe('Devices', function () {
     it('should return 200 on user getting my device', function (done) {
       server
         .get('/api/devices/' + devId1)
-        .set('Authorization', 'Bearer ' + userToken)
+        .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {
           res.should.have.status(200)
@@ -310,10 +286,10 @@ describe('Devices', function () {
   })
 
   describe('PUT /api/devices', function () {
-    it('should return 204 on coAdmin', function (done) {
+    it('should return 204 on admin', function (done) {
       server
         .put('/api/devices/' + devId2)
-        .set('Authorization', 'Bearer ' + coAdminToken)
+        .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .send('{"name": "Funky Device" }')
         .end(function (err, res) {
@@ -325,7 +301,7 @@ describe('Devices', function () {
     it('should return 403 (forbidden) on user', function (done) {
       server
         .put('/api/devices/' + devId2)
-        .set('Authorization', 'Bearer ' + userToken)
+        .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .send('{"name": "Funky Funky Device" }')
         .end(function (err, res) {
@@ -365,7 +341,7 @@ describe('Devices', function () {
     it('should return 403 (forbidden) on user', function (done) {
       server
         .delete('/api/devices/' + devId1)
-        .set('Authorization', 'Bearer ' + userToken)
+        .set('Authorization', 'Bearer ' + adminToken)
         .end(function (err, res) {
           res.should.have.status(403)
           done()

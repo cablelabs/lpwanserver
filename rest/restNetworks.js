@@ -600,10 +600,10 @@ exports.initialize = function (app, server) {
     modelAPI.networks.retrieveNetwork(networkId)
       .then((network) => {
         modelAPI.networkTypeAPI.test(network, network.securityData).then(() => {
-          restServer.respond(res, 200, {status: 'success'})
+          restServer.respond(res, 200, { status: 'success' })
         }).catch((err) => {
           appLogger.log(err)
-          restServer.respond(res, 400, {status: 'failed', message: err.toString()})
+          restServer.respond(res, 400, { status: 'failed', message: err.toString() })
         })
       })
       .catch((err) => {

@@ -1,17 +1,17 @@
 // General libraries in use in this module.
-var appLogger = require( './lib/appLogger.js' );
+var appLogger = require('./lib/appLogger.js')
 
-var restServer;
-var modelAPI;
+var restServer
+var modelAPI
 
-exports.initialize = function( app, server ) {
-    restServer = server;
-    modelAPI = server.modelAPI;
+exports.initialize = function (app, server) {
+  restServer = server
+  modelAPI = server.modelAPI
 
-    /*********************************************************************
+  /*********************************************************************
      * Sessions API
      ********************************************************************/
-    /**
+  /**
      * Creates a new session on behalf of the user.
      *
      * @api {post} /api/sessions Create Session
@@ -29,16 +29,16 @@ exports.initialize = function( app, server ) {
      * @apiSuccess (200) {string} token The JWT token for the user.
      * @apiVersion 0.1.0
      */
-    app.post('/api/sessions', function ( req, res, next ) {
-        modelAPI.sessions.authorize( req, res, next ).then( function( token ) {
-            restServer.respond( res, null, token );
-        })
-        .catch( function( err ) {
-            restServer.respond( res, err );
-        });
-    });
+  app.post('/api/sessions', function (req, res, next) {
+    modelAPI.sessions.authorize(req, res, next).then(function (token) {
+      restServer.respond(res, null, token)
+    })
+      .catch(function (err) {
+        restServer.respond(res, err)
+      })
+  })
 
-    /**
+  /**
      * Ends the session.
      *
      * @api {delete} /api/sessions Delete Session
@@ -46,13 +46,13 @@ exports.initialize = function( app, server ) {
      * @apiDescription Deletes the session.
      * @apiVersion 0.1.0
      */
-    app.delete('/api/sessions', [ restServer.isLoggedIn ], function( req, res, next ){
-        modelAPI.sessions.delete( req, res, next ).then( function() {
-            restServer.respond( res, 204 );
-        })
-        .catch( function( err ) {
-            appLogger.log( "Error on session logout: " + err );
-            restServer.respond( res, err );
-        });
-    });
+  app.delete('/api/sessions', [ restServer.isLoggedIn ], function (req, res, next) {
+    modelAPI.sessions.delete(req, res, next).then(function () {
+      restServer.respond(res, 204)
+    })
+      .catch(function (err) {
+        appLogger.log('Error on session logout: ' + err)
+        restServer.respond(res, err)
+      })
+  })
 }

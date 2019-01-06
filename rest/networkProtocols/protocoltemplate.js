@@ -5,20 +5,20 @@
  ***************************************************************************/
 
 // The request is used to access remote networks via a REST API.
-var request = require( 'request' );
+var request = require('request')
 
 // NCONF can be used to access settings specified in the config.hjson file.
-var nconf = require( 'nconf' );
+var nconf = require('nconf')
 
 // General libraries in use in this module.
 // AppLogger is a conole logger that adds timestamp, filename, and line number
 // information.  Usage: appLogger.log( <string> );
-var appLogger = require( '../lib/appLogger.js' );
+var appLogger = require('../lib/appLogger.js')
 
-//******************************************************************************
+//* *****************************************************************************
 // Maps the standard remote network API to the <remote network> server.
 // This is a cross-platform API that must remain consistent.
-//******************************************************************************
+//* *****************************************************************************
 
 // The login account data needed to manipulate companies.
 //
@@ -30,8 +30,8 @@ var appLogger = require( '../lib/appLogger.js' );
 //
 // Returns something that is passed to connect() as loginData to enable access
 // with the appropriate permissions to the remote network.
-exports.getCompanyAccessAccount = async function( dataAPI, network ) {
-};
+exports.getCompanyAccessAccount = async function (dataAPI, network) {
+}
 
 // The login account data needed to manipulate applications.
 //
@@ -43,7 +43,7 @@ exports.getCompanyAccessAccount = async function( dataAPI, network ) {
 //
 // Returns something that is passed to connect() as loginData to enable access
 // with the appropriate permissions to the remote network.
-exports.getApplicationAccessAccount = async function( dataAPI, network, applicationId ) {
+exports.getApplicationAccessAccount = async function (dataAPI, network, applicationId) {
 }
 
 // The login account data needed to manipulate devices.
@@ -55,7 +55,7 @@ exports.getApplicationAccessAccount = async function( dataAPI, network, applicat
 //
 // Returns something that is passed to connect() as loginData to enable access
 // with the appropriate permissions to the remote network.
-exports.getDeviceAccessAccount = async function( dataAPI, network, deviceId ) {
+exports.getDeviceAccessAccount = async function (dataAPI, network, deviceId) {
 }
 
 // The login account data needed to manipulate deviceProfiles.
@@ -69,13 +69,12 @@ exports.getDeviceAccessAccount = async function( dataAPI, network, deviceId ) {
 //
 // Returns something that is passed to connect() as loginData to enable access
 // with the appropriate permissions to the remote network.
-exports.getDeviceProfileAccessAccount = async function( dataAPI, network, deviceId ) {
+exports.getDeviceProfileAccessAccount = async function (dataAPI, network, deviceId) {
 }
 
-
-//******************************************************************************
+//* *****************************************************************************
 // Login/logout
-//******************************************************************************
+//* *****************************************************************************
 
 // Connect with the remote system.
 //
@@ -87,10 +86,10 @@ exports.getDeviceProfileAccessAccount = async function( dataAPI, network, device
 // connections like a login session, and it is up to the code in this module
 // to implement that concept.  The promise returns the opaque session data to
 // be passed into other methods.
-exports.connect = function( network, loginData ) {
-    // Hint:
-    //return new Promise( function( resolve, reject ) {
-    //});
+exports.connect = function (network, loginData) {
+  // Hint:
+  // return new Promise( function( resolve, reject ) {
+  // });
 }
 
 // Disconnect with the remote system.
@@ -98,15 +97,15 @@ exports.connect = function( network, loginData ) {
 // connection - The data top use to drop the connection
 //
 // Returns a Promise that disconnects from the remote system.
-exports.disconnect = function( connection ) {
-    // Hint:
-    //return new Promise( function( resolve, reject ) {
-    //});
+exports.disconnect = function (connection) {
+  // Hint:
+  // return new Promise( function( resolve, reject ) {
+  // });
 }
 
-//******************************************************************************
+//* *****************************************************************************
 // CRUD companies.
-//******************************************************************************
+//* *****************************************************************************
 
 // Add company.
 //
@@ -122,10 +121,10 @@ exports.disconnect = function( connection ) {
 // company.  The promise saves the id for the remote company, linked to the
 // local database record.  This method is called in an async manner against
 // lots of other networks, so logging should be done via the dataAPI.
-exports.addCompany = function( sessionData, network, companyId, dataAPI ) {
-    // Hint:
-    //return new Promise( async function( resolve, reject ) {
-    //});
+exports.addCompany = function (sessionData, network, companyId, dataAPI) {
+  // Hint:
+  // return new Promise( async function( resolve, reject ) {
+  // });
 }
 
 // Get company.
@@ -139,10 +138,10 @@ exports.addCompany = function( sessionData, network, companyId, dataAPI ) {
 //               operation.
 //
 // Returns a Promise that gets the company record from the remote system.
-exports.getCompany = function( sessionData, network, companyId, dataAPI ) {
-    // Hint:
-    //return new Promise( async function( resolve, reject ) {
-    //});
+exports.getCompany = function (sessionData, network, companyId, dataAPI) {
+  // Hint:
+  // return new Promise( async function( resolve, reject ) {
+  // });
 }
 
 // Update company.
@@ -156,10 +155,10 @@ exports.getCompany = function( sessionData, network, companyId, dataAPI ) {
 //               operation.
 //
 // Returns a Promise that updates the company record on the remote system.
-exports.updateCompany = function( sessionData, network, companyId, dataAPI ) {
-    // Hint:
-    //return new Promise( async function( resolve, reject ) {
-    //});
+exports.updateCompany = function (sessionData, network, companyId, dataAPI) {
+  // Hint:
+  // return new Promise( async function( resolve, reject ) {
+  // });
 }
 
 // Delete the company.
@@ -172,10 +171,10 @@ exports.updateCompany = function( sessionData, network, companyId, dataAPI ) {
 //               operation.
 //
 // Returns a Promise that deletes the company record from the remote system.
-exports.deleteCompany = function( sessionData, network, companyId, dataAPI ) {
-    // Hint:
-    //return new Promise( async function( resolve, reject ) {
-    //});
+exports.deleteCompany = function (sessionData, network, companyId, dataAPI) {
+  // Hint:
+  // return new Promise( async function( resolve, reject ) {
+  // });
 }
 
 // Push the company, meaning update if it exists, and create if it doesn't.
@@ -188,10 +187,10 @@ exports.deleteCompany = function( sessionData, network, companyId, dataAPI ) {
 //               operation.
 //
 // Returns a Promise that pushes the company record to the remote system.
-exports.pushCompany = function( sessionData, network, companyId, dataAPI ) {
-    // Hint:
-    //return new Promise( async function( resolve, reject ) {
-    //});
+exports.pushCompany = function (sessionData, network, companyId, dataAPI) {
+  // Hint:
+  // return new Promise( async function( resolve, reject ) {
+  // });
 }
 
 // Pull all company data from the remote network.
@@ -200,16 +199,15 @@ exports.pushCompany = function( sessionData, network, companyId, dataAPI ) {
 //                 to.
 //
 // Returns a Promise that pushes changes to the remote network of type.
-exports.pullCompany = function( networkTypeId ) {
-    // Hint:
-    //return new Promise( async function( resolve, reject ) {
-    //});
+exports.pullCompany = function (networkTypeId) {
+  // Hint:
+  // return new Promise( async function( resolve, reject ) {
+  // });
 }
 
-
-//******************************************************************************
+//* *****************************************************************************
 // CRUD applications.
-//******************************************************************************
+//* *****************************************************************************
 
 // Add application.
 //
@@ -225,7 +223,7 @@ exports.pullCompany = function( networkTypeId ) {
 // application.  The promise saves the id for the remote application, linked to
 // the local database record.  This method is called in an async manner against
 // lots of other networks, so logging should be done via the dataAPI.
-exports.addApplication = function( sessionData, network, applicationId, dataAPI ) {
+exports.addApplication = function (sessionData, network, applicationId, dataAPI) {
 }
 
 // Get application.
@@ -241,7 +239,7 @@ exports.addApplication = function( sessionData, network, applicationId, dataAPI 
 // Returns a Promise that connects to the remote system and gets the
 // application.  This method is called in an async manner against lots of other
 // networks, so logging should be done via the dataAPI.
-exports.getApplication = function( sessionData, network, applicationId, dataAPI ) {
+exports.getApplication = function (sessionData, network, applicationId, dataAPI) {
 }
 
 // Update application.
@@ -257,7 +255,7 @@ exports.getApplication = function( sessionData, network, applicationId, dataAPI 
 // Returns a Promise that connects to the remote system and updates the
 // application.  This method is called in an async manner against
 // lots of other networks, so logging should be done via the dataAPI.
-exports.updateApplication = function( sessionData, network, applicationId, dataAPI ) {
+exports.updateApplication = function (sessionData, network, applicationId, dataAPI) {
 }
 
 // Delete the application.
@@ -273,7 +271,7 @@ exports.updateApplication = function( sessionData, network, applicationId, dataA
 // Returns a Promise that connects to the remote system and deletes the
 // application.  This method is called in an async manner against
 // lots of other networks, so logging should be done via the dataAPI.
-exports.deleteApplication = function( sessionData, network, applicationId, dataAPI ) {
+exports.deleteApplication = function (sessionData, network, applicationId, dataAPI) {
 }
 
 // Push the application, meaning update if it exists, and create if it doesn't.
@@ -286,13 +284,12 @@ exports.deleteApplication = function( sessionData, network, applicationId, dataA
 //                 operation.
 //
 // Returns a Promise that pushes the application record to the remote system.
-exports.pushApplication = function( sessionData, network, applicationId, dataAPI ) {
+exports.pushApplication = function (sessionData, network, applicationId, dataAPI) {
 }
 
-
-//******************************************************************************
+//* *****************************************************************************
 // Start/Stop Application data delivery.
-//******************************************************************************
+//* *****************************************************************************
 // Start the application.
 //
 // sessionData   - The session data to access the account on the network.
@@ -303,8 +300,8 @@ exports.pushApplication = function( sessionData, network, applicationId, dataAPI
 //
 // Returns a Promise that starts the application data flowing from the remote
 // system.
-exports.startApplication = function( sessionData, network, applicationId, dataAPI ) {
-};
+exports.startApplication = function (sessionData, network, applicationId, dataAPI) {
+}
 
 // Stop the application.
 //
@@ -316,12 +313,12 @@ exports.startApplication = function( sessionData, network, applicationId, dataAP
 //
 // Returns a Promise that stops the application data flowing from the remote
 // system.
-exports.stopApplication = function( sessionData, network, applicationId, dataAPI ) {
-};
+exports.stopApplication = function (sessionData, network, applicationId, dataAPI) {
+}
 
-//******************************************************************************
+//* *****************************************************************************
 // CRUD deviceProfiles.
-//******************************************************************************
+//* *****************************************************************************
 
 // Add deviceProfile.
 //
@@ -338,7 +335,7 @@ exports.stopApplication = function( sessionData, network, applicationId, dataAPI
 // linked to the local database record.  This method is called in an async
 // manner against lots of other networks, so logging should be done via the
 // dataAPI.
-exports.addDeviceProfile = function( sessionData, network, deviceProfileId, dataAPI ) {
+exports.addDeviceProfile = function (sessionData, network, deviceProfileId, dataAPI) {
 }
 
 // Get deviceProfile.
@@ -354,7 +351,7 @@ exports.addDeviceProfile = function( sessionData, network, deviceProfileId, data
 // Returns a Promise that connects to the remote system and gets the
 // deviceProfile.  This method is called in an async manner against lots of other
 // networks, so logging should be done via the dataAPI.
-exports.getDeviceProfile = function( sessionData, network, deviceProfileId, dataAPI ) {
+exports.getDeviceProfile = function (sessionData, network, deviceProfileId, dataAPI) {
 }
 
 // Update deviceProfile.
@@ -370,7 +367,7 @@ exports.getDeviceProfile = function( sessionData, network, deviceProfileId, data
 // Returns a Promise that connects to the remote system and updates the
 // deviceProfile.  This method is called in an async manner against
 // lots of other networks, so logging should be done via the dataAPI.
-exports.updateDeviceProfile = function( sessionData, network, deviceProfileId, dataAPI ) {
+exports.updateDeviceProfile = function (sessionData, network, deviceProfileId, dataAPI) {
 }
 
 // Delete the deviceProfile.
@@ -386,7 +383,7 @@ exports.updateDeviceProfile = function( sessionData, network, deviceProfileId, d
 // Returns a Promise that connects to the remote system and deletes the
 // deviceProfile.  This method is called in an async manner against
 // lots of other networks, so logging should be done via the dataAPI.
-exports.deleteDeviceProfile = function( sessionData, network, deviceProfileId, dataAPI ) {
+exports.deleteDeviceProfile = function (sessionData, network, deviceProfileId, dataAPI) {
 }
 
 // Push the deviceProfile, meaning update if it exists, and create if it
@@ -401,13 +398,12 @@ exports.deleteDeviceProfile = function( sessionData, network, deviceProfileId, d
 //                   operation.
 //
 // Returns a Promise that pushes the application record to the remote system.
-exports.pushDeviceProfile = function( sessionData, network, deviceProfileId, dataAPI ) {
+exports.pushDeviceProfile = function (sessionData, network, deviceProfileId, dataAPI) {
 }
 
-
-//******************************************************************************
+//* *****************************************************************************
 // CRUD devices.
-//******************************************************************************
+//* *****************************************************************************
 
 // Add device.
 //
@@ -425,7 +421,7 @@ exports.pushDeviceProfile = function( sessionData, network, deviceProfileId, dat
 // Returns a Promise that connects to the remote system and creates the
 // device.  The promise returns the id of the created device to be added to the
 // deviceNetworkTypeLinks record by the caller.
-exports.addDevice = function( sessionData, network, deviceId, dataAPI ) {
+exports.addDevice = function (sessionData, network, deviceId, dataAPI) {
 }
 
 // Get device.
@@ -442,7 +438,7 @@ exports.addDevice = function( sessionData, network, deviceId, dataAPI ) {
 //                   and network.
 //
 // Returns a Promise that gets the device data from the remote system.
-exports.getDevice = function( sessionData, network, deviceId, dataAPI ) {
+exports.getDevice = function (sessionData, network, deviceId, dataAPI) {
 }
 
 // Update device.
@@ -456,7 +452,7 @@ exports.getDevice = function( sessionData, network, deviceId, dataAPI ) {
 // Returns a Promise that connects to the remote system and updates the
 // device.  This method is called in an async manner against lots of other
 // networks, so logging should be done via the dataAPI.
-exports.updateDevice = function( sessionData, network, deviceId, dataAPI ) {
+exports.updateDevice = function (sessionData, network, deviceId, dataAPI) {
 }
 
 // Delete the device.
@@ -473,7 +469,7 @@ exports.updateDevice = function( sessionData, network, deviceId, dataAPI ) {
 //                   and network.
 //
 // Returns a Promise that gets the application record from the remote system.
-exports.deleteDevice = function( sessionData, network, deviceId, dataAPI ) {
+exports.deleteDevice = function (sessionData, network, deviceId, dataAPI) {
 }
 
 // Push the device, meaning update if it exists, and create if it doesn't.
@@ -487,5 +483,5 @@ exports.deleteDevice = function( sessionData, network, deviceId, dataAPI ) {
 //                   operation.
 //
 // Returns a Promise that pushes the device record to the remote system.
-exports.pushDevice = function( sessionData, network, deviceId, dataAPI ) {
+exports.pushDevice = function (sessionData, network, deviceId, dataAPI) {
 }

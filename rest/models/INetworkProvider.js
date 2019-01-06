@@ -1,9 +1,9 @@
 // Configuration access.
-var nconf = require('nconf');
+var nconf = require('nconf')
 
-//******************************************************************************
+//* *****************************************************************************
 // The NetworkProvider interface.
-//******************************************************************************
+//* *****************************************************************************
 // Class constructor.
 //
 // Loads the implementation for the networkProvider interface based on the passed
@@ -12,10 +12,10 @@ var nconf = require('nconf');
 //
 // implPath - The subdirectory to get the dao implementation from.
 //
-function NetworkProvider() {
-    this.impl = new require( './dao/' +
-                             nconf.get( "impl_directory" ) +
-                             '/networkProviders.js' );
+function NetworkProvider () {
+  this.impl = require('./dao/' +
+                             nconf.get('impl_directory') +
+                             '/networkProviders.js')
 }
 
 // Retrieves a subset of the networkProviders in the system given the options.
@@ -23,8 +23,8 @@ function NetworkProvider() {
 // Options include limits on the number of networkProviders returned, the offset
 // to the first networkProvider returned (together giving a paging capability),
 // and a search string on networkProvider name.
-NetworkProvider.prototype.retrieveNetworkProviders = function( options ) {
-    return this.impl.retrieveNetworkProviders( options );
+NetworkProvider.prototype.retrieveNetworkProviders = function (options) {
+  return this.impl.retrieveNetworkProviders(options)
 }
 
 // Retrieve a networkProvider record by id.
@@ -32,8 +32,8 @@ NetworkProvider.prototype.retrieveNetworkProviders = function( options ) {
 // id - the record id of the networkProvider.
 //
 // Returns a promise that executes the retrieval.
-NetworkProvider.prototype.retrieveNetworkProvider = function( id ) {
-    return this.impl.retrieveNetworkProvider( id );
+NetworkProvider.prototype.retrieveNetworkProvider = function (id) {
+  return this.impl.retrieveNetworkProvider(id)
 }
 
 // Create the networkProvider record.
@@ -41,8 +41,8 @@ NetworkProvider.prototype.retrieveNetworkProvider = function( id ) {
 // name  - the name of the networkProvider
 //
 // Returns the promise that will execute the create.
-NetworkProvider.prototype.createNetworkProvider = function( name ) {
-    return this.impl.createNetworkProvider( name );
+NetworkProvider.prototype.createNetworkProvider = function (name) {
+  return this.impl.createNetworkProvider(name)
 }
 
 // Update the networkProvider record.
@@ -51,8 +51,8 @@ NetworkProvider.prototype.createNetworkProvider = function( name ) {
 //           retrieval to guarantee the same record is updated.
 //
 // Returns a promise that executes the update.
-NetworkProvider.prototype.updateNetworkProvider = function( record ) {
-    return this.impl.updateNetworkProvider( record );
+NetworkProvider.prototype.updateNetworkProvider = function (record) {
+  return this.impl.updateNetworkProvider(record)
 }
 
 // Delete the networkProvider record.
@@ -60,8 +60,8 @@ NetworkProvider.prototype.updateNetworkProvider = function( record ) {
 // networkProviderId - the id of the networkProvider record to delete.
 //
 // Returns a promise that performs the delete.
-NetworkProvider.prototype.deleteNetworkProvider = function( id ) {
-    return this.impl.deleteNetworkProvider( id );
+NetworkProvider.prototype.deleteNetworkProvider = function (id) {
+  return this.impl.deleteNetworkProvider(id)
 }
 
-module.exports = NetworkProvider;
+module.exports = NetworkProvider

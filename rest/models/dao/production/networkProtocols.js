@@ -35,7 +35,8 @@ exports.createNetworkProtocol = function (name, networkTypeId, protocolHandler, 
     db.insertRecord('networkProtocols', np, function (err, record) {
       if (err) {
         reject(err)
-      } else {
+      }
+      else {
         resolve(record)
       }
     })
@@ -51,7 +52,8 @@ exports.upsertNetworkProtocol = function (np) {
         if (oldNp.totalCount > 0) {
           oldNp = oldNp.records[0]
           resolve(me.updateNetworkProtocol(np))
-        } else {
+        }
+        else {
           me.createNetworkProtocol(np.name, np.networkTypeId, np.protocolHandler, np.networkProtocolVersion, np.masterProtocol)
             .then(record => {
               appLogger.log(record, 'error')
@@ -82,9 +84,11 @@ exports.retrieveNetworkProtocol = function (id) {
     db.fetchRecord('networkProtocols', 'id', id, function (err, rec) {
       if (err) {
         reject(err)
-      } else if (!rec) {
+      }
+      else if (!rec) {
         reject(new httpError.NotFound())
-      } else {
+      }
+      else {
         resolve(rec)
       }
     })
@@ -102,7 +106,8 @@ exports.updateNetworkProtocol = function (np) {
     db.updateRecord('networkProtocols', 'id', np, function (err, row) {
       if (err) {
         reject(err)
-      } else {
+      }
+      else {
         resolve(row)
       }
     })
@@ -119,7 +124,8 @@ exports.deleteNetworkProtocol = function (networkProtocolId) {
     db.deleteRecord('networkProtocols', 'id', networkProtocolId, function (err, rec) {
       if (err) {
         reject(err)
-      } else {
+      }
+      else {
         resolve(rec)
       }
     })
@@ -139,7 +145,8 @@ exports.retrieveAllNetworkProtocols = function () {
     db.select(sql, function (err, rows) {
       if (err) {
         reject(err)
-      } else {
+      }
+      else {
         resolve(rows)
       }
     })
@@ -199,7 +206,8 @@ exports.retrieveNetworkProtocols = function (options) {
     db.select(sql, function (err, rows) {
       if (err) {
         reject(err)
-      } else {
+      }
+      else {
         // Limit and/or offset requires a second search to get a
         // total count.  Well, usually.  Can also skip if the returned
         // count is less than the limit (add in the offset to the
@@ -221,18 +229,21 @@ exports.retrieveNetworkProtocols = function (options) {
           if (rows.length < limit) {
             resolve({ totalCount: offset + rows.length,
               records: rows })
-          } else {
+          }
+          else {
             // Must run counts query.
             db.select(sqlTotalCount, function (err, count) {
               if (err) {
                 reject(err)
-              } else {
+              }
+              else {
                 resolve({ totalCount: count[0].count,
                   records: rows })
               }
             })
           }
-        } else {
+        }
+        else {
           resolve({ totalCount: rows.length, records: rows })
         }
       }

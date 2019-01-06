@@ -1,24 +1,24 @@
 // Configuration access.
-var nconf = require('nconf');
+var nconf = require('nconf')
 
 // Json web token handling.
-var jwt = require('jsonwebtoken');
+var jwt = require('jsonwebtoken')
 
 // Errors.
-var httpError = require( 'http-errors' );
+var httpError = require('http-errors')
 
 // Sessions.
-var Session = require( './session.js' );
+var Session = require('./session.js')
 
 // The sessionsMap keeps track of sessions we know about so we can cache
 // credentials on behalf of those sessions in the object.  At worst, in a
 // restart, we re-establish those connections.
-var sessionsMap = {};
+var sessionsMap = {}
 
 // Make sure we have a global pointer to the session manager so we can use it
 // when we run a Promise.
-var thissessionmanager;
-//******************************************************************************
+var thissessionmanager
+//* *****************************************************************************
 // The Session Manager interface.
 //
 // The session manager interface uses the User interface to verify a user's
@@ -27,16 +27,16 @@ var thissessionmanager;
 // remote networks.
 //
 // users - The user interface to use to log in users.
-//******************************************************************************
-function SessionManager( users ) {
-    this.users = users;
-    this.jwtoptions = {
-        algorithm: nconf.get( 'jwt_algo' ),
-        expiresIn: nconf.get( 'jwt_ttl' ),
-        issuer: nconf.get( 'jwt_issuer' )
-    };
-    this.secret = nconf.get( 'jwt_secret' );
-    thissessionmanager = this;
+//* *****************************************************************************
+function SessionManager (users) {
+  this.users = users
+  this.jwtoptions = {
+    algorithm: nconf.get('jwt_algo'),
+    expiresIn: nconf.get('jwt_ttl'),
+    issuer: nconf.get('jwt_issuer')
+  }
+  this.secret = nconf.get('jwt_secret')
+  thissessionmanager = this
 }
 
 /**
@@ -53,48 +53,48 @@ function SessionManager( users ) {
  *           username and password are valid, rejected otherwise with an
  *           appropriate error.
  */
-SessionManager.prototype.authorize = function( req, res, next ) {
-    return new Promise( function( resolve, reject ) {
-        // Verify that we have the login fields required.
-        if ( !req.body.login_username || !req.body.login_password ) {
-            reject( new httpError.BadRequest );
-            return;
+SessionManager.prototype.authorize = function (req, res, next) {
+  return new Promise(function (resolve, reject) {
+    // Verify that we have the login fields required.
+    if (!req.body.login_username || !req.body.login_password) {
+      reject(new httpError.BadRequest())
+      return
+    }
+
+    // Got 'em.  Verify the username/password combo using the user
+    // implementation set up in the constructor.
+    thissessionmanager.users.authorizeUser(req.body.login_username,
+      req.body.login_password)
+      .then(function (user) {
+        // Not an error, per se, but user can be null, indicating
+        // failed to log in.  We don't want to say why.
+        if (user === null) {
+          reject(new httpError.Unauthorized())
         }
+        else {
+          // Make JWT token.  We'll just put in the username and look
+          // everything else up when called.
+          var token = jwt.sign({ user: user.username },
+            thissessionmanager.secret,
+            thissessionmanager.jwtoptions)
 
-        // Got 'em.  Verify the username/password combo using the user
-        // implementation set up in the constructor.
-        thissessionmanager.users.authorizeUser( req.body.login_username,
-                                         req.body.login_password )
-        .then( function( user ) {
-            // Not an error, per se, but user can be null, indicating
-            // failed to log in.  We don't want to say why.
-            if ( null === user ) {
-                reject( new httpError.Unauthorized );
-            }
-            else {
-                // Make JWT token.  We'll just put in the username and look
-                // everything else up when called.
-                var token = jwt.sign( { user: user.username },
-                                      thissessionmanager.secret,
-                                      thissessionmanager.jwtoptions );
+          // Create a session for the token and any remote network logins
+          var session = new Session(token)
 
-                // Create a session for the token and any remote network logins
-                var session = new Session( token );
+          // Save the session in the sessionsMap.
+          sessionsMap[ user.id ] = session
 
-                // Save the session in the sessionsMap.
-                sessionsMap[ user.id ] = session;
-
-                // Pass back the token.
-                resolve( session.jwtToken );
-            }
-        })
-        .catch( function( err ) {
-            // Either a database lookup error (not "not found"), or something
-            // else.
-            reject( new httpError.InternalServerError );
-        });
-    });
-};
+          // Pass back the token.
+          resolve(session.jwtToken)
+        }
+      })
+      .catch(function (err) {
+        // Either a database lookup error (not "not found"), or something
+        // else.
+        reject(new httpError.InternalServerError())
+      })
+  })
+}
 
 /**
  * Log out the current user.
@@ -106,27 +106,27 @@ SessionManager.prototype.authorize = function( req, res, next ) {
  *
  * Returns a promise that does nothing.
  */
-SessionManager.prototype.delete = function( req, res, next ) {
-    return new Promise( function( resolve, reject ) {
-        // There's really nothing we can do to kill a JWT token itself.  And we
-        // don't really want to, in case we get restarted in the middle of active
-        // sessions.  But let's end remote connections to the networks we are
-        // connected to and remove the session data from the sessionsMap.
-        var s = sessionsMap[ req.user.id ];
-        if ( s ) {
-            s.dropConnections().then( function( ) {
-                delete sessionsMap[ req.user.id ];
-                resolve();
-            } )
-            .catch( function( err ) {
-                reject( err );
-            });
-        }
-        else {
-            resolve( );
-        }
-    });
-};
+SessionManager.prototype.delete = function (req, res, next) {
+  return new Promise(function (resolve, reject) {
+    // There's really nothing we can do to kill a JWT token itself.  And we
+    // don't really want to, in case we get restarted in the middle of active
+    // sessions.  But let's end remote connections to the networks we are
+    // connected to and remove the session data from the sessionsMap.
+    var s = sessionsMap[ req.user.id ]
+    if (s) {
+      s.dropConnections().then(function () {
+        delete sessionsMap[ req.user.id ]
+        resolve()
+      })
+        .catch(function (err) {
+          reject(err)
+        })
+    }
+    else {
+      resolve()
+    }
+  })
+}
 
 /**
  * Verifies that the current request has a valid login.  This method
@@ -141,36 +141,35 @@ SessionManager.prototype.delete = function( req, res, next ) {
  * It executes and either passes on to the next step in the processing chain
  * via next, or end the request with a 401 error.
  */
-SessionManager.prototype.verifyAuthorization = function( req, res, next ) {
-    var verified;
-    try {
-        var token = req.headers.authorization.replace( "Bearer ", "" );
-        var verified = jwt.verify( token, thissessionmanager.secret );
-        // Assuming the verified data due to encryption is enough.
-        // Get the user record into the request structure for use in the
-        // methods.
-        thissessionmanager.users.retrieveUserByUsername( verified.user ).then( function( user ) {
-            // Drop internal use fields for upper layers.
-            delete user.passwordHash;
-            delete user.lastVerifiedEmail;
-            req.user = user;
+SessionManager.prototype.verifyAuthorization = function (req, res, next) {
+  var verified
+  try {
+    var token = req.headers.authorization.replace('Bearer ', '')
+    var verified = jwt.verify(token, thissessionmanager.secret)
+    // Assuming the verified data due to encryption is enough.
+    // Get the user record into the request structure for use in the
+    // methods.
+    thissessionmanager.users.retrieveUserByUsername(verified.user).then(function (user) {
+      // Drop internal use fields for upper layers.
+      delete user.passwordHash
+      delete user.lastVerifiedEmail
+      req.user = user
 
-            // Make sure we have a session for this user.
-            if ( ! sessionsMap[ user.id ] ) {
-                sessionsMap[ user.id ] = new Session( token );
-            }
-            next();
-        })
-        .catch( function( err ) {
-            res.status( 401 );
-            res.send();
-        });
-    }
-    catch( err ) {
-        res.status( 401 );
-        res.send();
-    }
+      // Make sure we have a session for this user.
+      if (!sessionsMap[ user.id ]) {
+        sessionsMap[ user.id ] = new Session(token)
+      }
+      next()
+    })
+      .catch(function (err) {
+        res.status(401)
+        res.send()
+      })
+  }
+  catch (err) {
+    res.status(401)
+    res.send()
+  }
+}
 
-};
-
-module.exports = SessionManager;
+module.exports = SessionManager

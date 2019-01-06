@@ -9,14 +9,12 @@ var server = chai.request(app).keepOpen()
 
 describe.skip('ApplicationNetworkTypeLinks', function () {
   var adminToken
-  var coAdminToken
-  var userToken
 
   before('User Sessions', function (done) {
     var sessions = 0
     var waitFunc = function () {
       ++sessions
-      if (sessions >= 3) {
+      if (sessions >= 1) {
         done()
       }
     }
@@ -30,28 +28,6 @@ describe.skip('ApplicationNetworkTypeLinks', function () {
         adminToken = res.text
         waitFunc()
       })
-
-    server
-      .post('/api/sessions')
-      .send({ 'login_username': 'clAdmin', 'login_password': 'password' })
-      .end(function (err, res) {
-        if (err) {
-          return done(err)
-        }
-        coAdminToken = res.text
-        waitFunc()
-      })
-
-    server
-      .post('/api/sessions')
-      .send({ 'login_username': 'clUser', 'login_password': 'password' })
-      .end(function (err, res) {
-        if (err) {
-          return done(err)
-        }
-        userToken = res.text
-        waitFunc()
-      })
   })
 
   var anlId1
@@ -60,7 +36,7 @@ describe.skip('ApplicationNetworkTypeLinks', function () {
     it('should return 403 (forbidden) on user', function (done) {
       server
         .post('/api/applicationNetworkTypeLinks')
-        .set('Authorization', 'Bearer ' + userToken)
+        .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .send({ 'applicationId': 1,
           'networkTypeId': 1,
@@ -71,10 +47,10 @@ describe.skip('ApplicationNetworkTypeLinks', function () {
         })
     })
 
-    it('should return 200 on coAdmin', function (done) {
+    it('should return 200 on admin', function (done) {
       server
         .post('/api/applicationNetworkTypeLinks')
-        .set('Authorization', 'Bearer ' + coAdminToken)
+        .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .send({ 'applicationId': 1,
           'networkTypeId': 1,
@@ -121,10 +97,10 @@ describe.skip('ApplicationNetworkTypeLinks', function () {
   })
 
   describe('GET /api/applicationNetworkTypeLinks (search/paging)', function () {
-    it('should return 200 with 2 applicationNetworkTypeLink on coAdmin', function (done) {
+    it('should return 200 with 2 applicationNetworkTypeLink on admin', function (done) {
       server
         .get('/api/applicationNetworkTypeLinks')
-        .set('Authorization', 'Bearer ' + coAdminToken)
+        .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {
           res.should.have.status(200)
@@ -139,7 +115,7 @@ describe.skip('ApplicationNetworkTypeLinks', function () {
     it('should return 200 on user', function (done) {
       server
         .get('/api/applicationNetworkTypeLinks')
-        .set('Authorization', 'Bearer ' + userToken)
+        .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {
           res.should.have.status(200)
@@ -184,10 +160,10 @@ describe.skip('ApplicationNetworkTypeLinks', function () {
   })
 
   describe('GET /api/applicationNetworkTypeLinks/{id}', function () {
-    it('should return 200 on coAdmin', function (done) {
+    it('should return 200 on admin', function (done) {
       server
         .get('/api/applicationNetworkTypeLinks/' + anlId2)
-        .set('Authorization', 'Bearer ' + coAdminToken)
+        .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {
           res.should.have.status(200)
@@ -198,7 +174,7 @@ describe.skip('ApplicationNetworkTypeLinks', function () {
     it('should return 200 on user', function (done) {
       server
         .get('/api/applicationNetworkTypeLinks/' + anlId2)
-        .set('Authorization', 'Bearer ' + userToken)
+        .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {
           res.should.have.status(200)
@@ -249,10 +225,10 @@ describe.skip('ApplicationNetworkTypeLinks', function () {
         })
     })
 
-    it('should return 200 on coAdmin getting my application', function (done) {
+    it('should return 200 on admin getting my application', function (done) {
       server
         .get('/api/applicationNetworkTypeLinks/' + anlId1)
-        .set('Authorization', 'Bearer ' + coAdminToken)
+        .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {
           res.should.have.status(200)
@@ -263,7 +239,7 @@ describe.skip('ApplicationNetworkTypeLinks', function () {
     it('should return 200 on user getting my application', function (done) {
       server
         .get('/api/applicationNetworkTypeLinks/' + anlId1)
-        .set('Authorization', 'Bearer ' + userToken)
+        .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {
           res.should.have.status(200)
@@ -273,10 +249,10 @@ describe.skip('ApplicationNetworkTypeLinks', function () {
   })
 
   describe('PUT /api/applicationNetworkTypeLinks', function () {
-    it('should return 200 on coAdmin', function (done) {
+    it('should return 200 on admin', function (done) {
       server
         .put('/api/applicationNetworkTypeLinks/' + anlId2)
-        .set('Authorization', 'Bearer ' + coAdminToken)
+        .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .send({ 'networkSettings': { 'description': 'Demo app 2' } })
         .end(function (err, res) {
@@ -288,7 +264,7 @@ describe.skip('ApplicationNetworkTypeLinks', function () {
     it('should return 403 (forbidden) on user', function (done) {
       server
         .put('/api/applicationNetworkTypeLinks/' + anlId1)
-        .set('Authorization', 'Bearer ' + userToken)
+        .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .send({ 'networkSettings': { 'description': 'Demo app 1' } })
         .end(function (err, res) {
@@ -328,7 +304,7 @@ describe.skip('ApplicationNetworkTypeLinks', function () {
     it('should return 403 (forbidden) on user', function (done) {
       server
         .delete('/api/applicationNetworkTypeLinks/' + anlId1)
-        .set('Authorization', 'Bearer ' + userToken)
+        .set('Authorization', 'Bearer ' + adminToken)
         .end(function (err, res) {
           res.should.have.status(403)
           done()
