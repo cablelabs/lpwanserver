@@ -8,45 +8,7 @@ const nconf = require('nconf')
 const Initializer = require('../../../rest/models/initializer')
 const TestModule = require('../../../rest/models/INetwork')
 const testName = 'Network'
-var cry = require('crypto')
-var k = cry.randomBytes(32)
-
-const modelAPIMock = {
-  networks: {
-    async retrieveNetwork (networkId) {
-      return {
-        networkId: 1,
-        networkProtocolId: 1
-      }
-    }
-  },
-  networkProtocols: {
-    async retrieveNetworkProtocol (networkProtocolId) {
-      return ({})
-    }
-  },
-  networkProtocolAPI: {
-    async getProtocol (network) {
-      return {
-        sessionData: {},
-        api: require('../../../rest/networkProtocols/LoRaOpenSource_2.js')
-      }
-    }
-  },
-  networkTypeAPI: {
-    async addDeviceProfile (nwkId, dpId) {
-      return ({})
-    },
-    async pushDeviceProfile (nwkId, dpId) {
-      return ({})
-    }
-  },
-  protocolData: {
-    async retrieveProtocolData (networkId, networkProtocolId, key) {
-      return (k.toString('base64'))
-    }
-  }
-}
+const modelAPIMock = require('../ModelAPI-mock')
 
 describe('Unit Tests for ' + testName, () => {
   let networkId = ''
@@ -54,9 +16,6 @@ describe('Unit Tests for ' + testName, () => {
     nconf.file('defaults', { file: 'config/defaults.hjson', format: require('hjson') })
     let initializer = new Initializer()
     initializer.init()
-    console.log(nconf.get('impl_directory'))
-    console.log(nconf.get('db_schema'))
-    console.log(nconf.get('db_create'))
   })
   after('Shutdown', async () => {
   })

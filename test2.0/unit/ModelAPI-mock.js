@@ -1,5 +1,6 @@
 const cry = require('crypto')
 const k = cry.randomBytes(32)
+var dataValue = null
 
 module.exports = {
   networks: {
@@ -29,11 +30,20 @@ module.exports = {
     },
     async pushDeviceProfile (nwkId, dpId) {
       return ({})
+    },
+    async connect() {
+      return ({})
+    },
+    async test() {
+      return ({})
     }
   },
   protocolData: {
     async retrieveProtocolData (networkId, networkProtocolId, key) {
-      return (k.toString('base64'))
+      return dataValue
+    },
+    async createProtocolData (networkId, networkProtocolId, key, data) {
+      dataValue = data
     }
   },
   reportingProtocols: {

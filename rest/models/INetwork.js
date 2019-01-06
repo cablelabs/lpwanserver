@@ -79,7 +79,7 @@ async function authorizeAndTest (network, modelAPI, k, me, dataAPI) {
     network.securityData.authorized = true
     try {
       await modelAPI.networkTypeAPI.test(network, network.securityData)
-      appLogger.log('Test Success ' + network.name)
+      appLogger.log('Test Success ' + network.name, 'info')
       network.securityData.authorized = true
       network.securityData.message = 'ok'
     }
@@ -120,7 +120,6 @@ Network.prototype.createNetwork = function (name, networkProviderId, networkType
       if (!securityData.authorized) securityData.authorized = false
       if (!securityData.message) securityData.message = 'Pending Authorization'
       if (!securityData.enabled) securityData.enabled = true
-      appLogger.log(securityData)
       securityData = dataAPI.hide(null, securityData, k)
     }
     me.impl.createNetwork(name,
@@ -135,7 +134,7 @@ Network.prototype.createNetwork = function (name, networkProviderId, networkType
           record.securityData = dataAPI.access(null, record.securityData, k)
           authorizeAndTest(record, modelAPI, k, me, dataAPI)
             .then(finalNetwork => {
-              appLogger.log(finalNetwork, 'info')
+              appLogger.log(finalNetwork, 'debug')
               finalNetwork.securityData = dataAPI.hide(null, finalNetwork.securityData, k)
               me.impl.updateNetwork(finalNetwork)
                 .then((rec) => {
@@ -157,19 +156,17 @@ Network.prototype.createNetwork = function (name, networkProviderId, networkType
 }
 
 Network.prototype.updateNetwork = async function updateNetwork (record) {
-  appLogger.log(record)
   let dataAPI = new NetworkProtocolDataAccess(modelAPI, 'INetwork Update')
   const old = await this.retrieveNetwork(record.id)
   const k = await dataAPI.getProtocolDataForKey(record.id, old.networkProtocolId, genKey(record.id))
   if (!record.securityData) record.securityData = old.securityData
   const finalNetwork = await authorizeAndTest(record, modelAPI, k, this, dataAPI)
-  appLogger.log(finalNetwork)
+  appLogger.log(finalNetwork, 'debug')
   finalNetwork.securityData = dataAPI.hide(null, finalNetwork.securityData, k)
   let masterProtocol = finalNetwork.masterProtocol
   delete finalNetwork.masterProtocol
   const rec = await this.impl.updateNetwork(finalNetwork)
   rec.masterProtocol = masterProtocol
-  appLogger.log(rec)
   return rec
 }
 
