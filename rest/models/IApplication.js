@@ -1,14 +1,13 @@
 // Configuration access.
-var nconf = require('nconf')
+const nconf = require('nconf')
 
 // General libraries in use in this module.
-var appLogger = require('../lib/appLogger.js')
+const appLogger = require('../lib/appLogger.js')
 // Used in getting data for the reportingProtocols
-var NetworkProtocolDataAccess = require('../networkProtocols/networkProtocolDataAccess.js')
-var reportingProtocol = require('../reportingProtocols/postHandler')
+const NetworkProtocolDataAccess = require('../networkProtocols/networkProtocolDataAccess.js')
+const reportingProtocol = require('../reportingProtocols/postHandler')
 
 var modelAPI
-var expressApp
 var running = new Map()
 
 //* *****************************************************************************
@@ -32,7 +31,6 @@ function Application (app, server) {
                              nconf.get('impl_directory') +
                              '/applications.js')
 
-  expressApp = app
   modelAPI = server
 }
 
@@ -42,7 +40,7 @@ function Application (app, server) {
 // the first application returned (together giving a paging capability), a
 // search string on application name, a companyId, and a reportingProtocolId
 Application.prototype.retrieveApplications = function (options) {
-  var me = this
+  let me = this
   return new Promise(async function (resolve, reject) {
     try {
       let recs = await me.impl.retrieveApplications(options)
@@ -65,7 +63,7 @@ Application.prototype.retrieveApplications = function (options) {
 //
 // Returns a promise that executes the retrieval.
 Application.prototype.retrieveApplication = function (id) {
-  var me = this
+  let me = this
   return new Promise(async function (resolve, reject) {
     try {
       let rec = await me.impl.retrieveApplication(id)
@@ -129,7 +127,7 @@ Application.prototype.deleteApplication = function (id) {
     try {
       // Delete applicationNetworkTypeLinks
       let antls = await modelAPI.applicationNetworkTypeLinks.retrieveApplicationNetworkTypeLinks({ applicationId: id })
-      recs = antls.records
+      let recs = antls.records
       for (let i = 0; i < recs.length; ++i) {
         await modelAPI.applicationNetworkTypeLinks.deleteApplicationNetworkTypeLink(recs[ i ].id)
       }
@@ -163,17 +161,17 @@ Application.prototype.deleteApplication = function (id) {
 //
 // Returns a promise that performs the start.
 Application.prototype.startApplication = async function (id) {
-  // var me = this
+  // let me = this
   // return new Promise(async function (resolve, reject) {
-  //   var appLinks = await modelAPI.applicationNetworkTypeLinks.retrieveApplicationNetworkTypeLinks({ 'applicationId': id })
-  //   var allLogs = []
-  //   var allPromises = []
+  //   let appLinks = await modelAPI.applicationNetworkTypeLinks.retrieveApplicationNetworkTypeLinks({ 'applicationId': id })
+  //   let allLogs = []
+  //   let allPromises = []
   //   appLinks.records.forEach(async function (appLink) {
   //     allPromises.push(modelAPI.networkTypeAPI.startApplication(appLink.networkTypeId, id))
   //   })
   //   try {
   //     // Generates an array of arrays of logs.
-  //     var logs = await Promise.all(allPromises)
+  //     let logs = await Promise.all(allPromises)
   //     logs.forEach((onePromiseLogs) => {
   //       onePromiseLogs.forEach((log) => {
   //         allLogs.push(log)
@@ -184,7 +182,7 @@ Application.prototype.startApplication = async function (id) {
   //     allLogs.push('Failed to start application on at least one network')
   //   }
   //
-  //   var rec = {}
+  //   let rec = {}
   //   rec.remoteAccessLogs = allLogs
   //
   //   // Keep track of running applications (transient property)
@@ -202,20 +200,20 @@ Application.prototype.startApplication = async function (id) {
 //
 // Returns a promise that performs the stop.
 Application.prototype.stopApplication = async function (id) {
-  // var me = this
+  // let me = this
   // return new Promise(async function (resolve, reject) {
-  //   var appLinks = await modelAPI.applicationNetworkTypeLinks.retrieveApplicationNetworkTypeLinks({ 'applicationId': id })
-  //   var allLogs = {}
-  //   var allPromises = []
+  //   let appLinks = await modelAPI.applicationNetworkTypeLinks.retrieveApplicationNetworkTypeLinks({ 'applicationId': id })
+  //   let allLogs = {}
+  //   let allPromises = []
   //   appLinks.records.forEach(async function (appLink) {
   //     allPromises.push(modelAPI.networkTypeAPI.stopApplication(appLink.networkTypeId, id))
   //   })
   //   try {
   //     // Generates an array of logs.
-  //     var logs = await Promise.all(allPromises)
-  //     for (var logSet = 0; logSet < logs.length; ++logSet) {
-  //       for (var networkId in logs[ logSet ]) {
-  //         var networkLogs = logs[ logSet ][ networkId ]
+  //     let logs = await Promise.all(allPromises)
+  //     for (let logSet = 0; logSet < logs.length; ++logSet) {
+  //       for (let networkId in logs[ logSet ]) {
+  //         let networkLogs = logs[ logSet ][ networkId ]
   //         if (!allLogs[ networkId ]) {
   //           // Not there yet.  OK to assign.  And yeah, this
   //           // is a reference, but we won't be using the entries
@@ -224,7 +222,7 @@ Application.prototype.stopApplication = async function (id) {
   //         }
   //         else {
   //           // Add in the logs from this network.
-  //           for (var j = 0; j < networkLogs[ networkId ].logs.length; ++j) {
+  //           for (let j = 0; j < networkLogs[ networkId ].logs.length; ++j) {
   //             allLogs[ networkId ].logs.push(networkLogs[ networkId ].logs[ j ])
   //           }
   //         }
@@ -235,7 +233,7 @@ Application.prototype.stopApplication = async function (id) {
   //     allLogs.push('Failed to stop application on at least one network')
   //   }
   //
-  //   var rec = {}
+  //   let rec = {}
   //   rec.remoteAccessLogs = allLogs
 
   // Remove from running applications
@@ -249,12 +247,12 @@ Application.prototype.stopApplication = async function (id) {
 //
 // Returns a promise that performs the test.
 Application.prototype.testApplication = function (applicationId, data) {
-  var me = this
+  let me = this
   return new Promise(async function (resolve, reject) {
     try {
-      var app = await me.impl.retrieveApplication(applicationId)
-      var response = await reportingProtocol.report(data, app.baseUrl, app.name)
-      resolve(204)
+      let app = await me.impl.retrieveApplication(applicationId)
+      let response = await reportingProtocol.report(data, app.baseUrl, app.name)
+      resolve(response.statusCode)
     }
     catch (err) {
       appLogger.log('Failed test, error = ' + err)
@@ -273,9 +271,9 @@ Application.prototype.testApplication = function (applicationId, data) {
 Application.prototype.passDataToApplication = function (applicationId, networkId, data) {
   return new Promise(async function (resolve, reject) {
     try {
-      var network = await modelAPI.networks.retrieveNetwork(networkId)
-      var proto = await modelAPI.networkProtocolAPI.getProtocol(network)
-      var dataAPI = new NetworkProtocolDataAccess(modelAPI, 'ReportingProtocol')
+      let network = await modelAPI.networks.retrieveNetwork(networkId)
+      let proto = await modelAPI.networkProtocolAPI.getProtocol(network)
+      let dataAPI = new NetworkProtocolDataAccess(modelAPI, 'ReportingProtocol')
       await proto.api.passDataToApplication(network, applicationId, data, dataAPI)
       resolve(204)
     }
@@ -288,7 +286,7 @@ Application.prototype.passDataToApplication = function (applicationId, networkId
 //
 // Returns a promise that performs the start.
 Application.prototype.startApplications = function () {
-  var me = this
+  let me = this
   return new Promise(async function (resolve, reject) {
     try {
       // Start all applications.
