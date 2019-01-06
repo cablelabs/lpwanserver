@@ -8,7 +8,7 @@ var nconf = require('nconf')
 var Initializer = require('../../../rest/models/initializer')
 var TestModule = require('../../../rest/models/IApplication')
 const testName = 'Application'
-const modelAPIMock = require('../ModelAPI-mock')
+const modelAPIMock = require('../../mock/ModelAPI-mock')
 
 // content of index.js
 const http = require('http')

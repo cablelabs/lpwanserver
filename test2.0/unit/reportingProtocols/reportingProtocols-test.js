@@ -5,7 +5,7 @@ const chai = require('chai')
 // eslint-disable-next-line no-unused-vars
 const should = chai.should()
 const TestModule = require('../../../rest/reportingProtocols/reportingProtocols')
-const modelAPI = require('../ModelAPI-mock')
+const modelAPI = require('../../mock/ModelAPI-mock')
 const testName = 'Reporting Protocol API'
 
 describe('Unit Tests for ' + testName, () => {
