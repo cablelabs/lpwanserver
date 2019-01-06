@@ -8,25 +8,7 @@ const nconf = require('nconf')
 const Initializer = require('../../../rest/models/initializer')
 const TestModule = require('../../../rest/models/IDevice')
 const testName = 'Device'
-
-const modelAPIMock = {
-  networks: {
-    async retrieveNetwork (networkId) {
-      return {
-        networkId: 1,
-        networkProtocolId: 1
-      }
-    }
-  },
-  networkProtocolAPI: {
-    async getProtocol (network) {
-      return {
-        sessionData: {},
-        api: require('../../../rest/networkProtocols/LoRaOpenSource_2.js')
-      }
-    }
-  }
-}
+const modelAPIMock = require('../ModelAPI-mock')
 
 describe('Unit Tests for ' + testName, () => {
   let deviceId = ''

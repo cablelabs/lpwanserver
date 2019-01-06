@@ -8,33 +8,7 @@ const nconf = require('nconf')
 const Initializer = require('../../../rest/models/initializer')
 const TestModule = require('../../../rest/models/IDeviceProfile')
 const testName = 'DeviceProfile'
-
-const modelAPIMock = {
-  networks: {
-    async retrieveNetwork (networkId) {
-      return {
-        networkId: 1,
-        networkProtocolId: 1
-      }
-    }
-  },
-  networkProtocolAPI: {
-    async getProtocol (network) {
-      return {
-        sessionData: {},
-        api: require('../../../rest/networkProtocols/LoRaOpenSource_2.js')
-      }
-    }
-  },
-  networkTypeAPI: {
-    async addDeviceProfile (nwkId, dpId) {
-      return ({})
-    },
-    async pushDeviceProfile (nwkId, dpId) {
-      return ({})
-    }
-  }
-}
+const modelAPIMock = require('../ModelAPI-mock')
 
 describe('Unit Tests for ' + testName, () => {
   let deviceProfileId = ''

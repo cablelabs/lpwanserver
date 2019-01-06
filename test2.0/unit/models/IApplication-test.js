@@ -8,6 +8,7 @@ var nconf = require('nconf')
 var Initializer = require('../../../rest/models/initializer')
 var TestModule = require('../../../rest/models/IApplication')
 const testName = 'Application'
+const modelAPIMock = require('../ModelAPI-mock')
 
 // content of index.js
 const http = require('http')
@@ -17,25 +18,6 @@ const requestHandler = (request, response) => {
   console.log(request.url)
   response.statusCode = 201
   response.end(JSON.stringify({}))
-}
-
-const modelAPIMock = {
-  networks: {
-    async retrieveNetwork (networkId) {
-      return {
-        networkId: 1,
-        networkProtocolId: 1
-      }
-    }
-  },
-  networkProtocolAPI: {
-    async getProtocol (network) {
-      return {
-        sessionData: {},
-        api: require('../../../rest/networkProtocols/LoRaOpenSource_2.js')
-      }
-    }
-  }
 }
 
 const server = http.createServer(requestHandler)
