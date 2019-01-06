@@ -16,4 +16,4 @@ COPY . .
 EXPOSE 3200
 
 # Override the command, to run the test instead of the application
-CMD ["mocha", "./test2.0/unit/models", "--recursive", "--reporter mocha-lcov-reporter | ./node_modules/coveralls/bin/coveralls.js"]
+CMD ["mocha", "./test2.0/unit", "--recursive", "--reporter mocha-lcov-reporter | ./node_modules/coveralls/bin/coveralls.js"]
