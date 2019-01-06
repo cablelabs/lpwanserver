@@ -8,7 +8,7 @@ const nconf = require('nconf')
 const Initializer = require('../../../rest/models/initializer')
 const TestModule = require('../../../rest/models/IDevice')
 const testName = 'Device'
-const modelAPIMock = require('../ModelAPI-mock')
+const modelAPIMock = require('../../mock/ModelAPI-mock')
 
 describe('Unit Tests for ' + testName, () => {
   let deviceId = ''
