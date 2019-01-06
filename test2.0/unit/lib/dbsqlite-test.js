@@ -102,12 +102,6 @@ describe('Unit Tests for ' + testName, () => {
     })
   })
   it(testName + ' Fetch Record', (done) => {
-    let record = {
-      name: 'test',
-      description: 'test description',
-      applicationId: 1,
-      deviceModel: 'AR2'
-    }
     TestModule.fetchRecord('devices', 'id', deviceId, (err, record) => {
       if (err) done(err)
       else {
@@ -231,7 +225,7 @@ describe('Unit Tests for ' + testName, () => {
   })
   it(testName + ' Select Both', (done) => {
     let sql = 'SELECT * from devices WHERE applicationId = 1'
-    TestModule.select(sql,  (err, records) => {
+    TestModule.select(sql, (err, records) => {
       if (err) done(err)
       else {
         records.length.should.equal(2)
@@ -241,7 +235,7 @@ describe('Unit Tests for ' + testName, () => {
   })
   it(testName + ' Select One of Two', (done) => {
     let sql = 'SELECT * from devices WHERE name = "test"'
-    TestModule.select(sql,  (err, records) => {
+    TestModule.select(sql, (err, records) => {
       if (err) done(err)
       else {
         records.length.should.equal(1)
@@ -251,7 +245,7 @@ describe('Unit Tests for ' + testName, () => {
   })
   it(testName + ' SelectOne', (done) => {
     let sql = 'SELECT * from devices WHERE applicationId = 1'
-    TestModule.selectOne(sql,(err, record) => {
+    TestModule.selectOne(sql, (err, record) => {
       if (err) done(err)
       else {
         record.should.have.property('id')

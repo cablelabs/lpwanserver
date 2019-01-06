@@ -20,8 +20,8 @@ const requestHandler = (request, response) => {
 }
 
 const modelAPIMock = {
-  networks:{
-    async retrieveNetwork(networkId){
+  networks: {
+    async retrieveNetwork (networkId) {
       return {
         networkId: 1,
         networkProtocolId: 1
@@ -29,7 +29,7 @@ const modelAPIMock = {
     }
   },
   networkProtocolAPI: {
-    async getProtocol(network) {
+    async getProtocol (network) {
       return {
         sessionData: {},
         api: require('../../../rest/networkProtocols/LoRaOpenSource_2.js')
@@ -49,7 +49,9 @@ describe('Unit Tests for ' + testName, () => {
     console.log(nconf.get('impl_directory'))
     console.log(nconf.get('db_schema'))
     console.log(nconf.get('db_create'))
-    server.listen(port, (err) => {})
+    server.listen(port, (err) => {
+      if (err) console.log('Server Error')
+    })
   })
   after('Shutdown', async () => {
     server.close()

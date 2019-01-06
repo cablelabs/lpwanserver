@@ -10,8 +10,8 @@ const TestModule = require('../../../rest/models/IDevice')
 const testName = 'Device'
 
 const modelAPIMock = {
-  networks:{
-    async retrieveNetwork(networkId){
+  networks: {
+    async retrieveNetwork (networkId) {
       return {
         networkId: 1,
         networkProtocolId: 1
@@ -19,7 +19,7 @@ const modelAPIMock = {
     }
   },
   networkProtocolAPI: {
-    async getProtocol(network) {
+    async getProtocol (network) {
       return {
         sessionData: {},
         api: require('../../../rest/networkProtocols/LoRaOpenSource_2.js')

@@ -21,7 +21,9 @@ const server = http.createServer(requestHandler)
 
 describe('Unit Tests for ' + testName, () => {
   before('Setup ENV', async () => {
-    server.listen(port, (err) => {})
+    server.listen(port, (err) => {
+      if (err) console.log(err)
+    })
   })
   after('Shutdown', async () => {
     server.close()
