@@ -68,7 +68,7 @@ SessionManager.prototype.authorize = function( req, res, next ) {
         .then( function( user ) {
             // Not an error, per se, but user can be null, indicating
             // failed to log in.  We don't want to say why.
-            if ( null == user ) {
+            if ( null === user ) {
                 reject( new httpError.Unauthorized );
             }
             else {

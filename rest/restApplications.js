@@ -74,13 +74,13 @@ exports.initialize = function (app, server) {
     }
 
     if (req.query.limit) {
-      var limitInt = parseInt(req.query.limit)
+      var limitInt = parseInt(req.query.limit, 10)
       if (!isNaN(limitInt)) {
         options.limit = limitInt
       }
     }
     if (req.query.offset) {
-      var offsetInt = parseInt(req.query.offset)
+      var offsetInt = parseInt(req.query.offset, 10)
       if (!isNaN(offsetInt)) {
         options.offset = offsetInt
       }
@@ -136,7 +136,7 @@ exports.initialize = function (app, server) {
   app.get('/api/applications/:id', [restServer.isLoggedIn,
     restServer.fetchCompany],
   function (req, res, next) {
-    modelAPI.applications.retrieveApplication(parseInt(req.params.id)).then(function (app) {
+    modelAPI.applications.retrieveApplication(parseInt(req.params.id, 10)).then(function (app) {
       if ((req.company.type !== modelAPI.companies.COMPANY_ADMIN) &&
                  (app.companyId !== req.user.companyId)) {
         restServer.respond(res, 403)
@@ -257,7 +257,7 @@ exports.initialize = function (app, server) {
     restServer.isAdmin],
   function (req, res, next) {
     var data = {}
-    data.id = parseInt(req.params.id)
+    data.id = parseInt(req.params.id, 10)
     // We'll start by getting the application, as a read is much less
     // expensive than a write, and then we'll be able to tell if anything
     // really changed before we even try to write.
@@ -342,7 +342,7 @@ exports.initialize = function (app, server) {
     restServer.fetchCompany,
     restServer.isAdmin],
   function (req, res, next) {
-    var id = parseInt(req.params.id)
+    var id = parseInt(req.params.id, 10)
     // If the caller is a global admin, we can just delete.
     if (req.company.type === modelAPI.companies.COMPANY_ADMIN) {
       modelAPI.applications.deleteApplication(id).then(function () {
@@ -393,7 +393,7 @@ exports.initialize = function (app, server) {
     restServer.fetchCompany,
     restServer.isAdmin],
   function (req, res, next) {
-    var id = parseInt(req.params.id)
+    var id = parseInt(req.params.id, 10)
     // If the caller is a global admin, we can just start.
     if (req.company.type === modelAPI.companies.COMPANY_ADMIN) {
       modelAPI.applications.startApplication(id).then(function (logs) {
@@ -443,7 +443,7 @@ exports.initialize = function (app, server) {
     restServer.fetchCompany,
     restServer.isAdmin],
   function (req, res, next) {
-    var id = parseInt(req.params.id)
+    var id = parseInt(req.params.id, 10)
     // If the caller is a global admin, we can just stop.
     if (req.company.type === modelAPI.companies.COMPANY_ADMIN) {
       modelAPI.applications.stopApplication(id).then(function (logs) {
@@ -483,7 +483,7 @@ exports.initialize = function (app, server) {
      * Yeah, yeah, this isn't a pure REST call.  So sue me.  Gets the job done.
      */
   app.post('/api/applications/:id/test', function (req, res, next) {
-    var id = parseInt(req.params.id)
+    var id = parseInt(req.params.id, 10)
     modelAPI.applications.testApplication(id, req.body).then(function (logs) {
       restServer.respond(res, 200)
     })
@@ -501,8 +501,8 @@ exports.initialize = function (app, server) {
      *   networkIds with a generic 404.
      */
   app.post('/api/ingest/:applicationId/:networkId', function (req, res, next) {
-    var applicationId = parseInt(req.params.applicationId)
-    var networkId = parseInt(req.params.networkId)
+    var applicationId = parseInt(req.params.applicationId, 10)
+    var networkId = parseInt(req.params.networkId, 10)
     var data = req.body
 
     // make sure the network is enabled

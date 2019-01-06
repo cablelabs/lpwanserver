@@ -148,19 +148,19 @@ exports.initialize = function( app, server ) {
             // sure they actually differ, though.
             var changed = 0;
             if ( ( req.body.name ) &&
-                 ( req.body.name != rp.name ) ) {
+                 ( req.body.name !== rp.name ) ) {
                 data.name = req.body.name;
                 ++changed;
             }
             if ( req.body.protocolHandler ) {
-                if ( req.body.protocolHandler != rp.protocolHandler ) {
+                if ( req.body.protocolHandler !== rp.protocolHandler ) {
                     data.protocolHandler = req.body.protocolHandler;
                     ++changed;
                 }
             }
 
             // Ready.  DO we have anything to actually change?
-            if ( 0 == changed ) {
+            if ( 0 === changed ) {
                 // No changes.  But returning 304 apparently causes Apache to strip
                 // CORS info, causing the browser to throw a fit.  So just say,
                 // "Yeah, we did that.  Really.  Trust us."

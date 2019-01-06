@@ -58,7 +58,7 @@ exports.initialize = function( app, server ) {
                                    function(req, res, next) {
         var options = {};
         // Make sure the caller is admin or part of the company.
-        if ( req.company.type != modelAPI.companies.COMPANY_ADMIN ) {
+        if ( req.company.type !== modelAPI.companies.COMPANY_ADMIN ) {
             if ( req.query.companyId ) {
                 var coidInt = parseInt( req.query.companyId );
                 if ( !isNaN( coidInt ) ) {
@@ -141,8 +141,8 @@ exports.initialize = function( app, server ) {
         // user.  (Admin user can get all, so we need to do this anyway.)
         var id = parseInt( req.params.id );
         modelAPI.deviceProfiles.retrieveDeviceProfile( id ).then( function( dp ) {
-            if ( ( req.company.type != modelAPI.companies.COMPANY_ADMIN ) &&
-                 ( dp.companyId != req.user.companyId ) ) {
+            if ( ( req.company.type !== modelAPI.companies.COMPANY_ADMIN ) &&
+                 ( dp.companyId !== req.user.companyId ) ) {
                 restServer.respond( res, 403 );
             }
             else {
@@ -210,8 +210,8 @@ exports.initialize = function( app, server ) {
 
         // The user must be part of the admin group or the deviceProfile's
         // company.
-        if ( ( modelAPI.companies.COMPANY_ADMIN != req.company.type ) &&
-             ( rec.companyId != req.user.companyId ) ) {
+        if ( ( modelAPI.companies.COMPANY_ADMIN !== req.company.type ) &&
+             ( rec.companyId !== req.user.companyId ) ) {
             restServer.respond( res, 403, "Can't create a deviceProfile for another company's application" );
         }
         else {
@@ -274,46 +274,46 @@ exports.initialize = function( app, server ) {
         // Start by getting the original deviceProfile to check for changes.
         modelAPI.deviceProfiles.retrieveDeviceProfile( data.id ).then( function( dp ) {
             // Verify that the user can make the change.
-            if ( ( modelAPI.companies.COMPANY_ADMIN != req.company.type ) &&
-                 ( req.user.companyId != dp.companyId ) ) {
+            if ( ( modelAPI.companies.COMPANY_ADMIN !== req.company.type ) &&
+                 ( req.user.companyId !== dp.companyId ) ) {
                 respond( res, 403 );
                 return;
             }
 
             var changed = 0;
             if ( ( req.body.name ) &&
-                 ( req.body.name != dp.name ) ) {
+                 ( req.body.name !== dp.name ) ) {
                 data.name = req.body.name;
                 ++changed;
             }
 
             if ( ( req.body.description ) &&
-                 ( req.body.description != dp.description ) ) {
+                 ( req.body.description !== dp.description ) ) {
                 data.description = req.body.description;
                 ++changed;
             }
 
             if ( ( req.body.networkTypeId ) &&
-                 ( req.body.networkTypeId != dp.networkTypeId ) ) {
+                 ( req.body.networkTypeId !== dp.networkTypeId ) ) {
                 data.networkTypeId = req.body.networkTypeId;
                 ++changed;
             }
 
             if ( ( req.body.companyId ) &&
-                 ( req.body.companyId != dp.companyId ) ) {
+                 ( req.body.companyId !== dp.companyId ) ) {
                 data.companyId = req.body.companyId;
                 ++changed;
             }
 
             if ( ( req.body.networkSettings ) &&
-                 ( req.body.networkSettings != dp.networkSettings ) ) {
+                 ( req.body.networkSettings !== dp.networkSettings ) ) {
                 data.networkSettings = req.body.networkSettings;
                 ++changed;
             }
 
 
             // Do we have a change?
-            if ( 0 == changed ) {
+            if ( 0 === changed ) {
                 // No changes.  But returning 304 apparently causes Apache to
                 // strip CORS info, causing the browser to throw a fit.  So
                 // just say, "Yeah, we did that.  Really.  Trust us."

@@ -248,7 +248,7 @@ exports.validateCompanyForApplication = function( companyId, applicationId ) {
         }
         else {
             app.retrieveApplication( applicationId ).then( function( a ) {
-                if ( a.companyId != companyId ) {
+                if ( a.companyId !== companyId ) {
                     reject( new httpError.Unauthorized );
                 }
                 else {

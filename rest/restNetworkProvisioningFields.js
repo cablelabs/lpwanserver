@@ -145,38 +145,38 @@ exports.initialize = function( app, server ) {
             // sure they actually differ, though.
             var changed = 0;
             if ( ( req.body.fieldOrder ) &&
-                 ( req.body.fieldOrder != npf.fieldOrder ) ) {
+                 ( req.body.fieldOrder !== npf.fieldOrder ) ) {
                 data.fieldOrder = req.body.fieldOrder;
                 ++changed;
             }
             if ( ( req.body.fieldName ) &&
-                 ( req.body.fieldName != npf.fieldName ) ) {
+                 ( req.body.fieldName !== npf.fieldName ) ) {
                 data.fieldName = req.body.fieldName;
                 ++changed;
             }
             if ( ( req.body.fieldLabel ) &&
-                 ( req.body.fieldLabel != npf.fieldLabel ) ) {
+                 ( req.body.fieldLabel !== npf.fieldLabel ) ) {
                 data.fieldLabel = req.body.fieldLabel;
                 ++changed;
             }
             if ( ( req.body.fieldType ) &&
-                 ( req.body.fieldType != npf.fieldType ) ) {
+                 ( req.body.fieldType !== npf.fieldType ) ) {
                 data.fieldType = req.body.fieldType;
                 ++changed;
             }
             if ( ( req.body.fieldSize ) &&
-                 ( req.body.fieldSize != npf.fieldSize ) ) {
+                 ( req.body.fieldSize !== npf.fieldSize ) ) {
                 data.fieldSize = req.body.fieldSize;
                 ++changed;
             }
             if ( ( req.body.requiredField ) &&
-                 ( req.body.requiredField != npf.requiredField ) ) {
+                 ( req.body.requiredField !== npf.requiredField ) ) {
                 data.requiredField = req.body.requiredField;
                 ++changed;
             }
 
             // Ready.  DO we have anything to actually change?
-            if ( 0 == changed ) {
+            if ( 0 === changed ) {
                 // No changes.  But returning 304 apparently causes Apache to strip
                 // CORS info, causing the browser to throw a fit.  So just say,
                 // "Yeah, we did that.  Really.  Trust us."

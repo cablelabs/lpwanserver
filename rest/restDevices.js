@@ -51,11 +51,11 @@ exports.initialize = function( app, server ) {
     app.get('/api/devices', [restServer.isLoggedIn, restServer.fetchCompany],
                             function(req, res, next) {
         var options = {};
-        if ( req.company.type != modelAPI.companies.COMPANY_ADMIN ) {
+        if ( req.company.type !== modelAPI.companies.COMPANY_ADMIN ) {
             // If they gave a applicationId, make sure it belongs to their
             // company.
             if ( req.query.companyId ) {
-                if ( req.query.companyId != req.user.companyId ) {
+                if ( req.query.companyId !== req.user.companyId ) {
                     restServer.respond( res, 403, "Cannot request devices for another company" );
                     return;
                 }
@@ -124,8 +124,8 @@ exports.initialize = function( app, server ) {
                                      function(req, res, next) {
         // Should have device and application in req due to
         // fetchDeviceApplication
-        if ( ( req.company.type != modelAPI.companies.COMPANY_ADMIN ) &&
-             ( req.application.companyId != req.user.companyId ) ) {
+        if ( ( req.company.type !== modelAPI.companies.COMPANY_ADMIN ) &&
+             ( req.application.companyId !== req.user.companyId ) ) {
                 restServer.respond( res, 403 );
         }
         else {
@@ -177,8 +177,8 @@ exports.initialize = function( app, server ) {
 
         // The user must be part of the admin group or the device's
         // application's company.
-        if ( ( modelAPI.companies.COMPANY_ADMIN != req.company.type ) &&
-             ( req.application.companyId != req.user.companyId ) ) {
+        if ( ( modelAPI.companies.COMPANY_ADMIN !== req.company.type ) &&
+             ( req.application.companyId !== req.user.companyId ) ) {
             restServer.respond( res, 403, "Can't create a device for another company's application" );
         }
         else {
@@ -235,21 +235,21 @@ exports.initialize = function( app, server ) {
         // We'll start with the device retrieved by fetchDeviceApplication as
         // a basis for comparison.
         // Verify that the user can make the change.
-        if ( ( modelAPI.companies.COMPANY_ADMIN != req.company.type ) &&
-             ( req.user.companyId != req.application.companyId ) ) {
+        if ( ( modelAPI.companies.COMPANY_ADMIN !== req.company.type ) &&
+             ( req.user.companyId !== req.application.companyId ) ) {
             respond( res, 403 );
             return;
         }
 
         var changed = 0;
         if ( ( req.body.name ) &&
-             ( req.body.name != req.device.name ) ) {
+             ( req.body.name !== req.device.name ) ) {
             data.name = req.body.name;
             ++changed;
         }
 
         if ( ( req.body.description ) &&
-             ( req.body.description != req.device.description ) ) {
+             ( req.body.description !== req.device.description ) ) {
             data.description = req.body.description;
             ++changed;
         }
@@ -258,17 +258,17 @@ exports.initialize = function( app, server ) {
         // Can only change the applicationId if an admin user, and the
         // new applicationId is part of the same company.
         if ( ( req.body.applicationId ) &&
-             ( req.body.applicationId != req.device.applicationId ) ) {
+             ( req.body.applicationId !== req.device.applicationId ) ) {
             data.applicationId = req.body.applicationId;
             ++changed;
 
             // If this is not a user with an admin company, we have to make sure
             // that the company doesn't change with the application.
-            if ( modelAPI.companies.COMPANY_ADMIN != req.company.type ) {
+            if ( modelAPI.companies.COMPANY_ADMIN !== req.company.type ) {
                 // The new application must also be part of the same company.
                 modelAPI.applications.retrieveApplication( req.body.applicationId )
                 .then( function( newApp ) {
-                    if ( newApp.companyId != req.application.id ) {
+                    if ( newApp.companyId !== req.application.id ) {
                         respond( res, 400, "Cannot change device's application to another company's application" );
                     }
                     else {
@@ -290,7 +290,7 @@ exports.initialize = function( app, server ) {
         }
 
         // Do we have a change?
-        if ( 0 == changed ) {
+        if ( 0 === changed ) {
             // No changes.  But returning 304 apparently causes Apache to strip
             // CORS info, causing the browser to throw a fit.  So just say,
             // "Yeah, we did that.  Really.  Trust us."

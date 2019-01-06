@@ -52,11 +52,11 @@ exports.createUser = function (username, password, email, companyId, role) {
     user.role = role
 
     // Savethe email.
-    if (email && email != '') {
+    if (email && email !== '') {
       user.email = email
       user.emailVerified = false
     }
-    else if (exports.ROLE_ADMIN == role) {
+    else if (exports.ROLE_ADMIN === role) {
       // Issue - admin account MUST have an email.
       reject(httpError(400, 'Email MUST be provided for Admin account.'))
       return
@@ -64,7 +64,7 @@ exports.createUser = function (username, password, email, companyId, role) {
 
     // Only allow admin if they pass in the correct admin value.
     // Otherwise, regular user.
-    if (exports.ROLE_ADMIN != user.role) {
+    if (exports.ROLE_ADMIN !== user.role) {
       user.role = exports.ROLE_USER
     }
 
@@ -88,7 +88,7 @@ exports.createUser = function (username, password, email, companyId, role) {
               reject(httpError(400, err))
             }
             else {
-              if (record.email && (record.email != '')) {
+              if (record.email && (record.email !== '')) {
                 // Verify that email
                 exports.emailVerify(record.id,
                   record.username,
@@ -193,7 +193,7 @@ exports.updateUser = function (user) {
 
     // Post-update may need access to the updated record.  Save it here.
     var originalUserNeeded = false
-    if (user.email && (user.email != '')) {
+    if (user.email && (user.email !== '')) {
       originalUserNeeded = true
       // Set up the user record to properly handle the new email.
       emailPre = function () {
@@ -255,7 +255,7 @@ exports.updateUser = function (user) {
       // But in the no-email case, we need to verify that they are not
       // changing to admin.  If they are, we need to make sure they
       // already have an email.
-      if (user.role && user.role == exports.ROLE_ADMIN) {
+      if (user.role && user.role === exports.ROLE_ADMIN) {
         originalUserNeeded = true
         noEmailPre = function () {
           return new Promise(function (resolve, reject) {
@@ -581,7 +581,7 @@ exports.getCompanyAdmins = function (companyId) {
                 'from users ' +
                 'where name = ' + db.sqlValue(usercompany) +
                 ' and role = ' + exports.ROLE_ADMIN +
-                " and email not null and email != ''"
+                " and email not null and email !== ''"
     db.select(q, function (err, rows) {
       if (err) {
         reject('Database error: ' + err)
@@ -688,7 +688,7 @@ var retrieveEmailVerification = function (uuid) {
       if (err) {
         reject(err)
       }
-      else if (row == null) {
+      else if (row === null) {
         reject(new httpError.NotFound())
       }
       else {
@@ -739,10 +739,10 @@ exports.handleEmailVerifyResponse = function (uuid, type, source) {
           }
           else {
             // Got the user.  Do what they requested.
-            if (type == 'accept') {
+            if (type === 'accept') {
               usrUpd.emailVerified = true
             }
-            else if (type == 'reject') {
+            else if (type === 'reject') {
               emails.notifyAdminsAboutReject(user, source)
               usrUpd.email = user.lastVerifiedEmail
               usrUpd.lastVerifiedEmail = ''

@@ -52,7 +52,7 @@ exports.initialize = function( app, server ) {
                                             function(req, res, next) {
         var options = {};
         // Limit by company, too, if not a system admin.
-        if ( req.company.type != modelAPI.companies.COMPANY_ADMIN ) {
+        if ( req.company.type !== modelAPI.companies.COMPANY_ADMIN ) {
             options.companyId = req.company.id;
         }
         else if ( req.query.companyId ) {
@@ -165,7 +165,7 @@ exports.initialize = function( app, server ) {
         // company.
         if ( ( modelAPI.companies.COMPANY_ADMIN !== req.company.type ) &&
              rec.companyId &&
-             ( rec.companyId != req.user.companyId ) ) {
+             ( rec.companyId !== req.user.companyId ) ) {
             restServer.respond( res, 403, "Cannot specify another company's networks" );
             return;
         }
@@ -250,14 +250,14 @@ exports.initialize = function( app, server ) {
             // sure they actually differ, though.
             var changed = 0;
             if ( req.body.networkSettings ) {
-                if ( req.body.networkSettings != cnl.networkSettings ) {
+                if ( req.body.networkSettings !== cnl.networkSettings ) {
                     data.networkSettings = req.body.networkSettings;
                     ++changed;
                 }
             }
 
             // Ready.  Do we have anything to actually change?
-            if ( 0 == changed ) {
+            if ( 0 === changed ) {
                 // No changes.  But returning 304 apparently causes Apache to strip
                 // CORS info, causing the browser to throw a fit.  So just say,
                 // "Yeah, we did that.  Really.  Trust us."
@@ -312,7 +312,7 @@ exports.initialize = function( app, server ) {
             // We'll need to read first to make sure the record is for the
             // company the company admin is part of.
             modelAPI.companyNetworkTypeLinks.retrieveCompanyNetworkTypeLink( id ).then( function( cnl ) {
-                if ( req.company.id != cnl.companyId ) {
+                if ( req.company.id !== cnl.companyId ) {
                      restServer.respond( res, 400, "Unauthorized to delete record" );
                 }
                 else {

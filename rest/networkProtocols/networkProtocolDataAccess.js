@@ -381,7 +381,7 @@ NetworkProtocolDataAccess.prototype.getDevicesForDeviceProfile = function (devic
 }
 
 NetworkProtocolDataAccess.prototype.initLog = function (networkType, network) {
-  if (network == null) {
+  if (network === null) {
     this.logs[ 0 ] = {}
     this.logs[ 0 ].logs = []
     this.logs[ 0 ].networkTypeName = networkType.name
@@ -417,7 +417,7 @@ NetworkProtocolDataAccess.prototype.addLog = function (network, message) {
     }
   }
 
-  if (network == null) {
+  if (network === null) {
     this.logs[ 0 ].logs.push(message)
   }
   else {

@@ -62,13 +62,13 @@ exports.initialize = function (app, server) {
   function (req, res, next) {
     var options = {}
     if (req.query.limit) {
-      var limitInt = parseInt(req.query.limit)
+      var limitInt = parseInt(req.query.limit, 10)
       if (!isNaN(limitInt)) {
         options.limit = limitInt
       }
     }
     if (req.query.offset) {
-      var offsetInt = parseInt(req.query.offset)
+      var offsetInt = parseInt(req.query.offset, 10)
       if (!isNaN(offsetInt)) {
         options.offset = offsetInt
       }
@@ -129,13 +129,13 @@ exports.initialize = function (app, server) {
   function (req, res, next) {
     var options = {}
     if (req.query.limit) {
-      var limitInt = parseInt(req.query.limit)
+      var limitInt = parseInt(req.query.limit, 10)
       if (!isNaN(limitInt)) {
         options.limit = limitInt
       }
     }
     if (req.query.offset) {
-      var offsetInt = parseInt(req.query.offset)
+      var offsetInt = parseInt(req.query.offset, 10)
       if (!isNaN(offsetInt)) {
         options.offset = offsetInt
       }
@@ -256,7 +256,7 @@ exports.initialize = function (app, server) {
   app.get('/api/networks/:id', [restServer.isLoggedIn,
     restServer.fetchCompany],
   function (req, res, next) {
-    var id = parseInt(req.params.id)
+    var id = parseInt(req.params.id, 10)
     modelAPI.networks.retrieveNetwork(id).then(function (network) {
       // Remove sensitive data for non-admin users.
       if (req.company.type !== modelAPI.companies.COMPANY_ADMIN) {
@@ -465,7 +465,7 @@ exports.initialize = function (app, server) {
   function (req, res, next) {
     var data = req.body
     var pullFlag = (data.securityData && data.securityData.authorized === false)
-    data.id = parseInt(req.params.id)
+    data.id = parseInt(req.params.id, 10)
     modelAPI.networks.updateNetwork(data)
       .then(function (rec) {
         modelAPI.networks.retrieveNetwork(rec.id)
@@ -547,7 +547,7 @@ exports.initialize = function (app, server) {
     restServer.fetchCompany,
     restServer.isAdminCompany],
   function (req, res, next) {
-    var id = parseInt(req.params.id)
+    var id = parseInt(req.params.id, 10)
     // If the caller is a global admin, we can just delete.
     modelAPI.networks.deleteNetwork(id).then(function () {
       restServer.respond(res, 204)
@@ -566,7 +566,7 @@ exports.initialize = function (app, server) {
     restServer.fetchCompany,
     restServer.isAdmin],
   function (req, res, next) {
-    var networkId = parseInt(req.params.networkId)
+    var networkId = parseInt(req.params.networkId, 10)
     // If the caller is a global admin, or the device is part of the company
     // admin's company, we can push.
     modelAPI.networks.pullNetwork(networkId).then(function (ret) {
@@ -581,7 +581,7 @@ exports.initialize = function (app, server) {
     restServer.fetchCompany,
     restServer.isAdmin],
   function (req, res, next) {
-    var networkId = parseInt(req.params.networkId)
+    var networkId = parseInt(req.params.networkId, 10)
     // If the caller is a global admin, or the device is part of the company
     // admin's company, we can push.
     modelAPI.networks.pushNetwork(networkId).then(function (ret) {
@@ -596,7 +596,7 @@ exports.initialize = function (app, server) {
     restServer.fetchCompany,
     restServer.isAdmin],
   function (req, res, next) {
-    var networkId = parseInt(req.params.networkId)
+    var networkId = parseInt(req.params.networkId, 10)
     modelAPI.networks.retrieveNetwork(networkId)
       .then((network) => {
         modelAPI.networkTypeAPI.test(network, network.securityData).then(() => {

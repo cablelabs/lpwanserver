@@ -151,7 +151,7 @@ DeviceNetworkTypeLink.prototype.deleteDeviceNetworkTypeLink = function (id, vali
       if (validateCompanyId) {
         var dev = await modelAPI.devices.retrieveDevice(rec.deviceId)
         var app = await modelAPI.applications.retrieveApplication(dev.applicationId)
-        if (validateCompanyId != app.companyId) {
+        if (validateCompanyId !== app.companyId) {
           reject(new httpError.Unauthorized())
           return
         }

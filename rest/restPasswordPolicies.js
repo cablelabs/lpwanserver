@@ -40,8 +40,8 @@ exports.initialize = function( app, server ) {
          var companyId = parseInt( req.params.companyId );
 
          // Must be admin user or part of the company.
-         if ( ( req.company.type != modelAPI.companies.COMPANY_ADMIN ) &&
-              ( req.company.id != companyId ) ) {
+         if ( ( req.company.type !== modelAPI.companies.COMPANY_ADMIN ) &&
+              ( req.company.id !== companyId ) ) {
               restServer.respond( res, 403 );
              return;
          }
@@ -96,9 +96,9 @@ exports.initialize = function( app, server ) {
             // it's global passwordPolicy rule or
             // the caller is part of the company that the passwordPolicy rule is
             // assigned to
-            if ( ( req.company.type == modelAPI.companies.COMPANY_ADMIN ) ||
+            if ( ( req.company.type === modelAPI.companies.COMPANY_ADMIN ) ||
                   ( !pp.companyId ) ||
-                  ( pp.companyId == req.company.id ) ) {
+                  ( pp.companyId === req.company.id ) ) {
                  restServer.respondJson( res, null, pp );
             }
             else {
@@ -160,11 +160,11 @@ exports.initialize = function( app, server ) {
         }
 
         // If the user is not part of the admin group...
-        if ( modelAPI.companies.COMPANY_ADMIN != req.company.type ) {
+        if ( modelAPI.companies.COMPANY_ADMIN !== req.company.type ) {
             // Did they specify the companyId?
             if ( rec.companyId ) {
                 // It better match the company they are part of.
-                if ( rec.companyId != req.company.id ) {
+                if ( rec.companyId !== req.company.id ) {
                      restServer.respond( res, 400, "Cannot specify a passordPolicy for a different company" );
                     return;
                 }
@@ -221,23 +221,23 @@ exports.initialize = function( app, server ) {
         // really changed before we even try to write.
         modelAPI.passwordPolicies.retrievePasswordPolicies( data.id ).then( function( pp ) {
             // If a company admin, cannot change companyId.
-            if ( ( req.company.type != modelAPI.companies.COMPANY_ADMIN ) &&
+            if ( ( req.company.type !== modelAPI.companies.COMPANY_ADMIN ) &&
                  ( req.body.companyId ) &&
-                 ( ( pp.companyId != req.companyId ) ||
-                   ( req.body.companyId != pp.companyId ) ) ) {
+                 ( ( pp.companyId !== req.companyId ) ||
+                   ( req.body.companyId !== pp.companyId ) ) ) {
                  restServer.respond( res, 403, "Company cannot be changed by non-system admin account" );
                  return;
             }
             else if ( req.body.companyId ) {
-                if ( req.body.companyId != pp.companyId ) {
+                if ( req.body.companyId !== pp.companyId ) {
                     data.companyId = req.body.companyId;
                     ++changed;
                 }
             }
 
             // If a company admin, must be a passwordPolicy for that company.
-            if ( ( req.company.type != modelAPI.companies.COMPANY_ADMIN ) &&
-                 ( !pp.companyId || pp.companyId != req.company.Id ) )
+            if ( ( req.company.type !== modelAPI.companies.COMPANY_ADMIN ) &&
+                 ( !pp.companyId || pp.companyId !== req.company.Id ) )
             {
                 restServer.respond( res, 403, "Cannot change the passwordPolicy of another company or global passwordPolicies" );
                 return;
@@ -247,20 +247,20 @@ exports.initialize = function( app, server ) {
             // permissions) can change.  Make sure they actually differ, though.
             var changed = 0;
             if ( ( req.body.ruleText ) &&
-                 ( req.body.ruleText != pp.ruleText ) ) {
+                 ( req.body.ruleText !== pp.ruleText ) ) {
                 data.ruleText = req.body.ruleText;
                 ++changed;
             }
 
             if ( req.body.ruleRegExp ) {
-                if ( req.body.ruleRegExp != pp.ruleRegExp ) {
+                if ( req.body.ruleRegExp !== pp.ruleRegExp ) {
                     data.ruleRegExp = req.body.ruleRegExp;
                     ++changed;
                 }
             }
 
             // Ready.  DO we have anything to actually change?
-            if ( 0 == changed ) {
+            if ( 0 === changed ) {
                 // No changes.  But returning 304 apparently causes Apache to strip
                 // CORS info, causing the browser to throw a fit.  So just say,
                 // "Yeah, we did that.  Really.  Trust us."
@@ -315,7 +315,7 @@ exports.initialize = function( app, server ) {
              // We'll need to read first to make sure the record is for the
              // company the company admin is part of.
              modelAPI.passwordPolicies.retrievePasswordPolicy( id ).then( function( pp ) {
-                 if ( req.company.id != pp.companyId ) {
+                 if ( req.company.id !== pp.companyId ) {
                       restServer.respond( res, 400, "Unauthorized to delete record" );
                  }
                  else {

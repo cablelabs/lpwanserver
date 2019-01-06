@@ -55,11 +55,11 @@ exports.initialize = function (app, server) {
   function (req, res, next) {
     var options = {}
     // Limit by company, too, if not a system admin.
-    if (req.company.type != modelAPI.companies.COMPANY_ADMIN) {
+    if (req.company.type !== modelAPI.companies.COMPANY_ADMIN) {
       options.companyId = req.company.id
     }
     if (req.query.networkTypeId) {
-      var networkTypeIdInt = parseInt(req.query.networkTypeId)
+      var networkTypeIdInt = parseInt(req.query.networkTypeId, 10)
       if (!isNaN(networkTypeIdInt)) {
         options.networkTypeId = networkTypeIdInt
       }
@@ -71,19 +71,19 @@ exports.initialize = function (app, server) {
       }
     }
     if (req.query.companyId) {
-      var companyIdInt = parseInt(req.query.companyId)
+      var companyIdInt = parseInt(req.query.companyId, 10)
       if (!isNaN(companyIdInt)) {
         options.companyId = companyIdInt
       }
     }
     if (req.query.limit) {
-      var limitInt = parseInt(req.query.limit)
+      var limitInt = parseInt(req.query.limit, 10)
       if (!isNaN(limitInt)) {
         options.limit = limitInt
       }
     }
     if (req.query.offset) {
-      var offsetInt = parseInt(req.query.offset)
+      var offsetInt = parseInt(req.query.offset, 10)
       if (!isNaN(offsetInt)) {
         options.offset = offsetInt
       }
@@ -121,7 +121,7 @@ exports.initialize = function (app, server) {
      * @apiVersion 0.1.0
      */
   app.get('/api/applicationNetworkTypeLinks/:id', [restServer.isLoggedIn], function (req, res, next) {
-    var id = parseInt(req.params.id)
+    var id = parseInt(req.params.id, 10)
     modelAPI.applicationNetworkTypeLinks.retrieveApplicationNetworkTypeLink(id).then(function (np) {
       restServer.respondJson(res, null, np)
     })
@@ -232,7 +232,7 @@ exports.initialize = function (app, server) {
     }
 
     var data = {}
-    data.id = parseInt(req.params.id)
+    data.id = parseInt(req.params.id, 10)
     // We'll start by getting the network, as a read is much less expensive
     // than a write, and then we'll be able to tell if anything really
     // changed before we even try to write.
@@ -248,7 +248,7 @@ exports.initialize = function (app, server) {
       }
 
       // Ready.  Do we have anything to actually change?
-      if (changed == 0) {
+      if (changed === 0) {
         // No changes.  But returning 304 apparently causes Apache to strip
         // CORS info, causing the browser to throw a fit.  So just say,
         // "Yeah, we did that.  Really.  Trust us."
@@ -292,7 +292,7 @@ exports.initialize = function (app, server) {
     restServer.fetchCompany,
     restServer.isAdmin],
   function (req, res, next) {
-    var id = parseInt(req.params.id)
+    var id = parseInt(req.params.id, 10)
     // If not an admin company, the applicationId better be associated
     // with the user's company.  We check that in the delete method.
     var companyId
@@ -318,7 +318,7 @@ exports.initialize = function (app, server) {
     restServer.fetchCompany,
     restServer.isAdmin],
   function (req, res, next) {
-    var id = parseInt(req.params.id)
+    var id = parseInt(req.params.id, 10)
     // If the caller is a global admin, or the device is part of the company
     // admin's company, we can push.
     modelAPI.applicationNetworkTypeLinks.pushApplicationNetworkTypeLink(id, req.company.id).then(function (ret) {

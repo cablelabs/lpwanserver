@@ -92,10 +92,10 @@ exports.retrieveProtocolData = function( networkId, networkProtocolId, key ) {
             if ( err ) {
                 reject( err );
             }
-            else if ( !rows || ( 0 == rows.length ) ) {
+            else if ( !rows || ( 0 === rows.length ) ) {
                 reject( 404 );
             }
-            // else if ( 1 != rows.length ) {
+            // else if ( 1 !== rows.length ) {
             //     appLogger.log(rows)
             //     reject( new Error( "Too many matches" ) );
             // }

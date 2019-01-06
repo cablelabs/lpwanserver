@@ -120,8 +120,8 @@ DeviceProfile.prototype.deleteDeviceProfile = function( id, validateCompanyId ) 
             // networks.  So get the record to start anyway.
             var rec = await me.impl.retrieveDeviceProfile( id );
 
-            if ( vci && ( vci != null ) ) {
-                if ( vci != rec.companyId ) {
+            if ( vci && ( vci !== null ) ) {
+                if ( vci !== rec.companyId ) {
                     reject( new httpError.Unauthorized );
                     return;
                 }

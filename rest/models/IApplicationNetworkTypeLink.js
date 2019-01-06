@@ -139,7 +139,7 @@ ApplicationNetworkTypeLink.prototype.deleteApplicationNetworkTypeLink = function
       // record, validate the company now, if required.
       if (validateCompanyId) {
         var app = await modelAPI.applications.retrieveApplication(rec.applicationId)
-        if (validateCompanyId != app.companyId) {
+        if (validateCompanyId !== app.companyId) {
           reject(new httpError.Unauthorized())
           return
         }

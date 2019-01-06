@@ -488,7 +488,7 @@ async function getApplicationById (network, appOrId, connection) {
         url: `https://console.thethingsnetwork.org/api/applications/${appId}`
       })
     }
-    
+
     return TTNAppRequest(network, connection, appId, {
       url: `http://${appRegion(app)}.thethings.network:8084/applications/${appId}`
     })
@@ -887,7 +887,7 @@ module.exports.updateApplication = async function updateApplication (session, ne
         body.payloadEncoderScript = applicationData.networkSettings.payloadEncoderScript
       }
     }
-    
+
     appLogger.log(application)
     appLogger.log(applicationData)
 
@@ -1708,7 +1708,7 @@ function normalizeDeviceData (remoteDevice, deviceProfileId) {
     deviceStatusMargin: '',
     lastSeenAt: remoteDevice.lorawan_device.last_seen
   }
-  //TTN only supports 1.0.x currently, so  nwkKey == appKey for conversion
+  //TTN only supports 1.0.x currently, so  nwkKey === appKey for conversion
   if (remoteDevice.lorawan_device.activation_constraints === 'otaa' || (remoteDevice.lorawan_device.app_key !== '')) {
     normalized.deviceKeys = {
       appKey: remoteDevice.lorawan_device.app_key,
@@ -1762,7 +1762,7 @@ function deNormalizeDeviceData (localDevice, localDeviceProfile, application, re
   }
 
   if (localDeviceProfile.supportsJoin) {
-    ttnDeviceData.lorawan_device.activation_constraints = 'otta',
+    ttnDeviceData.lorawan_device.activation_constraints = 'otta'
     ttnDeviceData.lorawan_device.app_key = localDevice.deviceKeys.appKey
   }
   else if (localDevice.deviceActivation) {

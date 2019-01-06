@@ -355,7 +355,7 @@ function getANetworkServerID (network, connection) {
         // Convert text to JSON array, use id from first element
         var res = JSON.parse(body)
         var nsList = res.result
-        if (nsList.length == 0) {
+        if (nsList.length === 0) {
           appLogger.log('Empty list of Network Servers returned')
           reject(404)
           return
@@ -708,7 +708,7 @@ function getServiceProfileForOrg (network, orgId, companyId, connection, dataAPI
         // network.
         body = JSON.parse(body)
         appLogger.log(body)
-        if (body.totalCount == 0) {
+        if (body.totalCount === 0) {
           // no SP to get
           resolve()
         }

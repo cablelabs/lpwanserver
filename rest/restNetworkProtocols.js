@@ -51,13 +51,13 @@ exports.initialize = function (app, server) {
     function (req, res, next) {
       var options = {}
       if (req.query.limit) {
-        var limitInt = parseInt(req.query.limit)
+        var limitInt = parseInt(req.query.limit, 10)
         if (!isNaN(limitInt)) {
           options.limit = limitInt
         }
       }
       if (req.query.offset) {
-        var offsetInt = parseInt(req.query.offset)
+        var offsetInt = parseInt(req.query.offset, 10)
         if (!isNaN(offsetInt)) {
           options.offset = offsetInt
         }
@@ -85,13 +85,13 @@ exports.initialize = function (app, server) {
     function (req, res, next) {
       var options = {}
       if (req.query.limit) {
-        var limitInt = parseInt(req.query.limit)
+        var limitInt = parseInt(req.query.limit, 10)
         if (!isNaN(limitInt)) {
           options.limit = limitInt
         }
       }
       if (req.query.offset) {
-        var offsetInt = parseInt(req.query.offset)
+        var offsetInt = parseInt(req.query.offset, 10)
         if (!isNaN(offsetInt)) {
           options.offset = offsetInt
         }
@@ -160,7 +160,7 @@ exports.initialize = function (app, server) {
      */
   app.get('/api/networkProtocols/:id', [restServer.isLoggedIn],
     function (req, res, next) {
-      modelAPI.networkProtocols.retrieveNetworkProtocol(parseInt(req.params.id)).then(function (np) {
+      modelAPI.networkProtocols.retrieveNetworkProtocol(parseInt(req.params.id, 10)).then(function (np) {
         // restServer.respondJson(res, null, np)
         restServer.respond(res, 200, np)
       })
@@ -256,7 +256,7 @@ exports.initialize = function (app, server) {
     restServer.isAdminCompany],
   function (req, res, next) {
     var data = {}
-    data.id = parseInt(req.params.id)
+    data.id = parseInt(req.params.id, 10)
     // We'll start by getting the company, as a read is much less expensive
     // than a write, and then we'll be able to tell if anything really
     // changed before we even try to write.
@@ -265,25 +265,25 @@ exports.initialize = function (app, server) {
       // sure they actually differ, thnetworkProtocolHandlersough.
       var changed = 0
       if ((req.body.name) &&
-                 (req.body.name != np.name)) {
+                 (req.body.name !== np.name)) {
         data.name = req.body.name
         ++changed
       }
       if (req.body.protocolHandler) {
-        if (req.body.protocolHandler != np.protocolHandler) {
+        if (req.body.protocolHandler !== np.protocolHandler) {
           data.protocolHandler = req.body.protocolHandler
           ++changed
         }
       }
       if (req.body.networkTypeId) {
-        if (req.body.networkTypeId != np.networkTypeId) {
+        if (req.body.networkTypeId !== np.networkTypeId) {
           data.networkTypeId = req.body.networkTypeId
           ++changed
         }
       }
 
       // Ready.  DO we have        appLogger.log(nps)
-      if (changed == 0) {
+      if (changed === 0) {
         // No changes.  But returning 304 apparently causes Apache to strip
         // CORS info, causing the browser to throw a fit.  So just say,
         // "Yeah, we did that.  Really.  Trust us."
@@ -325,7 +325,7 @@ exports.initialize = function (app, server) {
       error: 'DELETE to /api/networkProtocols is not allowed.  Please see documentation for more details.'
     }
     restServer.respond(res, 405, methodNotAllowed)
-    // var id = parseInt(req.params.id)
+    // var id = parseInt(req.params.id, 10)
     // modelAPI.networkProtocols.deleteNetworkProtocol(id).then(function () {
     //   restServer.respond(res, 204)
     // })
