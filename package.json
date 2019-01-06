@@ -24,7 +24,7 @@
     "package-api-test": "node bin/package-api-test.js",
     "package-e2e-test": "node bin/package-e2e-test.js",
     "test2": "./bin/unit-tests && ./bin/api-tests",
-    "test-with-coverage": "istanbul cover _mocha test2.0/unit/models --report lcovonly -- -R spec && cat ./coverage/lcov.info | codacy-coverage && rm -rf ./coverage"
+    "test-with-coverage": "istanbul cover _mocha test2.0/unit --report lcovonly -- -R spec && cat ./coverage/lcov.info | codacy-coverage && rm -rf ./coverage"
   },
   "dependencies": {
     "async": "~2.6.1",
