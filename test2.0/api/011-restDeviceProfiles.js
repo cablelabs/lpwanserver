@@ -33,21 +33,6 @@ describe('DeviceProfiles', function () {
   var dpId1
   var dpId2
   describe('POST /api/deviceProfiles', function () {
-    it('should return 403 (forbidden) on user', function (done) {
-      server
-        .post('/api/deviceProfiles')
-        .set('Authorization', 'Bearer ' + adminToken)
-        .set('Content-Type', 'application/json')
-        .send({ 'networkTypeId': 1,
-          'companyId': 2,
-          'name': 'LoRaGPSNode',
-          'description': '',
-          'networkSettings': { 'foo': 'bar' } })
-        .end(function (err, res) {
-          res.should.have.status(403)
-          done()
-        })
-    })
 
     it('should return 200 on admin', function (done) {
       server
@@ -114,23 +99,8 @@ describe('DeviceProfiles', function () {
           res.should.have.status(200)
           var result = JSON.parse(res.text)
           result.records.should.be.instanceof(Array)
-          result.records.should.have.length(2)
-          result.totalCount.should.equal(2)
-          done()
-        })
-    })
-
-    it('should return 200 with 2 deviceProfiles on user', function (done) {
-      server
-        .get('/api/deviceProfiles')
-        .set('Authorization', 'Bearer ' + adminToken)
-        .set('Content-Type', 'application/json')
-        .end(function (err, res) {
-          res.should.have.status(200)
-          var result = JSON.parse(res.text)
-          result.records.should.be.instanceof(Array)
-          result.records.should.have.length(2)
-          result.totalCount.should.equal(2)
+          result.records.should.have.length(3)
+          result.totalCount.should.equal(3)
           done()
         })
     })
@@ -144,8 +114,8 @@ describe('DeviceProfiles', function () {
           res.should.have.status(200)
           var result = JSON.parse(res.text)
           result.records.should.be.instanceof(Array)
-          result.records.should.have.length(2)
-          result.totalCount.should.equal(2)
+          result.records.should.have.length(3)
+          result.totalCount.should.equal(3)
           done()
         })
     })
@@ -160,8 +130,8 @@ describe('DeviceProfiles', function () {
           res.should.have.status(200)
           var result = JSON.parse(res.text)
           result.records.should.be.instanceof(Array)
-          result.records.should.have.length(1)
-          result.totalCount.should.equal(2)
+          result.records.should.have.length(2)
+          result.totalCount.should.equal(3)
           done()
         })
     })
@@ -227,17 +197,6 @@ describe('DeviceProfiles', function () {
         })
     })
 
-    it('should return 200 on user', function (done) {
-      server
-        .get('/api/deviceProfiles/' + dpId2)
-        .set('Authorization', 'Bearer ' + adminToken)
-        .set('Content-Type', 'application/json')
-        .end(function (err, res) {
-          res.should.have.status(200)
-          done()
-        })
-    })
-
     it('should return 200 on admin', function (done) {
       server
         .get('/api/deviceProfiles/' + dpId1)
@@ -262,16 +221,6 @@ describe('DeviceProfiles', function () {
         })
     })
 
-    it('should return 200 on user getting my device', function (done) {
-      server
-        .get('/api/deviceProfiles/' + dpId1)
-        .set('Authorization', 'Bearer ' + adminToken)
-        .set('Content-Type', 'application/json')
-        .end(function (err, res) {
-          res.should.have.status(200)
-          done()
-        })
-    })
   })
 
   describe('PUT /api/deviceProfiles', function () {
@@ -283,18 +232,6 @@ describe('DeviceProfiles', function () {
         .send('{"name": "Funky DeviceProfile" }')
         .end(function (err, res) {
           res.should.have.status(204)
-          done()
-        })
-    })
-
-    it('should return 403 (forbidden) on user', function (done) {
-      server
-        .put('/api/deviceProfiles/' + dpId2)
-        .set('Authorization', 'Bearer ' + adminToken)
-        .set('Content-Type', 'application/json')
-        .send('{"name": "Funky Funky DeviceProfile" }')
-        .end(function (err, res) {
-          res.should.have.status(403)
           done()
         })
     })
@@ -327,15 +264,6 @@ describe('DeviceProfiles', function () {
   })
 
   describe('DELETE /api/deviceProfiles', function () {
-    it('should return 403 (forbidden) on user', function (done) {
-      server
-        .delete('/api/deviceProfiles/' + dpId1)
-        .set('Authorization', 'Bearer ' + adminToken)
-        .end(function (err, res) {
-          res.should.have.status(403)
-          done()
-        })
-    })
 
     it('should return 200 on admin', function (done) {
       server

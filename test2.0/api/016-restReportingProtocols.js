@@ -12,8 +12,6 @@ var npId2
 
 describe('ReportingProtocols', function () {
   var adminToken
-  var adminToken
-  var adminToken
 
   before('User Sessions', function (done) {
     var sessions = 0
@@ -45,36 +43,13 @@ describe('ReportingProtocols', function () {
         .end(function (err, res) {
           res.should.have.status(200)
           let body = JSON.parse(res.text)
-          body.should.have.length(2)
+          body.should.have.length(1)
           done()
         })
     })
   })
 
   describe('POST /api/reportingProtocols', function () {
-    it('should return 403 (forbidden) on user', function (done) {
-      server
-        .post('/api/passwordPolicies')
-        .set('Authorization', 'Bearer ' + adminToken)
-        .set('Content-Type', 'application/json')
-        .send({ 'name': 'LoRa Server', 'networkTypeId': 1, 'protocolHandler': 'LoRaOpenSource.js' })
-        .end(function (err, res) {
-          res.should.have.status(403)
-          done()
-        })
-    })
-
-    it('should return 403 on admin', function (done) {
-      server
-        .post('/api/reportingProtocols')
-        .set('Authorization', 'Bearer ' + adminToken)
-        .set('Content-Type', 'application/json')
-        .send({ 'name': 'LoRa Server', 'networkTypeId': 1, 'protocolHandler': 'LoRaOpenSource.js' })
-        .end(function (err, res) {
-          res.should.have.status(403)
-          done()
-        })
-    })
 
     it('should return 200 on creating new reporting Protocol with admin account #1', function (done) {
       server
@@ -106,20 +81,6 @@ describe('ReportingProtocols', function () {
   })
   describe('GET /api/reportingProtocols', function () {
     it('should return 200 with 3 protocols on admin', function (done) {
-      server
-        .get('/api/reportingProtocols')
-        .set('Authorization', 'Bearer ' + adminToken)
-        .set('Content-Type', 'application/json')
-        .end(function (err, res) {
-          res.should.have.status(200)
-          var result = JSON.parse(res.text)
-          result.should.be.instanceof(Array)
-          result.should.have.length(3)
-          done()
-        })
-    })
-
-    it('should return 200 with 3 protocols on user', function (done) {
       server
         .get('/api/reportingProtocols')
         .set('Authorization', 'Bearer ' + adminToken)
@@ -212,29 +173,6 @@ describe('ReportingProtocols', function () {
   })
 
   describe('PUT /api/reportingProtocols', function () {
-    it('should return 403 (forbidden) on admin', function (done) {
-      server
-        .put('/api/reportingProtocols/' + npId1)
-        .set('Authorization', 'Bearer ' + adminToken)
-        .set('Content-Type', 'application/json')
-        .send('{"name": "I Hacked Your Networks" }')
-        .end(function (err, res) {
-          res.should.have.status(403)
-          done()
-        })
-    })
-
-    it('should return 403 (forbidden) on user', function (done) {
-      server
-        .put('/api/reportingProtocols/' + npId2)
-        .set('Authorization', 'Bearer ' + adminToken)
-        .set('Content-Type', 'application/json')
-        .send('{"name": "I Hacked Your Networks" }')
-        .end(function (err, res) {
-          res.should.have.status(403)
-          done()
-        })
-    })
 
     it('should return 204 on admin', function (done) {
       server
@@ -270,25 +208,6 @@ describe('ReportingProtocols', function () {
         .set('Authorization', 'Bearer ' + adminToken)
         .end(function (err, res) {
           res.should.have.status(204)
-          done()
-        })
-    })
-    it('should return 403 on admin', function (done) {
-      server
-        .delete('/api/reportingProtocols/' + npId2)
-        .set('Authorization', 'Bearer ' + adminToken)
-        .end(function (err, res) {
-          res.should.have.status(403)
-          done()
-        })
-    })
-
-    it('should return 403 on user', function (done) {
-      server
-        .delete('/api/reportingProtocols/' + npId2)
-        .set('Authorization', 'Bearer ' + adminToken)
-        .end(function (err, res) {
-          res.should.have.status(403)
           done()
         })
     })

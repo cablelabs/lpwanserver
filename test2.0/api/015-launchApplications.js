@@ -13,8 +13,6 @@ var server = chai.request(restserver).keepOpen()
  */
 describe('Launch Applications', function () {
   var adminToken
-  var adminToken
-  var adminToken
 
   before('User Sessions', function (done) {
     var sessions = 0

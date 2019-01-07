@@ -447,7 +447,7 @@ exports.initialize = function (app, server) {
     // If the caller is a global admin, we can just stop.
     if (req.company.type === modelAPI.companies.COMPANY_ADMIN) {
       modelAPI.applications.stopApplication(id).then(function (logs) {
-        restServer.respond(res, 200, logs.remoteAccessLogs)
+        restServer.respond(res, 200, logs)
       })
         .catch(function (err) {
           appLogger.log('Error stopping application ' + id + ': ' + err)

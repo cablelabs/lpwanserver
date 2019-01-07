@@ -33,21 +33,6 @@ describe('Devices', function () {
   var devId1
   var devId2
   describe('POST /api/devices', function () {
-    it('should return 403 (forbidden) on user', function (done) {
-      server
-        .post('/api/devices')
-        .set('Authorization', 'Bearer ' + adminToken)
-        .set('Content-Type', 'application/json')
-        .send({ 'applicationId': 1,
-          'name': 'MGPQD001',
-          'description': 'My Get Poor Quick Device 001',
-          'deviceModel': 'Mark1' })
-        .end(function (err, res) {
-          res.should.have.status(403)
-          done()
-        })
-    })
-
     it('should return 200 on admin', function (done) {
       server
         .post('/api/devices')
@@ -110,23 +95,8 @@ describe('Devices', function () {
           res.should.have.status(200)
           var result = JSON.parse(res.text)
           result.records.should.be.instanceof(Array)
-          result.records.should.have.length(2)
-          result.totalCount.should.equal(2)
-          done()
-        })
-    })
-
-    it('should return 200 on user', function (done) {
-      server
-        .get('/api/devices')
-        .set('Authorization', 'Bearer ' + adminToken)
-        .set('Content-Type', 'application/json')
-        .end(function (err, res) {
-          res.should.have.status(200)
-          var result = JSON.parse(res.text)
-          result.records.should.be.instanceof(Array)
-          result.records.should.have.length(2)
-          result.totalCount.should.equal(2)
+          result.records.should.have.length(3)
+          result.totalCount.should.equal(3)
           done()
         })
     })
@@ -140,8 +110,8 @@ describe('Devices', function () {
           res.should.have.status(200)
           var result = JSON.parse(res.text)
           result.records.should.be.instanceof(Array)
-          result.records.should.have.length(2)
-          result.totalCount.should.equal(2)
+          result.records.should.have.length(3)
+          result.totalCount.should.equal(3)
           done()
         })
     })
@@ -156,8 +126,8 @@ describe('Devices', function () {
           res.should.have.status(200)
           var result = JSON.parse(res.text)
           result.records.should.be.instanceof(Array)
-          result.records.should.have.length(1)
-          result.totalCount.should.equal(2)
+          result.records.should.have.length(2)
+          result.totalCount.should.equal(3)
           done()
         })
     })
@@ -223,17 +193,6 @@ describe('Devices', function () {
         })
     })
 
-    it('should return 200 on user', function (done) {
-      server
-        .get('/api/devices/' + devId2)
-        .set('Authorization', 'Bearer ' + adminToken)
-        .set('Content-Type', 'application/json')
-        .end(function (err, res) {
-          res.should.have.status(200)
-          done()
-        })
-    })
-
     it('should return 200 on admin', function (done) {
       server
         .get('/api/devices/' + devId2)
@@ -273,16 +232,6 @@ describe('Devices', function () {
         })
     })
 
-    it('should return 200 on user getting my device', function (done) {
-      server
-        .get('/api/devices/' + devId1)
-        .set('Authorization', 'Bearer ' + adminToken)
-        .set('Content-Type', 'application/json')
-        .end(function (err, res) {
-          res.should.have.status(200)
-          done()
-        })
-    })
   })
 
   describe('PUT /api/devices', function () {
@@ -294,18 +243,6 @@ describe('Devices', function () {
         .send('{"name": "Funky Device" }')
         .end(function (err, res) {
           res.should.have.status(204)
-          done()
-        })
-    })
-
-    it('should return 403 (forbidden) on user', function (done) {
-      server
-        .put('/api/devices/' + devId2)
-        .set('Authorization', 'Bearer ' + adminToken)
-        .set('Content-Type', 'application/json')
-        .send('{"name": "Funky Funky Device" }')
-        .end(function (err, res) {
-          res.should.have.status(403)
           done()
         })
     })
@@ -338,16 +275,6 @@ describe('Devices', function () {
   })
 
   describe('DELETE /api/devices', function () {
-    it('should return 403 (forbidden) on user', function (done) {
-      server
-        .delete('/api/devices/' + devId1)
-        .set('Authorization', 'Bearer ' + adminToken)
-        .end(function (err, res) {
-          res.should.have.status(403)
-          done()
-        })
-    })
-
     it('should return 204 on admin', function (done) {
       server
         .delete('/api/devices/' + devId2)
