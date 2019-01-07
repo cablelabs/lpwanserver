@@ -13,14 +13,12 @@ var server = chai.request(restserver).keepOpen()
  */
 describe('Launch Applications', function () {
   var adminToken
-  var coAdminToken
-  var userToken
 
   before('User Sessions', function (done) {
     var sessions = 0
     var waitFunc = function () {
       ++sessions
-      if (sessions >= 3) {
+      if (sessions >= 1) {
         done()
       }
     }
@@ -34,36 +32,14 @@ describe('Launch Applications', function () {
         adminToken = res.text
         waitFunc()
       })
-
-    server
-      .post('/api/sessions')
-      .send({ 'login_username': 'clAdmin', 'login_password': 'password' })
-      .end(function (err, res) {
-        if (err) {
-          return done(err)
-        }
-        coAdminToken = res.text
-        waitFunc()
-      })
-
-    server
-      .post('/api/sessions')
-      .send({ 'login_username': 'clUser', 'login_password': 'password' })
-      .end(function (err, res) {
-        if (err) {
-          return done(err)
-        }
-        userToken = res.text
-        waitFunc()
-      })
   })
 
   var appIds = []
   describe('GET /api/applications to launch', function () {
-    it('should return 200 with array of applications on coAdmin', function (done) {
+    it('should return 200 with array of applications on admin', function (done) {
       server
         .get('/api/applications')
-        .set('Authorization', 'Bearer ' + coAdminToken)
+        .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {
           res.should.have.status(200)

@@ -55,7 +55,8 @@ function done (id, logs, resolve) {
     if (tracker.targetCount === tracker.soFar) {
       resolve(logs)
     }
-  } else {
+  }
+  else {
     appLogger.log('Call to done() with invalid id!')
   }
 }
@@ -98,7 +99,8 @@ function createPromiseOperationForNetworksOfType (operationName,
       // Get the networks we'll be operating on that support the
       // networkType.
       networks = await npda.getNetworksOfType(networkTypeId)
-    } catch (err) {
+    }
+    catch (err) {
       appLogger.log('Error retrieving networks for type ID ' + networkTypeId)
       npda.addLog(null, 'Error retrieving networks for type ID ' + networkTypeId)
       resolve(npda.getLogs())

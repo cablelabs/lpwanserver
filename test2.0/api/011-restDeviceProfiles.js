@@ -9,14 +9,12 @@ var server = chai.request(app).keepOpen()
 
 describe('DeviceProfiles', function () {
   var adminToken
-  var coAdminToken
-  var userToken
 
   before('User Sessions', function (done) {
     var sessions = 0
     var waitFunc = function () {
       ++sessions
-      if (sessions >= 3) {
+      if (sessions >= 1) {
         done()
       }
     }
@@ -30,53 +28,16 @@ describe('DeviceProfiles', function () {
         adminToken = res.text
         waitFunc()
       })
-
-    server
-      .post('/api/sessions')
-      .send({ 'login_username': 'clAdmin', 'login_password': 'password' })
-      .end(function (err, res) {
-        if (err) {
-          return done(err)
-        }
-        coAdminToken = res.text
-        waitFunc()
-      })
-
-    server
-      .post('/api/sessions')
-      .send({ 'login_username': 'clUser', 'login_password': 'password' })
-      .end(function (err, res) {
-        if (err) {
-          return done(err)
-        }
-        userToken = res.text
-        waitFunc()
-      })
   })
 
   var dpId1
   var dpId2
   describe('POST /api/deviceProfiles', function () {
-    it('should return 403 (forbidden) on user', function (done) {
-      server
-        .post('/api/deviceProfiles')
-        .set('Authorization', 'Bearer ' + userToken)
-        .set('Content-Type', 'application/json')
-        .send({ 'networkTypeId': 1,
-          'companyId': 2,
-          'name': 'LoRaGPSNode',
-          'description': '',
-          'networkSettings': { 'foo': 'bar' } })
-        .end(function (err, res) {
-          res.should.have.status(403)
-          done()
-        })
-    })
 
-    it('should return 200 on coAdmin', function (done) {
+    it('should return 200 on admin', function (done) {
       server
         .post('/api/deviceProfiles')
-        .set('Authorization', 'Bearer ' + coAdminToken)
+        .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .send({ 'networkTypeId': 1,
           'companyId': 2,
@@ -129,32 +90,17 @@ describe('DeviceProfiles', function () {
   })
 
   describe('GET /api/deviceProfiles (search/paging)', function () {
-    it('should return 200 with 2 deviceProfiles on coAdmin', function (done) {
+    it('should return 200 with 2 deviceProfiles on admin', function (done) {
       server
         .get('/api/deviceProfiles')
-        .set('Authorization', 'Bearer ' + coAdminToken)
+        .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {
           res.should.have.status(200)
           var result = JSON.parse(res.text)
           result.records.should.be.instanceof(Array)
-          result.records.should.have.length(2)
-          result.totalCount.should.equal(2)
-          done()
-        })
-    })
-
-    it('should return 200 with 2 deviceProfiles on user', function (done) {
-      server
-        .get('/api/deviceProfiles')
-        .set('Authorization', 'Bearer ' + userToken)
-        .set('Content-Type', 'application/json')
-        .end(function (err, res) {
-          res.should.have.status(200)
-          var result = JSON.parse(res.text)
-          result.records.should.be.instanceof(Array)
-          result.records.should.have.length(2)
-          result.totalCount.should.equal(2)
+          result.records.should.have.length(3)
+          result.totalCount.should.equal(3)
           done()
         })
     })
@@ -168,8 +114,8 @@ describe('DeviceProfiles', function () {
           res.should.have.status(200)
           var result = JSON.parse(res.text)
           result.records.should.be.instanceof(Array)
-          result.records.should.have.length(2)
-          result.totalCount.should.equal(2)
+          result.records.should.have.length(3)
+          result.totalCount.should.equal(3)
           done()
         })
     })
@@ -184,8 +130,8 @@ describe('DeviceProfiles', function () {
           res.should.have.status(200)
           var result = JSON.parse(res.text)
           result.records.should.be.instanceof(Array)
-          result.records.should.have.length(1)
-          result.totalCount.should.equal(2)
+          result.records.should.have.length(2)
+          result.totalCount.should.equal(3)
           done()
         })
     })
@@ -222,10 +168,10 @@ describe('DeviceProfiles', function () {
         })
     })
 
-    it('should return 200 with 2 device on coAdmin, search L%', function (done) {
+    it('should return 200 with 2 device on admin, search L%', function (done) {
       server
         .get('/api/deviceProfiles')
-        .set('Authorization', 'Bearer ' + coAdminToken)
+        .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .query({ 'search': 'L%' })
         .end(function (err, res) {
@@ -240,21 +186,10 @@ describe('DeviceProfiles', function () {
   })
 
   describe('GET /api/deviceProfiles/{id}', function () {
-    it('should return 200 on coAdmin', function (done) {
+    it('should return 200 on admin', function (done) {
       server
         .get('/api/deviceProfiles/' + dpId2)
-        .set('Authorization', 'Bearer ' + coAdminToken)
-        .set('Content-Type', 'application/json')
-        .end(function (err, res) {
-          res.should.have.status(200)
-          done()
-        })
-    })
-
-    it('should return 200 on user', function (done) {
-      server
-        .get('/api/deviceProfiles/' + dpId2)
-        .set('Authorization', 'Bearer ' + userToken)
+        .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {
           res.should.have.status(200)
@@ -275,10 +210,10 @@ describe('DeviceProfiles', function () {
         })
     })
 
-    it('should return 200 on coAdmin getting my device', function (done) {
+    it('should return 200 on admin getting my device', function (done) {
       server
         .get('/api/deviceProfiles/' + dpId1)
-        .set('Authorization', 'Bearer ' + coAdminToken)
+        .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {
           res.should.have.status(200)
@@ -286,39 +221,17 @@ describe('DeviceProfiles', function () {
         })
     })
 
-    it('should return 200 on user getting my device', function (done) {
-      server
-        .get('/api/deviceProfiles/' + dpId1)
-        .set('Authorization', 'Bearer ' + userToken)
-        .set('Content-Type', 'application/json')
-        .end(function (err, res) {
-          res.should.have.status(200)
-          done()
-        })
-    })
   })
 
   describe('PUT /api/deviceProfiles', function () {
-    it('should return 204 on coAdmin', function (done) {
+    it('should return 204 on admin', function (done) {
       server
         .put('/api/deviceProfiles/' + dpId2)
-        .set('Authorization', 'Bearer ' + coAdminToken)
+        .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .send('{"name": "Funky DeviceProfile" }')
         .end(function (err, res) {
           res.should.have.status(204)
-          done()
-        })
-    })
-
-    it('should return 403 (forbidden) on user', function (done) {
-      server
-        .put('/api/deviceProfiles/' + dpId2)
-        .set('Authorization', 'Bearer ' + userToken)
-        .set('Content-Type', 'application/json')
-        .send('{"name": "Funky Funky DeviceProfile" }')
-        .end(function (err, res) {
-          res.should.have.status(403)
           done()
         })
     })
@@ -351,15 +264,6 @@ describe('DeviceProfiles', function () {
   })
 
   describe('DELETE /api/deviceProfiles', function () {
-    it('should return 403 (forbidden) on user', function (done) {
-      server
-        .delete('/api/deviceProfiles/' + dpId1)
-        .set('Authorization', 'Bearer ' + userToken)
-        .end(function (err, res) {
-          res.should.have.status(403)
-          done()
-        })
-    })
 
     it('should return 200 on admin', function (done) {
       server

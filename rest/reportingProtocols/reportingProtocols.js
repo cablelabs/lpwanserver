@@ -4,7 +4,6 @@
 // code is changed.
 //* *****************************************************************************
 
-
 function ReportingProtocolAccess (reportingProtocolDB) {
   this.rpDB = reportingProtocolDB
   this.reportingProtocolMap = {}

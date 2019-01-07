@@ -8,7 +8,10 @@ chai.use(chaiHttp)
 var server = chai.request(app).keepOpen()
 
 describe('Sessions', function () {
-  var userToken
+  var adminToken
+  before((done) => {
+    setTimeout(done, 2000)
+  })
 
   describe('POST /api/sessions', function () {
     it('should return 401 when the login is not valid', function (done) {
@@ -24,18 +27,18 @@ describe('Sessions', function () {
     it('should return 200 and a jwt when the login is valid', function (done) {
       server
         .post('/api/sessions')
-        .send({ 'login_username': 'clAdmin', 'login_password': 'password' })
+        .send({ 'login_username': 'admin', 'login_password': 'password' })
         .end(function (err, res) {
           res.should.have.status(200)
-          userToken = res.text
+          adminToken = res.text
           done()
         })
     })
 
-    it('should be able to use the coAdmin jwt to get all companies', function (done) {
+    it('should be able to use the admin jwt to get all companies', function (done) {
       server
         .get('/api/companies')
-        .set('Authorization', 'Bearer ' + userToken)
+        .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {
           res.should.have.status(200)
@@ -59,10 +62,10 @@ describe('Sessions', function () {
     it('should return 204 when the login is valid', function (done) {
       server
         .delete('/api/sessions')
-        .set('Authorization', 'Bearer ' + userToken)
+        .set('Authorization', 'Bearer ' + adminToken)
         .end(function (err, res) {
           res.should.have.status(204)
-          userToken = {}
+          adminToken = {}
           done()
         })
     })

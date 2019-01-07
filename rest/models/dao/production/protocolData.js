@@ -1,21 +1,21 @@
 // Database implementation.
-var db = require( "../../../lib/dbsqlite.js" );
+var db = require('../../../lib/dbsqlite.js')
 
 // Logging
-var appLogger = require( '../../../lib/appLogger.js' );
+var appLogger = require('../../../lib/appLogger.js')
 
 // Error reporting
-var httpError = require( 'http-errors' );
+var httpError = require('http-errors')
 
-//******************************************************************************
+//* *****************************************************************************
 // ProtocolData database table.
 //
 // Use by the protocols to store relevant data for their own use.
-//******************************************************************************
+//* *****************************************************************************
 
-//******************************************************************************
+//* *****************************************************************************
 // CRUD support.
-//******************************************************************************
+//* *****************************************************************************
 
 // Create the protocolData record.
 //
@@ -31,47 +31,47 @@ var httpError = require( 'http-errors' );
 //                     type to a string for storage.
 //
 // Returns the promise that will execute the create.
-exports.createProtocolData = function( networkId, networkProtocolId, key, data ) {
-    return new Promise( function( resolve, reject ) {
-        // Create the user record.
-        var pd = {};
-        pd.networkId = networkId;
-        pd.networkProtocolId = networkProtocolId;
-        pd.dataIdentifier = key;
-        pd.dataValue = data;
+exports.createProtocolData = function (networkId, networkProtocolId, key, data) {
+  return new Promise(function (resolve, reject) {
+    // Create the user record.
+    var pd = {}
+    pd.networkId = networkId
+    pd.networkProtocolId = networkProtocolId
+    pd.dataIdentifier = key
+    pd.dataValue = data
 
-        // OK, save it!
-        db.insertRecord("protocolData", pd, function( err, record ) {
-            if ( err ) {
-                reject( err );
-            }
-            else {
-                resolve( record );
-            }
-        });
-    });
-};
+    // OK, save it!
+    db.insertRecord('protocolData', pd, function (err, record) {
+      if (err) {
+        reject(err)
+      }
+      else {
+        resolve(record)
+      }
+    })
+  })
+}
 
 // Retrieve a protocolData record by id.
 //
 // id - the record id of the protocolData.
 //
 // Returns a promise that executes the retrieval.
-exports.retrieveProtocolDataRecord = function( id ) {
-    return new Promise( function ( resolve, reject ) {
-        db.fetchRecord("protocolData", "id", id, function ( err, rec ) {
-            if ( err ) {
-                reject( err );
-            }
-            else if ( !rec ) {
-                reject( new httpError.NotFound );
-            }
-            else {
-                resolve( rec.dataValue );
-            }
-        });
-    });
-};
+exports.retrieveProtocolDataRecord = function (id) {
+  return new Promise(function (resolve, reject) {
+    db.fetchRecord('protocolData', 'id', id, function (err, rec) {
+      if (err) {
+        reject(err)
+      }
+      else if (!rec) {
+        reject(new httpError.NotFound())
+      }
+      else {
+        resolve(rec.dataValue)
+      }
+    })
+  })
+}
 
 // Retrieve a protocolData record by id.
 //
@@ -80,31 +80,31 @@ exports.retrieveProtocolDataRecord = function( id ) {
 // key           - The key for the specific data item.
 //
 // Returns a promise that executes the retrieval.
-exports.retrieveProtocolData = function( networkId, networkProtocolId, key ) {
-    return new Promise( function ( resolve, reject ) {
-        var sql = "select * from protocolData where networkId = " +
-                  db.sqlValue( networkId ) +
-                  " and networkProtocolId = " +
-                  db.sqlValue( networkProtocolId ) +
-                  " and dataIdentifier = " +
-                  db.sqlValue( key );
-        db.select(sql, function ( err, rows ) {
-            if ( err ) {
-                reject( err );
-            }
-            else if ( !rows || ( 0 == rows.length ) ) {
-                reject( 404 );
-            }
-            // else if ( 1 != rows.length ) {
-            //     appLogger.log(rows)
-            //     reject( new Error( "Too many matches" ) );
-            // }
-            else {
-                resolve( rows[ 0 ].dataValue );
-            }
-        });
-    });
-};
+exports.retrieveProtocolData = function (networkId, networkProtocolId, key) {
+  return new Promise(function (resolve, reject) {
+    var sql = 'select * from protocolData where networkId = ' +
+                  db.sqlValue(networkId) +
+                  ' and networkProtocolId = ' +
+                  db.sqlValue(networkProtocolId) +
+                  ' and dataIdentifier = ' +
+                  db.sqlValue(key)
+    db.select(sql, function (err, rows) {
+      if (err) {
+        reject(err)
+      }
+      else if (!rows || (rows.length === 0)) {
+        reject(404)
+      }
+      // else if ( 1 !== rows.length ) {
+      //     appLogger.log(rows)
+      //     reject( new Error( "Too many matches" ) );
+      // }
+      else {
+        resolve(rows[ 0 ].dataValue)
+      }
+    })
+  })
+}
 
 // Update the protocolData record.
 //
@@ -112,36 +112,36 @@ exports.retrieveProtocolData = function( networkId, networkProtocolId, key ) {
 //                from retrieval to guarantee the same record is updated.
 //
 // Returns a promise that executes the update.
-exports.updateProtocolData = function( protocolData ) {
-    return new Promise( function( resolve, reject ) {
-        db.updateRecord("protocolData", "id", protocolData, function( err, row ) {
-            if ( err ) {
-                reject( err );
-            }
-            else {
-                resolve( row );
-            }
-        });
-    });
-};
+exports.updateProtocolData = function (protocolData) {
+  return new Promise(function (resolve, reject) {
+    db.updateRecord('protocolData', 'id', protocolData, function (err, row) {
+      if (err) {
+        reject(err)
+      }
+      else {
+        resolve(row)
+      }
+    })
+  })
+}
 
 // Delete the protocolData record.
 //
 // id - the id of the protocolData record to delete.
 //
 // Returns a promise that performs the delete.
-exports.deleteProtocolData = function( id ) {
-    return new Promise( function ( resolve, reject ) {
-        db.deleteRecord("protocolData", "id", id, function( err, rec ) {
-            if ( err ) {
-                reject( err );
-            }
-            else {
-                resolve( rec );
-            }
-        });
-    });
-};
+exports.deleteProtocolData = function (id) {
+  return new Promise(function (resolve, reject) {
+    db.deleteRecord('protocolData', 'id', id, function (err, rec) {
+      if (err) {
+        reject(err)
+      }
+      else {
+        resolve(rec)
+      }
+    })
+  })
+}
 
 // Delete the protocolData records with keys that start with the passed string.
 //
@@ -150,24 +150,24 @@ exports.deleteProtocolData = function( id ) {
 // key           - The key for the specific data item.
 //
 // Returns a promise that performs the delete.
-exports.clearProtocolData = function( networkId, networkProtocolId, keyStartsWith ) {
-    return new Promise( function ( resolve, reject ) {
-        var sql = "delete from protocolData where networkId = " +
-                  db.sqlValue( networkId ) +
-                  " and networkProtocolId = " +
-                  db.sqlValue( networkProtocolId ) +
-                  " and dataIdentifier like " +
-                  db.sqlValue( keyStartsWith + "%" );
+exports.clearProtocolData = function (networkId, networkProtocolId, keyStartsWith) {
+  return new Promise(function (resolve, reject) {
+    var sql = 'delete from protocolData where networkId = ' +
+                  db.sqlValue(networkId) +
+                  ' and networkProtocolId = ' +
+                  db.sqlValue(networkProtocolId) +
+                  ' and dataIdentifier like ' +
+                  db.sqlValue(keyStartsWith + '%')
 
-        db.select(sql, function ( err, rows ) {
-            if ( err ) {
-                reject( err );
-            }
-            else {
-                resolve();
-            }
-        });
-    });
+    db.select(sql, function (err, rows) {
+      if (err) {
+        reject(err)
+      }
+      else {
+        resolve()
+      }
+    })
+  })
 }
 
 // Retrieve the protocolData records with keys that start with the passed string
@@ -178,22 +178,22 @@ exports.clearProtocolData = function( networkId, networkProtocolId, keyStartsWit
 // key           - The key for the specific data item.
 //
 // Returns a promise that performs the delete.
-exports.reverseLookupProtocolData = function( networkId, keyLike, data ) {
-    return new Promise( function ( resolve, reject ) {
-        var sql = "select * from protocolData where networkId = " +
-                  db.sqlValue( networkId ) +
-                  " and dataIdentifier like \"" +
+exports.reverseLookupProtocolData = function (networkId, keyLike, data) {
+  return new Promise(function (resolve, reject) {
+    var sql = 'select * from protocolData where networkId = ' +
+                  db.sqlValue(networkId) +
+                  ' and dataIdentifier like "' +
                   keyLike +
-                  "\" and dataValue = "
-                  + db.sqlValue( data );
+                  '" and dataValue = ' +
+                  db.sqlValue(data)
 
-        db.select(sql, function ( err, rows ) {
-            if ( err ) {
-                reject( err );
-            }
-            else {
-                resolve( rows );
-            }
-        });
-    });
+    db.select(sql, function (err, rows) {
+      if (err) {
+        reject(err)
+      }
+      else {
+        resolve(rows)
+      }
+    })
+  })
 }

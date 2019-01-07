@@ -1,15 +1,15 @@
-var appLogger = require( "./lib/appLogger.js" );
-var restServer;
-var modelAPI;
+var appLogger = require('./lib/appLogger.js')
+var restServer
+var modelAPI
 
-exports.initialize = function( app, server ) {
-    restServer = server;
-    modelAPI = server.modelAPI;
+exports.initialize = function (app, server) {
+  restServer = server
+  modelAPI = server.modelAPI
 
-    /*********************************************************************
+  /*********************************************************************
     * DeviceProfiles API
     ********************************************************************/
-    /**
+  /**
      * Gets the deviceProfiles available for access by the calling account..
      *
      * @api {get} /api/deviceProfiles Get Device Profiles
@@ -53,64 +53,64 @@ exports.initialize = function( app, server ) {
      *      expected to match the Network Protocol's expected data used to
      *      set up the device on the remote Network(s).
      */
-    app.get('/api/deviceProfiles', [ restServer.isLoggedIn,
-                                     restServer.fetchCompany ],
-                                   function(req, res, next) {
-        var options = {};
-        // Make sure the caller is admin or part of the company.
-        if ( req.company.type != modelAPI.companies.COMPANY_ADMIN ) {
-            if ( req.query.companyId ) {
-                var coidInt = parseInt( req.query.companyId );
-                if ( !isNaN( coidInt ) ) {
-                    if ( coidInt !== req.user.companyId ) {
-                        restServer.respond( res, 403, "Cannot request deviceProfiles for another company" );
-                        return;
-                    }
-                    else {
-                        // Pass the restriction along
-                        options.companyId = coidInt;
-                    }
-                }
-                else {
-                    restServer.respond( res, 403, "Bad companyId in query" );
-                    return;
-                }
-            }
-            else {
-                // Force the search to be limited to the user's company anyway.
-                options.companyId = req.user.companyId;
-            }
+  app.get('/api/deviceProfiles', [ restServer.isLoggedIn,
+    restServer.fetchCompany ],
+  function (req, res, next) {
+    var options = {}
+    // Make sure the caller is admin or part of the company.
+    if (req.company.type !== modelAPI.companies.COMPANY_ADMIN) {
+      if (req.query.companyId) {
+        var coidInt = parseInt(req.query.companyId)
+        if (!isNaN(coidInt)) {
+          if (coidInt !== req.user.companyId) {
+            restServer.respond(res, 403, 'Cannot request deviceProfiles for another company')
+            return
+          }
+          else {
+            // Pass the restriction along
+            options.companyId = coidInt
+          }
         }
+        else {
+          restServer.respond(res, 403, 'Bad companyId in query')
+          return
+        }
+      }
+      else {
+        // Force the search to be limited to the user's company anyway.
+        options.companyId = req.user.companyId
+      }
+    }
 
-        if ( req.query.limit ) {
-            var limitInt = parseInt( req.query.limit );
-            if ( !isNaN( limitInt ) ) {
-                options.limit = limitInt;
-            }
-        }
-        if ( req.query.offset ) {
-            var offsetInt = parseInt( req.query.offset );
-            if ( !isNaN( offsetInt ) ) {
-                options.offset = offsetInt;
-            }
-        }
-        if ( req.query.search ) {
-            options.search = req.query.search;
-        }
-        if ( req.query.networkTypeId ) {
-            options.networkTypeId = req.query.networkTypeId;
-        }
+    if (req.query.limit) {
+      var limitInt = parseInt(req.query.limit)
+      if (!isNaN(limitInt)) {
+        options.limit = limitInt
+      }
+    }
+    if (req.query.offset) {
+      var offsetInt = parseInt(req.query.offset)
+      if (!isNaN(offsetInt)) {
+        options.offset = offsetInt
+      }
+    }
+    if (req.query.search) {
+      options.search = req.query.search
+    }
+    if (req.query.networkTypeId) {
+      options.networkTypeId = req.query.networkTypeId
+    }
 
-        modelAPI.deviceProfiles.retrieveDeviceProfiles( options ).then( function( dps ) {
-            restServer.respondJson( res, null, dps );
-        })
-        .catch( function( err ) {
-            appLogger.log( "Error getting deviceProfiles: " + err );
-            restServer.respond( res, err );
-        });
-    });
+    modelAPI.deviceProfiles.retrieveDeviceProfiles(options).then(function (dps) {
+      restServer.respondJson(res, null, dps)
+    })
+      .catch(function (err) {
+        appLogger.log('Error getting deviceProfiles: ' + err)
+        restServer.respond(res, err)
+      })
+  })
 
-    /**
+  /**
      * @apiDescription Gets the Device Profile record with the specified id.
      *
      * @api {get} /api/deviceProfile/:id Get Device Profile
@@ -134,27 +134,27 @@ exports.initialize = function( app, server ) {
      *      set up the device on the remote Network(s).
      * @apiVersion 0.1.0
      */
-    app.get('/api/deviceProfiles/:id', [ restServer.isLoggedIn,
-                                         restServer.fetchCompany ],
-                                       function(req, res, next) {
-        // Need the device record to see if it's OK to return for non-admin
-        // user.  (Admin user can get all, so we need to do this anyway.)
-        var id = parseInt( req.params.id );
-        modelAPI.deviceProfiles.retrieveDeviceProfile( id ).then( function( dp ) {
-            if ( ( req.company.type != modelAPI.companies.COMPANY_ADMIN ) &&
-                 ( dp.companyId != req.user.companyId ) ) {
-                restServer.respond( res, 403 );
-            }
-            else {
-                restServer.respondJson( res, null, dp );
-            }
-        })
-        .catch( function( err ) {
-                restServer.respondJson( res, err );
-        });
-    });
+  app.get('/api/deviceProfiles/:id', [ restServer.isLoggedIn,
+    restServer.fetchCompany ],
+  function (req, res, next) {
+    // Need the device record to see if it's OK to return for non-admin
+    // user.  (Admin user can get all, so we need to do this anyway.)
+    var id = parseInt(req.params.id)
+    modelAPI.deviceProfiles.retrieveDeviceProfile(id).then(function (dp) {
+      if ((req.company.type !== modelAPI.companies.COMPANY_ADMIN) &&
+                 (dp.companyId !== req.user.companyId)) {
+        restServer.respond(res, 403)
+      }
+      else {
+        restServer.respondJson(res, null, dp)
+      }
+    })
+      .catch(function (err) {
+        restServer.respondJson(res, err)
+      })
+  })
 
-    /**
+  /**
      * @apiDescription Creates a new Device Profile record.  Also creates a
      *      Device Profile on remote Networks of the Network Type, where
      *      supported.
@@ -187,54 +187,54 @@ exports.initialize = function( app, server ) {
      * @apiSuccess {Number} id The new Device Profile's id.
      * @apiVersion 0.1.0
      */
-    app.post('/api/deviceProfiles', [ restServer.isLoggedIn,
-                                      restServer.fetchCompany,
-                                      restServer.isAdmin ],
-                                    function(req, res, next) {
-        var rec = req.body;
-        // You can't specify an id.
-        if ( rec.id ) {
-             restServer.respond( res, 400, "Cannot specify the deviceProfiles's id in create" );
-            return;
-        }
+  app.post('/api/deviceProfiles', [ restServer.isLoggedIn,
+    restServer.fetchCompany,
+    restServer.isAdmin ],
+  function (req, res, next) {
+    var rec = req.body
+    // You can't specify an id.
+    if (rec.id) {
+      restServer.respond(res, 400, "Cannot specify the deviceProfiles's id in create")
+      return
+    }
 
-        // Verify that required fields exist.
-        if ( !rec.name ||
+    // Verify that required fields exist.
+    if (!rec.name ||
              !rec.description ||
              !rec.networkTypeId ||
              !rec.companyId ||
-             !rec.networkSettings ) {
-             restServer.respond( res, 400, "Missing required data" );
-             return;
-        }
+             !rec.networkSettings) {
+      restServer.respond(res, 400, 'Missing required data')
+      return
+    }
 
-        // The user must be part of the admin group or the deviceProfile's
-        // company.
-        if ( ( modelAPI.companies.COMPANY_ADMIN != req.company.type ) &&
-             ( rec.companyId != req.user.companyId ) ) {
-            restServer.respond( res, 403, "Can't create a deviceProfile for another company's application" );
-        }
-        else {
-            // OK, add it.
-            modelAPI.deviceProfiles.createDeviceProfile(
-                                            rec.networkTypeId,
-                                            rec.companyId,
-                                            rec.name,
-                                            rec.description,
-                                            rec.networkSettings ).then( function ( rec ) {
-                var send = {};
-                send.id = rec.id;
-                send.remoteAccessLogs = rec.remoteAccessLogs;
-                restServer.respondJson( res, 200, send );
-            })
-            .catch( function( err ) {
-                appLogger.log( "Failed to create deviceProfile " + JSON.stringify( rec ) + ": " + err );
-                restServer.respondJson( res, err );
-            });
-        }
-    });
+    // The user must be part of the admin group or the deviceProfile's
+    // company.
+    if ((modelAPI.companies.COMPANY_ADMIN !== req.company.type) &&
+             (rec.companyId !== req.user.companyId)) {
+      restServer.respond(res, 403, "Can't create a deviceProfile for another company's application")
+    }
+    else {
+      // OK, add it.
+      modelAPI.deviceProfiles.createDeviceProfile(
+        rec.networkTypeId,
+        rec.companyId,
+        rec.name,
+        rec.description,
+        rec.networkSettings).then(function (rec) {
+        var send = {}
+        send.id = rec.id
+        send.remoteAccessLogs = rec.remoteAccessLogs
+        restServer.respondJson(res, 200, send)
+      })
+        .catch(function (err) {
+          appLogger.log('Failed to create deviceProfile ' + JSON.stringify(rec) + ': ' + err)
+          restServer.respondJson(res, err)
+        })
+    }
+  })
 
-    /**
+  /**
      * @apiDescription Updates the Device Profile record with the specified id.
      *      Also pushes updates to remote Networks of the Network Type that
      *      support the concept of Device Profiles.
@@ -265,78 +265,77 @@ exports.initialize = function( app, server ) {
      *      }
      * @apiVersion 0.1.0
      */
-    app.put('/api/deviceProfiles/:id', [restServer.isLoggedIn,
-                                        restServer.fetchCompany,
-                                        restServer.isAdmin],
-                                       function(req, res, next) {
-        var data = {};
-        data.id = parseInt( req.params.id );
-        // Start by getting the original deviceProfile to check for changes.
-        modelAPI.deviceProfiles.retrieveDeviceProfile( data.id ).then( function( dp ) {
-            // Verify that the user can make the change.
-            if ( ( modelAPI.companies.COMPANY_ADMIN != req.company.type ) &&
-                 ( req.user.companyId != dp.companyId ) ) {
-                respond( res, 403 );
-                return;
-            }
+  app.put('/api/deviceProfiles/:id', [restServer.isLoggedIn,
+    restServer.fetchCompany,
+    restServer.isAdmin],
+  function (req, res, next) {
+    var data = {}
+    data.id = parseInt(req.params.id)
+    // Start by getting the original deviceProfile to check for changes.
+    modelAPI.deviceProfiles.retrieveDeviceProfile(data.id).then(function (dp) {
+      // Verify that the user can make the change.
+      if ((modelAPI.companies.COMPANY_ADMIN !== req.company.type) &&
+                 (req.user.companyId !== dp.companyId)) {
+        respond(res, 403)
+        return
+      }
 
-            var changed = 0;
-            if ( ( req.body.name ) &&
-                 ( req.body.name != dp.name ) ) {
-                data.name = req.body.name;
-                ++changed;
-            }
+      var changed = 0
+      if ((req.body.name) &&
+                 (req.body.name !== dp.name)) {
+        data.name = req.body.name
+        ++changed
+      }
 
-            if ( ( req.body.description ) &&
-                 ( req.body.description != dp.description ) ) {
-                data.description = req.body.description;
-                ++changed;
-            }
+      if ((req.body.description) &&
+                 (req.body.description !== dp.description)) {
+        data.description = req.body.description
+        ++changed
+      }
 
-            if ( ( req.body.networkTypeId ) &&
-                 ( req.body.networkTypeId != dp.networkTypeId ) ) {
-                data.networkTypeId = req.body.networkTypeId;
-                ++changed;
-            }
+      if ((req.body.networkTypeId) &&
+                 (req.body.networkTypeId !== dp.networkTypeId)) {
+        data.networkTypeId = req.body.networkTypeId
+        ++changed
+      }
 
-            if ( ( req.body.companyId ) &&
-                 ( req.body.companyId != dp.companyId ) ) {
-                data.companyId = req.body.companyId;
-                ++changed;
-            }
+      if ((req.body.companyId) &&
+                 (req.body.companyId !== dp.companyId)) {
+        data.companyId = req.body.companyId
+        ++changed
+      }
 
-            if ( ( req.body.networkSettings ) &&
-                 ( req.body.networkSettings != dp.networkSettings ) ) {
-                data.networkSettings = req.body.networkSettings;
-                ++changed;
-            }
+      if ((req.body.networkSettings) &&
+                 (req.body.networkSettings !== dp.networkSettings)) {
+        data.networkSettings = req.body.networkSettings
+        ++changed
+      }
 
-
-            // Do we have a change?
-            if ( 0 == changed ) {
-                // No changes.  But returning 304 apparently causes Apache to
-                // strip CORS info, causing the browser to throw a fit.  So
-                // just say, "Yeah, we did that.  Really.  Trust us."
-                restServer.respond( res, 204 );
-            }
-            else {
-                // Do the update.
-                modelAPI.deviceProfiles.updateDeviceProfile( data ).then( function ( rec ) {
-                     restServer.respondJson( res, 204,  { remoteAccessLogs: rec.remoteAccessLogs } );
-                })
-                .catch( function( err ) {
-                    appLogger.log( "Failed to update deviceProfile " + data.id + " with " + JSON.stringify( data ) + ": " + err );
-                     restServer.respond( res, err );
-                });
-            }
+      // Do we have a change?
+      if (changed === 0) {
+        // No changes.  But returning 304 apparently causes Apache to
+        // strip CORS info, causing the browser to throw a fit.  So
+        // just say, "Yeah, we did that.  Really.  Trust us."
+        restServer.respond(res, 204)
+      }
+      else {
+        // Do the update.
+        modelAPI.deviceProfiles.updateDeviceProfile(data).then(function (rec) {
+          restServer.respondJson(res, 204, { remoteAccessLogs: rec.remoteAccessLogs })
         })
-        .catch( function( err ) {
-            appLogger.log( "Failed to retrieve deviceProfile " + data.id + ": " + err );
-            restServer.respond( res, err );
-        });
-    });
+          .catch(function (err) {
+            appLogger.log('Failed to update deviceProfile ' + data.id + ' with ' + JSON.stringify(data) + ': ' + err)
+            restServer.respond(res, err)
+          })
+      }
+    })
+      .catch(function (err) {
+        appLogger.log('Failed to retrieve deviceProfile ' + data.id + ': ' + err)
+        restServer.respond(res, err)
+      })
+  })
 
-    /**
+  /**
      * @apiDescription Deletes the Device Profile record with the specified id.
      *      Also deletes the Device Profile from remote Networks of the Network
      *      Type, where the concept of a Device Profile is supported.
@@ -349,28 +348,28 @@ exports.initialize = function( app, server ) {
      * @apiParam (URL Parameters) {Number} id The Device Profile's id
      * @apiVersion 0.1.0
      */
-    app.delete('/api/deviceProfiles/:id', [ restServer.isLoggedIn,
-                                            restServer.fetchCompany,
-                                            restServer.isAdmin ],
-                                        function(req, res, next) {
-        var id = parseInt( req.params.id );
-        // If not an admin company, the deviceProfile better be associated
-        // with the user's company.  We check that in the delete method.
-        var companyId = null;
-        if( req.company.type !== modelAPI.companies.COMPANY_ADMIN ) {
-             companyId = req.user.companyId;
-        }
+  app.delete('/api/deviceProfiles/:id', [ restServer.isLoggedIn,
+    restServer.fetchCompany,
+    restServer.isAdmin ],
+  function (req, res, next) {
+    var id = parseInt(req.params.id)
+    // If not an admin company, the deviceProfile better be associated
+    // with the user's company.  We check that in the delete method.
+    var companyId = null
+    if (req.company.type !== modelAPI.companies.COMPANY_ADMIN) {
+      companyId = req.user.companyId
+    }
 
-        modelAPI.deviceProfiles.deleteDeviceProfile( id, companyId ).then( function( ret ) {
-            restServer.respondJson( res, 200,  { remoteAccessLogs: ret.remoteAccessLogs } );
-        })
-        .catch( function( err ) {
-            appLogger.log( "Error deleting deviceProfile " + id + ": " + err );
-            restServer.respond( res, err );
-        });
-    });
+    modelAPI.deviceProfiles.deleteDeviceProfile(id, companyId).then(function (ret) {
+      restServer.respondJson(res, 200, { remoteAccessLogs: ret.remoteAccessLogs })
+    })
+      .catch(function (err) {
+        appLogger.log('Error deleting deviceProfile ' + id + ': ' + err)
+        restServer.respond(res, err)
+      })
+  })
 
-    /**
+  /**
      * @apiDescription Pushes the Device Profile record with the specified id.
      *
      * @api {post} /api/deviceProfiles/:id/push Push Device Profile
@@ -381,24 +380,24 @@ exports.initialize = function( app, server ) {
      * @apiParam (URL Parameters) {Number} id The Device Profile's id
      * @apiVersion 0.1.0
      */
-    app.post('/api/deviceProfiles/:id/push', [restServer.isLoggedIn,
-            restServer.fetchCompany,
-            restServer.isAdmin],
-        function(req, res, next) {
-            var id = parseInt( req.params.id );
-            // If not an admin company, the deviceProfile better be associated
-            // with the user's company.  We check that in the push method.
-            var companyId = null;
-            if( req.company.type !== modelAPI.companies.COMPANY_ADMIN ) {
-                companyId = req.user.companyId;
-            }
+  app.post('/api/deviceProfiles/:id/push', [restServer.isLoggedIn,
+    restServer.fetchCompany,
+    restServer.isAdmin],
+  function (req, res, next) {
+    var id = parseInt(req.params.id)
+    // If not an admin company, the deviceProfile better be associated
+    // with the user's company.  We check that in the push method.
+    var companyId = null
+    if (req.company.type !== modelAPI.companies.COMPANY_ADMIN) {
+      companyId = req.user.companyId
+    }
 
-            modelAPI.deviceProfiles.pushDeviceProfile( id, companyId ).then( function( ret ) {
-                restServer.respond( res, 200, ret );
-            })
-                .catch( function( err ) {
-                    appLogger.log( "Error pushing deviceProfile " + id + ": " + err );
-                    restServer.respond( res, err );
-                });
-        });
+    modelAPI.deviceProfiles.pushDeviceProfile(id, companyId).then(function (ret) {
+      restServer.respond(res, 200, ret)
+    })
+      .catch(function (err) {
+        appLogger.log('Error pushing deviceProfile ' + id + ': ' + err)
+        restServer.respond(res, err)
+      })
+  })
 }

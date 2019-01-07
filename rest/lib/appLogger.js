@@ -27,8 +27,8 @@ exports.initRESTCallLogger = function (app) {
   }
 
   // Also init whether we do general logging
-  this.this.loggingEnabled = nconf.get('logging_enabled')
-  this.this.loggingHeaders = nconf.get('logging_headers')
+  this.loggingEnabled = nconf.get('logging_enabled')
+  this.loggingHeaders = nconf.get('logging_headers')
 }
 
 exports.log = function (msg, level) {
@@ -46,16 +46,16 @@ exports.log = function (msg, level) {
                          file + ':' +
                          line + ': '
 
-      if (level) this.logger.log(level, header + ':  ' + msg + "\n")
+      if (level) this.logger.log(level, header + ':  ' + msg + '\n')
       else this.logger.info(header, msg)
     }
     else {
-      if (level) this.logger.log(level, header + ':  ' + msg +"\n")
+      if (level) this.logger.log(level, header + ':  ' + msg + '\n')
       this.logger.info('Message', msg)
     }
     if (level === 'info' || level === 'warn' || level === 'error') {
       if (typeof msg === 'object') {
-        console.log(header + JSON.stringify(msg) + "\n")
+        console.log(header + JSON.stringify(msg) + '\n')
       }
       else {
         console.log(header +

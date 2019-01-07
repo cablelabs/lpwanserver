@@ -1,12 +1,12 @@
-var appLogger = require( "./lib/appLogger.js" );
-var restServer;
-var modelAPI;
+var appLogger = require('./lib/appLogger.js')
+var restServer
+var modelAPI
 
-exports.initialize = function( app, server ) {
-    restServer = server;
-    modelAPI = server.modelAPI;
+exports.initialize = function (app, server) {
+  restServer = server
+  modelAPI = server.modelAPI
 
-    /*********************************************************************
+  /*********************************************************************
      * NetworkProviders API.
      ********************************************************************
     /**
@@ -41,33 +41,33 @@ exports.initialize = function( app, server ) {
      * @apiSuccess {String} object.records.name The name of the Network Provider
      * @apiVersion 0.1.0
      */
-    app.get('/api/networkProviders', [restServer.isLoggedIn], function(req, res, next) {
-        var options = {};
-        if ( req.query.limit ) {
-            var limitInt = parseInt( req.query.limit );
-            if ( !isNaN( limitInt ) ) {
-                options.limit = limitInt;
-            }
-        }
-        if ( req.query.offset ) {
-            var offsetInt = parseInt( req.query.offset );
-            if ( !isNaN( offsetInt ) ) {
-                options.offset = offsetInt;
-            }
-        }
-        if ( req.query.search ) {
-            options.search = req.query.search;
-        }
-        modelAPI.networkProviders.retrieveNetworkProviders( options ).then( function( nps ) {
-            restServer.respondJson( res, null, nps );
-        })
-        .catch( function( err ) {
-            appLogger.log( "Error getting networkProviders: " + err );
-            restServer.respond( res, err );
-        });
-    });
+  app.get('/api/networkProviders', [restServer.isLoggedIn], function (req, res, next) {
+    var options = {}
+    if (req.query.limit) {
+      var limitInt = parseInt(req.query.limit)
+      if (!isNaN(limitInt)) {
+        options.limit = limitInt
+      }
+    }
+    if (req.query.offset) {
+      var offsetInt = parseInt(req.query.offset)
+      if (!isNaN(offsetInt)) {
+        options.offset = offsetInt
+      }
+    }
+    if (req.query.search) {
+      options.search = req.query.search
+    }
+    modelAPI.networkProviders.retrieveNetworkProviders(options).then(function (nps) {
+      restServer.respondJson(res, null, nps)
+    })
+      .catch(function (err) {
+        appLogger.log('Error getting networkProviders: ' + err)
+        restServer.respond(res, err)
+      })
+  })
 
-    /**
+  /**
      * @apiDescription Gets the Network Provider record with the specified id.
      *
      * @api {get} /api/networkProviders/:id Get Network Provider
@@ -81,19 +81,19 @@ exports.initialize = function( app, server ) {
      * @apiSuccess {String} object.name The name of the Network Provider
      * @apiVersion 0.1.0
      */
-    app.get('/api/networkProviders/:id', [restServer.isLoggedIn],
-                                     function(req, res, next) {
-        var id = req.params.id;
-        modelAPI.networkProviders.retrieveNetworkProvider( parseInt( req.params.id ) ).then( function( rp ) {
-            restServer.respondJson( res, null, rp );
+  app.get('/api/networkProviders/:id', [restServer.isLoggedIn],
+    function (req, res, next) {
+      var id = req.params.id
+      modelAPI.networkProviders.retrieveNetworkProvider(parseInt(req.params.id)).then(function (rp) {
+        restServer.respondJson(res, null, rp)
+      })
+        .catch(function (err) {
+          appLogger.log('Error getting networkProvider ' + req.params.id + ': ' + err)
+          restServer.respond(res, err)
         })
-        .catch( function( err ) {
-            appLogger.log( "Error getting networkProvider " + req.params.id + ": " + err );
-            restServer.respond( res, err );
-        });
-    });
+    })
 
-    /**
+  /**
      * @apiDescription Creates a new networkProviders record.
      *
      * @api {post} /api/networkProviders Create Network Provider
@@ -108,35 +108,35 @@ exports.initialize = function( app, server ) {
      *      }
      * @apiSuccess {Number} id The new Network Provider's id.
      */
-    app.post('/api/networkProviders', [restServer.isLoggedIn,
-                                       restServer.fetchCompany,
-                                       restServer.isAdminCompany],
-                                      function(req, res, next) {
-        var rec = req.body;
-        // You can't specify an id.
-        if ( rec.id ) {
-            restServer.respond( res, 400, "Cannot specify the networkProvider's id in create" );
-            return;
-        }
+  app.post('/api/networkProviders', [restServer.isLoggedIn,
+    restServer.fetchCompany,
+    restServer.isAdminCompany],
+  function (req, res, next) {
+    var rec = req.body
+    // You can't specify an id.
+    if (rec.id) {
+      restServer.respond(res, 400, "Cannot specify the networkProvider's id in create")
+      return
+    }
 
-        // Verify that required fields exist.
-        if ( !rec.name ) {
-            restServer.respond( res, 400, "Missing required data" );
-            return;
-        }
+    // Verify that required fields exist.
+    if (!rec.name) {
+      restServer.respond(res, 400, 'Missing required data')
+      return
+    }
 
-        // Do the add.
-        modelAPI.networkProviders.createNetworkProvider( rec.name ).then( function ( rec ) {
-            var send = {};
-            send.id = rec.id;
-            restServer.respondJson( res, 200, send );
-        })
-        .catch( function( err ) {
-            restServer.respond( res, err );
-        });
-    });
+    // Do the add.
+    modelAPI.networkProviders.createNetworkProvider(rec.name).then(function (rec) {
+      var send = {}
+      send.id = rec.id
+      restServer.respondJson(res, 200, send)
+    })
+      .catch(function (err) {
+        restServer.respond(res, err)
+      })
+  })
 
-    /**
+  /**
      * @apiDescription Updates the Network Provider record with the specified
      *      id.
      *
@@ -153,49 +153,49 @@ exports.initialize = function( app, server ) {
      *      }
      * @apiVersion 0.1.0
      */
-    app.put('/api/networkProviders/:id', [restServer.isLoggedIn,
-                                          restServer.fetchCompany,
-                                          restServer.isAdminCompany],
-                                         function(req, res, next) {
-        var data = {};
-        data.id = parseInt( req.params.id );
-        // We'll start by getting the old record, as a read is much less
-        // expensive than a write, and then we'll be able to tell if anything
-        // really changed before we even try to write.
-        modelAPI.networkProviders.retrieveNetworkProvider( req.params.id ).then( function( rp ) {
-            // Fields that may exist in the request body that can change.  Make
-            // sure they actually differ, though.
-            var changed = 0;
-            if ( ( req.body.name ) &&
-                 ( req.body.name != rp.name ) ) {
-                data.name = req.body.name;
-                ++changed;
-            }
+  app.put('/api/networkProviders/:id', [restServer.isLoggedIn,
+    restServer.fetchCompany,
+    restServer.isAdminCompany],
+  function (req, res, next) {
+    var data = {}
+    data.id = parseInt(req.params.id)
+    // We'll start by getting the old record, as a read is much less
+    // expensive than a write, and then we'll be able to tell if anything
+    // really changed before we even try to write.
+    modelAPI.networkProviders.retrieveNetworkProvider(req.params.id).then(function (rp) {
+      // Fields that may exist in the request body that can change.  Make
+      // sure they actually differ, though.
+      var changed = 0
+      if ((req.body.name) &&
+                 (req.body.name !== rp.name)) {
+        data.name = req.body.name
+        ++changed
+      }
 
-            // Ready.  DO we have anything to actually change?
-            if ( 0 == changed ) {
-                // No changes.  But returning 304 apparently causes Apache to strip
-                // CORS info, causing the browser to throw a fit.  So just say,
-                // "Yeah, we did that.  Really.  Trust us."
-                restServer.respond( res, 204 );
-            }
-            else {
-                // Do the update.
-                modelAPI.networkProviders.updateNetworkProvider( data ).then( function ( rec ) {
-                    restServer.respond( res, 204 );
-                })
-                .catch( function( err ) {
-                    restServer.respond( res, err );
-                });
-            }
+      // Ready.  DO we have anything to actually change?
+      if (changed === 0) {
+        // No changes.  But returning 304 apparently causes Apache to strip
+        // CORS info, causing the browser to throw a fit.  So just say,
+        // "Yeah, we did that.  Really.  Trust us."
+        restServer.respond(res, 204)
+      }
+      else {
+        // Do the update.
+        modelAPI.networkProviders.updateNetworkProvider(data).then(function (rec) {
+          restServer.respond(res, 204)
         })
-        .catch( function( err ) {
-            appLogger.log( "Error getting networkProvider " + data.id + ": " + err );
-            restServer.respond( res, err );
-        });
-    });
+          .catch(function (err) {
+            restServer.respond(res, err)
+          })
+      }
+    })
+      .catch(function (err) {
+        appLogger.log('Error getting networkProvider ' + data.id + ': ' + err)
+        restServer.respond(res, err)
+      })
+  })
 
-    /**
+  /**
      * @apiDescription Deletes the Network Provider record with the specified
      *      id.
      *
@@ -207,17 +207,17 @@ exports.initialize = function( app, server ) {
      * @apiParam (URL Parameters) {Number} id The Network Provider's id
      * @apiVersion 0.1.0
      */
-    app.delete('/api/networkProviders/:id', [restServer.isLoggedIn,
-                                             restServer.fetchCompany,
-                                             restServer.isAdminCompany],
-                                            function(req, res, next) {
-        var id = parseInt( req.params.id );
-        modelAPI.networkProviders.deleteNetworkProvider( id ).then( function( ) {
-            restServer.respond( res, 204 );
-        })
-        .catch( function( err ) {
-            appLogger.log( "Error deleting networkProvider " + id + ": " + err );
-            restServer.respond( res, err );
-        });
-    });
+  app.delete('/api/networkProviders/:id', [restServer.isLoggedIn,
+    restServer.fetchCompany,
+    restServer.isAdminCompany],
+  function (req, res, next) {
+    var id = parseInt(req.params.id)
+    modelAPI.networkProviders.deleteNetworkProvider(id).then(function () {
+      restServer.respond(res, 204)
+    })
+      .catch(function (err) {
+        appLogger.log('Error deleting networkProvider ' + id + ': ' + err)
+        restServer.respond(res, err)
+      })
+  })
 }

@@ -108,7 +108,7 @@ Device.prototype.deleteDevice = function (id) {
 // and it keeps all of that validation in one place, not requiring promises in
 // some cases but not others (e.g., when the user is part of an admin company).
 Device.prototype.fetchDeviceApplication = function (req, res, next) {
-  impl.retrieveDevice(parseInt(req.params.id))
+  impl.retrieveDevice(parseInt(req.params.id, 10))
     .then(function (dev) {
       // Save the device.
       req.device = dev
@@ -141,7 +141,7 @@ Device.prototype.fetchDeviceApplication = function (req, res, next) {
 // applicationId in the request body to get the application for the device we
 // want to create.
 Device.prototype.fetchApplicationForNewDevice = function (req, res, next) {
-  modelAPI.applications.retrieveApplication(parseInt(req.body.applicationId))
+  modelAPI.applications.retrieveApplication(parseInt(req.body.applicationId, 10))
     .then(function (app) {
       req.application = app
       next()

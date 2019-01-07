@@ -22,7 +22,7 @@ var modelAPI
 // server - The modelAPI object, allowing use of the other APIs.
 //
 function ApplicationNetworkTypeLink (server) {
-  this.impl = new require('./dao/' +
+  this.impl = require('./dao/' +
                              nconf.get('impl_directory') +
                              '/applicationNetworkTypeLinks.js')
 
@@ -139,7 +139,7 @@ ApplicationNetworkTypeLink.prototype.deleteApplicationNetworkTypeLink = function
       // record, validate the company now, if required.
       if (validateCompanyId) {
         var app = await modelAPI.applications.retrieveApplication(rec.applicationId)
-        if (validateCompanyId != app.companyId) {
+        if (validateCompanyId !== app.companyId) {
           reject(new httpError.Unauthorized())
           return
         }

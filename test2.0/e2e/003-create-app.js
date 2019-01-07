@@ -93,7 +93,7 @@ describe('E2E Test for Creating an Application Use Case #188', () => {
     it('Admin Login to LPWan Server', (done) => {
       server
         .post('/api/sessions')
-        .send({'login_username': 'admin', 'login_password': 'password'})
+        .send({ 'login_username': 'admin', 'login_password': 'password' })
         .end(function (err, res) {
           if (err) done(err)
           res.should.have.status(200)
@@ -134,7 +134,7 @@ describe('E2E Test for Creating an Application Use Case #188', () => {
             'networkTypeId': 1,
             'baseUrl': 'https://lora_appserver1:8080/api',
             'networkProtocolId': lora.loraV1.protocolId,
-            'securityData': {authorized: false, 'username': 'admin', 'password': 'admin'}
+            'securityData': { authorized: false, 'username': 'admin', 'password': 'admin' }
           })
           .end(function (err, res) {
             if (err) done(err)
@@ -198,7 +198,7 @@ describe('E2E Test for Creating an Application Use Case #188', () => {
             'networkTypeId': 1,
             'baseUrl': 'https://lora_appserver:8080/api',
             'networkProtocolId': lora.loraV2.protocolId,
-            'securityData': {authorized: false, 'username': 'admin', 'password': 'admin'}
+            'securityData': { authorized: false, 'username': 'admin', 'password': 'admin' }
           })
           .end(function (err, res) {
             if (err) done(err)
@@ -252,6 +252,7 @@ describe('E2E Test for Creating an Application Use Case #188', () => {
         .set('Content-Type', 'application/json')
         .send(application)
         .end(function (err, res) {
+          if (err) done(err)
           res.should.have.status(200)
           let ret = JSON.parse(res.text)
           appId1 = ret.id
@@ -267,6 +268,7 @@ describe('E2E Test for Creating an Application Use Case #188', () => {
         .set('Content-Type', 'application/json')
         .send()
         .end(function (err, res) {
+          if (err) done(err)
           res.should.have.status(200)
           let appObj = JSON.parse(res.text)
           appObj.should.have.property('id')
@@ -296,6 +298,7 @@ describe('E2E Test for Creating an Application Use Case #188', () => {
           'networkSettings': applicationNetworkSettings
         })
         .end(function (err, res) {
+          if (err) done(err)
           res.should.have.status(200)
           let ret = JSON.parse(res.text)
           anlId1 = ret.id
@@ -309,6 +312,7 @@ describe('E2E Test for Creating an Application Use Case #188', () => {
         .set('Content-Type', 'application/json')
         .send()
         .end(function (err, res) {
+          if (err) done(err)
           res.should.have.status(200)
           let appObj = JSON.parse(res.text)
           console.log(appObj)
@@ -324,6 +328,7 @@ describe('E2E Test for Creating an Application Use Case #188', () => {
         .set('Content-Type', 'application/json')
         .send(deviceProfile)
         .end(function (err, res) {
+          if (err) done(err)
           res.should.have.status(200)
           let ret = JSON.parse(res.text)
           dpId1 = ret.id
@@ -337,6 +342,7 @@ describe('E2E Test for Creating an Application Use Case #188', () => {
         .set('Content-Type', 'application/json')
         .send()
         .end(function (err, res) {
+          if (err) done(err)
           res.should.have.status(200)
           let dpObj = JSON.parse(res.text)
           dpObj.name.should.equal(deviceProfile.name)
@@ -355,6 +361,7 @@ describe('E2E Test for Creating an Application Use Case #188', () => {
         .set('Content-Type', 'application/json')
         .send(device)
         .end(function (err, res) {
+          if (err) done(err)
           appLogger.log(res)
           res.should.have.status(200)
           let ret = JSON.parse(res.text)
@@ -370,6 +377,7 @@ describe('E2E Test for Creating an Application Use Case #188', () => {
         .set('Content-Type', 'application/json')
         .send()
         .end(function (err, res) {
+          if (err) done(err)
           res.should.have.status(200)
           let devObj = JSON.parse(res.text)
           console.log(devObj)
@@ -388,6 +396,7 @@ describe('E2E Test for Creating an Application Use Case #188', () => {
         .set('Content-Type', 'application/json')
         .send(deviceNTL)
         .end(function (err, res) {
+          if (err) done(err)
           res.should.have.status(200)
           var dnlObj = JSON.parse(res.text)
           console.log(dnlObj)
@@ -403,6 +412,7 @@ describe('E2E Test for Creating an Application Use Case #188', () => {
         .set('Content-Type', 'application/json')
         .send()
         .end(function (err, res) {
+          if (err) done(err)
           res.should.have.status(200)
           var dnlObj = JSON.parse(res.text)
           dnlObj.deviceId.should.equal(deviceNTL.deviceId)
@@ -419,16 +429,16 @@ describe('E2E Test for Creating an Application Use Case #188', () => {
       let options = {}
       options.method = 'POST'
       options.url = baseUrl + '/internal/login'
-      options.headers = {'Content-Type': 'application/json'}
-      options.json = {username: 'admin', password: 'admin'}
-      options.agentOptions = {'secureProtocol': 'TLSv1_2_method', 'rejectUnauthorized': false}
+      options.headers = { 'Content-Type': 'application/json' }
+      options.json = { username: 'admin', password: 'admin' }
+      options.agentOptions = { 'secureProtocol': 'TLSv1_2_method', 'rejectUnauthorized': false }
       request(options, function (error, response, body) {
         if (error) {
-          appLogger.log('Error on signin: ' + error)
+          appLogger.log('Error on sign-in: ' + error)
           done(error)
         }
         else if (response.statusCode >= 400 || response.statusCode === 301) {
-          appLogger.log('Error on signin: ' + response.statusCode + ', ' + response.body.error)
+          appLogger.log('Error on sign-in: ' + response.statusCode + ', ' + response.body.error)
           done(response.statusCode)
         }
         else if (!body.jwt) {
@@ -612,9 +622,9 @@ describe('E2E Test for Creating an Application Use Case #188', () => {
       let options = {}
       options.method = 'POST'
       options.url = baseUrl + '/internal/login'
-      options.headers = {'Content-Type': 'application/json'}
-      options.json = {username: 'admin', password: 'admin'}
-      options.agentOptions = {'secureProtocol': 'TLSv1_2_method', 'rejectUnauthorized': false}
+      options.headers = { 'Content-Type': 'application/json' }
+      options.json = { username: 'admin', password: 'admin' }
+      options.agentOptions = { 'secureProtocol': 'TLSv1_2_method', 'rejectUnauthorized': false }
       request(options, function (error, response, body) {
         if (error) {
           appLogger.log('Error on signin: ' + error)

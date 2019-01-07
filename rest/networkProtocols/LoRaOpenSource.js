@@ -228,7 +228,7 @@ async function getCompanyAccount (dataAPI, network, companyId, generateIfMissing
       uname += 'admin'
       var pass = await dataAPI.genPass()
       kd = await dataAPI.genKey()
-      secData = {'username': uname, 'password': pass}
+      secData = { 'username': uname, 'password': pass }
       srd = dataAPI.hide(network, secData, kd)
       appLogger.log(uname)
       appLogger.log(pass)
@@ -328,7 +328,7 @@ function getANetworkServerID (network, connection) {
         // Convert text to JSON array, use id from first element
         var res = JSON.parse(body)
         var nsList = res.result
-        if (nsList.length == 0) {
+        if (nsList.length === 0) {
           appLogger.log('Empty list of Network Servers returned')
           reject(404)
           return
@@ -670,7 +670,7 @@ function getServiceProfileForOrg (network, orgId, companyId, connection, dataAPI
         // network.
         body = JSON.parse(body)
         appLogger.log(body)
-        if (body.totalCount == 0) {
+        if (body.totalCount === 0) {
           // no SP to get
           resolve()
         }
@@ -792,9 +792,9 @@ module.exports.connect = function (network, loginData) {
     var options = {}
     options.method = 'POST'
     options.url = network.baseUrl + '/internal/login'
-    options.headers = {'Content-Type': 'application/json'}
+    options.headers = { 'Content-Type': 'application/json' }
     options.json = loginData
-    options.agentOptions = {'secureProtocol': 'TLSv1_2_method', 'rejectUnauthorized': false}
+    options.agentOptions = { 'secureProtocol': 'TLSv1_2_method', 'rejectUnauthorized': false }
     request(options, function (error, response, body) {
       if (error) {
         appLogger.log('Error on signin: ' + error)
@@ -1339,7 +1339,7 @@ module.exports.pushApplication = function (sessionData, network, application, da
         }
         else if (appNetworkId) {
           appLogger.log('Ignoring Application  ' + application.id + ' already on network ' + network.name)
-          resolve({localApplication: application.id, remoteApplication: appNetworkId})
+          resolve({ localApplication: application.id, remoteApplication: appNetworkId })
         }
         else {
           reject(new Error('Bad things in the Protocol Table'))
@@ -1349,7 +1349,7 @@ module.exports.pushApplication = function (sessionData, network, application, da
         me.addApplication(sessionData, network, application.id, dataAPI)
           .then((appNetworkId) => {
             appLogger.log('Added application ' + application.id + ' to network ' + network.name)
-            resolve({localApplication: application.id, remoteApplication: appNetworkId})
+            resolve({ localApplication: application.id, remoteApplication: appNetworkId })
           })
           .catch(err => {
             appLogger.log(err)
@@ -1459,7 +1459,7 @@ module.exports.pushDevice = function (sessionData, network, device, dataAPI, upd
         }
         else if (devNetworkId) {
           appLogger.log('Ignoring Device  ' + device.id + ' already on network ' + network.name)
-          resolve({localDevice: device.id, remoteDevice: devNetworkId})
+          resolve({ localDevice: device.id, remoteDevice: devNetworkId })
         }
         else {
           reject(new Error('Bad things in the Protocol Table'))
@@ -1469,7 +1469,7 @@ module.exports.pushDevice = function (sessionData, network, device, dataAPI, upd
         me.addDevice(sessionData, network, device.id, dataAPI)
           .then((devNetworkId) => {
             appLogger.log('Added Device  ' + device.id + ' to network ' + network.name)
-            resolve({localDevice: device.id, remoteDevice: devNetworkId})
+            resolve({ localDevice: device.id, remoteDevice: devNetworkId })
           })
           .catch(err => {
             appLogger.log(err)
@@ -1537,7 +1537,7 @@ module.exports.setupOrganization = function (sessionData, network, modelAPI, dat
   return new Promise(async function (resolve, reject) {
     let company = await modelAPI.companies.retrieveCompany(2)
     let companyNtl = await dataAPI.getCompanyNetworkType(company.id, network.networkTypeId)
-    let lora1NetworkSettings = {network: network.id}
+    let lora1NetworkSettings = { network: network.id }
     if (!companyNtl) {
       companyNtl = await modelAPI.companyNetworkTypeLinks.createRemoteCompanyNetworkTypeLink(company.id, network.networkTypeId, {})
       companyNtl.networkSettings = JSON.parse(companyNtl.networkSettings)
@@ -1599,7 +1599,7 @@ module.exports.setupOrganization = function (sessionData, network, modelAPI, dat
                   lora1NetworkSettings.organizationId = organization.id
                   lora1NetworkSettings.networkId = network.id
 
-                  companyNtl.networkSettings.serviceProfile = {region: networkServer.region}
+                  companyNtl.networkSettings.serviceProfile = { region: networkServer.region }
                   companyNtl.networkSettings[network.name] = lora1NetworkSettings
 
                   appLogger.log(companyNtl, 'warn')
@@ -1688,7 +1688,7 @@ module.exports.addRemoteDeviceProfile = function (sessionData, limitedRemoteDevi
       .then((remoteDeviceProfile) => {
         appLogger.log('Adding ' + remoteDeviceProfile.name)
         appLogger.log(remoteDeviceProfile)
-        modelAPI.deviceProfiles.retrieveDeviceProfiles({search: remoteDeviceProfile.name})
+        modelAPI.deviceProfiles.retrieveDeviceProfiles({ search: remoteDeviceProfile.name })
           .then(existingDeviceProfile => {
             if (existingDeviceProfile.totalCount > 0) {
               existingDeviceProfile = existingDeviceProfile.records[0]
@@ -1798,7 +1798,7 @@ function addRemoteApplication (sessionData, limitedRemoteApplication, network, m
   return new Promise(async function (resolve, reject) {
     let remoteApplication = await getApplicationById(network, limitedRemoteApplication.id, sessionData.connection)
     appLogger.log(remoteApplication)
-    let existingApplication = await modelAPI.applications.retrieveApplications({search: remoteApplication.name})
+    let existingApplication = await modelAPI.applications.retrieveApplications({ search: remoteApplication.name })
     if (existingApplication.totalCount > 0) {
       existingApplication = existingApplication.records[0]
       appLogger.log(existingApplication.name + ' already exists')
@@ -1808,7 +1808,7 @@ function addRemoteApplication (sessionData, limitedRemoteApplication, network, m
       appLogger.log('Created ' + existingApplication.name)
     }
 
-    let existingApplicationNTL = await modelAPI.applicationNetworkTypeLinks.retrieveApplicationNetworkTypeLinks({applicationId: existingApplication.id})
+    let existingApplicationNTL = await modelAPI.applicationNetworkTypeLinks.retrieveApplicationNetworkTypeLinks({ applicationId: existingApplication.id })
     if (existingApplicationNTL.totalCount > 0) {
       appLogger.log(existingApplication.name + ' link already exists')
     }
@@ -1822,7 +1822,7 @@ function addRemoteApplication (sessionData, limitedRemoteApplication, network, m
         makeApplicationDataKey(existingApplication.id, 'appNwkId'),
         remoteApplication.id)
     }
-    resolve({localApplication: existingApplication.id, remoteApplication: remoteApplication.id})
+    resolve({ localApplication: existingApplication.id, remoteApplication: remoteApplication.id })
   })
 }
 
@@ -1894,7 +1894,7 @@ function addRemoteDevice (sessionData, limitedRemoteDevice, network, application
       remoteDevice = await getRemoteDeviceActivation(network, remoteDevice, sessionData.connection)
     }
 
-    let existingDevice = await modelAPI.devices.retrieveDevices({search: remoteDevice.name})
+    let existingDevice = await modelAPI.devices.retrieveDevices({ search: remoteDevice.name })
     appLogger.log(existingDevice)
     if (existingDevice.totalCount > 0) {
       existingDevice = existingDevice.records[0]
@@ -1906,7 +1906,7 @@ function addRemoteDevice (sessionData, limitedRemoteDevice, network, application
       appLogger.log('Created ' + existingDevice.name)
     }
 
-    let existingDeviceNTL = await modelAPI.deviceNetworkTypeLinks.retrieveDeviceNetworkTypeLinks({deviceId: existingDevice.id})
+    let existingDeviceNTL = await modelAPI.deviceNetworkTypeLinks.retrieveDeviceNetworkTypeLinks({ deviceId: existingDevice.id })
     if (existingDeviceNTL.totalCount > 0) {
       appLogger.log(existingDevice.name + ' link already exists')
     }

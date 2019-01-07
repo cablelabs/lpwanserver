@@ -1,9 +1,9 @@
 // Configuration access.
-var nconf = require('nconf');
+var nconf = require('nconf')
 
-//******************************************************************************
+//* *****************************************************************************
 // Initialize the REST library
-//******************************************************************************
+//* *****************************************************************************
 
 // Class constructor.
 //
@@ -14,10 +14,10 @@ var nconf = require('nconf');
 // specific implementation prior to starting the system for processing requests.
 //
 // implPath - The subdirectory to get the dao implementation from.
-function Initializer( ) {
-    this.impl = new require( './dao/' +
-                             nconf.get( "impl_directory" ) +
-                             '/initializer.js');
+function Initializer () {
+  this.impl = require('./dao/' +
+                             nconf.get('impl_directory') +
+                             '/initializer.js')
 }
 
 // Initializes the implementation for the dao objects.
@@ -25,8 +25,8 @@ function Initializer( ) {
 // Unlike most methods in the model interfaces, this method is expected to
 // perform its functionality within the scope of this call.  In other words,
 // this method does not return a Promise to be run.  It just runs.
-Initializer.prototype.init = function() {
-    return this.impl.init();
-};
+Initializer.prototype.init = function () {
+  return this.impl.init()
+}
 
-module.exports = Initializer;
+module.exports = Initializer

@@ -1,5 +1,5 @@
 // Logging
-var appLogger = require('./lib/appLogger.js')
+const appLogger = require('./lib/appLogger.js')
 
 var restServer
 var modelAPI
@@ -70,13 +70,13 @@ exports.initialize = function (app, server) {
     }
 
     if (req.query.limit) {
-      var limitInt = parseInt(req.query.limit)
+      var limitInt = parseInt(req.query.limit, 10)
       if (!isNaN(limitInt)) {
         options.limit = limitInt
       }
     }
     if (req.query.offset) {
-      var offsetInt = parseInt(req.query.offset)
+      var offsetInt = parseInt(req.query.offset, 10)
       if (!isNaN(offsetInt)) {
         options.offset = offsetInt
       }
@@ -117,12 +117,12 @@ exports.initialize = function (app, server) {
     restServer.fetchCompany],
   function (req, res, next) {
     var id = req.params.id
-    if ((req.company.type != modelAPI.companies.COMPANY_ADMIN) &&
-             (req.company.id != id)) {
+    if ((req.company.type !== modelAPI.companies.COMPANY_ADMIN) &&
+             (req.company.id !== id)) {
       restServer.respond(res, 403)
       return
     }
-    modelAPI.companies.retrieveCompany(parseInt(req.params.id)).then(function (co) {
+    modelAPI.companies.retrieveCompany(parseInt(req.params.id, 10)).then(function (co) {
       co['type'] = modelAPI.companies.reverseTypes[co['type']]
       restServer.respondJson(res, null, co)
     })
@@ -212,7 +212,7 @@ exports.initialize = function (app, server) {
     restServer.isAdmin],
   function (req, res, next) {
     var data = {}
-    data.id = parseInt(req.params.id)
+    data.id = parseInt(req.params.id, 10)
     // We'll start by getting the company, as a read is much less expensive
     // than a write, and then we'll be able to tell if anything really
     // changed before we even try to write.
@@ -221,14 +221,14 @@ exports.initialize = function (app, server) {
       // can change.  Make sure they actually differ, though.
       var changed = 0
       if ((req.body.name) &&
-                 (req.body.name != company.name)) {
+                 (req.body.name !== company.name)) {
         data.name = req.body.name
         ++changed
       }
 
       if (req.body.type) {
         var type = modelAPI.companies.types[ req.body.type ]
-        if (type != company.type) {
+        if (type !== company.type) {
           data.type = type
           ++changed
         }
@@ -237,15 +237,15 @@ exports.initialize = function (app, server) {
       // In order to update a company record, the logged in user must
       // either be part of the admin company, or a company admin for the
       // company.
-      if ((req.company.type != modelAPI.companies.COMPANY_ADMIN) &&
-                 (req.user.companyId != data.id)) {
+      if ((req.company.type !== modelAPI.companies.COMPANY_ADMIN) &&
+                 (req.user.companyId !== data.id)) {
         // Nope.  Not allowed.
         restServer.respond(res, 403)
         return
       }
 
       // Ready.  DO we have anything to actually change?
-      if (changed == 0) {
+      if (changed === 0) {
         // No changes.  But returning 304 apparently causes Apache to strip
         // CORS info, causing the browser to throw a fit.  So just say,
         // "Yeah, we did that.  Really.  Trust us."
@@ -282,7 +282,7 @@ exports.initialize = function (app, server) {
     restServer.fetchCompany,
     restServer.isAdminCompany],
   function (req, res, next) {
-    var id = parseInt(req.params.id)
+    let id = parseInt(req.params.id, 10)
     modelAPI.companies.deleteCompany(id).then(function () {
       restServer.respond(res, 204)
     })
