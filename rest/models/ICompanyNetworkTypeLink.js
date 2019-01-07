@@ -18,7 +18,7 @@ var modelAPI
 // Object).
 //
 function CompanyNetworkTypeLink (server) {
-  this.impl = new require('./dao/' +
+  this.impl = require('./dao/' +
                              nconf.get('impl_directory') +
                              '/companyNetworkTypeLinks.js')
 

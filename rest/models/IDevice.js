@@ -141,7 +141,7 @@ Device.prototype.fetchDeviceApplication = function (req, res, next) {
 // applicationId in the request body to get the application for the device we
 // want to create.
 Device.prototype.fetchApplicationForNewDevice = function (req, res, next) {
-  modelAPI.applications.retrieveApplication(parseInt(req.body.applicationId))
+  modelAPI.applications.retrieveApplication(parseInt(req.body.applicationId, 10))
     .then(function (app) {
       req.application = app
       next()

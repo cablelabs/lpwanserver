@@ -15,7 +15,7 @@ var nconf = require('nconf')
 //
 // implPath - The subdirectory to get the dao implementation from.
 function Initializer () {
-  this.impl = new require('./dao/' +
+  this.impl = require('./dao/' +
                              nconf.get('impl_directory') +
                              '/initializer.js')
 }

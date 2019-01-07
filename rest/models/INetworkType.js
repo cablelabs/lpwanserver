@@ -18,7 +18,7 @@ var httpError = require('http-errors')
 // implPath - The subdirectory to get the dao implementation from.
 //
 function NetworkType () {
-  this.impl = new require('./dao/' +
+  this.impl = require('./dao/' +
                              nconf.get('impl_directory') +
                              '/networkTypes.js')
   // Maps a type name to a numeric value.

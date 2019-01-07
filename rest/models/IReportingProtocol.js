@@ -5,7 +5,7 @@ var nconf = require('nconf')
 // The ReportingProtocol interface.
 //* *****************************************************************************
 function ReportingProtocol () {
-  this.impl = new require('./dao/' +
+  this.impl = require('./dao/' +
                              nconf.get('impl_directory') +
                              '/reportingProtocols.js')
 }

@@ -19,7 +19,7 @@ var modelAPI
 // server - The modelAPI object, allowing use of the other APIs.
 //
 function DeviceProfile (server) {
-  this.impl = new require('./dao/' +
+  this.impl = require('./dao/' +
                              nconf.get('impl_directory') +
                              '/deviceProfiles.js')
 

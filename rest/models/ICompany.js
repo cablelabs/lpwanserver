@@ -24,7 +24,7 @@ var modelAPI
 // implPath - The subdirectory to get the dao implementation from.
 //
 function Company (server) {
-  this.impl = new require('./dao/' +
+  this.impl = require('./dao/' +
                              nconf.get('impl_directory') +
                              '/companies.js')
   this.COMPANY_ADMIN = this.impl.COMPANY_ADMIN

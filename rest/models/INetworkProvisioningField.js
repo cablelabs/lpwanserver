@@ -10,7 +10,7 @@ var provisioningTables = {}
 var reverseProvisioningTables = {}
 
 function NetworkProvisioningField () {
-  this.impl = new require('./dao/' +
+  this.impl = require('./dao/' +
                              nconf.get('impl_directory') +
                              '/networkProvisioningFields.js')
 
