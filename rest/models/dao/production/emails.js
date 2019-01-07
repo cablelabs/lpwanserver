@@ -13,7 +13,8 @@ var hostUrl = 'localhost'
 var h = os.hostname()
 
 dns.lookup(h, { hints: dns.ADDRCONFIG }, function (err, ip) {
-  dns.lookupService(ip, 0, function (err, hostname, service) {
+  if (err) throw err
+  dns.lookupService(ip, 0, function (err, hostname) {
     if (err) {
       appLogger.log(err)
       return
@@ -85,16 +86,15 @@ Thank you.`
 
 exports.verifyEmail = function (oldemail, newemail, username, uuid) {
   // Set up the url root
-  var urlRoot = 'https:\/\/' + hostUrl
+  var urlRoot = 'https://' + hostUrl
   // First send an email to the old account
   if (oldemail) {
     var emailMsgOld = emailCustomize(verifyNewEmailToOldAccount,
       username,
       '', // old email cannot accept change.
-      urlRoot +
-                                          '\/portal\/emailverify?uuid=' +
-                                          uuid +
-                                          '&type=reject&source=old'
+      urlRoot + '/portal/emailverify?uuid=' +
+                          uuid +
+                          '&type=reject&source=old'
     )
     var emailOptionsOld = {
       from: emailMsgOld.from,
@@ -119,11 +119,11 @@ exports.verifyEmail = function (oldemail, newemail, username, uuid) {
   var emailMsgNew = emailCustomize(verifyNewEmailToNewAccount,
     username,
     urlRoot +
-                                      '\/portal\/emailverify?uuid=' +
+                                      '/portal/emailverify?uuid=' +
                                       uuid +
                                       '&type=accept&source=new',
     urlRoot +
-                                      '\/portal\/emailverify?uuid=' +
+                                      '/portal/emailverify?uuid=' +
                                       uuid +
                                       '&type=reject&source=new'
   )
@@ -146,7 +146,7 @@ exports.verifyEmail = function (oldemail, newemail, username, uuid) {
   })
 }
 
-exports.notifyAdminsAboutReject = function (user, source) {
+exports.notifyAdminsAboutReject = function (user) {
   var subject = reportEmailReject.subject
     .replace('%USERNAME%', user.username)
   var textMessage = reportEmailReject.textMessage
