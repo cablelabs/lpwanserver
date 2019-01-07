@@ -1,8 +1,8 @@
 // Database implementation.
-var db = require('../../../lib/dbsqlite.js')
+const db = require('../../../lib/dbsqlite.js')
 
 // Error reporting
-var httpError = require('http-errors')
+const httpError = require('http-errors')
 
 //* *****************************************************************************
 // PasswordPolicies database table.
@@ -124,18 +124,5 @@ exports.retrievePasswordPolicies = function (companyId) {
         resolve(rows)
       }
     })
-  })
-}
-
-//* *****************************************************************************
-// Other functions.
-//* *****************************************************************************
-
-exports.passwordValidator = function (companyId, password) {
-  return new Promise(function (resolve, reject) {
-    // Get the rules from the passwordPolicies table
-
-    // Verify that the password passes each rule.
-
   })
 }
