@@ -743,7 +743,7 @@ module.exports.addApplication = async function addApplication (session, network,
     appLogger.log('Failed to get required data for addApplication: ' + applicationId, 'error')
     throw err
   }
-  let ttnApplication = deNormalizeApplicationData(applicationData.networkSettings)
+  let ttnApplication = deNormalizeApplicationData(applicationData.networkSettings, application)
   try {
     const body = await TTNRequest(session.connection.access_token, {
       method: 'POST',
@@ -1622,13 +1622,13 @@ function normalizeApplicationData (remoteApplication, remoteApplicationMeta, net
   return normalized
 }
 
-function deNormalizeApplicationData (remoteApplication) {
+function deNormalizeApplicationData (remoteApplication, application) {
   let magicId = remoteApplication.id + '-lpwanserver-' + uuid()
   magicId = magicId.substr(0, 36)
   let ttnApplication = {
     ttnApplicationMeta: {
       id: magicId,
-      name: remoteApplication.name,
+      name: application.name,
       rights: [
         'settings',
         'delete',

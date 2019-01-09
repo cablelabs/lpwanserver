@@ -2068,7 +2068,8 @@ module.exports.addApplication = function (sessionData, network, applicationId, d
       options.json = deNormalizeApplicationData(
         Object.assign({}, application, applicationData.networkSettings),
         coSPId,
-        coNetworkId
+        coNetworkId,
+        application
       )
       options.agentOptions = {
         'secureProtocol': 'TLSv1_2_method',
@@ -2201,7 +2202,7 @@ module.exports.updateApplication = function (sessionData, network, applicationId
     //   'payloadDecoderScript': '',
     //   'payloadEncoderScript': ''
     // }
-    options.json = deNormalizeApplicationData(applicationData.networkSettings, coSPId, coNetworkId)
+    options.json = deNormalizeApplicationData(applicationData.networkSettings, coSPId, coNetworkId, application)
 
     options.agentOptions = {
       'secureProtocol': 'TLSv1_2_method',
@@ -3285,7 +3286,7 @@ function normalizeApplicationData (remoteApplication) {
   return normalized
 }
 
-function deNormalizeApplicationData (remoteApplication, serviceProfile, organizationId) {
+function deNormalizeApplicationData (remoteApplication, serviceProfile, organizationId, application) {
   let loraV1ApplicationData = {
     'description': remoteApplication.description,
     'id': remoteApplication.id,
@@ -3295,6 +3296,9 @@ function deNormalizeApplicationData (remoteApplication, serviceProfile, organiza
     'payloadDecoderScript': remoteApplication.payloadDecoderScript,
     'payloadEncoderScript': remoteApplication.payloadEncoderScript,
     'serviceProfileID': serviceProfile
+  }
+  if (application && application.description) {
+    loraV1ApplicationData.description = application.description
   }
   appLogger.log(remoteApplication, 'info')
   appLogger.log(loraV1ApplicationData, 'info')
