@@ -2,10 +2,208 @@
 
 ## API
 
-`/api/ingest/:applicationId/:networkId`
+### Uplink data from a Device via a Network Server
+
+```http
+POST /api/uplink/:applicationId/:networkId
+```
+```json
+ {
+    applicationID: 'string',
+    applicationName: 'string',
+    deviceName: 'string',
+    devEUI: 'string, base64',
+    rxInfo:[
+    {
+        gatewayID: 'string, base64',
+        name: 'string',
+        time: 'string, time-ISO',
+        rssi: 'number',
+        loRaSNR: 'number',
+        location:{
+            latitude: 'number',
+            longitude: 'number',
+            altitude: 'number'
+         }
+    }],
+    txInfo:{
+        frequency: 'number',
+        dr: 'number'
+    },
+    adr: 'boolean',
+    fCnt: 'number',
+    fPort: 'number',
+    data:'string, base64 e.g. eyJXRCI6ICJOVyIsICJIIC...',
+  }
+```
+### Downlink to All Devices
+
+```http
+POST /api/downlink/:applicationId
+```
+```json
+{
+  "deviceQueueItem": {
+    "confirmed": true,
+    "data": "string",
+    "fCnt": 0,
+    "fPort": 0,
+    "jsonObject": "string"
+  }
+}
+```
+
+### Downlink to a Single Device
+
+```http
+POST /api/downlink/:applicationId/:devEUI
+```
+
+```json
+{
+  "deviceQueueItem": {
+    "confirmed": true,
+    "data": "string",
+    "devEUI": "string",
+    "fCnt": 0,
+    "fPort": 0,
+    "jsonObject": "string"
+  }
+}
+```
+### Application Server Payload
+
+*Note Application Server API is application dependent*
+
+  ```json
+  {
+    applicationID: 'string',
+    applicationName: 'string',
+    deviceName: 'string',
+    devEUI: 'string, base64',
+    rxInfo:[
+    {
+        gatewayID: 'string, base64',
+        name: 'string',
+        time: 'string, time-ISO',
+        rssi: 'number',
+        loRaSNR: 'number',
+        location:{
+            latitude: 'number',
+            longitude: 'number',
+            altitude: 'number'
+         }
+    }],
+    txInfo:{
+        frequency: 'number',
+        dr: 'number'
+    },
+    adr: 'boolean',
+    fCnt: 'number',
+    fPort: 'number',
+    data:'string, base64 e.g. eyJXRCI6ICJOVyIsICJIIjogIjAiLCAidGltZSI6IC...',
+  }
+  ```
 
 
-## Incoming Data
+The purpose of the network is to see if it is enabled or not.  If not, the data is dropped
+The purpose of the application is 
+ 1 To find out if the application is running (if no drop data)
+ 2 To find out the integration information
+
+Requirements
+
+- Should support Downlink as well as uplink
+- Should allow a single application to support multiple integrations
+- Should support payload analysis for trouble shooting in UI
+
+## Proposed Flow
+
+### Uplink
+
+```sequence
+NetworkServer->applicationService: /api/uplink\n/:appId/:nwId
+applicationService->networkManager: retrieve network
+networkManager->DB: fetch network
+DB-->networkManager: network
+networkManager->applicationService: network
+Note Left of applicationService: If network\n is enabled
+applicationService->applicationManager: passData
+applicationManager->DB: fetch Application
+DB-->applicationManager: application
+Note Left of applicationManager: If application\nis running
+Note Right of applicationManager: For each integration
+applicationManager->reportingHandler: report
+reportingHandler->ApplicationServer: POST application url
+ApplicationServer-->reportingHandler: status
+reportingHandler-->applicationManager: status
+Note Left of applicationManager: Combine all\n integration status
+applicationManager-->applicationService: status
+applicationService-->NetworkServer: status
+```
+
+### Downlink to Single Device
+
+```sequence
+ApplicationServer->applicationService: /api/downlink\n/:appId/:deviceEUI
+applicationService->applicationManager: pass downlink
+applicationManager->DB: fetch Application
+DB-->applicationManager: application
+Note Left of applicationManager: If application\nis running
+Note Left of applicationManager: For each network
+applicationManager->networkManager: retrieve network
+networkManager->DB: fetch network
+DB-->networkManager: network
+networkManager->applicationManager: network
+Note Left of applicationManager: If network\n is enabled
+applicationManager->reportingHandler: enqueu
+reportingHandler->NetworkServer: POST /api/devices\n/:devEUI/queue
+NetworkServer-->reportingHandler: status
+reportingHandler-->applicationManager: status
+Note Left of applicationManager: Combine all\nnetwork status
+applicationManager-->applicationService: status
+applicationService-->ApplicationServer: status
+```
+
+### Downlink to All Devices
+
+```sequence
+ApplicationServer->applicationService: /api/downlink/:appId
+applicationService->applicationManager: pass downlink
+applicationManager->DB: fetch Application
+DB-->applicationManager: application
+Note Left of applicationManager: If application\nis running
+applicationManager->deviceManager: fetch all application devices
+deviceManager->DB: fetch devices where appId
+DB-->deviceManager: devices
+deviceManager->applicationManager: devices
+Note Left of applicationManager: For each network
+applicationManager->networkManager: retrieve network
+networkManager->DB: fetch network
+DB-->networkManager: network
+networkManager->applicationManager: network
+Note Left of applicationManager: If network\n is enabled
+Note Right of applicationManager: For each device
+applicationManager->reportingHandler: enqueu
+reportingHandler->NetworkServer: POST /api/devices\n/:devEUI/queue
+NetworkServer-->reportingHandler: status
+reportingHandler-->applicationManager: status
+Note Right of applicationManager: Combine all\ndevice status
+Note Left of applicationManager: Combine all\nnetwork status
+applicationManager-->applicationService: status
+applicationService-->ApplicationServer: status
+```
+
+
+
+## Current Implementation
+### API
+
+Uplink data from a Device via a Network Server
+
+```http
+POST /api/ingest/:applicationId/:networkId
+```
 
 ```json
  {
@@ -38,34 +236,9 @@
 
 ```
 
-#Proposed New Flow
-I think that the incoming data is sufficient for the application's purpose.  Therefore, in order to minimize the DB lookups,
-I would say only pull in the network and the application.  
+### Current Flow
 
-The purpose of the network is to see if it is enabled or not.  If not, the data is dropped
-The purpose of the application is 
- 1 To find out if the application is running (if no drop data)
- 2 To find out the integration information
-
-# Proposed Flow
-```sequence
-NetworkServer->restApplication: /api/ingest/:appId/:nwId
-restApplication->INetwork: retrieve network
-INetwork->DB: fetch network
-DB-->INetwork: network
-INetwork->restApplication: network
-Note Left of restApplication: If network\n is enabled
-restApplication->IApplication: passData
-IApplication->DB: fetch Application
-DB-->IApplication: application
-Note Left of IApplication: If application\nis running
-IApplication->reportingHandler: report
-reportingHandler->request: POST application url
-```
-
-
-
-# Current Flow
+*Note that Downlinks are not supported in the current codebase*
 
 ```sequence
 NetworkServer->restApplication: /api/ingest/:appId/:nwId
@@ -116,7 +289,9 @@ reportingHandler->request: POST application url
 
 
 
-# Current Post Data
+### Application Server Payload
+
+*Note Application Server API is application dependent*
 
   ```json
   {
