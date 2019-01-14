@@ -288,3 +288,118 @@ applicationManager-->applicationService: status
 applicationService-->client: status
 ```
 
+## Current Flow
+
+### New Application
+
+```sequence
+client->restApplication: POST\n/api/applications
+restApplication->IApplication: createApplication
+IApplication->dao.application: createApplication
+dao.application->DB: insertRecord
+DB-->dao.application: record
+dao.application-->IApplication: record
+IApplication-->restApplication: record
+restApplication-->client: record.id
+client->restApplicationNetworkTypeLinks: POST\n/api/applicationNetworkTypeLink
+restApplicationNetworkTypeLinks->IApplicationNetworkTypeLinks: createApplicationNetworkTypeLink
+IApplicationNetworkTypeLinks->dao.applicationNetworkTypeLinks:createApplicationNetworkTypeLink
+dao.applicationNetworkTypeLinks->DB: insert
+DB-->dao.applicationNetworkTypeLinks: record
+dao.applicationNetworkTypeLinks-->IApplicationNetworkTypeLinks:record
+IApplicationNetworkTypeLinks->networkTypeAPI: addApplication
+networkTypeAPI->networkTypeAPI: createPromiseOperationForNetworksOfType
+networkTypeAPI->NetworkProtocolDataAccess: getNetworksOfType
+NetworkProtocolDataAccess->INetworks: fetch networks
+INetworks->dao.networks: fetch networks
+dao.networks->DB: find networks
+DB-->dao.networks: networks
+dao.networks-->INetworks: networks
+INetworks-->NetworkProtocolDataAccess: networks
+NetworkProtocolDataAccess-->networkTypeAPI: networks
+Note left of networkTypeAPI: For each network
+networkTypeAPI->networkProtocols: addApplication
+networkProtocols->networkProtocols: getProtocol
+networkProtocols->INetworkProtocols: fetch
+INetworkProtocols->dao.networkProtocols: fetch 
+dao.networkProtocols->DB: find networkProtocol
+DB-->dao.networkProtocols: networkProtocol
+dao.networkProtocols-->INetworkProtocols: networkProtocol
+INetworkProtocols-->networkProtocols: networkProtocol
+networkProtocols->LoRaServerV2: getApplicationAccessAccount
+LoRaServerV2->NetworkProtocolDataAccess: getCompany
+NetworkProtocolDataAccess->ICompany: fetch company
+ICompany->dao.company: fetch company
+dao.company->DB: find company
+DB-->dao.company: company
+dao.company-->ICompany: company
+ICompany-->NetworkProtocolDataAccess: company
+NetworkProtocolDataAccess-->LoRaServerV2: company
+LoRaServerV2->NetworkProtocolDataAccess: getProtocolDataForKey
+NetworkProtocolDataAccess->IProtocolData: fetch ProtocolData
+IProtocolData->dao.ProtocolData: fetch ProtocolData
+dao.ProtocolData->DB: find ProtocolData
+DB-->dao.ProtocolData: sd
+dao.ProtocolData-->IProtocolData: sd
+IProtocolData-->NetworkProtocolDataAccess: sd
+NetworkProtocolDataAccess-->LoRaServerV2: sd
+LoRaServerV2->NetworkProtocolDataAccess: getProtocolDataForKey
+NetworkProtocolDataAccess->IProtocolData: fetch ProtocolData
+IProtocolData->dao.ProtocolData: fetch ProtocolData
+dao.ProtocolData->DB: find ProtocolData
+DB-->dao.ProtocolData: kd
+dao.ProtocolData-->IProtocolData: kd
+IProtocolData-->NetworkProtocolDataAccess: kd
+NetworkProtocolDataAccess-->LoRaServerV2: kd
+LoRaServerV2->NetworkProtocolDataAccess: access
+NetworkProtocolDataAccess-->LoRaServerV2: login data
+LoRaServerV2-->networkProtocols: login data
+networkProtocols->LoRaServerV2: addApplication
+LoRaServerV2->NetworkProtocolDataAccess: getApplicationById
+NetworkProtocolDataAccess-->IApplication: getApplication
+IApplication->dao.application: fetch application
+dao.application->DB: find application
+DB-->dao.application: application
+dao.application-->IApplication: application
+IApplication-->NetworkProtocolDataAccess: application
+NetworkProtocolDataAccess->LoRaServerV2: application
+LoRaServerV2->NetworkProtocolDataAccess: getApplicationNTL
+NetworkProtocolDataAccess-->IApplicationNetworkTypeLinks: getApplicationNTL
+IApplicationNetworkTypeLinks->dao.applicationNetworkTypeLinks: fetch applicationNTL
+dao.applicationNetworkTypeLinks->DB: find applicationNTL
+DB-->dao.applicationNetworkTypeLinks: applicationNTL
+dao.applicationNetworkTypeLinks-->IApplicationNetworkTypeLinks: applicationNTL
+IApplicationNetworkTypeLinks-->NetworkProtocolDataAccess: applicationNTL
+NetworkProtocolDataAccess->LoRaServerV2: applicationNTL
+LoRaServerV2->NetworkProtocolDataAccess: getProtocolDataForKey
+NetworkProtocolDataAccess->IProtocolData: fetch ProtocolData
+IProtocolData->dao.ProtocolData: fetch ProtocolData
+dao.ProtocolData->DB: find ProtocolData
+DB-->dao.ProtocolData: coNwkId
+dao.ProtocolData-->IProtocolData: coNwkId
+IProtocolData-->NetworkProtocolDataAccess: coNwkId
+NetworkProtocolDataAccess-->LoRaServerV2: coNwkId
+LoRaServerV2->NetworkProtocolDataAccess: getProtocolDataForKey
+NetworkProtocolDataAccess->IProtocolData: fetch ProtocolData
+IProtocolData->dao.ProtocolData: fetch ProtocolData
+dao.ProtocolData->DB: find ProtocolData
+DB-->dao.ProtocolData: coSPId
+dao.ProtocolData-->IProtocolData: coSPId
+IProtocolData-->NetworkProtocolDataAccess: coSPId
+NetworkProtocolDataAccess-->LoRaServerV2: coSPId
+LoRaServerV2->LoRaServerV2: translate data to LoRaV2
+LoRaServerV2->NetworkServer: POST /api/applications
+LoRaServerV2->NetworkProtocolDataAccess: putProtocolDataForKey
+NetworkProtocolDataAccess->IProtocolData: create ProtocolData
+IProtocolData->dao.ProtocolData: create ProtocolData
+dao.ProtocolData->DB: insert ProtocolData
+dao.ProtocolData-->IProtocolData: ok
+IProtocolData-->NetworkProtocolDataAccess: ok
+NetworkProtocolDataAccess-->LoRaServerV2: ok
+LoRaServerV2-->networkProtocols: status
+networkProtocols-->networkTypeAPI: status
+networkTypeAPI-->IApplicationNetworkTypeLinks: status
+IApplicationNetworkTypeLinks-->restApplicationNetworkTypeLinks: status
+restApplicationNetworkTypeLinks-->client: status
+```
+
