@@ -22,23 +22,26 @@ Body
 
 ```json
 {
-    name: appName,
-    description: appDescription,
-    payloadCodec: string, 
-    payloadDecoderScript: string,
-    payloadEncoderScript: string,
-    validationScript: string,
-    supportsDownLink: boolean,
-	running: boolean,
-    applicationEUI: string,
-    customerId: string,
-    integrations: [
+  "name": "appName",
+  "description": "appDescription",
+  "payloadCodec": "string",
+  "payloadDecoderScript": "string",
+  "payloadEncoderScript": "string",
+  "validationScript": "string",
+  "supportsDownLink": "boolean",
+  "running": "boolean",
+  "applicationEUI": "string",
+  "customerId": "string",
+  "integrations": [
     {
-    	baseUrl: baseUrl,
-    	reportingProtocolId: reportingProtocolId
+      "baseUrl": "baseUrl",
+      "reportingProtocolId": "reportingProtocolId"
     }
-    ],
-    networkDeployments: [networkId1, networkId2, ...]
+  ],
+  "networkDeployments": [
+    "networkId1",
+    "networkId2"
+  ]
 }
 ```
 
@@ -58,32 +61,32 @@ Returns 200
 
 ```json
 {
-    id: string,
-    name: appName,
-    description: appDescription,
-    payloadCodec: string,
-    payloadDecoderScript: string,
-    payloadEncoderScript: string,
-    validationScript: string,
-    canDownLink: boolean,
-	running: boolean,
-    applicationEUI: string,
-    customerId: string,
-    integrations: [
+  "id": "string",
+  "name": "appName",
+  "description": "appDescription",
+  "payloadCodec": "string",
+  "payloadDecoderScript": "string",
+  "payloadEncoderScript": "string",
+  "validationScript": "string",
+  "supportsDownLink": "boolean",
+  "running": "boolean",
+  "applicationEUI": "string",
+  "customerId": "string",
+  "integrations": [
     {
-    	baseUrl: baseUrl,
-    	reportingProtocolId: reportingProtocolId
+      "baseUrl": "baseUrl",
+      "reportingProtocolId": "reportingProtocolId"
     }
-    ],
-    networkDeployments: [
+  ],
+  "networkDeployments": [
     {
-    	networkId: string,
-        remoteApplicationId: string,
-        serviceProfileId: string,
-        organizationId: string,
-        securityData: {
-        	accessToken: string,
-        	refreshToken: string
+    	"networkId": "string",
+        "remoteApplicationId": "string",
+        "serviceProfileId": "string",
+        "organizationId": "string",
+        "securityData": {
+        	"accessToken": "string",
+        	"refreshToken": "string"
     	}
     }
     ]
@@ -100,16 +103,16 @@ Returns 200
 
 ```json
 {
-    returned: number,
-    avalible: number,
-    results: [
-	{
-        id: string,
-        name: appName,
-        description: appDescription,
-        running: boolean,
-        customerId: string,
-        networkDeployments: [networkId1, networkId2]
+  "returned": "number",
+  "avalible": "number",
+  "results": [
+    {
+      "id": "string",
+      "name": "appName",
+      "description": "appDescription",
+      "running": "boolean",
+      "customerId": "string",
+      "networkDeployments": ["networkId1", "networkId2"]
     }]
 }
 ```
@@ -126,24 +129,26 @@ Body
 
 ```json
 {
-    id: string,
-    name: appName,
-    description: appDescription,
-    payloadCodec: string,
-    payloadDecoderScript: string,
-    payloadEncoderScript: string,
-    validationScript: string,
-    canDownLink: boolean,
-	running: boolean,
-    applicationEUI: string,
-    customerId: string,
-    integrations: [
+  "name": "appName",
+  "description": "appDescription",
+  "payloadCodec": "string",
+  "payloadDecoderScript": "string",
+  "payloadEncoderScript": "string",
+  "validationScript": "string",
+  "supportsDownLink": "boolean",
+  "running": "boolean",
+  "applicationEUI": "string",
+  "customerId": "string",
+  "integrations": [
     {
-    	baseUrl: baseUrl,
-    	reportingProtocolId: reportingProtocolId
+      "baseUrl": "baseUrl",
+      "reportingProtocolId": "reportingProtocolId"
     }
-    ],
-    networkDeployments: [networkId1, networkId2]
+  ],
+  "networkDeployments": [
+    "networkId1",
+    "networkId2"
+  ]
 }
 ```
 
@@ -151,32 +156,32 @@ Return 200
 
 ```json
 {
-    id: string,
-    name: appName,
-    description: appDescription,
-    payloadCodec: string,
-    payloadDecoderScript: string,
-    payloadEncoderScript: string,
-    validationScript: string,
-    canDownLink: boolean,
-	running: boolean,
-    applicationEUI: string,
-    customerId: string,
-    integrations: [
+  "id": "string",
+  "name": "appName",
+  "description": "appDescription",
+  "payloadCodec": "string",
+  "payloadDecoderScript": "string",
+  "payloadEncoderScript": "string",
+  "validationScript": "string",
+  "supportsDownLink": "boolean",
+  "running": "boolean",
+  "applicationEUI": "string",
+  "customerId": "string",
+  "integrations": [
     {
-    	baseUrl: baseUrl,
-    	reportingProtocolId: reportingProtocolId
+      "baseUrl": "baseUrl",
+      "reportingProtocolId": "reportingProtocolId"
     }
-    ],
-    networkDeployments: [
+  ],
+  "networkDeployments": [
     {
-    	networkId: string,
-        remoteApplicationId: string,
-        serviceProfileId: string,
-        organizationId: string,
-        securityData: {
-        	accessToken: string,
-        	refreshToken: string
+    	"networkId": "string",
+        "remoteApplicationId": "string",
+        "serviceProfileId": "string",
+        "organizationId": "string",
+        "securityData": {
+        	"accessToken": "string",
+        	"refreshToken": "string"
     	}
     }
     ]
