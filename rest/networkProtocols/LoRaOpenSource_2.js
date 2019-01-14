@@ -2631,7 +2631,11 @@ module.exports.addDeviceProfile = function (sessionData, network, deviceProfileI
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ' + sessionData.connection
       }
-      options.json = deNormalizeDeviceProfileData(deviceProfile.networkSettings, networkServerId, orgId)
+      options.json = deNormalizeDeviceProfileData(
+        Object.assign({}, deviceProfile, deviceProfile.networkSettings),
+        networkServerId,
+        orgId
+      )
       options.agentOptions = {
         'secureProtocol': 'TLSv1_2_method',
         'rejectUnauthorized': false
@@ -3496,6 +3500,7 @@ function deNormalizeDeviceProfileData (remoteDeviceProfile, networkServerId, org
       supportsClassC: remoteDeviceProfile.supportsClassC,
       supportsJoin: remoteDeviceProfile.supportsJoin,
       name: remoteDeviceProfile.name,
+      description: remoteDeviceProfile.description,
       networkServerID: networkServerId,
       organizationID: organizationId
     }
