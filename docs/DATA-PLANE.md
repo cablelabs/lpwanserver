@@ -1,6 +1,23 @@
 # DATA PLANE
 
-## API
+## Notes and Ideas
+
+The purpose of the network is to see if it is enabled or not.  If not, the data is dropped
+
+Ideally, the application network intercection would conatin this so we can save the network call
+
+The purpose of the application is 
+ 1 To find out if the application is running (if no drop data)
+ 2 To find out the integration information
+
+Requirements
+
+- Should support Downlink as well as uplink
+- Should allow a single application to support multiple integrations
+- Should allow a single device on multiple applications (?) *Not sure about this*
+- Should support payload analysis for trouble shooting in UI
+
+## API and Data Shape
 
 ### Uplink data from a Device via a Network Server
 
@@ -43,12 +60,10 @@ POST /api/downlink/:applicationId
 ```
 ```json
 {
-  "deviceQueueItem": {
-    "confirmed": true,
+  "multicastQueueItem": {
     "data": "string",
     "fCnt": 0,
     "fPort": 0,
-    "jsonObject": "string"
   }
 }
 ```
@@ -105,18 +120,6 @@ POST /api/downlink/:applicationId/:devEUI
   }
   ```
 
-
-The purpose of the network is to see if it is enabled or not.  If not, the data is dropped
-The purpose of the application is 
- 1 To find out if the application is running (if no drop data)
- 2 To find out the integration information
-
-Requirements
-
-- Should support Downlink as well as uplink
-- Should allow a single application to support multiple integrations
-- Should support payload analysis for trouble shooting in UI
-
 ## Proposed Flow
 
 ### Uplink
@@ -167,28 +170,24 @@ applicationService-->ApplicationServer: status
 
 ### Downlink to All Devices
 
+*Note we assume the multicast group for the application has been created with groupId = application.name*
+
 ```sequence
 ApplicationServer->applicationService: /api/downlink/:appId
 applicationService->applicationManager: pass downlink
 applicationManager->DB: fetch Application
 DB-->applicationManager: application
 Note Left of applicationManager: If application\nis running
-applicationManager->deviceManager: fetch all application devices
-deviceManager->DB: fetch devices where appId
-DB-->deviceManager: devices
-deviceManager->applicationManager: devices
 Note Left of applicationManager: For each network
 applicationManager->networkManager: retrieve network
 networkManager->DB: fetch network
 DB-->networkManager: network
 networkManager->applicationManager: network
 Note Left of applicationManager: If network\n is enabled
-Note Right of applicationManager: For each device
-applicationManager->reportingHandler: enqueu
-reportingHandler->NetworkServer: POST /api/devices\n/:devEUI/queue
+applicationManager->reportingHandler: enqueue
+reportingHandler->NetworkServer: POST /api/multicast-groups/{app.name}/queue
 NetworkServer-->reportingHandler: status
 reportingHandler-->applicationManager: status
-Note Right of applicationManager: Combine all\ndevice status
 Note Left of applicationManager: Combine all\nnetwork status
 applicationManager-->applicationService: status
 applicationService-->ApplicationServer: status
