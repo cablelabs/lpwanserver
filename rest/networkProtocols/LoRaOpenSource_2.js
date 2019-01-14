@@ -1417,7 +1417,7 @@ module.exports.pushDeviceProfiles = function (sessionData, network, modelAPI, da
     let existingDeviceProfiles = await modelAPI.deviceProfiles.retrieveDeviceProfiles()
     let promiseList = []
     for (let index = 0; index < existingDeviceProfiles.records.length; index++) {
-      promiseList.push(me.pushDeviceProfile(sessionData, network, existingDeviceProfiles.records[index], dataAPI))
+      promiseList.push(me.pushDeviceProfile(sessionData, network, existingDeviceProfiles.records[index], dataAPI, false))
     }
     Promise.all(promiseList)
       .then(pushedResources => {
@@ -1431,7 +1431,7 @@ module.exports.pushDeviceProfiles = function (sessionData, network, modelAPI, da
   })
 }
 
-module.exports.pushDeviceProfile = function (sessionData, network, deviceProfile, dataAPI) {
+module.exports.pushDeviceProfile = function (sessionData, network, deviceProfile, dataAPI, isUpdate = true) {
   let me = this
   return new Promise(async function (resolve, reject) {
     // See if it already exists
@@ -1442,7 +1442,14 @@ module.exports.pushDeviceProfile = function (sessionData, network, deviceProfile
       makeDeviceProfileDataKey(deviceProfile.id, 'dpNwkId'))
       .then(dpNetworkId => {
         appLogger.log(dpNetworkId, 'info')
-        if (dpNetworkId) {
+        if (isUpdate && dpNetworkId) {
+          me.updateDeviceProfile(sessionData, network, deviceProfile.id, dataAPI)
+            .then(resolve)
+            .catch(err => {
+              appLogger.log(err, 'error')
+                reject(err)
+            })
+          } else if (dpNetworkId) {
           appLogger.log('Ignoring Device Profile  ' + deviceProfile.id + ' already on network ' + network.name)
           resolve({
             localDeviceProfile: deviceProfile.id,
@@ -2978,8 +2985,13 @@ module.exports.addDevice = function (sessionData, network, deviceId, dataAPI) {
         network.id,
         network.networkProtocolId,
         makeDeviceProfileDataKey(dntl.deviceProfileId, 'dpNwkId'))
-
-      let loraV2Device = deNormalizeDeviceData(dntl.networkSettings, deviceProfile.networkSettings, appNwkId, dpNwkId)
+      // let loraV2Device = deNormalizeDeviceData(dntl.networkSettings, deviceProfile.networkSettings, appNwkId, dpNwkId)
+      let loraV2Device = deNormalizeDeviceData(
+        Object.assign({}, device, dntl.networkSettings),
+        deviceProfile.networkSettings,
+        appNwkId,
+        dpNwkId
+      )
       // Set up the request options.
       var options = {}
       options.method = 'POST'
@@ -3447,6 +3459,7 @@ function normalizeDeviceProfileData (remoteDeviceProfile) {
 }
 
 function deNormalizeDeviceProfileData (remoteDeviceProfile, networkServerId, organizationId) {
+  console.log('DENORMALIZE DEVICE PROFILE DATA LoRa V2', JSON.stringify(arguments, null, 2))
   /*
     "createdAt": "2018-09-05T05:28:09.681Z",
       "deviceProfile": {
@@ -3579,6 +3592,7 @@ function normalizeDeviceData (remoteDevice) {
  * @returns {{device: {applicationID: (*|string), description: *, devEUI: *, deviceProfileID: *, name: *, skipFCntCheck: (*|boolean)}, deviceStatusBattery: number, deviceStatusMargin: number, lastSeenAt: (string|null)}}
  */
 function deNormalizeDeviceData (remoteDevice, deviceProfile, appId, dpId) {
+  console.log('DENORMALIZE DEVICE DATA', JSON.stringify(arguments, null, 2))
   let loraV2DeviceData = {
     device: {
       applicationID: appId,
