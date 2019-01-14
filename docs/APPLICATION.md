@@ -104,7 +104,7 @@ Returns 200
 ```json
 {
   "returned": "number",
-  "avalible": "number",
+  "available": "number",
   "results": [
     {
       "id": "string",
