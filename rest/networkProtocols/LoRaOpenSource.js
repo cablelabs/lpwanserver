@@ -3381,12 +3381,11 @@ function normalizeDeviceProfileData (remoteDeviceProfile) {
 }
 
 function deNormalizeDeviceProfileData (remoteDeviceProfile, networkServerId, organizationId) {
-  console.log('DENORMALIZE DEVICE PROFILE DATA LoRa V1', JSON.stringify(arguments, null, 2))
   let loraV1DeviceProfileData = {
     deviceProfile: {
       classBTimeout: remoteDeviceProfile.classBTimeout,
       classCTimeout: remoteDeviceProfile.classCTimeout,
-      deviceProfileID: remoteDeviceProfile.id,
+      deviceProfileID: `${remoteDeviceProfile.id}`,
       factoryPresetFreqs: remoteDeviceProfile.factoryPresetFreqs,
       macVersion: remoteDeviceProfile.macVersion,
       maxDutyCycle: remoteDeviceProfile.maxDutyCycle,
@@ -3404,9 +3403,6 @@ function deNormalizeDeviceProfileData (remoteDeviceProfile, networkServerId, org
       supportsClassB: remoteDeviceProfile.supportsClassB,
       supportsClassC: remoteDeviceProfile.supportsClassC,
       supportsJoin: remoteDeviceProfile.supportsJoin,
-      // name: remoteDeviceProfile.name,
-      // networkServerID: networkServerId,
-      // organizationID: organizationId
     },
     name: remoteDeviceProfile.name,
     networkServerID: networkServerId,

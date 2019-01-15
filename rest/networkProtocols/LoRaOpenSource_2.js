@@ -3459,7 +3459,6 @@ function normalizeDeviceProfileData (remoteDeviceProfile) {
 }
 
 function deNormalizeDeviceProfileData (remoteDeviceProfile, networkServerId, organizationId) {
-  console.log('DENORMALIZE DEVICE PROFILE DATA LoRa V2', JSON.stringify(arguments, null, 2))
   /*
     "createdAt": "2018-09-05T05:28:09.681Z",
       "deviceProfile": {
@@ -3592,7 +3591,6 @@ function normalizeDeviceData (remoteDevice) {
  * @returns {{device: {applicationID: (*|string), description: *, devEUI: *, deviceProfileID: *, name: *, skipFCntCheck: (*|boolean)}, deviceStatusBattery: number, deviceStatusMargin: number, lastSeenAt: (string|null)}}
  */
 function deNormalizeDeviceData (remoteDevice, deviceProfile, appId, dpId) {
-  console.log('DENORMALIZE DEVICE DATA', JSON.stringify(arguments, null, 2))
   let loraV2DeviceData = {
     device: {
       applicationID: appId,
