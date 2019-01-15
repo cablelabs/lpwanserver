@@ -1388,14 +1388,15 @@ module.exports.pushDeviceProfile = function (sessionData, network, deviceProfile
       network.networkProtocolId,
       makeDeviceProfileDataKey(deviceProfile.id, 'dpNwkId'))
       .then(dpNetworkId => {
-      if (isUpdate && dpNetworkId) {
-        me.updateDeviceProfile(sessionData, network, deviceProfile.id, dataAPI)
-        .then(resolve)
-        .catch(err => {
-          appLogger.log(err, 'error')
-            reject(err)
-        })
-      } else if (dpNetworkId) {
+        if (isUpdate && dpNetworkId) {
+          me.updateDeviceProfile(sessionData, network, deviceProfile.id, dataAPI)
+            .then(resolve)
+            .catch(err => {
+              appLogger.log(err, 'error')
+              reject(err)
+            })
+        }
+        else if (dpNetworkId) {
           appLogger.log('Ignoring Device Profile  ' + deviceProfile.id + ' already on network ' + network.name)
           resolve({
             localDeviceProfile: deviceProfile.id,
@@ -2903,7 +2904,7 @@ module.exports.addDevice = function (sessionData, network, deviceId, dataAPI) {
         network.id,
         network.networkProtocolId,
         makeDeviceProfileDataKey(dntl.deviceProfileId, 'dpNwkId'))
-      
+
       let loraV1Device = deNormalizeDeviceData(
         Object.assign({}, device, dntl.networkSettings),
         appNwkId,
@@ -3402,7 +3403,7 @@ function deNormalizeDeviceProfileData (remoteDeviceProfile, networkServerId, org
       supports32bitFCnt: remoteDeviceProfile.supports32BitFCnt,
       supportsClassB: remoteDeviceProfile.supportsClassB,
       supportsClassC: remoteDeviceProfile.supportsClassC,
-      supportsJoin: remoteDeviceProfile.supportsJoin,
+      supportsJoin: remoteDeviceProfile.supportsJoin
     },
     name: remoteDeviceProfile.name,
     networkServerID: networkServerId,

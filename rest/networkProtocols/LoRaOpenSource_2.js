@@ -1447,9 +1447,10 @@ module.exports.pushDeviceProfile = function (sessionData, network, deviceProfile
             .then(resolve)
             .catch(err => {
               appLogger.log(err, 'error')
-                reject(err)
+              reject(err)
             })
-          } else if (dpNetworkId) {
+        }
+        else if (dpNetworkId) {
           appLogger.log('Ignoring Device Profile  ' + deviceProfile.id + ' already on network ' + network.name)
           resolve({
             localDeviceProfile: deviceProfile.id,
