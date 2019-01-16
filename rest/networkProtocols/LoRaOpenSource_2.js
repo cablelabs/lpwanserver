@@ -2146,7 +2146,7 @@ module.exports.addApplication = function (sessionData, network, applicationId, d
       appLogger.log(coNetworkId, 'info')
 
       options.json = deNormalizeApplicationData(
-        Object.assign({}, application, applicationData.networkSettings),
+        applicationData.networkSettings,
         coSPId,
         coNetworkId,
         application
@@ -3191,7 +3191,12 @@ module.exports.updateDevice = function (sessionData, network, deviceId, dataAPI)
       //   'deviceProfileID': dpNwkId,
       //   'name': device.name
       // }
-      let loraV2Device = deNormalizeDeviceData(dntl.networkSettings, deviceProfile, appNwkId, dpNwkId)
+      let loraV2Device = deNormalizeDeviceData(
+        Object.assign({}, device, dntl.networkSettings),
+        deviceProfile,
+        appNwkId,
+        dpNwkId
+      )
       options.json = loraV2Device
       options.agentOptions = {
         'secureProtocol': 'TLSv1_2_method',

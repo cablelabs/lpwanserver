@@ -2210,7 +2210,12 @@ module.exports.updateApplication = function (sessionData, network, applicationId
     //   'payloadDecoderScript': '',
     //   'payloadEncoderScript': ''
     // }
-    options.json = deNormalizeApplicationData(applicationData.networkSettings, coSPId, coNetworkId, application)
+    options.json = deNormalizeApplicationData(
+      applicationData.networkSettings,
+      coSPId,
+      coNetworkId,
+      application
+    )
 
     options.agentOptions = {
       'secureProtocol': 'TLSv1_2_method',
@@ -3112,7 +3117,11 @@ module.exports.updateDevice = function (sessionData, network, deviceId, dataAPI)
       //   'deviceProfileID': dpNwkId,
       //   'name': device.name
       // }
-      let loraV1Device = deNormalizeDeviceData(dntl.networkSettings, appNwkId, dpNwkId)
+      let loraV1Device = deNormalizeDeviceData(
+        Object.assign({}, device, dntl.networkSettings),
+        appNwkId,
+        dpNwkId
+      )
       options.json = loraV1Device
       options.agentOptions = {
         'secureProtocol': 'TLSv1_2_method',
