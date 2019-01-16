@@ -236,6 +236,7 @@ exports.initialize = function (app, server) {
       // sure they actually differ, though.
       var changed = 0
       if (req.body.networkSettings) {
+        // This is always going to be false
         if (req.body.networkSettings !== dnl.networkSettings) {
           data.networkSettings = req.body.networkSettings
           ++changed

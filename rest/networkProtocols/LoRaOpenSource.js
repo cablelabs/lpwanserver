@@ -1365,7 +1365,7 @@ module.exports.pushDeviceProfiles = function (sessionData, network, modelAPI, da
     let existingDeviceProfiles = await modelAPI.deviceProfiles.retrieveDeviceProfiles()
     let promiseList = []
     for (let index = 0; index < existingDeviceProfiles.records.length; index++) {
-      promiseList.push(me.pushDeviceProfile(sessionData, network, existingDeviceProfiles.records[index], dataAPI))
+      promiseList.push(me.pushDeviceProfile(sessionData, network, existingDeviceProfiles.records[index], dataAPI, false))
     }
     Promise.all(promiseList)
       .then(pushedResources => {
@@ -1379,7 +1379,7 @@ module.exports.pushDeviceProfiles = function (sessionData, network, modelAPI, da
   })
 }
 
-module.exports.pushDeviceProfile = function (sessionData, network, deviceProfile, dataAPI) {
+module.exports.pushDeviceProfile = function (sessionData, network, deviceProfile, dataAPI, isUpdate = true) {
   let me = this
   return new Promise(async function (resolve, reject) {
     // See if it already exists
@@ -1388,8 +1388,16 @@ module.exports.pushDeviceProfile = function (sessionData, network, deviceProfile
       network.networkProtocolId,
       makeDeviceProfileDataKey(deviceProfile.id, 'dpNwkId'))
       .then(dpNetworkId => {
-        appLogger.log('Ignoring Device Profile  ' + deviceProfile.id + ' already on network ' + network.name)
-        if (dpNetworkId) {
+        if (isUpdate && dpNetworkId) {
+          me.updateDeviceProfile(sessionData, network, deviceProfile.id, dataAPI)
+            .then(resolve)
+            .catch(err => {
+              appLogger.log(err, 'error')
+              reject(err)
+            })
+        }
+        else if (dpNetworkId) {
+          appLogger.log('Ignoring Device Profile  ' + deviceProfile.id + ' already on network ' + network.name)
           resolve({
             localDeviceProfile: deviceProfile.id,
             remoteDeviceProfile: dpNetworkId
@@ -2202,7 +2210,12 @@ module.exports.updateApplication = function (sessionData, network, applicationId
     //   'payloadDecoderScript': '',
     //   'payloadEncoderScript': ''
     // }
-    options.json = deNormalizeApplicationData(applicationData.networkSettings, coSPId, coNetworkId, application)
+    options.json = deNormalizeApplicationData(
+      applicationData.networkSettings,
+      coSPId,
+      coNetworkId,
+      application
+    )
 
     options.agentOptions = {
       'secureProtocol': 'TLSv1_2_method',
@@ -2552,7 +2565,11 @@ module.exports.addDeviceProfile = function (sessionData, network, deviceProfileI
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ' + sessionData.connection
       }
-      options.json = deNormalizeDeviceProfileData(deviceProfile.networkSettings, networkServerId, orgId)
+      options.json = deNormalizeDeviceProfileData(
+        Object.assign({}, deviceProfile, deviceProfile.networkSettings),
+        networkServerId,
+        orgId
+      )
       options.agentOptions = {
         'secureProtocol': 'TLSv1_2_method',
         'rejectUnauthorized': false
@@ -2893,7 +2910,11 @@ module.exports.addDevice = function (sessionData, network, deviceId, dataAPI) {
         network.networkProtocolId,
         makeDeviceProfileDataKey(dntl.deviceProfileId, 'dpNwkId'))
 
-      let loraV1Device = deNormalizeDeviceData(dntl.networkSettings, appNwkId, dpNwkId)
+      let loraV1Device = deNormalizeDeviceData(
+        Object.assign({}, device, dntl.networkSettings),
+        appNwkId,
+        dpNwkId
+      )
       // Set up the request options.
       var options = {}
       options.method = 'POST'
@@ -3096,7 +3117,11 @@ module.exports.updateDevice = function (sessionData, network, deviceId, dataAPI)
       //   'deviceProfileID': dpNwkId,
       //   'name': device.name
       // }
-      let loraV1Device = deNormalizeDeviceData(dntl.networkSettings, appNwkId, dpNwkId)
+      let loraV1Device = deNormalizeDeviceData(
+        Object.assign({}, device, dntl.networkSettings),
+        appNwkId,
+        dpNwkId
+      )
       options.json = loraV1Device
       options.agentOptions = {
         'secureProtocol': 'TLSv1_2_method',
@@ -3370,7 +3395,7 @@ function deNormalizeDeviceProfileData (remoteDeviceProfile, networkServerId, org
     deviceProfile: {
       classBTimeout: remoteDeviceProfile.classBTimeout,
       classCTimeout: remoteDeviceProfile.classCTimeout,
-      deviceProfileID: remoteDeviceProfile.id,
+      deviceProfileID: `${remoteDeviceProfile.id}`,
       factoryPresetFreqs: remoteDeviceProfile.factoryPresetFreqs,
       macVersion: remoteDeviceProfile.macVersion,
       maxDutyCycle: remoteDeviceProfile.maxDutyCycle,

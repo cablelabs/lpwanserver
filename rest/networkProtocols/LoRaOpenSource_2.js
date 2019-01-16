@@ -1417,7 +1417,7 @@ module.exports.pushDeviceProfiles = function (sessionData, network, modelAPI, da
     let existingDeviceProfiles = await modelAPI.deviceProfiles.retrieveDeviceProfiles()
     let promiseList = []
     for (let index = 0; index < existingDeviceProfiles.records.length; index++) {
-      promiseList.push(me.pushDeviceProfile(sessionData, network, existingDeviceProfiles.records[index], dataAPI))
+      promiseList.push(me.pushDeviceProfile(sessionData, network, existingDeviceProfiles.records[index], dataAPI, false))
     }
     Promise.all(promiseList)
       .then(pushedResources => {
@@ -1431,7 +1431,7 @@ module.exports.pushDeviceProfiles = function (sessionData, network, modelAPI, da
   })
 }
 
-module.exports.pushDeviceProfile = function (sessionData, network, deviceProfile, dataAPI) {
+module.exports.pushDeviceProfile = function (sessionData, network, deviceProfile, dataAPI, isUpdate = true) {
   let me = this
   return new Promise(async function (resolve, reject) {
     // See if it already exists
@@ -1442,7 +1442,15 @@ module.exports.pushDeviceProfile = function (sessionData, network, deviceProfile
       makeDeviceProfileDataKey(deviceProfile.id, 'dpNwkId'))
       .then(dpNetworkId => {
         appLogger.log(dpNetworkId, 'info')
-        if (dpNetworkId) {
+        if (isUpdate && dpNetworkId) {
+          me.updateDeviceProfile(sessionData, network, deviceProfile.id, dataAPI)
+            .then(resolve)
+            .catch(err => {
+              appLogger.log(err, 'error')
+              reject(err)
+            })
+        }
+        else if (dpNetworkId) {
           appLogger.log('Ignoring Device Profile  ' + deviceProfile.id + ' already on network ' + network.name)
           resolve({
             localDeviceProfile: deviceProfile.id,
@@ -2138,7 +2146,7 @@ module.exports.addApplication = function (sessionData, network, applicationId, d
       appLogger.log(coNetworkId, 'info')
 
       options.json = deNormalizeApplicationData(
-        Object.assign({}, application, applicationData.networkSettings),
+        applicationData.networkSettings,
         coSPId,
         coNetworkId,
         application
@@ -2631,7 +2639,11 @@ module.exports.addDeviceProfile = function (sessionData, network, deviceProfileI
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ' + sessionData.connection
       }
-      options.json = deNormalizeDeviceProfileData(deviceProfile.networkSettings, networkServerId, orgId)
+      options.json = deNormalizeDeviceProfileData(
+        Object.assign({}, deviceProfile, deviceProfile.networkSettings),
+        networkServerId,
+        orgId
+      )
       options.agentOptions = {
         'secureProtocol': 'TLSv1_2_method',
         'rejectUnauthorized': false
@@ -2974,8 +2986,13 @@ module.exports.addDevice = function (sessionData, network, deviceId, dataAPI) {
         network.id,
         network.networkProtocolId,
         makeDeviceProfileDataKey(dntl.deviceProfileId, 'dpNwkId'))
-
-      let loraV2Device = deNormalizeDeviceData(dntl.networkSettings, deviceProfile.networkSettings, appNwkId, dpNwkId)
+      // let loraV2Device = deNormalizeDeviceData(dntl.networkSettings, deviceProfile.networkSettings, appNwkId, dpNwkId)
+      let loraV2Device = deNormalizeDeviceData(
+        Object.assign({}, device, dntl.networkSettings),
+        deviceProfile.networkSettings,
+        appNwkId,
+        dpNwkId
+      )
       // Set up the request options.
       var options = {}
       options.method = 'POST'
@@ -3174,7 +3191,12 @@ module.exports.updateDevice = function (sessionData, network, deviceId, dataAPI)
       //   'deviceProfileID': dpNwkId,
       //   'name': device.name
       // }
-      let loraV2Device = deNormalizeDeviceData(dntl.networkSettings, deviceProfile, appNwkId, dpNwkId)
+      let loraV2Device = deNormalizeDeviceData(
+        Object.assign({}, device, dntl.networkSettings),
+        deviceProfile,
+        appNwkId,
+        dpNwkId
+      )
       options.json = loraV2Device
       options.agentOptions = {
         'secureProtocol': 'TLSv1_2_method',
@@ -3496,6 +3518,7 @@ function deNormalizeDeviceProfileData (remoteDeviceProfile, networkServerId, org
       supportsClassC: remoteDeviceProfile.supportsClassC,
       supportsJoin: remoteDeviceProfile.supportsJoin,
       name: remoteDeviceProfile.name,
+      description: remoteDeviceProfile.description,
       networkServerID: networkServerId,
       organizationID: organizationId
     }
