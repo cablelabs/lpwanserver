@@ -3313,17 +3313,14 @@ function normalizeApplicationData (remoteApplication) {
 
 function deNormalizeApplicationData (remoteApplication, serviceProfile, organizationId, application) {
   let loraV1ApplicationData = {
-    'description': remoteApplication.description,
+    'description': application.description || remoteApplication.description,
     'id': remoteApplication.id,
-    'name': remoteApplication.name,
+    'name': application.name || remoteApplication.name,
     'organizationID': organizationId,
     'payloadCodec': remoteApplication.payloadCodec,
     'payloadDecoderScript': remoteApplication.payloadDecoderScript,
     'payloadEncoderScript': remoteApplication.payloadEncoderScript,
     'serviceProfileID': serviceProfile
-  }
-  if (application && application.description) {
-    loraV1ApplicationData.description = application.description
   }
   appLogger.log(remoteApplication, 'info')
   appLogger.log(loraV1ApplicationData, 'info')
