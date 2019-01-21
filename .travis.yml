@@ -9,9 +9,11 @@ install:
   - npm install -D
 before_script:
   - npm run package
+  - cd .. && git clone --depth 1 https://github.com/cablelabs/lpwanserver-web-client.git && cd lpwanserver
 script:
   - ./bin/unit-tests
   - npm run test-with-coverage
+  - ../lpwanserver-web-client/bin/e2e.js
 before_deploy:
   - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
 deploy:
