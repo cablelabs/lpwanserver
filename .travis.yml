@@ -13,7 +13,7 @@ before_script:
 script:
   - ./bin/unit-tests
   - npm run test-with-coverage
-  - ./lpwanserver-web-client/bin/e2e.js
+  - ../lpwanserver-web-client/bin/e2e.js
 before_deploy:
   - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
 deploy:
