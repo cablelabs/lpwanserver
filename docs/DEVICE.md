@@ -34,6 +34,9 @@ Returns 201
 
 ### Get Device
 
+1. Do we want to return the network information with the device
+2. If so does this impact Option 1 or 2 design?
+
 ```http
 GET /api/devices/:eui
 ```
@@ -51,7 +54,20 @@ Returns 200
     "referenceAltitude": "number",
     "deviceStatusBattery": "number",
     "deviceStatusMargin": "number",
-    "lastSeenAt": "date"
+    "lastSeenAt": "date",
+    "location": {
+    	"accuracy": "number",
+    	"altitude": "number",
+    	"latitude": "number",
+    	"longitude": "number",
+    	"source": "UNKNOWN"
+    },
+    "networkDeployment": [
+        {
+            networkId: "string",
+            remoteDeviceId: "string"
+        }
+    ]
 }
 ```
 
@@ -176,35 +192,35 @@ Return 204
 
 *Note: Used LoRaServerV2 as an example, could be any protocol*
 
+Question:  Do we want to use Appliaction to managae the networkDeployments or use them directly?
+
 ```sequence
-client->DeviceService: POST\n/api/Devices
+client->DeviceService: POST\n/api/devices
 DeviceService->DeviceManager: create
-Note left of DeviceManager: If any\nnetworkIds exist
-DeviceManager->networkManager: fetch networkId1, ...
-networkManager->DB: find networks
-DB-->networkManager: networks
-networkManager-->DeviceManager: networks
-Note left of DeviceManager: for each network
-DeviceManager->loRaHandler: create remote Device
-loRaHandler->LoRaServerV2Handler: translate\nDevice data
-LoRaServerV2Handler-->loRaHandler: Device data
-loRaHandler->NetworkServer: POST /api/Devices
-NetworkServer-->loRaHandler: app result
-Note left of loRaHandler: If any\nintegrations exist
-loRaHandler->NetworkServer: POST\n/api/Devices/:remoteDeviceId/integrations
-NetworkServer-->loRaHandler: status
-loRaHandler-->DeviceManager: app result
-DeviceManager->DeviceManager: create network\ndeployments
 DeviceManager->DB: insert Device
+DeviceManager->ApplicationManager: add device
+ApplicationManager->DB: findbyid application
+DB-->ApplicationManager: application
+Note Left of ApplicationManager: For each\nNetwork Deployment
+ApplicationManager->LoRaHandler: add device
+LoRaHandler->LoRaServerV2Handler: transform data
+LoRaServerV2Handler-->LoRaHandler: transform data
+LoRaHandler->NS: POST /api/devices
+NS-->LoRaHandler: 201/remoteId
+LoRaHandler-->ApplicationManager: remoteId
+ApplicationManager->DB: add remoteId\nto networkDeployment
+ApplicationManager-->DeviceManager: status
 DeviceManager-->DeviceService: status
 DeviceService-->client: status
 ```
+
+
 ### Update Device 
 
 *Note: Used LoRaServerV2 as an example, could be any protocol*
 
 ```sequence
-client->DeviceService: PUT\n/api/Devices/:id
+client->DeviceService: PUT\n/api/devices/:id
 DeviceService->DeviceManager: upate
 Note left of DeviceManager: If any\nnetworkIds exist
 DeviceManager->networkManager: fetch networkId1, ...
@@ -215,10 +231,10 @@ Note left of DeviceManager: for each network
 DeviceManager->loRaHandler: update remote Device
 loRaHandler->LoRaServerV2Handler: translate\nDevice data
 LoRaServerV2Handler-->loRaHandler: Device data
-loRaHandler->NetworkServer: PUT\n/api/Devices/:remoteDeviceId
+loRaHandler->NetworkServer: PUT\n/api/devices/:remoteDeviceId
 NetworkServer-->loRaHandler: app result
 Note left of loRaHandler: If any\nintegrations exist
-loRaHandler->NetworkServer: PUT\n/api/Devices/:remoteDeviceId/integrations
+loRaHandler->NetworkServer: PUT\n/api/devices/:remoteDeviceId/integrations
 NetworkServer-->loRaHandler: status
 loRaHandler-->DeviceManager: app result
 DeviceManager->DeviceManager: update network\ndeployments
@@ -229,7 +245,7 @@ DeviceService-->client: Device
 ### Get Device 
 
 ```sequence
-client->DeviceService: GET\n/api/Devices/:id
+client->DeviceService: GET\n/api/devices/:id
 DeviceService->DeviceManager: fetch
 DeviceManager->DB: findById Device
 DeviceManager-->DeviceService: Device
@@ -238,11 +254,11 @@ DeviceService-->client: Device
 ### Delete Device 
 
 ```sequence
-client->DeviceService: DELETE\n/api/Devices/:id
+client->DeviceService: DELETE\n/api/devices/:id
 DeviceService->DeviceManager: delete
 Note left of DeviceManager: for each network
 DeviceManager->loRaHandler: remove remote Device
-loRaHandler->NetworkServer: DELETE\n/api/Devices/:remoteDeviceId
+loRaHandler->NetworkServer: DELETE\n/api/devices/:remoteDeviceId
 NetworkServer-->loRaHandler: result
 loRaHandler-->DeviceManager: result
 DeviceManager->DB: delete Device
@@ -255,7 +271,7 @@ DeviceService-->client: status
 ### New Device
 
 ```sequence
-client->restDevice: POST\n/api/Devices
+client->restDevice: POST\n/api/devices
 restDevice->IDevice: createDevice
 IDevice->dao.Device: createDevice
 dao.Device->DB: insertRecord
@@ -350,7 +366,7 @@ dao.ProtocolData-->IProtocolData: coSPId
 IProtocolData-->NetworkProtocolDataAccess: coSPId
 NetworkProtocolDataAccess-->LoRaServerV2: coSPId
 LoRaServerV2->LoRaServerV2: translate data to LoRaV2
-LoRaServerV2->NetworkServer: POST /api/Devices
+LoRaServerV2->NetworkServer: POST /api/devices
 LoRaServerV2->NetworkProtocolDataAccess: putProtocolDataForKey
 NetworkProtocolDataAccess->IProtocolData: create ProtocolData
 IProtocolData->dao.ProtocolData: create ProtocolData
