@@ -1,4 +1,11 @@
-# LPWanServer Design
+## API Design Principles
+
+- A manager is reponsible for tasks maininly in their area (e.g. DeviceManager for Device operations)
+- API should be built to easy port to micro services
+- All DB specific formats/operations should be behind the DB Handler (e.g. SQL versus NoSQL queries formats) 
+- Operations should be done through CRUD operations as much as possible.  So use flags and PUTS rather than /api/resourse/:id/operation 
+
+## LPWanServer Design
 
 ```mermaid
 graph LR
@@ -50,14 +57,14 @@ LR --> AK
 
 
 
-# Data Model
+## Data Model
 
 ```mermaid
 graph LR
 A[Application<hr>AppId] 
 B[Device<hr>EUI]
 C[Device Profile<hr>dpId]
-D[AppNetworkDeployment<hr>remoteAppId<br>Option1: array of deviceId->remoteDeviceId]
+D[AppNetworkDeployment<hr>remoteAppId]
 E[Network<hr>networkId<br>orgId]
 G[DeviceProfileNetworkDeployment<hr>remoteDPId]
 H[Integration<hr>url]
