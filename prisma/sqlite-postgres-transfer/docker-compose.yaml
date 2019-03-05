@@ -1,0 +1,12 @@
+version: '3.5'
+services:
+  postgres:
+    image: postgres:10.5
+    network_mode: host
+    environment:
+      POSTGRES_USER: prisma
+      POSTGRES_PASSWORD: prisma
+    volumes:
+      - postgres:/var/lib/postgresql/data
+volumes:
+  postgres:
