@@ -1,12 +1,25 @@
 version: '3.5'
 services:
+  transfer:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+      args:
+        DB_FILE: db-schema.sqlite3
+        POSTGRES_USER: prisma
+    container_name: lpwan_db_xfer_transfer
+    network_mode: host
+    environment:
+      POSTGRES_HOST: localhost
+      DATABASE: lpwanserver
+    depends_on:
+      - postgres
   postgres:
     image: postgres:10.5
+    container_name: lpwan_db_xfer_postgres
     network_mode: host
     environment:
       POSTGRES_USER: prisma
       POSTGRES_PASSWORD: prisma
     volumes:
-      - postgres:/var/lib/postgresql/data
-volumes:
-  postgres:
+      - ./initdb:/docker-entrypoint-initdb.d

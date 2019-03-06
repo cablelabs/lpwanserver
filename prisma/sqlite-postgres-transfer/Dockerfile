@@ -4,9 +4,19 @@ WORKDIR /app
 
 RUN gem install sequel pg sqlite3
 
-COPY ./db.sqlite3 .
+ARG DB_FILE=db-schema.sqlite3
+ARG POSTGRES_USER=prisma
 
-RUN useradd -ms /bin/bash prisma
-USER prisma
+ENV DB_FILE ${DB_FILE}
+ENV POSTGRES_HOST=localhost
+ENV DATABASE=lpwanserver
 
-CMD ["sequel", "-C", "sqlite://db.sqlite3", "postgres://localhost/prisma"]
+COPY ./$DB_FILE .
+COPY ./transfer.sh .
+
+RUN useradd -ms /bin/bash $POSTGRES_USER
+USER $POSTGRES_USER
+
+# CMD sequel -C sqlite://${DB_FILE} postgres://${POSTGRES_HOST}/${DATABASE}
+
+CMD sh transfer.sh
