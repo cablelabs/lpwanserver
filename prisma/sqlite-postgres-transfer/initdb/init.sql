@@ -1,1 +1,0 @@
-create database lpwanserver with owner prisma;

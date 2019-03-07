@@ -77,9 +77,9 @@ type EmailVerification @pgTable(name: "emailVerifications") {
 
 type NetworkProtocol @pgTable(name: "networkProtocols") {
   id: Int! @id @unique
-  masterProtocol: NetworkProtocol @pgRelation(column: "masterProtocol") @relation(name: networkProtocols_masterProtocol)
+  masterProtocol: NetworkProtocol @pgRelation(column: "masterProtocol") @relation(name: "NetworkProtocolMasterProtocol")
   name: String
-  networkProtocols: [NetworkProtocol!]! @relation(name: networkProtocols)
+  networkProtocols: [NetworkProtocol!]! @relation(name: "NetworkProtocols")
   networkProtocolVersion: String
   networks: [Network!]!
   networkType: NetworkType @pgRelation(column: "networkTypeId")

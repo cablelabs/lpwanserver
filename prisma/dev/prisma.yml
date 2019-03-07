@@ -4,3 +4,11 @@ datamodel: datamodel.prisma
 generate:
   - generator: javascript-client
     output: ./generated/prisma-client/
+
+hooks:
+  post-deploy:
+    - prisma generate
+    - node ./post-deploy/dynamic-endpoint-client.js
+
+seed:
+  run: node ./seed.js

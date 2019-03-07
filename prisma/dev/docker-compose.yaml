@@ -1,0 +1,33 @@
+version: '3'
+services:
+  prisma:
+    image: prismagraphql/prisma:1.28
+    restart: always
+    ports:
+    - "4466:4466"
+    depends_on:
+      - postgres
+    environment:
+      PRISMA_CONFIG: |
+        port: 4466
+        databases:
+          default:
+            connector: postgres
+            user: prisma
+            password: prisma
+            host: postgres
+            port: 5432
+            database: prisma
+            schema: public
+            rawAccess: true
+            migrations: false
+  postgres:
+    image: postgres:10.3
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: prisma
+      POSTGRES_PASSWORD: prisma
+    volumes:
+      - ./initdb:/docker-entrypoint-initdb.d

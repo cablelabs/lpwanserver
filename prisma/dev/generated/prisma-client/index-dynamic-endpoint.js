@@ -80,6 +80,6 @@ var models = [
 exports.Prisma = prisma_lib_1.makePrismaClientClass({
   typeDefs,
   models,
-  endpoint: `http://localhost:4466`
+  endpoint: `${process.env.PRISMA_PROTOCOL}://${process.env.PRISMA_HOST}:${process.env.PRISMA_PORT}`
 });
 exports.prisma = new exports.Prisma();

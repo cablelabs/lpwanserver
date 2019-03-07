@@ -31,25 +31,20 @@ Execute a database dump inside of the running container.
 [pg_dump docs](https://www.postgresql.org/docs/10/app-pgdump.html)
 
 ```
-docker exec -ti lpwan_db_xfer_postgres pg_dump -U prisma lpwanserver > postgres-dump.sql
+docker exec -ti lpwan_db_xfer_postgres pg_dump -O -U prisma prisma > lpwanserver_postgres.sql
 ```
 
 Now you have a postgres backup of all the data that was in sqlite.
 
 ### Customize
-This workflow is setup to create a database `lpwanserver` which is owned by user `prisma`.
-These values allign with how [Prisma](https://prisma.io) will be configured.  You can configure
-Prisma to use any database and any Postgres user, so if you want change those, here is how.
+This workflow is setup to create a database `prisma` which is owned by user `prisma`.
+These values align with how [Prisma](https://prisma.io) will be configured for development.
+You can configure Prisma to use any database and any Postgres user, so if you want change those, here is how.
 
-#### Postgres User
-Change the value of `POSTGRES_USER` in `docker-compose.yaml`.  It's in 2 places.  The new
-Postgres instance running in the container will create a user according to that value.
-
-#### Database
-Change the name of the database in 2 places.
-
-- Replace `lpwanserver` in `initdb/init.sql`
-- Set DATABASE environment variable in `docker-compose.yaml`
+#### Postgres User (also database name)
+Change the value of `POSTGRES_USER` in `docker-compose.yaml`.  When Postgres starts, it creates
+a database for that user with the same name.  That database will hold the result of the data/schema
+transfer.
 
 #### Other
 Additional configuration isn't currently supported; however, hack away.
