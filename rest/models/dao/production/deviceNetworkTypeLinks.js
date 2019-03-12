@@ -100,10 +100,6 @@ async function deleteDeviceNetworkTypeLink (id, validateCompanyId) {
 // Returns a promise that does the retrieval.
 async function retrieveDeviceNetworkTypeLinks (opts) {
   const where = formatRefsIn(opts)
-  if (opts.search) {
-    where.name_contains = opts.search
-    delete where.search
-  }
   const query = { where }
   if (opts.limit) query.first = opts.limit
   if (opts.offset) query.skip = opts.offset
@@ -121,49 +117,16 @@ async function retrieveDeviceNetworkTypeLinks (opts) {
 /***************************************************************************
  * Validation methods
  ***************************************************************************/
-function validateCompanyForDevice (companyId, deviceId) {
-  return new Promise(function (resolve, reject) {
-    // undefined companyId is always valid - means the caller is a used for
-    // an admin company, so they can set up any links.
-    if (!companyId) {
-      resolve()
-    }
-    else {
-      dev.retrieveDevice(deviceId)
-        .then(function (d) {
-          app.validateCompanyForApplication(companyId, d.applicationId)
-            .then(resolve())
-            .catch(function (err) {
-              reject(err)
-            })
-        })
-        .catch(function (err) {
-          reject(err)
-        })
-    }
-  })
+async function validateCompanyForDevice (companyId, deviceId) {
+  if (!companyId) return
+  const d = await dev.retrieveDevice(deviceId)
+  await app.validateCompanyForApplication(companyId, d.application.id)
 }
 
-function validateCompanyForDeviceNetworkTypeLink (companyId, dnlId) {
-  return new Promise(function (resolve, reject) {
-    // undefined companyId is always valid - means the caller is a used for
-    // an admin company, so they can set up any links.
-    if (!companyId) {
-      resolve()
-    }
-    else {
-      exports.retrieveDeviceNetworkTypeLink(dnlId).then(function (dnl) {
-        validateCompanyForDevice(dnl.deviceId)
-          .then(resolve())
-          .catch(function (err) {
-            reject(err)
-          })
-      })
-        .catch(function (err) {
-          reject(err)
-        })
-    }
-  })
+async function validateCompanyForDeviceNetworkTypeLink (companyId, dnlId) {
+  if (!companyId) return
+  const dnl = await retrieveDeviceNetworkTypeLink(dnlId)
+  await validateCompanyForDevice(companyId, dnl.device.id)
 }
 
 const fragments = {

@@ -1,5 +1,8 @@
 // Database implementation.
-var db = require('../../../lib/dbsqlite.js')
+const { prisma, formatInputData, formatRelationshipReferences } = require('../../../lib/prisma')
+
+// Utils
+const { onFail } = require('../../../lib/utils')
 
 // Logging
 var appLogger = require('../../../lib/appLogger.js')
@@ -10,10 +13,20 @@ var app = require('./applications.js')
 // Error reporting
 var httpError = require('http-errors')
 
+const formatRefsIn = formatRelationshipReferences('in')
+
 //* *****************************************************************************
 // ApplicationNetworkTypeLinks database table.
 //* *****************************************************************************
-
+module.exports = {
+  createApplicationNetworkTypeLink,
+  retrieveApplicationNetworkTypeLink,
+  updateApplicationNetworkTypeLink,
+  deleteApplicationNetworkTypeLink,
+  retrieveApplicationNetworkTypeLinks,
+  validateCompanyForApplication,
+  validateCompanyForApplicationNetworkTypeLink
+}
 //* *****************************************************************************
 // CRUD support.
 //* *****************************************************************************
@@ -27,29 +40,13 @@ var httpError = require('http-errors')
 // validateCompanyId - If supplied, the application MUST belong to this company.
 //
 // Returns the promise that will execute the create.
-exports.createApplicationNetworkTypeLink = function (applicationId, networkTypeId, networkSettings, validateCompanyId) {
-  return new Promise(function (resolve, reject) {
-    exports.validateCompanyForApplication(validateCompanyId, applicationId).then(function () {
-      // Create the user record.
-      var anl = {}
-      anl.applicationId = applicationId
-      anl.networkTypeId = networkTypeId
-      anl.networkSettings = JSON.stringify(networkSettings)
-
-      // OK, save it!
-      db.insertRecord('applicationNetworkTypeLinks', anl, function (err, record) {
-        if (err) {
-          reject(err)
-        }
-        else {
-          resolve(record)
-        }
-      })
-    })
-      .catch(function (err) {
-        reject(err)
-      })
+function createApplicationNetworkTypeLink (applicationId, networkTypeId, networkSettings, validateCompanyId) {
+  const data = formatInputData({
+    applicationId,
+    networkTypeId,
+    networkSettings: JSON.stringify(networkSettings)
   })
+  return prisma.createApplicationNetworkTypeLink(data).fragment$(fragments.basic)
 }
 
 // Retrieve a applicationNetworkTypeLinks record by id.
@@ -57,22 +54,10 @@ exports.createApplicationNetworkTypeLink = function (applicationId, networkTypeI
 // id - the record id of the applicationNetworkTypeLinks record.
 //
 // Returns a promise that executes the retrieval.
-exports.retrieveApplicationNetworkTypeLink = function (id) {
-  return new Promise(function (resolve, reject) {
-    db.fetchRecord('applicationNetworkTypeLinks', 'id', id, function (err, rec) {
-      if (err) {
-        reject(err)
-      }
-      else if (!rec) {
-        reject(new httpError.NotFound())
-      }
-      else {
-        // Stored in the database as a string, make it an object.
-        rec.networkSettings = JSON.parse(rec.networkSettings)
-        resolve(rec)
-      }
-    })
-  })
+async function retrieveApplicationNetworkTypeLink (id) {
+  const rec = await onFail(400, () => prisma.applicationNetworkTypeLink({ id }).fragment$(fragments.basic))
+  if (!rec) throw httpError(404, 'ApplicationNetworkTypeLink not found')
+  return { ...rec, networkSettings: JSON.parse(rec.networkSettings) }
 }
 
 // Update the applicationNetworkTypeLinks record.
@@ -84,26 +69,13 @@ exports.retrieveApplicationNetworkTypeLink = function (id) {
 //                           company.
 //
 // Returns a promise that executes the update.
-exports.updateApplicationNetworkTypeLink = function (applicationNetworkTypeLink, validateCompanyId) {
-  return new Promise(async function (resolve, reject) {
-    exports.validateCompanyForApplicationNetworkTypeLink(validateCompanyId, applicationNetworkTypeLink.id).then(function () {
-      if (applicationNetworkTypeLink.networkSettings) {
-        applicationNetworkTypeLink.networkSettings = JSON.stringify(applicationNetworkTypeLink.networkSettings)
-      }
-      db.updateRecord('applicationNetworkTypeLinks', 'id', applicationNetworkTypeLink, function (err, row) {
-        if (err) {
-          reject(err)
-        }
-        else {
-          resolve(row)
-        }
-      })
-    })
-      .catch(function (err) {
-        appLogger.log('Error validating company ' + validateCompanyId + ' for ' + 'applicationNetworkLink ' + applicationNetworkTypeLink.id + '.')
-        reject(err)
-      })
-  })
+async function updateApplicationNetworkTypeLink ({ id, ...data }, validateCompanyId) {
+  await validateCompanyForApplicationNetworkTypeLink(validateCompanyId, id)
+  if (data.networkSettings) {
+    data.networkSettings = JSON.stringify(data.networkSettings)
+  }
+  data = formatInputData(data)
+  return prisma.updateApplicationNetworkTypeLink({ data, where: { id } })
 }
 
 // Delete the applicationNetworkTypeLinks record.
@@ -112,22 +84,9 @@ exports.updateApplicationNetworkTypeLink = function (applicationNetworkTypeLink,
 // validateCompanyId - If supplied, the application MUST belong to this company.
 //
 // Returns a promise that performs the delete.
-exports.deleteApplicationNetworkTypeLink = function (id, validateCompanyId) {
-  return new Promise(function (resolve, reject) {
-    exports.validateCompanyForApplicationNetworkTypeLink(validateCompanyId, id).then(function () {
-      db.deleteRecord('applicationNetworkTypeLinks', 'id', id, function (err, rec) {
-        if (err) {
-          reject(err)
-        }
-        else {
-          resolve(rec)
-        }
-      })
-    })
-      .catch(function (err) {
-        reject(err)
-      })
-  })
+async function deleteApplicationNetworkTypeLink (id, validateCompanyId) {
+  await validateCompanyForApplicationNetworkTypeLink(validateCompanyId, id)
+  return onFail(400, () => prisma.deleteApplicationNetworkTypeLink({ id }))
 }
 
 //* *****************************************************************************
@@ -139,148 +98,60 @@ exports.deleteApplicationNetworkTypeLink = function (id, validateCompanyId) {
 // Options include the applicationId, and the networkTypeId.
 //
 // Returns a promise that does the retrieval.
-exports.retrieveApplicationNetworkTypeLinks = function (options) {
-  return new Promise(function (resolve, reject) {
-    var sql = 'select anl.* from applicationNetworkTypeLinks anl'
-    var sqlTotalCount = 'select count( anl.id ) as count from applicationNetworkTypeLinks anl'
-    if (options) {
-      if (options.companyId) {
-        sql += ', applications a'
-        sqlTotalCount += ', applications a'
-      }
-      if (options.companyId || options.applicationId || options.networkTypeId) {
-        var needsAnd = false
-        sql += ' where'
-        sqlTotalCount += ' where'
-        if (options.applicationId) {
-          sql += ' anl.applicationId = ' + db.sqlValue(options.applicationId)
-          sqlTotalCount += ' anl.applicationId = ' + db.sqlValue(options.applicationId)
-          needsAnd = true
-        }
-        if (options.networkTypeId) {
-          if (needsAnd) {
-            sql += ' and'
-            sqlTotalCount += ' and'
-          }
-          sql += ' anl.networkTypeId = ' + db.sqlValue(options.networkTypeId)
-          sqlTotalCount += ' anl.networkTypeId = ' + db.sqlValue(options.networkTypeId)
-          needsAnd = true
-        }
-        if (options.companyId) {
-          if (needsAnd) {
-            sql += ' and'
-            sqlTotalCount += ' and'
-          }
-          sql += ' anl.applicationId = a.id and a.companyId = ' + db.sqlValue(options.companyId)
-          sqlTotalCount += ' anl.applicationId = a.id and a.companyId = ' + db.sqlValue(options.companyId)
-        }
-      }
-      if (options.limit) {
-        sql += ' limit ' + db.sqlValue(options.limit)
-      }
-      if (options.offset) {
-        sql += ' offset ' + db.sqlValue(options.offset)
-      }
-    }
-
-    db.select(sql, function (err, rows) {
-      if (err) {
-        reject(err)
-      }
-      else {
-        rows.forEach(function (row) {
-          // Stored in the database as a string, make it an object.
-          row.networkSettings = JSON.parse(row.networkSettings)
-        })
-        // Limit and/or offset requires a second search to get a
-        // total count.  Well, usually.  Can also skip if the returned
-        // count is less than the limit (add in the offset to the
-        // returned rows).
-        if (options &&
-                     (options.limit || options.offset)) {
-          // If we got back less than the limit rows, then the
-          // totalCount is the offset and the number of rows.  No
-          // need to run the other query.
-          // Handle if one or the other value is missing.
-          var limit = Number.MAX_VALUE
-          if (options.limit) {
-            limit = options.limit
-          }
-          var offset = 0
-          if (options.offset) {
-            offset = options.offset
-          }
-          if (rows.length < limit) {
-            resolve({ totalCount: offset + rows.length,
-              records: rows })
-          }
-          else {
-            // Must run counts query.
-            db.select(sqlTotalCount, function (err, count) {
-              if (err) {
-                reject(err)
-              }
-              else {
-                resolve({ totalCount: count[0].count,
-                  records: rows })
-              }
-            })
-          }
-        }
-        else {
-          resolve({ totalCount: rows.length, records: rows })
-        }
-      }
-    })
-  })
+async function retrieveApplicationNetworkTypeLinks (opts) {
+  const where = formatRefsIn(opts)
+  const query = { where }
+  if (opts.limit) query.first = opts.limit
+  if (opts.offset) query.skip = opts.offset
+  let [records, totalCount] = await Promise.all([
+    prisma.applicationNetworkTypeLinks(query).fragment$(fragments.basic),
+    prisma.applicationNetworkTypeLinksConnection({ where }).aggregate.count()
+  ])
+  records = records.map(x => ({
+    ...x,
+    networkSettings: JSON.parse(x.networkSettings)
+  }))
+  return { totalCount, records }
 }
 
 /***************************************************************************
  * Validation methods
  ***************************************************************************/
-exports.validateCompanyForApplication = function (companyId, applicationId) {
-  return new Promise(function (resolve, reject) {
-    // undefined companyId is always valid - means the caller is a used for
-    // an admin company, so they can set up any links.
-    if (!companyId) {
-      resolve()
+async function validateCompanyForApplication (companyId, applicationId) {
+  if (!companyId) return
+  try {
+    const application = await app.retrieveApplication(applicationId)
+    if (application.company.id !== companyId) {
+      throw new httpError.Unauthorized()
     }
-    else {
-      app.retrieveApplication(applicationId).then(function (a) {
-        if (a.companyId !== companyId) {
-          reject(new httpError.Unauthorized())
-        }
-        else {
-          resolve()
-        }
-      })
-        .catch(function (err) {
-          reject(err)
-        })
-    }
-  })
+  }
+  catch (err) {
+    appLogger.log('Error validating company ' + companyId + ' for ' + 'application ' + applicationId + '.')
+    throw err
+  }
 }
 
-exports.validateCompanyForApplicationNetworkTypeLink = function (companyId, antlId) {
-  return new Promise(async function (resolve, reject) {
-    // undefined companyId is always valid - means the caller is a used for
-    // an admin company, so they can set up any links.  Yes, this is
-    // redundant with the application validator, but it saves the database
-    // hit.
-    if (!companyId) {
-      resolve()
+async function validateCompanyForApplicationNetworkTypeLink (companyId, antlId) {
+  if (!companyId) return
+  try {
+    var antl = await retrieveApplicationNetworkTypeLink(antlId)
+    await validateCompanyForApplication(companyId, antl.application.id)
+  }
+  catch (err) {
+    appLogger.log('Error validating company ' + companyId + ' for ' + 'applicationNetworkLink ' + antlId + '.')
+    throw err
+  }
+}
+
+const fragments = {
+  basic: `fragment Basic on ApplicationNetworkTypeLink {
+    id
+    networkSettings
+    application {
+      id
     }
-    else {
-      try {
-        // Get the record we're validating.
-        var antl = await exports.retrieveApplicationNetworkTypeLink(antlId)
-        // Validate he record's applicationm against the company.
-        await exports.validateCompanyForApplication(companyId, antl.applicationId)
-        resolve()
-      }
-      catch (err) {
-        reject(err)
-      };
+    networkType {
+      id
     }
-  })
+  }`
 }
