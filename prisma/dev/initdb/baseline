@@ -604,7 +604,6 @@ COPY public."networkProviders" (id, name) FROM stdin;
 --
 
 COPY public."networkTypes" (id, name) FROM stdin;
-1	LoRa
 \.
 
 
@@ -621,7 +620,7 @@ COPY public.networks (id, name, "networkProviderId", "networkTypeId", "networkPr
 --
 
 COPY public."passwordPolicies" (id, "ruleText", "ruleRegExp", "companyId") FROM stdin;
-1	Must be at least 6 characters long	^\\S{6,}$	\N
+1	Must be at least 6 characters long	^\\S{6,}$	1
 \.
 
 

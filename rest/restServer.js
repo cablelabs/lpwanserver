@@ -216,7 +216,7 @@ RestServer.prototype.isAdmin = function (req, res, next) {
 // next - The next step in processing to perform.
 RestServer.prototype.fetchCompany = function (req, res, next) {
   if (req.user) {
-    restServer.modelAPI.companies.retrieveCompany(req.user.companyId).then(function (company) {
+    restServer.modelAPI.companies.retrieveCompany(req.user.company.id).then(function (company) {
       if (company) {
         req.company = company
         next()

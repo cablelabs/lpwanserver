@@ -1,17 +1,29 @@
 // Database implementation.
-var db = require('../../../lib/dbsqlite.js')
+const { prisma } = require('../../../lib/prisma')
 
 var pwVal = require('./passwordPolicies.js')
 
 // Error reporting
 var httpError = require('http-errors')
 
+// Utils
+const { onFail } = require('../../../lib/utils')
+
 exports.COMPANY_VENDOR = 2
 exports.COMPANY_ADMIN = 1
 //* *****************************************************************************
 // Companies database table.
 //* *****************************************************************************
-
+module.exports = {
+  createCompany,
+  retrieveCompany,
+  updateCompany,
+  deleteCompany,
+  retrieveCompanybyName,
+  retrieveCompanies,
+  passwordValidator,
+  getTypes
+}
 //* *****************************************************************************
 // CRUD support.
 //* *****************************************************************************
@@ -24,23 +36,15 @@ exports.COMPANY_ADMIN = 1
 //         and devices.
 //
 // Returns the promise that will execute the create.
-exports.createCompany = function (name, type) {
-  return new Promise(function (resolve, reject) {
-    // Create the user record.
-    var company = {}
-    company.name = name
-    company.type = type
+function createCompany (name, type) {
+  const data = { name, type }
+  return prisma.createCompany(data)
+}
 
-    // OK, save it!
-    db.insertRecord('companies', company, function (err, record) {
-      if (err) {
-        reject(err)
-      }
-      else {
-        resolve(record)
-      }
-    })
-  })
+async function loadCompany (uniqueKeyObj, fragementKey = 'basic') {
+  const rec = await onFail(400, () => prisma.company(uniqueKeyObj)).fragment$(fragments[fragementKey])
+  if (!rec) throw httpError(404, 'Company not found')
+  return rec
 }
 
 // Retrieve a company record by id.  This method retrieves not just the company
@@ -50,32 +54,18 @@ exports.createCompany = function (name, type) {
 // id - the record id of the company.
 //
 // Returns a promise that executes the retrieval.
-exports.retrieveCompany = function (id) {
-  return new Promise(function (resolve, reject) {
-    db.fetchRecord('companies', 'id', id, function (err, rec) {
-      if (err) {
-        reject(err)
-      }
-      else if (!rec) {
-        reject(new httpError.NotFound())
-      }
-      else {
-        // Get the networks for this company.
-        var networksQuery = 'select networkTypeId from companyNetworkTypeLinks where companyId = ' + db.sqlValue(id)
-        db.select(networksQuery, function (err, rows) {
-          // Ignore bad returns and null sets here.
-          if (!err && rows && (rows.length > 0)) {
-            // Add the networks array to the returned record.
-            rec.networks = []
-            for (var i = 0; i < rows.length; ++i) {
-              rec.networks.push(rows[ i ].networkTypeId)
-            }
-          }
-          resolve(rec)
-        })
-      }
-    })
-  })
+async function retrieveCompany (id) {
+  const company = await loadCompany({ id })
+  try {
+    const networks = await prisma
+      .companyNetworkTypeLinks({ where: { company: { id } } })
+      .fragment$(fragments.ntwkTypeLink)
+    company.networks = networks.map(x => x.networkType.id)
+  }
+  catch (err) {
+    // ignore
+  }
+  return company
 }
 
 // Update the company record.
@@ -84,17 +74,10 @@ exports.retrieveCompany = function (id) {
 //           retrieval to guarantee the same record is updated.
 //
 // Returns a promise that executes the update.
-exports.updateCompany = function (company) {
-  return new Promise(function (resolve, reject) {
-    db.updateRecord('companies', 'id', company, function (err, row) {
-      if (err) {
-        reject(err)
-      }
-      else {
-        resolve(row)
-      }
-    })
-  })
+function updateCompany ({ id, ...data }) {
+  if (!id) throw httpError(400, 'No existing Company ID')
+  if (data.type) data.type = { connect: { id: data.type } }
+  return prisma.updateCompany({ data, where: { id } })
 }
 
 // Delete the company record.
@@ -102,17 +85,8 @@ exports.updateCompany = function (company) {
 // companyId - the id of the company record to delete.
 //
 // Returns a promise that performs the delete.
-exports.deleteCompany = function (companyId) {
-  return new Promise(function (resolve, reject) {
-    db.deleteRecord('companies', 'id', companyId, function (err, rec) {
-      if (err) {
-        reject(err)
-      }
-      else {
-        resolve(rec)
-      }
-    })
-  })
+function deleteCompany (id) {
+  return onFail(400, () => prisma.deleteCompany({ id }))
 }
 
 //* *****************************************************************************
@@ -122,17 +96,8 @@ exports.deleteCompany = function (companyId) {
 // Retrieve the company by name.
 //
 // Returns a promise that does the retrieval.
-exports.retrieveCompanybyName = function (name) {
-  return new Promise(function (resolve, reject) {
-    db.fetchRecord('companies', 'name', name, function (err, rec) {
-      if (err) {
-        reject(err)
-      }
-      else {
-        resolve(rec)
-      }
-    })
-  })
+function retrieveCompanybyName (name) {
+  return loadCompany({ name })
 }
 
 // Retrieves a subset of the companies in the system given the options.
@@ -142,68 +107,17 @@ exports.retrieveCompanybyName = function (name) {
 // search string on company name.
 // The returned totalCount shows the number of records that match the query,
 // ignoring any limit and/or offset.
-exports.retrieveCompanies = function (options) {
-  return new Promise(function (resolve, reject) {
-    var sql = 'select * from companies'
-    var sqlTotalCount = 'select count(id) as count from companies'
-    if (options) {
-      if (options.search) {
-        sql += ' where name like ' + db.sqlValue(options.search)
-        sqlTotalCount += ' where name like ' + db.sqlValue(options.search)
-      }
-      if (options.limit) {
-        sql += ' limit ' + db.sqlValue(options.limit)
-      }
-      if (options.offset) {
-        sql += ' offset ' + db.sqlValue(options.offset)
-      }
-    }
-    db.select(sql, function (err, rows) {
-      if (err) {
-        reject(err)
-      }
-      else {
-        // Limit and/or offset requires a second search to get a
-        // total count.  Well, usually.  Can also skip if the returned
-        // count is less than the limit (add in the offset to the
-        // returned rows).
-        if (options &&
-                     (options.limit || options.offset)) {
-          // If we got back less than the limit rows, then the
-          // totalCount is the offset and the number of rows.  No
-          // need to run the other query.
-          // Handle if one or the other value is missing.
-          var limit = Number.MAX_VALUE
-          if (options.limit) {
-            limit = options.limit
-          }
-          var offset = 0
-          if (options.offset) {
-            offset = options.offset
-          }
-          if (rows.length < limit) {
-            resolve({ totalCount: offset + rows.length,
-              records: rows })
-          }
-          else {
-            // Must run counts query.
-            db.select(sqlTotalCount, function (err, count) {
-              if (err) {
-                reject(err)
-              }
-              else {
-                resolve({ totalCount: count[0].count,
-                  records: rows })
-              }
-            })
-          }
-        }
-        else {
-          resolve({ totalCount: rows.length, records: rows })
-        }
-      }
-    })
-  })
+async function retrieveCompanies (options) {
+  const where = {}
+  if (options.search) where.name_contains = options.search
+  const query = { where }
+  if (options.limit) query.first = options.limit
+  if (options.offset) query.skip = options.offset
+  const [records, totalCount] = await Promise.all([
+    prisma.companies(query).fragment$(fragments.query),
+    prisma.companiesConnection({ where }).aggregate.count()
+  ])
+  return { totalCount, records }
 }
 
 //* *****************************************************************************
@@ -217,43 +131,31 @@ exports.retrieveCompanies = function (options) {
 // password  - The password to be tested.
 //
 // Returns a promise that will perform the tests.
-exports.passwordValidator = function (companyId, password) {
-  return new Promise(function (resolve, reject) {
-    // Get the rules from the passwordPolicies table
-    pwVal.retrievePasswordPolicies(companyId).then(function (rows) {
-      // Verify that the password passes each rule.
-      for (var i = 0; i < rows.length; ++i) {
-        var regexp
-        try {
-          regexp = new RegExp(rows[ i ].ruleRegExp)
-        }
-        catch (e) {
-          // Invalid expression.  Skip it.
-          continue
-        }
-
-        if (!regexp.test(password)) {
-          // Invalid password
-          reject(rows[ i ].ruleText)
-          return
-        }
-      }
-      resolve()
-    })
-  })
+async function passwordValidator (companyId, password) {
+  // Get the rules from the passwordPolicies table
+  const pwPolicies = await pwVal.retrievePasswordPolicies(companyId)
+  const failed = pwPolicies.filter(x => !(new RegExp(x.ruleRegExp).test(password)))
+  if (!failed.length) return true
+  throw new Error('Password failed these policies:', failed.map(x => x.ruleText).join('; '))
 }
 
 // Gets the types of companies from the database table
-exports.getTypes = function () {
-  return new Promise(function (resolve, reject) {
-    var sql = 'select * from companyTypes'
-    db.select(sql, function (err, rows) {
-      if (err) {
-        reject(err)
-      }
-      else {
-        resolve(rows)
-      }
-    })
-  })
+function getTypes () {
+  return prisma.companyTypes()
+}
+
+const fragments = {
+  basic: `fragment Basic on Company {
+    id
+    name
+    type {
+      id
+    }
+  }`,
+  ntwkTypeLink: `fragment Basic on CompanyNetworkTypeLink {
+    id
+    networkType {
+      id
+    }
+  }`
 }

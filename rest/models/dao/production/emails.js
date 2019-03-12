@@ -154,7 +154,7 @@ exports.notifyAdminsAboutReject = function (user) {
     .replace('%NEW_EMAIL%', user.email)
     .replace('%OLD_EMAIL%', user.lastVerifiedEmail)
 
-  users.getCompanyAdmins(user.companyId).then(function (usersAdmins) {
+  users.getCompanyAdmins(user.company.id).then(function (usersAdmins) {
     var emailOptions = {
       from: reportEmailReject.from,
       to: usersAdmins,

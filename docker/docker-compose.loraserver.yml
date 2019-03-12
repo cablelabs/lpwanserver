@@ -1,8 +1,10 @@
-version: '3'
+version: '3.5'
 
 services:
   loraserver:
     image: loraserver/loraserver:2
+    networks:
+      - lpwanserver_net
     depends_on:
       - postgresql
       - redis
@@ -12,6 +14,8 @@ services:
 
   loraserver1:
     image: loraserver/loraserver:1
+    networks:
+      - lpwanserver_net
     depends_on:
       - postgresql
       - redis
@@ -21,6 +25,8 @@ services:
 
   lora_appserver:
     image: loraserver/lora-app-server:2
+    networks:
+      - lpwanserver_net
     depends_on:
       - postgresql
       - redis
@@ -32,6 +38,8 @@ services:
 
   lora_appserver1:
     image: loraserver/lora-app-server:1
+    networks:
+      - lpwanserver_net
     depends_on:
       - postgresql
       - redis
@@ -43,17 +51,31 @@ services:
 
   postgresql:
     image: postgres:9.6-alpine
+    container_name: dev_lpwanserver_loraserver_postgres
+    networks:
+      - lpwanserver_net
     ports:
       - 5432
     volumes:
       - ./configuration/postgresql/initdb:/docker-entrypoint-initdb.d
+      - lpwanserver_loraserver_postgres:/var/lib/postgresql/data
 
   redis:
+    networks:
+      - lpwanserver_net
     ports:
       - 6379
     image: redis:4-alpine
 
   mosquitto:
     image: eclipse-mosquitto
+    networks:
+      - lpwanserver_net
     ports:
       - 1883:1883
+
+networks:
+  lpwanserver_net:
+    name: lpwanserver_net
+volumes:
+  lpwanserver_loraserver_postgres:

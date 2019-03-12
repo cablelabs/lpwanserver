@@ -22,6 +22,7 @@ If for whatever reason there is a failure, you'll need to remove the postgres co
 
 ```
 docker container rm lpwan_db_xfer_postgres
+docker volume rm transfer_lpwan_db_xfer_postgres
 ```
 
 Let the Postgres container run.
@@ -58,4 +59,6 @@ To restore Postgres from the dump, see [pg_dump docs](https://www.postgresql.org
 ```
 docker-compose down
 docker container rm lpwan_db_xfer_postgres lpwan_db_xfer_transfer
+docker volume rm transfer_lpwan_db_xfer_postgres
+docker image rm transfer_lpwan_db_xfer
 ```

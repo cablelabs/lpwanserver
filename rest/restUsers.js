@@ -1,6 +1,9 @@
 var appLogger = require('./lib/appLogger.js')
+const { formatRelationshipReferences } = require('./lib/prisma')
 var restServer
 var modelAPI
+
+const formatRefsOut = formatRelationshipReferences('out')
 
 exports.initialize = function (app, server) {
   restServer = server
@@ -95,12 +98,12 @@ exports.initialize = function (app, server) {
     if (req.query.search) {
       options.search = req.query.search
     }
-    modelAPI.users.retrieveUsers(options).then(function (users) {
-      for (var i = 0; i < users.records.length; i++) {
-        users.records[i]['role'] = modelAPI.users.reverseRoles[users.records[i]['role']]
-        delete users.records[ i ].passwordHash
-      }
-      restServer.respondJson(res, null, users)
+    modelAPI.users.retrieveUsers(options).then(function (result) {
+      let records = result.records.map(x => ({
+        ...formatRefsOut(x),
+        role: modelAPI.users.reverseRoles[x.role.id]
+      }))
+      restServer.respondJson(res, null, { ...result, records })
     })
       .catch(function (err) {
         appLogger.log('Error getting users for company ' + req.company.name + ': ' + err)
@@ -130,14 +133,10 @@ exports.initialize = function (app, server) {
      * @apiVersion 0.1.0
      */
   app.get('/api/users/me', [restServer.isLoggedIn], function (req, res, next) {
-    // We could clone the object so we don't change the original in the
-    // request object, but it just gets thrown away at the end of this
-    // call anyway.
-    var me = req.user
-    me['role'] = modelAPI.users.reverseRoles[me['role']]
-    delete me.passwordHash
-
-    restServer.respondJson(res, null, req.user)
+    restServer.respondJson(res, null, {
+      ...req.user,
+      role: modelAPI.users.reverseRoles[req.user.role.id]
+    })
   })
 
   /**
@@ -163,16 +162,17 @@ exports.initialize = function (app, server) {
       */
   app.get('/api/users/:id', [restServer.isLoggedIn, restServer.fetchCompany], function (req, res, next) {
     modelAPI.users.retrieveUser(parseInt(req.params.id, 10)).then(function (user) {
-      if ((req.company.type !== modelAPI.companies.COMPANY_ADMIN) &&
-                 ((req.user.role !== modelAPI.users.ROLE_ADMIN) ||
-                   (req.user.companyId !== user.companyId)) &&
+      if ((req.company.type.id !== modelAPI.companies.COMPANY_ADMIN) &&
+                 ((req.user.role.id !== modelAPI.users.ROLE_ADMIN) ||
+                   (req.user.company.id !== user.company.id)) &&
                  (req.user.id !== user.id)) {
         restServer.respond(res, 403)
       }
       else {
-        user['role'] = modelAPI.users.reverseRoles[user['role']]
-        delete user.passwordHash
-        restServer.respondJson(res, null, user)
+        restServer.respondJson(res, null, {
+          ...formatRefsOut(user),
+          role: modelAPI.users.reverseRoles[user.role.id]
+        })
       }
     })
       .catch(function (err) {
@@ -229,9 +229,9 @@ exports.initialize = function (app, server) {
 
     // Company must match the user who is an admin role, or the user must be
     // part of the admin group.
-    if (((modelAPI.users.ROLE_ADMIN !== req.user.role) ||
-               (rec.companyId !== req.user.companyId)) &&
-             (req.company.type !== modelAPI.companies.COMPANY_ADMIN)) {
+    if (((modelAPI.users.ROLE_ADMIN !== req.user.role.id) ||
+               (rec.companyId !== req.user.company.id)) &&
+             (req.company.type.id !== modelAPI.companies.COMPANY_ADMIN)) {
       restServer.respond(res, 403)
       return
     }
@@ -328,9 +328,9 @@ exports.initialize = function (app, server) {
       // In order to update a user record, the logged in user must either be
       // a system admin, a company admin for the user's company, or the user
       // themselves.
-      if ((req.company.type !== modelAPI.companies.COMPANY_ADMIN) &&
-                 ((req.user.role !== modelAPI.users.ROLE_ADMIN) ||
-                   (req.user.companyId !== user.companyId)) &&
+      if ((req.company.type.id !== modelAPI.companies.COMPANY_ADMIN) &&
+                 ((req.user.role.id !== modelAPI.users.ROLE_ADMIN) ||
+                   (req.user.company.id !== user.company.id)) &&
                  (req.user.id !== user.id)) {
         // Nope.  Not allowed.
         restServer.respond(res, 403)
@@ -344,7 +344,7 @@ exports.initialize = function (app, server) {
         if (req.body.role) {
           var newrole = modelAPI.users.roles[ req.body.role ]
           if (newrole) {
-            if (newrole !== user.role) {
+            if (newrole !== user.role.id) {
               data.role = newrole
               ++changed
             }
@@ -366,8 +366,8 @@ exports.initialize = function (app, server) {
 
         // System admin can change companyId
         if ((req.body.companyId) &&
-                     (req.body.companyId !== user.companyId)) {
-          if (req.company.type === modelAPI.companies.COMPANY_ADMIN) {
+                     (req.body.companyId !== user.company.id)) {
+          if (req.company.type.id === modelAPI.companies.COMPANY_ADMIN) {
             // We COULD verify the company id here, but referential
             // integrity should tell us if we have an issue, anyway.
             data.companyId = req.body.companyId
@@ -429,7 +429,7 @@ exports.initialize = function (app, server) {
     }
 
     // If the caller is a global admin, we can just delete.
-    if (req.company.type === modelAPI.companies.COMPANY_ADMIN) {
+    if (req.company.type.id === modelAPI.companies.COMPANY_ADMIN) {
       modelAPI.users.deleteUser(id).then(function () {
         restServer.respond(res, 204)
       })
@@ -438,10 +438,10 @@ exports.initialize = function (app, server) {
           restServer.respond(res, err)
         })
     }
-    else if (req.user.role === modelAPI.users.ROLE_ADMIN) {
+    else if (req.user.role.id === modelAPI.users.ROLE_ADMIN) {
       // Admin for a company.  Get the user and verify the same company.
       modelAPI.users.retrieveUser(id).then(function (user) {
-        if (user.companyId !== req.user.companyId) {
+        if (user.company.id !== req.user.company.id) {
           restServer.respond(res, 403, 'Cannot delete a user from another company')
         }
         else {

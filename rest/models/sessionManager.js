@@ -150,11 +150,7 @@ SessionManager.prototype.verifyAuthorization = function (req, res, next) {
     // Get the user record into the request structure for use in the
     // methods.
     thissessionmanager.users.retrieveUserByUsername(verified.user).then(function (user) {
-      // Drop internal use fields for upper layers.
-      delete user.passwordHash
-      delete user.lastVerifiedEmail
       req.user = user
-
       // Make sure we have a session for this user.
       if (!sessionsMap[ user.id ]) {
         sessionsMap[ user.id ] = new Session(token)

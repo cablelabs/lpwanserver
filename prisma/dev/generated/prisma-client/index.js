@@ -5,7 +5,7 @@ var typeDefs = require("./prisma-schema").typeDefs;
 
 var models = [
   {
-    name: "ApplicationNetworkTypeLink",
+    name: "DeviceNetworkTypeLink",
     embedded: false
   },
   {
@@ -17,27 +17,35 @@ var models = [
     embedded: false
   },
   {
-    name: "CompanyNetworkTypeLink",
+    name: "User",
     embedded: false
   },
   {
-    name: "CompanyType",
+    name: "NetworkType",
     embedded: false
   },
   {
-    name: "DeviceNetworkTypeLink",
+    name: "ApplicationNetworkTypeLink",
     embedded: false
   },
   {
-    name: "DeviceProfile",
+    name: "ReportingProtocol",
     embedded: false
   },
   {
-    name: "Device",
+    name: "ProtocolData",
     embedded: false
   },
   {
-    name: "EmailVerification",
+    name: "UserRole",
+    embedded: false
+  },
+  {
+    name: "Network",
+    embedded: false
+  },
+  {
+    name: "PasswordPolicy",
     embedded: false
   },
   {
@@ -49,31 +57,23 @@ var models = [
     embedded: false
   },
   {
-    name: "Network",
+    name: "Device",
     embedded: false
   },
   {
-    name: "NetworkType",
+    name: "DeviceProfile",
     embedded: false
   },
   {
-    name: "PasswordPolicy",
+    name: "CompanyNetworkTypeLink",
     embedded: false
   },
   {
-    name: "ProtocolData",
+    name: "CompanyType",
     embedded: false
   },
   {
-    name: "ReportingProtocol",
-    embedded: false
-  },
-  {
-    name: "UserRole",
-    embedded: false
-  },
-  {
-    name: "User",
+    name: "EmailVerification",
     embedded: false
   }
 ];

@@ -1,17 +1,29 @@
 // Database implementation.
-var db = require('../../../lib/dbsqlite.js')
-
-// Logging
-var appLogger = require('../../../lib/appLogger.js')
+const { prisma, formatInputData, formatRelationshipReferences } = require('../../../lib/prisma')
 
 // Error reporting
 var httpError = require('http-errors')
+
+// Utils
+const { onFail } = require('../../../lib/utils')
+
+const formatRefsIn = formatRelationshipReferences('in')
 
 //* *****************************************************************************
 // ProtocolData database table.
 //
 // Use by the protocols to store relevant data for their own use.
 //* *****************************************************************************
+
+module.exports = {
+  createProtocolData,
+  retrieveProtocolDataRecord,
+  retrieveProtocolData,
+  updateProtocolData,
+  deleteProtocolData,
+  clearProtocolData,
+  reverseLookupProtocolData
+}
 
 //* *****************************************************************************
 // CRUD support.
@@ -31,25 +43,14 @@ var httpError = require('http-errors')
 //                     type to a string for storage.
 //
 // Returns the promise that will execute the create.
-exports.createProtocolData = function (networkId, networkProtocolId, key, data) {
-  return new Promise(function (resolve, reject) {
-    // Create the user record.
-    var pd = {}
-    pd.networkId = networkId
-    pd.networkProtocolId = networkProtocolId
-    pd.dataIdentifier = key
-    pd.dataValue = data
-
-    // OK, save it!
-    db.insertRecord('protocolData', pd, function (err, record) {
-      if (err) {
-        reject(err)
-      }
-      else {
-        resolve(record)
-      }
-    })
+function createProtocolData (networkId, networkProtocolId, dataIdentifier, dataValue) {
+  const data = formatInputData({
+    networkId,
+    networkProtocolId,
+    dataIdentifier,
+    dataValue
   })
+  return prisma.createProtocolData(data).fragment$(fragments.basic)
 }
 
 // Retrieve a protocolData record by id.
@@ -57,53 +58,30 @@ exports.createProtocolData = function (networkId, networkProtocolId, key, data) 
 // id - the record id of the protocolData.
 //
 // Returns a promise that executes the retrieval.
-exports.retrieveProtocolDataRecord = function (id) {
-  return new Promise(function (resolve, reject) {
-    db.fetchRecord('protocolData', 'id', id, function (err, rec) {
-      if (err) {
-        reject(err)
-      }
-      else if (!rec) {
-        reject(new httpError.NotFound())
-      }
-      else {
-        resolve(rec.dataValue)
-      }
-    })
-  })
+async function retrieveProtocolDataRecord (id) {
+  const rec = await onFail(400, () => prisma.protocolData({ id })).fragment$(fragments.basic)
+  if (!rec) throw httpError(404, 'ProtocolData not found')
+  return rec
 }
 
-// Retrieve a protocolData record by id.
+// Retrieve a protocolData record by .
 //
 // networkId     - the record id of the network this data is stored for.
 // networkTypeId - the record id of the networkType this data is stored for.
 // key           - The key for the specific data item.
 //
 // Returns a promise that executes the retrieval.
-exports.retrieveProtocolData = function (networkId, networkProtocolId, key) {
-  return new Promise(function (resolve, reject) {
-    var sql = 'select * from protocolData where networkId = ' +
-                  db.sqlValue(networkId) +
-                  ' and networkProtocolId = ' +
-                  db.sqlValue(networkProtocolId) +
-                  ' and dataIdentifier = ' +
-                  db.sqlValue(key)
-    db.select(sql, function (err, rows) {
-      if (err) {
-        reject(err)
-      }
-      else if (!rows || (rows.length === 0)) {
-        reject(404)
-      }
-      // else if ( 1 !== rows.length ) {
-      //     appLogger.log(rows)
-      //     reject( new Error( "Too many matches" ) );
-      // }
-      else {
-        resolve(rows[ 0 ].dataValue)
-      }
-    })
-  })
+async function retrieveProtocolData (networkId, networkProtocolId, key) {
+  const where = {
+    network: { id: networkId },
+    networkProtocol: { id: networkProtocolId },
+    dataIdentifier: key
+  }
+  const records = await prisma.protocolDatas({ where })
+  if (!records.length) {
+    throw httpError.NotFound()
+  }
+  return records[0].dataValue
 }
 
 // Update the protocolData record.
@@ -112,17 +90,10 @@ exports.retrieveProtocolData = function (networkId, networkProtocolId, key) {
 //                from retrieval to guarantee the same record is updated.
 //
 // Returns a promise that executes the update.
-exports.updateProtocolData = function (protocolData) {
-  return new Promise(function (resolve, reject) {
-    db.updateRecord('protocolData', 'id', protocolData, function (err, row) {
-      if (err) {
-        reject(err)
-      }
-      else {
-        resolve(row)
-      }
-    })
-  })
+function updateProtocolData ({ id, ...data }) {
+  if (!id) throw httpError(400, 'No existing ProtocolData ID')
+  data = formatInputData(data)
+  return prisma.updateProtocolData({ data, where: { id } })
 }
 
 // Delete the protocolData record.
@@ -130,17 +101,8 @@ exports.updateProtocolData = function (protocolData) {
 // id - the id of the protocolData record to delete.
 //
 // Returns a promise that performs the delete.
-exports.deleteProtocolData = function (id) {
-  return new Promise(function (resolve, reject) {
-    db.deleteRecord('protocolData', 'id', id, function (err, rec) {
-      if (err) {
-        reject(err)
-      }
-      else {
-        resolve(rec)
-      }
-    })
-  })
+function deleteProtocolData (id) {
+  return onFail(400, () => prisma.deleteProtocolData({ id }))
 }
 
 // Delete the protocolData records with keys that start with the passed string.
@@ -150,24 +112,13 @@ exports.deleteProtocolData = function (id) {
 // key           - The key for the specific data item.
 //
 // Returns a promise that performs the delete.
-exports.clearProtocolData = function (networkId, networkProtocolId, keyStartsWith) {
-  return new Promise(function (resolve, reject) {
-    var sql = 'delete from protocolData where networkId = ' +
-                  db.sqlValue(networkId) +
-                  ' and networkProtocolId = ' +
-                  db.sqlValue(networkProtocolId) +
-                  ' and dataIdentifier like ' +
-                  db.sqlValue(keyStartsWith + '%')
-
-    db.select(sql, function (err, rows) {
-      if (err) {
-        reject(err)
-      }
-      else {
-        resolve()
-      }
-    })
+function clearProtocolData (networkId, networkProtocolId, keyStartsWith) {
+  const where = formatRefsIn({
+    networkId,
+    networkProtocolId,
+    dataIdentifier_contains: keyStartsWith
   })
+  return prisma.deleteManyProtocolDatas({ where })
 }
 
 // Retrieve the protocolData records with keys that start with the passed string
@@ -178,22 +129,25 @@ exports.clearProtocolData = function (networkId, networkProtocolId, keyStartsWit
 // key           - The key for the specific data item.
 //
 // Returns a promise that performs the delete.
-exports.reverseLookupProtocolData = function (networkId, keyLike, data) {
-  return new Promise(function (resolve, reject) {
-    var sql = 'select * from protocolData where networkId = ' +
-                  db.sqlValue(networkId) +
-                  ' and dataIdentifier like "' +
-                  keyLike +
-                  '" and dataValue = ' +
-                  db.sqlValue(data)
-
-    db.select(sql, function (err, rows) {
-      if (err) {
-        reject(err)
-      }
-      else {
-        resolve(rows)
-      }
-    })
+function reverseLookupProtocolData (networkId, keyLike, data) {
+  const where = formatRefsIn({
+    networkId,
+    dataIdentifier_contains: keyLike,
+    dataValue: data
   })
+  return prisma.protocolDatas({ where })
+}
+
+const fragments = {
+  basic: `fragment Basic on ProtocolData {
+    id
+    dataIdentifier
+    dataValue
+    network {
+      id
+    }
+    networkProtocol {
+      id
+    }
+  }`
 }

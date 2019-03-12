@@ -9,6 +9,3 @@ hooks:
   post-deploy:
     - prisma generate
     - node ./post-deploy/dynamic-endpoint-client.js
-
-seed:
-  run: node ./seed.js

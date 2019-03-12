@@ -1,8 +1,10 @@
-version: '3'
+version: '3.5'
 services:
   prisma:
     image: prismagraphql/prisma:1.28
-    restart: always
+    container_name: dev_lpwanserver_prisma
+    networks:
+      - lpwanserver_net
     ports:
     - "4466:4466"
     depends_on:
@@ -13,21 +15,28 @@ services:
         databases:
           default:
             connector: postgres
-            user: prisma
-            password: prisma
             host: postgres
-            port: 5432
             database: prisma
             schema: public
+            user: prisma
+            password: prisma
             rawAccess: true
+            port: '5432'
             migrations: false
   postgres:
     image: postgres:10.3
-    restart: always
-    ports:
-      - "5432:5432"
+    container_name: dev_lpwanserver_postgres
+    networks:
+      - lpwanserver_net
     environment:
       POSTGRES_USER: prisma
       POSTGRES_PASSWORD: prisma
     volumes:
       - ./initdb:/docker-entrypoint-initdb.d
+      - ./initdb:/restore
+      - lpwanserver_postgres:/var/lib/postgresql/data
+volumes:
+  lpwanserver_postgres:
+networks:
+  lpwanserver_net:
+    name: lpwanserver_net

@@ -1,11 +1,11 @@
 version: '3.5'
 services:
-  transfer:
+  lpwan_db_xfer:
     build:
       context: ./
       dockerfile: Dockerfile
       args:
-        DB_FILE: db-schema.sqlite3
+        DB_FILE: baseline.db
         POSTGRES_USER: prisma
     container_name: lpwan_db_xfer_transfer
     network_mode: host
@@ -22,3 +22,7 @@ services:
     environment:
       POSTGRES_USER: prisma
       POSTGRES_PASSWORD: prisma
+    volumes:
+      - lpwan_db_xfer_postgres:/var/lib/postgresql/data
+volumes:
+  lpwan_db_xfer_postgres:

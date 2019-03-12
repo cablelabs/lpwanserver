@@ -21,8 +21,8 @@ function User () {
   // Load the roles
   let roleList = this.impl.getRoles()
   for (var i = 0; i < roleList.length; ++i) {
-    roles[ roleList[ i ].name ] = roleList[ i ].roleId
-    reverseRoles[ roleList[ i ].roleId ] = roleList[ i ].name
+    roles[ roleList[ i ].name ] = roleList[ i ].id
+    reverseRoles[ roleList[ i ].id ] = roleList[ i ].name
   }
 }
 

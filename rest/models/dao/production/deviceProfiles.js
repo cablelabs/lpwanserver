@@ -1,19 +1,24 @@
 // Database implementation.
-var db = require('../../../lib/dbsqlite.js')
-
-// Logging
-var appLogger = require('../../../lib/appLogger.js')
-
-// Device access
-var dev = require('./devices.js')
+const { prisma, formatInputData, formatRelationshipReferences } = require('../../../lib/prisma')
 
 // Error reporting
 var httpError = require('http-errors')
 
+// Utils
+const { onFail } = require('../../../lib/utils')
+
+const formatRefsIn = formatRelationshipReferences('in')
+
 //* *****************************************************************************
 // DeviceProfiles database table.
 //* *****************************************************************************
-
+module.exports = {
+  createDeviceProfile,
+  retrieveDeviceProfile,
+  updateDeviceProfile,
+  deleteDeviceProfile,
+  retrieveDeviceProfiles
+}
 //* *****************************************************************************
 // CRUD support.
 //* *****************************************************************************
@@ -27,26 +32,15 @@ var httpError = require('http-errors')
 // networkSettings   - The settings required by the network protocol in json
 //                     format
 // Returns the promise that will execute the create.
-exports.createDeviceProfile = function (networkTypeId, companyId, name, description, networkSettings) {
-  return new Promise(function (resolve, reject) {
-    // Create the link record.
-    var profile = {}
-    profile.networkTypeId = networkTypeId
-    profile.companyId = companyId
-    profile.name = name
-    profile.description = description
-    profile.networkSettings = JSON.stringify(networkSettings)
-
-    // OK, save it!
-    db.insertRecord('deviceProfiles', profile, function (err, record) {
-      if (err) {
-        reject(err)
-      }
-      else {
-        resolve(record)
-      }
-    })
+function createDeviceProfile (networkTypeId, companyId, name, description, networkSettings) {
+  const data = formatInputData({
+    networkTypeId,
+    companyId,
+    name,
+    description,
+    networkSettings: JSON.stringify(networkSettings)
   })
+  return prisma.createDeviceProfile(data).fragment$(fragments.basic)
 }
 
 // Retrieve a deviceProfiles record by id.
@@ -54,22 +48,10 @@ exports.createDeviceProfile = function (networkTypeId, companyId, name, descript
 // id - the record id of the deviceProfiles record.
 //
 // Returns a promise that executes the retrieval.
-exports.retrieveDeviceProfile = function (id) {
-  return new Promise(function (resolve, reject) {
-    db.fetchRecord('deviceProfiles', 'id', id, function (err, rec) {
-      if (err) {
-        reject(err)
-      }
-      else if (!rec) {
-        reject(new httpError.NotFound())
-      }
-      else {
-        // Stored in the database as a string, make it an object.
-        rec.networkSettings = JSON.parse(rec.networkSettings)
-        resolve(rec)
-      }
-    })
-  })
+async function retrieveDeviceProfile (id) {
+  const rec = await onFail(400, () => prisma.deviceProfile({ id })).fragment$(fragments.basic)
+  if (!rec) throw httpError(404, 'DeviceProfile not found')
+  return rec
 }
 
 // Update the deviceProfiles record.
@@ -78,20 +60,13 @@ exports.retrieveDeviceProfile = function (id) {
 //           retrieval to guarantee the same record is updated.
 //
 // Returns a promise that executes the update.
-exports.updateDeviceProfile = function (profile) {
-  return new Promise(function (resolve, reject) {
-    if (profile.networkSettings) {
-      profile.networkSettings = JSON.stringify(profile.networkSettings)
-    }
-    db.updateRecord('deviceProfiles', 'id', profile, function (err, row) {
-      if (err) {
-        reject(err)
-      }
-      else {
-        resolve(row)
-      }
-    })
-  })
+function updateDeviceProfile ({ id, ...data }) {
+  if (!id) throw httpError(400, 'No existing DeviceProfile ID')
+  if (data.networkSettings) {
+    data.networkSettings = JSON.stringify(data.networkSettings)
+  }
+  data = formatInputData(data)
+  return prisma.updateDeviceProfile({ data, where: { id } })
 }
 
 // Delete the deviceProfiles record.
@@ -99,17 +74,8 @@ exports.updateDeviceProfile = function (profile) {
 // id - the id of the deviceProfiles record to delete.
 //
 // Returns a promise that performs the delete.
-exports.deleteDeviceProfile = function (id) {
-  return new Promise(function (resolve, reject) {
-    db.deleteRecord('deviceProfiles', 'id', id, function (err, rec) {
-      if (err) {
-        reject(err)
-      }
-      else {
-        resolve(rec)
-      }
-    })
-  })
+function deleteDeviceProfile (id) {
+  return onFail(400, () => prisma.deleteDeviceProfile({ id }))
 }
 
 //* *****************************************************************************
@@ -121,96 +87,37 @@ exports.deleteDeviceProfile = function (id) {
 // Options include the companyId, and the networkTypeId.
 //
 // Returns a promise that does the retrieval.
-exports.retrieveDeviceProfiles = function (options) {
-  return new Promise(function (resolve, reject) {
-    var sql = 'select * from deviceProfiles'
-    var sqlTotalCount = 'select count( id ) as count from deviceProfiles'
-    if (options) {
-      if (options.companyId || options.networkTypeId || options.search) {
-        var needsAnd = false
-        sql += ' where'
-        sqlTotalCount += ' where'
-        if (options.networkTypeId) {
-          sql += ' networkTypeId = ' + db.sqlValue(options.networkTypeId)
-          sqlTotalCount += ' networkTypeId = ' + db.sqlValue(options.networkTypeId)
-          needsAnd = true
-        }
-        if (options.companyId) {
-          if (needsAnd) {
-            sql += ' and'
-            sqlTotalCount += ' and'
-          }
-          sql += ' companyId = ' + db.sqlValue(options.companyId)
-          needsAnd = true
-          sqlTotalCount += ' companyId = ' + db.sqlValue(options.companyId)
-          needsAnd = true
-        }
-        if (options.search) {
-          if (needsAnd) {
-            sql += ' and'
-            sqlTotalCount += ' and'
-          }
-          sql += ' name like ' + db.sqlValue(options.search)
-          needsAnd = true
-          sqlTotalCount += ' name like ' + db.sqlValue(options.search)
-          needsAnd = true
-        }
-      }
-      if (options.limit) {
-        sql += ' limit ' + db.sqlValue(options.limit)
-      }
-      if (options.offset) {
-        sql += ' offset ' + db.sqlValue(options.offset)
-      }
+async function retrieveDeviceProfiles (opts) {
+  const where = formatRefsIn(opts)
+  if (opts.search) {
+    where.name_contains = opts.search
+    delete where.search
+  }
+  const query = { where }
+  if (opts.limit) query.first = opts.limit
+  if (opts.offset) query.skip = opts.offset
+  let [records, totalCount] = await Promise.all([
+    prisma.deviceProfiles(query).fragment$(fragments.basic),
+    prisma.deviceProfilesConnection({ where }).aggregate.count()
+  ])
+  records = records.map(x => ({
+    ...x,
+    networkSettings: JSON.parse(x.networkSettings)
+  }))
+  return { totalCount, records }
+}
+
+const fragments = {
+  basic: `fragment Basic on DeviceProfile {
+    id
+    name
+    description
+    networkSettings
+    company {
+      id
     }
-    db.select(sql, function (err, rows) {
-      if (err) {
-        reject(err)
-      }
-      else {
-        rows.forEach(function (row) {
-          // Stored in the database as a string, make it an object.
-          row.networkSettings = JSON.parse(row.networkSettings)
-        })
-        // Limit and/or offset requires a second search to get a
-        // total count.  Well, usually.  Can also skip if the returned
-        // count is less than the limit (add in the offset to the
-        // returned rows).
-        if (options &&
-                     (options.limit || options.offset)) {
-          // If we got back less than the limit rows, then the
-          // totalCount is the offset and the number of rows.  No
-          // need to run the other query.
-          // Handle if one or the other value is missing.
-          var limit = Number.MAX_VALUE
-          if (options.limit) {
-            limit = options.limit
-          }
-          var offset = 0
-          if (options.offset) {
-            offset = options.offset
-          }
-          if (rows.length < limit) {
-            resolve({ totalCount: offset + rows.length,
-              records: rows })
-          }
-          else {
-            // Must run counts query.
-            db.select(sqlTotalCount, function (err, count) {
-              if (err) {
-                reject(err)
-              }
-              else {
-                resolve({ totalCount: count[0].count,
-                  records: rows })
-              }
-            })
-          }
-        }
-        else {
-          resolve({ totalCount: rows.length, records: rows })
-        }
-      }
-    })
-  })
+    networkType {
+      id
+    }
+  }`
 }

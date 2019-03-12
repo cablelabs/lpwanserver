@@ -71,4 +71,14 @@
     //////////////////////////////////////////////////////////
     // Whitelist allowing remote access - an array of strings.
     cors_whitelist: [ '.*' ]
+
+    //////////////////////////////////////////////////////////
+    // PRISMA settings
+    //////////////////////////////////////////////////////////
+    // Path to the Prisma JavaScript client
+    prisma_dir: dev
+    // URL parts for prisma service
+    prisma_protocol: http
+    prisma_host: prisma
+    prisma_port: 4466
 }

@@ -1,4 +1,4 @@
 #!/bin/bash
 set -e
 
-psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" prisma  < /docker-entrypoint-initdb.d/all-data
+psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d prisma -f /docker-entrypoint-initdb.d/baseline

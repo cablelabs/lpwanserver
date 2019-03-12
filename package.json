@@ -31,12 +31,13 @@
     "body-parser": "^1.18.3",
     "chai": "^4.2.0",
     "chai-http": "^4.2.0",
-    "codacy-coverage": "^3.3.0",
+    "codacy-coverage": "^3.4.0",
     "connect-ensure-login": "~0.1.1",
     "cookie-parser": "~1.4.3",
     "cors": "^2.8.5",
     "crypto": "~1.0.1",
     "db-migrate": "^0.11.4",
+    "dead-leaves": "^1.0.2",
     "debug": "^4.1.0",
     "express": "^4.16.4",
     "express-busboy": "^7.0.1",
@@ -53,6 +54,7 @@
     "object-sizeof": "^1.3.0",
     "passport": "^0.4.0",
     "passport-local": "^1.0.0",
+    "prisma-client-lib": "^1.28.1",
     "pug": "^2.0.3",
     "ramda": "^0.26.1",
     "request": "^2.88.0",
@@ -74,6 +76,6 @@
     "istanbul": "^1.0.0-alpha.2",
     "mocha-lcov-reporter": "^1.3.0",
     "nodemon": "^1.18.9",
-    "nyc": "^13.1.0"
+    "nyc": "^13.3.0"
   }
 }
