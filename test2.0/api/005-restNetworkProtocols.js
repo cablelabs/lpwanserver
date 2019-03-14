@@ -13,29 +13,19 @@ var npId2
 const NUMBER_PROTOCOLS = 3
 const NUMBER_PROTOCOL_HANDLERS = 3
 
+function waitForNetworkProtocolRegistration (ms) {
+  return new Promise(resolve => setTimeout(resolve, ms))
+}
+
 describe('NetworkProtocols', function () {
   var adminToken
-  var adminToken
-  var adminToken
 
-  before('User Sessions', function (done) {
-    var sessions = 0
-    var waitFunc = function () {
-      ++sessions
-      if (sessions >= 1) {
-        done()
-      }
-    }
-    server
+  before('User Sessions', async () => {
+    await waitForNetworkProtocolRegistration(7000)
+    const res = await server
       .post('/api/sessions')
       .send({ 'login_username': 'admin', 'login_password': 'password' })
-      .end(function (err, res) {
-        if (err) {
-          return done(err)
-        }
-        adminToken = res.text
-        waitFunc()
-      })
+    adminToken = res.text
   })
 
   describe('GET /api/networkProtocolHandlers', function () {
@@ -59,7 +49,7 @@ describe('NetworkProtocols', function () {
     })
   })
   describe('GET /api/networkProtocols', function () {
-    it('should return 200 with 4 protocols on admin', function (done) {
+    it('should return 200 with 3 protocols on admin', function (done) {
       server
         .get('/api/networkProtocols')
         .set('Authorization', 'Bearer ' + adminToken)

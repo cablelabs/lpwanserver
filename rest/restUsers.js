@@ -174,7 +174,7 @@ exports.initialize = function (app, server) {
       }
     })
       .catch(function (err) {
-        appLogger.log('Error getting users for company ' + req.company.name + ': ' + err)
+        appLogger.log('Error getting user ' + req.params.id + ' for company ' + req.company.name + ': ' + err)
         restServer.respond(res, err)
       })
   })
@@ -301,7 +301,7 @@ exports.initialize = function (app, server) {
     // We'll start by getting the user, as a read is much less expensive
     // than a write, and then we'll be able to tell if anything really
     // changed before we even try to write.
-    modelAPI.users.retrieveUser(req.params.id).then(function (user) {
+    modelAPI.users.retrieveUser(data.id).then(function (user) {
       // Fields that may exist in the request body that anyone (with permissions)
       // can change.  Make sure they actually differ, though.
       var changed = 0

@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
-docker system prune --force
-
-npm run package-test
+docker container rm dev_lpwanserver_prisma --force
+docker container rm dev_lpwanserver_postgres --force
+docker volume rm dev_lpwanserver_postgres --force
 
 # Start prisma daemon
 docker-compose \
@@ -16,7 +16,8 @@ cd prisma/dev && prisma deploy && cd ../..
 docker-compose \
   -f ./docker/docker-compose.unit-test.yml up \
   --abort-on-container-exit \
-  --exit-code-from unit-test
+  --exit-code-from unit-test \
+  --build
 
 # Stop prisma daemon
 docker-compose \

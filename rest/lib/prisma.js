@@ -23,7 +23,7 @@ function formatRelationshipsIn (data) {
 function formatRelationshipsOut (data) {
   return R.keys(data).reduce((acc, x) => {
     const val = data[x]
-    if (typeof val === 'object' && 'id' in val && R.keys(val).length === 1) {
+    if (val && typeof val === 'object' && 'id' in val && R.keys(val).length === 1) {
       return mutate(`${x}Id`, data[x].id, acc)
     }
     return mutate(x, data[x], acc)

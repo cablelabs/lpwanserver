@@ -131,8 +131,7 @@ function retrieveUser (id, fragment = 'basic') {
 //
 // Returns a promise that executes the retrieval.
 async function retrieveUserByUsername (username, fragment = 'basic') {
-  const user = await loadUser({ username }, fragment)
-  return user
+  return loadUser({ username }, fragment)
 }
 
 // Update the user record.
@@ -242,9 +241,16 @@ async function retrieveUsers ({ limit, offset, ...where } = {}) {
 //
 // Returns a promise that executes the authorization.
 async function authorizeUser (username, password) {
-  const user = await retrieveUserByUsername(username, 'internal')
-  await crypto.verifyPassword(password, user.passwordHash)
-  return dropInternalProps(user)
+  try {
+    const user = await retrieveUserByUsername(username, 'internal')
+    const matches = await crypto.verifyPassword(password, user.passwordHash)
+    if (!matches) throw new Error(`authorizeUser: passwords don't match username "${username}`)
+    return dropInternalProps(user)
+  }
+  catch (err) {
+    // don't specify whether or not username is valid
+    throw new httpError.Unauthorized()
+  }
 }
 
 // Retrieves the "user profile" which is the user data and the company data in

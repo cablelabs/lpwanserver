@@ -57,7 +57,7 @@ function createProtocolData (networkId, networkProtocolId, dataIdentifier, dataV
 //
 // Returns a promise that executes the retrieval.
 async function retrieveProtocolDataRecord (id) {
-  const rec = await onFail(400, () => prisma.protocolData({ id })).$fragment(fragments.basic)
+  const rec = await onFail(400, () => prisma.protocolData({ id }).$fragment(fragments.basic))
   if (!rec) throw httpError(404, 'ProtocolData not found')
   return rec
 }

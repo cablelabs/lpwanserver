@@ -32,15 +32,17 @@ module.exports = {
 //                   protocol api for this specific protocol.
 //
 // Returns the promise that will execute the create.
-function createNetworkProtocol (name, networkTypeId, protocolHandler, version, masterProtocolId) {
+async function createNetworkProtocol (name, networkTypeId, protocolHandler, version, masterProtocolId) {
   const data = formatInputData({
     name,
     protocolHandler,
     networkProtocolVersion: version,
     networkTypeId,
-    masterProtocolId
+    // masterProtocolId
   })
-  return prisma.createNetworkProtocol(data).$fragment(fragments.basic)
+  const rec = await prisma.createNetworkProtocol(data).$fragment(fragments.basic)
+  console.log('CREATED ', JSON.stringify(rec))
+  return rec
 }
 
 async function upsertNetworkProtocol ({ networkProtocolVersion, ...np }) {
@@ -48,7 +50,7 @@ async function upsertNetworkProtocol ({ networkProtocolVersion, ...np }) {
   if (records.length) {
     return updateNetworkProtocol({ id: records[0].id, ...np })
   }
-  return createNetworkProtocol(np.name, np.networkTypeId, np.protocolHandler, networkProtocolVersion, np.masterProtocol)
+  return createNetworkProtocol(np.name, np.networkTypeId, np.protocolHandler, networkProtocolVersion, np.masterProtocolId)
   // removed code in which NetworkProtocol references itself as it's masterProtocol
 }
 
@@ -58,7 +60,7 @@ async function upsertNetworkProtocol ({ networkProtocolVersion, ...np }) {
 //
 // Returns a promise that executes the retrieval.
 async function retrieveNetworkProtocol (id) {
-  const rec = await onFail(400, () => prisma.networkProtocol({ id })).$fragment(fragments.basic)
+  const rec = await onFail(400, () => prisma.networkProtocol({ id }).$fragment(fragments.basic))
   if (!rec) throw httpError(404, 'NetworkProtocol not found')
   return rec
 }
@@ -116,6 +118,7 @@ async function retrieveNetworkProtocols ({ limit, offset, ...where } = {}) {
   const query = { where }
   if (limit) query.first = limit
   if (offset) query.skip = offset
+  console.log('RETRIEVE_NETWORK_PROTOCOLS QUERY', JSON.stringify(query))
   const [records, totalCount] = await Promise.all([
     prisma.networkProtocols(query).$fragment(fragments.basic),
     prisma.networkProtocolsConnection({ where }).aggregate().count()

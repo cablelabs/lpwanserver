@@ -47,7 +47,7 @@ async function createPasswordPolicy (ruleText, ruleRegExp, companyId) {
 //
 // Returns a promise that executes the retrieval.
 async function retrievePasswordPolicy (id, fragementKey = 'basic') {
-  const rec = await onFail(400, () => prisma.passwordPolicy({ id })).$fragment(fragments[fragementKey])
+  const rec = await onFail(400, () => prisma.passwordPolicy({ id }).$fragment(fragments[fragementKey]))
   if (!rec) throw httpError(404, 'PasswordPolicy not found')
   return rec
 }

@@ -44,7 +44,7 @@ function createCompanyNetworkTypeLink (companyId, networkTypeId, networkSettings
 //
 // Returns a promise that executes the retrieval.
 async function retrieveCompanyNetworkTypeLink (id) {
-  const rec = await onFail(400, () => prisma.companyNetworkTypeLink({ id })).$fragment(fragments.basic)
+  const rec = await onFail(400, () => prisma.companyNetworkTypeLink({ id }).$fragment(fragments.basic))
   if (!rec) throw httpError(404, 'CompanyNetworkTypeLink not found')
   return rec
 }

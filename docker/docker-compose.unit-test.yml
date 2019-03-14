@@ -2,18 +2,20 @@ version: '3.5'
 
 services:
   unit-test:
-    image: lpwanserver/test
+    build:
+      context: ../
+      dockerfile: docker/Dockerfile.test
+    image: lpwanserver/unit-test:latest
     networks:
       - lpwanserver_net
+    ports:
+      - '3200:3200'
     environment:
       - NODE_ENV=e2e
       - port=3200
       - prisma_protocol=http
       - prisma_host=prisma
       - prisma_port=4466
-    ports:
-      - '3200:3200'
-
 networks:
   lpwanserver_net:
     name: lpwanserver_net

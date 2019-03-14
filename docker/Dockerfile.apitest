@@ -3,12 +3,16 @@ FROM node:8
 # set working directory
 WORKDIR /app
 
+RUN npm install -g mocha
+
+# Copy Prisma client
+COPY prisma/dev prisma/dev
+
 # Copy project file
 COPY package*.json ./
 
 # install ALL node_modules, including 'devDependencies'
-RUN npm install && \
-    npm install -g mocha
+RUN npm ci
 
 # copy all project
 COPY . .

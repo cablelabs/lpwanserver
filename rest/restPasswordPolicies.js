@@ -220,7 +220,7 @@ exports.initialize = function (app, server) {
     // We'll start by getting the passwordPolicy, as a read is much less
     // expensive than a write, and then we'll be able to tell if anything
     // really changed before we even try to write.
-    modelAPI.passwordPolicies.retrievePasswordPolicies(data.id).then(function (pp) {
+    modelAPI.passwordPolicies.retrievePasswordPolicy(data.id).then(function (pp) {
       // If a company admin, cannot change companyId.
       if ((req.company.type.id !== modelAPI.companies.COMPANY_ADMIN) &&
                  (req.body.companyId) &&
@@ -238,7 +238,7 @@ exports.initialize = function (app, server) {
 
       // If a company admin, must be a passwordPolicy for that company.
       if ((req.company.type.id !== modelAPI.companies.COMPANY_ADMIN) &&
-                 (!pp.company.id || pp.company.id !== req.company.Id)) {
+                 (!pp.company.id || pp.company.id !== req.company.id)) {
         restServer.respond(res, 403, 'Cannot change the passwordPolicy of another company or global passwordPolicies')
         return
       }
@@ -277,7 +277,7 @@ exports.initialize = function (app, server) {
       }
     })
       .catch(function (err) {
-        appLogger.log('Error getting company ' + req.body.name + ': ' + err)
+        appLogger.log('Error getting PasswordPolicy ' + req.params.id + ': ' + err)
         restServer.respond(res, err)
       })
   })

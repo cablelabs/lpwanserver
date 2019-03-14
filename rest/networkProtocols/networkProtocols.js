@@ -2,6 +2,7 @@
 var appLogger = require('../lib/appLogger.js')
 const fs = require('fs')
 const assert = require('assert')
+const path = require('path')
 
 // ******************************************************************************
 // Defines the generic cross-network API, and manages the network protocols
@@ -29,22 +30,13 @@ function clearProtocolMap () {
   networkProtocolMap = {}
 }
 
-NetworkProtocolAccess.prototype.register = function () {
-  let fileList = fs.readdirSync('./rest/networkProtocols')
-  for (let onefile in fileList) {
-    if (
-      fileList[onefile] === 'networkProtocolDataAccess.js' ||
-      fileList[onefile] === 'networkProtocols.js' ||
-      fileList[onefile] === 'networkTypeApi.js' ||
-      fileList[onefile] === 'protocoltemplate.js' ||
-      fileList[onefile] === 'README.txt'
-    ) {
-    }
-    else {
-      let handler = fileList[onefile].split('.')[0]
-      let proto = require('./' + handler)
-      proto.register(this.npAPI)
-    }
+NetworkProtocolAccess.prototype.register = async function register () {
+  const handlersDir = path.join(__dirname, 'handlers')
+  let fileList = fs.readdirSync(handlersDir)
+    .filter(x => x !== 'README.md')
+  for (let i = 0; i < fileList.length; i++) {
+    let proto = require(`${handlersDir}/${fileList[i]}`)
+    await proto.register(this.npAPI)
   }
 }
 // Clears the network from the protocol map. Should be called if the network

@@ -2,7 +2,7 @@ var appLogger = require('./lib/appLogger.js')
 const fs = require('fs')
 var restServer
 var modelAPI
-
+const path = require('path')
 const { formatRelationshipsOut } = require('./lib/prisma')
 
 exports.initialize = function (app, server) {
@@ -75,6 +75,7 @@ exports.initialize = function (app, server) {
       }
       modelAPI.networkProtocols.retrieveNetworkProtocols(options).then(function (nps) {
         // restServer.respondJson(res, null, nps)
+        console.log("NPS", JSON.stringify(nps))
         const responseBody = { ...nps, records: nps.records.map(formatRelationshipsOut) }
         restServer.respond(res, 200, responseBody)
       })
@@ -351,25 +352,13 @@ exports.initialize = function (app, server) {
      */
   app.get('/api/networkProtocolHandlers/', [restServer.isLoggedIn],
     function (req, res, next) {
-      let fileList = fs.readdirSync('./rest/networkProtocols/')
-      let handlerList = []
-      for (var onefile in fileList) {
-        if (
-          fileList[onefile] === 'networkProtocolDataAccess.js' ||
-                    fileList[onefile] === 'networkProtocols.js' ||
-                    fileList[onefile] === 'networkTypeApi.js' ||
-                    fileList[onefile] === 'protocoltemplate.js' ||
-                    fileList[onefile] === 'README.txt'
-        ) {
-        }
-        else {
-          let temp = {
-            id: fileList[onefile],
-            name: fileList[onefile].split('.')[0]
-          }
-          handlerList.push(temp)
-        }
-      }
+      const handlersDir = path.join(__dirname, './networkProtocols/handlers')
+      const handlerList = fs.readdirSync(handlersDir)
+        .filter(x => x !== 'README.md')
+        .map(x => ({
+          id: x,
+          name: x.split('.')[0]
+        }))
       restServer.respondJson(res, null, handlerList)
     })
 }

@@ -53,47 +53,27 @@ function SessionManager (users) {
  *           username and password are valid, rejected otherwise with an
  *           appropriate error.
  */
-SessionManager.prototype.authorize = function (req, res, next) {
-  return new Promise(function (resolve, reject) {
-    // Verify that we have the login fields required.
-    if (!req.body.login_username || !req.body.login_password) {
-      reject(new httpError.BadRequest())
-      return
-    }
+SessionManager.prototype.authorize = async function authorize (req, res, next) {
+  if (!req.body.login_username || !req.body.login_password) {
+    throw new httpError.BadRequest()
+  }
+  const user = await thissessionmanager.users.authorizeUser(req.body.login_username, req.body.login_password)
+  // Make JWT token.  We'll just put in the username and look
+  // everything else up when called.
+  var token = jwt.sign(
+    { user: user.username },
+    thissessionmanager.secret,
+    thissessionmanager.jwtoptions
+  )
 
-    // Got 'em.  Verify the username/password combo using the user
-    // implementation set up in the constructor.
-    thissessionmanager.users.authorizeUser(req.body.login_username,
-      req.body.login_password)
-      .then(function (user) {
-        // Not an error, per se, but user can be null, indicating
-        // failed to log in.  We don't want to say why.
-        if (user == null) {
-          reject(new httpError.Unauthorized())
-        }
-        else {
-          // Make JWT token.  We'll just put in the username and look
-          // everything else up when called.
-          var token = jwt.sign({ user: user.username },
-            thissessionmanager.secret,
-            thissessionmanager.jwtoptions)
+  // Create a session for the token and any remote network logins
+  var session = new Session(token)
 
-          // Create a session for the token and any remote network logins
-          var session = new Session(token)
+  // Save the session in the sessionsMap.
+  sessionsMap[ user.id ] = session
 
-          // Save the session in the sessionsMap.
-          sessionsMap[ user.id ] = session
-
-          // Pass back the token.
-          resolve(session.jwtToken)
-        }
-      })
-      .catch(function (err) {
-        // Either a database lookup error (not "not found"), or something
-        // else.
-        reject(new httpError.InternalServerError())
-      })
-  })
+  // Pass back the token.
+  return session.jwtToken
 }
 
 /**
@@ -141,29 +121,23 @@ SessionManager.prototype.delete = function (req, res, next) {
  * It executes and either passes on to the next step in the processing chain
  * via next, or end the request with a 401 error.
  */
-SessionManager.prototype.verifyAuthorization = function (req, res, next) {
+SessionManager.prototype.verifyAuthorization = async function verifyAuthorization (req, res, next) {
   try {
     var token = req.headers.authorization.replace('Bearer ', '')
     var verified = jwt.verify(token, thissessionmanager.secret)
     // Assuming the verified data due to encryption is enough.
     // Get the user record into the request structure for use in the
     // methods.
-    thissessionmanager.users.retrieveUserByUsername(verified.user).then(function (user) {
-      req.user = user
-      // Make sure we have a session for this user.
-      if (!sessionsMap[ user.id ]) {
-        sessionsMap[ user.id ] = new Session(token)
-      }
-      next()
-    })
-      .catch(function (err) {
-        console.error(err)
-        res.status(401)
-        res.send()
-      })
+    const user = await thissessionmanager.users.retrieveUserByUsername(verified.user)
+    req.user = user
+    // Make sure we have a session for this user.
+    if (!sessionsMap[ user.id ]) {
+      sessionsMap[ user.id ] = new Session(token)
+    }
+    next()
   }
   catch (err) {
-    console.error(err)
+    console.error(err.message)
     res.status(401)
     res.send()
   }
