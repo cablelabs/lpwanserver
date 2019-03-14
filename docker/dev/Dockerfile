@@ -15,4 +15,4 @@ RUN npm ci
 
 EXPOSE 8080
 
-CMD ["nodemon", "bin/rest", "--watch", "src"]
+CMD ["nodemon", "bin/rest", "--watch", "rest"]

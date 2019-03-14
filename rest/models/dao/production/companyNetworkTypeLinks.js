@@ -1,13 +1,11 @@
 // Database implementation.
-const { prisma, formatInputData, formatRelationshipReferences } = require('../../../lib/prisma')
+const { prisma, formatInputData, formatRelationshipsIn } = require('../../../lib/prisma')
 
 // Utils
 const { onFail } = require('../../../lib/utils')
 
 // Error reporting
 var httpError = require('http-errors')
-
-const formatRefsIn = formatRelationshipReferences('in')
 
 //* *****************************************************************************
 // CompanyNetworkTypeLinks database table.
@@ -37,7 +35,7 @@ function createCompanyNetworkTypeLink (companyId, networkTypeId, networkSettings
     networkTypeId,
     networkSettings: networkSettings && JSON.stringify(networkSettings)
   })
-  return prisma.createCompanyNetworkTypeLink(data).fragment$(fragments.basic)
+  return prisma.createCompanyNetworkTypeLink(data).$fragment(fragments.basic)
 }
 
 // Retrieve a companyNetworkTypeLinks record by id.
@@ -46,7 +44,7 @@ function createCompanyNetworkTypeLink (companyId, networkTypeId, networkSettings
 //
 // Returns a promise that executes the retrieval.
 async function retrieveCompanyNetworkTypeLink (id) {
-  const rec = await onFail(400, () => prisma.companyNetworkTypeLink({ id })).fragment$(fragments.basic)
+  const rec = await onFail(400, () => prisma.companyNetworkTypeLink({ id })).$fragment(fragments.basic)
   if (!rec) throw httpError(404, 'CompanyNetworkTypeLink not found')
   return rec
 }
@@ -62,7 +60,7 @@ function updateCompanyNetworkTypeLink ({ id, ...data }) {
     data.networkSettings = JSON.stringify(data.networkSettings)
   }
   data = formatInputData(data)
-  return prisma.updateCompanyNetworkTypeLink({ data, where: { id } })
+  return prisma.updateCompanyNetworkTypeLink({ data, where: { id } }).$fragment(fragments.basic)
 }
 
 // Delete the companyNetworkTypeLinks record.
@@ -83,20 +81,23 @@ function deleteCompanyNetworkTypeLink (id) {
 // Options include the companyId, and the networkTypeId.
 //
 // Returns a promise that does the retrieval.
-async function retrieveCompanyNetworkTypeLinks (opts) {
-  const where = formatRefsIn(opts)
+async function retrieveCompanyNetworkTypeLinks ({ limit, offset, ...where } = {}) {
+  where = formatRelationshipsIn(where)
   const query = { where }
-  if (opts.limit) query.first = opts.limit
-  if (opts.offset) query.skip = opts.offset
+  if (limit) query.first = limit
+  if (offset) query.skip = offset
   const [records, totalCount] = await Promise.all([
-    prisma.companyNetworkTypeLinks(query).fragment$(fragments.basic),
-    prisma.companyNetworkTypeLinksConnection({ where }).aggregate.count()
+    prisma.companyNetworkTypeLinks(query).$fragment(fragments.basic),
+    prisma.companyNetworkTypeLinksConnection({ where }).aggregate().count()
   ])
   return { totalCount, records }
 }
 
+//* *****************************************************************************
+// Fragments for how the data should be returned from Prisma.
+//* *****************************************************************************
 const fragments = {
-  basic: `fragment Basic on CompanyNetworkTypeLink {
+  basic: `fragment BasicCompanyNetworkTypeLink on CompanyNetworkTypeLink {
     id
     networkSettings
     company {

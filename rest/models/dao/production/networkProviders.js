@@ -79,15 +79,17 @@ function retrieveAllNetworkProviders () {
 // Retrieve the networkProvider by name.
 //
 // Returns a promise that does the retrieval.
-async function retrieveNetworkProviders (opts = {}) {
-  const where = {}
-  if (opts.search) where.name_contains = opts.search
+async function retrieveNetworkProviders ({ limit, offset, ...where } = {}) {
+  if (where.search) {
+    where.name_contains = where.search
+    delete where.search
+  }
   const query = { where }
-  if (opts.limit) query.first = opts.limit
-  if (opts.offset) query.skip = opts.offset
+  if (limit) query.first = limit
+  if (offset) query.skip = offset
   const [records, totalCount] = await Promise.all([
     prisma.networkProviders(query),
-    prisma.networkProvidersConnection({ where }).aggregate.count()
+    prisma.networkProvidersConnection({ where }).aggregate().count()
   ])
   return { totalCount, records }
 }

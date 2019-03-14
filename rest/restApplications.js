@@ -1,6 +1,7 @@
 var appLogger = require('./lib/appLogger.js')
 var restServer
 var modelAPI
+const { formatRelationshipsOut } = require('./lib/prisma')
 
 exports.initialize = function (app, server) {
   restServer = server
@@ -59,17 +60,17 @@ exports.initialize = function (app, server) {
     restServer.fetchCompany],
   function (req, res, next) {
     var options = {}
-    if (req.company.type !== modelAPI.companies.COMPANY_ADMIN) {
+    if (req.company.type.id !== modelAPI.companies.COMPANY_ADMIN) {
       // If they gave a companyId, make sure it's their own.
       if (req.query.companyId) {
-        if (req.query.companyId !== req.user.companyId) {
+        if (req.query.companyId !== req.user.company.id) {
           restServer.respond(res, 403, 'Cannot request applications for another company')
           return
         }
       }
       else {
         // Force the search to be limited to the user's company
-        options.companyId = req.user.companyId
+        options.companyId = req.user.company.id
       }
     }
 
@@ -100,7 +101,8 @@ exports.initialize = function (app, server) {
       options.networkProtocolId = req.query.networkProtocolId
     }
     modelAPI.applications.retrieveApplications(options).then(function (cos) {
-      restServer.respondJson(res, null, cos)
+      const responseBody = { ...cos, records: cos.records.map(formatRelationshipsOut) }
+      restServer.respondJson(res, null, responseBody)
     })
       .catch(function (err) {
         appLogger.log('Error getting applications: ' + err)
@@ -137,12 +139,12 @@ exports.initialize = function (app, server) {
     restServer.fetchCompany],
   function (req, res, next) {
     modelAPI.applications.retrieveApplication(parseInt(req.params.id, 10)).then(function (app) {
-      if ((req.company.type !== modelAPI.companies.COMPANY_ADMIN) &&
-                 (app.companyId !== req.user.companyId)) {
+      if ((req.company.type.id !== modelAPI.companies.COMPANY_ADMIN) &&
+                 (app.company.id !== req.user.company.id)) {
         restServer.respond(res, 403)
       }
       else {
-        restServer.respondJson(res, null, app)
+        restServer.respondJson(res, null, formatRelationshipsOut(app))
       }
     })
       .catch(function (err) {
@@ -200,8 +202,8 @@ exports.initialize = function (app, server) {
     }
 
     // The user must be part of the admin group or the target company.
-    if ((modelAPI.companies.COMPANY_ADMIN !== req.company.type) &&
-            (req.user.companyId !== rec.companyId)) {
+    if ((modelAPI.companies.COMPANY_ADMIN !== req.company.type.id) &&
+            (req.user.company.id !== rec.companyId)) {
       restServer.respond(res, 403)
       return
     }
@@ -263,8 +265,8 @@ exports.initialize = function (app, server) {
     // really changed before we even try to write.
     modelAPI.applications.retrieveApplication(data.id).then(function (app) {
       // Verify that the user can make the change.
-      if ((modelAPI.companies.COMPANY_ADMIN !== req.company.type) &&
-                 (req.user.companyId !== app.companyId)) {
+      if ((modelAPI.companies.COMPANY_ADMIN !== req.company.type.id) &&
+                 (req.user.company.id !== app.company.id)) {
         restServer.respond(res, 403)
         return
       }
@@ -284,19 +286,19 @@ exports.initialize = function (app, server) {
 
       // Can only change the companyId if an admin user.
       if ((req.body.companyId) &&
-                 (req.body.companyId !== app.companyId) &&
-                 (modelAPI.companies.COMPANY_ADMIN !== req.company.type)) {
+                 (req.body.companyId !== app.company.id) &&
+                 (modelAPI.companies.COMPANY_ADMIN !== req.company.type.id)) {
         restServer.respond(res, 400, "Cannot change application's company")
         return
       }
 
       if ((req.body.companyId) &&
-                 (req.body.companyId !== app.companyId)) {
+                 (req.body.companyId !== app.company.id)) {
         data.companyId = req.body.companyId
         ++changed
       }
       if ((req.body.reportingProtocolId) &&
-                 (req.body.reportingProtocolId !== app.reportingProtocolId)) {
+                 (req.body.reportingProtocolId !== app.reportingPotocol.id)) {
         data.reportingProtocolId = req.body.reportingProtocolId
         ++changed
       }
@@ -344,7 +346,7 @@ exports.initialize = function (app, server) {
   function (req, res, next) {
     var id = parseInt(req.params.id, 10)
     // If the caller is a global admin, we can just delete.
-    if (req.company.type === modelAPI.companies.COMPANY_ADMIN) {
+    if (req.company.type.id === modelAPI.companies.COMPANY_ADMIN) {
       modelAPI.applications.deleteApplication(id).then(function () {
         restServer.respond(res, 204)
       })
@@ -357,7 +359,7 @@ exports.initialize = function (app, server) {
     else {
       modelAPI.applications.retrieveApplication(req.params.id).then(function (app) {
         // Verify that the user can delete.
-        if (req.user.companyId !== app.companyId) {
+        if (req.user.company.id !== app.company.id) {
           restServer.respond(res, 403)
           return
         }
@@ -395,7 +397,7 @@ exports.initialize = function (app, server) {
   function (req, res, next) {
     var id = parseInt(req.params.id, 10)
     // If the caller is a global admin, we can just start.
-    if (req.company.type === modelAPI.companies.COMPANY_ADMIN) {
+    if (req.company.type.id === modelAPI.companies.COMPANY_ADMIN) {
       modelAPI.applications.startApplication(id).then(function (logs) {
         restServer.respond(res, 200, logs.remoteAccessLogs)
       })
@@ -408,7 +410,7 @@ exports.initialize = function (app, server) {
     else {
       modelAPI.applications.retrieveApplication(req.params.id).then(function (app) {
         // Verify that the user can start.
-        if (req.user.companyId !== app.companyId) {
+        if (req.user.company.id !== app.company.id) {
           restServer.respond(res, 403)
           return
         }
@@ -445,7 +447,7 @@ exports.initialize = function (app, server) {
   function (req, res, next) {
     var id = parseInt(req.params.id, 10)
     // If the caller is a global admin, we can just stop.
-    if (req.company.type === modelAPI.companies.COMPANY_ADMIN) {
+    if (req.company.type.id === modelAPI.companies.COMPANY_ADMIN) {
       modelAPI.applications.stopApplication(id).then(function (logs) {
         restServer.respond(res, 200, logs)
       })
@@ -458,7 +460,7 @@ exports.initialize = function (app, server) {
     else {
       modelAPI.applications.retrieveApplication(req.params.id).then(function (app) {
         // Verify that the user can stop this app.
-        if (req.user.companyId !== app.companyId) {
+        if (req.user.company.id !== app.company.id) {
           restServer.respond(res, 403)
           return
         }
@@ -506,7 +508,7 @@ exports.initialize = function (app, server) {
     var data = req.body
 
     // make sure the network is enabled
-    modelAPI.networks.retrieveNetwork(networkId)
+    modelAPI.networks.retrieveNetwork(networkId, 'internal')
       .then(network => {
         if (network.securityData.enabled) {
           appLogger.log('Received data from network ' + networkId +

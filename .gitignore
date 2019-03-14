@@ -51,6 +51,7 @@ b146add.json
 
 
 .idea/
+*.idea
 lpwanserver.iml
 
 key.pem

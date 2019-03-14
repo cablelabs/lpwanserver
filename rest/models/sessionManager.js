@@ -68,7 +68,7 @@ SessionManager.prototype.authorize = function (req, res, next) {
       .then(function (user) {
         // Not an error, per se, but user can be null, indicating
         // failed to log in.  We don't want to say why.
-        if (user === null) {
+        if (user == null) {
           reject(new httpError.Unauthorized())
         }
         else {
@@ -142,7 +142,6 @@ SessionManager.prototype.delete = function (req, res, next) {
  * via next, or end the request with a 401 error.
  */
 SessionManager.prototype.verifyAuthorization = function (req, res, next) {
-  var verified
   try {
     var token = req.headers.authorization.replace('Bearer ', '')
     var verified = jwt.verify(token, thissessionmanager.secret)
@@ -158,11 +157,13 @@ SessionManager.prototype.verifyAuthorization = function (req, res, next) {
       next()
     })
       .catch(function (err) {
+        console.error(err)
         res.status(401)
         res.send()
       })
   }
   catch (err) {
+    console.error(err)
     res.status(401)
     res.send()
   }

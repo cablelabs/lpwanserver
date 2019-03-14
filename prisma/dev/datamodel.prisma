@@ -2,9 +2,9 @@ type DeviceNetworkTypeLink @pgTable(name: "deviceNetworkTypeLinks") @indexes(val
   {name: "sqlite_autoindex_deviceNetworkTypeLinks_1", fields: ["device", "networkType"], unique: true}
 ]) {
   id: Int! @unique
-  device: Device @pgRelation(column: "deviceId")
-  networkType: NetworkType @pgRelation(column: "networkTypeId")
-  deviceProfile: DeviceProfile @pgRelation(column: "deviceProfileId")
+  device: Device! @pgRelation(column: "deviceId")
+  networkType: NetworkType! @pgRelation(column: "networkTypeId")
+  deviceProfile: DeviceProfile! @pgRelation(column: "deviceProfileId")
   networkSettings: String
 }
 
@@ -36,20 +36,20 @@ type User @pgTable(name: "users") {
   email: String
   lastVerifiedEmail: String
   emailVerified: Boolean @default(value: false)
-  company: Company @pgRelation(column: "companyId")
-  passwordHash: String
-  role: UserRole @pgRelation(column: "role")
+  company: Company! @pgRelation(column: "companyId")
+  passwordHash: String!
+  role: UserRole! @pgRelation(column: "role")
   emailVerifications: [EmailVerification]
 }
 
 type NetworkType @pgTable(name: "networkTypes") {
   id: Int! @unique
-  name: String @unique
+  name: String! @unique
   applicationNetworkTypeLinks: [ApplicationNetworkTypeLink]
   companyNetworkTypeLinks: [CompanyNetworkTypeLink]
   deviceNetworkTypeLinks: [DeviceNetworkTypeLink]
   deviceProfiles: [DeviceProfile]
-  networkProtocols: [NetworkProtocol]
+  networkProtocols: [NetworkProtocol] @relation(name: "NetworkTypeNetworkProtocols")
   networks: [Network]
 }
 
@@ -73,8 +73,8 @@ type ProtocolData @pgTable(name: "protocolData") @indexes(value: [
   {name: "protocolData_dataIdentifier_index", fields: ["dataIdentifier"]}
 ]) {
   id: Int! @unique
-  network: Network @pgRelation(column: "networkId")
-  networkProtocol: NetworkProtocol @pgRelation(column: "networkProtocolId")
+  network: Network! @pgRelation(column: "networkId")
+  networkProtocol: NetworkProtocol! @pgRelation(column: "networkProtocolId")
   dataIdentifier: String
   dataValue: String
 }
@@ -107,7 +107,7 @@ type NetworkProtocol @pgTable(name: "networkProtocols") {
   id: Int! @unique
   name: String
   protocolHandler: String
-  networkType: NetworkType @pgRelation(column: "networkTypeId")
+  networkType: NetworkType! @pgRelation(column: "networkTypeId") @relation(name: "NetworkTypeNetworkProtocols")
   networkProtocolVersion: String
   masterProtocol: NetworkProtocol @pgRelation(column: "masterProtocol") @relation(name: "NetworkProtocolMasterProtocol")
   networkProtocols: [NetworkProtocol] @relation(name: "MasterProtocolNetworkProtocols")
@@ -125,22 +125,19 @@ type Device @pgTable(name: "devices") {
   id: Int! @unique
   application: Application! @pgRelation(column: "applicationId")
   name: String
-  devEUI: String!
   description: String
   deviceModel: String
-  deviceProfile: DeviceProfile @pgRelation(column: "deviceProfileId")
   deviceNetworkTypeLinks: [DeviceNetworkTypeLink]
 }
 
 type DeviceProfile @pgTable(name: "deviceProfiles") {
   id: Int! @unique
   networkType: NetworkType! @pgRelation(column: "networkTypeId")
-  company: Company @pgRelation(column: "companyId")
+  company: Company! @pgRelation(column: "companyId")
   name: String
   description: String
   networkSettings: String
   deviceNetworkTypeLinks: [DeviceNetworkTypeLink]
-  devices: [Device]
 }
 
 type CompanyNetworkTypeLink @pgTable(name: "companyNetworkTypeLinks") @indexes(value: [
@@ -160,7 +157,7 @@ type CompanyType @pgTable(name: "companyTypes") {
 
 type EmailVerification @pgTable(name: "emailVerifications") {
   id: Int! @unique
-  user: User @pgRelation(column: "userId")
+  user: User! @pgRelation(column: "userId")
   uuid: String @unique
   email: String
   changeRequested: String

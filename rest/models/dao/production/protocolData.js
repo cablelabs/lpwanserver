@@ -1,13 +1,11 @@
 // Database implementation.
-const { prisma, formatInputData, formatRelationshipReferences } = require('../../../lib/prisma')
+const { prisma, formatInputData, formatRelationshipsIn } = require('../../../lib/prisma')
 
 // Error reporting
 var httpError = require('http-errors')
 
 // Utils
 const { onFail } = require('../../../lib/utils')
-
-const formatRefsIn = formatRelationshipReferences('in')
 
 //* *****************************************************************************
 // ProtocolData database table.
@@ -50,7 +48,7 @@ function createProtocolData (networkId, networkProtocolId, dataIdentifier, dataV
     dataIdentifier,
     dataValue
   })
-  return prisma.createProtocolData(data).fragment$(fragments.basic)
+  return prisma.createProtocolData(data).$fragment(fragments.basic)
 }
 
 // Retrieve a protocolData record by id.
@@ -59,7 +57,7 @@ function createProtocolData (networkId, networkProtocolId, dataIdentifier, dataV
 //
 // Returns a promise that executes the retrieval.
 async function retrieveProtocolDataRecord (id) {
-  const rec = await onFail(400, () => prisma.protocolData({ id })).fragment$(fragments.basic)
+  const rec = await onFail(400, () => prisma.protocolData({ id })).$fragment(fragments.basic)
   if (!rec) throw httpError(404, 'ProtocolData not found')
   return rec
 }
@@ -93,7 +91,7 @@ async function retrieveProtocolData (networkId, networkProtocolId, key) {
 function updateProtocolData ({ id, ...data }) {
   if (!id) throw httpError(400, 'No existing ProtocolData ID')
   data = formatInputData(data)
-  return prisma.updateProtocolData({ data, where: { id } })
+  return prisma.updateProtocolData({ data, where: { id } }).$fragment(fragments.basic)
 }
 
 // Delete the protocolData record.
@@ -113,7 +111,7 @@ function deleteProtocolData (id) {
 //
 // Returns a promise that performs the delete.
 function clearProtocolData (networkId, networkProtocolId, keyStartsWith) {
-  const where = formatRefsIn({
+  const where = formatRelationshipsIn({
     networkId,
     networkProtocolId,
     dataIdentifier_contains: keyStartsWith
@@ -130,7 +128,7 @@ function clearProtocolData (networkId, networkProtocolId, keyStartsWith) {
 //
 // Returns a promise that performs the delete.
 function reverseLookupProtocolData (networkId, keyLike, data) {
-  const where = formatRefsIn({
+  const where = formatRelationshipsIn({
     networkId,
     dataIdentifier_contains: keyLike,
     dataValue: data
@@ -138,8 +136,11 @@ function reverseLookupProtocolData (networkId, keyLike, data) {
   return prisma.protocolDatas({ where })
 }
 
+//* *****************************************************************************
+// Fragments for how the data should be returned from Prisma.
+//* *****************************************************************************
 const fragments = {
-  basic: `fragment Basic on ProtocolData {
+  basic: `fragment BasicProtocolData on ProtocolData {
     id
     dataIdentifier
     dataValue

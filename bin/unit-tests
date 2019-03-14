@@ -4,8 +4,20 @@ docker system prune --force
 
 npm run package-test
 
+# Start prisma daemon
+docker-compose \
+  -f ./prisma/dev/docker-compose.yaml up -d
+
+sleep 5s
+
+cd prisma/dev && prisma deploy && cd ../..
+
 # Run docker-compose with development configuration
 docker-compose \
   -f ./docker/docker-compose.unit-test.yml up \
   --abort-on-container-exit \
   --exit-code-from unit-test
+
+# Stop prisma daemon
+docker-compose \
+  -f ./prisma/dev/docker-compose.yaml down

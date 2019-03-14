@@ -25,7 +25,8 @@ var passwordOpts = {
  * @param {!string} password
  * @param {Object} opts - password hashing options
  */
-function hashPassword (password, opts = passwordOpts) {
+function hashPassword (password, opts = {}) {
+  opts = { ...passwordOpts, ...opts }
   return new Promise((resolve, reject) => {
     // generate a salt for pbkdf2
     crypto.randomBytes(opts.saltBytes, (err, salt) => {

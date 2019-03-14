@@ -1,5 +1,5 @@
 // Database implementation.
-const { prisma, formatInputData, formatRelationshipReferences } = require('../../../lib/prisma')
+const { prisma, formatInputData, formatRelationshipsIn } = require('../../../lib/prisma')
 
 // Utils
 const { onFail } = require('../../../lib/utils')
@@ -12,8 +12,6 @@ var app = require('./applicationNetworkTypeLinks.js')
 
 // Error reporting
 var httpError = require('http-errors')
-
-const formatRefsIn = formatRelationshipReferences('in')
 
 //* *****************************************************************************
 // DeviceNetworkTypeLinks database table.
@@ -46,7 +44,7 @@ async function createDeviceNetworkTypeLink (deviceId, networkTypeId, deviceProfi
     deviceProfileId,
     networkSettings: JSON.stringify(networkSettings)
   })
-  return prisma.createDeviceNetworkTypeLink(data).fragment$(fragments.basic)
+  return prisma.createDeviceNetworkTypeLink(data).$fragment(fragments.basic)
 }
 
 // Retrieve a deviceNetworkTypeLinks record by id.
@@ -55,7 +53,7 @@ async function createDeviceNetworkTypeLink (deviceId, networkTypeId, deviceProfi
 //
 // Returns a promise that executes the retrieval.
 async function retrieveDeviceNetworkTypeLink (id) {
-  const rec = await onFail(400, () => prisma.deviceNetworkTypeLink({ id }).fragment$(fragments.basic))
+  const rec = await onFail(400, () => prisma.deviceNetworkTypeLink({ id }).$fragment(fragments.basic))
   if (!rec) throw httpError(404, 'DeviceNetworkTypeLink not found')
   return rec
 }
@@ -75,7 +73,7 @@ async function updateDeviceNetworkTypeLink ({ id, ...data }, validateCompanyId) 
     data.networkSettings = JSON.stringify(data.networkSettings)
   }
   data = formatInputData(data)
-  return prisma.updateDeviceNetworkTypeLink({ data, where: { id } })
+  return prisma.updateDeviceNetworkTypeLink({ data, where: { id } }).$fragment(fragments.basic)
 }
 
 // Delete the deviceNetworkTypeLinks record.
@@ -98,14 +96,14 @@ async function deleteDeviceNetworkTypeLink (id, validateCompanyId) {
 // Options include the deviceId, and the networkTypeId.
 //
 // Returns a promise that does the retrieval.
-async function retrieveDeviceNetworkTypeLinks (opts) {
-  const where = formatRefsIn(opts)
+async function retrieveDeviceNetworkTypeLinks ({ limit, offset, ...where } = {}) {
+  where = formatRelationshipsIn(where)
   const query = { where }
-  if (opts.limit) query.first = opts.limit
-  if (opts.offset) query.skip = opts.offset
+  if (limit) query.first = limit
+  if (offset) query.skip = offset
   let [records, totalCount] = await Promise.all([
-    prisma.deviceNetworkTypeLinks(query).fragment$(fragments.basic),
-    prisma.deviceNetworkTypeLinksConnection({ where }).aggregate.count()
+    prisma.deviceNetworkTypeLinks(query).$fragment(fragments.basic),
+    prisma.deviceNetworkTypeLinksConnection({ where }).aggregate().count()
   ])
   records = records.map(x => ({
     ...x,
@@ -129,8 +127,11 @@ async function validateCompanyForDeviceNetworkTypeLink (companyId, dnlId) {
   await validateCompanyForDevice(companyId, dnl.device.id)
 }
 
+//* *****************************************************************************
+// Fragments for how the data should be returned from Prisma.
+//* *****************************************************************************
 const fragments = {
-  basic: `fragment Basic on DeviceNetworkTypeLink {
+  basic: `fragment BasicDeviceNetworkTypeLink on DeviceNetworkTypeLink {
     id
     networkSettings
     device {

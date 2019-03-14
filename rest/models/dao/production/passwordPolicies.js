@@ -47,7 +47,7 @@ async function createPasswordPolicy (ruleText, ruleRegExp, companyId) {
 //
 // Returns a promise that executes the retrieval.
 async function retrievePasswordPolicy (id, fragementKey = 'basic') {
-  const rec = await onFail(400, () => prisma.passwordPolicy({ id })).fragment$(fragments[fragementKey])
+  const rec = await onFail(400, () => prisma.passwordPolicy({ id })).$fragment(fragments[fragementKey])
   if (!rec) throw httpError(404, 'PasswordPolicy not found')
   return rec
 }
@@ -64,7 +64,7 @@ async function updatePasswordPolicy ({ id, ...data }) {
     data.company = { connect: { id: data.companyId } }
     delete data.companyId
   }
-  return prisma.updatePasswordPolicy({ data, where: { id } })
+  return prisma.updatePasswordPolicy({ data, where: { id } }).$fragment(fragments.basic)
 }
 
 // Delete the passwordPolicy record.
@@ -94,8 +94,11 @@ function retrievePasswordPolicies (companyId) {
   return prisma.passwordPolicies({ where })
 }
 
+//* *****************************************************************************
+// Fragments for how the data should be returned from Prisma.
+//* *****************************************************************************
 const fragments = {
-  basic: `fragment Basic on PasswordPolicy {
+  basic: `fragment BasicPasswordPolicy on PasswordPolicy {
     ruleText
     ruleRegExp
     company {

@@ -13,25 +13,17 @@ describe('Unit Tests for ' + testName, () => {
   })
   after('Shutdown', async () => {
   })
-  it(testName + ' Hash Password', (done) => {
-    TestModule.hashPassword('Test123', (err, hash) => {
-      if (err) done(err)
-      temp = hash
-      done()
-    })
+  it(testName + ' Hash Password', async () => {
+    temp = await TestModule.hashPassword('Test123')
   })
-  it(testName + ' Verify Password', (done) => {
-    TestModule.verifyPassword('Test123', temp, (err, valid) => {
-      if (err) done(err)
-      if (!valid) done(new Error('Password Failed'))
-      else done()
-    })
+  it(testName + ' Verify Password', async () => {
+    const valid = await TestModule.verifyPassword('Test123', temp)
+    if (valid) return
+    throw new Error('Password Failed')
   })
-  it(testName + ' Fail to Verify Password', (done) => {
-    TestModule.verifyPassword('Test456', temp, (err, valid) => {
-      if (err) done(err)
-      if (valid) done(new Error('Password Did not fail'))
-      else done()
-    })
+  it(testName + ' Fail to Verify Password', async () => {
+    const valid = await TestModule.verifyPassword('Test456', temp)
+    if (!valid) return
+    throw new Error('Password Did not fail')
   })
 })

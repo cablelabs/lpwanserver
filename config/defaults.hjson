@@ -58,27 +58,19 @@
     impl_directory: production
 
     //////////////////////////////////////////////////////////
-    // Database settings
+    // PRISMA (database) settings
     //////////////////////////////////////////////////////////
-    db_schema: data/lpwanserver.2.2.schema
-    // Create a new database at startup?
-    db_create: false
-    // The database file to use.
-    db_file: data/demo_data/demo.sqlite3
+    // Path to the prisma sub-folder that contains the datamodel
+    // and JS client to be used
+    prisma_dir: dev
+    // URL parts for running prisma service
+    prisma_protocol: http
+    prisma_host: prisma
+    prisma_port: 4466
 
     //////////////////////////////////////////////////////////
     // CORS settings
     //////////////////////////////////////////////////////////
     // Whitelist allowing remote access - an array of strings.
     cors_whitelist: [ '.*' ]
-
-    //////////////////////////////////////////////////////////
-    // PRISMA settings
-    //////////////////////////////////////////////////////////
-    // Path to the Prisma JavaScript client
-    prisma_dir: dev
-    // URL parts for prisma service
-    prisma_protocol: http
-    prisma_host: prisma
-    prisma_port: 4466
 }

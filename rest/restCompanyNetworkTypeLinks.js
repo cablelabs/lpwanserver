@@ -2,6 +2,7 @@ var appLogger = require('./lib/appLogger.js')
 
 var restServer
 var modelAPI
+const { formatRelationshipsOut } = require('./lib/prisma')
 
 exports.initialize = function (app, server) {
   restServer = server
@@ -52,7 +53,7 @@ exports.initialize = function (app, server) {
   function (req, res, next) {
     var options = {}
     // Limit by company, too, if not a system admin.
-    if (req.company.type !== modelAPI.companies.COMPANY_ADMIN) {
+    if (req.company.type.id !== modelAPI.companies.COMPANY_ADMIN) {
       options.companyId = req.company.id
     }
     else if (req.query.companyId) {
@@ -82,7 +83,8 @@ exports.initialize = function (app, server) {
       }
     }
     modelAPI.companyNetworkTypeLinks.retrieveCompanyNetworkTypeLinks(options).then(function (networkTypes) {
-      restServer.respondJson(res, null, networkTypes)
+      const responseBody = { ...networkTypes, records: networkTypes.records.map(formatRelationshipsOut) }
+      restServer.respondJson(res, null, responseBody)
     })
       .catch(function (err) {
         appLogger.log('Error getting networkTypes: ' + err)
@@ -115,7 +117,7 @@ exports.initialize = function (app, server) {
     function (req, res, next) {
       var id = parseInt(req.params.id)
       modelAPI.companyNetworkTypeLinks.retrieveCompanyNetworkTypeLink(id).then(function (np) {
-        restServer.respondJson(res, null, np)
+        restServer.respondJson(res, null, formatRelationshipsOut(np))
       })
         .catch(function (err) {
           appLogger.log('Error getting companyNetworkTypeLink ' + id + ': ' + err)
@@ -155,7 +157,7 @@ exports.initialize = function (app, server) {
 
     // If the user is part of the admin group and does not have a companyId
     // specified.
-    if ((modelAPI.companies.COMPANY_ADMIN === req.company.type) &&
+    if ((modelAPI.companies.COMPANY_ADMIN === req.company.type.id) &&
              (!rec.companyId)) {
       restServer.respond(res, 400, 'Must have companyId when part of admin company')
       return
@@ -163,15 +165,15 @@ exports.initialize = function (app, server) {
 
     // If the user is a not company admin, and is specifying another
     // company.
-    if ((modelAPI.companies.COMPANY_ADMIN !== req.company.type) &&
+    if ((modelAPI.companies.COMPANY_ADMIN !== req.company.type.id) &&
              rec.companyId &&
-             (rec.companyId !== req.user.companyId)) {
+             (rec.companyId !== req.user.company.id)) {
       restServer.respond(res, 403, "Cannot specify another company's networks")
       return
     }
 
     if (!rec.companyId) {
-      rec.companyId = req.user.companyId
+      rec.companyId = req.user.company.id
     }
 
     // You can't specify an id.
@@ -240,8 +242,8 @@ exports.initialize = function (app, server) {
     modelAPI.companyNetworkTypeLinks.retrieveCompanyNetworkTypeLink(data.id).then(function (cnl) {
       // If not an admin company, the companyId better match the user's
       // companyId.
-      if ((req.company.type !== modelAPI.companies.COMPANY_ADMIN) &&
-                 (cnl.companyId !== req.user.companyId)) {
+      if ((req.company.type.id !== modelAPI.companies.COMPANY_ADMIN) &&
+                 (cnl.company.id !== req.user.company.id)) {
         restServer.respond(res, 403, "Cannot change another company's record.")
         return
       }
@@ -299,7 +301,7 @@ exports.initialize = function (app, server) {
   function (req, res, next) {
     var id = parseInt(req.params.id)
     // If the caller is a global admin, we can just delete.
-    if (req.company.type === modelAPI.companies.COMPANY_ADMIN) {
+    if (req.company.type.id === modelAPI.companies.COMPANY_ADMIN) {
       modelAPI.companyNetworkTypeLinks.deleteCompanyNetworkTypeLink(id).then(function (ret) {
         restServer.respondJson(res, 200, { remoteAccessLogs: ret })
       })
@@ -312,7 +314,7 @@ exports.initialize = function (app, server) {
       // We'll need to read first to make sure the record is for the
       // company the company admin is part of.
       modelAPI.companyNetworkTypeLinks.retrieveCompanyNetworkTypeLink(id).then(function (cnl) {
-        if (req.company.id !== cnl.companyId) {
+        if (req.company.id !== cnl.company.id) {
           restServer.respond(res, 400, 'Unauthorized to delete record')
         }
         else {

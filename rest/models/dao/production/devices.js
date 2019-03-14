@@ -1,5 +1,5 @@
 // Database implementation.
-const { prisma, formatInputData, formatRelationshipReferences } = require('../../../lib/prisma')
+const { prisma, formatInputData, formatRelationshipsIn } = require('../../../lib/prisma')
 
 // Error reporting
 var httpError = require('http-errors')
@@ -7,7 +7,7 @@ var httpError = require('http-errors')
 // Utils
 const { onFail } = require('../../../lib/utils')
 
-const formatRefsIn = formatRelationshipReferences('in')
+const DevNtwkTypeLink = require('./deviceNetworkTypeLinks')
 
 //* *****************************************************************************
 // Devices database table.
@@ -39,11 +39,11 @@ function createDevice (name, description, applicationId, deviceModel) {
     applicationId,
     deviceModel
   })
-  return prisma.createDevice(data).fragment(fragments.basic)
+  return prisma.createDevice(data).$fragment(fragments.basic)
 }
 
 async function loadDevice (uniqueKeyObj, fragementKey = 'basic') {
-  const rec = await onFail(400, () => prisma.device(uniqueKeyObj)).fragment$(fragments[fragementKey])
+  const rec = await onFail(400, () => prisma.device(uniqueKeyObj).$fragment(fragments[fragementKey]))
   if (!rec) throw httpError(404, 'Device not found')
   return rec
 }
@@ -58,10 +58,10 @@ async function loadDevice (uniqueKeyObj, fragementKey = 'basic') {
 async function retrieveDevice (id) {
   const device = await loadDevice({ id })
   try {
-    const networks = await prisma
-      .deviceNetworkTypeLinks({ where: { device: { id } } })
-      .fragment$(fragments.ntwkTypeLink)
-    device.networks = networks.map(x => x.networkType.id)
+    const { records } = await DevNtwkTypeLink.retrieveDeviceNetworkTypeLinks({ deviceId: id })
+    if (records.length) {
+      device.networks = records.map(x => x.networkType.id)
+    }
   }
   catch (err) {
     // ignore
@@ -78,7 +78,7 @@ async function retrieveDevice (id) {
 function updateDevice ({ id, ...data }) {
   if (!id) throw httpError(400, 'No existing Device ID')
   data = formatInputData(data)
-  return prisma.updateDevice({ data, where: { id } })
+  return prisma.updateDevice({ data, where: { id } }).$fragment(fragments.basic)
 }
 
 // Delete the device record.
@@ -116,35 +116,32 @@ function retrieveAllDevices () {
 // the first device returned (together giving a paging capability), a
 // search string on device name, a companyId, an applicationId, or a
 // deviceProfileId.
-async function retrieveDevices (opts) {
-  const where = formatRefsIn(opts)
-  if (opts.search) {
-    where.name_contains = opts.search
+async function retrieveDevices ({ limit, offset, ...where } = {}) {
+  where = formatRelationshipsIn(where)
+  if (where.search) {
+    where.name_contains = where.search
     delete where.search
   }
   const query = { where }
-  if (opts.limit) query.first = opts.limit
-  if (opts.offset) query.skip = opts.offset
+  if (limit) query.first = limit
+  if (offset) query.skip = offset
   const [records, totalCount] = await Promise.all([
-    prisma.devices(query).fragment$(fragments.basic),
-    prisma.devicesConnection({ where }).aggregate.count()
+    prisma.devices(query).$fragment(fragments.basic),
+    prisma.devicesConnection({ where }).aggregate().count()
   ])
   return { totalCount, records }
 }
 
+//* *****************************************************************************
+// Fragments for how the data should be returned from Prisma.
+//* *****************************************************************************
 const fragments = {
-  basic: `fragment Basic on Device {
+  basic: `fragment BasicDevice on Device {
     id
     name
     description
     deviceModel
     application {
-      id
-    }
-  }`,
-  ntwkTypeLink: `fragment Basic on CompanyNetworkTypeLink {
-    id
-    networkType {
       id
     }
   }`

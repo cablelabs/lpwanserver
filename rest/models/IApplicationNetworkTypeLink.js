@@ -95,7 +95,7 @@ ApplicationNetworkTypeLink.prototype.updateApplicationNetworkTypeLink = function
   return new Promise(async function (resolve, reject) {
     try {
       var rec = await me.impl.updateApplicationNetworkTypeLink(applicationNetworkTypeLink, validateCompanyId)
-      var logs = await modelAPI.networkTypeAPI.pushApplication(rec.networkTypeId, rec, rec.networkSettings)
+      var logs = await modelAPI.networkTypeAPI.pushApplication(rec.networkType.id, rec, rec.networkSettings)
       rec.remoteAccessLogs = logs
       resolve(rec)
     }
@@ -138,8 +138,8 @@ ApplicationNetworkTypeLink.prototype.deleteApplicationNetworkTypeLink = function
       // Since we clear the remote networks before we delete the local
       // record, validate the company now, if required.
       if (validateCompanyId) {
-        var app = await modelAPI.applications.retrieveApplication(rec.applicationId)
-        if (validateCompanyId !== app.companyId) {
+        var app = await modelAPI.applications.retrieveApplication(rec.application.id)
+        if (validateCompanyId !== app.company.id) {
           reject(new httpError.Unauthorized())
           return
         }
@@ -152,7 +152,7 @@ ApplicationNetworkTypeLink.prototype.deleteApplicationNetworkTypeLink = function
       }
 
       // Don't delete the local record until the remote operations complete.
-      var logs = await modelAPI.networkTypeAPI.deleteApplication(rec.networkTypeId, rec.applicationId)
+      var logs = await modelAPI.networkTypeAPI.deleteApplication(rec.networkType.id, rec.application.id)
       await me.impl.deleteApplicationNetworkTypeLink(id)
       resolve(logs)
     }
@@ -181,13 +181,13 @@ ApplicationNetworkTypeLink.prototype.pushApplicationNetworkTypeLink = function (
       var rec = await me.impl.retrieveApplicationNetworkTypeLink(applicationNetworkTypeLink)
 
       // push devicenetworkTypeLinks
-      let dntls = await modelAPI.deviceNetworkTypeLinks.retrieveDeviceNetworkTypeLinks({ applicationId: rec.applicationId })
+      let dntls = await modelAPI.deviceNetworkTypeLinks.retrieveDeviceNetworkTypeLinks({ applicationId: rec.application.id })
       let recs = dntls.records
       for (let i = 0; i < recs.length; ++i) {
         await modelAPI.deviceNetworkTypeLinks.pushDeviceNetworkTypeLink(recs[ i ].id)
       }
 
-      var logs = await modelAPI.networkTypeAPI.pushApplication(rec.networkTypeId, rec.applicationId, rec.networkSettings)
+      var logs = await modelAPI.networkTypeAPI.pushApplication(rec.networkType.id, rec.application.id, rec.networkSettings)
       rec.remoteAccessLogs = logs
       resolve(rec)
     }

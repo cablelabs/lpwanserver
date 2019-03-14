@@ -26,7 +26,6 @@ const opts = { cwd: ROOT, stdio: 'inherit' }
 function copyDemoData () {
   execSync('rm -rf ./data/demo_data', opts)
   execSync('cp -r ./data/demo_baseline ./data/demo_data', opts)
-  execSync('cp ./data/baseline.sqlite3 ./data/demo_data/demo.sqlite3')
 }
 
 function packageRestServer () {

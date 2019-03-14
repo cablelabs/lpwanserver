@@ -1,5 +1,5 @@
 // Database implementation.
-const { prisma, formatInputData, formatRelationshipReferences } = require('../../../lib/prisma')
+const { prisma, formatInputData, formatRelationshipsIn } = require('../../../lib/prisma')
 
 // Error reporting
 var httpError = require('http-errors')
@@ -7,7 +7,7 @@ var httpError = require('http-errors')
 // Utils
 const { onFail } = require('../../../lib/utils')
 
-const formatRefsIn = formatRelationshipReferences('in')
+const AppNtwkTypeLink = require('./applicationNetworkTypeLinks')
 
 //* *****************************************************************************
 // Applications database table.
@@ -42,11 +42,11 @@ function createApplication (name, description, companyId, reportingProtocolId, b
     reportingProtocolId,
     baseUrl
   })
-  return prisma.createApplication(data).fragment$(fragments.basic)
+  return prisma.createApplication(data).$fragment(fragments.basic)
 }
 
 async function loadApplication (uniqueKeyObj, fragementKey = 'basic') {
-  const rec = await onFail(400, () => prisma.application(uniqueKeyObj)).fragment$(fragments[fragementKey])
+  const rec = await onFail(400, () => prisma.application(uniqueKeyObj).$fragment(fragments[fragementKey]))
   if (!rec) throw httpError(404, 'Application not found')
   return rec
 }
@@ -58,13 +58,13 @@ async function loadApplication (uniqueKeyObj, fragementKey = 'basic') {
 // id - the record id of the application.
 //
 // Returns a promise that executes the retrieval.
-async function retrieveApplication (id) {
-  const app = await loadApplication({ id })
+async function retrieveApplication (id, fragment) {
+  const app = await loadApplication({ id }, fragment)
   try {
-    const networks = await prisma
-      .applicationNetworkTypeLinks({ where: { application: { id } } })
-      .fragment$(fragments.ntwkTypeLink)
-    app.networks = networks.map(x => x.networkType.id)
+    const { records } = await AppNtwkTypeLink.retrieveApplicationNetworkTypeLinks({ applicationId: id })
+    if (records.length) {
+      app.networks = records.map(x => x.networkType.id)
+    }
   }
   catch (err) {
     // ignore
@@ -81,7 +81,7 @@ async function retrieveApplication (id) {
 function updateApplication ({ id, ...data }) {
   if (!id) throw httpError(400, 'No existing Application ID')
   data = formatInputData(data)
-  return prisma.updateApplication({ data, where: { id } })
+  return prisma.updateApplication({ data, where: { id } }).$fragment(fragments.basic)
 }
 
 // Delete the application record.
@@ -129,24 +129,27 @@ function retrieveAllApplications () {
 // search string on application name, a companyId, and a reportingProtocolId.
 // The returned totalCount shows the number of records that match the query,
 // ignoring any limit and/or offset.
-async function retrieveApplications (opts) {
-  const where = formatRefsIn(opts)
-  if (opts.search) {
-    where.name_contains = opts.search
+async function retrieveApplications ({ limit, offset, ...where } = {}) {
+  where = formatRelationshipsIn(where)
+  if (where.search) {
+    where.name_contains = where.search
     delete where.search
   }
   const query = { where }
-  if (opts.limit) query.first = opts.limit
-  if (opts.offset) query.skip = opts.offset
+  if (limit) query.first = limit
+  if (offset) query.skip = offset
   const [records, totalCount] = await Promise.all([
-    prisma.applications(query).fragment$(fragments.basic),
-    prisma.applicationsConnection({ where }).aggregate.count()
+    prisma.applications(query).$fragment(fragments.basic),
+    prisma.applicationsConnection({ where }).aggregate().count()
   ])
   return { totalCount, records }
 }
 
+//* *****************************************************************************
+// Fragments for how the data should be returned from Prisma.
+//* *****************************************************************************
 const fragments = {
-  basic: `fragment Basic on Application {
+  basic: `fragment BasicApplication on Application {
     id
     name
     description
@@ -155,12 +158,6 @@ const fragments = {
       id
     }
     reportingProtocol {
-      id
-    }
-  }`,
-  ntwkTypeLink: `fragment Basic on CompanyNetworkTypeLink {
-    id
-    networkType {
       id
     }
   }`

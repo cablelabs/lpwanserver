@@ -8,7 +8,7 @@ async function main () {
   const client = fs.readFileSync(readPath, { encoding: 'utf8' })
   const dynamicClient = client.replace(
     /http:\/\/localhost:4466/,
-    '${process.env.PRISMA_PROTOCOL}://${process.env.PRISMA_HOST}:${process.env.PRISMA_PORT}'
+    '${process.env.prisma_protocol}://${process.env.prisma_host}:${process.env.prisma_port}'
   )
   fs.writeFileSync(writePath, dynamicClient)
 }

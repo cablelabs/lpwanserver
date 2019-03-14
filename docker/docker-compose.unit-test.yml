@@ -1,10 +1,19 @@
-version: '3'
+version: '3.5'
 
 services:
   unit-test:
     image: lpwanserver/test
+    networks:
+      - lpwanserver_net
     environment:
-    - NODE_ENV=e2e
-    - PORT=3200
+      - NODE_ENV=e2e
+      - port=3200
+      - prisma_protocol=http
+      - prisma_host=prisma
+      - prisma_port=4466
     ports:
-    - '3200:3200'
+      - '3200:3200'
+
+networks:
+  lpwanserver_net:
+    name: lpwanserver_net

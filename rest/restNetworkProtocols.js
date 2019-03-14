@@ -3,6 +3,8 @@ const fs = require('fs')
 var restServer
 var modelAPI
 
+const { formatRelationshipsOut } = require('./lib/prisma')
+
 exports.initialize = function (app, server) {
   restServer = server
   modelAPI = server.modelAPI
@@ -73,7 +75,8 @@ exports.initialize = function (app, server) {
       }
       modelAPI.networkProtocols.retrieveNetworkProtocols(options).then(function (nps) {
         // restServer.respondJson(res, null, nps)
-        restServer.respond(res, 200, nps)
+        const responseBody = { ...nps, records: nps.records.map(formatRelationshipsOut) }
+        restServer.respond(res, 200, responseBody)
       })
         .catch(function (err) {
           appLogger.log('Error getting networkProtocols: ' + err)
@@ -115,7 +118,7 @@ exports.initialize = function (app, server) {
           while (!found && counter < nps.records.length) {
             if (nps.records[counter].name === rec.name) {
               found = true
-              nps.records[counter].versions.push(rec)
+              nps.records[counter].versions.push(formatRelationshipsOut(rec))
             }
             else {
               counter++
@@ -126,7 +129,7 @@ exports.initialize = function (app, server) {
             nps.records.push({
               name: rec.name,
               masterProtocol: rec.masterProtocol,
-              networkTypeId: rec.networkTypeId,
+              networkTypeId: rec.networkType.id,
               versions: [rec]
             })
           }
@@ -162,7 +165,7 @@ exports.initialize = function (app, server) {
     function (req, res, next) {
       modelAPI.networkProtocols.retrieveNetworkProtocol(parseInt(req.params.id, 10)).then(function (np) {
         // restServer.respondJson(res, null, np)
-        restServer.respond(res, 200, np)
+        restServer.respond(res, 200, formatRelationshipsOut(np))
       })
         .catch(function (err) {
           appLogger.log('Error getting networkProtocol ' + req.params.id + ': ' + err)
@@ -350,7 +353,7 @@ exports.initialize = function (app, server) {
     function (req, res, next) {
       let fileList = fs.readdirSync('./rest/networkProtocols/')
       let handlerList = []
-      for (onefile in fileList) {
+      for (var onefile in fileList) {
         if (
           fileList[onefile] === 'networkProtocolDataAccess.js' ||
                     fileList[onefile] === 'networkProtocols.js' ||

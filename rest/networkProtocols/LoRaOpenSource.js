@@ -209,12 +209,12 @@ async function getCompanyAccount (dataAPI, network, companyId, generateIfMissing
   try {
     srd = await dataAPI.getProtocolDataForKey(
       network.id,
-      network.networkProtocolId,
+      network.networkProtocol.id,
       makeCompanyDataKey(companyId, 'sd'))
 
     kd = await dataAPI.getProtocolDataForKey(
       network.id,
-      network.networkProtocolId,
+      network.networkProtocol.id,
       makeCompanyDataKey(companyId, 'kd'))
   }
   catch (err) {
@@ -236,13 +236,13 @@ async function getCompanyAccount (dataAPI, network, companyId, generateIfMissing
       // Save for future reference.networkId, networkProtocolId, key, data
       await dataAPI.putProtocolDataForKey(
         network.id,
-        network.networkProtocolId,
+        network.networkProtocol.id,
         makeCompanyDataKey(companyId, 'sd'),
         srd)
 
       await dataAPI.putProtocolDataForKey(
         network.id,
-        network.networkProtocolId,
+        network.networkProtocol.id,
         makeCompanyDataKey(companyId, 'kd'),
         kd)
       return secData
@@ -678,14 +678,14 @@ function getServiceProfileForOrg (network, orgId, companyId, connection, dataAPI
           let serviceProfile = body.result[0]
           await dataAPI.putProtocolDataForKey(
             network.id,
-            network.networkProtocolId,
+            network.networkProtocol.id,
             makeCompanyDataKey(companyId, 'coSPId'),
             serviceProfile.serviceProfileID)
           // TODO: Remove this HACK.  Should not store the service profile locally
           //       in case it gets changed on the remote server.
           await dataAPI.putProtocolDataForKey(
             network.id,
-            network.networkProtocolId,
+            network.networkProtocol.id,
             makeCompanyDataKey(companyId, 'coSPNwkId'),
             serviceProfile.networkServerID)
           resolve(serviceProfile)
@@ -704,7 +704,7 @@ function getANetworkServerIDFromServiceProfile (network, connection, coId, dataA
     try {
       coSPId = await dataAPI.getProtocolDataForKey(
         network.id,
-        network.networkProtocolId,
+        network.networkProtocol.id,
         makeCompanyDataKey(coId, 'coSPId'))
     }
     catch (err) {
@@ -719,7 +719,7 @@ function getANetworkServerIDFromServiceProfile (network, connection, coId, dataA
     try {
       var coSPNwkId = await dataAPI.getProtocolDataForKey(
         network.id,
-        network.networkProtocolId,
+        network.networkProtocol.id,
         makeCompanyDataKey(coId, 'coSPNwkId'))
       resolve(coSPNwkId)
     }
@@ -898,7 +898,7 @@ module.exports.addCompany = function (sessionData, network, companyId, dataAPI) 
         try {
           // Save the company ID from the remote network.
           await dataAPI.putProtocolDataForKey(network.id,
-            network.networkProtocolId,
+            network.networkProtocol.id,
             makeCompanyDataKey(company.id, 'coNwkId'),
             body.id)
           var networkCoId = body.id
@@ -957,7 +957,7 @@ module.exports.addCompany = function (sessionData, network, companyId, dataAPI) 
               appLogger.log(body)
               // Save the user ID from the remote network.
               await dataAPI.putProtocolDataForKey(network.id,
-                network.networkProtocolId,
+                network.networkProtocol.id,
                 makeCompanyDataKey(company.id, 'coUsrId'),
                 body.id)
             }
@@ -1012,14 +1012,14 @@ module.exports.addCompany = function (sessionData, network, companyId, dataAPI) 
                 // network.
                 await dataAPI.putProtocolDataForKey(
                   network.id,
-                  network.networkProtocolId,
+                  network.networkProtocol.id,
                   makeCompanyDataKey(company.id, 'coSPId'),
                   body.serviceProfileID)
                 // TODO: Remove this HACK.  Should not store the service profile locally
                 //       in case it gets changed on the remote server.
                 await dataAPI.putProtocolDataForKey(
                   network.id,
-                  network.networkProtocolId,
+                  network.networkProtocol.id,
                   makeCompanyDataKey(company.id, 'coSPNwkId'),
                   networkServerId)
                 resolve(body)
@@ -1056,7 +1056,7 @@ module.exports.getCompany = function (sessionData, network, companyId, dataAPI) 
       company = await dataAPI.getCompanyById(companyId)
       coid = await dataAPI.getProtocolDataForKey(
         network.id,
-        network.networkProtocolId,
+        network.networkProtocol.id,
         makeCompanyDataKey(company.id, 'coNwkId'))
     }
     catch (err) {
@@ -1111,7 +1111,7 @@ module.exports.updateCompany = function (sessionData, network, companyId, dataAP
       company = await dataAPI.getCompanyById(companyId)
       coid = await dataAPI.getProtocolDataForKey(
         network.id,
-        network.networkProtocolId,
+        network.networkProtocol.id,
         makeCompanyDataKey(company.id, 'coNwkId'))
     }
     catch (err) {
@@ -1170,13 +1170,13 @@ module.exports.deleteCompany = function (sessionData, network, companyId, dataAP
     try {
       coid = await dataAPI.getProtocolDataForKey(
         network.id,
-        network.networkProtocolId,
+        network.networkProtocol.id,
         makeCompanyDataKey(companyId, 'coNwkId'))
 
       // Get the admin user's id, too.
       userId = await dataAPI.getProtocolDataForKey(
         network.id,
-        network.networkProtocolId,
+        network.networkProtocol.id,
         makeCompanyDataKey(companyId, 'coUsrId'))
     }
     catch (err) {
@@ -1228,31 +1228,31 @@ module.exports.deleteCompany = function (sessionData, network, companyId, dataAP
             // protocolData store.
             await dataAPI.deleteProtocolDataForKey(
               network.id,
-              network.networkProtocolId,
+              network.networkProtocol.id,
               makeCompanyDataKey(companyId, 'kd'))
             await dataAPI.deleteProtocolDataForKey(
               network.id,
-              network.networkProtocolId,
+              network.networkProtocol.id,
               makeCompanyDataKey(companyId, 'coUsrId'))
 
             await dataAPI.deleteProtocolDataForKey(
               network.id,
-              network.networkProtocolId,
+              network.networkProtocol.id,
               makeCompanyDataKey(companyId, 'coNwkId'))
             await dataAPI.deleteProtocolDataForKey(
               network.id,
-              network.networkProtocolId,
+              network.networkProtocol.id,
               makeCompanyDataKey(companyId, 'sd'))
             await dataAPI.deleteProtocolDataForKey(
               network.id,
-              network.networkProtocolId,
+              network.networkProtocol.id,
               makeCompanyDataKey(companyId, 'coSPId'))
             // TODO: Remove this HACK.  Should not store the
             // service profile locally in case it gets changed on
             // the remote server.
             await dataAPI.deleteProtocolDataForKey(
               network.id,
-              network.networkProtocolId,
+              network.networkProtocol.id,
               makeCompanyDataKey(companyId, 'coSPNwkId'))
             resolve()
           }
@@ -1324,7 +1324,7 @@ module.exports.pushApplication = function (sessionData, network, application, da
     // See if it already exists
     dataAPI.getProtocolDataForKey(
       network.id,
-      network.networkProtocolId,
+      network.networkProtocol.id,
       makeApplicationDataKey(application.id, 'appNwkId'))
       .then(appNetworkId => {
         if (update && appNetworkId) {
@@ -1385,7 +1385,7 @@ module.exports.pushDeviceProfile = function (sessionData, network, deviceProfile
     // See if it already exists
     dataAPI.getProtocolDataForKey(
       network.id,
-      network.networkProtocolId,
+      network.networkProtocol.id,
       makeDeviceProfileDataKey(deviceProfile.id, 'dpNwkId'))
       .then(dpNetworkId => {
         if (isUpdate && dpNetworkId) {
@@ -1451,7 +1451,7 @@ module.exports.pushDevice = function (sessionData, network, device, dataAPI, upd
     // See if it already exists
     dataAPI.getProtocolDataForKey(
       network.id,
-      network.networkProtocolId,
+      network.networkProtocol.id,
       makeDeviceDataKey(device.id, 'devNwkId'))
       .then(devNetworkId => {
         if (update && devNetworkId) {
@@ -1544,10 +1544,10 @@ module.exports.setupOrganization = function (sessionData, network, modelAPI, dat
   let me = this
   return new Promise(async function (resolve, reject) {
     let company = await modelAPI.companies.retrieveCompany(2)
-    let companyNtl = await dataAPI.getCompanyNetworkType(company.id, network.networkTypeId)
+    let companyNtl = await dataAPI.getCompanyNetworkType(company.id, network.networkType.id)
     let lora1NetworkSettings = { network: network.id }
     if (!companyNtl) {
-      companyNtl = await modelAPI.companyNetworkTypeLinks.createRemoteCompanyNetworkTypeLink(company.id, network.networkTypeId, {})
+      companyNtl = await modelAPI.companyNetworkTypeLinks.createRemoteCompanyNetworkTypeLink(company.id, network.networkType.id, {})
       companyNtl.networkSettings = JSON.parse(companyNtl.networkSettings)
     }
     appLogger.log(company)
@@ -1595,7 +1595,7 @@ module.exports.setupOrganization = function (sessionData, network, modelAPI, dat
             .then(networkSettings => {
               appLogger.log(networkSettings, 'warn')
               dataAPI.putProtocolDataForKey(network.id,
-                network.networkProtocolId,
+                network.networkProtocol.id,
                 makeCompanyDataKey(company.id, 'coNwkId'),
                 organization.id)
 
@@ -1703,7 +1703,7 @@ module.exports.addRemoteDeviceProfile = function (sessionData, limitedRemoteDevi
               appLogger.log(existingDeviceProfile.name + ' already exists')
 
               dataAPI.putProtocolDataForKey(network.id,
-                network.networkProtocolId,
+                network.networkProtocol.id,
                 makeDeviceProfileDataKey(existingDeviceProfile.id, 'dpNwkId'),
                 remoteDeviceProfile.deviceProfile.deviceProfileID)
 
@@ -1716,14 +1716,14 @@ module.exports.addRemoteDeviceProfile = function (sessionData, limitedRemoteDevi
               appLogger.log('creating ' + remoteDeviceProfile.name)
               let networkSpecificDeviceProfileInformation = normalizeDeviceProfileData(remoteDeviceProfile)
               appLogger.log(networkSpecificDeviceProfileInformation, 'error')
-              modelAPI.deviceProfiles.createRemoteDeviceProfile(network.networkTypeId, 2,
+              modelAPI.deviceProfiles.createRemoteDeviceProfile(network.networkType.id, 2,
                 remoteDeviceProfile.name, 'Device Profile managed by LPWAN Server, perform changes via LPWAN',
                 networkSpecificDeviceProfileInformation)
                 .then((existingDeviceProfile) => {
                   appLogger.log(existingDeviceProfile)
 
                   dataAPI.putProtocolDataForKey(network.id,
-                    network.networkProtocolId,
+                    network.networkProtocol.id,
                     makeDeviceProfileDataKey(existingDeviceProfile.id, 'dpNwkId'),
                     remoteDeviceProfile.deviceProfile.deviceProfileID)
 
@@ -1823,10 +1823,10 @@ function addRemoteApplication (sessionData, limitedRemoteApplication, network, m
     else {
       let networkSpecificApplicationInformation = normalizeApplicationData(remoteApplication)
       appLogger.log(networkSpecificApplicationInformation)
-      existingApplicationNTL = await modelAPI.applicationNetworkTypeLinks.createRemoteApplicationNetworkTypeLink(existingApplication.id, network.networkTypeId, networkSpecificApplicationInformation, existingApplication.companyId)
+      existingApplicationNTL = await modelAPI.applicationNetworkTypeLinks.createRemoteApplicationNetworkTypeLink(existingApplication.id, network.networkType.id, networkSpecificApplicationInformation, existingApplication.company.id)
       appLogger.log(existingApplicationNTL)
       await dataAPI.putProtocolDataForKey(network.id,
-        network.networkProtocolId,
+        network.networkProtocol.id,
         makeApplicationDataKey(existingApplication.id, 'appNwkId'),
         remoteApplication.id)
     }
@@ -1922,11 +1922,11 @@ function addRemoteDevice (sessionData, limitedRemoteDevice, network, application
       appLogger.log('creating Network Link for ' + existingDevice.name)
       let normalizedDeviceSettings = normalizeDeviceData(remoteDevice)
       appLogger.log(normalizedDeviceSettings, 'info')
-      existingDeviceNTL = await modelAPI.deviceNetworkTypeLinks.createRemoteDeviceNetworkTypeLink(existingDevice.id, network.networkTypeId, deviceProfileId.localDeviceProfile, normalizedDeviceSettings, 2)
+      existingDeviceNTL = await modelAPI.deviceNetworkTypeLinks.createRemoteDeviceNetworkTypeLink(existingDevice.id, network.networkType.id, deviceProfileId.localDeviceProfile, normalizedDeviceSettings, 2)
       appLogger.log(existingDeviceNTL)
     }
     dataAPI.putProtocolDataForKey(network.id,
-      network.networkProtocolId,
+      network.networkProtocol.id,
       makeDeviceDataKey(existingDevice.id, 'devNwkId'),
       remoteDevice.devEUI)
     resolve(existingDevice.id)
@@ -2054,16 +2054,16 @@ module.exports.addApplication = function (sessionData, network, applicationId, d
     try {
       // Get the local application data.
       application = await dataAPI.getApplicationById(applicationId)
-      applicationData = await dataAPI.getApplicationNetworkType(applicationId, network.networkTypeId)
+      applicationData = await dataAPI.getApplicationNetworkType(applicationId, network.networkType.id)
 
       coNetworkId = await dataAPI.getProtocolDataForKey(
         network.id,
-        network.networkProtocolId,
-        makeCompanyDataKey(application.companyId, 'coNwkId'))
+        network.networkProtocol.id,
+        makeCompanyDataKey(application.company.id, 'coNwkId'))
       coSPId = await dataAPI.getProtocolDataForKey(
         network.id,
-        network.networkProtocolId,
-        makeCompanyDataKey(application.companyId, 'coSPId'))
+        network.networkProtocol.id,
+        makeCompanyDataKey(application.company.id, 'coSPId'))
 
       // Set up the request options.
       var options = {}
@@ -2100,7 +2100,7 @@ module.exports.addApplication = function (sessionData, network, applicationId, d
           try {
             // Save the application ID from the remote network.
             await dataAPI.putProtocolDataForKey(network.id,
-              network.networkProtocolId,
+              network.networkProtocol.id,
               makeApplicationDataKey(application.id, 'appNwkId'),
               body.id)
           }
@@ -2135,7 +2135,7 @@ module.exports.getApplication = function (sessionData, network, applicationId, d
   return new Promise(async function (resolve, reject) {
     var appNetworkId = await dataAPI.getProtocolDataForKey(
       network.id,
-      network.networkProtocolId,
+      network.networkProtocol.id,
       makeApplicationDataKey(applicationId, 'appNwkId'))
     // Set up the request options.
     var options = {}
@@ -2181,17 +2181,17 @@ module.exports.updateApplication = function (sessionData, network, applicationId
     let application = await dataAPI.getApplicationById(applicationId)
     let coNetworkId = await dataAPI.getProtocolDataForKey(
       network.id,
-      network.networkProtocolId,
-      makeCompanyDataKey(application.companyId, 'coNwkId'))
+      network.networkProtocol.id,
+      makeCompanyDataKey(application.company.id, 'coNwkId'))
     let appNetworkId = await dataAPI.getProtocolDataForKey(
       network.id,
-      network.networkProtocolId,
+      network.networkProtocol.id,
       makeApplicationDataKey(applicationId, 'appNwkId'))
-    let applicationData = await dataAPI.getApplicationNetworkType(applicationId, network.networkTypeId)
+    let applicationData = await dataAPI.getApplicationNetworkType(applicationId, network.networkType.id)
     let coSPId = await dataAPI.getProtocolDataForKey(
       network.id,
-      network.networkProtocolId,
-      makeCompanyDataKey(application.companyId, 'coSPId'))
+      network.networkProtocol.id,
+      makeCompanyDataKey(application.company.id, 'coSPId'))
 
     // Set up the request options.
     var options = {}
@@ -2297,7 +2297,7 @@ module.exports.deleteApplication = function (sessionData, network, applicationId
     var application = await dataAPI.getApplicationById(applicationId)
     var appNetworkId = await dataAPI.getProtocolDataForKey(
       network.id,
-      network.networkProtocolId,
+      network.networkProtocol.id,
       makeApplicationDataKey(applicationId, 'appNwkId'))
     // Set up the request options.
     var options = {}
@@ -2321,7 +2321,7 @@ module.exports.deleteApplication = function (sessionData, network, applicationId
         // get rid of the local copy of the applicationID
         await dataAPI.deleteProtocolDataForKey(
           network.id,
-          network.networkProtocolId,
+          network.networkProtocol.id,
           makeApplicationDataKey(applicationId, 'appNwkId'))
         resolve()
       }
@@ -2361,7 +2361,7 @@ module.exports.startApplication = function (sessionData, network, applicationId,
       // Set up the Forwarding with LoRa App Server
       var appNwkId = await dataAPI.getProtocolDataForKey(
         network.id,
-        network.networkProtocolId,
+        network.networkProtocol.id,
         makeApplicationDataKey(applicationId, 'appNwkId'))
       var options = {}
       options.method = 'POST'
@@ -2419,7 +2419,7 @@ module.exports.stopApplication = function (sessionData, network, applicationId, 
     try {
       var appNwkId = await dataAPI.getProtocolDataForKey(
         network.id,
-        network.networkProtocolId,
+        network.networkProtocol.id,
         makeApplicationDataKey(applicationId, 'appNwkId'))
     }
     catch (err) {
@@ -2551,11 +2551,11 @@ module.exports.addDeviceProfile = function (sessionData, network, deviceProfileI
       let company = await dataAPI.getCompanyById(2)
       appLogger.log(company)
       let orgId = await dataAPI.getProtocolDataForKey(network.id,
-        network.networkProtocolId,
+        network.networkProtocol.id,
         makeCompanyDataKey(company.id, 'coNwkId'))
       let networkServerId = await dataAPI.getProtocolDataForKey(
         network.id,
-        network.networkProtocolId,
+        network.networkProtocol.id,
         makeCompanyDataKey(company.id, 'coSPNwkId'))
 
       var options = {}
@@ -2591,7 +2591,7 @@ module.exports.addDeviceProfile = function (sessionData, network, deviceProfileI
           // Save the deviceProfile ID from the remote network.
           appLogger.log(body)
           await dataAPI.putProtocolDataForKey(network.id,
-            network.networkProtocolId,
+            network.networkProtocol.id,
             makeDeviceProfileDataKey(deviceProfile.id, 'dpNwkId'),
             body.deviceProfileID)
 
@@ -2625,7 +2625,7 @@ module.exports.getDeviceProfile = function (sessionData, network, deviceProfileI
     try {
       dpNetworkId = await dataAPI.getProtocolDataForKey(
         network.id,
-        network.networkProtocolId,
+        network.networkProtocol.id,
         makeDeviceProfileDataKey(deviceProfileId, 'dpNwkId'))
     }
     catch (err) {
@@ -2686,12 +2686,12 @@ module.exports.updateDeviceProfile = function (sessionData, network, deviceProfi
       deviceProfile = await dataAPI.getDeviceProfileById(deviceProfileId)
       dpNetworkId = await dataAPI.getProtocolDataForKey(
         network.id,
-        network.networkProtocolId,
+        network.networkProtocol.id,
         makeDeviceProfileDataKey(deviceProfileId, 'dpNwkId'))
       coNetworkId = await dataAPI.getProtocolDataForKey(
         network.id,
-        network.networkProtocolId,
-        makeCompanyDataKey(deviceProfile.companyId, 'coNwkId'))
+        network.networkProtocol.id,
+        makeCompanyDataKey(deviceProfile.company.id, 'coNwkId'))
     }
     catch (err) {
       appLogger.log('Error getting supporting data for update device Profile: ' + err)
@@ -2820,11 +2820,11 @@ module.exports.deleteDeviceProfile = function (sessionData, network, deviceProfi
       var deviceProfile = await dataAPI.getDeviceProfileById(deviceProfileId)
       var dpNetworkId = await dataAPI.getProtocolDataForKey(
         network.id,
-        network.networkProtocolId,
+        network.networkProtocol.id,
         makeDeviceProfileDataKey(deviceProfileId, 'dpNwkId'))
       await dataAPI.deleteProtocolDataForKey(
         network.id,
-        network.networkProtocolId,
+        network.networkProtocol.id,
         makeDeviceProfileDataKey(deviceProfileId, 'dpNwkId'))
     }
     catch (err) {
@@ -2894,8 +2894,8 @@ module.exports.addDevice = function (sessionData, network, deviceId, dataAPI) {
     var dpNwkId
     try {
       device = await dataAPI.getDeviceById(deviceId)
-      dntl = await dataAPI.getDeviceNetworkType(deviceId, network.networkTypeId)
-      deviceProfile = await dataAPI.getDeviceProfileById(dntl.deviceProfileId)
+      dntl = await dataAPI.getDeviceNetworkType(deviceId, network.networkType.id)
+      deviceProfile = await dataAPI.getDeviceProfileById(dntl.deviceProfile.id)
       if (!dntl.networkSettings || !dntl.networkSettings.devEUI) {
         appLogger.log('deviceNetworkTypeLink MUST have networkSettings which MUST have devEUI')
         reject(400)
@@ -2903,12 +2903,12 @@ module.exports.addDevice = function (sessionData, network, deviceId, dataAPI) {
       }
       appNwkId = await dataAPI.getProtocolDataForKey(
         network.id,
-        network.networkProtocolId,
-        makeApplicationDataKey(device.applicationId, 'appNwkId'))
+        network.networkProtocol.id,
+        makeApplicationDataKey(device.application.id, 'appNwkId'))
       dpNwkId = await dataAPI.getProtocolDataForKey(
         network.id,
-        network.networkProtocolId,
-        makeDeviceProfileDataKey(dntl.deviceProfileId, 'dpNwkId'))
+        network.networkProtocol.id,
+        makeDeviceProfileDataKey(dntl.deviceProfile.id, 'dpNwkId'))
 
       let loraV1Device = deNormalizeDeviceData(
         Object.assign({}, device, dntl.networkSettings),
@@ -2952,7 +2952,7 @@ module.exports.addDevice = function (sessionData, network, deviceId, dataAPI) {
         else {
         // LoRa Server uses the DevEUI as the node id.
           dataAPI.putProtocolDataForKey(network.id,
-            network.networkProtocolId,
+            network.networkProtocol.id,
             makeDeviceDataKey(device.id, 'devNwkId'),
             options.json.devEUI)
 
@@ -3024,7 +3024,7 @@ module.exports.getDevice = function (sessionData, network, deviceId, dataAPI) {
     try {
       var devNetworkId = await dataAPI.getProtocolDataForKey(
         network.id,
-        network.networkProtocolId,
+        network.networkProtocol.id,
         makeDeviceDataKey(deviceId, 'devNwkId'))
     }
     catch (err) {
@@ -3082,24 +3082,24 @@ module.exports.updateDevice = function (sessionData, network, deviceId, dataAPI)
       // Get the device data.
       let device = await dataAPI.getDeviceById(deviceId)
       appLogger.log(device)
-      dntl = await dataAPI.getDeviceNetworkType(device.id, network.networkTypeId)
+      dntl = await dataAPI.getDeviceNetworkType(device.id, network.networkType.id)
       appLogger.log(dntl)
-      deviceProfile = await dataAPI.getDeviceProfileById(dntl.deviceProfileId)
+      deviceProfile = await dataAPI.getDeviceProfileById(dntl.deviceProfile.id)
       appLogger.log(deviceProfile)
       devNetworkId = await dataAPI.getProtocolDataForKey(
         network.id,
-        network.networkProtocolId,
+        network.networkProtocol.id,
         makeDeviceDataKey(dntl.id, 'devNwkId'))
       appLogger.log(devNetworkId)
       let appNwkId = await dataAPI.getProtocolDataForKey(
         network.id,
-        network.networkProtocolId,
-        makeApplicationDataKey(device.applicationId, 'appNwkId'))
+        network.networkProtocol.id,
+        makeApplicationDataKey(device.application.id, 'appNwkId'))
       appLogger.log(appNwkId)
       let dpNwkId = await dataAPI.getProtocolDataForKey(
         network.id,
-        network.networkProtocolId,
-        makeDeviceProfileDataKey(dntl.deviceProfileId, 'dpNwkId'))
+        network.networkProtocol.id,
+        makeDeviceProfileDataKey(dntl.deviceProfile.id, 'dpNwkId'))
       appLogger.log(dpNwkId)
 
       // Set up the request options.
@@ -3209,7 +3209,7 @@ module.exports.deleteDevice = function (sessionData, network, deviceId, dataAPI)
     try {
       devNetworkId = await dataAPI.getProtocolDataForKey(
         network.id,
-        network.networkProtocolId,
+        network.networkProtocol.id,
         makeDeviceDataKey(deviceId, 'devNwkId'))
     }
     catch (err) {
@@ -3248,7 +3248,7 @@ module.exports.deleteDevice = function (sessionData, network, deviceId, dataAPI)
         try {
           await dataAPI.deleteProtocolDataForKey(
             network.id,
-            network.networkProtocolId,
+            network.networkProtocol.id,
             makeDeviceDataKey(deviceId, 'devNwkId'))
         }
         catch (err) {

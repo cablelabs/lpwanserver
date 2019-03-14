@@ -1,9 +1,7 @@
 var appLogger = require('./lib/appLogger.js')
-const { formatRelationshipReferences } = require('./lib/prisma')
+const { formatRelationshipsOut } = require('./lib/prisma')
 var restServer
 var modelAPI
-
-const formatRefsOut = formatRelationshipReferences('out')
 
 exports.initialize = function (app, server) {
   restServer = server
@@ -70,13 +68,13 @@ exports.initialize = function (app, server) {
     restServer.isAdmin],
   function (req, res, next) {
     var options = {}
-    if (req.company.type === modelAPI.companies.COMPANY_ADMIN) {
+    if (req.company.type.id === modelAPI.companies.COMPANY_ADMIN) {
       // Check for a company limit.
       if (req.query.companyId) {
         options.companyId = req.query.companyId
       }
     }
-    else if (req.user.role === modelAPI.users.ROLE_ADMIN) {
+    else if (req.user.role.id === modelAPI.users.ROLE_ADMIN) {
       options.companyId = req.company.id
     }
     else {
@@ -100,7 +98,7 @@ exports.initialize = function (app, server) {
     }
     modelAPI.users.retrieveUsers(options).then(function (result) {
       let records = result.records.map(x => ({
-        ...formatRefsOut(x),
+        ...formatRelationshipsOut(x),
         role: modelAPI.users.reverseRoles[x.role.id]
       }))
       restServer.respondJson(res, null, { ...result, records })
@@ -170,7 +168,7 @@ exports.initialize = function (app, server) {
       }
       else {
         restServer.respondJson(res, null, {
-          ...formatRefsOut(user),
+          ...formatRelationshipsOut(user),
           role: modelAPI.users.reverseRoles[user.role.id]
         })
       }

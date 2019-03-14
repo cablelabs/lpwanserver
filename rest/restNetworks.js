@@ -1,6 +1,7 @@
 var appLogger = require('./lib/appLogger.js')
 var restServer
 var modelAPI
+const { formatRelationshipsOut } = require('./lib/prisma')
 
 exports.initialize = function (app, server) {
   restServer = server
@@ -85,38 +86,33 @@ exports.initialize = function (app, server) {
     if (req.query.networkProtocolId) {
       options.networkProtocolId = req.query.networkProtocolId
     }
-    modelAPI.networks.retrieveNetworks(options).then(function (networks) {
-      // Remove sensitive data for non-admin users.
-      if (req.company.type !== modelAPI.companies.COMPANY_ADMIN) {
-        for (let i = 0; i < networks.records.length; ++i) {
-          delete networks.records[i].securityData
-        }
-      }
-      else {
-        for (let i = 0; i < networks.records.length; ++i) {
-          if (networks.records[i].securityData) {
-            let temp = {
-              authorized: networks.records[i].securityData.authorized,
-              message: networks.records[i].securityData.message,
-              enabled: networks.records[i].securityData.enabled
-            }
-            appLogger.log(networks.records[i])
-            if (networks.records[i].securityData.clientId) {
-              temp.clientId = networks.records[i].securityData.clientId
-              temp.clientSecret = networks.records[i].securityData.clientSecret
-            }
-            else if (networks.records[i].securityData.apikey) {
-              temp.apikey = networks.records[i].securityData.apikey
-            }
-            else if (networks.records[i].securityData.username) {
-              temp.username = networks.records[i].securityData.username
-              temp.password = networks.records[i].securityData.password
-            }
-            networks.records[i].securityData = temp
+    const isAdmin = req.company.type.id !== modelAPI.companies.COMPANY_ADMIN
+    const fragment = isAdmin ? 'internal' : 'basic'
+    modelAPI.networks.retrieveNetworks(options, fragment).then(function (networks) {
+      for (let i = 0; i < networks.records.length; ++i) {
+        if (networks.records[i].securityData) {
+          let temp = {
+            authorized: networks.records[i].securityData.authorized,
+            message: networks.records[i].securityData.message,
+            enabled: networks.records[i].securityData.enabled
           }
+          appLogger.log(networks.records[i])
+          if (networks.records[i].securityData.clientId) {
+            temp.clientId = networks.records[i].securityData.clientId
+            temp.clientSecret = networks.records[i].securityData.clientSecret
+          }
+          else if (networks.records[i].securityData.apikey) {
+            temp.apikey = networks.records[i].securityData.apikey
+          }
+          else if (networks.records[i].securityData.username) {
+            temp.username = networks.records[i].securityData.username
+            temp.password = networks.records[i].securityData.password
+          }
+          networks.records[i].securityData = temp
         }
       }
-      restServer.respond(res, 200, networks)
+      const responseBody = { ...networks, records: networks.records.map(formatRelationshipsOut) }
+      restServer.respond(res, 200, responseBody)
     })
       .catch(function (err) {
         appLogger.log('Error getting networks: ' + err)
@@ -152,7 +148,9 @@ exports.initialize = function (app, server) {
     if (req.query.networkProtocolId) {
       options.networkProtocolId = req.query.networkProtocolId
     }
-    modelAPI.networks.retrieveNetworks(options).then(function (networks) {
+    const isAdmin = req.company.type.id !== modelAPI.companies.COMPANY_ADMIN
+    const fragment = isAdmin ? 'internal' : 'basic'
+    modelAPI.networks.retrieveNetworks(options, fragment).then(function (networks) {
       modelAPI.networkProtocols.retrieveNetworkProtocols(options).then(function (recs) {
         let nps = {
           totalCount: recs.totalCount,
@@ -177,7 +175,7 @@ exports.initialize = function (app, server) {
             nps.records.push({
               name: rec.name,
               masterProtocol: rec.masterProtocol,
-              networkTypeId: rec.networkTypeId,
+              networkTypeId: rec.networkType.id,
               versions: [rec.id],
               networks: []
             })
@@ -185,36 +183,30 @@ exports.initialize = function (app, server) {
         }
 
         for (let i = 0; i < networks.records.length; ++i) {
-        // Remove sensitive data for non-admin users.
-          if (req.company.type !== modelAPI.companies.COMPANY_ADMIN) {
-            delete networks.records[i].securityData
-          }
-          else {
-            if (networks.records[i].securityData) {
-              let temp = {
-                authorized: networks.records[i].securityData.authorized,
-                message: networks.records[i].securityData.message,
-                enabled: networks.records[i].securityData.enabled
-              }
-              appLogger.log(networks.records[i])
-              if (networks.records[i].securityData.clientId) {
-                temp.clientId = networks.records[i].securityData.clientId
-                temp.clientSecret = networks.records[i].securityData.clientSecret
-              }
-              else if (networks.records[i].securityData.apikey) {
-                temp.apikey = networks.records[i].securityData.apikey
-              }
-              else if (networks.records[i].securityData.username) {
-                temp.username = networks.records[i].securityData.username
-                temp.password = networks.records[i].securityData.password
-              }
-              networks.records[i].securityData = temp
+          if (networks.records[i].securityData) {
+            let temp = {
+              authorized: networks.records[i].securityData.authorized,
+              message: networks.records[i].securityData.message,
+              enabled: networks.records[i].securityData.enabled
             }
+            appLogger.log(networks.records[i])
+            if (networks.records[i].securityData.clientId) {
+              temp.clientId = networks.records[i].securityData.clientId
+              temp.clientSecret = networks.records[i].securityData.clientSecret
+            }
+            else if (networks.records[i].securityData.apikey) {
+              temp.apikey = networks.records[i].securityData.apikey
+            }
+            else if (networks.records[i].securityData.username) {
+              temp.username = networks.records[i].securityData.username
+              temp.password = networks.records[i].securityData.password
+            }
+            networks.records[i].securityData = temp
           }
           // Add network to correct protocol
           for (let npIndex = 0; npIndex < nps.records.length; npIndex++) {
-            if (nps.records[npIndex].versions.includes(networks.records[i].networkProtocolId)) {
-              nps.records[npIndex].networks.push(networks.records[i])
+            if (nps.records[npIndex].versions.includes(networks.records[i].networkProtocol.id)) {
+              nps.records[npIndex].networks.push(formatRelationshipsOut(networks.records[i]))
             }
           }
         }
@@ -257,32 +249,28 @@ exports.initialize = function (app, server) {
     restServer.fetchCompany],
   function (req, res, next) {
     var id = parseInt(req.params.id, 10)
-    modelAPI.networks.retrieveNetwork(id).then(function (network) {
-      // Remove sensitive data for non-admin users.
-      if (req.company.type !== modelAPI.companies.COMPANY_ADMIN) {
-        delete network.securityData
-      }
-      else {
-        let temp = {
-          authorized: network.securityData.authorized,
-          message: network.securityData.message,
-          enabled: network.securityData.enabled
+    const isAdmin = req.company.type.id !== modelAPI.companies.COMPANY_ADMIN
+    const fragment = isAdmin ? 'internal' : 'basic'
+    modelAPI.networks.retrieveNetwork(id, fragment).then(function (network) {
+      let temp = {
+        authorized: network.securityData.authorized,
+        message: network.securityData.message,
+        enabled: network.securityData.enabled
 
-        }
-        if (network.securityData.clientId) {
-          temp.clientId = network.securityData.clientId
-          temp.clientSecret = network.securityData.clientSecret
-        }
-        else if (network.securityData.apikey) {
-          temp.apikey = network.securityData.apikey
-        }
-        else if (network.securityData.username) {
-          temp.username = network.securityData.username
-          temp.password = network.securityData.password
-        }
-        network.securityData = temp
       }
-      restServer.respond(res, 200, network)
+      if (network.securityData.clientId) {
+        temp.clientId = network.securityData.clientId
+        temp.clientSecret = network.securityData.clientSecret
+      }
+      else if (network.securityData.apikey) {
+        temp.apikey = network.securityData.apikey
+      }
+      else if (network.securityData.username) {
+        temp.username = network.securityData.username
+        temp.password = network.securityData.password
+      }
+      network.securityData = temp
+      restServer.respond(res, 200, formatRelationshipsOut(network))
     })
       .catch(function (err) {
         appLogger.log('Error getting network ' + id + ': ' + err)
@@ -368,7 +356,7 @@ exports.initialize = function (app, server) {
       rec.baseUrl,
       rec.securityData)
       .then(function (rec) {
-        modelAPI.networks.retrieveNetwork(rec.id)
+        modelAPI.networks.retrieveNetwork(rec.id, 'internal')
           .then((network) => {
             appLogger.log(network)
             let temp = {
@@ -396,10 +384,10 @@ exports.initialize = function (app, server) {
               modelAPI.networks.pullNetwork(network.id)
                 .then(result => {
                   appLogger.log('Success pulling from network ' + network.name)
-                  modelAPI.networks.pushNetworks(network.networkTypeId)
+                  modelAPI.networks.pushNetworks(network.networkType.id)
                     .then(ret => {
                       appLogger.log('Success pushing to networks')
-                      restServer.respond(res, 201, network)
+                      restServer.respond(res, 201, formatRelationshipsOut(network))
                     }).catch(err => {
                       appLogger.log('Error pushing to networks: ' + err)
                       restServer.respond(res, err)
@@ -410,7 +398,7 @@ exports.initialize = function (app, server) {
                   appLogger.log(network.securityData)
                   if (!network.securityData.authorized) {
                     network.securityData.message = 'Pending Authorization'
-                    restServer.respond(res, 201, network)
+                    restServer.respond(res, 201, formatRelationshipsOut(network))
                   }
                   else {
                     restServer.respond(res, err)
@@ -506,10 +494,10 @@ exports.initialize = function (app, server) {
               modelAPI.networks.pullNetwork(network.id)
                 .then(result => {
                   appLogger.log('Success pulling from network ' + network.name)
-                  modelAPI.networks.pushNetworks(network.networkTypeId)
+                  modelAPI.networks.pushNetworks(network.networkType.id)
                     .then(ret => {
                       appLogger.log('Success pushing to networks')
-                      restServer.respond(res, 200, network)
+                      restServer.respond(res, 200, formatRelationshipsOut(network))
                     }).catch(err => {
                       appLogger.log('Error pushing to networks: ' + err)
                       restServer.respond(res, err)
@@ -517,7 +505,7 @@ exports.initialize = function (app, server) {
                 })
                 .catch(err => {
                   if (!network.securityData.authorized) {
-                    restServer.respond(res, 200, network)
+                    restServer.respond(res, 200, formatRelationshipsOut(network))
                   }
                   else {
                     restServer.respond(res, err)

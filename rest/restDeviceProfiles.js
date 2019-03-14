@@ -2,6 +2,8 @@ var appLogger = require('./lib/appLogger.js')
 var restServer
 var modelAPI
 
+const { formatRelationshipsOut } = require('./lib/prisma')
+
 exports.initialize = function (app, server) {
   restServer = server
   modelAPI = server.modelAPI
@@ -58,11 +60,11 @@ exports.initialize = function (app, server) {
   function (req, res, next) {
     var options = {}
     // Make sure the caller is admin or part of the company.
-    if (req.company.type !== modelAPI.companies.COMPANY_ADMIN) {
+    if (req.company.type.id !== modelAPI.companies.COMPANY_ADMIN) {
       if (req.query.companyId) {
         var coidInt = parseInt(req.query.companyId)
         if (!isNaN(coidInt)) {
-          if (coidInt !== req.user.companyId) {
+          if (coidInt !== req.user.company.id) {
             restServer.respond(res, 403, 'Cannot request deviceProfiles for another company')
             return
           }
@@ -78,7 +80,7 @@ exports.initialize = function (app, server) {
       }
       else {
         // Force the search to be limited to the user's company anyway.
-        options.companyId = req.user.companyId
+        options.companyId = req.user.company.id
       }
     }
 
@@ -102,7 +104,8 @@ exports.initialize = function (app, server) {
     }
 
     modelAPI.deviceProfiles.retrieveDeviceProfiles(options).then(function (dps) {
-      restServer.respondJson(res, null, dps)
+      const responseBody = { ...dps, records: dps.records.map(formatRelationshipsOut) }
+      restServer.respondJson(res, null, responseBody)
     })
       .catch(function (err) {
         appLogger.log('Error getting deviceProfiles: ' + err)
@@ -141,12 +144,12 @@ exports.initialize = function (app, server) {
     // user.  (Admin user can get all, so we need to do this anyway.)
     var id = parseInt(req.params.id)
     modelAPI.deviceProfiles.retrieveDeviceProfile(id).then(function (dp) {
-      if ((req.company.type !== modelAPI.companies.COMPANY_ADMIN) &&
-                 (dp.companyId !== req.user.companyId)) {
+      if ((req.company.type.id !== modelAPI.companies.COMPANY_ADMIN) &&
+                 (dp.company.id !== req.user.company.id)) {
         restServer.respond(res, 403)
       }
       else {
-        restServer.respondJson(res, null, dp)
+        restServer.respondJson(res, null, formatRelationshipsOut(dp))
       }
     })
       .catch(function (err) {
@@ -210,8 +213,8 @@ exports.initialize = function (app, server) {
 
     // The user must be part of the admin group or the deviceProfile's
     // company.
-    if ((modelAPI.companies.COMPANY_ADMIN !== req.company.type) &&
-             (rec.companyId !== req.user.companyId)) {
+    if ((modelAPI.companies.COMPANY_ADMIN !== req.company.type.id) &&
+             (rec.companyId !== req.user.company.id)) {
       restServer.respond(res, 403, "Can't create a deviceProfile for another company's application")
     }
     else {
@@ -274,8 +277,8 @@ exports.initialize = function (app, server) {
     // Start by getting the original deviceProfile to check for changes.
     modelAPI.deviceProfiles.retrieveDeviceProfile(data.id).then(function (dp) {
       // Verify that the user can make the change.
-      if ((modelAPI.companies.COMPANY_ADMIN !== req.company.type) &&
-                 (req.user.companyId !== dp.companyId)) {
+      if ((modelAPI.companies.COMPANY_ADMIN !== req.company.type.id) &&
+                 (req.user.company.id !== dp.company.id)) {
         respond(res, 403)
         return
       }
@@ -294,13 +297,13 @@ exports.initialize = function (app, server) {
       }
 
       if ((req.body.networkTypeId) &&
-                 (req.body.networkTypeId !== dp.networkTypeId)) {
+                 (req.body.networkTypeId !== dp.networkType.id)) {
         data.networkTypeId = req.body.networkTypeId
         ++changed
       }
 
       if ((req.body.companyId) &&
-                 (req.body.companyId !== dp.companyId)) {
+                 (req.body.companyId !== dp.company.id)) {
         data.companyId = req.body.companyId
         ++changed
       }
@@ -356,8 +359,8 @@ exports.initialize = function (app, server) {
     // If not an admin company, the deviceProfile better be associated
     // with the user's company.  We check that in the delete method.
     var companyId = null
-    if (req.company.type !== modelAPI.companies.COMPANY_ADMIN) {
-      companyId = req.user.companyId
+    if (req.company.type.id !== modelAPI.companies.COMPANY_ADMIN) {
+      companyId = req.user.company.id
     }
 
     modelAPI.deviceProfiles.deleteDeviceProfile(id, companyId).then(function (ret) {
@@ -388,8 +391,8 @@ exports.initialize = function (app, server) {
     // If not an admin company, the deviceProfile better be associated
     // with the user's company.  We check that in the push method.
     var companyId = null
-    if (req.company.type !== modelAPI.companies.COMPANY_ADMIN) {
-      companyId = req.user.companyId
+    if (req.company.type.id !== modelAPI.companies.COMPANY_ADMIN) {
+      companyId = req.user.company.id
     }
 
     modelAPI.deviceProfiles.pushDeviceProfile(id, companyId).then(function (ret) {

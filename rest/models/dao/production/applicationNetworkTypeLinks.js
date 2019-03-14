@@ -1,5 +1,5 @@
 // Database implementation.
-const { prisma, formatInputData, formatRelationshipReferences } = require('../../../lib/prisma')
+const { prisma, formatInputData, formatRelationshipsIn } = require('../../../lib/prisma')
 
 // Utils
 const { onFail } = require('../../../lib/utils')
@@ -12,8 +12,6 @@ var app = require('./applications.js')
 
 // Error reporting
 var httpError = require('http-errors')
-
-const formatRefsIn = formatRelationshipReferences('in')
 
 //* *****************************************************************************
 // ApplicationNetworkTypeLinks database table.
@@ -40,13 +38,16 @@ module.exports = {
 // validateCompanyId - If supplied, the application MUST belong to this company.
 //
 // Returns the promise that will execute the create.
-function createApplicationNetworkTypeLink (applicationId, networkTypeId, networkSettings, validateCompanyId) {
+async function createApplicationNetworkTypeLink (applicationId, networkTypeId, networkSettings, validateCompanyId) {
+  if (validateCompanyId) {
+    await validateCompanyForApplication(validateCompanyId, applicationId)
+  }
   const data = formatInputData({
     applicationId,
     networkTypeId,
     networkSettings: JSON.stringify(networkSettings)
   })
-  return prisma.createApplicationNetworkTypeLink(data).fragment$(fragments.basic)
+  return prisma.createApplicationNetworkTypeLink(data).$fragment(fragments.basic)
 }
 
 // Retrieve a applicationNetworkTypeLinks record by id.
@@ -55,7 +56,7 @@ function createApplicationNetworkTypeLink (applicationId, networkTypeId, network
 //
 // Returns a promise that executes the retrieval.
 async function retrieveApplicationNetworkTypeLink (id) {
-  const rec = await onFail(400, () => prisma.applicationNetworkTypeLink({ id }).fragment$(fragments.basic))
+  const rec = await onFail(400, () => prisma.applicationNetworkTypeLink({ id }).$fragment(fragments.basic))
   if (!rec) throw httpError(404, 'ApplicationNetworkTypeLink not found')
   return { ...rec, networkSettings: JSON.parse(rec.networkSettings) }
 }
@@ -75,7 +76,7 @@ async function updateApplicationNetworkTypeLink ({ id, ...data }, validateCompan
     data.networkSettings = JSON.stringify(data.networkSettings)
   }
   data = formatInputData(data)
-  return prisma.updateApplicationNetworkTypeLink({ data, where: { id } })
+  return prisma.updateApplicationNetworkTypeLink({ data, where: { id } }).$fragment(fragments.basic)
 }
 
 // Delete the applicationNetworkTypeLinks record.
@@ -98,14 +99,14 @@ async function deleteApplicationNetworkTypeLink (id, validateCompanyId) {
 // Options include the applicationId, and the networkTypeId.
 //
 // Returns a promise that does the retrieval.
-async function retrieveApplicationNetworkTypeLinks (opts) {
-  const where = formatRefsIn(opts)
+async function retrieveApplicationNetworkTypeLinks ({ limit, offset, ...where } = {}) {
+  where = formatRelationshipsIn(opts)
   const query = { where }
-  if (opts.limit) query.first = opts.limit
-  if (opts.offset) query.skip = opts.offset
+  if (limit) query.first = limit
+  if (offset) query.skip = offset
   let [records, totalCount] = await Promise.all([
-    prisma.applicationNetworkTypeLinks(query).fragment$(fragments.basic),
-    prisma.applicationNetworkTypeLinksConnection({ where }).aggregate.count()
+    prisma.applicationNetworkTypeLinks(query).$fragment(fragments.basic),
+    prisma.applicationNetworkTypeLinksConnection({ where }).aggregate().count()
   ])
   records = records.map(x => ({
     ...x,
@@ -143,8 +144,11 @@ async function validateCompanyForApplicationNetworkTypeLink (companyId, antlId) 
   }
 }
 
+//* *****************************************************************************
+// Fragments for how the data should be returned from Prisma.
+//* *****************************************************************************
 const fragments = {
-  basic: `fragment Basic on ApplicationNetworkTypeLink {
+  basic: `fragment BasicApplicationNetworkTypeLink on ApplicationNetworkTypeLink {
     id
     networkSettings
     application {

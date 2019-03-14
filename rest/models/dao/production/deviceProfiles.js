@@ -1,13 +1,11 @@
 // Database implementation.
-const { prisma, formatInputData, formatRelationshipReferences } = require('../../../lib/prisma')
+const { prisma, formatInputData, formatRelationshipsIn } = require('../../../lib/prisma')
 
 // Error reporting
 var httpError = require('http-errors')
 
 // Utils
 const { onFail } = require('../../../lib/utils')
-
-const formatRefsIn = formatRelationshipReferences('in')
 
 //* *****************************************************************************
 // DeviceProfiles database table.
@@ -40,7 +38,7 @@ function createDeviceProfile (networkTypeId, companyId, name, description, netwo
     description,
     networkSettings: JSON.stringify(networkSettings)
   })
-  return prisma.createDeviceProfile(data).fragment$(fragments.basic)
+  return prisma.createDeviceProfile(data).$fragment(fragments.basic)
 }
 
 // Retrieve a deviceProfiles record by id.
@@ -49,7 +47,7 @@ function createDeviceProfile (networkTypeId, companyId, name, description, netwo
 //
 // Returns a promise that executes the retrieval.
 async function retrieveDeviceProfile (id) {
-  const rec = await onFail(400, () => prisma.deviceProfile({ id })).fragment$(fragments.basic)
+  const rec = await onFail(400, () => prisma.deviceProfile({ id }).$fragment(fragments.basic))
   if (!rec) throw httpError(404, 'DeviceProfile not found')
   return rec
 }
@@ -66,7 +64,7 @@ function updateDeviceProfile ({ id, ...data }) {
     data.networkSettings = JSON.stringify(data.networkSettings)
   }
   data = formatInputData(data)
-  return prisma.updateDeviceProfile({ data, where: { id } })
+  return prisma.updateDeviceProfile({ data, where: { id } }).$fragment(fragments.basic)
 }
 
 // Delete the deviceProfiles record.
@@ -87,18 +85,18 @@ function deleteDeviceProfile (id) {
 // Options include the companyId, and the networkTypeId.
 //
 // Returns a promise that does the retrieval.
-async function retrieveDeviceProfiles (opts) {
-  const where = formatRefsIn(opts)
-  if (opts.search) {
-    where.name_contains = opts.search
+async function retrieveDeviceProfiles ({ limit, offset, ...where } = {}) {
+  where = formatRelationshipsIn(where)
+  if (where.search) {
+    where.name_contains = where.search
     delete where.search
   }
   const query = { where }
-  if (opts.limit) query.first = opts.limit
-  if (opts.offset) query.skip = opts.offset
+  if (limit) query.first = limit
+  if (offset) query.skip = offset
   let [records, totalCount] = await Promise.all([
-    prisma.deviceProfiles(query).fragment$(fragments.basic),
-    prisma.deviceProfilesConnection({ where }).aggregate.count()
+    prisma.deviceProfiles(query).$fragment(fragments.basic),
+    prisma.deviceProfilesConnection({ where }).aggregate().count()
   ])
   records = records.map(x => ({
     ...x,
@@ -107,8 +105,11 @@ async function retrieveDeviceProfiles (opts) {
   return { totalCount, records }
 }
 
+//* *****************************************************************************
+// Fragments for how the data should be returned from Prisma.
+//* *****************************************************************************
 const fragments = {
-  basic: `fragment Basic on DeviceProfile {
+  basic: `fragment BasicDeviceProfile on DeviceProfile {
     id
     name
     description

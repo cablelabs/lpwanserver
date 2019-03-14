@@ -11,7 +11,7 @@ const { onFail } = require('../../../lib/utils')
 // NetworkTypes database table.
 //* *****************************************************************************
 
-module.exports {
+module.exports = {
   createNetworkType,
   retrieveNetworkType,
   updateNetworkType,

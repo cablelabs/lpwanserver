@@ -271,7 +271,7 @@ Application.prototype.testApplication = function (applicationId, data) {
 Application.prototype.passDataToApplication = function (applicationId, networkId, data) {
   return new Promise(async function (resolve, reject) {
     try {
-      let network = await modelAPI.networks.retrieveNetwork(networkId)
+      let network = await modelAPI.networks.retrieveNetwork(networkId, 'internal')
       let proto = await modelAPI.networkProtocolAPI.getProtocol(network)
       let dataAPI = new NetworkProtocolDataAccess(modelAPI, 'ReportingProtocol')
       await proto.api.passDataToApplication(network, applicationId, data, dataAPI)

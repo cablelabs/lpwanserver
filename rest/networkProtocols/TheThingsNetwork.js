@@ -460,7 +460,7 @@ async function addRemoteApplication (session, limitedRemoteApplication, network,
       appLogger.log(normalizedApplication, 'info')
     }
     else {
-      existingApplication = await modelAPI.applications.createApplication(normalizedApplication.name, normalizedApplication.description, 2, network.networkTypeId, 'http://set.me.to.your.real.url:8888')
+      existingApplication = await modelAPI.applications.createApplication(normalizedApplication.name, normalizedApplication.description, 2, network.networkType.id, 'http://set.me.to.your.real.url:8888')
       appLogger.log('Created ' + existingApplication.name)
     }
 
@@ -469,11 +469,11 @@ async function addRemoteApplication (session, limitedRemoteApplication, network,
       appLogger.log(existingApplication.name + ' link already exists', 'info')
     }
     else {
-      existingApplicationNTL = await modelAPI.applicationNetworkTypeLinks.createRemoteApplicationNetworkTypeLink(existingApplication.id, network.networkTypeId, normalizedApplication, existingApplication.companyId)
+      existingApplicationNTL = await modelAPI.applicationNetworkTypeLinks.createRemoteApplicationNetworkTypeLink(existingApplication.id, network.networkType.id, normalizedApplication, existingApplication.company.id)
       appLogger.log(existingApplicationNTL, 'info')
       await dataAPI.putProtocolDataForKey(
         network.id,
-        network.networkProtocolId,
+        network.networkProtocol.id,
         makeApplicationDataKey(existingApplication.id, 'appNwkId'),
         normalizedApplication.id
       )
@@ -567,11 +567,11 @@ async function addRemoteDevice (session, remoteDevice, network, applicationId, d
     appLogger.log(dp, 'info')
     let normalizedDevice = normalizeDeviceData(remoteDevice, dp.localDeviceProfile)
     appLogger.log(normalizedDevice)
-    const existingDeviceNTL = await modelAPI.deviceNetworkTypeLinks.createRemoteDeviceNetworkTypeLink(existingDevice.id, network.networkTypeId, dp.localDeviceProfile, normalizedDevice, 2)
+    const existingDeviceNTL = await modelAPI.deviceNetworkTypeLinks.createRemoteDeviceNetworkTypeLink(existingDevice.id, network.networkType.id, dp.localDeviceProfile, normalizedDevice, 2)
     appLogger.log(existingDeviceNTL)
     await dataAPI.putProtocolDataForKey(
       network.id,
-      network.networkProtocolId,
+      network.networkProtocol.id,
       makeDeviceDataKey(existingDevice.id, 'devNwkId'),
       remoteDevice.dev_id
     )
@@ -589,7 +589,7 @@ async function addRemoteDeviceProfile (session, remoteDevice, application, netwo
   appLogger.log(networkSpecificDeviceProfileInformation, 'error')
   try {
     const existingDeviceProfile = await modelAPI.deviceProfiles.createRemoteDeviceProfile(
-      network.networkTypeId,
+      network.networkType.id,
       2,
       networkSpecificDeviceProfileInformation.name,
       'Device Profile managed by LPWAN Server, perform changes via LPWAN',
@@ -652,7 +652,7 @@ module.exports.pushApplication = async function pushApplication (session, networ
     // See if it already exists
     const appNetworkId = await dataAPI.getProtocolDataForKey(
       network.id,
-      network.networkProtocolId,
+      network.networkProtocol.id,
       makeApplicationDataKey(application.id, 'appNwkId')
     )
     if (!appNetworkId) {
@@ -696,7 +696,7 @@ module.exports.pushDevice = async function pushDevice (sessionData, network, dev
   try {
     const devNetworkId = await dataAPI.getProtocolDataForKey(
       network.id,
-      network.networkProtocolId,
+      network.networkProtocol.id,
       makeDeviceDataKey(device.id, 'devNwkId')
     )
     appLogger.log('Ignoring Device  ' + device.id + ' already on network ' + network.name, 'info')
@@ -737,7 +737,7 @@ module.exports.addApplication = async function addApplication (session, network,
   try {
     // Get the local application data.
     application = await dataAPI.getApplicationById(applicationId)
-    applicationData = await dataAPI.getApplicationNetworkType(applicationId, network.networkTypeId)
+    applicationData = await dataAPI.getApplicationNetworkType(applicationId, network.networkType.id)
   }
   catch (err) {
     appLogger.log('Failed to get required data for addApplication: ' + applicationId, 'error')
@@ -755,7 +755,7 @@ module.exports.addApplication = async function addApplication (session, network,
     await modelAPI.applicationNetworkTypeLinks.updateRemoteApplicationNetworkTypeLink(applicationData, 2)
     await dataAPI.putProtocolDataForKey(
       network.id,
-      network.networkProtocolId,
+      network.networkProtocol.id,
       makeApplicationDataKey(application.id, 'appNwkId'),
       body.id
     )
@@ -812,7 +812,7 @@ module.exports.getApplication = async function getApplication (session, network,
   try {
     let appNetworkId = await dataAPI.getProtocolDataForKey(
       network.id,
-      network.networkProtocolId,
+      network.networkProtocol.id,
       makeApplicationDataKey(applicationId, 'appNwkId')
     )
     return TTNAppRequest(network, session.connection, true, {
@@ -853,13 +853,13 @@ module.exports.updateApplication = async function updateApplication (session, ne
     let application = await dataAPI.getApplicationById(applicationId)
     let coNetworkId = await dataAPI.getProtocolDataForKey(
       network.id,
-      network.networkProtocolId,
-      makeCompanyDataKey(application.companyId, 'coNwkId'))
+      network.networkProtocol.id,
+      makeCompanyDataKey(application.company.id, 'coNwkId'))
     let appNetworkId = await dataAPI.getProtocolDataForKey(
       network.id,
-      network.networkProtocolId,
+      network.networkProtocol.id,
       makeApplicationDataKey(applicationId, 'appNwkId'))
-    let applicationData = await dataAPI.getApplicationNetworkType(applicationId, network.networkTypeId)
+    let applicationData = await dataAPI.getApplicationNetworkType(applicationId, network.networkType.id)
 
     // build body
     const body = {
@@ -943,7 +943,7 @@ module.exports.deleteApplication = async function deleteApplication (session, ne
     // Get the application data.
     let appNetworkId = await dataAPI.getProtocolDataForKey(
       network.id,
-      network.networkProtocolId,
+      network.networkProtocol.id,
       makeApplicationDataKey(applicationId, 'appNwkId')
     )
     await TTNAppRequest(network, session.connection, appNetworkId, {
@@ -952,7 +952,7 @@ module.exports.deleteApplication = async function deleteApplication (session, ne
     })
     await dataAPI.deleteProtocolDataForKey(
       network.id,
-      network.networkProtocolId,
+      network.networkProtocol.id,
       makeApplicationDataKey(applicationId, 'appNwkId')
     )
   }
@@ -986,7 +986,7 @@ module.exports.startApplication = async function startApplication (session, netw
     // Set up the Forwarding with LoRa App Server
     let appNwkId = await dataAPI.getProtocolDataForKey(
       network.id,
-      network.networkProtocolId,
+      network.networkProtocol.id,
       makeApplicationDataKey(applicationId, 'appNwkId')
     )
     await TTNAppRequest(network, session.connection, appNwkId, {
@@ -1023,7 +1023,7 @@ module.exports.stopApplication = async function stopApplication (session, networ
   try {
     appNwkId = await dataAPI.getProtocolDataForKey(
       network.id,
-      network.networkProtocolId,
+      network.networkProtocol.id,
       makeApplicationDataKey(applicationId, 'appNwkId')
     )
   }
@@ -1125,7 +1125,7 @@ async function postSingleDevice (session, network, device, deviceProfile, applic
     })
     await dataAPI.putProtocolDataForKey(
       network.id,
-      network.networkProtocolId,
+      network.networkProtocol.id,
       makeDeviceDataKey(device.id, 'devNwkId'),
       ttnDevice.dev_id
     )
@@ -1141,8 +1141,8 @@ module.exports.addDevice = async function addDevice (session, network, deviceId,
   let result
   let promiseList = [
     dataAPI.getDeviceById(deviceId),
-    dataAPI.getDeviceNetworkType(deviceId, network.networkTypeId),
-    dataAPI.getDeviceProfileByDeviceIdNetworkTypeId(deviceId, network.networkTypeId),
+    dataAPI.getDeviceNetworkType(deviceId, network.networkType.id),
+    dataAPI.getDeviceProfileByDeviceIdNetworkTypeId(deviceId, network.networkType.id),
     dataAPI.getApplicationByDeviceId(deviceId)
   ]
   try {
@@ -1152,7 +1152,7 @@ module.exports.addDevice = async function addDevice (session, network, deviceId,
       throw new Error('Could not retrieve local device, dntl, and device profile: ')
     }
     let [device, dntl, deviceProfile, application] = result[1]
-    result = await tryAsync(dataAPI.getApplicationNetworkType(application.id, network.networkTypeId))
+    result = await tryAsync(dataAPI.getApplicationNetworkType(application.id, network.networkType.id))
     if (result[0]) {
       appLogger.log('Could not retrieve application ntl: ', 'error')
       throw new Error('Could not retrieve application ntl')
@@ -1160,7 +1160,7 @@ module.exports.addDevice = async function addDevice (session, network, deviceId,
     const applicationData = result[1]
     result = await tryAsync(dataAPI.getProtocolDataForKey(
       network.id,
-      network.networkProtocolId,
+      network.networkProtocol.id,
       makeApplicationDataKey(application.id, 'appNwkId')
     ))
     if (result[0]) {
@@ -1193,7 +1193,7 @@ module.exports.getDevice = async function getDevice (session, network, deviceId,
   try {
     let devNetworkId = await dataAPI.getProtocolDataForKey(
       network.id,
-      network.networkProtocolId,
+      network.networkProtocol.id,
       makeDeviceDataKey(deviceId, 'devNwkId')
     )
     return TTNRequest(session.connection.access_token, {
@@ -1225,19 +1225,19 @@ module.exports.updateDevice = async function updateDevice (session, network, dev
   try {
     // Get the device data.
     device = await dataAPI.getDeviceById(deviceId)
-    let dp = await dataAPI.getDeviceProfileByDeviceIdNetworkTypeId(deviceId, network.networkTypeId)
-    dntl = await dataAPI.getDeviceNetworkType(deviceId, network.networkTypeId)
+    let dp = await dataAPI.getDeviceProfileByDeviceIdNetworkTypeId(deviceId, network.networkType.id)
+    dntl = await dataAPI.getDeviceNetworkType(deviceId, network.networkType.id)
     devNetworkId = await dataAPI.getProtocolDataForKey(
       network.id,
-      network.networkProtocolId,
+      network.networkProtocol.id,
       makeDeviceDataKey(deviceId, 'devNwkId'))
     appNwkId = await dataAPI.getProtocolDataForKey(
       network.id,
-      network.networkProtocolId,
-      makeApplicationDataKey(device.applicationId, 'appNwkId'))
+      network.networkProtocol.id,
+      makeApplicationDataKey(device.application.id, 'appNwkId'))
     dpNwkId = await dataAPI.getProtocolDataForKey(
       network.id,
-      network.networkProtocolId,
+      network.networkProtocol.id,
       makeDeviceProfileDataKey(dp.id, 'dpNwkId'))
   }
   catch (err) {
@@ -1295,7 +1295,7 @@ module.exports.deleteDevice = async function deleteDevice (session, network, dev
   try {
     devNetworkId = await dataAPI.getProtocolDataForKey(
       network.id,
-      network.networkProtocolId,
+      network.networkProtocol.id,
       makeDeviceDataKey(deviceId, 'devNwkId'))
   }
   catch (err) {
@@ -1313,7 +1313,7 @@ module.exports.deleteDevice = async function deleteDevice (session, network, dev
     try {
       await dataAPI.deleteProtocolDataForKey(
         network.id,
-        network.networkProtocolId,
+        network.networkProtocol.id,
         makeDeviceDataKey(deviceId, 'devNwkId'))
     }
     catch (err) {

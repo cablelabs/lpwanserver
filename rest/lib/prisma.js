@@ -12,23 +12,23 @@ const prismaClientPath = path.join(
   'generated/prisma-client/index-dynamic-endpoint'
 )
 
-const REF_PROP_RE = /^(.+)Id$/
+function formatRelationshipsIn (data) {
+  const REF_PROP_RE = /^(.+)Id$/
+  return R.keys(data).reduce((acc, x) => {
+    if (!REF_PROP_RE.test(x)) return mutate(x, data[x], acc)
+    return mutate(x.replace(/Id$/, ''), { id: data[x] }, acc)
+  }, {})
+}
 
-const formatRelationshipReferences = R.curry(
-  function formatRelationshipReferences (type, data) {
-    return R.keys(data).reduce((acc, x) => {
-      if (!REF_PROP_RE.test(x)) return mutate(x, data[x], acc)
-      switch (type) {
-        // Format from entId to ent: { id }
-        case 'in': return mutate(x.replace(/Id$/, ''), { id: data[x] }, acc)
-        // Format from end: { id } to entId
-        case 'out': return mutate(`${x}Id`, data[x].id, acc)
-        // If type not recognized, don't change anything
-        default: return mutate(x, data[x], acc)
-      }
-    }, {})
-  }
-)
+function formatRelationshipsOut (data) {
+  return R.keys(data).reduce((acc, x) => {
+    const val = data[x]
+    if (typeof val === 'object' && 'id' in val && R.keys(val).length === 1) {
+      return mutate(`${x}Id`, data[x].id, acc)
+    }
+    return mutate(x, data[x], acc)
+  }, {})
+}
 
 function connectRelationshipReferences (data) {
   return R.keys(data).reduce((acc, x) => {
@@ -46,13 +46,14 @@ function formatInputPruneFilter (x) {
 // remove any undefined properties, then format the reference connections
 const formatInputData = R.compose(
   connectRelationshipReferences,
-  formatRelationshipReferences('in'),
+  formatRelationshipsIn,
   x => prune(x, formatInputPruneFilter)
 )
 
 module.exports = {
-  prisma: require(prismaClientPath),
-  formatRelationshipReferences,
+  ...require(prismaClientPath),
+  formatRelationshipsIn,
+  formatRelationshipsOut,
   connectRelationshipReferences,
   formatInputData
 }

@@ -5,7 +5,7 @@ var appLogger = require('../../../lib/appLogger.js')
 var nconf = require('nconf')
 
 // Database implementation.
-const { prisma, formatInputData } = require('../../../lib/prisma')
+const { prisma, formatInputData, formatRelationshipsIn } = require('../../../lib/prisma')
 
 // Password hashing
 var crypto = require('../../../lib/crypto.js')
@@ -93,7 +93,7 @@ async function createUser (username, password, email, companyId, roleId) {
     await companies.passwordValidator(companyId, password)
     data.passwordHash = await crypto.hashPassword(password)
     delete data.password
-    user = await prisma.createUser(user).fragment$(fragments.profile)
+    user = await prisma.createUser(data).$fragment(fragments.profile)
   }
   catch (err) {
     throw httpError(400, err.message)
@@ -111,7 +111,7 @@ async function createUser (username, password, email, companyId, roleId) {
 }
 
 async function loadUser (uniqueKeyObj, fragementKey = 'internal') {
-  const rec = await onFail(400, () => prisma.user(uniqueKeyObj)).fragment$(fragments[fragementKey])
+  const rec = await onFail(400, () => prisma.user(uniqueKeyObj).$fragment(fragments[fragementKey]))
   if (!rec) throw httpError(404, 'User not found')
   return rec
 }
@@ -121,8 +121,8 @@ async function loadUser (uniqueKeyObj, fragementKey = 'internal') {
 // id - the record id of the user.
 //
 // Returns a promise that executes the retrieval.
-function retrieveUser (id) {
-  return loadUser({ id }, 'basic')
+function retrieveUser (id, fragment = 'basic') {
+  return loadUser({ id }, fragment)
 }
 
 // Retrieve a user record by username.
@@ -130,8 +130,9 @@ function retrieveUser (id) {
 // username - the username of the user.
 //
 // Returns a promise that executes the retrieval.
-function retrieveUserByUsername (username) {
-  return loadUser({ username }, 'basic')
+async function retrieveUserByUsername (username, fragment = 'basic') {
+  const user = await loadUser({ username }, fragment)
+  return user
 }
 
 // Update the user record.
@@ -173,7 +174,7 @@ async function updateUser ({ id, role, ...data }) {
 
   if (data.email) data = setEmailProps(data)
 
-  let user = await onFail(400, () => prisma.updateUser({ data, where: { id } }))
+  let user = await onFail(400, () => prisma.updateUser({ data, where: { id } }).$fragment(fragments.internal))
 
   if (data.email) {
     try {
@@ -214,16 +215,18 @@ function deleteUser (id) {
  * string on username, and/or the company associated with the user.
  *
  */
-async function retrieveUsers (opts) {
-  const where = {}
-  if (opts.companyId) where.company = { id: opts.companyId }
-  if (opts.search) where.username_contains = opts.search
+async function retrieveUsers ({ limit, offset, ...where } = {}) {
+  where = formatRelationshipsIn(where)
+  if (where.search) {
+    where.username_contains = where.search
+    delete where.search
+  }
   const query = { where }
-  if (opts.limit) query.first = opts.limit
-  if (opts.offset) query.skip = opts.offset
+  if (limit) query.first = limit
+  if (offset) query.skip = offset
   const [records, totalCount] = await Promise.all([
-    prisma.users(query).fragment$(fragments.query),
-    prisma.usersConnection({ where }).aggregate.count()
+    prisma.users(query).$fragment(fragments.basic),
+    prisma.usersConnection({ where }).aggregate().count()
   ])
   return { totalCount, records }
 }
@@ -239,8 +242,9 @@ async function retrieveUsers (opts) {
 //
 // Returns a promise that executes the authorization.
 async function authorizeUser (username, password) {
-  const user = await retrieveUserByUsername(username)
-  return crypto.verifyPassword(password, user.passwordHash)
+  const user = await retrieveUserByUsername(username, 'internal')
+  await crypto.verifyPassword(password, user.passwordHash)
+  return dropInternalProps(user)
 }
 
 // Retrieves the "user profile" which is the user data and the company data in
@@ -262,7 +266,7 @@ function retrieveUserProfile (username) {
 // Returns a promise that gets the emails.
 async function getCompanyAdmins (companyId) {
   const where = { company: { id: companyId } }
-  const users = await prisma.users({ where }).fragment$(fragments.userEmail)
+  const users = await prisma.users({ where }).$fragment(fragments.userEmail)
   return users.map(x => x.email).filter(R.identity)
 }
 
@@ -330,7 +334,7 @@ async function emailVerify (userId, username, newemail, oldemail, urlRoot) {
 //
 // Returns a promise.
 async function retrieveEmailVerification (uuid) {
-  const ev = await onFail(400, () => prisma.emailVerification({ uuid }).fragment$(fragments.emailVerification))
+  const ev = await onFail(400, () => prisma.emailVerification({ uuid }).$fragment(fragments.emailVerification))
   if (!ev) throw httpError(404, 'Email verification token not found')
   return ev
 }
@@ -390,9 +394,11 @@ async function expireEmailVerify () {
   )
 }
 
-// Fragments
+//* *****************************************************************************
+// Fragments for how the data should be returned from Prisma.
+//* *****************************************************************************
 const fragments = {
-  internal: `fragment Internal on User {
+  internal: `fragment InternalUser on User {
     id
     username
     email
@@ -406,14 +412,14 @@ const fragments = {
       id
     }
   }`,
-  basic: `fragment Basic on User {
+  basic: `fragment BasicUser on User {
     id
     username
     email
-    company: {
+    company {
       id
     }
-    role: {
+    role {
       id
     }
   }`,
@@ -433,21 +439,10 @@ const fragments = {
       id
     }
   }`,
-  query: `fragment UserListItem on User {
-    id
-    username
-    email
-    company {
-      id
-    }
-    role {
-      id
-    }
-  }`,
-  userEmail: `fragment Email on User {
+  userEmail: `fragment UserEmail on User {
     email
   }`,
-  emailVerification: `fragment withUser on EmailVerification {
+  emailVerification: `fragment BasicEmailVerification on EmailVerification {
     id
     uuid
     email

@@ -13,9 +13,12 @@ var cookieParser = require('cookie-parser')
 var bodyParser = require('body-parser')
 // var session = require('express-session');
 var fs = require('fs')
+// Setup/Import configuration
+require('./config')
+var nconf = require('nconf')
+// server
 var server = require('./rest/restServer.js')
 var appLogger = require('./rest/lib/appLogger.js')
-var nconf = require('nconf')
 
 // Catch unhandled promise rejections.
 process.on('unhandledRejection', (reason, p) => {
@@ -23,10 +26,6 @@ process.on('unhandledRejection', (reason, p) => {
   console.log('Stack:', reason.stack)
   // application specific logging, throwing an error, or other logic here
 })
-
-// Set up config data access.
-require('./config')
-console.log('variables', nconf.get('NODE_ENV'), nconf.get('port'), nconf.get('foo'))
 
 // Create the REST application.
 var app = express()
@@ -37,9 +36,6 @@ var ipPort = nconf.get('port')
 // Load the ssl config
 var sslkeyName = nconf.get('ssl_key_file')
 var sslcertName = nconf.get('ssl_cert_file')
-
-console.log(sslkeyName)
-console.log(sslcertName)
 
 if (sslkeyName && sslcertName) {
   // Load the files

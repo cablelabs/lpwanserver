@@ -1242,6 +1242,20 @@ input CompanyUpdateOneRequiredWithoutCompanyNetworkTypeLinksInput {
   connect: CompanyWhereUniqueInput
 }
 
+input CompanyUpdateOneRequiredWithoutDeviceProfilesInput {
+  create: CompanyCreateWithoutDeviceProfilesInput
+  update: CompanyUpdateWithoutDeviceProfilesDataInput
+  upsert: CompanyUpsertWithoutDeviceProfilesInput
+  connect: CompanyWhereUniqueInput
+}
+
+input CompanyUpdateOneRequiredWithoutUsersInput {
+  create: CompanyCreateWithoutUsersInput
+  update: CompanyUpdateWithoutUsersDataInput
+  upsert: CompanyUpsertWithoutUsersInput
+  connect: CompanyWhereUniqueInput
+}
+
 input CompanyUpdateOneWithoutApplicationsInput {
   create: CompanyCreateWithoutApplicationsInput
   update: CompanyUpdateWithoutApplicationsDataInput
@@ -1251,28 +1265,10 @@ input CompanyUpdateOneWithoutApplicationsInput {
   connect: CompanyWhereUniqueInput
 }
 
-input CompanyUpdateOneWithoutDeviceProfilesInput {
-  create: CompanyCreateWithoutDeviceProfilesInput
-  update: CompanyUpdateWithoutDeviceProfilesDataInput
-  upsert: CompanyUpsertWithoutDeviceProfilesInput
-  delete: Boolean
-  disconnect: Boolean
-  connect: CompanyWhereUniqueInput
-}
-
 input CompanyUpdateOneWithoutPasswordPoliciesInput {
   create: CompanyCreateWithoutPasswordPoliciesInput
   update: CompanyUpdateWithoutPasswordPoliciesDataInput
   upsert: CompanyUpsertWithoutPasswordPoliciesInput
-  delete: Boolean
-  disconnect: Boolean
-  connect: CompanyWhereUniqueInput
-}
-
-input CompanyUpdateOneWithoutUsersInput {
-  create: CompanyCreateWithoutUsersInput
-  update: CompanyUpdateWithoutUsersDataInput
-  upsert: CompanyUpsertWithoutUsersInput
   delete: Boolean
   disconnect: Boolean
   connect: CompanyWhereUniqueInput
@@ -1471,9 +1467,9 @@ type DeviceEdge {
 
 type DeviceNetworkTypeLink {
   id: Int!
-  device: Device
-  networkType: NetworkType
-  deviceProfile: DeviceProfile
+  device: Device!
+  networkType: NetworkType!
+  deviceProfile: DeviceProfile!
   networkSettings: String
 }
 
@@ -1484,9 +1480,9 @@ type DeviceNetworkTypeLinkConnection {
 }
 
 input DeviceNetworkTypeLinkCreateInput {
-  device: DeviceCreateOneWithoutDeviceNetworkTypeLinksInput
-  networkType: NetworkTypeCreateOneWithoutDeviceNetworkTypeLinksInput
-  deviceProfile: DeviceProfileCreateOneWithoutDeviceNetworkTypeLinksInput
+  device: DeviceCreateOneWithoutDeviceNetworkTypeLinksInput!
+  networkType: NetworkTypeCreateOneWithoutDeviceNetworkTypeLinksInput!
+  deviceProfile: DeviceProfileCreateOneWithoutDeviceNetworkTypeLinksInput!
   networkSettings: String
 }
 
@@ -1506,20 +1502,20 @@ input DeviceNetworkTypeLinkCreateManyWithoutNetworkTypeInput {
 }
 
 input DeviceNetworkTypeLinkCreateWithoutDeviceInput {
-  networkType: NetworkTypeCreateOneWithoutDeviceNetworkTypeLinksInput
-  deviceProfile: DeviceProfileCreateOneWithoutDeviceNetworkTypeLinksInput
+  networkType: NetworkTypeCreateOneWithoutDeviceNetworkTypeLinksInput!
+  deviceProfile: DeviceProfileCreateOneWithoutDeviceNetworkTypeLinksInput!
   networkSettings: String
 }
 
 input DeviceNetworkTypeLinkCreateWithoutDeviceProfileInput {
-  device: DeviceCreateOneWithoutDeviceNetworkTypeLinksInput
-  networkType: NetworkTypeCreateOneWithoutDeviceNetworkTypeLinksInput
+  device: DeviceCreateOneWithoutDeviceNetworkTypeLinksInput!
+  networkType: NetworkTypeCreateOneWithoutDeviceNetworkTypeLinksInput!
   networkSettings: String
 }
 
 input DeviceNetworkTypeLinkCreateWithoutNetworkTypeInput {
-  device: DeviceCreateOneWithoutDeviceNetworkTypeLinksInput
-  deviceProfile: DeviceProfileCreateOneWithoutDeviceNetworkTypeLinksInput
+  device: DeviceCreateOneWithoutDeviceNetworkTypeLinksInput!
+  deviceProfile: DeviceProfileCreateOneWithoutDeviceNetworkTypeLinksInput!
   networkSettings: String
 }
 
@@ -1591,9 +1587,9 @@ input DeviceNetworkTypeLinkSubscriptionWhereInput {
 }
 
 input DeviceNetworkTypeLinkUpdateInput {
-  device: DeviceUpdateOneWithoutDeviceNetworkTypeLinksInput
-  networkType: NetworkTypeUpdateOneWithoutDeviceNetworkTypeLinksInput
-  deviceProfile: DeviceProfileUpdateOneWithoutDeviceNetworkTypeLinksInput
+  device: DeviceUpdateOneRequiredWithoutDeviceNetworkTypeLinksInput
+  networkType: NetworkTypeUpdateOneRequiredWithoutDeviceNetworkTypeLinksInput
+  deviceProfile: DeviceProfileUpdateOneRequiredWithoutDeviceNetworkTypeLinksInput
   networkSettings: String
 }
 
@@ -1647,20 +1643,20 @@ input DeviceNetworkTypeLinkUpdateManyWithWhereNestedInput {
 }
 
 input DeviceNetworkTypeLinkUpdateWithoutDeviceDataInput {
-  networkType: NetworkTypeUpdateOneWithoutDeviceNetworkTypeLinksInput
-  deviceProfile: DeviceProfileUpdateOneWithoutDeviceNetworkTypeLinksInput
+  networkType: NetworkTypeUpdateOneRequiredWithoutDeviceNetworkTypeLinksInput
+  deviceProfile: DeviceProfileUpdateOneRequiredWithoutDeviceNetworkTypeLinksInput
   networkSettings: String
 }
 
 input DeviceNetworkTypeLinkUpdateWithoutDeviceProfileDataInput {
-  device: DeviceUpdateOneWithoutDeviceNetworkTypeLinksInput
-  networkType: NetworkTypeUpdateOneWithoutDeviceNetworkTypeLinksInput
+  device: DeviceUpdateOneRequiredWithoutDeviceNetworkTypeLinksInput
+  networkType: NetworkTypeUpdateOneRequiredWithoutDeviceNetworkTypeLinksInput
   networkSettings: String
 }
 
 input DeviceNetworkTypeLinkUpdateWithoutNetworkTypeDataInput {
-  device: DeviceUpdateOneWithoutDeviceNetworkTypeLinksInput
-  deviceProfile: DeviceProfileUpdateOneWithoutDeviceNetworkTypeLinksInput
+  device: DeviceUpdateOneRequiredWithoutDeviceNetworkTypeLinksInput
+  deviceProfile: DeviceProfileUpdateOneRequiredWithoutDeviceNetworkTypeLinksInput
   networkSettings: String
 }
 
@@ -1757,7 +1753,7 @@ type DevicePreviousValues {
 type DeviceProfile {
   id: Int!
   networkType: NetworkType!
-  company: Company
+  company: Company!
   name: String
   description: String
   networkSettings: String
@@ -1772,7 +1768,7 @@ type DeviceProfileConnection {
 
 input DeviceProfileCreateInput {
   networkType: NetworkTypeCreateOneWithoutDeviceProfilesInput!
-  company: CompanyCreateOneWithoutDeviceProfilesInput
+  company: CompanyCreateOneWithoutDeviceProfilesInput!
   name: String
   description: String
   networkSettings: String
@@ -1804,14 +1800,14 @@ input DeviceProfileCreateWithoutCompanyInput {
 
 input DeviceProfileCreateWithoutDeviceNetworkTypeLinksInput {
   networkType: NetworkTypeCreateOneWithoutDeviceProfilesInput!
-  company: CompanyCreateOneWithoutDeviceProfilesInput
+  company: CompanyCreateOneWithoutDeviceProfilesInput!
   name: String
   description: String
   networkSettings: String
 }
 
 input DeviceProfileCreateWithoutNetworkTypeInput {
-  company: CompanyCreateOneWithoutDeviceProfilesInput
+  company: CompanyCreateOneWithoutDeviceProfilesInput!
   name: String
   description: String
   networkSettings: String
@@ -1921,7 +1917,7 @@ input DeviceProfileSubscriptionWhereInput {
 
 input DeviceProfileUpdateInput {
   networkType: NetworkTypeUpdateOneRequiredWithoutDeviceProfilesInput
-  company: CompanyUpdateOneWithoutDeviceProfilesInput
+  company: CompanyUpdateOneRequiredWithoutDeviceProfilesInput
   name: String
   description: String
   networkSettings: String
@@ -1969,12 +1965,10 @@ input DeviceProfileUpdateManyWithWhereNestedInput {
   data: DeviceProfileUpdateManyDataInput!
 }
 
-input DeviceProfileUpdateOneWithoutDeviceNetworkTypeLinksInput {
+input DeviceProfileUpdateOneRequiredWithoutDeviceNetworkTypeLinksInput {
   create: DeviceProfileCreateWithoutDeviceNetworkTypeLinksInput
   update: DeviceProfileUpdateWithoutDeviceNetworkTypeLinksDataInput
   upsert: DeviceProfileUpsertWithoutDeviceNetworkTypeLinksInput
-  delete: Boolean
-  disconnect: Boolean
   connect: DeviceProfileWhereUniqueInput
 }
 
@@ -1988,14 +1982,14 @@ input DeviceProfileUpdateWithoutCompanyDataInput {
 
 input DeviceProfileUpdateWithoutDeviceNetworkTypeLinksDataInput {
   networkType: NetworkTypeUpdateOneRequiredWithoutDeviceProfilesInput
-  company: CompanyUpdateOneWithoutDeviceProfilesInput
+  company: CompanyUpdateOneRequiredWithoutDeviceProfilesInput
   name: String
   description: String
   networkSettings: String
 }
 
 input DeviceProfileUpdateWithoutNetworkTypeDataInput {
-  company: CompanyUpdateOneWithoutDeviceProfilesInput
+  company: CompanyUpdateOneRequiredWithoutDeviceProfilesInput
   name: String
   description: String
   networkSettings: String
@@ -2205,12 +2199,10 @@ input DeviceUpdateManyWithWhereNestedInput {
   data: DeviceUpdateManyDataInput!
 }
 
-input DeviceUpdateOneWithoutDeviceNetworkTypeLinksInput {
+input DeviceUpdateOneRequiredWithoutDeviceNetworkTypeLinksInput {
   create: DeviceCreateWithoutDeviceNetworkTypeLinksInput
   update: DeviceUpdateWithoutDeviceNetworkTypeLinksDataInput
   upsert: DeviceUpsertWithoutDeviceNetworkTypeLinksInput
-  delete: Boolean
-  disconnect: Boolean
   connect: DeviceWhereUniqueInput
 }
 
@@ -2310,7 +2302,7 @@ input DeviceWhereUniqueInput {
 
 type EmailVerification {
   id: Int!
-  user: User
+  user: User!
   uuid: String
   email: String
   changeRequested: String
@@ -2323,7 +2315,7 @@ type EmailVerificationConnection {
 }
 
 input EmailVerificationCreateInput {
-  user: UserCreateOneWithoutEmailVerificationsInput
+  user: UserCreateOneWithoutEmailVerificationsInput!
   uuid: String
   email: String
   changeRequested: String
@@ -2442,7 +2434,7 @@ input EmailVerificationSubscriptionWhereInput {
 }
 
 input EmailVerificationUpdateInput {
-  user: UserUpdateOneWithoutEmailVerificationsInput
+  user: UserUpdateOneRequiredWithoutEmailVerificationsInput
   uuid: String
   email: String
   changeRequested: String
@@ -2789,7 +2781,7 @@ type NetworkProtocol {
   id: Int!
   name: String
   protocolHandler: String
-  networkType: NetworkType
+  networkType: NetworkType!
   networkProtocolVersion: String
   masterProtocol: NetworkProtocol
   networkProtocols(where: NetworkProtocolWhereInput, orderBy: NetworkProtocolOrderByInput, skip: Int, after: String, before: String, first: Int, last: Int): [NetworkProtocol!]
@@ -2806,7 +2798,7 @@ type NetworkProtocolConnection {
 input NetworkProtocolCreateInput {
   name: String
   protocolHandler: String
-  networkType: NetworkTypeCreateOneWithoutNetworkProtocolsInput
+  networkType: NetworkTypeCreateOneWithoutNetworkProtocolsInput!
   networkProtocolVersion: String
   masterProtocol: NetworkProtocolCreateOneWithoutMasterProtocolInput
   networkProtocols: NetworkProtocolCreateManyWithoutNetworkProtocolsInput
@@ -2842,7 +2834,7 @@ input NetworkProtocolCreateOneWithoutProtocolDataInput {
 input NetworkProtocolCreateWithoutMasterProtocolInput {
   name: String
   protocolHandler: String
-  networkType: NetworkTypeCreateOneWithoutNetworkProtocolsInput
+  networkType: NetworkTypeCreateOneWithoutNetworkProtocolsInput!
   networkProtocolVersion: String
   networkProtocols: NetworkProtocolCreateManyWithoutNetworkProtocolsInput
   networks: NetworkCreateManyWithoutNetworkProtocolInput
@@ -2852,7 +2844,7 @@ input NetworkProtocolCreateWithoutMasterProtocolInput {
 input NetworkProtocolCreateWithoutNetworkProtocolsInput {
   name: String
   protocolHandler: String
-  networkType: NetworkTypeCreateOneWithoutNetworkProtocolsInput
+  networkType: NetworkTypeCreateOneWithoutNetworkProtocolsInput!
   networkProtocolVersion: String
   masterProtocol: NetworkProtocolCreateOneWithoutMasterProtocolInput
   networks: NetworkCreateManyWithoutNetworkProtocolInput
@@ -2862,7 +2854,7 @@ input NetworkProtocolCreateWithoutNetworkProtocolsInput {
 input NetworkProtocolCreateWithoutNetworksInput {
   name: String
   protocolHandler: String
-  networkType: NetworkTypeCreateOneWithoutNetworkProtocolsInput
+  networkType: NetworkTypeCreateOneWithoutNetworkProtocolsInput!
   networkProtocolVersion: String
   masterProtocol: NetworkProtocolCreateOneWithoutMasterProtocolInput
   networkProtocols: NetworkProtocolCreateManyWithoutNetworkProtocolsInput
@@ -2882,7 +2874,7 @@ input NetworkProtocolCreateWithoutNetworkTypeInput {
 input NetworkProtocolCreateWithoutProtocolDataInput {
   name: String
   protocolHandler: String
-  networkType: NetworkTypeCreateOneWithoutNetworkProtocolsInput
+  networkType: NetworkTypeCreateOneWithoutNetworkProtocolsInput!
   networkProtocolVersion: String
   masterProtocol: NetworkProtocolCreateOneWithoutMasterProtocolInput
   networkProtocols: NetworkProtocolCreateManyWithoutNetworkProtocolsInput
@@ -2993,7 +2985,7 @@ input NetworkProtocolSubscriptionWhereInput {
 input NetworkProtocolUpdateInput {
   name: String
   protocolHandler: String
-  networkType: NetworkTypeUpdateOneWithoutNetworkProtocolsInput
+  networkType: NetworkTypeUpdateOneRequiredWithoutNetworkProtocolsInput
   networkProtocolVersion: String
   masterProtocol: NetworkProtocolUpdateOneWithoutMasterProtocolInput
   networkProtocols: NetworkProtocolUpdateManyWithoutNetworkProtocolsInput
@@ -3049,6 +3041,13 @@ input NetworkProtocolUpdateOneRequiredWithoutNetworksInput {
   connect: NetworkProtocolWhereUniqueInput
 }
 
+input NetworkProtocolUpdateOneRequiredWithoutProtocolDataInput {
+  create: NetworkProtocolCreateWithoutProtocolDataInput
+  update: NetworkProtocolUpdateWithoutProtocolDataDataInput
+  upsert: NetworkProtocolUpsertWithoutProtocolDataInput
+  connect: NetworkProtocolWhereUniqueInput
+}
+
 input NetworkProtocolUpdateOneWithoutMasterProtocolInput {
   create: NetworkProtocolCreateWithoutMasterProtocolInput
   update: NetworkProtocolUpdateWithoutMasterProtocolDataInput
@@ -3058,19 +3057,10 @@ input NetworkProtocolUpdateOneWithoutMasterProtocolInput {
   connect: NetworkProtocolWhereUniqueInput
 }
 
-input NetworkProtocolUpdateOneWithoutProtocolDataInput {
-  create: NetworkProtocolCreateWithoutProtocolDataInput
-  update: NetworkProtocolUpdateWithoutProtocolDataDataInput
-  upsert: NetworkProtocolUpsertWithoutProtocolDataInput
-  delete: Boolean
-  disconnect: Boolean
-  connect: NetworkProtocolWhereUniqueInput
-}
-
 input NetworkProtocolUpdateWithoutMasterProtocolDataInput {
   name: String
   protocolHandler: String
-  networkType: NetworkTypeUpdateOneWithoutNetworkProtocolsInput
+  networkType: NetworkTypeUpdateOneRequiredWithoutNetworkProtocolsInput
   networkProtocolVersion: String
   networkProtocols: NetworkProtocolUpdateManyWithoutNetworkProtocolsInput
   networks: NetworkUpdateManyWithoutNetworkProtocolInput
@@ -3080,7 +3070,7 @@ input NetworkProtocolUpdateWithoutMasterProtocolDataInput {
 input NetworkProtocolUpdateWithoutNetworkProtocolsDataInput {
   name: String
   protocolHandler: String
-  networkType: NetworkTypeUpdateOneWithoutNetworkProtocolsInput
+  networkType: NetworkTypeUpdateOneRequiredWithoutNetworkProtocolsInput
   networkProtocolVersion: String
   masterProtocol: NetworkProtocolUpdateOneWithoutMasterProtocolInput
   networks: NetworkUpdateManyWithoutNetworkProtocolInput
@@ -3090,7 +3080,7 @@ input NetworkProtocolUpdateWithoutNetworkProtocolsDataInput {
 input NetworkProtocolUpdateWithoutNetworksDataInput {
   name: String
   protocolHandler: String
-  networkType: NetworkTypeUpdateOneWithoutNetworkProtocolsInput
+  networkType: NetworkTypeUpdateOneRequiredWithoutNetworkProtocolsInput
   networkProtocolVersion: String
   masterProtocol: NetworkProtocolUpdateOneWithoutMasterProtocolInput
   networkProtocols: NetworkProtocolUpdateManyWithoutNetworkProtocolsInput
@@ -3110,7 +3100,7 @@ input NetworkProtocolUpdateWithoutNetworkTypeDataInput {
 input NetworkProtocolUpdateWithoutProtocolDataDataInput {
   name: String
   protocolHandler: String
-  networkType: NetworkTypeUpdateOneWithoutNetworkProtocolsInput
+  networkType: NetworkTypeUpdateOneRequiredWithoutNetworkProtocolsInput
   networkProtocolVersion: String
   masterProtocol: NetworkProtocolUpdateOneWithoutMasterProtocolInput
   networkProtocols: NetworkProtocolUpdateManyWithoutNetworkProtocolsInput
@@ -3426,7 +3416,7 @@ input NetworkSubscriptionWhereInput {
 
 type NetworkType {
   id: Int!
-  name: String
+  name: String!
   applicationNetworkTypeLinks(where: ApplicationNetworkTypeLinkWhereInput, orderBy: ApplicationNetworkTypeLinkOrderByInput, skip: Int, after: String, before: String, first: Int, last: Int): [ApplicationNetworkTypeLink!]
   companyNetworkTypeLinks(where: CompanyNetworkTypeLinkWhereInput, orderBy: CompanyNetworkTypeLinkOrderByInput, skip: Int, after: String, before: String, first: Int, last: Int): [CompanyNetworkTypeLink!]
   deviceNetworkTypeLinks(where: DeviceNetworkTypeLinkWhereInput, orderBy: DeviceNetworkTypeLinkOrderByInput, skip: Int, after: String, before: String, first: Int, last: Int): [DeviceNetworkTypeLink!]
@@ -3442,7 +3432,7 @@ type NetworkTypeConnection {
 }
 
 input NetworkTypeCreateInput {
-  name: String
+  name: String!
   applicationNetworkTypeLinks: ApplicationNetworkTypeLinkCreateManyWithoutNetworkTypeInput
   companyNetworkTypeLinks: CompanyNetworkTypeLinkCreateManyWithoutNetworkTypeInput
   deviceNetworkTypeLinks: DeviceNetworkTypeLinkCreateManyWithoutNetworkTypeInput
@@ -3482,7 +3472,7 @@ input NetworkTypeCreateOneWithoutNetworksInput {
 }
 
 input NetworkTypeCreateWithoutApplicationNetworkTypeLinksInput {
-  name: String
+  name: String!
   companyNetworkTypeLinks: CompanyNetworkTypeLinkCreateManyWithoutNetworkTypeInput
   deviceNetworkTypeLinks: DeviceNetworkTypeLinkCreateManyWithoutNetworkTypeInput
   deviceProfiles: DeviceProfileCreateManyWithoutNetworkTypeInput
@@ -3491,7 +3481,7 @@ input NetworkTypeCreateWithoutApplicationNetworkTypeLinksInput {
 }
 
 input NetworkTypeCreateWithoutCompanyNetworkTypeLinksInput {
-  name: String
+  name: String!
   applicationNetworkTypeLinks: ApplicationNetworkTypeLinkCreateManyWithoutNetworkTypeInput
   deviceNetworkTypeLinks: DeviceNetworkTypeLinkCreateManyWithoutNetworkTypeInput
   deviceProfiles: DeviceProfileCreateManyWithoutNetworkTypeInput
@@ -3500,7 +3490,7 @@ input NetworkTypeCreateWithoutCompanyNetworkTypeLinksInput {
 }
 
 input NetworkTypeCreateWithoutDeviceNetworkTypeLinksInput {
-  name: String
+  name: String!
   applicationNetworkTypeLinks: ApplicationNetworkTypeLinkCreateManyWithoutNetworkTypeInput
   companyNetworkTypeLinks: CompanyNetworkTypeLinkCreateManyWithoutNetworkTypeInput
   deviceProfiles: DeviceProfileCreateManyWithoutNetworkTypeInput
@@ -3509,7 +3499,7 @@ input NetworkTypeCreateWithoutDeviceNetworkTypeLinksInput {
 }
 
 input NetworkTypeCreateWithoutDeviceProfilesInput {
-  name: String
+  name: String!
   applicationNetworkTypeLinks: ApplicationNetworkTypeLinkCreateManyWithoutNetworkTypeInput
   companyNetworkTypeLinks: CompanyNetworkTypeLinkCreateManyWithoutNetworkTypeInput
   deviceNetworkTypeLinks: DeviceNetworkTypeLinkCreateManyWithoutNetworkTypeInput
@@ -3518,7 +3508,7 @@ input NetworkTypeCreateWithoutDeviceProfilesInput {
 }
 
 input NetworkTypeCreateWithoutNetworkProtocolsInput {
-  name: String
+  name: String!
   applicationNetworkTypeLinks: ApplicationNetworkTypeLinkCreateManyWithoutNetworkTypeInput
   companyNetworkTypeLinks: CompanyNetworkTypeLinkCreateManyWithoutNetworkTypeInput
   deviceNetworkTypeLinks: DeviceNetworkTypeLinkCreateManyWithoutNetworkTypeInput
@@ -3527,7 +3517,7 @@ input NetworkTypeCreateWithoutNetworkProtocolsInput {
 }
 
 input NetworkTypeCreateWithoutNetworksInput {
-  name: String
+  name: String!
   applicationNetworkTypeLinks: ApplicationNetworkTypeLinkCreateManyWithoutNetworkTypeInput
   companyNetworkTypeLinks: CompanyNetworkTypeLinkCreateManyWithoutNetworkTypeInput
   deviceNetworkTypeLinks: DeviceNetworkTypeLinkCreateManyWithoutNetworkTypeInput
@@ -3553,7 +3543,7 @@ enum NetworkTypeOrderByInput {
 
 type NetworkTypePreviousValues {
   id: Int!
-  name: String
+  name: String!
 }
 
 type NetworkTypeSubscriptionPayload {
@@ -3602,6 +3592,13 @@ input NetworkTypeUpdateOneRequiredWithoutCompanyNetworkTypeLinksInput {
   connect: NetworkTypeWhereUniqueInput
 }
 
+input NetworkTypeUpdateOneRequiredWithoutDeviceNetworkTypeLinksInput {
+  create: NetworkTypeCreateWithoutDeviceNetworkTypeLinksInput
+  update: NetworkTypeUpdateWithoutDeviceNetworkTypeLinksDataInput
+  upsert: NetworkTypeUpsertWithoutDeviceNetworkTypeLinksInput
+  connect: NetworkTypeWhereUniqueInput
+}
+
 input NetworkTypeUpdateOneRequiredWithoutDeviceProfilesInput {
   create: NetworkTypeCreateWithoutDeviceProfilesInput
   update: NetworkTypeUpdateWithoutDeviceProfilesDataInput
@@ -3609,28 +3606,17 @@ input NetworkTypeUpdateOneRequiredWithoutDeviceProfilesInput {
   connect: NetworkTypeWhereUniqueInput
 }
 
+input NetworkTypeUpdateOneRequiredWithoutNetworkProtocolsInput {
+  create: NetworkTypeCreateWithoutNetworkProtocolsInput
+  update: NetworkTypeUpdateWithoutNetworkProtocolsDataInput
+  upsert: NetworkTypeUpsertWithoutNetworkProtocolsInput
+  connect: NetworkTypeWhereUniqueInput
+}
+
 input NetworkTypeUpdateOneRequiredWithoutNetworksInput {
   create: NetworkTypeCreateWithoutNetworksInput
   update: NetworkTypeUpdateWithoutNetworksDataInput
   upsert: NetworkTypeUpsertWithoutNetworksInput
-  connect: NetworkTypeWhereUniqueInput
-}
-
-input NetworkTypeUpdateOneWithoutDeviceNetworkTypeLinksInput {
-  create: NetworkTypeCreateWithoutDeviceNetworkTypeLinksInput
-  update: NetworkTypeUpdateWithoutDeviceNetworkTypeLinksDataInput
-  upsert: NetworkTypeUpsertWithoutDeviceNetworkTypeLinksInput
-  delete: Boolean
-  disconnect: Boolean
-  connect: NetworkTypeWhereUniqueInput
-}
-
-input NetworkTypeUpdateOneWithoutNetworkProtocolsInput {
-  create: NetworkTypeCreateWithoutNetworkProtocolsInput
-  update: NetworkTypeUpdateWithoutNetworkProtocolsDataInput
-  upsert: NetworkTypeUpsertWithoutNetworkProtocolsInput
-  delete: Boolean
-  disconnect: Boolean
   connect: NetworkTypeWhereUniqueInput
 }
 
@@ -3766,6 +3752,7 @@ input NetworkTypeWhereInput {
 
 input NetworkTypeWhereUniqueInput {
   id: Int
+  name: String
 }
 
 input NetworkUpdateInput {
@@ -3831,12 +3818,10 @@ input NetworkUpdateManyWithWhereNestedInput {
   data: NetworkUpdateManyDataInput!
 }
 
-input NetworkUpdateOneWithoutProtocolDataInput {
+input NetworkUpdateOneRequiredWithoutProtocolDataInput {
   create: NetworkCreateWithoutProtocolDataInput
   update: NetworkUpdateWithoutProtocolDataDataInput
   upsert: NetworkUpsertWithoutProtocolDataInput
-  delete: Boolean
-  disconnect: Boolean
   connect: NetworkWhereUniqueInput
 }
 
@@ -4202,8 +4187,8 @@ input PasswordPolicyWhereUniqueInput {
 
 type ProtocolData {
   id: Int!
-  network: Network
-  networkProtocol: NetworkProtocol
+  network: Network!
+  networkProtocol: NetworkProtocol!
   dataIdentifier: String
   dataValue: String
 }
@@ -4215,8 +4200,8 @@ type ProtocolDataConnection {
 }
 
 input ProtocolDataCreateInput {
-  network: NetworkCreateOneWithoutProtocolDataInput
-  networkProtocol: NetworkProtocolCreateOneWithoutProtocolDataInput
+  network: NetworkCreateOneWithoutProtocolDataInput!
+  networkProtocol: NetworkProtocolCreateOneWithoutProtocolDataInput!
   dataIdentifier: String
   dataValue: String
 }
@@ -4232,13 +4217,13 @@ input ProtocolDataCreateManyWithoutNetworkProtocolInput {
 }
 
 input ProtocolDataCreateWithoutNetworkInput {
-  networkProtocol: NetworkProtocolCreateOneWithoutProtocolDataInput
+  networkProtocol: NetworkProtocolCreateOneWithoutProtocolDataInput!
   dataIdentifier: String
   dataValue: String
 }
 
 input ProtocolDataCreateWithoutNetworkProtocolInput {
-  network: NetworkCreateOneWithoutProtocolDataInput
+  network: NetworkCreateOneWithoutProtocolDataInput!
   dataIdentifier: String
   dataValue: String
 }
@@ -4328,8 +4313,8 @@ input ProtocolDataSubscriptionWhereInput {
 }
 
 input ProtocolDataUpdateInput {
-  network: NetworkUpdateOneWithoutProtocolDataInput
-  networkProtocol: NetworkProtocolUpdateOneWithoutProtocolDataInput
+  network: NetworkUpdateOneRequiredWithoutProtocolDataInput
+  networkProtocol: NetworkProtocolUpdateOneRequiredWithoutProtocolDataInput
   dataIdentifier: String
   dataValue: String
 }
@@ -4374,13 +4359,13 @@ input ProtocolDataUpdateManyWithWhereNestedInput {
 }
 
 input ProtocolDataUpdateWithoutNetworkDataInput {
-  networkProtocol: NetworkProtocolUpdateOneWithoutProtocolDataInput
+  networkProtocol: NetworkProtocolUpdateOneRequiredWithoutProtocolDataInput
   dataIdentifier: String
   dataValue: String
 }
 
 input ProtocolDataUpdateWithoutNetworkProtocolDataInput {
-  network: NetworkUpdateOneWithoutProtocolDataInput
+  network: NetworkUpdateOneRequiredWithoutProtocolDataInput
   dataIdentifier: String
   dataValue: String
 }
@@ -4687,12 +4672,12 @@ type Subscription {
 type User {
   id: Int!
   username: String
-  email: String!
+  email: String
   lastVerifiedEmail: String
   emailVerified: Boolean
-  company: Company
-  passwordHash: String
-  role: UserRole
+  company: Company!
+  passwordHash: String!
+  role: UserRole!
   emailVerifications(where: EmailVerificationWhereInput, orderBy: EmailVerificationOrderByInput, skip: Int, after: String, before: String, first: Int, last: Int): [EmailVerification!]
 }
 
@@ -4704,12 +4689,12 @@ type UserConnection {
 
 input UserCreateInput {
   username: String
-  email: String!
+  email: String
   lastVerifiedEmail: String
   emailVerified: Boolean
-  company: CompanyCreateOneWithoutUsersInput
-  passwordHash: String
-  role: UserRoleCreateOneWithoutUsersInput
+  company: CompanyCreateOneWithoutUsersInput!
+  passwordHash: String!
+  role: UserRoleCreateOneWithoutUsersInput!
   emailVerifications: EmailVerificationCreateManyWithoutUserInput
 }
 
@@ -4730,31 +4715,31 @@ input UserCreateOneWithoutEmailVerificationsInput {
 
 input UserCreateWithoutCompanyInput {
   username: String
-  email: String!
+  email: String
   lastVerifiedEmail: String
   emailVerified: Boolean
-  passwordHash: String
-  role: UserRoleCreateOneWithoutUsersInput
+  passwordHash: String!
+  role: UserRoleCreateOneWithoutUsersInput!
   emailVerifications: EmailVerificationCreateManyWithoutUserInput
 }
 
 input UserCreateWithoutEmailVerificationsInput {
   username: String
-  email: String!
+  email: String
   lastVerifiedEmail: String
   emailVerified: Boolean
-  company: CompanyCreateOneWithoutUsersInput
-  passwordHash: String
-  role: UserRoleCreateOneWithoutUsersInput
+  company: CompanyCreateOneWithoutUsersInput!
+  passwordHash: String!
+  role: UserRoleCreateOneWithoutUsersInput!
 }
 
 input UserCreateWithoutRoleInput {
   username: String
-  email: String!
+  email: String
   lastVerifiedEmail: String
   emailVerified: Boolean
-  company: CompanyCreateOneWithoutUsersInput
-  passwordHash: String
+  company: CompanyCreateOneWithoutUsersInput!
+  passwordHash: String!
   emailVerifications: EmailVerificationCreateManyWithoutUserInput
 }
 
@@ -4785,10 +4770,10 @@ enum UserOrderByInput {
 type UserPreviousValues {
   id: Int!
   username: String
-  email: String!
+  email: String
   lastVerifiedEmail: String
   emailVerified: Boolean
-  passwordHash: String
+  passwordHash: String!
 }
 
 type UserRole {
@@ -4865,12 +4850,10 @@ input UserRoleUpdateManyMutationInput {
   name: String
 }
 
-input UserRoleUpdateOneWithoutUsersInput {
+input UserRoleUpdateOneRequiredWithoutUsersInput {
   create: UserRoleCreateWithoutUsersInput
   update: UserRoleUpdateWithoutUsersDataInput
   upsert: UserRoleUpsertWithoutUsersInput
-  delete: Boolean
-  disconnect: Boolean
   connect: UserRoleWhereUniqueInput
 }
 
@@ -5014,9 +4997,9 @@ input UserUpdateInput {
   email: String
   lastVerifiedEmail: String
   emailVerified: Boolean
-  company: CompanyUpdateOneWithoutUsersInput
+  company: CompanyUpdateOneRequiredWithoutUsersInput
   passwordHash: String
-  role: UserRoleUpdateOneWithoutUsersInput
+  role: UserRoleUpdateOneRequiredWithoutUsersInput
   emailVerifications: EmailVerificationUpdateManyWithoutUserInput
 }
 
@@ -5065,12 +5048,10 @@ input UserUpdateManyWithWhereNestedInput {
   data: UserUpdateManyDataInput!
 }
 
-input UserUpdateOneWithoutEmailVerificationsInput {
+input UserUpdateOneRequiredWithoutEmailVerificationsInput {
   create: UserCreateWithoutEmailVerificationsInput
   update: UserUpdateWithoutEmailVerificationsDataInput
   upsert: UserUpsertWithoutEmailVerificationsInput
-  delete: Boolean
-  disconnect: Boolean
   connect: UserWhereUniqueInput
 }
 
@@ -5080,7 +5061,7 @@ input UserUpdateWithoutCompanyDataInput {
   lastVerifiedEmail: String
   emailVerified: Boolean
   passwordHash: String
-  role: UserRoleUpdateOneWithoutUsersInput
+  role: UserRoleUpdateOneRequiredWithoutUsersInput
   emailVerifications: EmailVerificationUpdateManyWithoutUserInput
 }
 
@@ -5089,9 +5070,9 @@ input UserUpdateWithoutEmailVerificationsDataInput {
   email: String
   lastVerifiedEmail: String
   emailVerified: Boolean
-  company: CompanyUpdateOneWithoutUsersInput
+  company: CompanyUpdateOneRequiredWithoutUsersInput
   passwordHash: String
-  role: UserRoleUpdateOneWithoutUsersInput
+  role: UserRoleUpdateOneRequiredWithoutUsersInput
 }
 
 input UserUpdateWithoutRoleDataInput {
@@ -5099,7 +5080,7 @@ input UserUpdateWithoutRoleDataInput {
   email: String
   lastVerifiedEmail: String
   emailVerified: Boolean
-  company: CompanyUpdateOneWithoutUsersInput
+  company: CompanyUpdateOneRequiredWithoutUsersInput
   passwordHash: String
   emailVerifications: EmailVerificationUpdateManyWithoutUserInput
 }

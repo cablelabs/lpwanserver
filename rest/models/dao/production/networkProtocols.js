@@ -1,5 +1,5 @@
 // Database implementation.
-const { prisma, formatInputData } = require('../../../lib/prisma')
+const { prisma, formatInputData, formatRelationshipsIn } = require('../../../lib/prisma')
 const appLogger = require('../../../lib/appLogger')
 
 // Error reporting
@@ -40,13 +40,13 @@ function createNetworkProtocol (name, networkTypeId, protocolHandler, version, m
     networkTypeId,
     masterProtocolId
   })
-  return prisma.createNetworkProtocol(data).fragment$(fragments.basic)
+  return prisma.createNetworkProtocol(data).$fragment(fragments.basic)
 }
 
 async function upsertNetworkProtocol ({ networkProtocolVersion, ...np }) {
-  const [ oldNp ] = await retrieveNetworkProtocols({ search: np.name, networkProtocolVersion })
-  if (oldNp) {
-    return updateNetworkProtocol({ id: oldNp.id, ...np })
+  const { records } = await retrieveNetworkProtocols({ search: np.name, networkProtocolVersion })
+  if (records.length) {
+    return updateNetworkProtocol({ id: records[0].id, ...np })
   }
   return createNetworkProtocol(np.name, np.networkTypeId, np.protocolHandler, networkProtocolVersion, np.masterProtocol)
   // removed code in which NetworkProtocol references itself as it's masterProtocol
@@ -58,7 +58,7 @@ async function upsertNetworkProtocol ({ networkProtocolVersion, ...np }) {
 //
 // Returns a promise that executes the retrieval.
 async function retrieveNetworkProtocol (id) {
-  const rec = await onFail(400, () => prisma.networkProtocol({ id })).fragment$(fragments.basic)
+  const rec = await onFail(400, () => prisma.networkProtocol({ id })).$fragment(fragments.basic)
   if (!rec) throw httpError(404, 'NetworkProtocol not found')
   return rec
 }
@@ -72,7 +72,7 @@ async function retrieveNetworkProtocol (id) {
 function updateNetworkProtocol ({ id, ...data }) {
   if (!id) throw httpError(400, 'No existing NetworkProtocol ID')
   data = formatInputData(data)
-  return prisma.updateNetworkProtocol({ data, where: { id } })
+  return prisma.updateNetworkProtocol({ data, where: { id } }).$fragment(fragments.basic)
 }
 
 // Delete the networkProtocol record.
@@ -92,7 +92,7 @@ function deleteNetworkProtocol (id) {
 //
 // Returns a promise that does the retrieval.
 function retrieveAllNetworkProtocols () {
-  return prisma.networkProtocols().fragment$(fragments.basic)
+  return prisma.networkProtocols().$fragment(fragments.basic)
 }
 
 /**
@@ -103,23 +103,31 @@ function retrieveAllNetworkProtocols () {
  * search string on networkProtocol name or type.
  *
  */
-async function retrieveNetworkProtocols (opts) {
-  const where = {}
-  if (opts.networkId) where.network = { id: opts.networkId }
-  if (opts.search) where.name_contains = opts.search
-  if (opts.networkProtocolVersion) where.networkProtocolVersion_contains = opts.networkProtocolVersion
+async function retrieveNetworkProtocols ({ limit, offset, ...where } = {}) {
+  where = formatRelationshipsIn(where)
+  if (where.search) {
+    where.name_contains = where.search
+    delete where.search
+  }
+  if (where.networkProtocolVersion) {
+    where.networkProtocolVersion_contains = where.networkProtocolVersion
+    delete where.networkProtocolVersion
+  }
   const query = { where }
-  if (opts.limit) query.first = opts.limit
-  if (opts.offset) query.skip = opts.offset
+  if (limit) query.first = limit
+  if (offset) query.skip = offset
   const [records, totalCount] = await Promise.all([
-    prisma.networkProtocols(query).fragment$(fragments.query),
-    prisma.networkProtocolsConnection({ where }).aggregate.count()
+    prisma.networkProtocols(query).$fragment(fragments.basic),
+    prisma.networkProtocolsConnection({ where }).aggregate().count()
   ])
   return { totalCount, records }
 }
 
+//* *****************************************************************************
+// Fragments for how the data should be returned from Prisma.
+//* *****************************************************************************
 const fragments = {
-  basic: `fragment Basic on NetworkProtocol {
+  basic: `fragment BasicNetworkProtocol on NetworkProtocol {
     id
     name
     protocolHandler

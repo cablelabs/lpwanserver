@@ -1,13 +1,11 @@
 // Database implementation.
-const { prisma, formatRelationshipReferences, formatInputData } = require('../../../lib/prisma')
+const { prisma, formatRelationshipsIn, formatInputData } = require('../../../lib/prisma')
 
 // Error reporting
 var httpError = require('http-errors')
 
 // Utils
 const { onFail } = require('../../../lib/utils')
-
-const formatRefsIn = formatRelationshipReferences('in')
 
 //* *****************************************************************************
 // Networks database table.
@@ -38,16 +36,16 @@ module.exports = {
 //                             login credentials.
 //
 // Returns the promise that will execute the create.
-function createNetwork (name, networkProviderId, networkTypeId, networkProtocolId, baseUrl, securityData) {
+async function createNetwork (name, networkProviderId, networkTypeId, networkProtocolId, baseUrl, securityData) {
   const data = formatInputData({
     name,
     networkProviderId,
     networkTypeId,
     networkProtocolId,
     baseUrl,
-    securityData
+    securityData: securityData && JSON.stringify(securityData)
   })
-  return prisma.createNetwork(data).fragment$(fragments.basic)
+  return prisma.createNetwork(data).$fragment(fragments.internal)
 }
 
 // Retrieve a network record by id.
@@ -55,8 +53,8 @@ function createNetwork (name, networkProviderId, networkTypeId, networkProtocolI
 // id - the record id of the network.
 //
 // Returns a promise that executes the retrieval.
-async function retrieveNetwork (id) {
-  const rec = await onFail(400, () => prisma.network({ id })).fragment$(fragments.basic)
+async function retrieveNetwork (id, fragment = 'internal') {
+  const rec = await onFail(400, () => prisma.network({ id }).$fragment(fragments[fragment]))
   if (!rec) throw httpError(404, 'Network not found')
   return rec
 }
@@ -67,10 +65,10 @@ async function retrieveNetwork (id) {
 //          from retrieval to guarantee the same record is updated.
 //
 // Returns a promise that executes the update.
-function updateNetwork ({ id, ...data }) {
+async function updateNetwork ({ id, ...data }, fragment = 'internal') {
   if (!id) throw httpError(400, 'No existing Network ID')
   data = formatInputData(data)
-  return prisma.updateNetwork({ data, where: { id } })
+  return prisma.updateNetwork({ data, where: { id } }).$fragment(fragments[fragment])
 }
 
 // Delete the network record.
@@ -94,26 +92,45 @@ function deleteNetwork (id) {
  * search string on network name, and networkProtocolId.
  *
  */
-async function retrieveNetworks (opts = {}) {
-  const where = formatRefsIn(opts)
-  if (opts.search) {
-    where.name_contains = opts.search
+async function retrieveNetworks ({ limit, offset, ...where } = {}, fragment = 'basic') {
+  where = formatRelationshipsIn(where)
+  if (where.search) {
+    where.name_contains = where.search
     delete where.search
   }
   const query = { where }
-  if (opts.limit) query.first = opts.limit
-  if (opts.offset) query.skip = opts.offset
-  const [records, totalCount] = await Promise.all([
-    prisma.networks(query).fragment$(fragments.basic),
-    prisma.networksConnection({ where }).aggregate.count()
+  if (limit) query.first = limit
+  if (offset) query.skip = offset
+  let [records, totalCount] = await Promise.all([
+    prisma.networks(query).$fragment(fragments[fragment]),
+    prisma.networksConnection({ where }).aggregate().count()
   ])
   return { totalCount, records }
 }
 
+//* *****************************************************************************
+// Fragments for how the data should be returned from Prisma.
+//* *****************************************************************************
 const fragments = {
-  basic: `fragment Basic on Network {
+  basic: `fragment BasicNetwork on Network {
     id
+    name
     baseUrl
+    networkProvider {
+      id
+    }
+    networkType {
+      id
+    }
+    networkProtocol {
+      id
+    }
+  }`,
+  internal: `fragment InternalNetwork on Network {
+    id
+    name
+    baseUrl
+    securityData
     networkProvider {
       id
     }

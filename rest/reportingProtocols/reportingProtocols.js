@@ -26,7 +26,7 @@ ReportingProtocolAccess.prototype.clearProtocol = function (reportingProtocol) {
 ReportingProtocolAccess.prototype.getProtocol = function (application) {
   let me = this
   return new Promise(async function (resolve, reject) {
-    let id = application.reportingProtocolId
+    let id = application.reportingPotocol.id
     if (!me.reportingProtocolMap[ id ]) {
       // We'll need the protocol for the network.
       try {

@@ -1204,12 +1204,10 @@ export type ReportingProtocolOrderByInput =
 
 export type MutationType = "CREATED" | "UPDATED" | "DELETED";
 
-export interface NetworkTypeUpdateOneWithoutNetworkProtocolsInput {
+export interface NetworkTypeUpdateOneRequiredWithoutNetworkProtocolsInput {
   create?: NetworkTypeCreateWithoutNetworkProtocolsInput;
   update?: NetworkTypeUpdateWithoutNetworkProtocolsDataInput;
   upsert?: NetworkTypeUpsertWithoutNetworkProtocolsInput;
-  delete?: Boolean;
-  disconnect?: Boolean;
   connect?: NetworkTypeWhereUniqueInput;
 }
 
@@ -1770,8 +1768,8 @@ export interface CompanyNetworkTypeLinkWhereInput {
 }
 
 export interface DeviceNetworkTypeLinkUpdateWithoutDeviceDataInput {
-  networkType?: NetworkTypeUpdateOneWithoutDeviceNetworkTypeLinksInput;
-  deviceProfile?: DeviceProfileUpdateOneWithoutDeviceNetworkTypeLinksInput;
+  networkType?: NetworkTypeUpdateOneRequiredWithoutDeviceNetworkTypeLinksInput;
+  deviceProfile?: DeviceProfileUpdateOneRequiredWithoutDeviceNetworkTypeLinksInput;
   networkSettings?: String;
 }
 
@@ -1821,12 +1819,10 @@ export interface NetworkTypeWhereInput {
   NOT?: NetworkTypeWhereInput[] | NetworkTypeWhereInput;
 }
 
-export interface NetworkTypeUpdateOneWithoutDeviceNetworkTypeLinksInput {
+export interface NetworkTypeUpdateOneRequiredWithoutDeviceNetworkTypeLinksInput {
   create?: NetworkTypeCreateWithoutDeviceNetworkTypeLinksInput;
   update?: NetworkTypeUpdateWithoutDeviceNetworkTypeLinksDataInput;
   upsert?: NetworkTypeUpsertWithoutDeviceNetworkTypeLinksInput;
-  delete?: Boolean;
-  disconnect?: Boolean;
   connect?: NetworkTypeWhereUniqueInput;
 }
 
@@ -2110,7 +2106,7 @@ export interface UserUpdateWithoutRoleDataInput {
   email?: String;
   lastVerifiedEmail?: String;
   emailVerified?: Boolean;
-  company?: CompanyUpdateOneWithoutUsersInput;
+  company?: CompanyUpdateOneRequiredWithoutUsersInput;
   passwordHash?: String;
   emailVerifications?: EmailVerificationUpdateManyWithoutUserInput;
 }
@@ -2296,8 +2292,8 @@ export type DeviceNetworkTypeLinkWhereUniqueInput = AtLeastOne<{
 }>;
 
 export interface DeviceNetworkTypeLinkUpdateWithoutNetworkTypeDataInput {
-  device?: DeviceUpdateOneWithoutDeviceNetworkTypeLinksInput;
-  deviceProfile?: DeviceProfileUpdateOneWithoutDeviceNetworkTypeLinksInput;
+  device?: DeviceUpdateOneRequiredWithoutDeviceNetworkTypeLinksInput;
+  deviceProfile?: DeviceProfileUpdateOneRequiredWithoutDeviceNetworkTypeLinksInput;
   networkSettings?: String;
 }
 
@@ -2306,12 +2302,10 @@ export interface ApplicationUpdateWithWhereUniqueWithoutReportingProtocolInput {
   data: ApplicationUpdateWithoutReportingProtocolDataInput;
 }
 
-export interface DeviceUpdateOneWithoutDeviceNetworkTypeLinksInput {
+export interface DeviceUpdateOneRequiredWithoutDeviceNetworkTypeLinksInput {
   create?: DeviceCreateWithoutDeviceNetworkTypeLinksInput;
   update?: DeviceUpdateWithoutDeviceNetworkTypeLinksDataInput;
   upsert?: DeviceUpsertWithoutDeviceNetworkTypeLinksInput;
-  delete?: Boolean;
-  disconnect?: Boolean;
   connect?: DeviceWhereUniqueInput;
 }
 
@@ -2380,12 +2374,10 @@ export interface PasswordPolicyUpdateManyMutationInput {
   ruleRegExp?: String;
 }
 
-export interface DeviceProfileUpdateOneWithoutDeviceNetworkTypeLinksInput {
+export interface DeviceProfileUpdateOneRequiredWithoutDeviceNetworkTypeLinksInput {
   create?: DeviceProfileCreateWithoutDeviceNetworkTypeLinksInput;
   update?: DeviceProfileUpdateWithoutDeviceNetworkTypeLinksDataInput;
   upsert?: DeviceProfileUpsertWithoutDeviceNetworkTypeLinksInput;
-  delete?: Boolean;
-  disconnect?: Boolean;
   connect?: DeviceProfileWhereUniqueInput;
 }
 
@@ -2395,7 +2387,7 @@ export type NetworkProtocolWhereUniqueInput = AtLeastOne<{
 
 export interface DeviceProfileUpdateWithoutDeviceNetworkTypeLinksDataInput {
   networkType?: NetworkTypeUpdateOneRequiredWithoutDeviceProfilesInput;
-  company?: CompanyUpdateOneWithoutDeviceProfilesInput;
+  company?: CompanyUpdateOneRequiredWithoutDeviceProfilesInput;
   name?: String;
   description?: String;
   networkSettings?: String;
@@ -2489,7 +2481,7 @@ export interface NetworkProtocolUpdateWithoutNetworkTypeDataInput {
 }
 
 export interface NetworkTypeCreateInput {
-  name?: String;
+  name: String;
   applicationNetworkTypeLinks?: ApplicationNetworkTypeLinkCreateManyWithoutNetworkTypeInput;
   companyNetworkTypeLinks?: CompanyNetworkTypeLinkCreateManyWithoutNetworkTypeInput;
   deviceNetworkTypeLinks?: DeviceNetworkTypeLinkCreateManyWithoutNetworkTypeInput;
@@ -2514,7 +2506,7 @@ export type PasswordPolicyWhereUniqueInput = AtLeastOne<{
 export interface NetworkProtocolUpdateWithoutMasterProtocolDataInput {
   name?: String;
   protocolHandler?: String;
-  networkType?: NetworkTypeUpdateOneWithoutNetworkProtocolsInput;
+  networkType?: NetworkTypeUpdateOneRequiredWithoutNetworkProtocolsInput;
   networkProtocolVersion?: String;
   networkProtocols?: NetworkProtocolUpdateManyWithoutNetworkProtocolsInput;
   networks?: NetworkUpdateManyWithoutNetworkProtocolInput;
@@ -2530,12 +2522,10 @@ export interface NetworkUpdateWithoutNetworkProviderDataInput {
   protocolData?: ProtocolDataUpdateManyWithoutNetworkInput;
 }
 
-export interface CompanyUpdateOneWithoutUsersInput {
+export interface CompanyUpdateOneRequiredWithoutUsersInput {
   create?: CompanyCreateWithoutUsersInput;
   update?: CompanyUpdateWithoutUsersDataInput;
   upsert?: CompanyUpsertWithoutUsersInput;
-  delete?: Boolean;
-  disconnect?: Boolean;
   connect?: CompanyWhereUniqueInput;
 }
 
@@ -2592,7 +2582,7 @@ export interface NetworkProviderCreateInput {
 }
 
 export interface DeviceProfileUpdateWithoutNetworkTypeDataInput {
-  company?: CompanyUpdateOneWithoutDeviceProfilesInput;
+  company?: CompanyUpdateOneRequiredWithoutDeviceProfilesInput;
   name?: String;
   description?: String;
   networkSettings?: String;
@@ -2602,7 +2592,7 @@ export interface DeviceProfileUpdateWithoutNetworkTypeDataInput {
 export interface NetworkProtocolUpdateInput {
   name?: String;
   protocolHandler?: String;
-  networkType?: NetworkTypeUpdateOneWithoutNetworkProtocolsInput;
+  networkType?: NetworkTypeUpdateOneRequiredWithoutNetworkProtocolsInput;
   networkProtocolVersion?: String;
   masterProtocol?: NetworkProtocolUpdateOneWithoutMasterProtocolInput;
   networkProtocols?: NetworkProtocolUpdateManyWithoutNetworkProtocolsInput;
@@ -2610,19 +2600,17 @@ export interface NetworkProtocolUpdateInput {
   protocolData?: ProtocolDataUpdateManyWithoutNetworkProtocolInput;
 }
 
-export interface CompanyUpdateOneWithoutDeviceProfilesInput {
+export interface CompanyUpdateOneRequiredWithoutDeviceProfilesInput {
   create?: CompanyCreateWithoutDeviceProfilesInput;
   update?: CompanyUpdateWithoutDeviceProfilesDataInput;
   upsert?: CompanyUpsertWithoutDeviceProfilesInput;
-  delete?: Boolean;
-  disconnect?: Boolean;
   connect?: CompanyWhereUniqueInput;
 }
 
 export interface NetworkProtocolCreateInput {
   name?: String;
   protocolHandler?: String;
-  networkType?: NetworkTypeCreateOneWithoutNetworkProtocolsInput;
+  networkType: NetworkTypeCreateOneWithoutNetworkProtocolsInput;
   networkProtocolVersion?: String;
   masterProtocol?: NetworkProtocolCreateOneWithoutMasterProtocolInput;
   networkProtocols?: NetworkProtocolCreateManyWithoutNetworkProtocolsInput;
@@ -2712,9 +2700,9 @@ export interface UserUpdateWithoutEmailVerificationsDataInput {
   email?: String;
   lastVerifiedEmail?: String;
   emailVerified?: Boolean;
-  company?: CompanyUpdateOneWithoutUsersInput;
+  company?: CompanyUpdateOneRequiredWithoutUsersInput;
   passwordHash?: String;
-  role?: UserRoleUpdateOneWithoutUsersInput;
+  role?: UserRoleUpdateOneRequiredWithoutUsersInput;
 }
 
 export interface ApplicationCreateInput {
@@ -2841,12 +2829,10 @@ export interface CompanyTypeCreateWithoutCompaniesInput {
   name?: String;
 }
 
-export interface UserUpdateOneWithoutEmailVerificationsInput {
+export interface UserUpdateOneRequiredWithoutEmailVerificationsInput {
   create?: UserCreateWithoutEmailVerificationsInput;
   update?: UserUpdateWithoutEmailVerificationsDataInput;
   upsert?: UserUpsertWithoutEmailVerificationsInput;
-  delete?: Boolean;
-  disconnect?: Boolean;
   connect?: UserWhereUniqueInput;
 }
 
@@ -2918,7 +2904,7 @@ export interface NetworkWhereInput {
 }
 
 export interface NetworkTypeCreateWithoutCompanyNetworkTypeLinksInput {
-  name?: String;
+  name: String;
   applicationNetworkTypeLinks?: ApplicationNetworkTypeLinkCreateManyWithoutNetworkTypeInput;
   deviceNetworkTypeLinks?: DeviceNetworkTypeLinkCreateManyWithoutNetworkTypeInput;
   deviceProfiles?: DeviceProfileCreateManyWithoutNetworkTypeInput;
@@ -2942,7 +2928,7 @@ export interface UserUpdateWithoutCompanyDataInput {
   lastVerifiedEmail?: String;
   emailVerified?: Boolean;
   passwordHash?: String;
-  role?: UserRoleUpdateOneWithoutUsersInput;
+  role?: UserRoleUpdateOneRequiredWithoutUsersInput;
   emailVerifications?: EmailVerificationUpdateManyWithoutUserInput;
 }
 
@@ -2955,12 +2941,10 @@ export interface ApplicationCreateWithoutApplicationNetworkTypeLinksInput {
   devices?: DeviceCreateManyWithoutApplicationInput;
 }
 
-export interface UserRoleUpdateOneWithoutUsersInput {
+export interface UserRoleUpdateOneRequiredWithoutUsersInput {
   create?: UserRoleCreateWithoutUsersInput;
   update?: UserRoleUpdateWithoutUsersDataInput;
   upsert?: UserRoleUpsertWithoutUsersInput;
-  delete?: Boolean;
-  disconnect?: Boolean;
   connect?: UserRoleWhereUniqueInput;
 }
 
@@ -2986,8 +2970,8 @@ export interface UserRoleUpsertWithoutUsersInput {
 }
 
 export interface DeviceNetworkTypeLinkCreateWithoutDeviceInput {
-  networkType?: NetworkTypeCreateOneWithoutDeviceNetworkTypeLinksInput;
-  deviceProfile?: DeviceProfileCreateOneWithoutDeviceNetworkTypeLinksInput;
+  networkType: NetworkTypeCreateOneWithoutDeviceNetworkTypeLinksInput;
+  deviceProfile: DeviceProfileCreateOneWithoutDeviceNetworkTypeLinksInput;
   networkSettings?: String;
 }
 
@@ -3020,7 +3004,7 @@ export interface EmailVerificationUpdateManyWithoutUserInput {
 }
 
 export interface NetworkTypeCreateWithoutDeviceNetworkTypeLinksInput {
-  name?: String;
+  name: String;
   applicationNetworkTypeLinks?: ApplicationNetworkTypeLinkCreateManyWithoutNetworkTypeInput;
   companyNetworkTypeLinks?: CompanyNetworkTypeLinkCreateManyWithoutNetworkTypeInput;
   deviceProfiles?: DeviceProfileCreateManyWithoutNetworkTypeInput;
@@ -3135,7 +3119,7 @@ export interface EmailVerificationUpdateManyWithWhereNestedInput {
 }
 
 export interface NetworkTypeCreateWithoutApplicationNetworkTypeLinksInput {
-  name?: String;
+  name: String;
   companyNetworkTypeLinks?: CompanyNetworkTypeLinkCreateManyWithoutNetworkTypeInput;
   deviceNetworkTypeLinks?: DeviceNetworkTypeLinkCreateManyWithoutNetworkTypeInput;
   deviceProfiles?: DeviceProfileCreateManyWithoutNetworkTypeInput;
@@ -3150,8 +3134,8 @@ export interface EmailVerificationUpdateManyDataInput {
 }
 
 export interface DeviceNetworkTypeLinkCreateWithoutNetworkTypeInput {
-  device?: DeviceCreateOneWithoutDeviceNetworkTypeLinksInput;
-  deviceProfile?: DeviceProfileCreateOneWithoutDeviceNetworkTypeLinksInput;
+  device: DeviceCreateOneWithoutDeviceNetworkTypeLinksInput;
+  deviceProfile: DeviceProfileCreateOneWithoutDeviceNetworkTypeLinksInput;
   networkSettings?: String;
 }
 
@@ -3256,7 +3240,7 @@ export interface UserUpdateManyWithWhereNestedInput {
 
 export interface DeviceProfileCreateWithoutDeviceNetworkTypeLinksInput {
   networkType: NetworkTypeCreateOneWithoutDeviceProfilesInput;
-  company?: CompanyCreateOneWithoutDeviceProfilesInput;
+  company: CompanyCreateOneWithoutDeviceProfilesInput;
   name?: String;
   description?: String;
   networkSettings?: String;
@@ -3271,7 +3255,7 @@ export interface UserUpdateManyDataInput {
 }
 
 export interface NetworkTypeCreateWithoutDeviceProfilesInput {
-  name?: String;
+  name: String;
   applicationNetworkTypeLinks?: ApplicationNetworkTypeLinkCreateManyWithoutNetworkTypeInput;
   companyNetworkTypeLinks?: CompanyNetworkTypeLinkCreateManyWithoutNetworkTypeInput;
   deviceNetworkTypeLinks?: DeviceNetworkTypeLinkCreateManyWithoutNetworkTypeInput;
@@ -3327,7 +3311,7 @@ export interface DeviceNetworkTypeLinkUpdateManyWithoutDeviceProfileInput {
 export interface NetworkProtocolCreateWithoutMasterProtocolInput {
   name?: String;
   protocolHandler?: String;
-  networkType?: NetworkTypeCreateOneWithoutNetworkProtocolsInput;
+  networkType: NetworkTypeCreateOneWithoutNetworkProtocolsInput;
   networkProtocolVersion?: String;
   networkProtocols?: NetworkProtocolCreateManyWithoutNetworkProtocolsInput;
   networks?: NetworkCreateManyWithoutNetworkProtocolInput;
@@ -3340,7 +3324,7 @@ export interface DeviceNetworkTypeLinkUpdateWithWhereUniqueWithoutDeviceProfileI
 }
 
 export interface NetworkTypeCreateWithoutNetworkProtocolsInput {
-  name?: String;
+  name: String;
   applicationNetworkTypeLinks?: ApplicationNetworkTypeLinkCreateManyWithoutNetworkTypeInput;
   companyNetworkTypeLinks?: CompanyNetworkTypeLinkCreateManyWithoutNetworkTypeInput;
   deviceNetworkTypeLinks?: DeviceNetworkTypeLinkCreateManyWithoutNetworkTypeInput;
@@ -3349,13 +3333,13 @@ export interface NetworkTypeCreateWithoutNetworkProtocolsInput {
 }
 
 export interface DeviceNetworkTypeLinkUpdateWithoutDeviceProfileDataInput {
-  device?: DeviceUpdateOneWithoutDeviceNetworkTypeLinksInput;
-  networkType?: NetworkTypeUpdateOneWithoutDeviceNetworkTypeLinksInput;
+  device?: DeviceUpdateOneRequiredWithoutDeviceNetworkTypeLinksInput;
+  networkType?: NetworkTypeUpdateOneRequiredWithoutDeviceNetworkTypeLinksInput;
   networkSettings?: String;
 }
 
 export interface DeviceProfileCreateWithoutNetworkTypeInput {
-  company?: CompanyCreateOneWithoutDeviceProfilesInput;
+  company: CompanyCreateOneWithoutDeviceProfilesInput;
   name?: String;
   description?: String;
   networkSettings?: String;
@@ -3423,11 +3407,11 @@ export interface DeviceNetworkTypeLinkUpdateManyWithWhereNestedInput {
 
 export interface UserCreateWithoutCompanyInput {
   username?: String;
-  email: String;
+  email?: String;
   lastVerifiedEmail?: String;
   emailVerified?: Boolean;
-  passwordHash?: String;
-  role?: UserRoleCreateOneWithoutUsersInput;
+  passwordHash: String;
+  role: UserRoleCreateOneWithoutUsersInput;
   emailVerifications?: EmailVerificationCreateManyWithoutUserInput;
 }
 
@@ -3508,8 +3492,8 @@ export interface DeviceProfileScalarWhereInput {
 }
 
 export interface DeviceNetworkTypeLinkCreateWithoutDeviceProfileInput {
-  device?: DeviceCreateOneWithoutDeviceNetworkTypeLinksInput;
-  networkType?: NetworkTypeCreateOneWithoutDeviceNetworkTypeLinksInput;
+  device: DeviceCreateOneWithoutDeviceNetworkTypeLinksInput;
+  networkType: NetworkTypeCreateOneWithoutDeviceNetworkTypeLinksInput;
   networkSettings?: String;
 }
 
@@ -3560,7 +3544,7 @@ export interface NetworkUpdateManyWithoutNetworkTypeInput {
 export interface NetworkProtocolCreateWithoutNetworksInput {
   name?: String;
   protocolHandler?: String;
-  networkType?: NetworkTypeCreateOneWithoutNetworkProtocolsInput;
+  networkType: NetworkTypeCreateOneWithoutNetworkProtocolsInput;
   networkProtocolVersion?: String;
   masterProtocol?: NetworkProtocolCreateOneWithoutMasterProtocolInput;
   networkProtocols?: NetworkProtocolCreateManyWithoutNetworkProtocolsInput;
@@ -3575,7 +3559,7 @@ export interface NetworkUpdateWithWhereUniqueWithoutNetworkTypeInput {
 export interface NetworkProtocolCreateWithoutNetworkProtocolsInput {
   name?: String;
   protocolHandler?: String;
-  networkType?: NetworkTypeCreateOneWithoutNetworkProtocolsInput;
+  networkType: NetworkTypeCreateOneWithoutNetworkProtocolsInput;
   networkProtocolVersion?: String;
   masterProtocol?: NetworkProtocolCreateOneWithoutMasterProtocolInput;
   networks?: NetworkCreateManyWithoutNetworkProtocolInput;
@@ -3608,7 +3592,7 @@ export interface NetworkProviderUpdateOneRequiredWithoutNetworksInput {
 }
 
 export interface NetworkTypeCreateWithoutNetworksInput {
-  name?: String;
+  name: String;
   applicationNetworkTypeLinks?: ApplicationNetworkTypeLinkCreateManyWithoutNetworkTypeInput;
   companyNetworkTypeLinks?: CompanyNetworkTypeLinkCreateManyWithoutNetworkTypeInput;
   deviceNetworkTypeLinks?: DeviceNetworkTypeLinkCreateManyWithoutNetworkTypeInput;
@@ -3621,7 +3605,7 @@ export interface NetworkProviderUpdateWithoutNetworksDataInput {
 }
 
 export interface ProtocolDataCreateWithoutNetworkInput {
-  networkProtocol?: NetworkProtocolCreateOneWithoutProtocolDataInput;
+  networkProtocol: NetworkProtocolCreateOneWithoutProtocolDataInput;
   dataIdentifier?: String;
   dataValue?: String;
 }
@@ -3634,7 +3618,7 @@ export interface NetworkProviderUpsertWithoutNetworksInput {
 export interface NetworkProtocolCreateWithoutProtocolDataInput {
   name?: String;
   protocolHandler?: String;
-  networkType?: NetworkTypeCreateOneWithoutNetworkProtocolsInput;
+  networkType: NetworkTypeCreateOneWithoutNetworkProtocolsInput;
   networkProtocolVersion?: String;
   masterProtocol?: NetworkProtocolCreateOneWithoutMasterProtocolInput;
   networkProtocols?: NetworkProtocolCreateManyWithoutNetworkProtocolsInput;
@@ -3649,7 +3633,7 @@ export interface NetworkProtocolUpdateOneRequiredWithoutNetworksInput {
 }
 
 export interface ProtocolDataCreateWithoutNetworkProtocolInput {
-  network?: NetworkCreateOneWithoutProtocolDataInput;
+  network: NetworkCreateOneWithoutProtocolDataInput;
   dataIdentifier?: String;
   dataValue?: String;
 }
@@ -3657,7 +3641,7 @@ export interface ProtocolDataCreateWithoutNetworkProtocolInput {
 export interface NetworkProtocolUpdateWithoutNetworksDataInput {
   name?: String;
   protocolHandler?: String;
-  networkType?: NetworkTypeUpdateOneWithoutNetworkProtocolsInput;
+  networkType?: NetworkTypeUpdateOneRequiredWithoutNetworkProtocolsInput;
   networkProtocolVersion?: String;
   masterProtocol?: NetworkProtocolUpdateOneWithoutMasterProtocolInput;
   networkProtocols?: NetworkProtocolUpdateManyWithoutNetworkProtocolsInput;
@@ -3722,7 +3706,7 @@ export interface CompanyUpdateOneWithoutApplicationsInput {
 export interface NetworkProtocolUpdateWithoutNetworkProtocolsDataInput {
   name?: String;
   protocolHandler?: String;
-  networkType?: NetworkTypeUpdateOneWithoutNetworkProtocolsInput;
+  networkType?: NetworkTypeUpdateOneRequiredWithoutNetworkProtocolsInput;
   networkProtocolVersion?: String;
   masterProtocol?: NetworkProtocolUpdateOneWithoutMasterProtocolInput;
   networks?: NetworkUpdateManyWithoutNetworkProtocolInput;
@@ -3951,7 +3935,7 @@ export interface DeviceWhereInput {
 }
 
 export interface ProtocolDataUpdateWithoutNetworkDataInput {
-  networkProtocol?: NetworkProtocolUpdateOneWithoutProtocolDataInput;
+  networkProtocol?: NetworkProtocolUpdateOneRequiredWithoutProtocolDataInput;
   dataIdentifier?: String;
   dataValue?: String;
 }
@@ -3973,12 +3957,10 @@ export interface NetworkProviderSubscriptionWhereInput {
     | NetworkProviderSubscriptionWhereInput;
 }
 
-export interface NetworkProtocolUpdateOneWithoutProtocolDataInput {
+export interface NetworkProtocolUpdateOneRequiredWithoutProtocolDataInput {
   create?: NetworkProtocolCreateWithoutProtocolDataInput;
   update?: NetworkProtocolUpdateWithoutProtocolDataDataInput;
   upsert?: NetworkProtocolUpsertWithoutProtocolDataInput;
-  delete?: Boolean;
-  disconnect?: Boolean;
   connect?: NetworkProtocolWhereUniqueInput;
 }
 
@@ -3996,7 +3978,7 @@ export interface NetworkSubscriptionWhereInput {
 export interface NetworkProtocolUpdateWithoutProtocolDataDataInput {
   name?: String;
   protocolHandler?: String;
-  networkType?: NetworkTypeUpdateOneWithoutNetworkProtocolsInput;
+  networkType?: NetworkTypeUpdateOneRequiredWithoutNetworkProtocolsInput;
   networkProtocolVersion?: String;
   masterProtocol?: NetworkProtocolUpdateOneWithoutMasterProtocolInput;
   networkProtocols?: NetworkProtocolUpdateManyWithoutNetworkProtocolsInput;
@@ -4151,9 +4133,9 @@ export interface UserUpdateInput {
   email?: String;
   lastVerifiedEmail?: String;
   emailVerified?: Boolean;
-  company?: CompanyUpdateOneWithoutUsersInput;
+  company?: CompanyUpdateOneRequiredWithoutUsersInput;
   passwordHash?: String;
-  role?: UserRoleUpdateOneWithoutUsersInput;
+  role?: UserRoleUpdateOneRequiredWithoutUsersInput;
   emailVerifications?: EmailVerificationUpdateManyWithoutUserInput;
 }
 
@@ -4278,8 +4260,8 @@ export interface ProtocolDataUpdateManyWithoutNetworkProtocolInput {
 }
 
 export interface ProtocolDataUpdateInput {
-  network?: NetworkUpdateOneWithoutProtocolDataInput;
-  networkProtocol?: NetworkProtocolUpdateOneWithoutProtocolDataInput;
+  network?: NetworkUpdateOneRequiredWithoutProtocolDataInput;
+  networkProtocol?: NetworkProtocolUpdateOneRequiredWithoutProtocolDataInput;
   dataIdentifier?: String;
   dataValue?: String;
 }
@@ -4295,7 +4277,7 @@ export interface CompanyUpsertWithoutPasswordPoliciesInput {
 }
 
 export interface ProtocolDataUpdateWithoutNetworkProtocolDataInput {
-  network?: NetworkUpdateOneWithoutProtocolDataInput;
+  network?: NetworkUpdateOneRequiredWithoutProtocolDataInput;
   dataIdentifier?: String;
   dataValue?: String;
 }
@@ -4306,12 +4288,10 @@ export interface PasswordPolicyUpdateInput {
   company?: CompanyUpdateOneWithoutPasswordPoliciesInput;
 }
 
-export interface NetworkUpdateOneWithoutProtocolDataInput {
+export interface NetworkUpdateOneRequiredWithoutProtocolDataInput {
   create?: NetworkCreateWithoutProtocolDataInput;
   update?: NetworkUpdateWithoutProtocolDataDataInput;
   upsert?: NetworkUpsertWithoutProtocolDataInput;
-  delete?: Boolean;
-  disconnect?: Boolean;
   connect?: NetworkWhereUniqueInput;
 }
 
@@ -5052,11 +5032,11 @@ export interface DeviceScalarWhereInput {
 
 export interface UserCreateWithoutRoleInput {
   username?: String;
-  email: String;
+  email?: String;
   lastVerifiedEmail?: String;
   emailVerified?: Boolean;
-  company?: CompanyCreateOneWithoutUsersInput;
-  passwordHash?: String;
+  company: CompanyCreateOneWithoutUsersInput;
+  passwordHash: String;
   emailVerifications?: EmailVerificationCreateManyWithoutUserInput;
 }
 
@@ -5067,12 +5047,12 @@ export interface DeviceUpdateManyWithWhereNestedInput {
 
 export interface UserCreateInput {
   username?: String;
-  email: String;
+  email?: String;
   lastVerifiedEmail?: String;
   emailVerified?: Boolean;
-  company?: CompanyCreateOneWithoutUsersInput;
-  passwordHash?: String;
-  role?: UserRoleCreateOneWithoutUsersInput;
+  company: CompanyCreateOneWithoutUsersInput;
+  passwordHash: String;
+  role: UserRoleCreateOneWithoutUsersInput;
   emailVerifications?: EmailVerificationCreateManyWithoutUserInput;
 }
 
@@ -5094,8 +5074,8 @@ export interface ApplicationUpsertWithoutApplicationNetworkTypeLinksInput {
 }
 
 export interface ProtocolDataCreateInput {
-  network?: NetworkCreateOneWithoutProtocolDataInput;
-  networkProtocol?: NetworkProtocolCreateOneWithoutProtocolDataInput;
+  network: NetworkCreateOneWithoutProtocolDataInput;
+  networkProtocol: NetworkProtocolCreateOneWithoutProtocolDataInput;
   dataIdentifier?: String;
   dataValue?: String;
 }
@@ -5197,7 +5177,7 @@ export interface NetworkTypeCreateOneWithoutCompanyNetworkTypeLinksInput {
 }
 
 export interface EmailVerificationUpdateInput {
-  user?: UserUpdateOneWithoutEmailVerificationsInput;
+  user?: UserUpdateOneRequiredWithoutEmailVerificationsInput;
   uuid?: String;
   email?: String;
   changeRequested?: String;
@@ -5427,6 +5407,7 @@ export interface CompanyUpdateManyWithoutTypeInput {
 
 export type NetworkTypeWhereUniqueInput = AtLeastOne<{
   id: Int;
+  name?: String;
 }>;
 
 export interface CompanyUpdateWithWhereUniqueWithoutTypeInput {
@@ -5583,9 +5564,9 @@ export interface CompanyUpdateWithoutPasswordPoliciesDataInput {
 }
 
 export interface DeviceNetworkTypeLinkCreateInput {
-  device?: DeviceCreateOneWithoutDeviceNetworkTypeLinksInput;
-  networkType?: NetworkTypeCreateOneWithoutDeviceNetworkTypeLinksInput;
-  deviceProfile?: DeviceProfileCreateOneWithoutDeviceNetworkTypeLinksInput;
+  device: DeviceCreateOneWithoutDeviceNetworkTypeLinksInput;
+  networkType: NetworkTypeCreateOneWithoutDeviceNetworkTypeLinksInput;
+  deviceProfile: DeviceProfileCreateOneWithoutDeviceNetworkTypeLinksInput;
   networkSettings?: String;
 }
 
@@ -5596,9 +5577,9 @@ export interface EmailVerificationUpdateManyMutationInput {
 }
 
 export interface DeviceNetworkTypeLinkUpdateInput {
-  device?: DeviceUpdateOneWithoutDeviceNetworkTypeLinksInput;
-  networkType?: NetworkTypeUpdateOneWithoutDeviceNetworkTypeLinksInput;
-  deviceProfile?: DeviceProfileUpdateOneWithoutDeviceNetworkTypeLinksInput;
+  device?: DeviceUpdateOneRequiredWithoutDeviceNetworkTypeLinksInput;
+  networkType?: NetworkTypeUpdateOneRequiredWithoutDeviceNetworkTypeLinksInput;
+  deviceProfile?: DeviceProfileUpdateOneRequiredWithoutDeviceNetworkTypeLinksInput;
   networkSettings?: String;
 }
 
@@ -5626,7 +5607,7 @@ export interface DeviceNetworkTypeLinkCreateManyWithoutDeviceProfileInput {
 
 export interface DeviceProfileCreateInput {
   networkType: NetworkTypeCreateOneWithoutDeviceProfilesInput;
-  company?: CompanyCreateOneWithoutDeviceProfilesInput;
+  company: CompanyCreateOneWithoutDeviceProfilesInput;
   name?: String;
   description?: String;
   networkSettings?: String;
@@ -5640,7 +5621,7 @@ export interface CompanyNetworkTypeLinkUpdateWithoutCompanyDataInput {
 
 export interface DeviceProfileUpdateInput {
   networkType?: NetworkTypeUpdateOneRequiredWithoutDeviceProfilesInput;
-  company?: CompanyUpdateOneWithoutDeviceProfilesInput;
+  company?: CompanyUpdateOneRequiredWithoutDeviceProfilesInput;
   name?: String;
   description?: String;
   networkSettings?: String;
@@ -5658,12 +5639,12 @@ export interface ApplicationUpdateWithoutReportingProtocolDataInput {
 
 export interface UserCreateWithoutEmailVerificationsInput {
   username?: String;
-  email: String;
+  email?: String;
   lastVerifiedEmail?: String;
   emailVerified?: Boolean;
-  company?: CompanyCreateOneWithoutUsersInput;
-  passwordHash?: String;
-  role?: UserRoleCreateOneWithoutUsersInput;
+  company: CompanyCreateOneWithoutUsersInput;
+  passwordHash: String;
+  role: UserRoleCreateOneWithoutUsersInput;
 }
 
 export interface UserCreateOneWithoutEmailVerificationsInput {
@@ -5672,7 +5653,7 @@ export interface UserCreateOneWithoutEmailVerificationsInput {
 }
 
 export interface EmailVerificationCreateInput {
-  user?: UserCreateOneWithoutEmailVerificationsInput;
+  user: UserCreateOneWithoutEmailVerificationsInput;
   uuid?: String;
   email?: String;
   changeRequested?: String;
@@ -5762,7 +5743,7 @@ export interface AggregateApplicationNetworkTypeLinkSubscription
 
 export interface NetworkType {
   id: Int;
-  name?: String;
+  name: String;
 }
 
 export interface NetworkTypePromise extends Promise<NetworkType>, Fragmentable {
@@ -6049,10 +6030,10 @@ export interface ApplicationNetworkTypeLinkConnectionSubscription
 export interface UserPreviousValues {
   id: Int;
   username?: String;
-  email: String;
+  email?: String;
   lastVerifiedEmail?: String;
   emailVerified?: Boolean;
-  passwordHash?: String;
+  passwordHash: String;
 }
 
 export interface UserPreviousValuesPromise
@@ -7293,10 +7274,10 @@ export interface CompanyEdgeSubscription
 export interface User {
   id: Int;
   username?: String;
-  email: String;
+  email?: String;
   lastVerifiedEmail?: String;
   emailVerified?: Boolean;
-  passwordHash?: String;
+  passwordHash: String;
 }
 
 export interface UserPromise extends Promise<User>, Fragmentable {
@@ -7985,7 +7966,7 @@ export interface UserRoleConnectionSubscription
 
 export interface NetworkTypePreviousValues {
   id: Int;
-  name?: String;
+  name: String;
 }
 
 export interface NetworkTypePreviousValuesPromise

@@ -85,7 +85,7 @@ CompanyNetworkTypeLink.prototype.updateCompanyNetworkTypeLink = function (compan
   return new Promise(async function (resolve, reject) {
     try {
       var rec = await me.impl.updateCompanyNetworkTypeLink(companyNetworkTypeLink)
-      var logs = await modelAPI.networkTypeAPI.pushCompany(rec.networkTypeId, rec.companyId, rec.networkSettings)
+      var logs = await modelAPI.networkTypeAPI.pushCompany(rec.networkType.id, rec.company.id, rec.networkSettings)
       rec.remoteAccessLogs = logs
       resolve(rec)
     }
@@ -121,13 +121,13 @@ CompanyNetworkTypeLink.prototype.deleteCompanyNetworkTypeLink = function (id) {
     try {
       var rec = await me.impl.retrieveCompanyNetworkTypeLink(id)
       // Delete applicationNetworkTypeLinks
-      let antls = await modelAPI.applicationNetworkTypeLinks.retrieveApplicationNetworkTypeLinks({ companyId: rec.companyId })
+      let antls = await modelAPI.applicationNetworkTypeLinks.retrieveApplicationNetworkTypeLinks({ companyId: rec.company.id })
       let recs = antls.records
       for (let i = 0; i < recs.length; ++i) {
         await modelAPI.applicationNetworkTypeLinks.deleteApplicationNetworkTypeLink(recs[ i ].id)
       }
       // Don't delete the local record until the remote operations complete.
-      var logs = await modelAPI.networkTypeAPI.deleteCompany(rec.networkTypeId, rec.companyId)
+      var logs = await modelAPI.networkTypeAPI.deleteCompany(rec.networkType.id, rec.company.id)
       await me.impl.deleteCompanyNetworkTypeLink(id)
       resolve(logs)
     }
@@ -156,12 +156,12 @@ CompanyNetworkTypeLink.prototype.pushCompanyNetworkTypeLink = function (companyN
       var rec = await me.impl.retrieveCompanyNetworkTypeLink(companyNetworkTypeLink)
 
       // push applicationNetworkTypeLinks
-      let antls = await modelAPI.applicationNetworkTypeLinks.retrieveApplicationNetworkTypeLinks({ companyId: rec.companyId })
+      let antls = await modelAPI.applicationNetworkTypeLinks.retrieveApplicationNetworkTypeLinks({ companyId: rec.company.id })
       let recs = antls.records
       for (let i = 0; i < recs.length; ++i) {
         await modelAPI.applicationNetworkTypeLinks.pushApplicationNetworkTypeLink(recs[i].id)
       }
-      var logs = await modelAPI.networkTypeAPI.pushCompany(rec.networkTypeId, rec.companyId, rec.networkSettings)
+      var logs = await modelAPI.networkTypeAPI.pushCompany(rec.networkType.id, rec.company.id, rec.networkSettings)
       rec.remoteAccessLogs = logs
       resolve(rec)
     }
@@ -243,7 +243,7 @@ CompanyNetworkTypeLink.prototype.pullCompanyNetworkTypeLink = function (networkT
         }
         else {
           appLogger.log('creating Network Link for ' + application.name)
-          modelAPI.applicationNetworkTypeLinks.createApplicationNetworkTypeLink(existingApplication.id, networkTypeId, {}, existingApplication.companyId)
+          modelAPI.applicationNetworkTypeLinks.createApplicationNetworkTypeLink(existingApplication.id, networkTypeId, {}, existingApplication.company.id)
         }
       }
 
@@ -310,7 +310,7 @@ CompanyNetworkTypeLink.prototype.pullCompanyNetworkTypeLink = function (networkT
             // let coId = protocolDataAccess.prototype.getCompanyByApplicationId(existingDevice.applicationId);
 
             let tempApp = await modelAPI.applications.retrieveApplication(localAppId[appIndex])
-            let coId = tempApp.companyId
+            let coId = tempApp.company.id
 
             modelAPI.deviceNetworkTypeLinks.createDeviceNetworkTypeLink(existingDevice.id, networkTypeId, localDpId[dpIndex], device, coId)
           }

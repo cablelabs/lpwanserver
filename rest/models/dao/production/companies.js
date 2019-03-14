@@ -9,6 +9,8 @@ var httpError = require('http-errors')
 // Utils
 const { onFail } = require('../../../lib/utils')
 
+const CompNtwkTypeLink = require('./companyNetworkTypeLinks')
+
 exports.COMPANY_VENDOR = 2
 exports.COMPANY_ADMIN = 1
 //* *****************************************************************************
@@ -42,7 +44,7 @@ function createCompany (name, type) {
 }
 
 async function loadCompany (uniqueKeyObj, fragementKey = 'basic') {
-  const rec = await onFail(400, () => prisma.company(uniqueKeyObj)).fragment$(fragments[fragementKey])
+  const rec = await onFail(400, () => prisma.company(uniqueKeyObj).$fragment(fragments[fragementKey]))
   if (!rec) throw httpError(404, 'Company not found')
   return rec
 }
@@ -57,10 +59,10 @@ async function loadCompany (uniqueKeyObj, fragementKey = 'basic') {
 async function retrieveCompany (id) {
   const company = await loadCompany({ id })
   try {
-    const networks = await prisma
-      .companyNetworkTypeLinks({ where: { company: { id } } })
-      .fragment$(fragments.ntwkTypeLink)
-    company.networks = networks.map(x => x.networkType.id)
+    const { records } = await CompNtwkTypeLink.retrieveCompanyNetworkTypeLinks({ companyId: id })
+    if (records.length) {
+      company.networks = records.map(x => x.networkType.id)
+    }
   }
   catch (err) {
     // ignore
@@ -77,7 +79,7 @@ async function retrieveCompany (id) {
 function updateCompany ({ id, ...data }) {
   if (!id) throw httpError(400, 'No existing Company ID')
   if (data.type) data.type = { connect: { id: data.type } }
-  return prisma.updateCompany({ data, where: { id } })
+  return prisma.updateCompany({ data, where: { id } }).$fragment(fragments.basic)
 }
 
 // Delete the company record.
@@ -107,15 +109,17 @@ function retrieveCompanybyName (name) {
 // search string on company name.
 // The returned totalCount shows the number of records that match the query,
 // ignoring any limit and/or offset.
-async function retrieveCompanies (options) {
-  const where = {}
-  if (options.search) where.name_contains = options.search
+async function retrieveCompanies ({ limit, offset, ...where } = {}) {
+  if (where.search) {
+    where.name_contains = where.search
+    delete where.search
+  }
   const query = { where }
-  if (options.limit) query.first = options.limit
-  if (options.offset) query.skip = options.offset
+  if (limit) query.first = limit
+  if (offset) query.skip = offset
   const [records, totalCount] = await Promise.all([
-    prisma.companies(query).fragment$(fragments.query),
-    prisma.companiesConnection({ where }).aggregate.count()
+    prisma.companies(query).$fragment(fragments.basic),
+    prisma.companiesConnection({ where }).aggregate().count()
   ])
   return { totalCount, records }
 }
@@ -144,17 +148,14 @@ function getTypes () {
   return prisma.companyTypes()
 }
 
+//* *****************************************************************************
+// Fragments for how the data should be returned from Prisma.
+//* *****************************************************************************
 const fragments = {
-  basic: `fragment Basic on Company {
+  basic: `fragment BasicCompany on Company {
     id
     name
     type {
-      id
-    }
-  }`,
-  ntwkTypeLink: `fragment Basic on CompanyNetworkTypeLink {
-    id
-    networkType {
       id
     }
   }`

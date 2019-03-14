@@ -112,7 +112,7 @@ Device.prototype.fetchDeviceApplication = function (req, res, next) {
     .then(function (dev) {
       // Save the device.
       req.device = dev
-      modelAPI.applications.retrieveApplication(dev.applicationId).then(function (app) {
+      modelAPI.applications.retrieveApplication(dev.application.id).then(function (app) {
         req.application = app
         next()
       })
