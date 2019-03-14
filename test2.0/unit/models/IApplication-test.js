@@ -97,7 +97,7 @@ describe('Unit Tests for ' + testName, () => {
     let testModule = new TestModule({}, modelAPIMock)
     should.exist(testModule)
     const actual = await testModule.passDataToApplication(appId, 1, { name: 'test' })
-    console.log(actual)
+    actual.should.be(204)
   })
   it(testName + ' Stop', async () => {
     let testModule = new TestModule({}, modelAPIMock)

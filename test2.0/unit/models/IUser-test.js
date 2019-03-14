@@ -61,6 +61,6 @@ describe('Unit Tests for ' + testName, () => {
     }
     const actual = await testModule.updateUser(updated)
     assertUserProps(actual)
-    actual.role.should.equal(updated.role)
+    actual.role.id.should.equal(updated.role)
   })
 })

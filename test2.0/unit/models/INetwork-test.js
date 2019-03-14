@@ -12,7 +12,6 @@ const testName = 'Network'
 const modelAPIMock = require('../../mock/ModelAPI-mock')
 
 function assertNetworkProps (actual) {
-  console.log("NETWORK", JSON.stringify(actual))
   actual.should.have.property('name')
   actual.networkProvider.should.have.property('id')
   actual.networkType.should.have.property('id')

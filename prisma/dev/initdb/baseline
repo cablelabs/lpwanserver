@@ -490,7 +490,7 @@ CREATE TABLE public.users (
     "emailVerified" boolean DEFAULT false,
     "companyId" bigint,
     "passwordHash" text,
-    role bigint DEFAULT 0
+    role bigint
 );
 
 

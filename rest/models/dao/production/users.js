@@ -304,14 +304,14 @@ function emailVerifyInit () {
 //
 // Returns a promise that handles the email verification.
 async function emailVerify (userId, username, newemail, oldemail, urlRoot) {
-  var data = {
+  var data = formatInputData({
     // Need a UUID for the verification record.
     uuid: uuidgen.v4(),
     userId,
     email: newemail,
     // timestamp
     changeRequested: new Date().toISOString()
-  }
+  })
   try {
     const record = await prisma.createEmailVerification(data)
     // Sending verification emails.

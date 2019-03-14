@@ -13,40 +13,31 @@ describe('Unit Tests for ' + testName, () => {
   })
   after('Shutdown', async () => {
   })
-  it(testName + ' Construction', (done) => {
+  it(testName + ' Construction', async () => {
     let testModule = new TestModule(modelAPI.reportingProtocols)
     should.exist(testModule)
     should.exist(testModule.rpDB)
     testModule.reportingProtocolMap.should.eql({})
-    done()
   })
-  it(testName + ' Clear Protocols', (done) => {
+  it(testName + ' Clear Protocols', async () => {
     let testModule = new TestModule(modelAPI.reportingProtocols)
     testModule.clearProtocolMap()
     testModule.reportingProtocolMap.should.eql({})
-    done()
   })
-  it(testName + ' Get Protocol', (done) => {
+  it(testName + ' Get Protocol', async () => {
     let testModule = new TestModule(modelAPI.reportingProtocols)
-    testModule.getProtocol({ reportingProtocolId: 1 })
-      .then((protocolHandler) => {
-        should.exist(protocolHandler)
-        testModule.reportingProtocolMap.should.have.property('1')
-        done()
-      })
-      .catch((err) => {
-        done(err)
-      })
+    const protocolHandler = await testModule.getProtocol({ reportingProtocol: { id: 1 } })
+    should.exist(protocolHandler)
+    testModule.reportingProtocolMap.should.have.property('1')
   })
-  it(testName + ' Get Non Existing Protocol', (done) => {
+  it(testName + ' Get Non Existing Protocol', async () => {
     let testModule = new TestModule(modelAPI.reportingProtocols)
-    testModule.getProtocol({ reportingProtocolId: 2 })
-      .then(() => {
-        done(new Error('Protocol Should not exist'))
-      })
-      .catch(() => {
-        testModule.reportingProtocolMap.should.eql({})
-        done()
-      })
+    try {
+      await testModule.getProtocol()
+      throw new Error('Protocol Should not exist')
+    }
+    catch (err) {
+      testModule.reportingProtocolMap.should.eql({})
+    }
   })
 })

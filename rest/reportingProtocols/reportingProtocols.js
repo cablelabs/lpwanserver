@@ -23,26 +23,21 @@ ReportingProtocolAccess.prototype.clearProtocol = function (reportingProtocol) {
   }
 }
 
-ReportingProtocolAccess.prototype.getProtocol = function (application) {
-  let me = this
-  return new Promise(async function (resolve, reject) {
-    let id = application.reportingPotocol.id
-    if (!me.reportingProtocolMap[ id ]) {
-      // We'll need the protocol for the network.
-      try {
-        let rp = await me.rpDB.retrieveReportingProtocol(id)
-        me.reportingProtocolMap[ id ] = require('./' + rp.protocolHandler)
-        resolve(me.reportingProtocolMap[ id ])
-      }
-      catch (err) {
-        console.log('Error loading reportingProtocol: ' + err)
-        reject(err)
-      }
+ReportingProtocolAccess.prototype.getProtocol = async function getProtocol (application) {
+  let { id } = application.reportingProtocol
+  if (!this.reportingProtocolMap[ id ]) {
+    // We'll need the protocol for the network.
+    try {
+      let rp = await this.rpDB.retrieveReportingProtocol(id)
+      this.reportingProtocolMap[ id ] = require('./' + rp.protocolHandler)
+      return this.reportingProtocolMap[ id ]
     }
-    else {
-      resolve(me.reportingProtocolMap[ id ])
+    catch (err) {
+      console.log('Error loading reportingProtocol: ' + err)
+      throw err
     }
-  })
+  }
+  return this.reportingProtocolMap[ id ]
 }
 
 module.exports = ReportingProtocolAccess
