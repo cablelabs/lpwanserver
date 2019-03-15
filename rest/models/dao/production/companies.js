@@ -11,12 +11,14 @@ const { onFail } = require('../../../lib/utils')
 
 const CompNtwkTypeLink = require('./companyNetworkTypeLinks')
 
-exports.COMPANY_VENDOR = 2
-exports.COMPANY_ADMIN = 1
+const COMPANY_VENDOR = 2
+const COMPANY_ADMIN = 1
 //* *****************************************************************************
 // Companies database table.
 //* *****************************************************************************
 module.exports = {
+  COMPANY_VENDOR,
+  COMPANY_ADMIN,
   createCompany,
   retrieveCompany,
   updateCompany,

@@ -30,7 +30,6 @@ INSERT INTO users ( id, username, email, companyId, passwordHash, role )
 INSERT INTO networkTypes ( id, name )
     values( 1, 'LoRa' );
 
-
 -- Start with the POST reportingProtocol.
 INSERT INTO reportingProtocols ( id, name, protocolHandler )
     values( 1, 'POST', 'postHandler' );

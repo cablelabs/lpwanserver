@@ -8,7 +8,7 @@ var should = chai.should()
 chai.use(chaiHttp)
 var server = chai.request(app).keepOpen()
 
-describe.skip('Users', function () {
+describe('Users', function () {
   var adminToken
 
   before('User Sessions', function (done) {

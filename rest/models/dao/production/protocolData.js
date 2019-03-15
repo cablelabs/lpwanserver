@@ -116,7 +116,7 @@ function clearProtocolData (networkId, networkProtocolId, keyStartsWith) {
     networkProtocolId,
     dataIdentifier_contains: keyStartsWith
   })
-  return prisma.deleteManyProtocolDatas({ where })
+  return prisma.deleteManyProtocolDatas(where)
 }
 
 // Retrieve the protocolData records with keys that start with the passed string

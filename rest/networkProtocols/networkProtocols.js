@@ -4,6 +4,8 @@ const fs = require('fs')
 const assert = require('assert')
 const path = require('path')
 
+const handlersDir = path.join(__dirname, 'handlers')
+
 // ******************************************************************************
 // Defines the generic cross-network API, and manages the network protocols
 // for the upper layers.
@@ -31,7 +33,6 @@ function clearProtocolMap () {
 }
 
 NetworkProtocolAccess.prototype.register = async function register () {
-  const handlersDir = path.join(__dirname, 'handlers')
   let fileList = fs.readdirSync(handlersDir)
     .filter(x => x !== 'README.md')
   for (let i = 0; i < fileList.length; i++) {
@@ -67,7 +68,7 @@ NetworkProtocolAccess.prototype.getProtocol = function (network) {
         .then(np => {
           networkProtocolMap[id] = {}
           networkProtocolMap[id]['sessionData'] = {}
-          networkProtocolMap[id]['api'] = require('./' + np.protocolHandler)
+          networkProtocolMap[id]['api'] = require(`${handlersDir}/${np.protocolHandler}`)
           resolve(networkProtocolMap[id])
         })
         .catch(err => {

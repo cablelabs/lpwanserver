@@ -9,25 +9,23 @@ var server = chai.request(app).keepOpen()
 
 describe('Devices', function () {
   var adminToken
+  var appId
 
-  before('User Sessions', function (done) {
-    var sessions = 0
-    var waitFunc = function () {
-      ++sessions
-      if (sessions >= 1) {
-        done()
-      }
-    }
-    server
+  before('User Sessions', async () => {
+    let res = await server
       .post('/api/sessions')
       .send({ 'login_username': 'admin', 'login_password': 'password' })
-      .end(function (err, res) {
-        if (err) {
-          return done(err)
-        }
-        adminToken = res.text
-        waitFunc()
-      })
+    adminToken = res.text
+    res = await server
+      .post('/api/applications')
+      .set('Authorization', 'Bearer ' + adminToken)
+      .set('Content-Type', 'application/json')
+      .send({ 'companyId': 1,
+      'name': 'MyGetRichQuickApp2',
+      'description': 'A really good idea that was boring',
+      'baseUrl': 'http://localhost:5086',
+      'reportingProtocolId': 1 })
+    appId = JSON.parse(res.text).id
   })
 
   var devId1
@@ -38,15 +36,15 @@ describe('Devices', function () {
         .post('/api/devices')
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
-        .send({ 'applicationId': 1,
+        .send({ 'applicationId': appId,
           'name': 'MGRQD002',
           'description': 'My Get Rich Quick Device 002',
           'deviceModel': 'Mark1' })
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(200)
           var ret = JSON.parse(res.text)
           devId1 = ret.id
-
           done()
         })
     })
@@ -56,11 +54,12 @@ describe('Devices', function () {
         .post('/api/devices')
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
-        .send({ 'applicationId': 1,
+        .send({ 'applicationId': appId,
           'name': 'MGRQD003',
           'description': 'My Get Rich Quick Device 003',
           'deviceModel': 'Mark2' })
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(200)
           var ret = JSON.parse(res.text)
           devId2 = ret.id
@@ -75,6 +74,7 @@ describe('Devices', function () {
         .set('Content-Type', 'application/json')
         .send()
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(200)
           var devObj = JSON.parse(res.text)
           devObj.name.should.equal('MGRQD002')
@@ -92,11 +92,12 @@ describe('Devices', function () {
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(200)
           var result = JSON.parse(res.text)
           result.records.should.be.instanceof(Array)
-          result.records.should.have.length(3)
-          result.totalCount.should.equal(3)
+          result.records.should.have.length(2)
+          result.totalCount.should.equal(2)
           done()
         })
     })
@@ -107,11 +108,12 @@ describe('Devices', function () {
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(200)
           var result = JSON.parse(res.text)
           result.records.should.be.instanceof(Array)
-          result.records.should.have.length(3)
-          result.totalCount.should.equal(3)
+          result.records.should.have.length(2)
+          result.totalCount.should.equal(2)
           done()
         })
     })
@@ -123,11 +125,12 @@ describe('Devices', function () {
         .set('Content-Type', 'application/json')
         .query({ 'limit': 2, 'offset': 1 })
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(200)
           var result = JSON.parse(res.text)
           result.records.should.be.instanceof(Array)
-          result.records.should.have.length(2)
-          result.totalCount.should.equal(3)
+          result.records.should.have.length(1)
+          result.totalCount.should.equal(2)
           done()
         })
     })
@@ -139,6 +142,7 @@ describe('Devices', function () {
         .set('Content-Type', 'application/json')
         .query({ 'search': 'MGR%' })
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(200)
           var result = JSON.parse(res.text)
           result.records.should.be.instanceof(Array)
@@ -155,6 +159,7 @@ describe('Devices', function () {
         .set('Content-Type', 'application/json')
         .query({ 'search': 'MG%' })
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(200)
           var result = JSON.parse(res.text)
           result.records.should.be.instanceof(Array)
@@ -171,6 +176,7 @@ describe('Devices', function () {
         .set('Content-Type', 'application/json')
         .query({ 'search': 'M%' })
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(200)
           var result = JSON.parse(res.text)
           result.records.should.be.instanceof(Array)
@@ -188,6 +194,7 @@ describe('Devices', function () {
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(200)
           done()
         })
@@ -199,6 +206,7 @@ describe('Devices', function () {
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(200)
           var ret = JSON.parse(res.text)
           ret.id.should.equal(devId2)
@@ -213,10 +221,11 @@ describe('Devices', function () {
         .set('Content-Type', 'application/json')
         .send()
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(200)
           var devObj = JSON.parse(res.text)
           devObj.name.should.equal('MGRQD002')
-          devObj.applicationId.should.equal(1)
+          devObj.applicationId.should.equal(appId)
           done()
         })
     })
@@ -227,6 +236,7 @@ describe('Devices', function () {
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(200)
           done()
         })
@@ -242,6 +252,7 @@ describe('Devices', function () {
         .set('Content-Type', 'application/json')
         .send('{"name": "Funky Device" }')
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(204)
           done()
         })
@@ -254,6 +265,7 @@ describe('Devices', function () {
         .set('Content-Type', 'application/json')
         .send('{"name": "Funky Punky Device" }')
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(204)
           done()
         })
@@ -266,6 +278,7 @@ describe('Devices', function () {
         .set('Content-Type', 'application/json')
         .send()
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(200)
           var coObj = JSON.parse(res.text)
           coObj.name.should.equal('Funky Punky Device')
@@ -280,6 +293,7 @@ describe('Devices', function () {
         .delete('/api/devices/' + devId2)
         .set('Authorization', 'Bearer ' + adminToken)
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(204)
           done()
         })
@@ -292,6 +306,7 @@ describe('Devices', function () {
         .set('Content-Type', 'application/json')
         .send()
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(404)
           done()
         })

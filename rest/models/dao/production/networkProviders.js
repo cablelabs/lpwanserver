@@ -32,13 +32,13 @@ function createNetworkProvider (name) {
 }
 
 async function loadNetworkProvider (uniqueKeyObj) {
-  const rec = await onFail(400, () => prisma.networkType(uniqueKeyObj))
+  const rec = await onFail(400, () => prisma.networkProvider(uniqueKeyObj))
   if (!rec) throw httpError(404, 'NetworkProvider not found')
   return rec
 }
-// Retrieve a networkType record by id.
+// Retrieve a networkProvider record by id.
 //
-// id - the record id of the networkType.
+// id - the record id of the networkProvider.
 //
 // Returns a promise that executes the retrieval.
 async function retrieveNetworkProvider (id) {

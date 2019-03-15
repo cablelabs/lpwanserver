@@ -7,7 +7,7 @@ var should = chai.should()
 chai.use(chaiHttp)
 var server = chai.request(app).keepOpen()
 
-describe.skip('Sessions', () => {
+describe('Sessions', () => {
   var adminToken
   before((done) => {
     setTimeout(done, 2000)

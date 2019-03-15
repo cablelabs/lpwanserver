@@ -106,10 +106,10 @@ type PasswordPolicy @pgTable(name: "passwordPolicies") {
 type NetworkProtocol @pgTable(name: "networkProtocols") {
   id: Int! @unique
   name: String
-  protocolHandler: String
+  protocolHandler: String @unique
   networkType: NetworkType! @pgRelation(column: "networkTypeId") @relation(name: "NetworkTypeNetworkProtocols")
   networkProtocolVersion: String
-  masterProtocol: NetworkProtocol @pgRelation(column: "masterProtocol") @relation(name: "NetworkProtocolMasterProtocol")
+  masterProtocol: NetworkProtocol @pgRelation(column: "masterProtocol") @relation(name: "MasterProtocolNetworkProtocols")
   networkProtocols: [NetworkProtocol] @relation(name: "MasterProtocolNetworkProtocols")
   networks: [Network]
   protocolData: [ProtocolData]

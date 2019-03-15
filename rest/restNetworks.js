@@ -249,27 +249,29 @@ exports.initialize = function (app, server) {
     restServer.fetchCompany],
   function (req, res, next) {
     var id = parseInt(req.params.id, 10)
-    const isAdmin = req.company.type.id !== modelAPI.companies.COMPANY_ADMIN
+    const isAdmin = req.company.type.id === modelAPI.companies.COMPANY_ADMIN
     const fragment = isAdmin ? 'internal' : 'basic'
     modelAPI.networks.retrieveNetwork(id, fragment).then(function (network) {
-      let temp = {
-        authorized: network.securityData.authorized,
-        message: network.securityData.message,
-        enabled: network.securityData.enabled
-
+      if (network.securityData) {
+        let temp = {
+          authorized: network.securityData.authorized,
+          message: network.securityData.message,
+          enabled: network.securityData.enabled
+  
+        }
+        if (network.securityData.clientId) {
+          temp.clientId = network.securityData.clientId
+          temp.clientSecret = network.securityData.clientSecret
+        }
+        else if (network.securityData.apikey) {
+          temp.apikey = network.securityData.apikey
+        }
+        else if (network.securityData.username) {
+          temp.username = network.securityData.username
+          temp.password = network.securityData.password
+        }
+        network.securityData = temp
       }
-      if (network.securityData.clientId) {
-        temp.clientId = network.securityData.clientId
-        temp.clientSecret = network.securityData.clientSecret
-      }
-      else if (network.securityData.apikey) {
-        temp.apikey = network.securityData.apikey
-      }
-      else if (network.securityData.username) {
-        temp.username = network.securityData.username
-        temp.password = network.securityData.password
-      }
-      network.securityData = temp
       restServer.respond(res, 200, formatRelationshipsOut(network))
     })
       .catch(function (err) {

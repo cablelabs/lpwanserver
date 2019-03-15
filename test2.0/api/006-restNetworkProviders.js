@@ -41,6 +41,7 @@ describe('NetworkProviders', function () {
         .set('Content-Type', 'application/json')
         .send({ 'name': 'Kyrio' })
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(200)
           var ret = JSON.parse(res.text)
           npId1 = ret.id
@@ -55,6 +56,7 @@ describe('NetworkProviders', function () {
         .set('Content-Type', 'application/json')
         .send({ 'name': 'TMobile' })
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(200)
           var ret = JSON.parse(res.text)
           npId2 = ret.id
@@ -69,6 +71,7 @@ describe('NetworkProviders', function () {
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(200)
           var result = JSON.parse(res.text)
           result.records.should.be.instanceof(Array)
@@ -84,6 +87,7 @@ describe('NetworkProviders', function () {
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(200)
           var result = JSON.parse(res.text)
           result.records.should.be.instanceof(Array)
@@ -101,6 +105,7 @@ describe('NetworkProviders', function () {
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(200)
           done()
         })
@@ -112,6 +117,7 @@ describe('NetworkProviders', function () {
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(200)
           done()
         })
@@ -127,6 +133,7 @@ describe('NetworkProviders', function () {
         .set('Content-Type', 'application/json')
         .send('{"name": "Sprint NB-IoT" }')
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(204)
           done()
         })
@@ -139,6 +146,7 @@ describe('NetworkProviders', function () {
         .set('Content-Type', 'application/json')
         .send()
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(200)
           var coObj = JSON.parse(res.text)
           coObj.name.should.equal('Sprint NB-IoT')
@@ -153,6 +161,7 @@ describe('NetworkProviders', function () {
         .delete('/api/networkProviders/' + npId1)
         .set('Authorization', 'Bearer ' + adminToken)
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(204)
           done()
         })
@@ -162,6 +171,7 @@ describe('NetworkProviders', function () {
         .delete('/api/networkProviders/' + npId2)
         .set('Authorization', 'Bearer ' + adminToken)
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(204)
           done()
         })

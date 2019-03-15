@@ -7,7 +7,7 @@ var should = chai.should()
 chai.use(chaiHttp)
 var server = chai.request(app).keepOpen()
 
-describe.skip('PasswordPolicies', function () {
+describe('PasswordPolicies', function () {
   var adminToken
 
   before('User Sessions', function (done) {

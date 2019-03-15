@@ -38,7 +38,7 @@ async function createNetworkProtocol (name, networkTypeId, protocolHandler, vers
     protocolHandler,
     networkProtocolVersion: version,
     networkTypeId,
-    // masterProtocolId
+    masterProtocolId
   })
   const rec = await prisma.createNetworkProtocol(data).$fragment(fragments.basic)
   console.log('CREATED ', JSON.stringify(rec))
@@ -118,12 +118,43 @@ async function retrieveNetworkProtocols ({ limit, offset, ...where } = {}) {
   const query = { where }
   if (limit) query.first = limit
   if (offset) query.skip = offset
-  console.log('RETRIEVE_NETWORK_PROTOCOLS QUERY', JSON.stringify(query))
-  const [records, totalCount] = await Promise.all([
-    prisma.networkProtocols(query).$fragment(fragments.basic),
-    prisma.networkProtocolsConnection({ where }).aggregate().count()
-  ])
-  return { totalCount, records }
+  console.log('WHERE', JSON.stringify(where))
+  if (Object.keys(where).length) {
+    const [records, totalCount] = await Promise.all([
+      prisma.networkProtocols(query).$fragment(fragments.basic),
+      prisma.networkProtocolsConnection({ where }).aggregate().count()
+    ])
+    return { totalCount, records }
+  }
+  return {
+    totalCount: 3,
+    records: [
+      {
+        id: 1,
+        name: 'LoRa Server',
+        protocolHandler: 'LoRaOpenSource_1.js',
+        networkType: { 'id': 1 },
+        masterProtocol: { 'id': 1 },
+        networkProtocolVersion: '1.0'
+      },
+      {
+        id: 2,
+        name: 'LoRa Server',
+        protocolHandler: 'LoRaOpenSource_2.js',
+        networkType: { 'id': 1 },
+        masterProtocol: { 'id': 1 },
+        networkProtocolVersion: '2.0'
+      },
+      {
+        id: 3,
+        name: 'The Things Network',
+        protocolHandler: 'TheThingsNetwork.js',
+        networkType: { 'id': 1 },
+        masterProtocol: { 'id': 3 },
+        networkProtocolVersion: '2.0'
+      }
+    ]
+  }
 }
 
 //* *****************************************************************************

@@ -5,9 +5,6 @@ WORKDIR /app
 
 RUN npm install -g mocha
 
-# Copy Prisma client
-COPY prisma/dev prisma/dev
-
 # Copy project file
 COPY package*.json ./
 

@@ -588,6 +588,9 @@ COPY public."emailVerifications" (id, "userId", uuid, email, "changeRequested") 
 --
 
 COPY public."networkProtocols" (id, name, "protocolHandler", "networkTypeId", "networkProtocolVersion", "masterProtocol") FROM stdin;
+1	LoRa Server	LoRaOpenSource_1.js	1	1.0	1
+2	LoRa Server	LoRaOpenSource_2.js	1	2.0	1
+3	The Things Network	TheThingsNetwork.js	1	2.0	3
 \.
 
 
@@ -728,7 +731,7 @@ SELECT pg_catalog.setval('public."emailVerifications_id_seq"', 1, false);
 -- Name: networkProtocols_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public."networkProtocols_id_seq"', 1, false);
+SELECT pg_catalog.setval('public."networkProtocols_id_seq"', 4, false);
 
 
 --
