@@ -7,9 +7,9 @@ var should = chai.should()
 chai.use(chaiHttp)
 var server = chai.request(app).keepOpen()
 
-describe.skip('Networks', function () {
+describe('Networks', function () {
   var adminToken
-  var npId1 = 1
+  var npId1
   var netProvId
 
   before('User Sessions', async () => {
@@ -28,7 +28,7 @@ describe.skip('Networks', function () {
   var netId1
   var netId2
   describe('POST /api/networks', function () {
-    it.skip('Get Network Protocol for Lora OS', function (done) {
+    it('Get Network Protocol for Lora OS', function (done) {
       server
         .get('/api/networkProtocols?search=LoRa Server')
         .set('Authorization', 'Bearer ' + adminToken)

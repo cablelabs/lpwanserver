@@ -588,9 +588,6 @@ COPY public."emailVerifications" (id, "userId", uuid, email, "changeRequested") 
 --
 
 COPY public."networkProtocols" (id, name, "protocolHandler", "networkTypeId", "networkProtocolVersion", "masterProtocol") FROM stdin;
-1	LoRa Server	LoRaOpenSource_1.js	1	1.0	1
-2	LoRa Server	LoRaOpenSource_2.js	1	2.0	1
-3	The Things Network	TheThingsNetwork.js	1	2.0	3
 \.
 
 
@@ -1113,8 +1110,8 @@ ALTER TABLE ONLY public."emailVerifications"
 -- Name: networkProtocols networkProtocols_masterProtocol_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public."networkProtocols"
-    ADD CONSTRAINT "networkProtocols_masterProtocol_fkey" FOREIGN KEY ("masterProtocol") REFERENCES public."networkProtocols"(id) ON DELETE SET NULL;
+-- ALTER TABLE ONLY public."networkProtocols"
+--     ADD CONSTRAINT "networkProtocols_masterProtocol_fkey" FOREIGN KEY ("masterProtocol") REFERENCES public."networkProtocols"(id) ON DELETE SET NULL;
 
 
 --

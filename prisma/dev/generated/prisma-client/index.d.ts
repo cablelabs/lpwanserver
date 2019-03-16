@@ -1061,6 +1061,8 @@ export type NetworkProtocolOrderByInput =
   | "protocolHandler_DESC"
   | "networkProtocolVersion_ASC"
   | "networkProtocolVersion_DESC"
+  | "masterProtocol_ASC"
+  | "masterProtocol_DESC"
   | "createdAt_ASC"
   | "createdAt_DESC"
   | "updatedAt_ASC"
@@ -1204,21 +1206,35 @@ export type ReportingProtocolOrderByInput =
 
 export type MutationType = "CREATED" | "UPDATED" | "DELETED";
 
-export interface NetworkTypeUpdateOneRequiredWithoutNetworkProtocolsInput {
-  create?: NetworkTypeCreateWithoutNetworkProtocolsInput;
-  update?: NetworkTypeUpdateWithoutNetworkProtocolsDataInput;
-  upsert?: NetworkTypeUpsertWithoutNetworkProtocolsInput;
-  connect?: NetworkTypeWhereUniqueInput;
+export interface NetworkUpdateManyWithoutNetworkProtocolInput {
+  create?:
+    | NetworkCreateWithoutNetworkProtocolInput[]
+    | NetworkCreateWithoutNetworkProtocolInput;
+  delete?: NetworkWhereUniqueInput[] | NetworkWhereUniqueInput;
+  connect?: NetworkWhereUniqueInput[] | NetworkWhereUniqueInput;
+  set?: NetworkWhereUniqueInput[] | NetworkWhereUniqueInput;
+  disconnect?: NetworkWhereUniqueInput[] | NetworkWhereUniqueInput;
+  update?:
+    | NetworkUpdateWithWhereUniqueWithoutNetworkProtocolInput[]
+    | NetworkUpdateWithWhereUniqueWithoutNetworkProtocolInput;
+  upsert?:
+    | NetworkUpsertWithWhereUniqueWithoutNetworkProtocolInput[]
+    | NetworkUpsertWithWhereUniqueWithoutNetworkProtocolInput;
+  deleteMany?: NetworkScalarWhereInput[] | NetworkScalarWhereInput;
+  updateMany?:
+    | NetworkUpdateManyWithWhereNestedInput[]
+    | NetworkUpdateManyWithWhereNestedInput;
 }
 
 export type ApplicationWhereUniqueInput = AtLeastOne<{
   id: Int;
 }>;
 
-export interface PasswordPolicyUpsertWithWhereUniqueWithoutCompanyInput {
-  where: PasswordPolicyWhereUniqueInput;
-  update: PasswordPolicyUpdateWithoutCompanyDataInput;
-  create: PasswordPolicyCreateWithoutCompanyInput;
+export interface CompanyUpdateOneRequiredWithoutDeviceProfilesInput {
+  create?: CompanyCreateWithoutDeviceProfilesInput;
+  update?: CompanyUpdateWithoutDeviceProfilesDataInput;
+  upsert?: CompanyUpsertWithoutDeviceProfilesInput;
+  connect?: CompanyWhereUniqueInput;
 }
 
 export interface UserWhereInput {
@@ -1298,46 +1314,13 @@ export interface UserWhereInput {
   NOT?: UserWhereInput[] | UserWhereInput;
 }
 
-export interface PasswordPolicyScalarWhereInput {
-  id?: Int;
-  id_not?: Int;
-  id_in?: Int[] | Int;
-  id_not_in?: Int[] | Int;
-  id_lt?: Int;
-  id_lte?: Int;
-  id_gt?: Int;
-  id_gte?: Int;
-  ruleText?: String;
-  ruleText_not?: String;
-  ruleText_in?: String[] | String;
-  ruleText_not_in?: String[] | String;
-  ruleText_lt?: String;
-  ruleText_lte?: String;
-  ruleText_gt?: String;
-  ruleText_gte?: String;
-  ruleText_contains?: String;
-  ruleText_not_contains?: String;
-  ruleText_starts_with?: String;
-  ruleText_not_starts_with?: String;
-  ruleText_ends_with?: String;
-  ruleText_not_ends_with?: String;
-  ruleRegExp?: String;
-  ruleRegExp_not?: String;
-  ruleRegExp_in?: String[] | String;
-  ruleRegExp_not_in?: String[] | String;
-  ruleRegExp_lt?: String;
-  ruleRegExp_lte?: String;
-  ruleRegExp_gt?: String;
-  ruleRegExp_gte?: String;
-  ruleRegExp_contains?: String;
-  ruleRegExp_not_contains?: String;
-  ruleRegExp_starts_with?: String;
-  ruleRegExp_not_starts_with?: String;
-  ruleRegExp_ends_with?: String;
-  ruleRegExp_not_ends_with?: String;
-  AND?: PasswordPolicyScalarWhereInput[] | PasswordPolicyScalarWhereInput;
-  OR?: PasswordPolicyScalarWhereInput[] | PasswordPolicyScalarWhereInput;
-  NOT?: PasswordPolicyScalarWhereInput[] | PasswordPolicyScalarWhereInput;
+export interface CompanyUpdateWithoutDeviceProfilesDataInput {
+  name?: String;
+  type?: CompanyTypeUpdateOneWithoutCompaniesInput;
+  applications?: ApplicationUpdateManyWithoutCompanyInput;
+  companyNetworkTypeLinks?: CompanyNetworkTypeLinkUpdateManyWithoutCompanyInput;
+  passwordPolicies?: PasswordPolicyUpdateManyWithoutCompanyInput;
+  users?: UserUpdateManyWithoutCompanyInput;
 }
 
 export interface UserRoleWhereInput {
@@ -1371,9 +1354,28 @@ export interface UserRoleWhereInput {
   NOT?: UserRoleWhereInput[] | UserRoleWhereInput;
 }
 
-export interface PasswordPolicyUpdateManyWithWhereNestedInput {
-  where: PasswordPolicyScalarWhereInput;
-  data: PasswordPolicyUpdateManyDataInput;
+export interface PasswordPolicyUpdateManyWithoutCompanyInput {
+  create?:
+    | PasswordPolicyCreateWithoutCompanyInput[]
+    | PasswordPolicyCreateWithoutCompanyInput;
+  delete?: PasswordPolicyWhereUniqueInput[] | PasswordPolicyWhereUniqueInput;
+  connect?: PasswordPolicyWhereUniqueInput[] | PasswordPolicyWhereUniqueInput;
+  set?: PasswordPolicyWhereUniqueInput[] | PasswordPolicyWhereUniqueInput;
+  disconnect?:
+    | PasswordPolicyWhereUniqueInput[]
+    | PasswordPolicyWhereUniqueInput;
+  update?:
+    | PasswordPolicyUpdateWithWhereUniqueWithoutCompanyInput[]
+    | PasswordPolicyUpdateWithWhereUniqueWithoutCompanyInput;
+  upsert?:
+    | PasswordPolicyUpsertWithWhereUniqueWithoutCompanyInput[]
+    | PasswordPolicyUpsertWithWhereUniqueWithoutCompanyInput;
+  deleteMany?:
+    | PasswordPolicyScalarWhereInput[]
+    | PasswordPolicyScalarWhereInput;
+  updateMany?:
+    | PasswordPolicyUpdateManyWithWhereNestedInput[]
+    | PasswordPolicyUpdateManyWithWhereNestedInput;
 }
 
 export interface PasswordPolicyWhereInput {
@@ -1419,9 +1421,9 @@ export interface PasswordPolicyWhereInput {
   NOT?: PasswordPolicyWhereInput[] | PasswordPolicyWhereInput;
 }
 
-export interface PasswordPolicyUpdateManyDataInput {
-  ruleText?: String;
-  ruleRegExp?: String;
+export interface PasswordPolicyUpdateWithWhereUniqueWithoutCompanyInput {
+  where: PasswordPolicyWhereUniqueInput;
+  data: PasswordPolicyUpdateWithoutCompanyDataInput;
 }
 
 export interface NetworkProviderWhereInput {
@@ -1455,13 +1457,11 @@ export interface NetworkProviderWhereInput {
   NOT?: NetworkProviderWhereInput[] | NetworkProviderWhereInput;
 }
 
-export interface ReportingProtocolUpdateOneWithoutApplicationsInput {
-  create?: ReportingProtocolCreateWithoutApplicationsInput;
-  update?: ReportingProtocolUpdateWithoutApplicationsDataInput;
-  upsert?: ReportingProtocolUpsertWithoutApplicationsInput;
-  delete?: Boolean;
-  disconnect?: Boolean;
-  connect?: ReportingProtocolWhereUniqueInput;
+export interface ApplicationUpdateOneRequiredWithoutApplicationNetworkTypeLinksInput {
+  create?: ApplicationCreateWithoutApplicationNetworkTypeLinksInput;
+  update?: ApplicationUpdateWithoutApplicationNetworkTypeLinksDataInput;
+  upsert?: ApplicationUpsertWithoutApplicationNetworkTypeLinksInput;
+  connect?: ApplicationWhereUniqueInput;
 }
 
 export interface CompanyCreateOneWithoutUsersInput {
@@ -1469,32 +1469,27 @@ export interface CompanyCreateOneWithoutUsersInput {
   connect?: CompanyWhereUniqueInput;
 }
 
-export interface ReportingProtocolUpdateWithoutApplicationsDataInput {
+export interface ApplicationUpdateWithoutApplicationNetworkTypeLinksDataInput {
+  company?: CompanyUpdateOneWithoutApplicationsInput;
   name?: String;
-  protocolHandler?: String;
+  description?: String;
+  baseUrl?: String;
+  reportingProtocol?: ReportingProtocolUpdateOneWithoutApplicationsInput;
+  devices?: DeviceUpdateManyWithoutApplicationInput;
 }
 
-export interface UserUpdateManyWithoutCompanyInput {
-  create?: UserCreateWithoutCompanyInput[] | UserCreateWithoutCompanyInput;
-  delete?: UserWhereUniqueInput[] | UserWhereUniqueInput;
-  connect?: UserWhereUniqueInput[] | UserWhereUniqueInput;
-  set?: UserWhereUniqueInput[] | UserWhereUniqueInput;
-  disconnect?: UserWhereUniqueInput[] | UserWhereUniqueInput;
-  update?:
-    | UserUpdateWithWhereUniqueWithoutCompanyInput[]
-    | UserUpdateWithWhereUniqueWithoutCompanyInput;
-  upsert?:
-    | UserUpsertWithWhereUniqueWithoutCompanyInput[]
-    | UserUpsertWithWhereUniqueWithoutCompanyInput;
-  deleteMany?: UserScalarWhereInput[] | UserScalarWhereInput;
-  updateMany?:
-    | UserUpdateManyWithWhereNestedInput[]
-    | UserUpdateManyWithWhereNestedInput;
+export interface PasswordPolicyUpdateWithoutCompanyDataInput {
+  ruleText?: String;
+  ruleRegExp?: String;
 }
 
-export interface ReportingProtocolUpsertWithoutApplicationsInput {
-  update: ReportingProtocolUpdateWithoutApplicationsDataInput;
-  create: ReportingProtocolCreateWithoutApplicationsInput;
+export interface ReportingProtocolUpdateOneWithoutApplicationsInput {
+  create?: ReportingProtocolCreateWithoutApplicationsInput;
+  update?: ReportingProtocolUpdateWithoutApplicationsDataInput;
+  upsert?: ReportingProtocolUpsertWithoutApplicationsInput;
+  delete?: Boolean;
+  disconnect?: Boolean;
+  connect?: ReportingProtocolWhereUniqueInput;
 }
 
 export interface NetworkProtocolWhereInput {
@@ -1549,10 +1544,14 @@ export interface NetworkProtocolWhereInput {
   networkProtocolVersion_not_starts_with?: String;
   networkProtocolVersion_ends_with?: String;
   networkProtocolVersion_not_ends_with?: String;
-  masterProtocol?: NetworkProtocolWhereInput;
-  networkProtocols_every?: NetworkProtocolWhereInput;
-  networkProtocols_some?: NetworkProtocolWhereInput;
-  networkProtocols_none?: NetworkProtocolWhereInput;
+  masterProtocol?: Int;
+  masterProtocol_not?: Int;
+  masterProtocol_in?: Int[] | Int;
+  masterProtocol_not_in?: Int[] | Int;
+  masterProtocol_lt?: Int;
+  masterProtocol_lte?: Int;
+  masterProtocol_gt?: Int;
+  masterProtocol_gte?: Int;
   networks_every?: NetworkWhereInput;
   networks_some?: NetworkWhereInput;
   networks_none?: NetworkWhereInput;
@@ -1564,24 +1563,9 @@ export interface NetworkProtocolWhereInput {
   NOT?: NetworkProtocolWhereInput[] | NetworkProtocolWhereInput;
 }
 
-export interface DeviceUpdateManyWithoutApplicationInput {
-  create?:
-    | DeviceCreateWithoutApplicationInput[]
-    | DeviceCreateWithoutApplicationInput;
-  delete?: DeviceWhereUniqueInput[] | DeviceWhereUniqueInput;
-  connect?: DeviceWhereUniqueInput[] | DeviceWhereUniqueInput;
-  set?: DeviceWhereUniqueInput[] | DeviceWhereUniqueInput;
-  disconnect?: DeviceWhereUniqueInput[] | DeviceWhereUniqueInput;
-  update?:
-    | DeviceUpdateWithWhereUniqueWithoutApplicationInput[]
-    | DeviceUpdateWithWhereUniqueWithoutApplicationInput;
-  upsert?:
-    | DeviceUpsertWithWhereUniqueWithoutApplicationInput[]
-    | DeviceUpsertWithWhereUniqueWithoutApplicationInput;
-  deleteMany?: DeviceScalarWhereInput[] | DeviceScalarWhereInput;
-  updateMany?:
-    | DeviceUpdateManyWithWhereNestedInput[]
-    | DeviceUpdateManyWithWhereNestedInput;
+export interface ReportingProtocolUpdateWithoutApplicationsDataInput {
+  name?: String;
+  protocolHandler?: String;
 }
 
 export interface ReportingProtocolSubscriptionWhereInput {
@@ -1601,9 +1585,9 @@ export interface ReportingProtocolSubscriptionWhereInput {
     | ReportingProtocolSubscriptionWhereInput;
 }
 
-export interface DeviceUpdateWithWhereUniqueWithoutApplicationInput {
-  where: DeviceWhereUniqueInput;
-  data: DeviceUpdateWithoutApplicationDataInput;
+export interface ReportingProtocolUpsertWithoutApplicationsInput {
+  update: ReportingProtocolUpdateWithoutApplicationsDataInput;
+  create: ReportingProtocolCreateWithoutApplicationsInput;
 }
 
 export interface DeviceProfileWhereInput {
@@ -1667,11 +1651,24 @@ export interface DeviceProfileWhereInput {
   NOT?: DeviceProfileWhereInput[] | DeviceProfileWhereInput;
 }
 
-export interface DeviceUpdateWithoutApplicationDataInput {
-  name?: String;
-  description?: String;
-  deviceModel?: String;
-  deviceNetworkTypeLinks?: DeviceNetworkTypeLinkUpdateManyWithoutDeviceInput;
+export interface DeviceUpdateManyWithoutApplicationInput {
+  create?:
+    | DeviceCreateWithoutApplicationInput[]
+    | DeviceCreateWithoutApplicationInput;
+  delete?: DeviceWhereUniqueInput[] | DeviceWhereUniqueInput;
+  connect?: DeviceWhereUniqueInput[] | DeviceWhereUniqueInput;
+  set?: DeviceWhereUniqueInput[] | DeviceWhereUniqueInput;
+  disconnect?: DeviceWhereUniqueInput[] | DeviceWhereUniqueInput;
+  update?:
+    | DeviceUpdateWithWhereUniqueWithoutApplicationInput[]
+    | DeviceUpdateWithWhereUniqueWithoutApplicationInput;
+  upsert?:
+    | DeviceUpsertWithWhereUniqueWithoutApplicationInput[]
+    | DeviceUpsertWithWhereUniqueWithoutApplicationInput;
+  deleteMany?: DeviceScalarWhereInput[] | DeviceScalarWhereInput;
+  updateMany?:
+    | DeviceUpdateManyWithWhereNestedInput[]
+    | DeviceUpdateManyWithWhereNestedInput;
 }
 
 export interface PasswordPolicySubscriptionWhereInput {
@@ -1691,34 +1688,9 @@ export interface PasswordPolicySubscriptionWhereInput {
     | PasswordPolicySubscriptionWhereInput;
 }
 
-export interface DeviceNetworkTypeLinkUpdateManyWithoutDeviceInput {
-  create?:
-    | DeviceNetworkTypeLinkCreateWithoutDeviceInput[]
-    | DeviceNetworkTypeLinkCreateWithoutDeviceInput;
-  delete?:
-    | DeviceNetworkTypeLinkWhereUniqueInput[]
-    | DeviceNetworkTypeLinkWhereUniqueInput;
-  connect?:
-    | DeviceNetworkTypeLinkWhereUniqueInput[]
-    | DeviceNetworkTypeLinkWhereUniqueInput;
-  set?:
-    | DeviceNetworkTypeLinkWhereUniqueInput[]
-    | DeviceNetworkTypeLinkWhereUniqueInput;
-  disconnect?:
-    | DeviceNetworkTypeLinkWhereUniqueInput[]
-    | DeviceNetworkTypeLinkWhereUniqueInput;
-  update?:
-    | DeviceNetworkTypeLinkUpdateWithWhereUniqueWithoutDeviceInput[]
-    | DeviceNetworkTypeLinkUpdateWithWhereUniqueWithoutDeviceInput;
-  upsert?:
-    | DeviceNetworkTypeLinkUpsertWithWhereUniqueWithoutDeviceInput[]
-    | DeviceNetworkTypeLinkUpsertWithWhereUniqueWithoutDeviceInput;
-  deleteMany?:
-    | DeviceNetworkTypeLinkScalarWhereInput[]
-    | DeviceNetworkTypeLinkScalarWhereInput;
-  updateMany?:
-    | DeviceNetworkTypeLinkUpdateManyWithWhereNestedInput[]
-    | DeviceNetworkTypeLinkUpdateManyWithWhereNestedInput;
+export interface DeviceUpdateWithWhereUniqueWithoutApplicationInput {
+  where: DeviceWhereUniqueInput;
+  data: DeviceUpdateWithoutApplicationDataInput;
 }
 
 export interface NetworkTypeSubscriptionWhereInput {
@@ -1732,9 +1704,11 @@ export interface NetworkTypeSubscriptionWhereInput {
   NOT?: NetworkTypeSubscriptionWhereInput[] | NetworkTypeSubscriptionWhereInput;
 }
 
-export interface DeviceNetworkTypeLinkUpdateWithWhereUniqueWithoutDeviceInput {
-  where: DeviceNetworkTypeLinkWhereUniqueInput;
-  data: DeviceNetworkTypeLinkUpdateWithoutDeviceDataInput;
+export interface DeviceUpdateWithoutApplicationDataInput {
+  name?: String;
+  description?: String;
+  deviceModel?: String;
+  deviceNetworkTypeLinks?: DeviceNetworkTypeLinkUpdateManyWithoutDeviceInput;
 }
 
 export interface CompanyNetworkTypeLinkWhereInput {
@@ -1767,10 +1741,34 @@ export interface CompanyNetworkTypeLinkWhereInput {
   NOT?: CompanyNetworkTypeLinkWhereInput[] | CompanyNetworkTypeLinkWhereInput;
 }
 
-export interface DeviceNetworkTypeLinkUpdateWithoutDeviceDataInput {
-  networkType?: NetworkTypeUpdateOneRequiredWithoutDeviceNetworkTypeLinksInput;
-  deviceProfile?: DeviceProfileUpdateOneRequiredWithoutDeviceNetworkTypeLinksInput;
-  networkSettings?: String;
+export interface DeviceNetworkTypeLinkUpdateManyWithoutDeviceInput {
+  create?:
+    | DeviceNetworkTypeLinkCreateWithoutDeviceInput[]
+    | DeviceNetworkTypeLinkCreateWithoutDeviceInput;
+  delete?:
+    | DeviceNetworkTypeLinkWhereUniqueInput[]
+    | DeviceNetworkTypeLinkWhereUniqueInput;
+  connect?:
+    | DeviceNetworkTypeLinkWhereUniqueInput[]
+    | DeviceNetworkTypeLinkWhereUniqueInput;
+  set?:
+    | DeviceNetworkTypeLinkWhereUniqueInput[]
+    | DeviceNetworkTypeLinkWhereUniqueInput;
+  disconnect?:
+    | DeviceNetworkTypeLinkWhereUniqueInput[]
+    | DeviceNetworkTypeLinkWhereUniqueInput;
+  update?:
+    | DeviceNetworkTypeLinkUpdateWithWhereUniqueWithoutDeviceInput[]
+    | DeviceNetworkTypeLinkUpdateWithWhereUniqueWithoutDeviceInput;
+  upsert?:
+    | DeviceNetworkTypeLinkUpsertWithWhereUniqueWithoutDeviceInput[]
+    | DeviceNetworkTypeLinkUpsertWithWhereUniqueWithoutDeviceInput;
+  deleteMany?:
+    | DeviceNetworkTypeLinkScalarWhereInput[]
+    | DeviceNetworkTypeLinkScalarWhereInput;
+  updateMany?:
+    | DeviceNetworkTypeLinkUpdateManyWithWhereNestedInput[]
+    | DeviceNetworkTypeLinkUpdateManyWithWhereNestedInput;
 }
 
 export interface NetworkTypeWhereInput {
@@ -1819,11 +1817,9 @@ export interface NetworkTypeWhereInput {
   NOT?: NetworkTypeWhereInput[] | NetworkTypeWhereInput;
 }
 
-export interface NetworkTypeUpdateOneRequiredWithoutDeviceNetworkTypeLinksInput {
-  create?: NetworkTypeCreateWithoutDeviceNetworkTypeLinksInput;
-  update?: NetworkTypeUpdateWithoutDeviceNetworkTypeLinksDataInput;
-  upsert?: NetworkTypeUpsertWithoutDeviceNetworkTypeLinksInput;
-  connect?: NetworkTypeWhereUniqueInput;
+export interface DeviceNetworkTypeLinkUpdateWithWhereUniqueWithoutDeviceInput {
+  where: DeviceNetworkTypeLinkWhereUniqueInput;
+  data: DeviceNetworkTypeLinkUpdateWithoutDeviceDataInput;
 }
 
 export interface ApplicationNetworkTypeLinkWhereInput {
@@ -1862,13 +1858,10 @@ export interface ApplicationNetworkTypeLinkWhereInput {
     | ApplicationNetworkTypeLinkWhereInput;
 }
 
-export interface NetworkTypeUpdateWithoutDeviceNetworkTypeLinksDataInput {
-  name?: String;
-  applicationNetworkTypeLinks?: ApplicationNetworkTypeLinkUpdateManyWithoutNetworkTypeInput;
-  companyNetworkTypeLinks?: CompanyNetworkTypeLinkUpdateManyWithoutNetworkTypeInput;
-  deviceProfiles?: DeviceProfileUpdateManyWithoutNetworkTypeInput;
-  networkProtocols?: NetworkProtocolUpdateManyWithoutNetworkTypeInput;
-  networks?: NetworkUpdateManyWithoutNetworkTypeInput;
+export interface DeviceNetworkTypeLinkUpdateWithoutDeviceDataInput {
+  networkType?: NetworkTypeUpdateOneRequiredWithoutDeviceNetworkTypeLinksInput;
+  deviceProfile?: DeviceProfileUpdateOneRequiredWithoutDeviceNetworkTypeLinksInput;
+  networkSettings?: String;
 }
 
 export interface DeviceProfileSubscriptionWhereInput {
@@ -1888,34 +1881,11 @@ export interface DeviceProfileSubscriptionWhereInput {
     | DeviceProfileSubscriptionWhereInput;
 }
 
-export interface CompanyNetworkTypeLinkUpdateManyWithoutNetworkTypeInput {
-  create?:
-    | CompanyNetworkTypeLinkCreateWithoutNetworkTypeInput[]
-    | CompanyNetworkTypeLinkCreateWithoutNetworkTypeInput;
-  delete?:
-    | CompanyNetworkTypeLinkWhereUniqueInput[]
-    | CompanyNetworkTypeLinkWhereUniqueInput;
-  connect?:
-    | CompanyNetworkTypeLinkWhereUniqueInput[]
-    | CompanyNetworkTypeLinkWhereUniqueInput;
-  set?:
-    | CompanyNetworkTypeLinkWhereUniqueInput[]
-    | CompanyNetworkTypeLinkWhereUniqueInput;
-  disconnect?:
-    | CompanyNetworkTypeLinkWhereUniqueInput[]
-    | CompanyNetworkTypeLinkWhereUniqueInput;
-  update?:
-    | CompanyNetworkTypeLinkUpdateWithWhereUniqueWithoutNetworkTypeInput[]
-    | CompanyNetworkTypeLinkUpdateWithWhereUniqueWithoutNetworkTypeInput;
-  upsert?:
-    | CompanyNetworkTypeLinkUpsertWithWhereUniqueWithoutNetworkTypeInput[]
-    | CompanyNetworkTypeLinkUpsertWithWhereUniqueWithoutNetworkTypeInput;
-  deleteMany?:
-    | CompanyNetworkTypeLinkScalarWhereInput[]
-    | CompanyNetworkTypeLinkScalarWhereInput;
-  updateMany?:
-    | CompanyNetworkTypeLinkUpdateManyWithWhereNestedInput[]
-    | CompanyNetworkTypeLinkUpdateManyWithWhereNestedInput;
+export interface NetworkTypeUpdateOneRequiredWithoutDeviceNetworkTypeLinksInput {
+  create?: NetworkTypeCreateWithoutDeviceNetworkTypeLinksInput;
+  update?: NetworkTypeUpdateWithoutDeviceNetworkTypeLinksDataInput;
+  upsert?: NetworkTypeUpsertWithoutDeviceNetworkTypeLinksInput;
+  connect?: NetworkTypeWhereUniqueInput;
 }
 
 export interface DeviceNetworkTypeLinkSubscriptionWhereInput {
@@ -1935,9 +1905,13 @@ export interface DeviceNetworkTypeLinkSubscriptionWhereInput {
     | DeviceNetworkTypeLinkSubscriptionWhereInput;
 }
 
-export interface CompanyNetworkTypeLinkUpdateWithWhereUniqueWithoutNetworkTypeInput {
-  where: CompanyNetworkTypeLinkWhereUniqueInput;
-  data: CompanyNetworkTypeLinkUpdateWithoutNetworkTypeDataInput;
+export interface NetworkTypeUpdateWithoutDeviceNetworkTypeLinksDataInput {
+  name?: String;
+  applicationNetworkTypeLinks?: ApplicationNetworkTypeLinkUpdateManyWithoutNetworkTypeInput;
+  companyNetworkTypeLinks?: CompanyNetworkTypeLinkUpdateManyWithoutNetworkTypeInput;
+  deviceProfiles?: DeviceProfileUpdateManyWithoutNetworkTypeInput;
+  networkProtocols?: NetworkProtocolUpdateManyWithoutNetworkTypeInput;
+  networks?: NetworkUpdateManyWithoutNetworkTypeInput;
 }
 
 export interface ApplicationWhereInput {
@@ -2004,9 +1978,34 @@ export interface ApplicationWhereInput {
   NOT?: ApplicationWhereInput[] | ApplicationWhereInput;
 }
 
-export interface CompanyNetworkTypeLinkUpdateWithoutNetworkTypeDataInput {
-  company?: CompanyUpdateOneRequiredWithoutCompanyNetworkTypeLinksInput;
-  networkSettings?: String;
+export interface CompanyNetworkTypeLinkUpdateManyWithoutNetworkTypeInput {
+  create?:
+    | CompanyNetworkTypeLinkCreateWithoutNetworkTypeInput[]
+    | CompanyNetworkTypeLinkCreateWithoutNetworkTypeInput;
+  delete?:
+    | CompanyNetworkTypeLinkWhereUniqueInput[]
+    | CompanyNetworkTypeLinkWhereUniqueInput;
+  connect?:
+    | CompanyNetworkTypeLinkWhereUniqueInput[]
+    | CompanyNetworkTypeLinkWhereUniqueInput;
+  set?:
+    | CompanyNetworkTypeLinkWhereUniqueInput[]
+    | CompanyNetworkTypeLinkWhereUniqueInput;
+  disconnect?:
+    | CompanyNetworkTypeLinkWhereUniqueInput[]
+    | CompanyNetworkTypeLinkWhereUniqueInput;
+  update?:
+    | CompanyNetworkTypeLinkUpdateWithWhereUniqueWithoutNetworkTypeInput[]
+    | CompanyNetworkTypeLinkUpdateWithWhereUniqueWithoutNetworkTypeInput;
+  upsert?:
+    | CompanyNetworkTypeLinkUpsertWithWhereUniqueWithoutNetworkTypeInput[]
+    | CompanyNetworkTypeLinkUpsertWithWhereUniqueWithoutNetworkTypeInput;
+  deleteMany?:
+    | CompanyNetworkTypeLinkScalarWhereInput[]
+    | CompanyNetworkTypeLinkScalarWhereInput;
+  updateMany?:
+    | CompanyNetworkTypeLinkUpdateManyWithWhereNestedInput[]
+    | CompanyNetworkTypeLinkUpdateManyWithWhereNestedInput;
 }
 
 export interface CompanyNetworkTypeLinkSubscriptionWhereInput {
@@ -2026,11 +2025,9 @@ export interface CompanyNetworkTypeLinkSubscriptionWhereInput {
     | CompanyNetworkTypeLinkSubscriptionWhereInput;
 }
 
-export interface CompanyUpdateOneRequiredWithoutCompanyNetworkTypeLinksInput {
-  create?: CompanyCreateWithoutCompanyNetworkTypeLinksInput;
-  update?: CompanyUpdateWithoutCompanyNetworkTypeLinksDataInput;
-  upsert?: CompanyUpsertWithoutCompanyNetworkTypeLinksInput;
-  connect?: CompanyWhereUniqueInput;
+export interface CompanyNetworkTypeLinkUpdateWithWhereUniqueWithoutNetworkTypeInput {
+  where: CompanyNetworkTypeLinkWhereUniqueInput;
+  data: CompanyNetworkTypeLinkUpdateWithoutNetworkTypeDataInput;
 }
 
 export interface ApplicationNetworkTypeLinkSubscriptionWhereInput {
@@ -2050,13 +2047,9 @@ export interface ApplicationNetworkTypeLinkSubscriptionWhereInput {
     | ApplicationNetworkTypeLinkSubscriptionWhereInput;
 }
 
-export interface CompanyUpdateWithoutCompanyNetworkTypeLinksDataInput {
-  name?: String;
-  type?: CompanyTypeUpdateOneWithoutCompaniesInput;
-  applications?: ApplicationUpdateManyWithoutCompanyInput;
-  deviceProfiles?: DeviceProfileUpdateManyWithoutCompanyInput;
-  passwordPolicies?: PasswordPolicyUpdateManyWithoutCompanyInput;
-  users?: UserUpdateManyWithoutCompanyInput;
+export interface CompanyNetworkTypeLinkUpdateWithoutNetworkTypeDataInput {
+  company?: CompanyUpdateOneRequiredWithoutCompanyNetworkTypeLinksInput;
+  networkSettings?: String;
 }
 
 export interface ApplicationSubscriptionWhereInput {
@@ -2068,6 +2061,38 @@ export interface ApplicationSubscriptionWhereInput {
   AND?: ApplicationSubscriptionWhereInput[] | ApplicationSubscriptionWhereInput;
   OR?: ApplicationSubscriptionWhereInput[] | ApplicationSubscriptionWhereInput;
   NOT?: ApplicationSubscriptionWhereInput[] | ApplicationSubscriptionWhereInput;
+}
+
+export interface CompanyUpdateOneRequiredWithoutCompanyNetworkTypeLinksInput {
+  create?: CompanyCreateWithoutCompanyNetworkTypeLinksInput;
+  update?: CompanyUpdateWithoutCompanyNetworkTypeLinksDataInput;
+  upsert?: CompanyUpsertWithoutCompanyNetworkTypeLinksInput;
+  connect?: CompanyWhereUniqueInput;
+}
+
+export interface UserUpsertWithWhereUniqueWithoutRoleInput {
+  where: UserWhereUniqueInput;
+  update: UserUpdateWithoutRoleDataInput;
+  create: UserCreateWithoutRoleInput;
+}
+
+export interface CompanyUpdateWithoutCompanyNetworkTypeLinksDataInput {
+  name?: String;
+  type?: CompanyTypeUpdateOneWithoutCompaniesInput;
+  applications?: ApplicationUpdateManyWithoutCompanyInput;
+  deviceProfiles?: DeviceProfileUpdateManyWithoutCompanyInput;
+  passwordPolicies?: PasswordPolicyUpdateManyWithoutCompanyInput;
+  users?: UserUpdateManyWithoutCompanyInput;
+}
+
+export interface UserUpdateWithoutRoleDataInput {
+  username?: String;
+  email?: String;
+  lastVerifiedEmail?: String;
+  emailVerified?: Boolean;
+  company?: CompanyUpdateOneRequiredWithoutUsersInput;
+  passwordHash?: String;
+  emailVerifications?: EmailVerificationUpdateManyWithoutUserInput;
 }
 
 export interface ApplicationUpdateManyWithoutCompanyInput {
@@ -2090,36 +2115,6 @@ export interface ApplicationUpdateManyWithoutCompanyInput {
     | ApplicationUpdateManyWithWhereNestedInput;
 }
 
-export interface UserUpsertWithWhereUniqueWithoutRoleInput {
-  where: UserWhereUniqueInput;
-  update: UserUpdateWithoutRoleDataInput;
-  create: UserCreateWithoutRoleInput;
-}
-
-export interface ApplicationUpdateWithWhereUniqueWithoutCompanyInput {
-  where: ApplicationWhereUniqueInput;
-  data: ApplicationUpdateWithoutCompanyDataInput;
-}
-
-export interface UserUpdateWithoutRoleDataInput {
-  username?: String;
-  email?: String;
-  lastVerifiedEmail?: String;
-  emailVerified?: Boolean;
-  company?: CompanyUpdateOneRequiredWithoutUsersInput;
-  passwordHash?: String;
-  emailVerifications?: EmailVerificationUpdateManyWithoutUserInput;
-}
-
-export interface ApplicationUpdateWithoutCompanyDataInput {
-  name?: String;
-  description?: String;
-  baseUrl?: String;
-  reportingProtocol?: ReportingProtocolUpdateOneWithoutApplicationsInput;
-  applicationNetworkTypeLinks?: ApplicationNetworkTypeLinkUpdateManyWithoutApplicationInput;
-  devices?: DeviceUpdateManyWithoutApplicationInput;
-}
-
 export interface UserUpdateManyWithoutRoleInput {
   create?: UserCreateWithoutRoleInput[] | UserCreateWithoutRoleInput;
   delete?: UserWhereUniqueInput[] | UserWhereUniqueInput;
@@ -2136,6 +2131,30 @@ export interface UserUpdateManyWithoutRoleInput {
   updateMany?:
     | UserUpdateManyWithWhereNestedInput[]
     | UserUpdateManyWithWhereNestedInput;
+}
+
+export interface ApplicationUpdateWithWhereUniqueWithoutCompanyInput {
+  where: ApplicationWhereUniqueInput;
+  data: ApplicationUpdateWithoutCompanyDataInput;
+}
+
+export interface UserRoleUpdateInput {
+  name?: String;
+  users?: UserUpdateManyWithoutRoleInput;
+}
+
+export interface ApplicationUpdateWithoutCompanyDataInput {
+  name?: String;
+  description?: String;
+  baseUrl?: String;
+  reportingProtocol?: ReportingProtocolUpdateOneWithoutApplicationsInput;
+  applicationNetworkTypeLinks?: ApplicationNetworkTypeLinkUpdateManyWithoutApplicationInput;
+  devices?: DeviceUpdateManyWithoutApplicationInput;
+}
+
+export interface UserCreateManyWithoutRoleInput {
+  create?: UserCreateWithoutRoleInput[] | UserCreateWithoutRoleInput;
+  connect?: UserWhereUniqueInput[] | UserWhereUniqueInput;
 }
 
 export interface ApplicationNetworkTypeLinkUpdateManyWithoutApplicationInput {
@@ -2166,26 +2185,6 @@ export interface ApplicationNetworkTypeLinkUpdateManyWithoutApplicationInput {
   updateMany?:
     | ApplicationNetworkTypeLinkUpdateManyWithWhereNestedInput[]
     | ApplicationNetworkTypeLinkUpdateManyWithWhereNestedInput;
-}
-
-export interface UserRoleUpdateInput {
-  name?: String;
-  users?: UserUpdateManyWithoutRoleInput;
-}
-
-export interface ApplicationNetworkTypeLinkUpdateWithWhereUniqueWithoutApplicationInput {
-  where: ApplicationNetworkTypeLinkWhereUniqueInput;
-  data: ApplicationNetworkTypeLinkUpdateWithoutApplicationDataInput;
-}
-
-export interface UserCreateManyWithoutRoleInput {
-  create?: UserCreateWithoutRoleInput[] | UserCreateWithoutRoleInput;
-  connect?: UserWhereUniqueInput[] | UserWhereUniqueInput;
-}
-
-export interface ApplicationNetworkTypeLinkUpdateWithoutApplicationDataInput {
-  networkType?: NetworkTypeUpdateOneRequiredWithoutApplicationNetworkTypeLinksInput;
-  networkSettings?: String;
 }
 
 export interface CompanyTypeWhereInput {
@@ -2219,11 +2218,9 @@ export interface CompanyTypeWhereInput {
   NOT?: CompanyTypeWhereInput[] | CompanyTypeWhereInput;
 }
 
-export interface NetworkTypeUpdateOneRequiredWithoutApplicationNetworkTypeLinksInput {
-  create?: NetworkTypeCreateWithoutApplicationNetworkTypeLinksInput;
-  update?: NetworkTypeUpdateWithoutApplicationNetworkTypeLinksDataInput;
-  upsert?: NetworkTypeUpsertWithoutApplicationNetworkTypeLinksInput;
-  connect?: NetworkTypeWhereUniqueInput;
+export interface ApplicationNetworkTypeLinkUpdateWithWhereUniqueWithoutApplicationInput {
+  where: ApplicationNetworkTypeLinkWhereUniqueInput;
+  data: ApplicationNetworkTypeLinkUpdateWithoutApplicationDataInput;
 }
 
 export interface UserUpdateManyMutationInput {
@@ -2232,6 +2229,27 @@ export interface UserUpdateManyMutationInput {
   lastVerifiedEmail?: String;
   emailVerified?: Boolean;
   passwordHash?: String;
+}
+
+export interface ApplicationNetworkTypeLinkUpdateWithoutApplicationDataInput {
+  networkType?: NetworkTypeUpdateOneRequiredWithoutApplicationNetworkTypeLinksInput;
+  networkSettings?: String;
+}
+
+export type DeviceWhereUniqueInput = AtLeastOne<{
+  id: Int;
+}>;
+
+export interface NetworkTypeUpdateOneRequiredWithoutApplicationNetworkTypeLinksInput {
+  create?: NetworkTypeCreateWithoutApplicationNetworkTypeLinksInput;
+  update?: NetworkTypeUpdateWithoutApplicationNetworkTypeLinksDataInput;
+  upsert?: NetworkTypeUpsertWithoutApplicationNetworkTypeLinksInput;
+  connect?: NetworkTypeWhereUniqueInput;
+}
+
+export interface ReportingProtocolUpdateManyMutationInput {
+  name?: String;
+  protocolHandler?: String;
 }
 
 export interface NetworkTypeUpdateWithoutApplicationNetworkTypeLinksDataInput {
@@ -2243,7 +2261,7 @@ export interface NetworkTypeUpdateWithoutApplicationNetworkTypeLinksDataInput {
   networks?: NetworkUpdateManyWithoutNetworkTypeInput;
 }
 
-export type DeviceWhereUniqueInput = AtLeastOne<{
+export type DeviceNetworkTypeLinkWhereUniqueInput = AtLeastOne<{
   id: Int;
 }>;
 
@@ -2277,9 +2295,9 @@ export interface DeviceNetworkTypeLinkUpdateManyWithoutNetworkTypeInput {
     | DeviceNetworkTypeLinkUpdateManyWithWhereNestedInput;
 }
 
-export interface ReportingProtocolUpdateManyMutationInput {
-  name?: String;
-  protocolHandler?: String;
+export interface ApplicationUpdateWithWhereUniqueWithoutReportingProtocolInput {
+  where: ApplicationWhereUniqueInput;
+  data: ApplicationUpdateWithoutReportingProtocolDataInput;
 }
 
 export interface DeviceNetworkTypeLinkUpdateWithWhereUniqueWithoutNetworkTypeInput {
@@ -2287,7 +2305,7 @@ export interface DeviceNetworkTypeLinkUpdateWithWhereUniqueWithoutNetworkTypeInp
   data: DeviceNetworkTypeLinkUpdateWithoutNetworkTypeDataInput;
 }
 
-export type DeviceNetworkTypeLinkWhereUniqueInput = AtLeastOne<{
+export type DeviceProfileWhereUniqueInput = AtLeastOne<{
   id: Int;
 }>;
 
@@ -2295,29 +2313,6 @@ export interface DeviceNetworkTypeLinkUpdateWithoutNetworkTypeDataInput {
   device?: DeviceUpdateOneRequiredWithoutDeviceNetworkTypeLinksInput;
   deviceProfile?: DeviceProfileUpdateOneRequiredWithoutDeviceNetworkTypeLinksInput;
   networkSettings?: String;
-}
-
-export interface ApplicationUpdateWithWhereUniqueWithoutReportingProtocolInput {
-  where: ApplicationWhereUniqueInput;
-  data: ApplicationUpdateWithoutReportingProtocolDataInput;
-}
-
-export interface DeviceUpdateOneRequiredWithoutDeviceNetworkTypeLinksInput {
-  create?: DeviceCreateWithoutDeviceNetworkTypeLinksInput;
-  update?: DeviceUpdateWithoutDeviceNetworkTypeLinksDataInput;
-  upsert?: DeviceUpsertWithoutDeviceNetworkTypeLinksInput;
-  connect?: DeviceWhereUniqueInput;
-}
-
-export type DeviceProfileWhereUniqueInput = AtLeastOne<{
-  id: Int;
-}>;
-
-export interface DeviceUpdateWithoutDeviceNetworkTypeLinksDataInput {
-  application?: ApplicationUpdateOneRequiredWithoutDevicesInput;
-  name?: String;
-  description?: String;
-  deviceModel?: String;
 }
 
 export interface ApplicationCreateWithoutReportingProtocolInput {
@@ -2329,6 +2324,30 @@ export interface ApplicationCreateWithoutReportingProtocolInput {
   devices?: DeviceCreateManyWithoutApplicationInput;
 }
 
+export interface DeviceUpdateOneRequiredWithoutDeviceNetworkTypeLinksInput {
+  create?: DeviceCreateWithoutDeviceNetworkTypeLinksInput;
+  update?: DeviceUpdateWithoutDeviceNetworkTypeLinksDataInput;
+  upsert?: DeviceUpsertWithoutDeviceNetworkTypeLinksInput;
+  connect?: DeviceWhereUniqueInput;
+}
+
+export type EmailVerificationWhereUniqueInput = AtLeastOne<{
+  id: Int;
+  uuid?: String;
+}>;
+
+export interface DeviceUpdateWithoutDeviceNetworkTypeLinksDataInput {
+  application?: ApplicationUpdateOneRequiredWithoutDevicesInput;
+  name?: String;
+  description?: String;
+  deviceModel?: String;
+}
+
+export interface ProtocolDataUpdateManyMutationInput {
+  dataIdentifier?: String;
+  dataValue?: String;
+}
+
 export interface ApplicationUpdateOneRequiredWithoutDevicesInput {
   create?: ApplicationCreateWithoutDevicesInput;
   update?: ApplicationUpdateWithoutDevicesDataInput;
@@ -2336,9 +2355,8 @@ export interface ApplicationUpdateOneRequiredWithoutDevicesInput {
   connect?: ApplicationWhereUniqueInput;
 }
 
-export type EmailVerificationWhereUniqueInput = AtLeastOne<{
+export type NetworkWhereUniqueInput = AtLeastOne<{
   id: Int;
-  uuid?: String;
 }>;
 
 export interface ApplicationUpdateWithoutDevicesDataInput {
@@ -2350,9 +2368,9 @@ export interface ApplicationUpdateWithoutDevicesDataInput {
   applicationNetworkTypeLinks?: ApplicationNetworkTypeLinkUpdateManyWithoutApplicationInput;
 }
 
-export interface ProtocolDataUpdateManyMutationInput {
-  dataIdentifier?: String;
-  dataValue?: String;
+export interface PasswordPolicyUpdateManyMutationInput {
+  ruleText?: String;
+  ruleRegExp?: String;
 }
 
 export interface ApplicationUpsertWithoutDevicesInput {
@@ -2360,38 +2378,14 @@ export interface ApplicationUpsertWithoutDevicesInput {
   create: ApplicationCreateWithoutDevicesInput;
 }
 
-export type NetworkWhereUniqueInput = AtLeastOne<{
-  id: Int;
-}>;
-
-export interface DeviceUpsertWithoutDeviceNetworkTypeLinksInput {
-  update: DeviceUpdateWithoutDeviceNetworkTypeLinksDataInput;
-  create: DeviceCreateWithoutDeviceNetworkTypeLinksInput;
-}
-
-export interface PasswordPolicyUpdateManyMutationInput {
-  ruleText?: String;
-  ruleRegExp?: String;
-}
-
-export interface DeviceProfileUpdateOneRequiredWithoutDeviceNetworkTypeLinksInput {
-  create?: DeviceProfileCreateWithoutDeviceNetworkTypeLinksInput;
-  update?: DeviceProfileUpdateWithoutDeviceNetworkTypeLinksDataInput;
-  upsert?: DeviceProfileUpsertWithoutDeviceNetworkTypeLinksInput;
-  connect?: DeviceProfileWhereUniqueInput;
-}
-
 export type NetworkProtocolWhereUniqueInput = AtLeastOne<{
   id: Int;
   protocolHandler?: String;
 }>;
 
-export interface DeviceProfileUpdateWithoutDeviceNetworkTypeLinksDataInput {
-  networkType?: NetworkTypeUpdateOneRequiredWithoutDeviceProfilesInput;
-  company?: CompanyUpdateOneRequiredWithoutDeviceProfilesInput;
-  name?: String;
-  description?: String;
-  networkSettings?: String;
+export interface DeviceUpsertWithoutDeviceNetworkTypeLinksInput {
+  update: DeviceUpdateWithoutDeviceNetworkTypeLinksDataInput;
+  create: DeviceCreateWithoutDeviceNetworkTypeLinksInput;
 }
 
 export interface CompanyUpdateOneWithoutPasswordPoliciesInput {
@@ -2403,6 +2397,34 @@ export interface CompanyUpdateOneWithoutPasswordPoliciesInput {
   connect?: CompanyWhereUniqueInput;
 }
 
+export interface DeviceProfileUpdateOneRequiredWithoutDeviceNetworkTypeLinksInput {
+  create?: DeviceProfileCreateWithoutDeviceNetworkTypeLinksInput;
+  update?: DeviceProfileUpdateWithoutDeviceNetworkTypeLinksDataInput;
+  upsert?: DeviceProfileUpsertWithoutDeviceNetworkTypeLinksInput;
+  connect?: DeviceProfileWhereUniqueInput;
+}
+
+export type NetworkProviderWhereUniqueInput = AtLeastOne<{
+  id: Int;
+}>;
+
+export interface DeviceProfileUpdateWithoutDeviceNetworkTypeLinksDataInput {
+  networkType?: NetworkTypeUpdateOneRequiredWithoutDeviceProfilesInput;
+  company?: CompanyUpdateOneRequiredWithoutDeviceProfilesInput;
+  name?: String;
+  description?: String;
+  networkSettings?: String;
+}
+
+export interface CompanyCreateWithoutPasswordPoliciesInput {
+  name?: String;
+  type?: CompanyTypeCreateOneWithoutCompaniesInput;
+  applications?: ApplicationCreateManyWithoutCompanyInput;
+  companyNetworkTypeLinks?: CompanyNetworkTypeLinkCreateManyWithoutCompanyInput;
+  deviceProfiles?: DeviceProfileCreateManyWithoutCompanyInput;
+  users?: UserCreateManyWithoutCompanyInput;
+}
+
 export interface NetworkTypeUpdateOneRequiredWithoutDeviceProfilesInput {
   create?: NetworkTypeCreateWithoutDeviceProfilesInput;
   update?: NetworkTypeUpdateWithoutDeviceProfilesDataInput;
@@ -2410,9 +2432,11 @@ export interface NetworkTypeUpdateOneRequiredWithoutDeviceProfilesInput {
   connect?: NetworkTypeWhereUniqueInput;
 }
 
-export type NetworkProviderWhereUniqueInput = AtLeastOne<{
-  id: Int;
-}>;
+export interface PasswordPolicyCreateInput {
+  ruleText?: String;
+  ruleRegExp?: String;
+  company?: CompanyCreateOneWithoutPasswordPoliciesInput;
+}
 
 export interface NetworkTypeUpdateWithoutDeviceProfilesDataInput {
   name?: String;
@@ -2423,13 +2447,8 @@ export interface NetworkTypeUpdateWithoutDeviceProfilesDataInput {
   networks?: NetworkUpdateManyWithoutNetworkTypeInput;
 }
 
-export interface CompanyCreateWithoutPasswordPoliciesInput {
+export interface NetworkTypeUpdateManyMutationInput {
   name?: String;
-  type?: CompanyTypeCreateOneWithoutCompaniesInput;
-  applications?: ApplicationCreateManyWithoutCompanyInput;
-  companyNetworkTypeLinks?: CompanyNetworkTypeLinkCreateManyWithoutCompanyInput;
-  deviceProfiles?: DeviceProfileCreateManyWithoutCompanyInput;
-  users?: UserCreateManyWithoutCompanyInput;
 }
 
 export interface NetworkProtocolUpdateManyWithoutNetworkTypeInput {
@@ -2456,31 +2475,6 @@ export interface NetworkProtocolUpdateManyWithoutNetworkTypeInput {
     | NetworkProtocolUpdateManyWithWhereNestedInput;
 }
 
-export interface PasswordPolicyCreateInput {
-  ruleText?: String;
-  ruleRegExp?: String;
-  company?: CompanyCreateOneWithoutPasswordPoliciesInput;
-}
-
-export interface NetworkProtocolUpdateWithWhereUniqueWithoutNetworkTypeInput {
-  where: NetworkProtocolWhereUniqueInput;
-  data: NetworkProtocolUpdateWithoutNetworkTypeDataInput;
-}
-
-export interface NetworkTypeUpdateManyMutationInput {
-  name?: String;
-}
-
-export interface NetworkProtocolUpdateWithoutNetworkTypeDataInput {
-  name?: String;
-  protocolHandler?: String;
-  networkProtocolVersion?: String;
-  masterProtocol?: NetworkProtocolUpdateOneWithoutNetworkProtocolsInput;
-  networkProtocols?: NetworkProtocolUpdateManyWithoutMasterProtocolInput;
-  networks?: NetworkUpdateManyWithoutNetworkProtocolInput;
-  protocolData?: ProtocolDataUpdateManyWithoutNetworkProtocolInput;
-}
-
 export interface NetworkTypeCreateInput {
   name: String;
   applicationNetworkTypeLinks?: ApplicationNetworkTypeLinkCreateManyWithoutNetworkTypeInput;
@@ -2491,25 +2485,20 @@ export interface NetworkTypeCreateInput {
   networks?: NetworkCreateManyWithoutNetworkTypeInput;
 }
 
-export interface NetworkProtocolUpdateOneWithoutNetworkProtocolsInput {
-  create?: NetworkProtocolCreateWithoutNetworkProtocolsInput;
-  update?: NetworkProtocolUpdateWithoutNetworkProtocolsDataInput;
-  upsert?: NetworkProtocolUpsertWithoutNetworkProtocolsInput;
-  delete?: Boolean;
-  disconnect?: Boolean;
-  connect?: NetworkProtocolWhereUniqueInput;
+export interface NetworkProtocolUpdateWithWhereUniqueWithoutNetworkTypeInput {
+  where: NetworkProtocolWhereUniqueInput;
+  data: NetworkProtocolUpdateWithoutNetworkTypeDataInput;
 }
 
 export type PasswordPolicyWhereUniqueInput = AtLeastOne<{
   id: Int;
 }>;
 
-export interface NetworkProtocolUpdateWithoutNetworkProtocolsDataInput {
+export interface NetworkProtocolUpdateWithoutNetworkTypeDataInput {
   name?: String;
   protocolHandler?: String;
-  networkType?: NetworkTypeUpdateOneRequiredWithoutNetworkProtocolsInput;
   networkProtocolVersion?: String;
-  masterProtocol?: NetworkProtocolUpdateOneWithoutNetworkProtocolsInput;
+  masterProtocol?: Int;
   networks?: NetworkUpdateManyWithoutNetworkProtocolInput;
   protocolData?: ProtocolDataUpdateManyWithoutNetworkProtocolInput;
 }
@@ -2534,18 +2523,104 @@ export type ProtocolDataWhereUniqueInput = AtLeastOne<{
   id: Int;
 }>;
 
-export interface NetworkTypeUpdateWithoutNetworkProtocolsDataInput {
-  name?: String;
-  applicationNetworkTypeLinks?: ApplicationNetworkTypeLinkUpdateManyWithoutNetworkTypeInput;
-  companyNetworkTypeLinks?: CompanyNetworkTypeLinkUpdateManyWithoutNetworkTypeInput;
-  deviceNetworkTypeLinks?: DeviceNetworkTypeLinkUpdateManyWithoutNetworkTypeInput;
-  deviceProfiles?: DeviceProfileUpdateManyWithoutNetworkTypeInput;
-  networks?: NetworkUpdateManyWithoutNetworkTypeInput;
+export interface NetworkUpdateWithWhereUniqueWithoutNetworkProtocolInput {
+  where: NetworkWhereUniqueInput;
+  data: NetworkUpdateWithoutNetworkProtocolDataInput;
 }
 
 export interface NetworkProviderUpdateInput {
   name?: String;
   networks?: NetworkUpdateManyWithoutNetworkProviderInput;
+}
+
+export interface NetworkUpdateWithoutNetworkProtocolDataInput {
+  name?: String;
+  networkProvider?: NetworkProviderUpdateOneRequiredWithoutNetworksInput;
+  networkType?: NetworkTypeUpdateOneRequiredWithoutNetworksInput;
+  baseUrl?: String;
+  securityData?: String;
+  protocolData?: ProtocolDataUpdateManyWithoutNetworkInput;
+}
+
+export type ReportingProtocolWhereUniqueInput = AtLeastOne<{
+  id: Int;
+}>;
+
+export interface NetworkProviderUpdateOneRequiredWithoutNetworksInput {
+  create?: NetworkProviderCreateWithoutNetworksInput;
+  update?: NetworkProviderUpdateWithoutNetworksDataInput;
+  upsert?: NetworkProviderUpsertWithoutNetworksInput;
+  connect?: NetworkProviderWhereUniqueInput;
+}
+
+export interface NetworkProviderCreateInput {
+  name?: String;
+  networks?: NetworkCreateManyWithoutNetworkProviderInput;
+}
+
+export interface NetworkProviderUpdateWithoutNetworksDataInput {
+  name?: String;
+}
+
+export interface NetworkProtocolUpdateInput {
+  name?: String;
+  protocolHandler?: String;
+  networkType?: NetworkTypeUpdateOneRequiredWithoutNetworkProtocolsInput;
+  networkProtocolVersion?: String;
+  masterProtocol?: Int;
+  networks?: NetworkUpdateManyWithoutNetworkProtocolInput;
+  protocolData?: ProtocolDataUpdateManyWithoutNetworkProtocolInput;
+}
+
+export interface NetworkProviderUpsertWithoutNetworksInput {
+  update: NetworkProviderUpdateWithoutNetworksDataInput;
+  create: NetworkProviderCreateWithoutNetworksInput;
+}
+
+export interface NetworkProtocolCreateInput {
+  name?: String;
+  protocolHandler?: String;
+  networkType: NetworkTypeCreateOneWithoutNetworkProtocolsInput;
+  networkProtocolVersion?: String;
+  masterProtocol?: Int;
+  networks?: NetworkCreateManyWithoutNetworkProtocolInput;
+  protocolData?: ProtocolDataCreateManyWithoutNetworkProtocolInput;
+}
+
+export interface NetworkTypeUpdateOneRequiredWithoutNetworksInput {
+  create?: NetworkTypeCreateWithoutNetworksInput;
+  update?: NetworkTypeUpdateWithoutNetworksDataInput;
+  upsert?: NetworkTypeUpsertWithoutNetworksInput;
+  connect?: NetworkTypeWhereUniqueInput;
+}
+
+export interface NetworkUpdateInput {
+  name?: String;
+  networkProvider?: NetworkProviderUpdateOneRequiredWithoutNetworksInput;
+  networkType?: NetworkTypeUpdateOneRequiredWithoutNetworksInput;
+  networkProtocol?: NetworkProtocolUpdateOneRequiredWithoutNetworksInput;
+  baseUrl?: String;
+  securityData?: String;
+  protocolData?: ProtocolDataUpdateManyWithoutNetworkInput;
+}
+
+export interface NetworkTypeUpdateWithoutNetworksDataInput {
+  name?: String;
+  applicationNetworkTypeLinks?: ApplicationNetworkTypeLinkUpdateManyWithoutNetworkTypeInput;
+  companyNetworkTypeLinks?: CompanyNetworkTypeLinkUpdateManyWithoutNetworkTypeInput;
+  deviceNetworkTypeLinks?: DeviceNetworkTypeLinkUpdateManyWithoutNetworkTypeInput;
+  deviceProfiles?: DeviceProfileUpdateManyWithoutNetworkTypeInput;
+  networkProtocols?: NetworkProtocolUpdateManyWithoutNetworkTypeInput;
+}
+
+export interface NetworkCreateInput {
+  name?: String;
+  networkProvider: NetworkProviderCreateOneWithoutNetworksInput;
+  networkType: NetworkTypeCreateOneWithoutNetworksInput;
+  networkProtocol: NetworkProtocolCreateOneWithoutNetworksInput;
+  baseUrl?: String;
+  securityData?: String;
+  protocolData?: ProtocolDataCreateManyWithoutNetworkInput;
 }
 
 export interface DeviceProfileUpdateManyWithoutNetworkTypeInput {
@@ -2568,18 +2643,23 @@ export interface DeviceProfileUpdateManyWithoutNetworkTypeInput {
     | DeviceProfileUpdateManyWithWhereNestedInput;
 }
 
-export type ReportingProtocolWhereUniqueInput = AtLeastOne<{
-  id: Int;
-}>;
+export interface UserUpsertWithoutEmailVerificationsInput {
+  update: UserUpdateWithoutEmailVerificationsDataInput;
+  create: UserCreateWithoutEmailVerificationsInput;
+}
 
 export interface DeviceProfileUpdateWithWhereUniqueWithoutNetworkTypeInput {
   where: DeviceProfileWhereUniqueInput;
   data: DeviceProfileUpdateWithoutNetworkTypeDataInput;
 }
 
-export interface NetworkProviderCreateInput {
+export interface CompanyUpdateWithoutUsersDataInput {
   name?: String;
-  networks?: NetworkCreateManyWithoutNetworkProviderInput;
+  type?: CompanyTypeUpdateOneWithoutCompaniesInput;
+  applications?: ApplicationUpdateManyWithoutCompanyInput;
+  companyNetworkTypeLinks?: CompanyNetworkTypeLinkUpdateManyWithoutCompanyInput;
+  deviceProfiles?: DeviceProfileUpdateManyWithoutCompanyInput;
+  passwordPolicies?: PasswordPolicyUpdateManyWithoutCompanyInput;
 }
 
 export interface DeviceProfileUpdateWithoutNetworkTypeDataInput {
@@ -2590,110 +2670,14 @@ export interface DeviceProfileUpdateWithoutNetworkTypeDataInput {
   deviceNetworkTypeLinks?: DeviceNetworkTypeLinkUpdateManyWithoutDeviceProfileInput;
 }
 
-export interface NetworkProtocolUpdateInput {
+export interface ApplicationCreateInput {
+  company?: CompanyCreateOneWithoutApplicationsInput;
   name?: String;
-  protocolHandler?: String;
-  networkType?: NetworkTypeUpdateOneRequiredWithoutNetworkProtocolsInput;
-  networkProtocolVersion?: String;
-  masterProtocol?: NetworkProtocolUpdateOneWithoutNetworkProtocolsInput;
-  networkProtocols?: NetworkProtocolUpdateManyWithoutMasterProtocolInput;
-  networks?: NetworkUpdateManyWithoutNetworkProtocolInput;
-  protocolData?: ProtocolDataUpdateManyWithoutNetworkProtocolInput;
-}
-
-export interface CompanyUpdateOneRequiredWithoutDeviceProfilesInput {
-  create?: CompanyCreateWithoutDeviceProfilesInput;
-  update?: CompanyUpdateWithoutDeviceProfilesDataInput;
-  upsert?: CompanyUpsertWithoutDeviceProfilesInput;
-  connect?: CompanyWhereUniqueInput;
-}
-
-export interface NetworkProtocolCreateInput {
-  name?: String;
-  protocolHandler?: String;
-  networkType: NetworkTypeCreateOneWithoutNetworkProtocolsInput;
-  networkProtocolVersion?: String;
-  masterProtocol?: NetworkProtocolCreateOneWithoutNetworkProtocolsInput;
-  networkProtocols?: NetworkProtocolCreateManyWithoutMasterProtocolInput;
-  networks?: NetworkCreateManyWithoutNetworkProtocolInput;
-  protocolData?: ProtocolDataCreateManyWithoutNetworkProtocolInput;
-}
-
-export interface CompanyUpdateWithoutDeviceProfilesDataInput {
-  name?: String;
-  type?: CompanyTypeUpdateOneWithoutCompaniesInput;
-  applications?: ApplicationUpdateManyWithoutCompanyInput;
-  companyNetworkTypeLinks?: CompanyNetworkTypeLinkUpdateManyWithoutCompanyInput;
-  passwordPolicies?: PasswordPolicyUpdateManyWithoutCompanyInput;
-  users?: UserUpdateManyWithoutCompanyInput;
-}
-
-export interface NetworkUpdateInput {
-  name?: String;
-  networkProvider?: NetworkProviderUpdateOneRequiredWithoutNetworksInput;
-  networkType?: NetworkTypeUpdateOneRequiredWithoutNetworksInput;
-  networkProtocol?: NetworkProtocolUpdateOneRequiredWithoutNetworksInput;
+  description?: String;
   baseUrl?: String;
-  securityData?: String;
-  protocolData?: ProtocolDataUpdateManyWithoutNetworkInput;
-}
-
-export interface PasswordPolicyUpdateManyWithoutCompanyInput {
-  create?:
-    | PasswordPolicyCreateWithoutCompanyInput[]
-    | PasswordPolicyCreateWithoutCompanyInput;
-  delete?: PasswordPolicyWhereUniqueInput[] | PasswordPolicyWhereUniqueInput;
-  connect?: PasswordPolicyWhereUniqueInput[] | PasswordPolicyWhereUniqueInput;
-  set?: PasswordPolicyWhereUniqueInput[] | PasswordPolicyWhereUniqueInput;
-  disconnect?:
-    | PasswordPolicyWhereUniqueInput[]
-    | PasswordPolicyWhereUniqueInput;
-  update?:
-    | PasswordPolicyUpdateWithWhereUniqueWithoutCompanyInput[]
-    | PasswordPolicyUpdateWithWhereUniqueWithoutCompanyInput;
-  upsert?:
-    | PasswordPolicyUpsertWithWhereUniqueWithoutCompanyInput[]
-    | PasswordPolicyUpsertWithWhereUniqueWithoutCompanyInput;
-  deleteMany?:
-    | PasswordPolicyScalarWhereInput[]
-    | PasswordPolicyScalarWhereInput;
-  updateMany?:
-    | PasswordPolicyUpdateManyWithWhereNestedInput[]
-    | PasswordPolicyUpdateManyWithWhereNestedInput;
-}
-
-export interface NetworkCreateInput {
-  name?: String;
-  networkProvider: NetworkProviderCreateOneWithoutNetworksInput;
-  networkType: NetworkTypeCreateOneWithoutNetworksInput;
-  networkProtocol: NetworkProtocolCreateOneWithoutNetworksInput;
-  baseUrl?: String;
-  securityData?: String;
-  protocolData?: ProtocolDataCreateManyWithoutNetworkInput;
-}
-
-export interface PasswordPolicyUpdateWithWhereUniqueWithoutCompanyInput {
-  where: PasswordPolicyWhereUniqueInput;
-  data: PasswordPolicyUpdateWithoutCompanyDataInput;
-}
-
-export interface UserUpsertWithoutEmailVerificationsInput {
-  update: UserUpdateWithoutEmailVerificationsDataInput;
-  create: UserCreateWithoutEmailVerificationsInput;
-}
-
-export interface PasswordPolicyUpdateWithoutCompanyDataInput {
-  ruleText?: String;
-  ruleRegExp?: String;
-}
-
-export interface CompanyUpdateWithoutUsersDataInput {
-  name?: String;
-  type?: CompanyTypeUpdateOneWithoutCompaniesInput;
-  applications?: ApplicationUpdateManyWithoutCompanyInput;
-  companyNetworkTypeLinks?: CompanyNetworkTypeLinkUpdateManyWithoutCompanyInput;
-  deviceProfiles?: DeviceProfileUpdateManyWithoutCompanyInput;
-  passwordPolicies?: PasswordPolicyUpdateManyWithoutCompanyInput;
+  reportingProtocol?: ReportingProtocolCreateOneWithoutApplicationsInput;
+  applicationNetworkTypeLinks?: ApplicationNetworkTypeLinkCreateManyWithoutApplicationInput;
+  devices?: DeviceCreateManyWithoutApplicationInput;
 }
 
 export interface UserUpdateWithoutEmailVerificationsDataInput {
@@ -2706,14 +2690,13 @@ export interface UserUpdateWithoutEmailVerificationsDataInput {
   role?: UserRoleUpdateOneRequiredWithoutUsersInput;
 }
 
-export interface ApplicationCreateInput {
-  company?: CompanyCreateOneWithoutApplicationsInput;
+export interface CompanyCreateWithoutApplicationsInput {
   name?: String;
-  description?: String;
-  baseUrl?: String;
-  reportingProtocol?: ReportingProtocolCreateOneWithoutApplicationsInput;
-  applicationNetworkTypeLinks?: ApplicationNetworkTypeLinkCreateManyWithoutApplicationInput;
-  devices?: DeviceCreateManyWithoutApplicationInput;
+  type?: CompanyTypeCreateOneWithoutCompaniesInput;
+  companyNetworkTypeLinks?: CompanyNetworkTypeLinkCreateManyWithoutCompanyInput;
+  deviceProfiles?: DeviceProfileCreateManyWithoutCompanyInput;
+  passwordPolicies?: PasswordPolicyCreateManyWithoutCompanyInput;
+  users?: UserCreateManyWithoutCompanyInput;
 }
 
 export interface EmailVerificationWhereInput {
@@ -2773,13 +2756,8 @@ export interface EmailVerificationWhereInput {
   NOT?: EmailVerificationWhereInput[] | EmailVerificationWhereInput;
 }
 
-export interface CompanyCreateWithoutApplicationsInput {
+export interface CompanyTypeCreateWithoutCompaniesInput {
   name?: String;
-  type?: CompanyTypeCreateOneWithoutCompaniesInput;
-  companyNetworkTypeLinks?: CompanyNetworkTypeLinkCreateManyWithoutCompanyInput;
-  deviceProfiles?: DeviceProfileCreateManyWithoutCompanyInput;
-  passwordPolicies?: PasswordPolicyCreateManyWithoutCompanyInput;
-  users?: UserCreateManyWithoutCompanyInput;
 }
 
 export interface ProtocolDataWhereInput {
@@ -2826,8 +2804,9 @@ export interface ProtocolDataWhereInput {
   NOT?: ProtocolDataWhereInput[] | ProtocolDataWhereInput;
 }
 
-export interface CompanyTypeCreateWithoutCompaniesInput {
-  name?: String;
+export interface CompanyNetworkTypeLinkCreateWithoutCompanyInput {
+  networkType: NetworkTypeCreateOneWithoutCompanyNetworkTypeLinksInput;
+  networkSettings?: String;
 }
 
 export interface UserUpdateOneRequiredWithoutEmailVerificationsInput {
@@ -2837,9 +2816,13 @@ export interface UserUpdateOneRequiredWithoutEmailVerificationsInput {
   connect?: UserWhereUniqueInput;
 }
 
-export interface CompanyNetworkTypeLinkCreateWithoutCompanyInput {
-  networkType: NetworkTypeCreateOneWithoutCompanyNetworkTypeLinksInput;
-  networkSettings?: String;
+export interface NetworkTypeCreateWithoutCompanyNetworkTypeLinksInput {
+  name: String;
+  applicationNetworkTypeLinks?: ApplicationNetworkTypeLinkCreateManyWithoutNetworkTypeInput;
+  deviceNetworkTypeLinks?: DeviceNetworkTypeLinkCreateManyWithoutNetworkTypeInput;
+  deviceProfiles?: DeviceProfileCreateManyWithoutNetworkTypeInput;
+  networkProtocols?: NetworkProtocolCreateManyWithoutNetworkTypeInput;
+  networks?: NetworkCreateManyWithoutNetworkTypeInput;
 }
 
 export interface NetworkWhereInput {
@@ -2904,10 +2887,118 @@ export interface NetworkWhereInput {
   NOT?: NetworkWhereInput[] | NetworkWhereInput;
 }
 
-export interface NetworkTypeCreateWithoutCompanyNetworkTypeLinksInput {
+export interface ApplicationNetworkTypeLinkCreateWithoutNetworkTypeInput {
+  application: ApplicationCreateOneWithoutApplicationNetworkTypeLinksInput;
+  networkSettings?: String;
+}
+
+export interface PasswordPolicyUpsertWithWhereUniqueWithoutCompanyInput {
+  where: PasswordPolicyWhereUniqueInput;
+  update: PasswordPolicyUpdateWithoutCompanyDataInput;
+  create: PasswordPolicyCreateWithoutCompanyInput;
+}
+
+export interface ApplicationCreateWithoutApplicationNetworkTypeLinksInput {
+  company?: CompanyCreateOneWithoutApplicationsInput;
+  name?: String;
+  description?: String;
+  baseUrl?: String;
+  reportingProtocol?: ReportingProtocolCreateOneWithoutApplicationsInput;
+  devices?: DeviceCreateManyWithoutApplicationInput;
+}
+
+export interface PasswordPolicyScalarWhereInput {
+  id?: Int;
+  id_not?: Int;
+  id_in?: Int[] | Int;
+  id_not_in?: Int[] | Int;
+  id_lt?: Int;
+  id_lte?: Int;
+  id_gt?: Int;
+  id_gte?: Int;
+  ruleText?: String;
+  ruleText_not?: String;
+  ruleText_in?: String[] | String;
+  ruleText_not_in?: String[] | String;
+  ruleText_lt?: String;
+  ruleText_lte?: String;
+  ruleText_gt?: String;
+  ruleText_gte?: String;
+  ruleText_contains?: String;
+  ruleText_not_contains?: String;
+  ruleText_starts_with?: String;
+  ruleText_not_starts_with?: String;
+  ruleText_ends_with?: String;
+  ruleText_not_ends_with?: String;
+  ruleRegExp?: String;
+  ruleRegExp_not?: String;
+  ruleRegExp_in?: String[] | String;
+  ruleRegExp_not_in?: String[] | String;
+  ruleRegExp_lt?: String;
+  ruleRegExp_lte?: String;
+  ruleRegExp_gt?: String;
+  ruleRegExp_gte?: String;
+  ruleRegExp_contains?: String;
+  ruleRegExp_not_contains?: String;
+  ruleRegExp_starts_with?: String;
+  ruleRegExp_not_starts_with?: String;
+  ruleRegExp_ends_with?: String;
+  ruleRegExp_not_ends_with?: String;
+  AND?: PasswordPolicyScalarWhereInput[] | PasswordPolicyScalarWhereInput;
+  OR?: PasswordPolicyScalarWhereInput[] | PasswordPolicyScalarWhereInput;
+  NOT?: PasswordPolicyScalarWhereInput[] | PasswordPolicyScalarWhereInput;
+}
+
+export interface ReportingProtocolCreateWithoutApplicationsInput {
+  name?: String;
+  protocolHandler?: String;
+}
+
+export interface PasswordPolicyUpdateManyWithWhereNestedInput {
+  where: PasswordPolicyScalarWhereInput;
+  data: PasswordPolicyUpdateManyDataInput;
+}
+
+export interface DeviceCreateWithoutApplicationInput {
+  name?: String;
+  description?: String;
+  deviceModel?: String;
+  deviceNetworkTypeLinks?: DeviceNetworkTypeLinkCreateManyWithoutDeviceInput;
+}
+
+export interface PasswordPolicyUpdateManyDataInput {
+  ruleText?: String;
+  ruleRegExp?: String;
+}
+
+export interface DeviceNetworkTypeLinkCreateWithoutDeviceInput {
+  networkType: NetworkTypeCreateOneWithoutDeviceNetworkTypeLinksInput;
+  deviceProfile: DeviceProfileCreateOneWithoutDeviceNetworkTypeLinksInput;
+  networkSettings?: String;
+}
+
+export interface UserUpdateManyWithoutCompanyInput {
+  create?: UserCreateWithoutCompanyInput[] | UserCreateWithoutCompanyInput;
+  delete?: UserWhereUniqueInput[] | UserWhereUniqueInput;
+  connect?: UserWhereUniqueInput[] | UserWhereUniqueInput;
+  set?: UserWhereUniqueInput[] | UserWhereUniqueInput;
+  disconnect?: UserWhereUniqueInput[] | UserWhereUniqueInput;
+  update?:
+    | UserUpdateWithWhereUniqueWithoutCompanyInput[]
+    | UserUpdateWithWhereUniqueWithoutCompanyInput;
+  upsert?:
+    | UserUpsertWithWhereUniqueWithoutCompanyInput[]
+    | UserUpsertWithWhereUniqueWithoutCompanyInput;
+  deleteMany?: UserScalarWhereInput[] | UserScalarWhereInput;
+  updateMany?:
+    | UserUpdateManyWithWhereNestedInput[]
+    | UserUpdateManyWithWhereNestedInput;
+}
+
+export interface NetworkTypeCreateWithoutDeviceNetworkTypeLinksInput {
   name: String;
   applicationNetworkTypeLinks?: ApplicationNetworkTypeLinkCreateManyWithoutNetworkTypeInput;
-  deviceNetworkTypeLinks?: DeviceNetworkTypeLinkCreateManyWithoutNetworkTypeInput;
+  companyNetworkTypeLinks?: CompanyNetworkTypeLinkCreateManyWithoutNetworkTypeInput;
   deviceProfiles?: DeviceProfileCreateManyWithoutNetworkTypeInput;
   networkProtocols?: NetworkProtocolCreateManyWithoutNetworkTypeInput;
   networks?: NetworkCreateManyWithoutNetworkTypeInput;
@@ -2918,8 +3009,8 @@ export interface UserUpdateWithWhereUniqueWithoutCompanyInput {
   data: UserUpdateWithoutCompanyDataInput;
 }
 
-export interface ApplicationNetworkTypeLinkCreateWithoutNetworkTypeInput {
-  application: ApplicationCreateOneWithoutApplicationNetworkTypeLinksInput;
+export interface CompanyNetworkTypeLinkCreateWithoutNetworkTypeInput {
+  company: CompanyCreateOneWithoutCompanyNetworkTypeLinksInput;
   networkSettings?: String;
 }
 
@@ -2933,13 +3024,13 @@ export interface UserUpdateWithoutCompanyDataInput {
   emailVerifications?: EmailVerificationUpdateManyWithoutUserInput;
 }
 
-export interface ApplicationCreateWithoutApplicationNetworkTypeLinksInput {
-  company?: CompanyCreateOneWithoutApplicationsInput;
+export interface CompanyCreateWithoutCompanyNetworkTypeLinksInput {
   name?: String;
-  description?: String;
-  baseUrl?: String;
-  reportingProtocol?: ReportingProtocolCreateOneWithoutApplicationsInput;
-  devices?: DeviceCreateManyWithoutApplicationInput;
+  type?: CompanyTypeCreateOneWithoutCompaniesInput;
+  applications?: ApplicationCreateManyWithoutCompanyInput;
+  deviceProfiles?: DeviceProfileCreateManyWithoutCompanyInput;
+  passwordPolicies?: PasswordPolicyCreateManyWithoutCompanyInput;
+  users?: UserCreateManyWithoutCompanyInput;
 }
 
 export interface UserRoleUpdateOneRequiredWithoutUsersInput {
@@ -2949,20 +3040,22 @@ export interface UserRoleUpdateOneRequiredWithoutUsersInput {
   connect?: UserRoleWhereUniqueInput;
 }
 
-export interface ReportingProtocolCreateWithoutApplicationsInput {
+export interface ApplicationCreateWithoutCompanyInput {
   name?: String;
-  protocolHandler?: String;
+  description?: String;
+  baseUrl?: String;
+  reportingProtocol?: ReportingProtocolCreateOneWithoutApplicationsInput;
+  applicationNetworkTypeLinks?: ApplicationNetworkTypeLinkCreateManyWithoutApplicationInput;
+  devices?: DeviceCreateManyWithoutApplicationInput;
 }
 
 export interface UserRoleUpdateWithoutUsersDataInput {
   name?: String;
 }
 
-export interface DeviceCreateWithoutApplicationInput {
-  name?: String;
-  description?: String;
-  deviceModel?: String;
-  deviceNetworkTypeLinks?: DeviceNetworkTypeLinkCreateManyWithoutDeviceInput;
+export interface ApplicationNetworkTypeLinkCreateWithoutApplicationInput {
+  networkType: NetworkTypeCreateOneWithoutApplicationNetworkTypeLinksInput;
+  networkSettings?: String;
 }
 
 export interface UserRoleUpsertWithoutUsersInput {
@@ -2970,10 +3063,13 @@ export interface UserRoleUpsertWithoutUsersInput {
   create: UserRoleCreateWithoutUsersInput;
 }
 
-export interface DeviceNetworkTypeLinkCreateWithoutDeviceInput {
-  networkType: NetworkTypeCreateOneWithoutDeviceNetworkTypeLinksInput;
-  deviceProfile: DeviceProfileCreateOneWithoutDeviceNetworkTypeLinksInput;
-  networkSettings?: String;
+export interface NetworkTypeCreateWithoutApplicationNetworkTypeLinksInput {
+  name: String;
+  companyNetworkTypeLinks?: CompanyNetworkTypeLinkCreateManyWithoutNetworkTypeInput;
+  deviceNetworkTypeLinks?: DeviceNetworkTypeLinkCreateManyWithoutNetworkTypeInput;
+  deviceProfiles?: DeviceProfileCreateManyWithoutNetworkTypeInput;
+  networkProtocols?: NetworkProtocolCreateManyWithoutNetworkTypeInput;
+  networks?: NetworkCreateManyWithoutNetworkTypeInput;
 }
 
 export interface EmailVerificationUpdateManyWithoutUserInput {
@@ -3004,13 +3100,10 @@ export interface EmailVerificationUpdateManyWithoutUserInput {
     | EmailVerificationUpdateManyWithWhereNestedInput;
 }
 
-export interface NetworkTypeCreateWithoutDeviceNetworkTypeLinksInput {
-  name: String;
-  applicationNetworkTypeLinks?: ApplicationNetworkTypeLinkCreateManyWithoutNetworkTypeInput;
-  companyNetworkTypeLinks?: CompanyNetworkTypeLinkCreateManyWithoutNetworkTypeInput;
-  deviceProfiles?: DeviceProfileCreateManyWithoutNetworkTypeInput;
-  networkProtocols?: NetworkProtocolCreateManyWithoutNetworkTypeInput;
-  networks?: NetworkCreateManyWithoutNetworkTypeInput;
+export interface DeviceNetworkTypeLinkCreateWithoutNetworkTypeInput {
+  device: DeviceCreateOneWithoutDeviceNetworkTypeLinksInput;
+  deviceProfile: DeviceProfileCreateOneWithoutDeviceNetworkTypeLinksInput;
+  networkSettings?: String;
 }
 
 export interface EmailVerificationUpdateWithWhereUniqueWithoutUserInput {
@@ -3018,9 +3111,11 @@ export interface EmailVerificationUpdateWithWhereUniqueWithoutUserInput {
   data: EmailVerificationUpdateWithoutUserDataInput;
 }
 
-export interface CompanyNetworkTypeLinkCreateWithoutNetworkTypeInput {
-  company: CompanyCreateOneWithoutCompanyNetworkTypeLinksInput;
-  networkSettings?: String;
+export interface DeviceCreateWithoutDeviceNetworkTypeLinksInput {
+  application: ApplicationCreateOneWithoutDevicesInput;
+  name?: String;
+  description?: String;
+  deviceModel?: String;
 }
 
 export interface EmailVerificationUpdateWithoutUserDataInput {
@@ -3029,13 +3124,13 @@ export interface EmailVerificationUpdateWithoutUserDataInput {
   changeRequested?: String;
 }
 
-export interface CompanyCreateWithoutCompanyNetworkTypeLinksInput {
+export interface ApplicationCreateWithoutDevicesInput {
+  company?: CompanyCreateOneWithoutApplicationsInput;
   name?: String;
-  type?: CompanyTypeCreateOneWithoutCompaniesInput;
-  applications?: ApplicationCreateManyWithoutCompanyInput;
-  deviceProfiles?: DeviceProfileCreateManyWithoutCompanyInput;
-  passwordPolicies?: PasswordPolicyCreateManyWithoutCompanyInput;
-  users?: UserCreateManyWithoutCompanyInput;
+  description?: String;
+  baseUrl?: String;
+  reportingProtocol?: ReportingProtocolCreateOneWithoutApplicationsInput;
+  applicationNetworkTypeLinks?: ApplicationNetworkTypeLinkCreateManyWithoutApplicationInput;
 }
 
 export interface EmailVerificationUpsertWithWhereUniqueWithoutUserInput {
@@ -3044,13 +3139,12 @@ export interface EmailVerificationUpsertWithWhereUniqueWithoutUserInput {
   create: EmailVerificationCreateWithoutUserInput;
 }
 
-export interface ApplicationCreateWithoutCompanyInput {
+export interface DeviceProfileCreateWithoutDeviceNetworkTypeLinksInput {
+  networkType: NetworkTypeCreateOneWithoutDeviceProfilesInput;
+  company: CompanyCreateOneWithoutDeviceProfilesInput;
   name?: String;
   description?: String;
-  baseUrl?: String;
-  reportingProtocol?: ReportingProtocolCreateOneWithoutApplicationsInput;
-  applicationNetworkTypeLinks?: ApplicationNetworkTypeLinkCreateManyWithoutApplicationInput;
-  devices?: DeviceCreateManyWithoutApplicationInput;
+  networkSettings?: String;
 }
 
 export interface EmailVerificationScalarWhereInput {
@@ -3109,9 +3203,13 @@ export interface EmailVerificationScalarWhereInput {
   NOT?: EmailVerificationScalarWhereInput[] | EmailVerificationScalarWhereInput;
 }
 
-export interface ApplicationNetworkTypeLinkCreateWithoutApplicationInput {
-  networkType: NetworkTypeCreateOneWithoutApplicationNetworkTypeLinksInput;
-  networkSettings?: String;
+export interface NetworkTypeCreateWithoutDeviceProfilesInput {
+  name: String;
+  applicationNetworkTypeLinks?: ApplicationNetworkTypeLinkCreateManyWithoutNetworkTypeInput;
+  companyNetworkTypeLinks?: CompanyNetworkTypeLinkCreateManyWithoutNetworkTypeInput;
+  deviceNetworkTypeLinks?: DeviceNetworkTypeLinkCreateManyWithoutNetworkTypeInput;
+  networkProtocols?: NetworkProtocolCreateManyWithoutNetworkTypeInput;
+  networks?: NetworkCreateManyWithoutNetworkTypeInput;
 }
 
 export interface EmailVerificationUpdateManyWithWhereNestedInput {
@@ -3119,13 +3217,13 @@ export interface EmailVerificationUpdateManyWithWhereNestedInput {
   data: EmailVerificationUpdateManyDataInput;
 }
 
-export interface NetworkTypeCreateWithoutApplicationNetworkTypeLinksInput {
-  name: String;
-  companyNetworkTypeLinks?: CompanyNetworkTypeLinkCreateManyWithoutNetworkTypeInput;
-  deviceNetworkTypeLinks?: DeviceNetworkTypeLinkCreateManyWithoutNetworkTypeInput;
-  deviceProfiles?: DeviceProfileCreateManyWithoutNetworkTypeInput;
-  networkProtocols?: NetworkProtocolCreateManyWithoutNetworkTypeInput;
-  networks?: NetworkCreateManyWithoutNetworkTypeInput;
+export interface NetworkProtocolCreateWithoutNetworkTypeInput {
+  name?: String;
+  protocolHandler?: String;
+  networkProtocolVersion?: String;
+  masterProtocol?: Int;
+  networks?: NetworkCreateManyWithoutNetworkProtocolInput;
+  protocolData?: ProtocolDataCreateManyWithoutNetworkProtocolInput;
 }
 
 export interface EmailVerificationUpdateManyDataInput {
@@ -3134,10 +3232,13 @@ export interface EmailVerificationUpdateManyDataInput {
   changeRequested?: String;
 }
 
-export interface DeviceNetworkTypeLinkCreateWithoutNetworkTypeInput {
-  device: DeviceCreateOneWithoutDeviceNetworkTypeLinksInput;
-  deviceProfile: DeviceProfileCreateOneWithoutDeviceNetworkTypeLinksInput;
-  networkSettings?: String;
+export interface NetworkCreateWithoutNetworkProtocolInput {
+  name?: String;
+  networkProvider: NetworkProviderCreateOneWithoutNetworksInput;
+  networkType: NetworkTypeCreateOneWithoutNetworksInput;
+  baseUrl?: String;
+  securityData?: String;
+  protocolData?: ProtocolDataCreateManyWithoutNetworkInput;
 }
 
 export interface UserUpsertWithWhereUniqueWithoutCompanyInput {
@@ -3146,11 +3247,8 @@ export interface UserUpsertWithWhereUniqueWithoutCompanyInput {
   create: UserCreateWithoutCompanyInput;
 }
 
-export interface DeviceCreateWithoutDeviceNetworkTypeLinksInput {
-  application: ApplicationCreateOneWithoutDevicesInput;
+export interface NetworkProviderCreateWithoutNetworksInput {
   name?: String;
-  description?: String;
-  deviceModel?: String;
 }
 
 export interface UserScalarWhereInput {
@@ -3225,13 +3323,13 @@ export interface UserScalarWhereInput {
   NOT?: UserScalarWhereInput[] | UserScalarWhereInput;
 }
 
-export interface ApplicationCreateWithoutDevicesInput {
-  company?: CompanyCreateOneWithoutApplicationsInput;
-  name?: String;
-  description?: String;
-  baseUrl?: String;
-  reportingProtocol?: ReportingProtocolCreateOneWithoutApplicationsInput;
-  applicationNetworkTypeLinks?: ApplicationNetworkTypeLinkCreateManyWithoutApplicationInput;
+export interface NetworkTypeCreateWithoutNetworksInput {
+  name: String;
+  applicationNetworkTypeLinks?: ApplicationNetworkTypeLinkCreateManyWithoutNetworkTypeInput;
+  companyNetworkTypeLinks?: CompanyNetworkTypeLinkCreateManyWithoutNetworkTypeInput;
+  deviceNetworkTypeLinks?: DeviceNetworkTypeLinkCreateManyWithoutNetworkTypeInput;
+  deviceProfiles?: DeviceProfileCreateManyWithoutNetworkTypeInput;
+  networkProtocols?: NetworkProtocolCreateManyWithoutNetworkTypeInput;
 }
 
 export interface UserUpdateManyWithWhereNestedInput {
@@ -3239,12 +3337,12 @@ export interface UserUpdateManyWithWhereNestedInput {
   data: UserUpdateManyDataInput;
 }
 
-export interface DeviceProfileCreateWithoutDeviceNetworkTypeLinksInput {
-  networkType: NetworkTypeCreateOneWithoutDeviceProfilesInput;
+export interface DeviceProfileCreateWithoutNetworkTypeInput {
   company: CompanyCreateOneWithoutDeviceProfilesInput;
   name?: String;
   description?: String;
   networkSettings?: String;
+  deviceNetworkTypeLinks?: DeviceNetworkTypeLinkCreateManyWithoutDeviceProfileInput;
 }
 
 export interface UserUpdateManyDataInput {
@@ -3255,13 +3353,13 @@ export interface UserUpdateManyDataInput {
   passwordHash?: String;
 }
 
-export interface NetworkTypeCreateWithoutDeviceProfilesInput {
-  name: String;
-  applicationNetworkTypeLinks?: ApplicationNetworkTypeLinkCreateManyWithoutNetworkTypeInput;
-  companyNetworkTypeLinks?: CompanyNetworkTypeLinkCreateManyWithoutNetworkTypeInput;
-  deviceNetworkTypeLinks?: DeviceNetworkTypeLinkCreateManyWithoutNetworkTypeInput;
-  networkProtocols?: NetworkProtocolCreateManyWithoutNetworkTypeInput;
-  networks?: NetworkCreateManyWithoutNetworkTypeInput;
+export interface CompanyCreateWithoutDeviceProfilesInput {
+  name?: String;
+  type?: CompanyTypeCreateOneWithoutCompaniesInput;
+  applications?: ApplicationCreateManyWithoutCompanyInput;
+  companyNetworkTypeLinks?: CompanyNetworkTypeLinkCreateManyWithoutCompanyInput;
+  passwordPolicies?: PasswordPolicyCreateManyWithoutCompanyInput;
+  users?: UserCreateManyWithoutCompanyInput;
 }
 
 export interface CompanyUpsertWithoutDeviceProfilesInput {
@@ -3269,14 +3367,9 @@ export interface CompanyUpsertWithoutDeviceProfilesInput {
   create: CompanyCreateWithoutDeviceProfilesInput;
 }
 
-export interface NetworkProtocolCreateWithoutNetworkTypeInput {
-  name?: String;
-  protocolHandler?: String;
-  networkProtocolVersion?: String;
-  masterProtocol?: NetworkProtocolCreateOneWithoutNetworkProtocolsInput;
-  networkProtocols?: NetworkProtocolCreateManyWithoutMasterProtocolInput;
-  networks?: NetworkCreateManyWithoutNetworkProtocolInput;
-  protocolData?: ProtocolDataCreateManyWithoutNetworkProtocolInput;
+export interface PasswordPolicyCreateWithoutCompanyInput {
+  ruleText?: String;
+  ruleRegExp?: String;
 }
 
 export interface DeviceNetworkTypeLinkUpdateManyWithoutDeviceProfileInput {
@@ -3309,14 +3402,14 @@ export interface DeviceNetworkTypeLinkUpdateManyWithoutDeviceProfileInput {
     | DeviceNetworkTypeLinkUpdateManyWithWhereNestedInput;
 }
 
-export interface NetworkProtocolCreateWithoutNetworkProtocolsInput {
-  name?: String;
-  protocolHandler?: String;
-  networkType: NetworkTypeCreateOneWithoutNetworkProtocolsInput;
-  networkProtocolVersion?: String;
-  masterProtocol?: NetworkProtocolCreateOneWithoutNetworkProtocolsInput;
-  networks?: NetworkCreateManyWithoutNetworkProtocolInput;
-  protocolData?: ProtocolDataCreateManyWithoutNetworkProtocolInput;
+export interface UserCreateWithoutCompanyInput {
+  username?: String;
+  email?: String;
+  lastVerifiedEmail?: String;
+  emailVerified?: Boolean;
+  passwordHash: String;
+  role: UserRoleCreateOneWithoutUsersInput;
+  emailVerifications?: EmailVerificationCreateManyWithoutUserInput;
 }
 
 export interface DeviceNetworkTypeLinkUpdateWithWhereUniqueWithoutDeviceProfileInput {
@@ -3324,13 +3417,8 @@ export interface DeviceNetworkTypeLinkUpdateWithWhereUniqueWithoutDeviceProfileI
   data: DeviceNetworkTypeLinkUpdateWithoutDeviceProfileDataInput;
 }
 
-export interface NetworkTypeCreateWithoutNetworkProtocolsInput {
-  name: String;
-  applicationNetworkTypeLinks?: ApplicationNetworkTypeLinkCreateManyWithoutNetworkTypeInput;
-  companyNetworkTypeLinks?: CompanyNetworkTypeLinkCreateManyWithoutNetworkTypeInput;
-  deviceNetworkTypeLinks?: DeviceNetworkTypeLinkCreateManyWithoutNetworkTypeInput;
-  deviceProfiles?: DeviceProfileCreateManyWithoutNetworkTypeInput;
-  networks?: NetworkCreateManyWithoutNetworkTypeInput;
+export interface UserRoleCreateWithoutUsersInput {
+  name?: String;
 }
 
 export interface DeviceNetworkTypeLinkUpdateWithoutDeviceProfileDataInput {
@@ -3339,12 +3427,10 @@ export interface DeviceNetworkTypeLinkUpdateWithoutDeviceProfileDataInput {
   networkSettings?: String;
 }
 
-export interface DeviceProfileCreateWithoutNetworkTypeInput {
-  company: CompanyCreateOneWithoutDeviceProfilesInput;
-  name?: String;
-  description?: String;
-  networkSettings?: String;
-  deviceNetworkTypeLinks?: DeviceNetworkTypeLinkCreateManyWithoutDeviceProfileInput;
+export interface EmailVerificationCreateWithoutUserInput {
+  uuid?: String;
+  email?: String;
+  changeRequested?: String;
 }
 
 export interface DeviceNetworkTypeLinkUpsertWithWhereUniqueWithoutDeviceProfileInput {
@@ -3353,13 +3439,10 @@ export interface DeviceNetworkTypeLinkUpsertWithWhereUniqueWithoutDeviceProfileI
   create: DeviceNetworkTypeLinkCreateWithoutDeviceProfileInput;
 }
 
-export interface CompanyCreateWithoutDeviceProfilesInput {
-  name?: String;
-  type?: CompanyTypeCreateOneWithoutCompaniesInput;
-  applications?: ApplicationCreateManyWithoutCompanyInput;
-  companyNetworkTypeLinks?: CompanyNetworkTypeLinkCreateManyWithoutCompanyInput;
-  passwordPolicies?: PasswordPolicyCreateManyWithoutCompanyInput;
-  users?: UserCreateManyWithoutCompanyInput;
+export interface DeviceNetworkTypeLinkCreateWithoutDeviceProfileInput {
+  device: DeviceCreateOneWithoutDeviceNetworkTypeLinksInput;
+  networkType: NetworkTypeCreateOneWithoutDeviceNetworkTypeLinksInput;
+  networkSettings?: String;
 }
 
 export interface DeviceNetworkTypeLinkScalarWhereInput {
@@ -3396,9 +3479,10 @@ export interface DeviceNetworkTypeLinkScalarWhereInput {
     | DeviceNetworkTypeLinkScalarWhereInput;
 }
 
-export interface PasswordPolicyCreateWithoutCompanyInput {
-  ruleText?: String;
-  ruleRegExp?: String;
+export interface ProtocolDataCreateWithoutNetworkInput {
+  networkProtocol: NetworkProtocolCreateOneWithoutProtocolDataInput;
+  dataIdentifier?: String;
+  dataValue?: String;
 }
 
 export interface DeviceNetworkTypeLinkUpdateManyWithWhereNestedInput {
@@ -3406,22 +3490,26 @@ export interface DeviceNetworkTypeLinkUpdateManyWithWhereNestedInput {
   data: DeviceNetworkTypeLinkUpdateManyDataInput;
 }
 
-export interface UserCreateWithoutCompanyInput {
-  username?: String;
-  email?: String;
-  lastVerifiedEmail?: String;
-  emailVerified?: Boolean;
-  passwordHash: String;
-  role: UserRoleCreateOneWithoutUsersInput;
-  emailVerifications?: EmailVerificationCreateManyWithoutUserInput;
+export interface NetworkProtocolCreateWithoutProtocolDataInput {
+  name?: String;
+  protocolHandler?: String;
+  networkType: NetworkTypeCreateOneWithoutNetworkProtocolsInput;
+  networkProtocolVersion?: String;
+  masterProtocol?: Int;
+  networks?: NetworkCreateManyWithoutNetworkProtocolInput;
 }
 
 export interface DeviceNetworkTypeLinkUpdateManyDataInput {
   networkSettings?: String;
 }
 
-export interface UserRoleCreateWithoutUsersInput {
-  name?: String;
+export interface NetworkTypeCreateWithoutNetworkProtocolsInput {
+  name: String;
+  applicationNetworkTypeLinks?: ApplicationNetworkTypeLinkCreateManyWithoutNetworkTypeInput;
+  companyNetworkTypeLinks?: CompanyNetworkTypeLinkCreateManyWithoutNetworkTypeInput;
+  deviceNetworkTypeLinks?: DeviceNetworkTypeLinkCreateManyWithoutNetworkTypeInput;
+  deviceProfiles?: DeviceProfileCreateManyWithoutNetworkTypeInput;
+  networks?: NetworkCreateManyWithoutNetworkTypeInput;
 }
 
 export interface DeviceProfileUpsertWithWhereUniqueWithoutNetworkTypeInput {
@@ -3430,10 +3518,13 @@ export interface DeviceProfileUpsertWithWhereUniqueWithoutNetworkTypeInput {
   create: DeviceProfileCreateWithoutNetworkTypeInput;
 }
 
-export interface EmailVerificationCreateWithoutUserInput {
-  uuid?: String;
-  email?: String;
-  changeRequested?: String;
+export interface NetworkCreateWithoutNetworkTypeInput {
+  name?: String;
+  networkProvider: NetworkProviderCreateOneWithoutNetworksInput;
+  networkProtocol: NetworkProtocolCreateOneWithoutNetworksInput;
+  baseUrl?: String;
+  securityData?: String;
+  protocolData?: ProtocolDataCreateManyWithoutNetworkInput;
 }
 
 export interface DeviceProfileScalarWhereInput {
@@ -3492,145 +3583,18 @@ export interface DeviceProfileScalarWhereInput {
   NOT?: DeviceProfileScalarWhereInput[] | DeviceProfileScalarWhereInput;
 }
 
-export interface DeviceNetworkTypeLinkCreateWithoutDeviceProfileInput {
-  device: DeviceCreateOneWithoutDeviceNetworkTypeLinksInput;
-  networkType: NetworkTypeCreateOneWithoutDeviceNetworkTypeLinksInput;
-  networkSettings?: String;
-}
-
-export interface DeviceProfileUpdateManyWithWhereNestedInput {
-  where: DeviceProfileScalarWhereInput;
-  data: DeviceProfileUpdateManyDataInput;
-}
-
-export interface NetworkCreateWithoutNetworkTypeInput {
-  name?: String;
-  networkProvider: NetworkProviderCreateOneWithoutNetworksInput;
-  networkProtocol: NetworkProtocolCreateOneWithoutNetworksInput;
-  baseUrl?: String;
-  securityData?: String;
-  protocolData?: ProtocolDataCreateManyWithoutNetworkInput;
-}
-
-export interface DeviceProfileUpdateManyDataInput {
-  name?: String;
-  description?: String;
-  networkSettings?: String;
-}
-
-export interface NetworkProviderCreateWithoutNetworksInput {
-  name?: String;
-}
-
-export interface NetworkUpdateManyWithoutNetworkTypeInput {
-  create?:
-    | NetworkCreateWithoutNetworkTypeInput[]
-    | NetworkCreateWithoutNetworkTypeInput;
-  delete?: NetworkWhereUniqueInput[] | NetworkWhereUniqueInput;
-  connect?: NetworkWhereUniqueInput[] | NetworkWhereUniqueInput;
-  set?: NetworkWhereUniqueInput[] | NetworkWhereUniqueInput;
-  disconnect?: NetworkWhereUniqueInput[] | NetworkWhereUniqueInput;
-  update?:
-    | NetworkUpdateWithWhereUniqueWithoutNetworkTypeInput[]
-    | NetworkUpdateWithWhereUniqueWithoutNetworkTypeInput;
-  upsert?:
-    | NetworkUpsertWithWhereUniqueWithoutNetworkTypeInput[]
-    | NetworkUpsertWithWhereUniqueWithoutNetworkTypeInput;
-  deleteMany?: NetworkScalarWhereInput[] | NetworkScalarWhereInput;
-  updateMany?:
-    | NetworkUpdateManyWithWhereNestedInput[]
-    | NetworkUpdateManyWithWhereNestedInput;
-}
-
 export interface NetworkProtocolCreateWithoutNetworksInput {
   name?: String;
   protocolHandler?: String;
   networkType: NetworkTypeCreateOneWithoutNetworkProtocolsInput;
   networkProtocolVersion?: String;
-  masterProtocol?: NetworkProtocolCreateOneWithoutNetworkProtocolsInput;
-  networkProtocols?: NetworkProtocolCreateManyWithoutMasterProtocolInput;
+  masterProtocol?: Int;
   protocolData?: ProtocolDataCreateManyWithoutNetworkProtocolInput;
 }
 
-export interface NetworkUpdateWithWhereUniqueWithoutNetworkTypeInput {
-  where: NetworkWhereUniqueInput;
-  data: NetworkUpdateWithoutNetworkTypeDataInput;
-}
-
-export interface NetworkProtocolCreateWithoutMasterProtocolInput {
-  name?: String;
-  protocolHandler?: String;
-  networkType: NetworkTypeCreateOneWithoutNetworkProtocolsInput;
-  networkProtocolVersion?: String;
-  networkProtocols?: NetworkProtocolCreateManyWithoutMasterProtocolInput;
-  networks?: NetworkCreateManyWithoutNetworkProtocolInput;
-  protocolData?: ProtocolDataCreateManyWithoutNetworkProtocolInput;
-}
-
-export interface NetworkUpdateWithoutNetworkTypeDataInput {
-  name?: String;
-  networkProvider?: NetworkProviderUpdateOneRequiredWithoutNetworksInput;
-  networkProtocol?: NetworkProtocolUpdateOneRequiredWithoutNetworksInput;
-  baseUrl?: String;
-  securityData?: String;
-  protocolData?: ProtocolDataUpdateManyWithoutNetworkInput;
-}
-
-export interface NetworkCreateWithoutNetworkProtocolInput {
-  name?: String;
-  networkProvider: NetworkProviderCreateOneWithoutNetworksInput;
-  networkType: NetworkTypeCreateOneWithoutNetworksInput;
-  baseUrl?: String;
-  securityData?: String;
-  protocolData?: ProtocolDataCreateManyWithoutNetworkInput;
-}
-
-export interface NetworkProviderUpdateOneRequiredWithoutNetworksInput {
-  create?: NetworkProviderCreateWithoutNetworksInput;
-  update?: NetworkProviderUpdateWithoutNetworksDataInput;
-  upsert?: NetworkProviderUpsertWithoutNetworksInput;
-  connect?: NetworkProviderWhereUniqueInput;
-}
-
-export interface NetworkTypeCreateWithoutNetworksInput {
-  name: String;
-  applicationNetworkTypeLinks?: ApplicationNetworkTypeLinkCreateManyWithoutNetworkTypeInput;
-  companyNetworkTypeLinks?: CompanyNetworkTypeLinkCreateManyWithoutNetworkTypeInput;
-  deviceNetworkTypeLinks?: DeviceNetworkTypeLinkCreateManyWithoutNetworkTypeInput;
-  deviceProfiles?: DeviceProfileCreateManyWithoutNetworkTypeInput;
-  networkProtocols?: NetworkProtocolCreateManyWithoutNetworkTypeInput;
-}
-
-export interface NetworkProviderUpdateWithoutNetworksDataInput {
-  name?: String;
-}
-
-export interface ProtocolDataCreateWithoutNetworkInput {
-  networkProtocol: NetworkProtocolCreateOneWithoutProtocolDataInput;
-  dataIdentifier?: String;
-  dataValue?: String;
-}
-
-export interface NetworkProviderUpsertWithoutNetworksInput {
-  update: NetworkProviderUpdateWithoutNetworksDataInput;
-  create: NetworkProviderCreateWithoutNetworksInput;
-}
-
-export interface NetworkProtocolCreateWithoutProtocolDataInput {
-  name?: String;
-  protocolHandler?: String;
-  networkType: NetworkTypeCreateOneWithoutNetworkProtocolsInput;
-  networkProtocolVersion?: String;
-  masterProtocol?: NetworkProtocolCreateOneWithoutNetworkProtocolsInput;
-  networkProtocols?: NetworkProtocolCreateManyWithoutMasterProtocolInput;
-  networks?: NetworkCreateManyWithoutNetworkProtocolInput;
-}
-
-export interface NetworkProtocolUpdateOneRequiredWithoutNetworksInput {
-  create?: NetworkProtocolCreateWithoutNetworksInput;
-  update?: NetworkProtocolUpdateWithoutNetworksDataInput;
-  upsert?: NetworkProtocolUpsertWithoutNetworksInput;
-  connect?: NetworkProtocolWhereUniqueInput;
+export interface DeviceProfileUpdateManyWithWhereNestedInput {
+  where: DeviceProfileScalarWhereInput;
+  data: DeviceProfileUpdateManyDataInput;
 }
 
 export interface ProtocolDataCreateWithoutNetworkProtocolInput {
@@ -3639,14 +3603,10 @@ export interface ProtocolDataCreateWithoutNetworkProtocolInput {
   dataValue?: String;
 }
 
-export interface NetworkProtocolUpdateWithoutNetworksDataInput {
+export interface DeviceProfileUpdateManyDataInput {
   name?: String;
-  protocolHandler?: String;
-  networkType?: NetworkTypeUpdateOneRequiredWithoutNetworkProtocolsInput;
-  networkProtocolVersion?: String;
-  masterProtocol?: NetworkProtocolUpdateOneWithoutNetworkProtocolsInput;
-  networkProtocols?: NetworkProtocolUpdateManyWithoutMasterProtocolInput;
-  protocolData?: ProtocolDataUpdateManyWithoutNetworkProtocolInput;
+  description?: String;
+  networkSettings?: String;
 }
 
 export interface NetworkCreateWithoutProtocolDataInput {
@@ -3658,28 +3618,9 @@ export interface NetworkCreateWithoutProtocolDataInput {
   securityData?: String;
 }
 
-export interface NetworkProtocolUpdateManyWithoutMasterProtocolInput {
-  create?:
-    | NetworkProtocolCreateWithoutMasterProtocolInput[]
-    | NetworkProtocolCreateWithoutMasterProtocolInput;
-  delete?: NetworkProtocolWhereUniqueInput[] | NetworkProtocolWhereUniqueInput;
-  connect?: NetworkProtocolWhereUniqueInput[] | NetworkProtocolWhereUniqueInput;
-  set?: NetworkProtocolWhereUniqueInput[] | NetworkProtocolWhereUniqueInput;
-  disconnect?:
-    | NetworkProtocolWhereUniqueInput[]
-    | NetworkProtocolWhereUniqueInput;
-  update?:
-    | NetworkProtocolUpdateWithWhereUniqueWithoutMasterProtocolInput[]
-    | NetworkProtocolUpdateWithWhereUniqueWithoutMasterProtocolInput;
-  upsert?:
-    | NetworkProtocolUpsertWithWhereUniqueWithoutMasterProtocolInput[]
-    | NetworkProtocolUpsertWithWhereUniqueWithoutMasterProtocolInput;
-  deleteMany?:
-    | NetworkProtocolScalarWhereInput[]
-    | NetworkProtocolScalarWhereInput;
-  updateMany?:
-    | NetworkProtocolUpdateManyWithWhereNestedInput[]
-    | NetworkProtocolUpdateManyWithWhereNestedInput;
+export interface NetworkTypeUpsertWithoutNetworksInput {
+  update: NetworkTypeUpdateWithoutNetworksDataInput;
+  create: NetworkTypeCreateWithoutNetworksInput;
 }
 
 export interface DeviceProfileCreateWithoutCompanyInput {
@@ -3690,9 +3631,24 @@ export interface DeviceProfileCreateWithoutCompanyInput {
   deviceNetworkTypeLinks?: DeviceNetworkTypeLinkCreateManyWithoutDeviceProfileInput;
 }
 
-export interface NetworkProtocolUpdateWithWhereUniqueWithoutMasterProtocolInput {
-  where: NetworkProtocolWhereUniqueInput;
-  data: NetworkProtocolUpdateWithoutMasterProtocolDataInput;
+export interface ProtocolDataUpdateManyWithoutNetworkInput {
+  create?:
+    | ProtocolDataCreateWithoutNetworkInput[]
+    | ProtocolDataCreateWithoutNetworkInput;
+  delete?: ProtocolDataWhereUniqueInput[] | ProtocolDataWhereUniqueInput;
+  connect?: ProtocolDataWhereUniqueInput[] | ProtocolDataWhereUniqueInput;
+  set?: ProtocolDataWhereUniqueInput[] | ProtocolDataWhereUniqueInput;
+  disconnect?: ProtocolDataWhereUniqueInput[] | ProtocolDataWhereUniqueInput;
+  update?:
+    | ProtocolDataUpdateWithWhereUniqueWithoutNetworkInput[]
+    | ProtocolDataUpdateWithWhereUniqueWithoutNetworkInput;
+  upsert?:
+    | ProtocolDataUpsertWithWhereUniqueWithoutNetworkInput[]
+    | ProtocolDataUpsertWithWhereUniqueWithoutNetworkInput;
+  deleteMany?: ProtocolDataScalarWhereInput[] | ProtocolDataScalarWhereInput;
+  updateMany?:
+    | ProtocolDataUpdateManyWithWhereNestedInput[]
+    | ProtocolDataUpdateManyWithWhereNestedInput;
 }
 
 export interface CompanyUpdateOneWithoutApplicationsInput {
@@ -3704,14 +3660,9 @@ export interface CompanyUpdateOneWithoutApplicationsInput {
   connect?: CompanyWhereUniqueInput;
 }
 
-export interface NetworkProtocolUpdateWithoutMasterProtocolDataInput {
-  name?: String;
-  protocolHandler?: String;
-  networkType?: NetworkTypeUpdateOneRequiredWithoutNetworkProtocolsInput;
-  networkProtocolVersion?: String;
-  networkProtocols?: NetworkProtocolUpdateManyWithoutMasterProtocolInput;
-  networks?: NetworkUpdateManyWithoutNetworkProtocolInput;
-  protocolData?: ProtocolDataUpdateManyWithoutNetworkProtocolInput;
+export interface ProtocolDataUpdateWithWhereUniqueWithoutNetworkInput {
+  where: ProtocolDataWhereUniqueInput;
+  data: ProtocolDataUpdateWithoutNetworkDataInput;
 }
 
 export interface CompanyTypeUpdateOneWithoutCompaniesInput {
@@ -3723,24 +3674,10 @@ export interface CompanyTypeUpdateOneWithoutCompaniesInput {
   connect?: CompanyTypeWhereUniqueInput;
 }
 
-export interface NetworkUpdateManyWithoutNetworkProtocolInput {
-  create?:
-    | NetworkCreateWithoutNetworkProtocolInput[]
-    | NetworkCreateWithoutNetworkProtocolInput;
-  delete?: NetworkWhereUniqueInput[] | NetworkWhereUniqueInput;
-  connect?: NetworkWhereUniqueInput[] | NetworkWhereUniqueInput;
-  set?: NetworkWhereUniqueInput[] | NetworkWhereUniqueInput;
-  disconnect?: NetworkWhereUniqueInput[] | NetworkWhereUniqueInput;
-  update?:
-    | NetworkUpdateWithWhereUniqueWithoutNetworkProtocolInput[]
-    | NetworkUpdateWithWhereUniqueWithoutNetworkProtocolInput;
-  upsert?:
-    | NetworkUpsertWithWhereUniqueWithoutNetworkProtocolInput[]
-    | NetworkUpsertWithWhereUniqueWithoutNetworkProtocolInput;
-  deleteMany?: NetworkScalarWhereInput[] | NetworkScalarWhereInput;
-  updateMany?:
-    | NetworkUpdateManyWithWhereNestedInput[]
-    | NetworkUpdateManyWithWhereNestedInput;
+export interface ProtocolDataUpdateWithoutNetworkDataInput {
+  networkProtocol?: NetworkProtocolUpdateOneRequiredWithoutProtocolDataInput;
+  dataIdentifier?: String;
+  dataValue?: String;
 }
 
 export interface CompanyTypeUpsertWithoutCompaniesInput {
@@ -3748,9 +3685,11 @@ export interface CompanyTypeUpsertWithoutCompaniesInput {
   create: CompanyTypeCreateWithoutCompaniesInput;
 }
 
-export interface NetworkUpdateWithWhereUniqueWithoutNetworkProtocolInput {
-  where: NetworkWhereUniqueInput;
-  data: NetworkUpdateWithoutNetworkProtocolDataInput;
+export interface NetworkProtocolUpdateOneRequiredWithoutProtocolDataInput {
+  create?: NetworkProtocolCreateWithoutProtocolDataInput;
+  update?: NetworkProtocolUpdateWithoutProtocolDataDataInput;
+  upsert?: NetworkProtocolUpsertWithoutProtocolDataInput;
+  connect?: NetworkProtocolWhereUniqueInput;
 }
 
 export interface CompanyNetworkTypeLinkUpdateWithWhereUniqueWithoutCompanyInput {
@@ -3758,13 +3697,13 @@ export interface CompanyNetworkTypeLinkUpdateWithWhereUniqueWithoutCompanyInput 
   data: CompanyNetworkTypeLinkUpdateWithoutCompanyDataInput;
 }
 
-export interface NetworkUpdateWithoutNetworkProtocolDataInput {
+export interface NetworkProtocolUpdateWithoutProtocolDataDataInput {
   name?: String;
-  networkProvider?: NetworkProviderUpdateOneRequiredWithoutNetworksInput;
-  networkType?: NetworkTypeUpdateOneRequiredWithoutNetworksInput;
-  baseUrl?: String;
-  securityData?: String;
-  protocolData?: ProtocolDataUpdateManyWithoutNetworkInput;
+  protocolHandler?: String;
+  networkType?: NetworkTypeUpdateOneRequiredWithoutNetworkProtocolsInput;
+  networkProtocolVersion?: String;
+  masterProtocol?: Int;
+  networks?: NetworkUpdateManyWithoutNetworkProtocolInput;
 }
 
 export interface NetworkTypeUpdateOneRequiredWithoutCompanyNetworkTypeLinksInput {
@@ -3774,10 +3713,10 @@ export interface NetworkTypeUpdateOneRequiredWithoutCompanyNetworkTypeLinksInput
   connect?: NetworkTypeWhereUniqueInput;
 }
 
-export interface NetworkTypeUpdateOneRequiredWithoutNetworksInput {
-  create?: NetworkTypeCreateWithoutNetworksInput;
-  update?: NetworkTypeUpdateWithoutNetworksDataInput;
-  upsert?: NetworkTypeUpsertWithoutNetworksInput;
+export interface NetworkTypeUpdateOneRequiredWithoutNetworkProtocolsInput {
+  create?: NetworkTypeCreateWithoutNetworkProtocolsInput;
+  update?: NetworkTypeUpdateWithoutNetworkProtocolsDataInput;
+  upsert?: NetworkTypeUpsertWithoutNetworkProtocolsInput;
   connect?: NetworkTypeWhereUniqueInput;
 }
 
@@ -3811,13 +3750,13 @@ export interface ApplicationNetworkTypeLinkUpdateManyWithoutNetworkTypeInput {
     | ApplicationNetworkTypeLinkUpdateManyWithWhereNestedInput;
 }
 
-export interface NetworkTypeUpdateWithoutNetworksDataInput {
+export interface NetworkTypeUpdateWithoutNetworkProtocolsDataInput {
   name?: String;
   applicationNetworkTypeLinks?: ApplicationNetworkTypeLinkUpdateManyWithoutNetworkTypeInput;
   companyNetworkTypeLinks?: CompanyNetworkTypeLinkUpdateManyWithoutNetworkTypeInput;
   deviceNetworkTypeLinks?: DeviceNetworkTypeLinkUpdateManyWithoutNetworkTypeInput;
   deviceProfiles?: DeviceProfileUpdateManyWithoutNetworkTypeInput;
-  networkProtocols?: NetworkProtocolUpdateManyWithoutNetworkTypeInput;
+  networks?: NetworkUpdateManyWithoutNetworkTypeInput;
 }
 
 export interface ApplicationNetworkTypeLinkUpdateWithoutNetworkTypeDataInput {
@@ -3825,38 +3764,24 @@ export interface ApplicationNetworkTypeLinkUpdateWithoutNetworkTypeDataInput {
   networkSettings?: String;
 }
 
-export interface NetworkTypeUpsertWithoutNetworksInput {
-  update: NetworkTypeUpdateWithoutNetworksDataInput;
-  create: NetworkTypeCreateWithoutNetworksInput;
-}
-
-export interface ApplicationUpdateWithoutApplicationNetworkTypeLinksDataInput {
-  company?: CompanyUpdateOneWithoutApplicationsInput;
-  name?: String;
-  description?: String;
-  baseUrl?: String;
-  reportingProtocol?: ReportingProtocolUpdateOneWithoutApplicationsInput;
-  devices?: DeviceUpdateManyWithoutApplicationInput;
-}
-
-export interface ProtocolDataUpdateManyWithoutNetworkInput {
+export interface NetworkUpdateManyWithoutNetworkTypeInput {
   create?:
-    | ProtocolDataCreateWithoutNetworkInput[]
-    | ProtocolDataCreateWithoutNetworkInput;
-  delete?: ProtocolDataWhereUniqueInput[] | ProtocolDataWhereUniqueInput;
-  connect?: ProtocolDataWhereUniqueInput[] | ProtocolDataWhereUniqueInput;
-  set?: ProtocolDataWhereUniqueInput[] | ProtocolDataWhereUniqueInput;
-  disconnect?: ProtocolDataWhereUniqueInput[] | ProtocolDataWhereUniqueInput;
+    | NetworkCreateWithoutNetworkTypeInput[]
+    | NetworkCreateWithoutNetworkTypeInput;
+  delete?: NetworkWhereUniqueInput[] | NetworkWhereUniqueInput;
+  connect?: NetworkWhereUniqueInput[] | NetworkWhereUniqueInput;
+  set?: NetworkWhereUniqueInput[] | NetworkWhereUniqueInput;
+  disconnect?: NetworkWhereUniqueInput[] | NetworkWhereUniqueInput;
   update?:
-    | ProtocolDataUpdateWithWhereUniqueWithoutNetworkInput[]
-    | ProtocolDataUpdateWithWhereUniqueWithoutNetworkInput;
+    | NetworkUpdateWithWhereUniqueWithoutNetworkTypeInput[]
+    | NetworkUpdateWithWhereUniqueWithoutNetworkTypeInput;
   upsert?:
-    | ProtocolDataUpsertWithWhereUniqueWithoutNetworkInput[]
-    | ProtocolDataUpsertWithWhereUniqueWithoutNetworkInput;
-  deleteMany?: ProtocolDataScalarWhereInput[] | ProtocolDataScalarWhereInput;
+    | NetworkUpsertWithWhereUniqueWithoutNetworkTypeInput[]
+    | NetworkUpsertWithWhereUniqueWithoutNetworkTypeInput;
+  deleteMany?: NetworkScalarWhereInput[] | NetworkScalarWhereInput;
   updateMany?:
-    | ProtocolDataUpdateManyWithWhereNestedInput[]
-    | ProtocolDataUpdateManyWithWhereNestedInput;
+    | NetworkUpdateManyWithWhereNestedInput[]
+    | NetworkUpdateManyWithWhereNestedInput;
 }
 
 export interface UserSubscriptionWhereInput {
@@ -3870,9 +3795,9 @@ export interface UserSubscriptionWhereInput {
   NOT?: UserSubscriptionWhereInput[] | UserSubscriptionWhereInput;
 }
 
-export interface ProtocolDataUpdateWithWhereUniqueWithoutNetworkInput {
-  where: ProtocolDataWhereUniqueInput;
-  data: ProtocolDataUpdateWithoutNetworkDataInput;
+export interface NetworkUpdateWithWhereUniqueWithoutNetworkTypeInput {
+  where: NetworkWhereUniqueInput;
+  data: NetworkUpdateWithoutNetworkTypeDataInput;
 }
 
 export interface DeviceWhereInput {
@@ -3935,10 +3860,13 @@ export interface DeviceWhereInput {
   NOT?: DeviceWhereInput[] | DeviceWhereInput;
 }
 
-export interface ProtocolDataUpdateWithoutNetworkDataInput {
-  networkProtocol?: NetworkProtocolUpdateOneRequiredWithoutProtocolDataInput;
-  dataIdentifier?: String;
-  dataValue?: String;
+export interface NetworkUpdateWithoutNetworkTypeDataInput {
+  name?: String;
+  networkProvider?: NetworkProviderUpdateOneRequiredWithoutNetworksInput;
+  networkProtocol?: NetworkProtocolUpdateOneRequiredWithoutNetworksInput;
+  baseUrl?: String;
+  securityData?: String;
+  protocolData?: ProtocolDataUpdateManyWithoutNetworkInput;
 }
 
 export interface NetworkProviderSubscriptionWhereInput {
@@ -3958,10 +3886,10 @@ export interface NetworkProviderSubscriptionWhereInput {
     | NetworkProviderSubscriptionWhereInput;
 }
 
-export interface NetworkProtocolUpdateOneRequiredWithoutProtocolDataInput {
-  create?: NetworkProtocolCreateWithoutProtocolDataInput;
-  update?: NetworkProtocolUpdateWithoutProtocolDataDataInput;
-  upsert?: NetworkProtocolUpsertWithoutProtocolDataInput;
+export interface NetworkProtocolUpdateOneRequiredWithoutNetworksInput {
+  create?: NetworkProtocolCreateWithoutNetworksInput;
+  update?: NetworkProtocolUpdateWithoutNetworksDataInput;
+  upsert?: NetworkProtocolUpsertWithoutNetworksInput;
   connect?: NetworkProtocolWhereUniqueInput;
 }
 
@@ -3976,14 +3904,13 @@ export interface NetworkSubscriptionWhereInput {
   NOT?: NetworkSubscriptionWhereInput[] | NetworkSubscriptionWhereInput;
 }
 
-export interface NetworkProtocolUpdateWithoutProtocolDataDataInput {
+export interface NetworkProtocolUpdateWithoutNetworksDataInput {
   name?: String;
   protocolHandler?: String;
   networkType?: NetworkTypeUpdateOneRequiredWithoutNetworkProtocolsInput;
   networkProtocolVersion?: String;
-  masterProtocol?: NetworkProtocolUpdateOneWithoutNetworkProtocolsInput;
-  networkProtocols?: NetworkProtocolUpdateManyWithoutMasterProtocolInput;
-  networks?: NetworkUpdateManyWithoutNetworkProtocolInput;
+  masterProtocol?: Int;
+  protocolData?: ProtocolDataUpdateManyWithoutNetworkProtocolInput;
 }
 
 export interface ReportingProtocolWhereInput {
@@ -4031,9 +3958,24 @@ export interface ReportingProtocolWhereInput {
   NOT?: ReportingProtocolWhereInput[] | ReportingProtocolWhereInput;
 }
 
-export interface NetworkProtocolUpsertWithoutProtocolDataInput {
-  update: NetworkProtocolUpdateWithoutProtocolDataDataInput;
-  create: NetworkProtocolCreateWithoutProtocolDataInput;
+export interface ProtocolDataUpdateManyWithoutNetworkProtocolInput {
+  create?:
+    | ProtocolDataCreateWithoutNetworkProtocolInput[]
+    | ProtocolDataCreateWithoutNetworkProtocolInput;
+  delete?: ProtocolDataWhereUniqueInput[] | ProtocolDataWhereUniqueInput;
+  connect?: ProtocolDataWhereUniqueInput[] | ProtocolDataWhereUniqueInput;
+  set?: ProtocolDataWhereUniqueInput[] | ProtocolDataWhereUniqueInput;
+  disconnect?: ProtocolDataWhereUniqueInput[] | ProtocolDataWhereUniqueInput;
+  update?:
+    | ProtocolDataUpdateWithWhereUniqueWithoutNetworkProtocolInput[]
+    | ProtocolDataUpdateWithWhereUniqueWithoutNetworkProtocolInput;
+  upsert?:
+    | ProtocolDataUpsertWithWhereUniqueWithoutNetworkProtocolInput[]
+    | ProtocolDataUpsertWithWhereUniqueWithoutNetworkProtocolInput;
+  deleteMany?: ProtocolDataScalarWhereInput[] | ProtocolDataScalarWhereInput;
+  updateMany?:
+    | ProtocolDataUpdateManyWithWhereNestedInput[]
+    | ProtocolDataUpdateManyWithWhereNestedInput;
 }
 
 export interface CompanyTypeSubscriptionWhereInput {
@@ -4047,15 +3989,78 @@ export interface CompanyTypeSubscriptionWhereInput {
   NOT?: CompanyTypeSubscriptionWhereInput[] | CompanyTypeSubscriptionWhereInput;
 }
 
-export interface ProtocolDataUpsertWithWhereUniqueWithoutNetworkInput {
+export interface ProtocolDataUpdateWithWhereUniqueWithoutNetworkProtocolInput {
   where: ProtocolDataWhereUniqueInput;
-  update: ProtocolDataUpdateWithoutNetworkDataInput;
-  create: ProtocolDataCreateWithoutNetworkInput;
+  data: ProtocolDataUpdateWithoutNetworkProtocolDataInput;
 }
 
 export type ApplicationNetworkTypeLinkWhereUniqueInput = AtLeastOne<{
   id: Int;
 }>;
+
+export interface ProtocolDataUpdateWithoutNetworkProtocolDataInput {
+  network?: NetworkUpdateOneRequiredWithoutProtocolDataInput;
+  dataIdentifier?: String;
+  dataValue?: String;
+}
+
+export type CompanyWhereUniqueInput = AtLeastOne<{
+  id: Int;
+  name?: String;
+}>;
+
+export interface NetworkUpdateOneRequiredWithoutProtocolDataInput {
+  create?: NetworkCreateWithoutProtocolDataInput;
+  update?: NetworkUpdateWithoutProtocolDataDataInput;
+  upsert?: NetworkUpsertWithoutProtocolDataInput;
+  connect?: NetworkWhereUniqueInput;
+}
+
+export type CompanyNetworkTypeLinkWhereUniqueInput = AtLeastOne<{
+  id: Int;
+}>;
+
+export interface NetworkUpdateWithoutProtocolDataDataInput {
+  name?: String;
+  networkProvider?: NetworkProviderUpdateOneRequiredWithoutNetworksInput;
+  networkType?: NetworkTypeUpdateOneRequiredWithoutNetworksInput;
+  networkProtocol?: NetworkProtocolUpdateOneRequiredWithoutNetworksInput;
+  baseUrl?: String;
+  securityData?: String;
+}
+
+export type CompanyTypeWhereUniqueInput = AtLeastOne<{
+  id: Int;
+  name?: String;
+}>;
+
+export interface NetworkUpsertWithoutProtocolDataInput {
+  update: NetworkUpdateWithoutProtocolDataDataInput;
+  create: NetworkCreateWithoutProtocolDataInput;
+}
+
+export interface UserUpdateInput {
+  username?: String;
+  email?: String;
+  lastVerifiedEmail?: String;
+  emailVerified?: Boolean;
+  company?: CompanyUpdateOneRequiredWithoutUsersInput;
+  passwordHash?: String;
+  role?: UserRoleUpdateOneRequiredWithoutUsersInput;
+  emailVerifications?: EmailVerificationUpdateManyWithoutUserInput;
+}
+
+export interface ProtocolDataUpsertWithWhereUniqueWithoutNetworkProtocolInput {
+  where: ProtocolDataWhereUniqueInput;
+  update: ProtocolDataUpdateWithoutNetworkProtocolDataInput;
+  create: ProtocolDataCreateWithoutNetworkProtocolInput;
+}
+
+export interface ApplicationUpsertWithWhereUniqueWithoutReportingProtocolInput {
+  where: ApplicationWhereUniqueInput;
+  update: ApplicationUpdateWithoutReportingProtocolDataInput;
+  create: ApplicationCreateWithoutReportingProtocolInput;
+}
 
 export interface ProtocolDataScalarWhereInput {
   id?: Int;
@@ -4099,45 +4104,70 @@ export interface ProtocolDataScalarWhereInput {
   NOT?: ProtocolDataScalarWhereInput[] | ProtocolDataScalarWhereInput;
 }
 
-export type CompanyWhereUniqueInput = AtLeastOne<{
-  id: Int;
-  name?: String;
-}>;
+export interface ApplicationUpdateManyWithoutReportingProtocolInput {
+  create?:
+    | ApplicationCreateWithoutReportingProtocolInput[]
+    | ApplicationCreateWithoutReportingProtocolInput;
+  delete?: ApplicationWhereUniqueInput[] | ApplicationWhereUniqueInput;
+  connect?: ApplicationWhereUniqueInput[] | ApplicationWhereUniqueInput;
+  set?: ApplicationWhereUniqueInput[] | ApplicationWhereUniqueInput;
+  disconnect?: ApplicationWhereUniqueInput[] | ApplicationWhereUniqueInput;
+  update?:
+    | ApplicationUpdateWithWhereUniqueWithoutReportingProtocolInput[]
+    | ApplicationUpdateWithWhereUniqueWithoutReportingProtocolInput;
+  upsert?:
+    | ApplicationUpsertWithWhereUniqueWithoutReportingProtocolInput[]
+    | ApplicationUpsertWithWhereUniqueWithoutReportingProtocolInput;
+  deleteMany?: ApplicationScalarWhereInput[] | ApplicationScalarWhereInput;
+  updateMany?:
+    | ApplicationUpdateManyWithWhereNestedInput[]
+    | ApplicationUpdateManyWithWhereNestedInput;
+}
 
 export interface ProtocolDataUpdateManyWithWhereNestedInput {
   where: ProtocolDataScalarWhereInput;
   data: ProtocolDataUpdateManyDataInput;
 }
 
-export type CompanyNetworkTypeLinkWhereUniqueInput = AtLeastOne<{
-  id: Int;
-}>;
+export interface ApplicationCreateManyWithoutReportingProtocolInput {
+  create?:
+    | ApplicationCreateWithoutReportingProtocolInput[]
+    | ApplicationCreateWithoutReportingProtocolInput;
+  connect?: ApplicationWhereUniqueInput[] | ApplicationWhereUniqueInput;
+}
 
 export interface ProtocolDataUpdateManyDataInput {
   dataIdentifier?: String;
   dataValue?: String;
 }
 
-export type CompanyTypeWhereUniqueInput = AtLeastOne<{
-  id: Int;
-  name?: String;
-}>;
-
-export interface NetworkUpsertWithWhereUniqueWithoutNetworkProtocolInput {
-  where: NetworkWhereUniqueInput;
-  update: NetworkUpdateWithoutNetworkProtocolDataInput;
-  create: NetworkCreateWithoutNetworkProtocolInput;
+export interface ProtocolDataUpdateInput {
+  network?: NetworkUpdateOneRequiredWithoutProtocolDataInput;
+  networkProtocol?: NetworkProtocolUpdateOneRequiredWithoutProtocolDataInput;
+  dataIdentifier?: String;
+  dataValue?: String;
 }
 
-export interface UserUpdateInput {
-  username?: String;
-  email?: String;
-  lastVerifiedEmail?: String;
-  emailVerified?: Boolean;
-  company?: CompanyUpdateOneRequiredWithoutUsersInput;
-  passwordHash?: String;
-  role?: UserRoleUpdateOneRequiredWithoutUsersInput;
-  emailVerifications?: EmailVerificationUpdateManyWithoutUserInput;
+export interface NetworkProtocolUpsertWithoutNetworksInput {
+  update: NetworkProtocolUpdateWithoutNetworksDataInput;
+  create: NetworkProtocolCreateWithoutNetworksInput;
+}
+
+export interface CompanyUpsertWithoutPasswordPoliciesInput {
+  update: CompanyUpdateWithoutPasswordPoliciesDataInput;
+  create: CompanyCreateWithoutPasswordPoliciesInput;
+}
+
+export interface NetworkUpsertWithWhereUniqueWithoutNetworkTypeInput {
+  where: NetworkWhereUniqueInput;
+  update: NetworkUpdateWithoutNetworkTypeDataInput;
+  create: NetworkCreateWithoutNetworkTypeInput;
+}
+
+export interface PasswordPolicyUpdateInput {
+  ruleText?: String;
+  ruleRegExp?: String;
+  company?: CompanyUpdateOneWithoutPasswordPoliciesInput;
 }
 
 export interface NetworkScalarWhereInput {
@@ -4196,118 +4226,14 @@ export interface NetworkScalarWhereInput {
   NOT?: NetworkScalarWhereInput[] | NetworkScalarWhereInput;
 }
 
-export interface ApplicationUpsertWithWhereUniqueWithoutReportingProtocolInput {
-  where: ApplicationWhereUniqueInput;
-  update: ApplicationUpdateWithoutReportingProtocolDataInput;
-  create: ApplicationCreateWithoutReportingProtocolInput;
-}
-
-export interface NetworkUpdateManyWithWhereNestedInput {
-  where: NetworkScalarWhereInput;
-  data: NetworkUpdateManyDataInput;
-}
-
-export interface ApplicationUpdateManyWithoutReportingProtocolInput {
-  create?:
-    | ApplicationCreateWithoutReportingProtocolInput[]
-    | ApplicationCreateWithoutReportingProtocolInput;
-  delete?: ApplicationWhereUniqueInput[] | ApplicationWhereUniqueInput;
-  connect?: ApplicationWhereUniqueInput[] | ApplicationWhereUniqueInput;
-  set?: ApplicationWhereUniqueInput[] | ApplicationWhereUniqueInput;
-  disconnect?: ApplicationWhereUniqueInput[] | ApplicationWhereUniqueInput;
-  update?:
-    | ApplicationUpdateWithWhereUniqueWithoutReportingProtocolInput[]
-    | ApplicationUpdateWithWhereUniqueWithoutReportingProtocolInput;
-  upsert?:
-    | ApplicationUpsertWithWhereUniqueWithoutReportingProtocolInput[]
-    | ApplicationUpsertWithWhereUniqueWithoutReportingProtocolInput;
-  deleteMany?: ApplicationScalarWhereInput[] | ApplicationScalarWhereInput;
-  updateMany?:
-    | ApplicationUpdateManyWithWhereNestedInput[]
-    | ApplicationUpdateManyWithWhereNestedInput;
-}
-
-export interface NetworkUpdateManyDataInput {
-  name?: String;
-  baseUrl?: String;
-  securityData?: String;
-}
-
-export interface ApplicationCreateManyWithoutReportingProtocolInput {
-  create?:
-    | ApplicationCreateWithoutReportingProtocolInput[]
-    | ApplicationCreateWithoutReportingProtocolInput;
-  connect?: ApplicationWhereUniqueInput[] | ApplicationWhereUniqueInput;
-}
-
-export interface ProtocolDataUpdateManyWithoutNetworkProtocolInput {
-  create?:
-    | ProtocolDataCreateWithoutNetworkProtocolInput[]
-    | ProtocolDataCreateWithoutNetworkProtocolInput;
-  delete?: ProtocolDataWhereUniqueInput[] | ProtocolDataWhereUniqueInput;
-  connect?: ProtocolDataWhereUniqueInput[] | ProtocolDataWhereUniqueInput;
-  set?: ProtocolDataWhereUniqueInput[] | ProtocolDataWhereUniqueInput;
-  disconnect?: ProtocolDataWhereUniqueInput[] | ProtocolDataWhereUniqueInput;
-  update?:
-    | ProtocolDataUpdateWithWhereUniqueWithoutNetworkProtocolInput[]
-    | ProtocolDataUpdateWithWhereUniqueWithoutNetworkProtocolInput;
-  upsert?:
-    | ProtocolDataUpsertWithWhereUniqueWithoutNetworkProtocolInput[]
-    | ProtocolDataUpsertWithWhereUniqueWithoutNetworkProtocolInput;
-  deleteMany?: ProtocolDataScalarWhereInput[] | ProtocolDataScalarWhereInput;
-  updateMany?:
-    | ProtocolDataUpdateManyWithWhereNestedInput[]
-    | ProtocolDataUpdateManyWithWhereNestedInput;
-}
-
-export interface ProtocolDataUpdateInput {
-  network?: NetworkUpdateOneRequiredWithoutProtocolDataInput;
-  networkProtocol?: NetworkProtocolUpdateOneRequiredWithoutProtocolDataInput;
-  dataIdentifier?: String;
-  dataValue?: String;
-}
-
-export interface ProtocolDataUpdateWithWhereUniqueWithoutNetworkProtocolInput {
-  where: ProtocolDataWhereUniqueInput;
-  data: ProtocolDataUpdateWithoutNetworkProtocolDataInput;
-}
-
-export interface CompanyUpsertWithoutPasswordPoliciesInput {
-  update: CompanyUpdateWithoutPasswordPoliciesDataInput;
-  create: CompanyCreateWithoutPasswordPoliciesInput;
-}
-
-export interface ProtocolDataUpdateWithoutNetworkProtocolDataInput {
-  network?: NetworkUpdateOneRequiredWithoutProtocolDataInput;
-  dataIdentifier?: String;
-  dataValue?: String;
-}
-
-export interface PasswordPolicyUpdateInput {
-  ruleText?: String;
-  ruleRegExp?: String;
-  company?: CompanyUpdateOneWithoutPasswordPoliciesInput;
-}
-
-export interface NetworkUpdateOneRequiredWithoutProtocolDataInput {
-  create?: NetworkCreateWithoutProtocolDataInput;
-  update?: NetworkUpdateWithoutProtocolDataDataInput;
-  upsert?: NetworkUpsertWithoutProtocolDataInput;
-  connect?: NetworkWhereUniqueInput;
-}
-
 export interface CompanyCreateOneWithoutPasswordPoliciesInput {
   create?: CompanyCreateWithoutPasswordPoliciesInput;
   connect?: CompanyWhereUniqueInput;
 }
 
-export interface NetworkUpdateWithoutProtocolDataDataInput {
-  name?: String;
-  networkProvider?: NetworkProviderUpdateOneRequiredWithoutNetworksInput;
-  networkType?: NetworkTypeUpdateOneRequiredWithoutNetworksInput;
-  networkProtocol?: NetworkProtocolUpdateOneRequiredWithoutNetworksInput;
-  baseUrl?: String;
-  securityData?: String;
+export interface NetworkUpdateManyWithWhereNestedInput {
+  where: NetworkScalarWhereInput;
+  data: NetworkUpdateManyDataInput;
 }
 
 export interface NetworkTypeUpdateInput {
@@ -4320,9 +4246,10 @@ export interface NetworkTypeUpdateInput {
   networks?: NetworkUpdateManyWithoutNetworkTypeInput;
 }
 
-export interface NetworkUpsertWithoutProtocolDataInput {
-  update: NetworkUpdateWithoutProtocolDataDataInput;
-  create: NetworkCreateWithoutProtocolDataInput;
+export interface NetworkUpdateManyDataInput {
+  name?: String;
+  baseUrl?: String;
+  securityData?: String;
 }
 
 export interface NetworkUpsertWithWhereUniqueWithoutNetworkProviderInput {
@@ -4331,10 +4258,9 @@ export interface NetworkUpsertWithWhereUniqueWithoutNetworkProviderInput {
   create: NetworkCreateWithoutNetworkProviderInput;
 }
 
-export interface ProtocolDataUpsertWithWhereUniqueWithoutNetworkProtocolInput {
-  where: ProtocolDataWhereUniqueInput;
-  update: ProtocolDataUpdateWithoutNetworkProtocolDataInput;
-  create: ProtocolDataCreateWithoutNetworkProtocolInput;
+export interface NetworkTypeUpsertWithoutNetworkProtocolsInput {
+  update: NetworkTypeUpdateWithoutNetworkProtocolsDataInput;
+  create: NetworkTypeCreateWithoutNetworkProtocolsInput;
 }
 
 export interface NetworkUpdateManyWithoutNetworkProviderInput {
@@ -4357,10 +4283,9 @@ export interface NetworkUpdateManyWithoutNetworkProviderInput {
     | NetworkUpdateManyWithWhereNestedInput;
 }
 
-export interface NetworkProtocolUpsertWithWhereUniqueWithoutMasterProtocolInput {
-  where: NetworkProtocolWhereUniqueInput;
-  update: NetworkProtocolUpdateWithoutMasterProtocolDataInput;
-  create: NetworkProtocolCreateWithoutMasterProtocolInput;
+export interface NetworkProtocolUpsertWithoutProtocolDataInput {
+  update: NetworkProtocolUpdateWithoutProtocolDataDataInput;
+  create: NetworkProtocolCreateWithoutProtocolDataInput;
 }
 
 export interface NetworkCreateManyWithoutNetworkProviderInput {
@@ -4368,6 +4293,39 @@ export interface NetworkCreateManyWithoutNetworkProviderInput {
     | NetworkCreateWithoutNetworkProviderInput[]
     | NetworkCreateWithoutNetworkProviderInput;
   connect?: NetworkWhereUniqueInput[] | NetworkWhereUniqueInput;
+}
+
+export interface ProtocolDataUpsertWithWhereUniqueWithoutNetworkInput {
+  where: ProtocolDataWhereUniqueInput;
+  update: ProtocolDataUpdateWithoutNetworkDataInput;
+  create: ProtocolDataCreateWithoutNetworkInput;
+}
+
+export type UserWhereUniqueInput = AtLeastOne<{
+  id: Int;
+  username?: String;
+}>;
+
+export interface NetworkUpsertWithWhereUniqueWithoutNetworkProtocolInput {
+  where: NetworkWhereUniqueInput;
+  update: NetworkUpdateWithoutNetworkProtocolDataInput;
+  create: NetworkCreateWithoutNetworkProtocolInput;
+}
+
+export type UserRoleWhereUniqueInput = AtLeastOne<{
+  id: Int;
+  name?: String;
+}>;
+
+export interface NetworkProtocolUpsertWithWhereUniqueWithoutNetworkTypeInput {
+  where: NetworkProtocolWhereUniqueInput;
+  update: NetworkProtocolUpdateWithoutNetworkTypeDataInput;
+  create: NetworkProtocolCreateWithoutNetworkTypeInput;
+}
+
+export interface CompanyUpsertWithoutUsersInput {
+  update: CompanyUpdateWithoutUsersDataInput;
+  create: CompanyCreateWithoutUsersInput;
 }
 
 export interface NetworkProtocolScalarWhereInput {
@@ -4421,40 +4379,17 @@ export interface NetworkProtocolScalarWhereInput {
   networkProtocolVersion_not_starts_with?: String;
   networkProtocolVersion_ends_with?: String;
   networkProtocolVersion_not_ends_with?: String;
+  masterProtocol?: Int;
+  masterProtocol_not?: Int;
+  masterProtocol_in?: Int[] | Int;
+  masterProtocol_not_in?: Int[] | Int;
+  masterProtocol_lt?: Int;
+  masterProtocol_lte?: Int;
+  masterProtocol_gt?: Int;
+  masterProtocol_gte?: Int;
   AND?: NetworkProtocolScalarWhereInput[] | NetworkProtocolScalarWhereInput;
   OR?: NetworkProtocolScalarWhereInput[] | NetworkProtocolScalarWhereInput;
   NOT?: NetworkProtocolScalarWhereInput[] | NetworkProtocolScalarWhereInput;
-}
-
-export type UserWhereUniqueInput = AtLeastOne<{
-  id: Int;
-  username?: String;
-}>;
-
-export interface NetworkProtocolUpdateManyWithWhereNestedInput {
-  where: NetworkProtocolScalarWhereInput;
-  data: NetworkProtocolUpdateManyDataInput;
-}
-
-export type UserRoleWhereUniqueInput = AtLeastOne<{
-  id: Int;
-  name?: String;
-}>;
-
-export interface NetworkProtocolUpdateManyDataInput {
-  name?: String;
-  protocolHandler?: String;
-  networkProtocolVersion?: String;
-}
-
-export interface CompanyUpsertWithoutUsersInput {
-  update: CompanyUpdateWithoutUsersDataInput;
-  create: CompanyCreateWithoutUsersInput;
-}
-
-export interface NetworkProtocolUpsertWithoutNetworksInput {
-  update: NetworkProtocolUpdateWithoutNetworksDataInput;
-  create: NetworkProtocolCreateWithoutNetworksInput;
 }
 
 export interface CompanyCreateOneWithoutApplicationsInput {
@@ -4462,10 +4397,9 @@ export interface CompanyCreateOneWithoutApplicationsInput {
   connect?: CompanyWhereUniqueInput;
 }
 
-export interface NetworkUpsertWithWhereUniqueWithoutNetworkTypeInput {
-  where: NetworkWhereUniqueInput;
-  update: NetworkUpdateWithoutNetworkTypeDataInput;
-  create: NetworkCreateWithoutNetworkTypeInput;
+export interface NetworkProtocolUpdateManyWithWhereNestedInput {
+  where: NetworkProtocolScalarWhereInput;
+  data: NetworkProtocolUpdateManyDataInput;
 }
 
 export interface CompanyNetworkTypeLinkCreateManyWithoutCompanyInput {
@@ -4477,9 +4411,11 @@ export interface CompanyNetworkTypeLinkCreateManyWithoutCompanyInput {
     | CompanyNetworkTypeLinkWhereUniqueInput;
 }
 
-export interface NetworkTypeUpsertWithoutNetworkProtocolsInput {
-  update: NetworkTypeUpdateWithoutNetworkProtocolsDataInput;
-  create: NetworkTypeCreateWithoutNetworkProtocolsInput;
+export interface NetworkProtocolUpdateManyDataInput {
+  name?: String;
+  protocolHandler?: String;
+  networkProtocolVersion?: String;
+  masterProtocol?: Int;
 }
 
 export interface ApplicationNetworkTypeLinkCreateManyWithoutNetworkTypeInput {
@@ -4491,9 +4427,9 @@ export interface ApplicationNetworkTypeLinkCreateManyWithoutNetworkTypeInput {
     | ApplicationNetworkTypeLinkWhereUniqueInput;
 }
 
-export interface NetworkProtocolUpsertWithoutNetworkProtocolsInput {
-  update: NetworkProtocolUpdateWithoutNetworkProtocolsDataInput;
-  create: NetworkProtocolCreateWithoutNetworkProtocolsInput;
+export interface NetworkTypeUpsertWithoutDeviceProfilesInput {
+  update: NetworkTypeUpdateWithoutDeviceProfilesDataInput;
+  create: NetworkTypeCreateWithoutDeviceProfilesInput;
 }
 
 export interface ReportingProtocolCreateOneWithoutApplicationsInput {
@@ -4501,10 +4437,9 @@ export interface ReportingProtocolCreateOneWithoutApplicationsInput {
   connect?: ReportingProtocolWhereUniqueInput;
 }
 
-export interface NetworkProtocolUpsertWithWhereUniqueWithoutNetworkTypeInput {
-  where: NetworkProtocolWhereUniqueInput;
-  update: NetworkProtocolUpdateWithoutNetworkTypeDataInput;
-  create: NetworkProtocolCreateWithoutNetworkTypeInput;
+export interface DeviceProfileUpsertWithoutDeviceNetworkTypeLinksInput {
+  update: DeviceProfileUpdateWithoutDeviceNetworkTypeLinksDataInput;
+  create: DeviceProfileCreateWithoutDeviceNetworkTypeLinksInput;
 }
 
 export interface DeviceNetworkTypeLinkCreateManyWithoutDeviceInput {
@@ -4516,9 +4451,10 @@ export interface DeviceNetworkTypeLinkCreateManyWithoutDeviceInput {
     | DeviceNetworkTypeLinkWhereUniqueInput;
 }
 
-export interface NetworkTypeUpsertWithoutDeviceProfilesInput {
-  update: NetworkTypeUpdateWithoutDeviceProfilesDataInput;
-  create: NetworkTypeCreateWithoutDeviceProfilesInput;
+export interface DeviceNetworkTypeLinkUpsertWithWhereUniqueWithoutNetworkTypeInput {
+  where: DeviceNetworkTypeLinkWhereUniqueInput;
+  update: DeviceNetworkTypeLinkUpdateWithoutNetworkTypeDataInput;
+  create: DeviceNetworkTypeLinkCreateWithoutNetworkTypeInput;
 }
 
 export interface CompanyNetworkTypeLinkCreateManyWithoutNetworkTypeInput {
@@ -4530,9 +4466,9 @@ export interface CompanyNetworkTypeLinkCreateManyWithoutNetworkTypeInput {
     | CompanyNetworkTypeLinkWhereUniqueInput;
 }
 
-export interface DeviceProfileUpsertWithoutDeviceNetworkTypeLinksInput {
-  update: DeviceProfileUpdateWithoutDeviceNetworkTypeLinksDataInput;
-  create: DeviceProfileCreateWithoutDeviceNetworkTypeLinksInput;
+export interface NetworkTypeUpsertWithoutApplicationNetworkTypeLinksInput {
+  update: NetworkTypeUpdateWithoutApplicationNetworkTypeLinksDataInput;
+  create: NetworkTypeCreateWithoutApplicationNetworkTypeLinksInput;
 }
 
 export interface ApplicationCreateManyWithoutCompanyInput {
@@ -4542,36 +4478,15 @@ export interface ApplicationCreateManyWithoutCompanyInput {
   connect?: ApplicationWhereUniqueInput[] | ApplicationWhereUniqueInput;
 }
 
-export interface DeviceNetworkTypeLinkUpsertWithWhereUniqueWithoutNetworkTypeInput {
-  where: DeviceNetworkTypeLinkWhereUniqueInput;
-  update: DeviceNetworkTypeLinkUpdateWithoutNetworkTypeDataInput;
-  create: DeviceNetworkTypeLinkCreateWithoutNetworkTypeInput;
-}
-
-export interface NetworkTypeCreateOneWithoutApplicationNetworkTypeLinksInput {
-  create?: NetworkTypeCreateWithoutApplicationNetworkTypeLinksInput;
-  connect?: NetworkTypeWhereUniqueInput;
-}
-
-export interface NetworkTypeUpsertWithoutApplicationNetworkTypeLinksInput {
-  update: NetworkTypeUpdateWithoutApplicationNetworkTypeLinksDataInput;
-  create: NetworkTypeCreateWithoutApplicationNetworkTypeLinksInput;
-}
-
-export interface DeviceCreateOneWithoutDeviceNetworkTypeLinksInput {
-  create?: DeviceCreateWithoutDeviceNetworkTypeLinksInput;
-  connect?: DeviceWhereUniqueInput;
-}
-
 export interface ApplicationNetworkTypeLinkUpsertWithWhereUniqueWithoutApplicationInput {
   where: ApplicationNetworkTypeLinkWhereUniqueInput;
   update: ApplicationNetworkTypeLinkUpdateWithoutApplicationDataInput;
   create: ApplicationNetworkTypeLinkCreateWithoutApplicationInput;
 }
 
-export interface DeviceProfileCreateOneWithoutDeviceNetworkTypeLinksInput {
-  create?: DeviceProfileCreateWithoutDeviceNetworkTypeLinksInput;
-  connect?: DeviceProfileWhereUniqueInput;
+export interface NetworkTypeCreateOneWithoutApplicationNetworkTypeLinksInput {
+  create?: NetworkTypeCreateWithoutApplicationNetworkTypeLinksInput;
+  connect?: NetworkTypeWhereUniqueInput;
 }
 
 export interface ApplicationNetworkTypeLinkScalarWhereInput {
@@ -4608,11 +4523,9 @@ export interface ApplicationNetworkTypeLinkScalarWhereInput {
     | ApplicationNetworkTypeLinkScalarWhereInput;
 }
 
-export interface NetworkProtocolCreateManyWithoutNetworkTypeInput {
-  create?:
-    | NetworkProtocolCreateWithoutNetworkTypeInput[]
-    | NetworkProtocolCreateWithoutNetworkTypeInput;
-  connect?: NetworkProtocolWhereUniqueInput[] | NetworkProtocolWhereUniqueInput;
+export interface DeviceCreateOneWithoutDeviceNetworkTypeLinksInput {
+  create?: DeviceCreateWithoutDeviceNetworkTypeLinksInput;
+  connect?: DeviceWhereUniqueInput;
 }
 
 export interface ApplicationNetworkTypeLinkUpdateManyWithWhereNestedInput {
@@ -4620,18 +4533,20 @@ export interface ApplicationNetworkTypeLinkUpdateManyWithWhereNestedInput {
   data: ApplicationNetworkTypeLinkUpdateManyDataInput;
 }
 
-export interface NetworkTypeCreateOneWithoutNetworkProtocolsInput {
-  create?: NetworkTypeCreateWithoutNetworkProtocolsInput;
-  connect?: NetworkTypeWhereUniqueInput;
+export interface DeviceProfileCreateOneWithoutDeviceNetworkTypeLinksInput {
+  create?: DeviceProfileCreateWithoutDeviceNetworkTypeLinksInput;
+  connect?: DeviceProfileWhereUniqueInput;
 }
 
 export interface ApplicationNetworkTypeLinkUpdateManyDataInput {
   networkSettings?: String;
 }
 
-export interface CompanyCreateOneWithoutDeviceProfilesInput {
-  create?: CompanyCreateWithoutDeviceProfilesInput;
-  connect?: CompanyWhereUniqueInput;
+export interface NetworkProtocolCreateManyWithoutNetworkTypeInput {
+  create?:
+    | NetworkProtocolCreateWithoutNetworkTypeInput[]
+    | NetworkProtocolCreateWithoutNetworkTypeInput;
+  connect?: NetworkProtocolWhereUniqueInput[] | NetworkProtocolWhereUniqueInput;
 }
 
 export interface ApplicationUpsertWithWhereUniqueWithoutCompanyInput {
@@ -4640,9 +4555,9 @@ export interface ApplicationUpsertWithWhereUniqueWithoutCompanyInput {
   create: ApplicationCreateWithoutCompanyInput;
 }
 
-export interface UserCreateManyWithoutCompanyInput {
-  create?: UserCreateWithoutCompanyInput[] | UserCreateWithoutCompanyInput;
-  connect?: UserWhereUniqueInput[] | UserWhereUniqueInput;
+export interface NetworkProviderCreateOneWithoutNetworksInput {
+  create?: NetworkProviderCreateWithoutNetworksInput;
+  connect?: NetworkProviderWhereUniqueInput;
 }
 
 export interface ApplicationScalarWhereInput {
@@ -4701,13 +4616,11 @@ export interface ApplicationScalarWhereInput {
   NOT?: ApplicationScalarWhereInput[] | ApplicationScalarWhereInput;
 }
 
-export interface EmailVerificationCreateManyWithoutUserInput {
+export interface DeviceProfileCreateManyWithoutNetworkTypeInput {
   create?:
-    | EmailVerificationCreateWithoutUserInput[]
-    | EmailVerificationCreateWithoutUserInput;
-  connect?:
-    | EmailVerificationWhereUniqueInput[]
-    | EmailVerificationWhereUniqueInput;
+    | DeviceProfileCreateWithoutNetworkTypeInput[]
+    | DeviceProfileCreateWithoutNetworkTypeInput;
+  connect?: DeviceProfileWhereUniqueInput[] | DeviceProfileWhereUniqueInput;
 }
 
 export interface ApplicationUpdateManyWithWhereNestedInput {
@@ -4715,11 +4628,11 @@ export interface ApplicationUpdateManyWithWhereNestedInput {
   data: ApplicationUpdateManyDataInput;
 }
 
-export interface NetworkCreateManyWithoutNetworkTypeInput {
+export interface PasswordPolicyCreateManyWithoutCompanyInput {
   create?:
-    | NetworkCreateWithoutNetworkTypeInput[]
-    | NetworkCreateWithoutNetworkTypeInput;
-  connect?: NetworkWhereUniqueInput[] | NetworkWhereUniqueInput;
+    | PasswordPolicyCreateWithoutCompanyInput[]
+    | PasswordPolicyCreateWithoutCompanyInput;
+  connect?: PasswordPolicyWhereUniqueInput[] | PasswordPolicyWhereUniqueInput;
 }
 
 export interface ApplicationUpdateManyDataInput {
@@ -4728,9 +4641,9 @@ export interface ApplicationUpdateManyDataInput {
   baseUrl?: String;
 }
 
-export interface NetworkProtocolCreateOneWithoutNetworksInput {
-  create?: NetworkProtocolCreateWithoutNetworksInput;
-  connect?: NetworkProtocolWhereUniqueInput;
+export interface UserRoleCreateOneWithoutUsersInput {
+  create?: UserRoleCreateWithoutUsersInput;
+  connect?: UserRoleWhereUniqueInput;
 }
 
 export interface DeviceProfileUpdateManyWithoutCompanyInput {
@@ -4753,11 +4666,13 @@ export interface DeviceProfileUpdateManyWithoutCompanyInput {
     | DeviceProfileUpdateManyWithWhereNestedInput;
 }
 
-export interface NetworkCreateManyWithoutNetworkProtocolInput {
+export interface DeviceNetworkTypeLinkCreateManyWithoutDeviceProfileInput {
   create?:
-    | NetworkCreateWithoutNetworkProtocolInput[]
-    | NetworkCreateWithoutNetworkProtocolInput;
-  connect?: NetworkWhereUniqueInput[] | NetworkWhereUniqueInput;
+    | DeviceNetworkTypeLinkCreateWithoutDeviceProfileInput[]
+    | DeviceNetworkTypeLinkCreateWithoutDeviceProfileInput;
+  connect?:
+    | DeviceNetworkTypeLinkWhereUniqueInput[]
+    | DeviceNetworkTypeLinkWhereUniqueInput;
 }
 
 export interface DeviceProfileUpdateWithWhereUniqueWithoutCompanyInput {
@@ -4765,11 +4680,9 @@ export interface DeviceProfileUpdateWithWhereUniqueWithoutCompanyInput {
   data: DeviceProfileUpdateWithoutCompanyDataInput;
 }
 
-export interface ProtocolDataCreateManyWithoutNetworkInput {
-  create?:
-    | ProtocolDataCreateWithoutNetworkInput[]
-    | ProtocolDataCreateWithoutNetworkInput;
-  connect?: ProtocolDataWhereUniqueInput[] | ProtocolDataWhereUniqueInput;
+export interface NetworkProtocolCreateOneWithoutProtocolDataInput {
+  create?: NetworkProtocolCreateWithoutProtocolDataInput;
+  connect?: NetworkProtocolWhereUniqueInput;
 }
 
 export interface DeviceProfileUpdateWithoutCompanyDataInput {
@@ -4780,6 +4693,19 @@ export interface DeviceProfileUpdateWithoutCompanyDataInput {
   deviceNetworkTypeLinks?: DeviceNetworkTypeLinkUpdateManyWithoutDeviceProfileInput;
 }
 
+export interface NetworkCreateManyWithoutNetworkTypeInput {
+  create?:
+    | NetworkCreateWithoutNetworkTypeInput[]
+    | NetworkCreateWithoutNetworkTypeInput;
+  connect?: NetworkWhereUniqueInput[] | NetworkWhereUniqueInput;
+}
+
+export interface DeviceProfileUpsertWithWhereUniqueWithoutCompanyInput {
+  where: DeviceProfileWhereUniqueInput;
+  update: DeviceProfileUpdateWithoutCompanyDataInput;
+  create: DeviceProfileCreateWithoutCompanyInput;
+}
+
 export interface ProtocolDataCreateManyWithoutNetworkProtocolInput {
   create?:
     | ProtocolDataCreateWithoutNetworkProtocolInput[]
@@ -4787,10 +4713,9 @@ export interface ProtocolDataCreateManyWithoutNetworkProtocolInput {
   connect?: ProtocolDataWhereUniqueInput[] | ProtocolDataWhereUniqueInput;
 }
 
-export interface DeviceProfileUpsertWithWhereUniqueWithoutCompanyInput {
-  where: DeviceProfileWhereUniqueInput;
-  update: DeviceProfileUpdateWithoutCompanyDataInput;
-  create: DeviceProfileCreateWithoutCompanyInput;
+export interface CompanyUpsertWithoutCompanyNetworkTypeLinksInput {
+  update: CompanyUpdateWithoutCompanyNetworkTypeLinksDataInput;
+  create: CompanyCreateWithoutCompanyNetworkTypeLinksInput;
 }
 
 export interface DeviceProfileCreateManyWithoutCompanyInput {
@@ -4800,9 +4725,10 @@ export interface DeviceProfileCreateManyWithoutCompanyInput {
   connect?: DeviceProfileWhereUniqueInput[] | DeviceProfileWhereUniqueInput;
 }
 
-export interface CompanyUpsertWithoutCompanyNetworkTypeLinksInput {
-  update: CompanyUpdateWithoutCompanyNetworkTypeLinksDataInput;
-  create: CompanyCreateWithoutCompanyNetworkTypeLinksInput;
+export interface CompanyNetworkTypeLinkUpsertWithWhereUniqueWithoutNetworkTypeInput {
+  where: CompanyNetworkTypeLinkWhereUniqueInput;
+  update: CompanyNetworkTypeLinkUpdateWithoutNetworkTypeDataInput;
+  create: CompanyNetworkTypeLinkCreateWithoutNetworkTypeInput;
 }
 
 export interface CompanyUpdateWithoutApplicationsDataInput {
@@ -4812,42 +4738,6 @@ export interface CompanyUpdateWithoutApplicationsDataInput {
   deviceProfiles?: DeviceProfileUpdateManyWithoutCompanyInput;
   passwordPolicies?: PasswordPolicyUpdateManyWithoutCompanyInput;
   users?: UserUpdateManyWithoutCompanyInput;
-}
-
-export interface CompanyNetworkTypeLinkUpsertWithWhereUniqueWithoutNetworkTypeInput {
-  where: CompanyNetworkTypeLinkWhereUniqueInput;
-  update: CompanyNetworkTypeLinkUpdateWithoutNetworkTypeDataInput;
-  create: CompanyNetworkTypeLinkCreateWithoutNetworkTypeInput;
-}
-
-export interface CompanyNetworkTypeLinkUpdateManyWithoutCompanyInput {
-  create?:
-    | CompanyNetworkTypeLinkCreateWithoutCompanyInput[]
-    | CompanyNetworkTypeLinkCreateWithoutCompanyInput;
-  delete?:
-    | CompanyNetworkTypeLinkWhereUniqueInput[]
-    | CompanyNetworkTypeLinkWhereUniqueInput;
-  connect?:
-    | CompanyNetworkTypeLinkWhereUniqueInput[]
-    | CompanyNetworkTypeLinkWhereUniqueInput;
-  set?:
-    | CompanyNetworkTypeLinkWhereUniqueInput[]
-    | CompanyNetworkTypeLinkWhereUniqueInput;
-  disconnect?:
-    | CompanyNetworkTypeLinkWhereUniqueInput[]
-    | CompanyNetworkTypeLinkWhereUniqueInput;
-  update?:
-    | CompanyNetworkTypeLinkUpdateWithWhereUniqueWithoutCompanyInput[]
-    | CompanyNetworkTypeLinkUpdateWithWhereUniqueWithoutCompanyInput;
-  upsert?:
-    | CompanyNetworkTypeLinkUpsertWithWhereUniqueWithoutCompanyInput[]
-    | CompanyNetworkTypeLinkUpsertWithWhereUniqueWithoutCompanyInput;
-  deleteMany?:
-    | CompanyNetworkTypeLinkScalarWhereInput[]
-    | CompanyNetworkTypeLinkScalarWhereInput;
-  updateMany?:
-    | CompanyNetworkTypeLinkUpdateManyWithWhereNestedInput[]
-    | CompanyNetworkTypeLinkUpdateManyWithWhereNestedInput;
 }
 
 export interface CompanyNetworkTypeLinkScalarWhereInput {
@@ -4884,6 +4774,41 @@ export interface CompanyNetworkTypeLinkScalarWhereInput {
     | CompanyNetworkTypeLinkScalarWhereInput;
 }
 
+export interface CompanyNetworkTypeLinkUpdateManyWithoutCompanyInput {
+  create?:
+    | CompanyNetworkTypeLinkCreateWithoutCompanyInput[]
+    | CompanyNetworkTypeLinkCreateWithoutCompanyInput;
+  delete?:
+    | CompanyNetworkTypeLinkWhereUniqueInput[]
+    | CompanyNetworkTypeLinkWhereUniqueInput;
+  connect?:
+    | CompanyNetworkTypeLinkWhereUniqueInput[]
+    | CompanyNetworkTypeLinkWhereUniqueInput;
+  set?:
+    | CompanyNetworkTypeLinkWhereUniqueInput[]
+    | CompanyNetworkTypeLinkWhereUniqueInput;
+  disconnect?:
+    | CompanyNetworkTypeLinkWhereUniqueInput[]
+    | CompanyNetworkTypeLinkWhereUniqueInput;
+  update?:
+    | CompanyNetworkTypeLinkUpdateWithWhereUniqueWithoutCompanyInput[]
+    | CompanyNetworkTypeLinkUpdateWithWhereUniqueWithoutCompanyInput;
+  upsert?:
+    | CompanyNetworkTypeLinkUpsertWithWhereUniqueWithoutCompanyInput[]
+    | CompanyNetworkTypeLinkUpsertWithWhereUniqueWithoutCompanyInput;
+  deleteMany?:
+    | CompanyNetworkTypeLinkScalarWhereInput[]
+    | CompanyNetworkTypeLinkScalarWhereInput;
+  updateMany?:
+    | CompanyNetworkTypeLinkUpdateManyWithWhereNestedInput[]
+    | CompanyNetworkTypeLinkUpdateManyWithWhereNestedInput;
+}
+
+export interface CompanyNetworkTypeLinkUpdateManyWithWhereNestedInput {
+  where: CompanyNetworkTypeLinkScalarWhereInput;
+  data: CompanyNetworkTypeLinkUpdateManyDataInput;
+}
+
 export interface NetworkTypeUpdateWithoutCompanyNetworkTypeLinksDataInput {
   name?: String;
   applicationNetworkTypeLinks?: ApplicationNetworkTypeLinkUpdateManyWithoutNetworkTypeInput;
@@ -4893,37 +4818,19 @@ export interface NetworkTypeUpdateWithoutCompanyNetworkTypeLinksDataInput {
   networks?: NetworkUpdateManyWithoutNetworkTypeInput;
 }
 
-export interface CompanyNetworkTypeLinkUpdateManyWithWhereNestedInput {
-  where: CompanyNetworkTypeLinkScalarWhereInput;
-  data: CompanyNetworkTypeLinkUpdateManyDataInput;
-}
-
-export interface ApplicationUpdateOneRequiredWithoutApplicationNetworkTypeLinksInput {
-  create?: ApplicationCreateWithoutApplicationNetworkTypeLinksInput;
-  update?: ApplicationUpdateWithoutApplicationNetworkTypeLinksDataInput;
-  upsert?: ApplicationUpsertWithoutApplicationNetworkTypeLinksInput;
-  connect?: ApplicationWhereUniqueInput;
-}
-
 export interface CompanyNetworkTypeLinkUpdateManyDataInput {
   networkSettings?: String;
 }
 
-export interface ProtocolDataSubscriptionWhereInput {
+export interface UserRoleSubscriptionWhereInput {
   mutation_in?: MutationType[] | MutationType;
   updatedFields_contains?: String;
   updatedFields_contains_every?: String[] | String;
   updatedFields_contains_some?: String[] | String;
-  node?: ProtocolDataWhereInput;
-  AND?:
-    | ProtocolDataSubscriptionWhereInput[]
-    | ProtocolDataSubscriptionWhereInput;
-  OR?:
-    | ProtocolDataSubscriptionWhereInput[]
-    | ProtocolDataSubscriptionWhereInput;
-  NOT?:
-    | ProtocolDataSubscriptionWhereInput[]
-    | ProtocolDataSubscriptionWhereInput;
+  node?: UserRoleWhereInput;
+  AND?: UserRoleSubscriptionWhereInput[] | UserRoleSubscriptionWhereInput;
+  OR?: UserRoleSubscriptionWhereInput[] | UserRoleSubscriptionWhereInput;
+  NOT?: UserRoleSubscriptionWhereInput[] | UserRoleSubscriptionWhereInput;
 }
 
 export interface NetworkTypeUpsertWithoutDeviceNetworkTypeLinksInput {
@@ -4931,21 +4838,35 @@ export interface NetworkTypeUpsertWithoutDeviceNetworkTypeLinksInput {
   create: NetworkTypeCreateWithoutDeviceNetworkTypeLinksInput;
 }
 
-export interface NetworkProtocolSubscriptionWhereInput {
-  mutation_in?: MutationType[] | MutationType;
-  updatedFields_contains?: String;
-  updatedFields_contains_every?: String[] | String;
-  updatedFields_contains_some?: String[] | String;
-  node?: NetworkProtocolWhereInput;
-  AND?:
-    | NetworkProtocolSubscriptionWhereInput[]
-    | NetworkProtocolSubscriptionWhereInput;
-  OR?:
-    | NetworkProtocolSubscriptionWhereInput[]
-    | NetworkProtocolSubscriptionWhereInput;
-  NOT?:
-    | NetworkProtocolSubscriptionWhereInput[]
-    | NetworkProtocolSubscriptionWhereInput;
+export interface DeviceNetworkTypeLinkWhereInput {
+  id?: Int;
+  id_not?: Int;
+  id_in?: Int[] | Int;
+  id_not_in?: Int[] | Int;
+  id_lt?: Int;
+  id_lte?: Int;
+  id_gt?: Int;
+  id_gte?: Int;
+  device?: DeviceWhereInput;
+  networkType?: NetworkTypeWhereInput;
+  deviceProfile?: DeviceProfileWhereInput;
+  networkSettings?: String;
+  networkSettings_not?: String;
+  networkSettings_in?: String[] | String;
+  networkSettings_not_in?: String[] | String;
+  networkSettings_lt?: String;
+  networkSettings_lte?: String;
+  networkSettings_gt?: String;
+  networkSettings_gte?: String;
+  networkSettings_contains?: String;
+  networkSettings_not_contains?: String;
+  networkSettings_starts_with?: String;
+  networkSettings_not_starts_with?: String;
+  networkSettings_ends_with?: String;
+  networkSettings_not_ends_with?: String;
+  AND?: DeviceNetworkTypeLinkWhereInput[] | DeviceNetworkTypeLinkWhereInput;
+  OR?: DeviceNetworkTypeLinkWhereInput[] | DeviceNetworkTypeLinkWhereInput;
+  NOT?: DeviceNetworkTypeLinkWhereInput[] | DeviceNetworkTypeLinkWhereInput;
 }
 
 export interface DeviceNetworkTypeLinkUpsertWithWhereUniqueWithoutDeviceInput {
@@ -4954,15 +4875,21 @@ export interface DeviceNetworkTypeLinkUpsertWithWhereUniqueWithoutDeviceInput {
   create: DeviceNetworkTypeLinkCreateWithoutDeviceInput;
 }
 
-export interface DeviceSubscriptionWhereInput {
+export interface EmailVerificationSubscriptionWhereInput {
   mutation_in?: MutationType[] | MutationType;
   updatedFields_contains?: String;
   updatedFields_contains_every?: String[] | String;
   updatedFields_contains_some?: String[] | String;
-  node?: DeviceWhereInput;
-  AND?: DeviceSubscriptionWhereInput[] | DeviceSubscriptionWhereInput;
-  OR?: DeviceSubscriptionWhereInput[] | DeviceSubscriptionWhereInput;
-  NOT?: DeviceSubscriptionWhereInput[] | DeviceSubscriptionWhereInput;
+  node?: EmailVerificationWhereInput;
+  AND?:
+    | EmailVerificationSubscriptionWhereInput[]
+    | EmailVerificationSubscriptionWhereInput;
+  OR?:
+    | EmailVerificationSubscriptionWhereInput[]
+    | EmailVerificationSubscriptionWhereInput;
+  NOT?:
+    | EmailVerificationSubscriptionWhereInput[]
+    | EmailVerificationSubscriptionWhereInput;
 }
 
 export interface DeviceUpsertWithWhereUniqueWithoutApplicationInput {
@@ -4971,8 +4898,15 @@ export interface DeviceUpsertWithWhereUniqueWithoutApplicationInput {
   create: DeviceCreateWithoutApplicationInput;
 }
 
-export interface UserRoleUpdateManyMutationInput {
-  name?: String;
+export interface CompanySubscriptionWhereInput {
+  mutation_in?: MutationType[] | MutationType;
+  updatedFields_contains?: String;
+  updatedFields_contains_every?: String[] | String;
+  updatedFields_contains_some?: String[] | String;
+  node?: CompanyWhereInput;
+  AND?: CompanySubscriptionWhereInput[] | CompanySubscriptionWhereInput;
+  OR?: CompanySubscriptionWhereInput[] | CompanySubscriptionWhereInput;
+  NOT?: CompanySubscriptionWhereInput[] | CompanySubscriptionWhereInput;
 }
 
 export interface DeviceScalarWhereInput {
@@ -5031,19 +4965,291 @@ export interface DeviceScalarWhereInput {
   NOT?: DeviceScalarWhereInput[] | DeviceScalarWhereInput;
 }
 
-export interface UserCreateWithoutRoleInput {
-  username?: String;
-  email?: String;
-  lastVerifiedEmail?: String;
-  emailVerified?: Boolean;
-  company: CompanyCreateOneWithoutUsersInput;
-  passwordHash: String;
-  emailVerifications?: EmailVerificationCreateManyWithoutUserInput;
+export interface UserUpdateWithWhereUniqueWithoutRoleInput {
+  where: UserWhereUniqueInput;
+  data: UserUpdateWithoutRoleDataInput;
 }
 
 export interface DeviceUpdateManyWithWhereNestedInput {
   where: DeviceScalarWhereInput;
   data: DeviceUpdateManyDataInput;
+}
+
+export interface UserRoleCreateInput {
+  name?: String;
+  users?: UserCreateManyWithoutRoleInput;
+}
+
+export interface DeviceUpdateManyDataInput {
+  name?: String;
+  description?: String;
+  deviceModel?: String;
+}
+
+export interface ApplicationUpdateWithoutReportingProtocolDataInput {
+  company?: CompanyUpdateOneWithoutApplicationsInput;
+  name?: String;
+  description?: String;
+  baseUrl?: String;
+  applicationNetworkTypeLinks?: ApplicationNetworkTypeLinkUpdateManyWithoutApplicationInput;
+  devices?: DeviceUpdateManyWithoutApplicationInput;
+}
+
+export interface ApplicationUpsertWithoutApplicationNetworkTypeLinksInput {
+  update: ApplicationUpdateWithoutApplicationNetworkTypeLinksDataInput;
+  create: ApplicationCreateWithoutApplicationNetworkTypeLinksInput;
+}
+
+export interface ReportingProtocolCreateInput {
+  name?: String;
+  protocolHandler?: String;
+  applications?: ApplicationCreateManyWithoutReportingProtocolInput;
+}
+
+export interface ApplicationNetworkTypeLinkUpsertWithWhereUniqueWithoutNetworkTypeInput {
+  where: ApplicationNetworkTypeLinkWhereUniqueInput;
+  update: ApplicationNetworkTypeLinkUpdateWithoutNetworkTypeDataInput;
+  create: ApplicationNetworkTypeLinkCreateWithoutNetworkTypeInput;
+}
+
+export interface CompanyUpdateWithoutPasswordPoliciesDataInput {
+  name?: String;
+  type?: CompanyTypeUpdateOneWithoutCompaniesInput;
+  applications?: ApplicationUpdateManyWithoutCompanyInput;
+  companyNetworkTypeLinks?: CompanyNetworkTypeLinkUpdateManyWithoutCompanyInput;
+  deviceProfiles?: DeviceProfileUpdateManyWithoutCompanyInput;
+  users?: UserUpdateManyWithoutCompanyInput;
+}
+
+export interface NetworkTypeUpsertWithoutCompanyNetworkTypeLinksInput {
+  update: NetworkTypeUpdateWithoutCompanyNetworkTypeLinksDataInput;
+  create: NetworkTypeCreateWithoutCompanyNetworkTypeLinksInput;
+}
+
+export type NetworkTypeWhereUniqueInput = AtLeastOne<{
+  id: Int;
+  name?: String;
+}>;
+
+export interface CompanyNetworkTypeLinkUpsertWithWhereUniqueWithoutCompanyInput {
+  where: CompanyNetworkTypeLinkWhereUniqueInput;
+  update: CompanyNetworkTypeLinkUpdateWithoutCompanyDataInput;
+  create: CompanyNetworkTypeLinkCreateWithoutCompanyInput;
+}
+
+export interface NetworkUpdateWithWhereUniqueWithoutNetworkProviderInput {
+  where: NetworkWhereUniqueInput;
+  data: NetworkUpdateWithoutNetworkProviderDataInput;
+}
+
+export interface CompanyUpsertWithoutApplicationsInput {
+  update: CompanyUpdateWithoutApplicationsDataInput;
+  create: CompanyCreateWithoutApplicationsInput;
+}
+
+export interface NetworkProtocolUpdateManyMutationInput {
+  name?: String;
+  protocolHandler?: String;
+  networkProtocolVersion?: String;
+  masterProtocol?: Int;
+}
+
+export interface ApplicationUpdateManyMutationInput {
+  name?: String;
+  description?: String;
+  baseUrl?: String;
+}
+
+export interface EmailVerificationUpdateManyMutationInput {
+  uuid?: String;
+  email?: String;
+  changeRequested?: String;
+}
+
+export interface EmailVerificationUpdateInput {
+  user?: UserUpdateOneRequiredWithoutEmailVerificationsInput;
+  uuid?: String;
+  email?: String;
+  changeRequested?: String;
+}
+
+export interface CompanyTypeCreateOneWithoutCompaniesInput {
+  create?: CompanyTypeCreateWithoutCompaniesInput;
+  connect?: CompanyTypeWhereUniqueInput;
+}
+
+export interface CompanyCreateWithoutUsersInput {
+  name?: String;
+  type?: CompanyTypeCreateOneWithoutCompaniesInput;
+  applications?: ApplicationCreateManyWithoutCompanyInput;
+  companyNetworkTypeLinks?: CompanyNetworkTypeLinkCreateManyWithoutCompanyInput;
+  deviceProfiles?: DeviceProfileCreateManyWithoutCompanyInput;
+  passwordPolicies?: PasswordPolicyCreateManyWithoutCompanyInput;
+}
+
+export interface ApplicationCreateOneWithoutApplicationNetworkTypeLinksInput {
+  create?: ApplicationCreateWithoutApplicationNetworkTypeLinksInput;
+  connect?: ApplicationWhereUniqueInput;
+}
+
+export interface ApplicationNetworkTypeLinkCreateInput {
+  application: ApplicationCreateOneWithoutApplicationNetworkTypeLinksInput;
+  networkType: NetworkTypeCreateOneWithoutApplicationNetworkTypeLinksInput;
+  networkSettings?: String;
+}
+
+export interface NetworkTypeCreateOneWithoutDeviceNetworkTypeLinksInput {
+  create?: NetworkTypeCreateWithoutDeviceNetworkTypeLinksInput;
+  connect?: NetworkTypeWhereUniqueInput;
+}
+
+export interface ApplicationNetworkTypeLinkUpdateInput {
+  application?: ApplicationUpdateOneRequiredWithoutApplicationNetworkTypeLinksInput;
+  networkType?: NetworkTypeUpdateOneRequiredWithoutApplicationNetworkTypeLinksInput;
+  networkSettings?: String;
+}
+
+export interface ApplicationNetworkTypeLinkCreateManyWithoutApplicationInput {
+  create?:
+    | ApplicationNetworkTypeLinkCreateWithoutApplicationInput[]
+    | ApplicationNetworkTypeLinkCreateWithoutApplicationInput;
+  connect?:
+    | ApplicationNetworkTypeLinkWhereUniqueInput[]
+    | ApplicationNetworkTypeLinkWhereUniqueInput;
+}
+
+export interface ApplicationNetworkTypeLinkUpdateManyMutationInput {
+  networkSettings?: String;
+}
+
+export interface ApplicationCreateOneWithoutDevicesInput {
+  create?: ApplicationCreateWithoutDevicesInput;
+  connect?: ApplicationWhereUniqueInput;
+}
+
+export interface CompanyCreateInput {
+  name?: String;
+  type?: CompanyTypeCreateOneWithoutCompaniesInput;
+  applications?: ApplicationCreateManyWithoutCompanyInput;
+  companyNetworkTypeLinks?: CompanyNetworkTypeLinkCreateManyWithoutCompanyInput;
+  deviceProfiles?: DeviceProfileCreateManyWithoutCompanyInput;
+  passwordPolicies?: PasswordPolicyCreateManyWithoutCompanyInput;
+  users?: UserCreateManyWithoutCompanyInput;
+}
+
+export interface NetworkCreateManyWithoutNetworkProtocolInput {
+  create?:
+    | NetworkCreateWithoutNetworkProtocolInput[]
+    | NetworkCreateWithoutNetworkProtocolInput;
+  connect?: NetworkWhereUniqueInput[] | NetworkWhereUniqueInput;
+}
+
+export interface CompanyUpdateInput {
+  name?: String;
+  type?: CompanyTypeUpdateOneWithoutCompaniesInput;
+  applications?: ApplicationUpdateManyWithoutCompanyInput;
+  companyNetworkTypeLinks?: CompanyNetworkTypeLinkUpdateManyWithoutCompanyInput;
+  deviceProfiles?: DeviceProfileUpdateManyWithoutCompanyInput;
+  passwordPolicies?: PasswordPolicyUpdateManyWithoutCompanyInput;
+  users?: UserUpdateManyWithoutCompanyInput;
+}
+
+export interface CompanyCreateOneWithoutDeviceProfilesInput {
+  create?: CompanyCreateWithoutDeviceProfilesInput;
+  connect?: CompanyWhereUniqueInput;
+}
+
+export interface CompanyUpdateManyMutationInput {
+  name?: String;
+}
+
+export interface EmailVerificationCreateManyWithoutUserInput {
+  create?:
+    | EmailVerificationCreateWithoutUserInput[]
+    | EmailVerificationCreateWithoutUserInput;
+  connect?:
+    | EmailVerificationWhereUniqueInput[]
+    | EmailVerificationWhereUniqueInput;
+}
+
+export interface CompanyNetworkTypeLinkCreateInput {
+  company: CompanyCreateOneWithoutCompanyNetworkTypeLinksInput;
+  networkType: NetworkTypeCreateOneWithoutCompanyNetworkTypeLinksInput;
+  networkSettings?: String;
+}
+
+export interface NetworkTypeCreateOneWithoutNetworkProtocolsInput {
+  create?: NetworkTypeCreateWithoutNetworkProtocolsInput;
+  connect?: NetworkTypeWhereUniqueInput;
+}
+
+export interface CompanyNetworkTypeLinkUpdateInput {
+  company?: CompanyUpdateOneRequiredWithoutCompanyNetworkTypeLinksInput;
+  networkType?: NetworkTypeUpdateOneRequiredWithoutCompanyNetworkTypeLinksInput;
+  networkSettings?: String;
+}
+
+export interface NetworkCreateOneWithoutProtocolDataInput {
+  create?: NetworkCreateWithoutProtocolDataInput;
+  connect?: NetworkWhereUniqueInput;
+}
+
+export interface CompanyNetworkTypeLinkUpdateManyMutationInput {
+  networkSettings?: String;
+}
+
+export interface CompanyTypeUpdateWithoutCompaniesDataInput {
+  name?: String;
+}
+
+export interface CompanyTypeCreateInput {
+  name?: String;
+  companies?: CompanyCreateManyWithoutTypeInput;
+}
+
+export interface ApplicationNetworkTypeLinkUpdateWithWhereUniqueWithoutNetworkTypeInput {
+  where: ApplicationNetworkTypeLinkWhereUniqueInput;
+  data: ApplicationNetworkTypeLinkUpdateWithoutNetworkTypeDataInput;
+}
+
+export interface CompanyCreateManyWithoutTypeInput {
+  create?: CompanyCreateWithoutTypeInput[] | CompanyCreateWithoutTypeInput;
+  connect?: CompanyWhereUniqueInput[] | CompanyWhereUniqueInput;
+}
+
+export interface NetworkProtocolSubscriptionWhereInput {
+  mutation_in?: MutationType[] | MutationType;
+  updatedFields_contains?: String;
+  updatedFields_contains_every?: String[] | String;
+  updatedFields_contains_some?: String[] | String;
+  node?: NetworkProtocolWhereInput;
+  AND?:
+    | NetworkProtocolSubscriptionWhereInput[]
+    | NetworkProtocolSubscriptionWhereInput;
+  OR?:
+    | NetworkProtocolSubscriptionWhereInput[]
+    | NetworkProtocolSubscriptionWhereInput;
+  NOT?:
+    | NetworkProtocolSubscriptionWhereInput[]
+    | NetworkProtocolSubscriptionWhereInput;
+}
+
+export interface CompanyCreateWithoutTypeInput {
+  name?: String;
+  applications?: ApplicationCreateManyWithoutCompanyInput;
+  companyNetworkTypeLinks?: CompanyNetworkTypeLinkCreateManyWithoutCompanyInput;
+  deviceProfiles?: DeviceProfileCreateManyWithoutCompanyInput;
+  passwordPolicies?: PasswordPolicyCreateManyWithoutCompanyInput;
+  users?: UserCreateManyWithoutCompanyInput;
+}
+
+export interface UserRoleUpdateManyMutationInput {
+  name?: String;
+}
+
+export interface CompanyTypeUpdateInput {
+  name?: String;
+  companies?: CompanyUpdateManyWithoutTypeInput;
 }
 
 export interface UserCreateInput {
@@ -5057,7 +5263,160 @@ export interface UserCreateInput {
   emailVerifications?: EmailVerificationCreateManyWithoutUserInput;
 }
 
-export interface DeviceUpdateManyDataInput {
+export interface CompanyUpdateManyWithoutTypeInput {
+  create?: CompanyCreateWithoutTypeInput[] | CompanyCreateWithoutTypeInput;
+  delete?: CompanyWhereUniqueInput[] | CompanyWhereUniqueInput;
+  connect?: CompanyWhereUniqueInput[] | CompanyWhereUniqueInput;
+  set?: CompanyWhereUniqueInput[] | CompanyWhereUniqueInput;
+  disconnect?: CompanyWhereUniqueInput[] | CompanyWhereUniqueInput;
+  update?:
+    | CompanyUpdateWithWhereUniqueWithoutTypeInput[]
+    | CompanyUpdateWithWhereUniqueWithoutTypeInput;
+  upsert?:
+    | CompanyUpsertWithWhereUniqueWithoutTypeInput[]
+    | CompanyUpsertWithWhereUniqueWithoutTypeInput;
+  deleteMany?: CompanyScalarWhereInput[] | CompanyScalarWhereInput;
+  updateMany?:
+    | CompanyUpdateManyWithWhereNestedInput[]
+    | CompanyUpdateManyWithWhereNestedInput;
+}
+
+export interface ProtocolDataCreateInput {
+  network: NetworkCreateOneWithoutProtocolDataInput;
+  networkProtocol: NetworkProtocolCreateOneWithoutProtocolDataInput;
+  dataIdentifier?: String;
+  dataValue?: String;
+}
+
+export interface CompanyUpdateWithWhereUniqueWithoutTypeInput {
+  where: CompanyWhereUniqueInput;
+  data: CompanyUpdateWithoutTypeDataInput;
+}
+
+export interface NetworkProviderUpdateManyMutationInput {
+  name?: String;
+}
+
+export interface CompanyUpdateWithoutTypeDataInput {
+  name?: String;
+  applications?: ApplicationUpdateManyWithoutCompanyInput;
+  companyNetworkTypeLinks?: CompanyNetworkTypeLinkUpdateManyWithoutCompanyInput;
+  deviceProfiles?: DeviceProfileUpdateManyWithoutCompanyInput;
+  passwordPolicies?: PasswordPolicyUpdateManyWithoutCompanyInput;
+  users?: UserUpdateManyWithoutCompanyInput;
+}
+
+export interface NetworkUpdateManyMutationInput {
+  name?: String;
+  baseUrl?: String;
+  securityData?: String;
+}
+
+export interface CompanyUpsertWithWhereUniqueWithoutTypeInput {
+  where: CompanyWhereUniqueInput;
+  update: CompanyUpdateWithoutTypeDataInput;
+  create: CompanyCreateWithoutTypeInput;
+}
+
+export interface NetworkTypeCreateOneWithoutCompanyNetworkTypeLinksInput {
+  create?: NetworkTypeCreateWithoutCompanyNetworkTypeLinksInput;
+  connect?: NetworkTypeWhereUniqueInput;
+}
+
+export interface CompanyScalarWhereInput {
+  id?: Int;
+  id_not?: Int;
+  id_in?: Int[] | Int;
+  id_not_in?: Int[] | Int;
+  id_lt?: Int;
+  id_lte?: Int;
+  id_gt?: Int;
+  id_gte?: Int;
+  name?: String;
+  name_not?: String;
+  name_in?: String[] | String;
+  name_not_in?: String[] | String;
+  name_lt?: String;
+  name_lte?: String;
+  name_gt?: String;
+  name_gte?: String;
+  name_contains?: String;
+  name_not_contains?: String;
+  name_starts_with?: String;
+  name_not_starts_with?: String;
+  name_ends_with?: String;
+  name_not_ends_with?: String;
+  AND?: CompanyScalarWhereInput[] | CompanyScalarWhereInput;
+  OR?: CompanyScalarWhereInput[] | CompanyScalarWhereInput;
+  NOT?: CompanyScalarWhereInput[] | CompanyScalarWhereInput;
+}
+
+export interface CompanyCreateOneWithoutCompanyNetworkTypeLinksInput {
+  create?: CompanyCreateWithoutCompanyNetworkTypeLinksInput;
+  connect?: CompanyWhereUniqueInput;
+}
+
+export interface CompanyUpdateManyWithWhereNestedInput {
+  where: CompanyScalarWhereInput;
+  data: CompanyUpdateManyDataInput;
+}
+
+export interface NetworkTypeCreateOneWithoutDeviceProfilesInput {
+  create?: NetworkTypeCreateWithoutDeviceProfilesInput;
+  connect?: NetworkTypeWhereUniqueInput;
+}
+
+export interface CompanyUpdateManyDataInput {
+  name?: String;
+}
+
+export interface UserCreateManyWithoutCompanyInput {
+  create?: UserCreateWithoutCompanyInput[] | UserCreateWithoutCompanyInput;
+  connect?: UserWhereUniqueInput[] | UserWhereUniqueInput;
+}
+
+export interface CompanyTypeUpdateManyMutationInput {
+  name?: String;
+}
+
+export interface NetworkProtocolCreateOneWithoutNetworksInput {
+  create?: NetworkProtocolCreateWithoutNetworksInput;
+  connect?: NetworkProtocolWhereUniqueInput;
+}
+
+export interface DeviceCreateInput {
+  application: ApplicationCreateOneWithoutDevicesInput;
+  name?: String;
+  description?: String;
+  deviceModel?: String;
+  deviceNetworkTypeLinks?: DeviceNetworkTypeLinkCreateManyWithoutDeviceInput;
+}
+
+export interface CompanyNetworkTypeLinkUpdateWithoutCompanyDataInput {
+  networkType?: NetworkTypeUpdateOneRequiredWithoutCompanyNetworkTypeLinksInput;
+  networkSettings?: String;
+}
+
+export interface DeviceUpdateInput {
+  application?: ApplicationUpdateOneRequiredWithoutDevicesInput;
+  name?: String;
+  description?: String;
+  deviceModel?: String;
+  deviceNetworkTypeLinks?: DeviceNetworkTypeLinkUpdateManyWithoutDeviceInput;
+}
+
+export interface DeviceSubscriptionWhereInput {
+  mutation_in?: MutationType[] | MutationType;
+  updatedFields_contains?: String;
+  updatedFields_contains_every?: String[] | String;
+  updatedFields_contains_some?: String[] | String;
+  node?: DeviceWhereInput;
+  AND?: DeviceSubscriptionWhereInput[] | DeviceSubscriptionWhereInput;
+  OR?: DeviceSubscriptionWhereInput[] | DeviceSubscriptionWhereInput;
+  NOT?: DeviceSubscriptionWhereInput[] | DeviceSubscriptionWhereInput;
+}
+
+export interface DeviceUpdateManyMutationInput {
   name?: String;
   description?: String;
   deviceModel?: String;
@@ -5069,22 +5428,118 @@ export interface ReportingProtocolUpdateInput {
   applications?: ApplicationUpdateManyWithoutReportingProtocolInput;
 }
 
-export interface ApplicationUpsertWithoutApplicationNetworkTypeLinksInput {
-  update: ApplicationUpdateWithoutApplicationNetworkTypeLinksDataInput;
-  create: ApplicationCreateWithoutApplicationNetworkTypeLinksInput;
+export interface DeviceNetworkTypeLinkCreateInput {
+  device: DeviceCreateOneWithoutDeviceNetworkTypeLinksInput;
+  networkType: NetworkTypeCreateOneWithoutDeviceNetworkTypeLinksInput;
+  deviceProfile: DeviceProfileCreateOneWithoutDeviceNetworkTypeLinksInput;
+  networkSettings?: String;
 }
 
-export interface ProtocolDataCreateInput {
-  network: NetworkCreateOneWithoutProtocolDataInput;
-  networkProtocol: NetworkProtocolCreateOneWithoutProtocolDataInput;
-  dataIdentifier?: String;
-  dataValue?: String;
+export interface NetworkCreateWithoutNetworkProviderInput {
+  name?: String;
+  networkType: NetworkTypeCreateOneWithoutNetworksInput;
+  networkProtocol: NetworkProtocolCreateOneWithoutNetworksInput;
+  baseUrl?: String;
+  securityData?: String;
+  protocolData?: ProtocolDataCreateManyWithoutNetworkInput;
 }
 
-export interface ApplicationNetworkTypeLinkUpsertWithWhereUniqueWithoutNetworkTypeInput {
-  where: ApplicationNetworkTypeLinkWhereUniqueInput;
-  update: ApplicationNetworkTypeLinkUpdateWithoutNetworkTypeDataInput;
-  create: ApplicationNetworkTypeLinkCreateWithoutNetworkTypeInput;
+export interface DeviceNetworkTypeLinkUpdateInput {
+  device?: DeviceUpdateOneRequiredWithoutDeviceNetworkTypeLinksInput;
+  networkType?: NetworkTypeUpdateOneRequiredWithoutDeviceNetworkTypeLinksInput;
+  deviceProfile?: DeviceProfileUpdateOneRequiredWithoutDeviceNetworkTypeLinksInput;
+  networkSettings?: String;
+}
+
+export interface DeviceCreateManyWithoutApplicationInput {
+  create?:
+    | DeviceCreateWithoutApplicationInput[]
+    | DeviceCreateWithoutApplicationInput;
+  connect?: DeviceWhereUniqueInput[] | DeviceWhereUniqueInput;
+}
+
+export interface DeviceNetworkTypeLinkUpdateManyMutationInput {
+  networkSettings?: String;
+}
+
+export interface NetworkTypeCreateOneWithoutNetworksInput {
+  create?: NetworkTypeCreateWithoutNetworksInput;
+  connect?: NetworkTypeWhereUniqueInput;
+}
+
+export interface DeviceProfileCreateInput {
+  networkType: NetworkTypeCreateOneWithoutDeviceProfilesInput;
+  company: CompanyCreateOneWithoutDeviceProfilesInput;
+  name?: String;
+  description?: String;
+  networkSettings?: String;
+  deviceNetworkTypeLinks?: DeviceNetworkTypeLinkCreateManyWithoutDeviceProfileInput;
+}
+
+export interface ApplicationUpdateInput {
+  company?: CompanyUpdateOneWithoutApplicationsInput;
+  name?: String;
+  description?: String;
+  baseUrl?: String;
+  reportingProtocol?: ReportingProtocolUpdateOneWithoutApplicationsInput;
+  applicationNetworkTypeLinks?: ApplicationNetworkTypeLinkUpdateManyWithoutApplicationInput;
+  devices?: DeviceUpdateManyWithoutApplicationInput;
+}
+
+export interface DeviceProfileUpdateInput {
+  networkType?: NetworkTypeUpdateOneRequiredWithoutDeviceProfilesInput;
+  company?: CompanyUpdateOneRequiredWithoutDeviceProfilesInput;
+  name?: String;
+  description?: String;
+  networkSettings?: String;
+  deviceNetworkTypeLinks?: DeviceNetworkTypeLinkUpdateManyWithoutDeviceProfileInput;
+}
+
+export interface UserCreateWithoutRoleInput {
+  username?: String;
+  email?: String;
+  lastVerifiedEmail?: String;
+  emailVerified?: Boolean;
+  company: CompanyCreateOneWithoutUsersInput;
+  passwordHash: String;
+  emailVerifications?: EmailVerificationCreateManyWithoutUserInput;
+}
+
+export interface UserCreateWithoutEmailVerificationsInput {
+  username?: String;
+  email?: String;
+  lastVerifiedEmail?: String;
+  emailVerified?: Boolean;
+  company: CompanyCreateOneWithoutUsersInput;
+  passwordHash: String;
+  role: UserRoleCreateOneWithoutUsersInput;
+}
+
+export interface UserCreateOneWithoutEmailVerificationsInput {
+  create?: UserCreateWithoutEmailVerificationsInput;
+  connect?: UserWhereUniqueInput;
+}
+
+export interface EmailVerificationCreateInput {
+  user: UserCreateOneWithoutEmailVerificationsInput;
+  uuid?: String;
+  email?: String;
+  changeRequested?: String;
+}
+
+export interface DeviceProfileUpdateManyMutationInput {
+  name?: String;
+  description?: String;
+  networkSettings?: String;
+}
+
+export interface DeviceNetworkTypeLinkCreateManyWithoutNetworkTypeInput {
+  create?:
+    | DeviceNetworkTypeLinkCreateWithoutNetworkTypeInput[]
+    | DeviceNetworkTypeLinkCreateWithoutNetworkTypeInput;
+  connect?:
+    | DeviceNetworkTypeLinkWhereUniqueInput[]
+    | DeviceNetworkTypeLinkWhereUniqueInput;
 }
 
 export interface CompanyWhereInput {
@@ -5131,576 +5586,28 @@ export interface CompanyWhereInput {
   NOT?: CompanyWhereInput[] | CompanyWhereInput;
 }
 
-export interface NetworkTypeUpsertWithoutCompanyNetworkTypeLinksInput {
-  update: NetworkTypeUpdateWithoutCompanyNetworkTypeLinksDataInput;
-  create: NetworkTypeCreateWithoutCompanyNetworkTypeLinksInput;
-}
-
-export interface NetworkProviderUpdateManyMutationInput {
-  name?: String;
-}
-
-export interface CompanyNetworkTypeLinkUpsertWithWhereUniqueWithoutCompanyInput {
-  where: CompanyNetworkTypeLinkWhereUniqueInput;
-  update: CompanyNetworkTypeLinkUpdateWithoutCompanyDataInput;
-  create: CompanyNetworkTypeLinkCreateWithoutCompanyInput;
-}
-
-export interface NetworkCreateWithoutNetworkProviderInput {
-  name?: String;
-  networkType: NetworkTypeCreateOneWithoutNetworksInput;
-  networkProtocol: NetworkProtocolCreateOneWithoutNetworksInput;
-  baseUrl?: String;
-  securityData?: String;
-  protocolData?: ProtocolDataCreateManyWithoutNetworkInput;
-}
-
-export interface CompanyUpsertWithoutApplicationsInput {
-  update: CompanyUpdateWithoutApplicationsDataInput;
-  create: CompanyCreateWithoutApplicationsInput;
-}
-
-export interface NetworkUpdateManyMutationInput {
-  name?: String;
-  baseUrl?: String;
-  securityData?: String;
-}
-
-export interface ApplicationUpdateManyMutationInput {
-  name?: String;
-  description?: String;
-  baseUrl?: String;
-}
-
-export interface NetworkTypeCreateOneWithoutCompanyNetworkTypeLinksInput {
-  create?: NetworkTypeCreateWithoutCompanyNetworkTypeLinksInput;
-  connect?: NetworkTypeWhereUniqueInput;
-}
-
-export interface EmailVerificationUpdateInput {
-  user?: UserUpdateOneRequiredWithoutEmailVerificationsInput;
-  uuid?: String;
-  email?: String;
-  changeRequested?: String;
-}
-
-export interface DeviceCreateManyWithoutApplicationInput {
-  create?:
-    | DeviceCreateWithoutApplicationInput[]
-    | DeviceCreateWithoutApplicationInput;
-  connect?: DeviceWhereUniqueInput[] | DeviceWhereUniqueInput;
-}
-
-export interface CompanyCreateWithoutUsersInput {
-  name?: String;
-  type?: CompanyTypeCreateOneWithoutCompaniesInput;
-  applications?: ApplicationCreateManyWithoutCompanyInput;
-  companyNetworkTypeLinks?: CompanyNetworkTypeLinkCreateManyWithoutCompanyInput;
-  deviceProfiles?: DeviceProfileCreateManyWithoutCompanyInput;
-  passwordPolicies?: PasswordPolicyCreateManyWithoutCompanyInput;
-}
-
-export interface CompanyCreateOneWithoutCompanyNetworkTypeLinksInput {
-  create?: CompanyCreateWithoutCompanyNetworkTypeLinksInput;
-  connect?: CompanyWhereUniqueInput;
-}
-
-export interface ApplicationNetworkTypeLinkCreateInput {
-  application: ApplicationCreateOneWithoutApplicationNetworkTypeLinksInput;
-  networkType: NetworkTypeCreateOneWithoutApplicationNetworkTypeLinksInput;
-  networkSettings?: String;
-}
-
-export interface DeviceNetworkTypeLinkCreateManyWithoutNetworkTypeInput {
-  create?:
-    | DeviceNetworkTypeLinkCreateWithoutNetworkTypeInput[]
-    | DeviceNetworkTypeLinkCreateWithoutNetworkTypeInput;
-  connect?:
-    | DeviceNetworkTypeLinkWhereUniqueInput[]
-    | DeviceNetworkTypeLinkWhereUniqueInput;
-}
-
-export interface ApplicationNetworkTypeLinkUpdateInput {
-  application?: ApplicationUpdateOneRequiredWithoutApplicationNetworkTypeLinksInput;
-  networkType?: NetworkTypeUpdateOneRequiredWithoutApplicationNetworkTypeLinksInput;
-  networkSettings?: String;
-}
-
-export interface NetworkTypeCreateOneWithoutDeviceProfilesInput {
-  create?: NetworkTypeCreateWithoutDeviceProfilesInput;
-  connect?: NetworkTypeWhereUniqueInput;
-}
-
-export interface ApplicationNetworkTypeLinkUpdateManyMutationInput {
-  networkSettings?: String;
-}
-
-export interface DeviceProfileCreateManyWithoutNetworkTypeInput {
-  create?:
-    | DeviceProfileCreateWithoutNetworkTypeInput[]
-    | DeviceProfileCreateWithoutNetworkTypeInput;
-  connect?: DeviceProfileWhereUniqueInput[] | DeviceProfileWhereUniqueInput;
-}
-
-export interface CompanyCreateInput {
-  name?: String;
-  type?: CompanyTypeCreateOneWithoutCompaniesInput;
-  applications?: ApplicationCreateManyWithoutCompanyInput;
-  companyNetworkTypeLinks?: CompanyNetworkTypeLinkCreateManyWithoutCompanyInput;
-  deviceProfiles?: DeviceProfileCreateManyWithoutCompanyInput;
-  passwordPolicies?: PasswordPolicyCreateManyWithoutCompanyInput;
-  users?: UserCreateManyWithoutCompanyInput;
-}
-
-export interface UserRoleCreateOneWithoutUsersInput {
-  create?: UserRoleCreateWithoutUsersInput;
-  connect?: UserRoleWhereUniqueInput;
-}
-
-export interface CompanyUpdateInput {
-  name?: String;
-  type?: CompanyTypeUpdateOneWithoutCompaniesInput;
-  applications?: ApplicationUpdateManyWithoutCompanyInput;
-  companyNetworkTypeLinks?: CompanyNetworkTypeLinkUpdateManyWithoutCompanyInput;
-  deviceProfiles?: DeviceProfileUpdateManyWithoutCompanyInput;
-  passwordPolicies?: PasswordPolicyUpdateManyWithoutCompanyInput;
-  users?: UserUpdateManyWithoutCompanyInput;
-}
-
-export interface NetworkProviderCreateOneWithoutNetworksInput {
-  create?: NetworkProviderCreateWithoutNetworksInput;
-  connect?: NetworkProviderWhereUniqueInput;
-}
-
-export interface CompanyUpdateManyMutationInput {
-  name?: String;
-}
-
-export interface NetworkTypeCreateOneWithoutNetworksInput {
-  create?: NetworkTypeCreateWithoutNetworksInput;
-  connect?: NetworkTypeWhereUniqueInput;
-}
-
-export interface CompanyNetworkTypeLinkCreateInput {
-  company: CompanyCreateOneWithoutCompanyNetworkTypeLinksInput;
-  networkType: NetworkTypeCreateOneWithoutCompanyNetworkTypeLinksInput;
-  networkSettings?: String;
-}
-
-export interface NetworkCreateOneWithoutProtocolDataInput {
-  create?: NetworkCreateWithoutProtocolDataInput;
-  connect?: NetworkWhereUniqueInput;
-}
-
-export interface CompanyNetworkTypeLinkUpdateInput {
-  company?: CompanyUpdateOneRequiredWithoutCompanyNetworkTypeLinksInput;
-  networkType?: NetworkTypeUpdateOneRequiredWithoutCompanyNetworkTypeLinksInput;
-  networkSettings?: String;
-}
-
-export interface CompanyTypeUpdateWithoutCompaniesDataInput {
-  name?: String;
-}
-
-export interface CompanyNetworkTypeLinkUpdateManyMutationInput {
-  networkSettings?: String;
-}
-
-export interface ApplicationNetworkTypeLinkUpdateWithWhereUniqueWithoutNetworkTypeInput {
-  where: ApplicationNetworkTypeLinkWhereUniqueInput;
-  data: ApplicationNetworkTypeLinkUpdateWithoutNetworkTypeDataInput;
-}
-
-export interface CompanyTypeCreateInput {
-  name?: String;
-  companies?: CompanyCreateManyWithoutTypeInput;
-}
-
-export interface DeviceNetworkTypeLinkWhereInput {
-  id?: Int;
-  id_not?: Int;
-  id_in?: Int[] | Int;
-  id_not_in?: Int[] | Int;
-  id_lt?: Int;
-  id_lte?: Int;
-  id_gt?: Int;
-  id_gte?: Int;
-  device?: DeviceWhereInput;
-  networkType?: NetworkTypeWhereInput;
-  deviceProfile?: DeviceProfileWhereInput;
-  networkSettings?: String;
-  networkSettings_not?: String;
-  networkSettings_in?: String[] | String;
-  networkSettings_not_in?: String[] | String;
-  networkSettings_lt?: String;
-  networkSettings_lte?: String;
-  networkSettings_gt?: String;
-  networkSettings_gte?: String;
-  networkSettings_contains?: String;
-  networkSettings_not_contains?: String;
-  networkSettings_starts_with?: String;
-  networkSettings_not_starts_with?: String;
-  networkSettings_ends_with?: String;
-  networkSettings_not_ends_with?: String;
-  AND?: DeviceNetworkTypeLinkWhereInput[] | DeviceNetworkTypeLinkWhereInput;
-  OR?: DeviceNetworkTypeLinkWhereInput[] | DeviceNetworkTypeLinkWhereInput;
-  NOT?: DeviceNetworkTypeLinkWhereInput[] | DeviceNetworkTypeLinkWhereInput;
-}
-
-export interface CompanyCreateManyWithoutTypeInput {
-  create?: CompanyCreateWithoutTypeInput[] | CompanyCreateWithoutTypeInput;
-  connect?: CompanyWhereUniqueInput[] | CompanyWhereUniqueInput;
-}
-
-export interface CompanySubscriptionWhereInput {
+export interface ProtocolDataSubscriptionWhereInput {
   mutation_in?: MutationType[] | MutationType;
   updatedFields_contains?: String;
   updatedFields_contains_every?: String[] | String;
   updatedFields_contains_some?: String[] | String;
-  node?: CompanyWhereInput;
-  AND?: CompanySubscriptionWhereInput[] | CompanySubscriptionWhereInput;
-  OR?: CompanySubscriptionWhereInput[] | CompanySubscriptionWhereInput;
-  NOT?: CompanySubscriptionWhereInput[] | CompanySubscriptionWhereInput;
-}
-
-export interface CompanyCreateWithoutTypeInput {
-  name?: String;
-  applications?: ApplicationCreateManyWithoutCompanyInput;
-  companyNetworkTypeLinks?: CompanyNetworkTypeLinkCreateManyWithoutCompanyInput;
-  deviceProfiles?: DeviceProfileCreateManyWithoutCompanyInput;
-  passwordPolicies?: PasswordPolicyCreateManyWithoutCompanyInput;
-  users?: UserCreateManyWithoutCompanyInput;
-}
-
-export interface UserRoleCreateInput {
-  name?: String;
-  users?: UserCreateManyWithoutRoleInput;
-}
-
-export interface CompanyTypeUpdateInput {
-  name?: String;
-  companies?: CompanyUpdateManyWithoutTypeInput;
-}
-
-export interface ReportingProtocolCreateInput {
-  name?: String;
-  protocolHandler?: String;
-  applications?: ApplicationCreateManyWithoutReportingProtocolInput;
-}
-
-export interface CompanyUpdateManyWithoutTypeInput {
-  create?: CompanyCreateWithoutTypeInput[] | CompanyCreateWithoutTypeInput;
-  delete?: CompanyWhereUniqueInput[] | CompanyWhereUniqueInput;
-  connect?: CompanyWhereUniqueInput[] | CompanyWhereUniqueInput;
-  set?: CompanyWhereUniqueInput[] | CompanyWhereUniqueInput;
-  disconnect?: CompanyWhereUniqueInput[] | CompanyWhereUniqueInput;
-  update?:
-    | CompanyUpdateWithWhereUniqueWithoutTypeInput[]
-    | CompanyUpdateWithWhereUniqueWithoutTypeInput;
-  upsert?:
-    | CompanyUpsertWithWhereUniqueWithoutTypeInput[]
-    | CompanyUpsertWithWhereUniqueWithoutTypeInput;
-  deleteMany?: CompanyScalarWhereInput[] | CompanyScalarWhereInput;
-  updateMany?:
-    | CompanyUpdateManyWithWhereNestedInput[]
-    | CompanyUpdateManyWithWhereNestedInput;
-}
-
-export type NetworkTypeWhereUniqueInput = AtLeastOne<{
-  id: Int;
-  name?: String;
-}>;
-
-export interface CompanyUpdateWithWhereUniqueWithoutTypeInput {
-  where: CompanyWhereUniqueInput;
-  data: CompanyUpdateWithoutTypeDataInput;
-}
-
-export interface NetworkProtocolUpdateManyMutationInput {
-  name?: String;
-  protocolHandler?: String;
-  networkProtocolVersion?: String;
-}
-
-export interface CompanyUpdateWithoutTypeDataInput {
-  name?: String;
-  applications?: ApplicationUpdateManyWithoutCompanyInput;
-  companyNetworkTypeLinks?: CompanyNetworkTypeLinkUpdateManyWithoutCompanyInput;
-  deviceProfiles?: DeviceProfileUpdateManyWithoutCompanyInput;
-  passwordPolicies?: PasswordPolicyUpdateManyWithoutCompanyInput;
-  users?: UserUpdateManyWithoutCompanyInput;
-}
-
-export interface CompanyTypeCreateOneWithoutCompaniesInput {
-  create?: CompanyTypeCreateWithoutCompaniesInput;
-  connect?: CompanyTypeWhereUniqueInput;
-}
-
-export interface CompanyUpsertWithWhereUniqueWithoutTypeInput {
-  where: CompanyWhereUniqueInput;
-  update: CompanyUpdateWithoutTypeDataInput;
-  create: CompanyCreateWithoutTypeInput;
-}
-
-export interface NetworkTypeCreateOneWithoutDeviceNetworkTypeLinksInput {
-  create?: NetworkTypeCreateWithoutDeviceNetworkTypeLinksInput;
-  connect?: NetworkTypeWhereUniqueInput;
-}
-
-export interface CompanyScalarWhereInput {
-  id?: Int;
-  id_not?: Int;
-  id_in?: Int[] | Int;
-  id_not_in?: Int[] | Int;
-  id_lt?: Int;
-  id_lte?: Int;
-  id_gt?: Int;
-  id_gte?: Int;
-  name?: String;
-  name_not?: String;
-  name_in?: String[] | String;
-  name_not_in?: String[] | String;
-  name_lt?: String;
-  name_lte?: String;
-  name_gt?: String;
-  name_gte?: String;
-  name_contains?: String;
-  name_not_contains?: String;
-  name_starts_with?: String;
-  name_not_starts_with?: String;
-  name_ends_with?: String;
-  name_not_ends_with?: String;
-  AND?: CompanyScalarWhereInput[] | CompanyScalarWhereInput;
-  OR?: CompanyScalarWhereInput[] | CompanyScalarWhereInput;
-  NOT?: CompanyScalarWhereInput[] | CompanyScalarWhereInput;
-}
-
-export interface ApplicationCreateOneWithoutDevicesInput {
-  create?: ApplicationCreateWithoutDevicesInput;
-  connect?: ApplicationWhereUniqueInput;
-}
-
-export interface CompanyUpdateManyWithWhereNestedInput {
-  where: CompanyScalarWhereInput;
-  data: CompanyUpdateManyDataInput;
-}
-
-export interface PasswordPolicyCreateManyWithoutCompanyInput {
-  create?:
-    | PasswordPolicyCreateWithoutCompanyInput[]
-    | PasswordPolicyCreateWithoutCompanyInput;
-  connect?: PasswordPolicyWhereUniqueInput[] | PasswordPolicyWhereUniqueInput;
-}
-
-export interface CompanyUpdateManyDataInput {
-  name?: String;
-}
-
-export interface NetworkProtocolCreateManyWithoutMasterProtocolInput {
-  create?:
-    | NetworkProtocolCreateWithoutMasterProtocolInput[]
-    | NetworkProtocolCreateWithoutMasterProtocolInput;
-  connect?: NetworkProtocolWhereUniqueInput[] | NetworkProtocolWhereUniqueInput;
-}
-
-export interface CompanyTypeUpdateManyMutationInput {
-  name?: String;
-}
-
-export interface ApplicationUpdateInput {
-  company?: CompanyUpdateOneWithoutApplicationsInput;
-  name?: String;
-  description?: String;
-  baseUrl?: String;
-  reportingProtocol?: ReportingProtocolUpdateOneWithoutApplicationsInput;
-  applicationNetworkTypeLinks?: ApplicationNetworkTypeLinkUpdateManyWithoutApplicationInput;
-  devices?: DeviceUpdateManyWithoutApplicationInput;
-}
-
-export interface DeviceCreateInput {
-  application: ApplicationCreateOneWithoutDevicesInput;
-  name?: String;
-  description?: String;
-  deviceModel?: String;
-  deviceNetworkTypeLinks?: DeviceNetworkTypeLinkCreateManyWithoutDeviceInput;
-}
-
-export interface UserRoleSubscriptionWhereInput {
-  mutation_in?: MutationType[] | MutationType;
-  updatedFields_contains?: String;
-  updatedFields_contains_every?: String[] | String;
-  updatedFields_contains_some?: String[] | String;
-  node?: UserRoleWhereInput;
-  AND?: UserRoleSubscriptionWhereInput[] | UserRoleSubscriptionWhereInput;
-  OR?: UserRoleSubscriptionWhereInput[] | UserRoleSubscriptionWhereInput;
-  NOT?: UserRoleSubscriptionWhereInput[] | UserRoleSubscriptionWhereInput;
-}
-
-export interface DeviceUpdateInput {
-  application?: ApplicationUpdateOneRequiredWithoutDevicesInput;
-  name?: String;
-  description?: String;
-  deviceModel?: String;
-  deviceNetworkTypeLinks?: DeviceNetworkTypeLinkUpdateManyWithoutDeviceInput;
-}
-
-export interface UserUpdateWithWhereUniqueWithoutRoleInput {
-  where: UserWhereUniqueInput;
-  data: UserUpdateWithoutRoleDataInput;
-}
-
-export interface DeviceUpdateManyMutationInput {
-  name?: String;
-  description?: String;
-  deviceModel?: String;
-}
-
-export interface CompanyUpdateWithoutPasswordPoliciesDataInput {
-  name?: String;
-  type?: CompanyTypeUpdateOneWithoutCompaniesInput;
-  applications?: ApplicationUpdateManyWithoutCompanyInput;
-  companyNetworkTypeLinks?: CompanyNetworkTypeLinkUpdateManyWithoutCompanyInput;
-  deviceProfiles?: DeviceProfileUpdateManyWithoutCompanyInput;
-  users?: UserUpdateManyWithoutCompanyInput;
-}
-
-export interface DeviceNetworkTypeLinkCreateInput {
-  device: DeviceCreateOneWithoutDeviceNetworkTypeLinksInput;
-  networkType: NetworkTypeCreateOneWithoutDeviceNetworkTypeLinksInput;
-  deviceProfile: DeviceProfileCreateOneWithoutDeviceNetworkTypeLinksInput;
-  networkSettings?: String;
-}
-
-export interface EmailVerificationUpdateManyMutationInput {
-  uuid?: String;
-  email?: String;
-  changeRequested?: String;
-}
-
-export interface DeviceNetworkTypeLinkUpdateInput {
-  device?: DeviceUpdateOneRequiredWithoutDeviceNetworkTypeLinksInput;
-  networkType?: NetworkTypeUpdateOneRequiredWithoutDeviceNetworkTypeLinksInput;
-  deviceProfile?: DeviceProfileUpdateOneRequiredWithoutDeviceNetworkTypeLinksInput;
-  networkSettings?: String;
-}
-
-export interface ApplicationNetworkTypeLinkCreateManyWithoutApplicationInput {
-  create?:
-    | ApplicationNetworkTypeLinkCreateWithoutApplicationInput[]
-    | ApplicationNetworkTypeLinkCreateWithoutApplicationInput;
-  connect?:
-    | ApplicationNetworkTypeLinkWhereUniqueInput[]
-    | ApplicationNetworkTypeLinkWhereUniqueInput;
-}
-
-export interface DeviceNetworkTypeLinkUpdateManyMutationInput {
-  networkSettings?: String;
-}
-
-export interface DeviceNetworkTypeLinkCreateManyWithoutDeviceProfileInput {
-  create?:
-    | DeviceNetworkTypeLinkCreateWithoutDeviceProfileInput[]
-    | DeviceNetworkTypeLinkCreateWithoutDeviceProfileInput;
-  connect?:
-    | DeviceNetworkTypeLinkWhereUniqueInput[]
-    | DeviceNetworkTypeLinkWhereUniqueInput;
-}
-
-export interface DeviceProfileCreateInput {
-  networkType: NetworkTypeCreateOneWithoutDeviceProfilesInput;
-  company: CompanyCreateOneWithoutDeviceProfilesInput;
-  name?: String;
-  description?: String;
-  networkSettings?: String;
-  deviceNetworkTypeLinks?: DeviceNetworkTypeLinkCreateManyWithoutDeviceProfileInput;
-}
-
-export interface CompanyNetworkTypeLinkUpdateWithoutCompanyDataInput {
-  networkType?: NetworkTypeUpdateOneRequiredWithoutCompanyNetworkTypeLinksInput;
-  networkSettings?: String;
-}
-
-export interface DeviceProfileUpdateInput {
-  networkType?: NetworkTypeUpdateOneRequiredWithoutDeviceProfilesInput;
-  company?: CompanyUpdateOneRequiredWithoutDeviceProfilesInput;
-  name?: String;
-  description?: String;
-  networkSettings?: String;
-  deviceNetworkTypeLinks?: DeviceNetworkTypeLinkUpdateManyWithoutDeviceProfileInput;
-}
-
-export interface ApplicationUpdateWithoutReportingProtocolDataInput {
-  company?: CompanyUpdateOneWithoutApplicationsInput;
-  name?: String;
-  description?: String;
-  baseUrl?: String;
-  applicationNetworkTypeLinks?: ApplicationNetworkTypeLinkUpdateManyWithoutApplicationInput;
-  devices?: DeviceUpdateManyWithoutApplicationInput;
-}
-
-export interface UserCreateWithoutEmailVerificationsInput {
-  username?: String;
-  email?: String;
-  lastVerifiedEmail?: String;
-  emailVerified?: Boolean;
-  company: CompanyCreateOneWithoutUsersInput;
-  passwordHash: String;
-  role: UserRoleCreateOneWithoutUsersInput;
-}
-
-export interface UserCreateOneWithoutEmailVerificationsInput {
-  create?: UserCreateWithoutEmailVerificationsInput;
-  connect?: UserWhereUniqueInput;
-}
-
-export interface EmailVerificationCreateInput {
-  user: UserCreateOneWithoutEmailVerificationsInput;
-  uuid?: String;
-  email?: String;
-  changeRequested?: String;
-}
-
-export interface DeviceProfileUpdateManyMutationInput {
-  name?: String;
-  description?: String;
-  networkSettings?: String;
-}
-
-export interface NetworkUpdateWithWhereUniqueWithoutNetworkProviderInput {
-  where: NetworkWhereUniqueInput;
-  data: NetworkUpdateWithoutNetworkProviderDataInput;
-}
-
-export interface EmailVerificationSubscriptionWhereInput {
-  mutation_in?: MutationType[] | MutationType;
-  updatedFields_contains?: String;
-  updatedFields_contains_every?: String[] | String;
-  updatedFields_contains_some?: String[] | String;
-  node?: EmailVerificationWhereInput;
+  node?: ProtocolDataWhereInput;
   AND?:
-    | EmailVerificationSubscriptionWhereInput[]
-    | EmailVerificationSubscriptionWhereInput;
+    | ProtocolDataSubscriptionWhereInput[]
+    | ProtocolDataSubscriptionWhereInput;
   OR?:
-    | EmailVerificationSubscriptionWhereInput[]
-    | EmailVerificationSubscriptionWhereInput;
+    | ProtocolDataSubscriptionWhereInput[]
+    | ProtocolDataSubscriptionWhereInput;
   NOT?:
-    | EmailVerificationSubscriptionWhereInput[]
-    | EmailVerificationSubscriptionWhereInput;
+    | ProtocolDataSubscriptionWhereInput[]
+    | ProtocolDataSubscriptionWhereInput;
 }
 
-export interface NetworkProtocolCreateOneWithoutProtocolDataInput {
-  create?: NetworkProtocolCreateWithoutProtocolDataInput;
-  connect?: NetworkProtocolWhereUniqueInput;
-}
-
-export interface NetworkProtocolCreateOneWithoutNetworkProtocolsInput {
-  create?: NetworkProtocolCreateWithoutNetworkProtocolsInput;
-  connect?: NetworkProtocolWhereUniqueInput;
-}
-
-export interface ApplicationCreateOneWithoutApplicationNetworkTypeLinksInput {
-  create?: ApplicationCreateWithoutApplicationNetworkTypeLinksInput;
-  connect?: ApplicationWhereUniqueInput;
+export interface ProtocolDataCreateManyWithoutNetworkInput {
+  create?:
+    | ProtocolDataCreateWithoutNetworkInput[]
+    | ProtocolDataCreateWithoutNetworkInput;
+  connect?: ProtocolDataWhereUniqueInput[] | ProtocolDataWhereUniqueInput;
 }
 
 export interface NodeNode {
@@ -7672,6 +7579,7 @@ export interface NetworkProtocolPreviousValues {
   name?: String;
   protocolHandler?: String;
   networkProtocolVersion?: String;
+  masterProtocol?: Int;
 }
 
 export interface NetworkProtocolPreviousValuesPromise
@@ -7681,6 +7589,7 @@ export interface NetworkProtocolPreviousValuesPromise
   name: () => Promise<String>;
   protocolHandler: () => Promise<String>;
   networkProtocolVersion: () => Promise<String>;
+  masterProtocol: () => Promise<Int>;
 }
 
 export interface NetworkProtocolPreviousValuesSubscription
@@ -7690,6 +7599,7 @@ export interface NetworkProtocolPreviousValuesSubscription
   name: () => Promise<AsyncIterator<String>>;
   protocolHandler: () => Promise<AsyncIterator<String>>;
   networkProtocolVersion: () => Promise<AsyncIterator<String>>;
+  masterProtocol: () => Promise<AsyncIterator<Int>>;
 }
 
 export interface EmailVerificationConnection {
@@ -8014,6 +7924,7 @@ export interface NetworkProtocol {
   name?: String;
   protocolHandler?: String;
   networkProtocolVersion?: String;
+  masterProtocol?: Int;
 }
 
 export interface NetworkProtocolPromise
@@ -8024,18 +7935,7 @@ export interface NetworkProtocolPromise
   protocolHandler: () => Promise<String>;
   networkType: <T = NetworkTypePromise>() => T;
   networkProtocolVersion: () => Promise<String>;
-  masterProtocol: <T = NetworkProtocolPromise>() => T;
-  networkProtocols: <T = FragmentableArray<NetworkProtocol>>(
-    args?: {
-      where?: NetworkProtocolWhereInput;
-      orderBy?: NetworkProtocolOrderByInput;
-      skip?: Int;
-      after?: String;
-      before?: String;
-      first?: Int;
-      last?: Int;
-    }
-  ) => T;
+  masterProtocol: () => Promise<Int>;
   networks: <T = FragmentableArray<Network>>(
     args?: {
       where?: NetworkWhereInput;
@@ -8068,18 +7968,7 @@ export interface NetworkProtocolSubscription
   protocolHandler: () => Promise<AsyncIterator<String>>;
   networkType: <T = NetworkTypeSubscription>() => T;
   networkProtocolVersion: () => Promise<AsyncIterator<String>>;
-  masterProtocol: <T = NetworkProtocolSubscription>() => T;
-  networkProtocols: <T = Promise<AsyncIterator<NetworkProtocolSubscription>>>(
-    args?: {
-      where?: NetworkProtocolWhereInput;
-      orderBy?: NetworkProtocolOrderByInput;
-      skip?: Int;
-      after?: String;
-      before?: String;
-      first?: Int;
-      last?: Int;
-    }
-  ) => T;
+  masterProtocol: () => Promise<AsyncIterator<Int>>;
   networks: <T = Promise<AsyncIterator<NetworkSubscription>>>(
     args?: {
       where?: NetworkWhereInput;

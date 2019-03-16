@@ -32,16 +32,18 @@ module.exports = {
 //                   protocol api for this specific protocol.
 //
 // Returns the promise that will execute the create.
-async function createNetworkProtocol (name, networkTypeId, protocolHandler, version, masterProtocolId) {
+async function createNetworkProtocol (name, networkTypeId, protocolHandler, version, masterProtocol) {
   const data = formatInputData({
     name,
     protocolHandler,
     networkProtocolVersion: version,
     networkTypeId,
-    masterProtocolId
+    masterProtocol
   })
-  const rec = await prisma.createNetworkProtocol(data).$fragment(fragments.basic)
-  console.log('CREATED ', JSON.stringify(rec))
+  let rec = await prisma.createNetworkProtocol(data).$fragment(fragments.basic)
+  if (!masterProtocol) {
+    rec = await updateNetworkProtocol({ id: rec.id, masterProtocol })
+  }
   return rec
 }
 
@@ -50,7 +52,7 @@ async function upsertNetworkProtocol ({ networkProtocolVersion, ...np }) {
   if (records.length) {
     return updateNetworkProtocol({ id: records[0].id, ...np })
   }
-  return createNetworkProtocol(np.name, np.networkTypeId, np.protocolHandler, networkProtocolVersion, np.masterProtocolId)
+  return createNetworkProtocol(np.name, np.networkTypeId, np.protocolHandler, networkProtocolVersion, np.masterProtocol)
   // removed code in which NetworkProtocol references itself as it's masterProtocol
 }
 
@@ -71,10 +73,10 @@ async function retrieveNetworkProtocol (id) {
 //                   from retrieval to guarantee the same record is updated.
 //
 // Returns a promise that executes the update.
-function updateNetworkProtocol ({ id, ...data }) {
+function updateNetworkProtocol ({ id, ...data }, fragment = 'basic') {
   if (!id) throw httpError(400, 'No existing NetworkProtocol ID')
   data = formatInputData(data)
-  return prisma.updateNetworkProtocol({ data, where: { id } }).$fragment(fragments.basic)
+  return prisma.updateNetworkProtocol({ data, where: { id } }).$fragment(fragments[fragment])
 }
 
 // Delete the networkProtocol record.
@@ -118,43 +120,42 @@ async function retrieveNetworkProtocols ({ limit, offset, ...where } = {}) {
   const query = { where }
   if (limit) query.first = limit
   if (offset) query.skip = offset
-  console.log('WHERE', JSON.stringify(where))
-  if (Object.keys(where).length) {
-    const [records, totalCount] = await Promise.all([
-      prisma.networkProtocols(query).$fragment(fragments.basic),
-      prisma.networkProtocolsConnection({ where }).aggregate().count()
-    ])
-    return { totalCount, records }
-  }
-  return {
-    totalCount: 3,
-    records: [
-      {
-        id: 1,
-        name: 'LoRa Server',
-        protocolHandler: 'LoRaOpenSource_1.js',
-        networkType: { 'id': 1 },
-        masterProtocol: { 'id': 1 },
-        networkProtocolVersion: '1.0'
-      },
-      {
-        id: 2,
-        name: 'LoRa Server',
-        protocolHandler: 'LoRaOpenSource_2.js',
-        networkType: { 'id': 1 },
-        masterProtocol: { 'id': 1 },
-        networkProtocolVersion: '2.0'
-      },
-      {
-        id: 3,
-        name: 'The Things Network',
-        protocolHandler: 'TheThingsNetwork.js',
-        networkType: { 'id': 1 },
-        masterProtocol: { 'id': 3 },
-        networkProtocolVersion: '2.0'
-      }
-    ]
-  }
+  // if (Object.keys(where).length) {
+  const [records, totalCount] = await Promise.all([
+    prisma.networkProtocols(query).$fragment(fragments.basic),
+    prisma.networkProtocolsConnection({ where }).aggregate().count()
+  ])
+  return { totalCount, records }
+  // }
+  // return {
+  //   totalCount: 3,
+  //   records: [
+  //     {
+  //       id: 1,
+  //       name: 'LoRa Server',
+  //       protocolHandler: 'LoRaOpenSource_1.js',
+  //       networkType: { 'id': 1 },
+  //       masterProtocol: { 'id': 1 },
+  //       networkProtocolVersion: '1.0'
+  //     },
+  //     {
+  //       id: 2,
+  //       name: 'LoRa Server',
+  //       protocolHandler: 'LoRaOpenSource_2.js',
+  //       networkType: { 'id': 1 },
+  //       masterProtocol: { 'id': 1 },
+  //       networkProtocolVersion: '2.0'
+  //     },
+  //     {
+  //       id: 3,
+  //       name: 'The Things Network',
+  //       protocolHandler: 'TheThingsNetwork.js',
+  //       networkType: { 'id': 1 },
+  //       masterProtocol: { 'id': 3 },
+  //       networkProtocolVersion: '2.0'
+  //     }
+  //   ]
+  // }
 }
 
 //* *****************************************************************************
@@ -166,10 +167,8 @@ const fragments = {
     name
     protocolHandler
     networkProtocolVersion
+    masterProtocol
     networkType {
-      id
-    }
-    masterProtocol {
       id
     }
   }`

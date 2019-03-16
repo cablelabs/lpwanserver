@@ -204,12 +204,12 @@ module.exports = {
  */
 module.exports.register = async function register (networkProtocols) {
   appLogger.log('TTN:register', 'info')
-  // await networkProtocols.upsertNetworkProtocol({
-  //   name: 'The Things Network',
-  //   networkTypeId: 1,
-  //   protocolHandler: 'TheThingsNetwork.js',
-  //   networkProtocolVersion: '2.0'
-  // })
+  await networkProtocols.upsertNetworkProtocol({
+    name: 'The Things Network',
+    networkTypeId: 1,
+    protocolHandler: 'TheThingsNetwork.js',
+    networkProtocolVersion: '2.0'
+  })
 }
 
 /**

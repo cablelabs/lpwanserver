@@ -13,15 +13,15 @@ services:
       - prisma_protocol=http
       - prisma_host=prisma
       - prisma_port=4466
-    # depends_on:
-    #   - loraserver1
-    #   - lora_appserver1
-  # postgresql:
-  #   volumes:
-  #     - ./configuration/postgresql/initdb-demo:/docker-entrypoint-initdb.d
-  # redis:
-  #   volumes:
-  #     - ../data/demo_data/redis:/data
+    depends_on:
+      - loraserver1
+      - lora_appserver1
+  postgresql:
+    volumes:
+      - ./configuration/postgresql/initdb-demo:/docker-entrypoint-initdb.d
+  redis:
+    volumes:
+      - ../data/demo_data/redis:/data
 networks:
   lpwanserver_net:
     name: lpwanserver_net

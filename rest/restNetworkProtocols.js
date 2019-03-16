@@ -75,7 +75,6 @@ exports.initialize = function (app, server) {
       }
       modelAPI.networkProtocols.retrieveNetworkProtocols(options).then(function (nps) {
         // restServer.respondJson(res, null, nps)
-        console.log("NPS", JSON.stringify(nps))
         const responseBody = { ...nps, records: nps.records.map(formatRelationshipsOut) }
         restServer.respond(res, 200, responseBody)
       })

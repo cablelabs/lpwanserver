@@ -51,23 +51,23 @@ module.exports.metaData =
 
 module.exports.register = async function register (networkProtocols) {
   appLogger.log('LoraOpenSource:register', 'warn')
-  // let me = {
-  //   name: 'LoRa Server',
-  //   networkTypeId: 1,
-  //   protocolHandler: 'LoRaOpenSource_2.js',
-  //   networkProtocolVersion: '2.0'
-  // }
-  // try {
-  //   const { records } = await networkProtocols.retrieveNetworkProtocols({ search: me.name, networkProtocolVersion: '1.0' })
-  //   console.log('REGISTER LORA 2: RECORDS', JSON.stringify(records))
-  //   if (records.length) {
-  //     me.masterProtocolId = records[0].id
-  //   }
-  // }
-  // catch (err) {
-  //   // ignore error
-  // }
-  // await networkProtocols.upsertNetworkProtocol(me)
+  let me = {
+    name: 'LoRa Server',
+    networkTypeId: 1,
+    protocolHandler: 'LoRaOpenSource_2.js',
+    networkProtocolVersion: '2.0'
+  }
+  try {
+    const { records } = await networkProtocols.retrieveNetworkProtocols({ search: me.name, networkProtocolVersion: '1.0' })
+    console.log('REGISTER LORA 2: RECORDS', JSON.stringify(records))
+    if (records.length) {
+      me.masterProtocol = records[0].id
+    }
+  }
+  catch (err) {
+    // ignore error
+  }
+  await networkProtocols.upsertNetworkProtocol(me)
 }
 
 /**

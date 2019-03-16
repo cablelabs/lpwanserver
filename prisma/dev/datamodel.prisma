@@ -109,8 +109,7 @@ type NetworkProtocol @pgTable(name: "networkProtocols") {
   protocolHandler: String @unique
   networkType: NetworkType! @pgRelation(column: "networkTypeId") @relation(name: "NetworkTypeNetworkProtocols")
   networkProtocolVersion: String
-  masterProtocol: NetworkProtocol @pgRelation(column: "masterProtocol") @relation(name: "MasterProtocolNetworkProtocols")
-  networkProtocols: [NetworkProtocol] @relation(name: "MasterProtocolNetworkProtocols")
+  masterProtocol: Int
   networks: [Network]
   protocolData: [ProtocolData]
 }

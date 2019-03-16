@@ -15,7 +15,7 @@ docker volume rm docker_lpwanserver_loraserver_postgres --force
 docker-compose \
   -f ./prisma/dev/docker-compose.yaml up -d
 
-sleep 3s
+sleep 5s
 
 # Deploy Prisma datamodel
 cd prisma/dev && prisma deploy && cd ../..

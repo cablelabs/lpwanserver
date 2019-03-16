@@ -52,12 +52,12 @@ module.exports.metaData =
 
 module.exports.register = async function register (networkProtocols) {
   appLogger.log('LoraOpenSource:register')
-  // await networkProtocols.upsertNetworkProtocol({
-  //   name: 'LoRa Server',
-  //   networkTypeId: 1,
-  //   protocolHandler: 'LoRaOpenSource_1.js',
-  //   networkProtocolVersion: '1.0'
-  // })
+  await networkProtocols.upsertNetworkProtocol({
+    name: 'LoRa Server',
+    networkTypeId: 1,
+    protocolHandler: 'LoRaOpenSource_1.js',
+    networkProtocolVersion: '1.0'
+  })
 }
 
 /**

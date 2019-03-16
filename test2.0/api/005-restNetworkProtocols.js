@@ -17,7 +17,7 @@ function waitForNetworkProtocolRegistration (ms) {
   return new Promise(resolve => setTimeout(resolve, ms))
 }
 
-describe.skip('NetworkProtocols', function () {
+describe('NetworkProtocols', function () {
   var adminToken
 
   before('User Sessions', async () => {

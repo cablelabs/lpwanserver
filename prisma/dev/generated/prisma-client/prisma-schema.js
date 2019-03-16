@@ -2783,8 +2783,7 @@ type NetworkProtocol {
   protocolHandler: String
   networkType: NetworkType!
   networkProtocolVersion: String
-  masterProtocol: NetworkProtocol
-  networkProtocols(where: NetworkProtocolWhereInput, orderBy: NetworkProtocolOrderByInput, skip: Int, after: String, before: String, first: Int, last: Int): [NetworkProtocol!]
+  masterProtocol: Int
   networks(where: NetworkWhereInput, orderBy: NetworkOrderByInput, skip: Int, after: String, before: String, first: Int, last: Int): [Network!]
   protocolData(where: ProtocolDataWhereInput, orderBy: ProtocolDataOrderByInput, skip: Int, after: String, before: String, first: Int, last: Int): [ProtocolData!]
 }
@@ -2800,25 +2799,14 @@ input NetworkProtocolCreateInput {
   protocolHandler: String
   networkType: NetworkTypeCreateOneWithoutNetworkProtocolsInput!
   networkProtocolVersion: String
-  masterProtocol: NetworkProtocolCreateOneWithoutNetworkProtocolsInput
-  networkProtocols: NetworkProtocolCreateManyWithoutMasterProtocolInput
+  masterProtocol: Int
   networks: NetworkCreateManyWithoutNetworkProtocolInput
   protocolData: ProtocolDataCreateManyWithoutNetworkProtocolInput
-}
-
-input NetworkProtocolCreateManyWithoutMasterProtocolInput {
-  create: [NetworkProtocolCreateWithoutMasterProtocolInput!]
-  connect: [NetworkProtocolWhereUniqueInput!]
 }
 
 input NetworkProtocolCreateManyWithoutNetworkTypeInput {
   create: [NetworkProtocolCreateWithoutNetworkTypeInput!]
   connect: [NetworkProtocolWhereUniqueInput!]
-}
-
-input NetworkProtocolCreateOneWithoutNetworkProtocolsInput {
-  create: NetworkProtocolCreateWithoutNetworkProtocolsInput
-  connect: NetworkProtocolWhereUniqueInput
 }
 
 input NetworkProtocolCreateOneWithoutNetworksInput {
@@ -2831,33 +2819,12 @@ input NetworkProtocolCreateOneWithoutProtocolDataInput {
   connect: NetworkProtocolWhereUniqueInput
 }
 
-input NetworkProtocolCreateWithoutMasterProtocolInput {
-  name: String
-  protocolHandler: String
-  networkType: NetworkTypeCreateOneWithoutNetworkProtocolsInput!
-  networkProtocolVersion: String
-  networkProtocols: NetworkProtocolCreateManyWithoutMasterProtocolInput
-  networks: NetworkCreateManyWithoutNetworkProtocolInput
-  protocolData: ProtocolDataCreateManyWithoutNetworkProtocolInput
-}
-
-input NetworkProtocolCreateWithoutNetworkProtocolsInput {
-  name: String
-  protocolHandler: String
-  networkType: NetworkTypeCreateOneWithoutNetworkProtocolsInput!
-  networkProtocolVersion: String
-  masterProtocol: NetworkProtocolCreateOneWithoutNetworkProtocolsInput
-  networks: NetworkCreateManyWithoutNetworkProtocolInput
-  protocolData: ProtocolDataCreateManyWithoutNetworkProtocolInput
-}
-
 input NetworkProtocolCreateWithoutNetworksInput {
   name: String
   protocolHandler: String
   networkType: NetworkTypeCreateOneWithoutNetworkProtocolsInput!
   networkProtocolVersion: String
-  masterProtocol: NetworkProtocolCreateOneWithoutNetworkProtocolsInput
-  networkProtocols: NetworkProtocolCreateManyWithoutMasterProtocolInput
+  masterProtocol: Int
   protocolData: ProtocolDataCreateManyWithoutNetworkProtocolInput
 }
 
@@ -2865,8 +2832,7 @@ input NetworkProtocolCreateWithoutNetworkTypeInput {
   name: String
   protocolHandler: String
   networkProtocolVersion: String
-  masterProtocol: NetworkProtocolCreateOneWithoutNetworkProtocolsInput
-  networkProtocols: NetworkProtocolCreateManyWithoutMasterProtocolInput
+  masterProtocol: Int
   networks: NetworkCreateManyWithoutNetworkProtocolInput
   protocolData: ProtocolDataCreateManyWithoutNetworkProtocolInput
 }
@@ -2876,8 +2842,7 @@ input NetworkProtocolCreateWithoutProtocolDataInput {
   protocolHandler: String
   networkType: NetworkTypeCreateOneWithoutNetworkProtocolsInput!
   networkProtocolVersion: String
-  masterProtocol: NetworkProtocolCreateOneWithoutNetworkProtocolsInput
-  networkProtocols: NetworkProtocolCreateManyWithoutMasterProtocolInput
+  masterProtocol: Int
   networks: NetworkCreateManyWithoutNetworkProtocolInput
 }
 
@@ -2895,6 +2860,8 @@ enum NetworkProtocolOrderByInput {
   protocolHandler_DESC
   networkProtocolVersion_ASC
   networkProtocolVersion_DESC
+  masterProtocol_ASC
+  masterProtocol_DESC
   createdAt_ASC
   createdAt_DESC
   updatedAt_ASC
@@ -2906,6 +2873,7 @@ type NetworkProtocolPreviousValues {
   name: String
   protocolHandler: String
   networkProtocolVersion: String
+  masterProtocol: Int
 }
 
 input NetworkProtocolScalarWhereInput {
@@ -2959,6 +2927,14 @@ input NetworkProtocolScalarWhereInput {
   networkProtocolVersion_not_starts_with: String
   networkProtocolVersion_ends_with: String
   networkProtocolVersion_not_ends_with: String
+  masterProtocol: Int
+  masterProtocol_not: Int
+  masterProtocol_in: [Int!]
+  masterProtocol_not_in: [Int!]
+  masterProtocol_lt: Int
+  masterProtocol_lte: Int
+  masterProtocol_gt: Int
+  masterProtocol_gte: Int
   AND: [NetworkProtocolScalarWhereInput!]
   OR: [NetworkProtocolScalarWhereInput!]
   NOT: [NetworkProtocolScalarWhereInput!]
@@ -2987,8 +2963,7 @@ input NetworkProtocolUpdateInput {
   protocolHandler: String
   networkType: NetworkTypeUpdateOneRequiredWithoutNetworkProtocolsInput
   networkProtocolVersion: String
-  masterProtocol: NetworkProtocolUpdateOneWithoutNetworkProtocolsInput
-  networkProtocols: NetworkProtocolUpdateManyWithoutMasterProtocolInput
+  masterProtocol: Int
   networks: NetworkUpdateManyWithoutNetworkProtocolInput
   protocolData: ProtocolDataUpdateManyWithoutNetworkProtocolInput
 }
@@ -2997,24 +2972,14 @@ input NetworkProtocolUpdateManyDataInput {
   name: String
   protocolHandler: String
   networkProtocolVersion: String
+  masterProtocol: Int
 }
 
 input NetworkProtocolUpdateManyMutationInput {
   name: String
   protocolHandler: String
   networkProtocolVersion: String
-}
-
-input NetworkProtocolUpdateManyWithoutMasterProtocolInput {
-  create: [NetworkProtocolCreateWithoutMasterProtocolInput!]
-  delete: [NetworkProtocolWhereUniqueInput!]
-  connect: [NetworkProtocolWhereUniqueInput!]
-  set: [NetworkProtocolWhereUniqueInput!]
-  disconnect: [NetworkProtocolWhereUniqueInput!]
-  update: [NetworkProtocolUpdateWithWhereUniqueWithoutMasterProtocolInput!]
-  upsert: [NetworkProtocolUpsertWithWhereUniqueWithoutMasterProtocolInput!]
-  deleteMany: [NetworkProtocolScalarWhereInput!]
-  updateMany: [NetworkProtocolUpdateManyWithWhereNestedInput!]
+  masterProtocol: Int
 }
 
 input NetworkProtocolUpdateManyWithoutNetworkTypeInput {
@@ -3048,42 +3013,12 @@ input NetworkProtocolUpdateOneRequiredWithoutProtocolDataInput {
   connect: NetworkProtocolWhereUniqueInput
 }
 
-input NetworkProtocolUpdateOneWithoutNetworkProtocolsInput {
-  create: NetworkProtocolCreateWithoutNetworkProtocolsInput
-  update: NetworkProtocolUpdateWithoutNetworkProtocolsDataInput
-  upsert: NetworkProtocolUpsertWithoutNetworkProtocolsInput
-  delete: Boolean
-  disconnect: Boolean
-  connect: NetworkProtocolWhereUniqueInput
-}
-
-input NetworkProtocolUpdateWithoutMasterProtocolDataInput {
-  name: String
-  protocolHandler: String
-  networkType: NetworkTypeUpdateOneRequiredWithoutNetworkProtocolsInput
-  networkProtocolVersion: String
-  networkProtocols: NetworkProtocolUpdateManyWithoutMasterProtocolInput
-  networks: NetworkUpdateManyWithoutNetworkProtocolInput
-  protocolData: ProtocolDataUpdateManyWithoutNetworkProtocolInput
-}
-
-input NetworkProtocolUpdateWithoutNetworkProtocolsDataInput {
-  name: String
-  protocolHandler: String
-  networkType: NetworkTypeUpdateOneRequiredWithoutNetworkProtocolsInput
-  networkProtocolVersion: String
-  masterProtocol: NetworkProtocolUpdateOneWithoutNetworkProtocolsInput
-  networks: NetworkUpdateManyWithoutNetworkProtocolInput
-  protocolData: ProtocolDataUpdateManyWithoutNetworkProtocolInput
-}
-
 input NetworkProtocolUpdateWithoutNetworksDataInput {
   name: String
   protocolHandler: String
   networkType: NetworkTypeUpdateOneRequiredWithoutNetworkProtocolsInput
   networkProtocolVersion: String
-  masterProtocol: NetworkProtocolUpdateOneWithoutNetworkProtocolsInput
-  networkProtocols: NetworkProtocolUpdateManyWithoutMasterProtocolInput
+  masterProtocol: Int
   protocolData: ProtocolDataUpdateManyWithoutNetworkProtocolInput
 }
 
@@ -3091,8 +3026,7 @@ input NetworkProtocolUpdateWithoutNetworkTypeDataInput {
   name: String
   protocolHandler: String
   networkProtocolVersion: String
-  masterProtocol: NetworkProtocolUpdateOneWithoutNetworkProtocolsInput
-  networkProtocols: NetworkProtocolUpdateManyWithoutMasterProtocolInput
+  masterProtocol: Int
   networks: NetworkUpdateManyWithoutNetworkProtocolInput
   protocolData: ProtocolDataUpdateManyWithoutNetworkProtocolInput
 }
@@ -3102,24 +3036,13 @@ input NetworkProtocolUpdateWithoutProtocolDataDataInput {
   protocolHandler: String
   networkType: NetworkTypeUpdateOneRequiredWithoutNetworkProtocolsInput
   networkProtocolVersion: String
-  masterProtocol: NetworkProtocolUpdateOneWithoutNetworkProtocolsInput
-  networkProtocols: NetworkProtocolUpdateManyWithoutMasterProtocolInput
+  masterProtocol: Int
   networks: NetworkUpdateManyWithoutNetworkProtocolInput
-}
-
-input NetworkProtocolUpdateWithWhereUniqueWithoutMasterProtocolInput {
-  where: NetworkProtocolWhereUniqueInput!
-  data: NetworkProtocolUpdateWithoutMasterProtocolDataInput!
 }
 
 input NetworkProtocolUpdateWithWhereUniqueWithoutNetworkTypeInput {
   where: NetworkProtocolWhereUniqueInput!
   data: NetworkProtocolUpdateWithoutNetworkTypeDataInput!
-}
-
-input NetworkProtocolUpsertWithoutNetworkProtocolsInput {
-  update: NetworkProtocolUpdateWithoutNetworkProtocolsDataInput!
-  create: NetworkProtocolCreateWithoutNetworkProtocolsInput!
 }
 
 input NetworkProtocolUpsertWithoutNetworksInput {
@@ -3130,12 +3053,6 @@ input NetworkProtocolUpsertWithoutNetworksInput {
 input NetworkProtocolUpsertWithoutProtocolDataInput {
   update: NetworkProtocolUpdateWithoutProtocolDataDataInput!
   create: NetworkProtocolCreateWithoutProtocolDataInput!
-}
-
-input NetworkProtocolUpsertWithWhereUniqueWithoutMasterProtocolInput {
-  where: NetworkProtocolWhereUniqueInput!
-  update: NetworkProtocolUpdateWithoutMasterProtocolDataInput!
-  create: NetworkProtocolCreateWithoutMasterProtocolInput!
 }
 
 input NetworkProtocolUpsertWithWhereUniqueWithoutNetworkTypeInput {
@@ -3196,10 +3113,14 @@ input NetworkProtocolWhereInput {
   networkProtocolVersion_not_starts_with: String
   networkProtocolVersion_ends_with: String
   networkProtocolVersion_not_ends_with: String
-  masterProtocol: NetworkProtocolWhereInput
-  networkProtocols_every: NetworkProtocolWhereInput
-  networkProtocols_some: NetworkProtocolWhereInput
-  networkProtocols_none: NetworkProtocolWhereInput
+  masterProtocol: Int
+  masterProtocol_not: Int
+  masterProtocol_in: [Int!]
+  masterProtocol_not_in: [Int!]
+  masterProtocol_lt: Int
+  masterProtocol_lte: Int
+  masterProtocol_gt: Int
+  masterProtocol_gte: Int
   networks_every: NetworkWhereInput
   networks_some: NetworkWhereInput
   networks_none: NetworkWhereInput

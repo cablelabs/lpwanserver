@@ -38,6 +38,7 @@ describe('Users', function () {
         .set('Content-Type', 'application/json')
         .send({ 'username': 'test1', 'password': 'test13', 'role': 'user', 'companyId': 1 })
         .end(function (err, res) {
+          console.error(err)
           if (err) return done(err)
           res.should.have.status(200)
           var ret = JSON.parse(res.text)
