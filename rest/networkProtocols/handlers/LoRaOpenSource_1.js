@@ -1539,7 +1539,7 @@ module.exports.pullNetwork = function (sessionData, network, dataAPI, modelAPI) 
 module.exports.setupOrganization = function (sessionData, network, modelAPI, dataAPI) {
   let me = this
   return new Promise(async function (resolve, reject) {
-    let company = await modelAPI.companies.retrieveCompany(1)
+    let company = await modelAPI.companies.retrieveCompany(2)
     let companyNtl = await dataAPI.getCompanyNetworkType(company.id, network.networkType.id)
     let lora1NetworkSettings = { network: network.id }
     if (!companyNtl) {
@@ -1712,7 +1712,7 @@ module.exports.addRemoteDeviceProfile = function (sessionData, limitedRemoteDevi
               appLogger.log('creating ' + remoteDeviceProfile.name)
               let networkSpecificDeviceProfileInformation = normalizeDeviceProfileData(remoteDeviceProfile)
               appLogger.log(networkSpecificDeviceProfileInformation, 'error')
-              modelAPI.deviceProfiles.createRemoteDeviceProfile(network.networkType.id, 1,
+              modelAPI.deviceProfiles.createRemoteDeviceProfile(network.networkType.id, 2,
                 remoteDeviceProfile.name, 'Device Profile managed by LPWAN Server, perform changes via LPWAN',
                 networkSpecificDeviceProfileInformation)
                 .then((existingDeviceProfile) => {
@@ -1808,7 +1808,7 @@ function addRemoteApplication (sessionData, limitedRemoteApplication, network, m
       appLogger.log(existingApplication.name + ' already exists')
     }
     else {
-      existingApplication = await modelAPI.applications.createApplication(remoteApplication.name, remoteApplication.description, 1, 1, 'http://set.me.to.your.real.url:8888')
+      existingApplication = await modelAPI.applications.createApplication(remoteApplication.name, remoteApplication.description, 2, 1, 'http://set.me.to.your.real.url:8888')
       appLogger.log('Created ' + existingApplication.name)
     }
 
@@ -1918,7 +1918,7 @@ function addRemoteDevice (sessionData, limitedRemoteDevice, network, application
       appLogger.log('creating Network Link for ' + existingDevice.name)
       let normalizedDeviceSettings = normalizeDeviceData(remoteDevice)
       appLogger.log(normalizedDeviceSettings, 'info')
-      existingDeviceNTL = await modelAPI.deviceNetworkTypeLinks.createRemoteDeviceNetworkTypeLink(existingDevice.id, network.networkType.id, deviceProfileId.localDeviceProfile, normalizedDeviceSettings, 1)
+      existingDeviceNTL = await modelAPI.deviceNetworkTypeLinks.createRemoteDeviceNetworkTypeLink(existingDevice.id, network.networkType.id, deviceProfileId.localDeviceProfile, normalizedDeviceSettings, 2)
       appLogger.log(existingDeviceNTL)
     }
     dataAPI.putProtocolDataForKey(network.id,
@@ -2544,7 +2544,7 @@ module.exports.addDeviceProfile = function (sessionData, network, deviceProfileI
     try {
       // Get the deviceProfile data.
       deviceProfile = await dataAPI.getDeviceProfileById(deviceProfileId)
-      let company = await dataAPI.getCompanyById(1)
+      let company = await dataAPI.getCompanyById(2)
       appLogger.log(company)
       let orgId = await dataAPI.getProtocolDataForKey(network.id,
         network.networkProtocol.id,

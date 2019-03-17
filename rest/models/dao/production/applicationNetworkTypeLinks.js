@@ -100,7 +100,7 @@ async function deleteApplicationNetworkTypeLink (id, validateCompanyId) {
 //
 // Returns a promise that does the retrieval.
 async function retrieveApplicationNetworkTypeLinks ({ limit, offset, ...where } = {}) {
-  where = formatRelationshipsIn(opts)
+  where = formatRelationshipsIn(where)
   const query = { where }
   if (limit) query.first = limit
   if (offset) query.skip = offset

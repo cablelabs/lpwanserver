@@ -680,7 +680,8 @@ describe('E2E Test for Updating an Application Use Case #189', () => {
         .set('Content-Type', 'application/json')
         .send(applicationUpdate)
         .end(function (err, res) {
-          if (err) done(err)
+          if (err) return done(err)
+          console.log(res.text)
           res.should.have.status(204)
           done()
         })

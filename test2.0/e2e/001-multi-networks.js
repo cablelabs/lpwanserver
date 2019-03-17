@@ -17,6 +17,7 @@ describe('E2E Test for Multiple Networks', () => {
   let adminToken
   let userId
   let userToken
+  let netProvId
   let lora = {
     loraV1: {
       protocolId: '',
@@ -44,14 +45,12 @@ describe('E2E Test for Multiple Networks', () => {
     testTTN = true
   }
 
-  before((done) => {
-    setup.start()
-      .then(() => {
-        setTimeout(done, 10000)
-      })
-      .catch((err) => {
-        done(err)
-      })
+  const wait = ms => new Promise(resolve => setTimeout(resolve, ms))
+
+  before(async () => {
+    await setup.start()
+    await wait(10000)
+
   })
   describe('Verify Login and Administration of Users Works', () => {
     it('Admin Login to LPWan Server', (done) => {
@@ -71,7 +70,7 @@ describe('E2E Test for Multiple Networks', () => {
         .post('/api/users')
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
-        .send({'username': 'bobmouse', 'password': 'mousetrap', 'role': 'user', 'companyId': 2})
+        .send({'username': 'bobmouse', 'password': 'mousetrap', 'role': 'user', 'companyId': 1})
         .end(function (err, res) {
           if (err) done(err)
           res.should.have.status(200)
@@ -111,6 +110,14 @@ describe('E2E Test for Multiple Networks', () => {
   })
   describe('Setup Networks', () => {
     describe('Setup Lora 1.0 Network', () => {
+      it('Create Network Provider', async () => {
+        const res = await server
+          .post('/api/networkProviders')
+          .set('Authorization', 'Bearer ' + adminToken)
+          .set('Content-Type', 'application/json')
+          .send({ 'name': 'Kyrio' })
+        netProvId = JSON.parse(res.text).id
+      })
       it('Verify LoraOS 1.0 Protocol Exists', (done) => {
         server
           .get('/api/networkProtocols?search=LoRa Server&networkProtocolVersion=1.0')
@@ -137,7 +144,7 @@ describe('E2E Test for Multiple Networks', () => {
           .set('Content-Type', 'application/json')
           .send({
             'name': 'LocalLoraOS1_0',
-            'networkProviderId': -1,
+            'networkProviderId': netProvId,
             'networkTypeId': 1,
             'baseUrl': 'https://lora_appserver1:8080/api',
             'networkProtocolId': lora.loraV1.protocolId,
@@ -201,7 +208,7 @@ describe('E2E Test for Multiple Networks', () => {
           .set('Content-Type', 'application/json')
           .send({
             'name': 'LocalLoraOS2_0',
-            'networkProviderId': -1,
+            'networkProviderId': netProvId,
             'networkTypeId': 1,
             'baseUrl': 'https://lora_appserver:8080/api',
             'networkProtocolId': lora.loraV2.protocolId,
@@ -266,7 +273,7 @@ describe('E2E Test for Multiple Networks', () => {
             .set('Content-Type', 'application/json')
             .send({
               'name': 'LocalTTN',
-              'networkProviderId': -1,
+              'networkProviderId': netProvId,
               'networkTypeId': 1,
               'baseUrl': 'https://account.thethingsnetwork.org',
               'networkProtocolId': lora.ttn.protocolId,
@@ -325,7 +332,7 @@ describe('E2E Test for Multiple Networks', () => {
             companies.should.have.property('totalCount')
             companies.should.have.property('records')
             companies.totalCount.should.equal(2)
-            companies.records[0].name.should.equal('cl-admin')
+            companies.records[0].name.should.equal('SysAdmins')
             companies.records[1].name.should.equal('cablelabs')
             done()
           })
@@ -345,7 +352,7 @@ describe('E2E Test for Multiple Networks', () => {
             companies.should.have.property('totalCount')
             companies.should.have.property('records')
             companies.totalCount.should.equal(2)
-            companies.records[0].name.should.equal('cl-admin')
+            companies.records[0].name.should.equal('SysAdmins')
             companies.records[1].name.should.equal('cablelabs')
             done()
           })
@@ -366,7 +373,7 @@ describe('E2E Test for Multiple Networks', () => {
               companies.should.have.property('totalCount')
               companies.should.have.property('records')
               companies.totalCount.should.equal(2)
-              companies.records[0].name.should.equal('cl-admin')
+              companies.records[0].name.should.equal('SysAdmins')
               companies.records[1].name.should.equal('cablelabs')
               done()
             })
@@ -625,7 +632,7 @@ describe('E2E Test for Multiple Networks', () => {
         let expected = {
           'id': 1,
           'networkTypeId': 1,
-          'companyId': 2,
+          'companyId': 1,
           'name': 'BobMouseTrapDeviceProfileLv1',
           'networkSettings': {
             'deviceProfileID': '5d1e49eb-28c8-411b-9cbf-87650d103d51',
@@ -772,7 +779,7 @@ describe('E2E Test for Multiple Networks', () => {
         let expected = {
           'id': 2,
           'networkTypeId': 1,
-          'companyId': 2,
+          'companyId': 1,
           'name': 'BobMouseTrapDeviceProfileLv2',
           'networkSettings': {
             'id': '9dd538e8-a231-4a35-8823-eecbffb9d4a9',
@@ -918,7 +925,7 @@ describe('E2E Test for Multiple Networks', () => {
           let expected = {
             'id': 3,
             'networkTypeId': 1,
-            'companyId': 2,
+            'companyId': 1,
             'name': 'CableLabs TTN Device ABP',
             'networkSettings': {
               'id': 'cl-weather-station-profile',

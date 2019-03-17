@@ -530,6 +530,7 @@ COPY public.applications (id, "companyId", name, description, "baseUrl", "report
 
 COPY public.companies (id, name, type) FROM stdin;
 1	SysAdmins	1
+2	cablelabs	1
 \.
 
 
@@ -657,7 +658,7 @@ COPY public."userRoles" ("roleId", name) FROM stdin;
 --
 
 COPY public.users (id, username, email, "lastVerifiedEmail", "emailVerified", "companyId", "passwordHash", role) FROM stdin;
-1	admin	admin@fakeco.co	\N	f	1	000000100000003238bd33bdf92cfc3a8e7847e377e51ff8a3689913919b39d7dd0fe77c89610ce2947ab0b43a36895510d7d1f2924d84ab	2
+1	admin	admin@fakeco.co	\N	f	2	000000100000003238bd33bdf92cfc3a8e7847e377e51ff8a3689913919b39d7dd0fe77c89610ce2947ab0b43a36895510d7d1f2924d84ab	2
 \.
 
 

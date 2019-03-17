@@ -145,7 +145,9 @@ ApplicationNetworkTypeLink.prototype.deleteApplicationNetworkTypeLink = function
         }
       }
       // Delete devicenetworkTypeLinks
-      let dntls = await modelAPI.deviceNetworkTypeLinks.retrieveDeviceNetworkTypeLinks({ applicationId: id })
+      const { records: devices } = await modelAPI.devices.retrieveDevices({ applicationId: id })
+      const dntlQuery = { device: { id_in: devices.map(x => x.id) } }
+      let dntls = await modelAPI.deviceNetworkTypeLinks.retrieveDeviceNetworkTypeLinks(dntlQuery)
       let recs = dntls.records
       for (let i = 0; i < recs.length; ++i) {
         await modelAPI.deviceNetworkTypeLinks.deleteDeviceNetworkTypeLink(recs[ i ].id)

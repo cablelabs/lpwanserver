@@ -259,7 +259,7 @@ exports.initialize = function (app, server) {
       else {
         // Do the update.
         // TODO: Get rid of companies.  For now it is always 1 HACK
-        let companyId = 1
+        let companyId = 2
         modelAPI.applicationNetworkTypeLinks.updateApplicationNetworkTypeLink(data, companyId).then(function (rec) {
           restServer.respondJson(res, 200, { remoteAccessLogs: rec.remoteAccessLogs })
         })

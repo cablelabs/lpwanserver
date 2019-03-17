@@ -45,8 +45,8 @@ function createApplication (name, description, companyId, reportingProtocolId, b
   return prisma.createApplication(data).$fragment(fragments.basic)
 }
 
-async function loadApplication (uniqueKeyObj, fragementKey = 'basic') {
-  const rec = await onFail(400, () => prisma.application(uniqueKeyObj).$fragment(fragments[fragementKey]))
+async function loadApplication (uniqueKeyObj, fragement = 'basic') {
+  const rec = await onFail(400, () => prisma.application(uniqueKeyObj).$fragment(fragments[fragement]))
   if (!rec) throw httpError(404, 'Application not found')
   return rec
 }

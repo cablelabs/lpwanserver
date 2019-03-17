@@ -2,6 +2,24 @@
 
 docker system prune --force
 
+# Remove prisma/lpwanserver containers and volumes
+docker container rm dev_lpwanserver_prisma --force
+docker container rm dev_lpwanserver_postgres --force
+docker volume rm dev_lpwanserver_postgres --force
+
+# Remove LoRa Server postgres container and volume
+docker container rm dev_lpwanserver_loraserver_postgres --force
+docker volume rm docker_lpwanserver_loraserver_postgres --force
+
+# Start Prisma
+docker-compose \
+  -f ./prisma/dev/docker-compose.yaml up -d
+
+sleep 5s
+
+# Deploy Prisma datamodel
+cd prisma/dev && prisma deploy && cd ../..
+
 npm run package-e2e-test
 
 # Run docker-compose with development configuration
@@ -9,4 +27,8 @@ docker-compose \
   -f ./docker/docker-compose.loraserver.yml \
   -f ./docker/docker-compose.e2e-test.yml up \
   --abort-on-container-exit
+  --exit-code-from e2e-test
           
+# Stop Prisma
+docker-compose \
+  -f ./prisma/dev/docker-compose.yaml down

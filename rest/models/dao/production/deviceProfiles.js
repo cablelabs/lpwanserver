@@ -49,6 +49,9 @@ function createDeviceProfile (networkTypeId, companyId, name, description, netwo
 async function retrieveDeviceProfile (id) {
   const rec = await onFail(400, () => prisma.deviceProfile({ id }).$fragment(fragments.basic))
   if (!rec) throw httpError(404, 'DeviceProfile not found')
+  if (rec.networkSettings) {
+    rec.networkSettings = JSON.parse(rec.networkSettings)
+  }
   return rec
 }
 

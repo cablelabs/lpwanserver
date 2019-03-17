@@ -245,7 +245,7 @@ module.exports.test = async function testNetwork (network, loginData) {
  * @returns {Promise<SecurityData>} - The Things Network account information
  */
 module.exports.getCompanyAccessAccount = async function (dataAPI, network) {
-  return getCompanyAccount(dataAPI, network, 1, false)
+  return getCompanyAccount(dataAPI, network, 2, false)
 }
 
 /**
@@ -460,7 +460,7 @@ async function addRemoteApplication (session, limitedRemoteApplication, network,
       appLogger.log(normalizedApplication, 'info')
     }
     else {
-      existingApplication = await modelAPI.applications.createApplication(normalizedApplication.name, normalizedApplication.description, 1, network.networkType.id, 'http://set.me.to.your.real.url:8888')
+      existingApplication = await modelAPI.applications.createApplication(normalizedApplication.name, normalizedApplication.description, 2, network.networkType.id, 'http://set.me.to.your.real.url:8888')
       appLogger.log('Created ' + existingApplication.name)
     }
 
@@ -567,7 +567,7 @@ async function addRemoteDevice (session, remoteDevice, network, applicationId, d
     appLogger.log(dp, 'info')
     let normalizedDevice = normalizeDeviceData(remoteDevice, dp.localDeviceProfile)
     appLogger.log(normalizedDevice)
-    const existingDeviceNTL = await modelAPI.deviceNetworkTypeLinks.createRemoteDeviceNetworkTypeLink(existingDevice.id, network.networkType.id, dp.localDeviceProfile, normalizedDevice, 1)
+    const existingDeviceNTL = await modelAPI.deviceNetworkTypeLinks.createRemoteDeviceNetworkTypeLink(existingDevice.id, network.networkType.id, dp.localDeviceProfile, normalizedDevice, 2)
     appLogger.log(existingDeviceNTL)
     await dataAPI.putProtocolDataForKey(
       network.id,
@@ -590,7 +590,7 @@ async function addRemoteDeviceProfile (session, remoteDevice, application, netwo
   try {
     const existingDeviceProfile = await modelAPI.deviceProfiles.createRemoteDeviceProfile(
       network.networkType.id,
-      1,
+      2,
       networkSpecificDeviceProfileInformation.name,
       'Device Profile managed by LPWAN Server, perform changes via LPWAN',
       networkSpecificDeviceProfileInformation
@@ -752,7 +752,7 @@ module.exports.addApplication = async function addApplication (session, network,
     })
     applicationData.networkSettings.applicationEUI = body.euis[0]
     appLogger.log(applicationData, 'error')
-    await modelAPI.applicationNetworkTypeLinks.updateRemoteApplicationNetworkTypeLink(applicationData, 1)
+    await modelAPI.applicationNetworkTypeLinks.updateRemoteApplicationNetworkTypeLink(applicationData, 2)
     await dataAPI.putProtocolDataForKey(
       network.id,
       network.networkProtocol.id,
@@ -1115,7 +1115,7 @@ module.exports.passDataToApplication = function (network, applicationId, data, d
 async function postSingleDevice (session, network, device, deviceProfile, application, remoteApplicationId, dataAPI) {
   try {
     console.log('******postSingleDevice******')
-    console.log(JSON.stringify(device, null, 1))
+    console.log(JSON.stringify(device, null, 2))
     let ttnDevice = deNormalizeDeviceData(device.networkSettings, deviceProfile.networkSettings, application.networkSettings, remoteApplicationId)
     delete ttnDevice.attributes
     await TTNAppRequest(network, session.connection, ttnDevice.app_id, {

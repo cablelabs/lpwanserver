@@ -7,8 +7,6 @@ var httpError = require('http-errors')
 // Utils
 const { onFail } = require('../../../lib/utils')
 
-const DevNtwkTypeLink = require('./deviceNetworkTypeLinks')
-
 //* *****************************************************************************
 // Devices database table.
 //* *****************************************************************************
@@ -56,17 +54,7 @@ async function loadDevice (uniqueKeyObj, fragementKey = 'basic') {
 //
 // Returns a promise that executes the retrieval.
 async function retrieveDevice (id) {
-  const device = await loadDevice({ id })
-  try {
-    const { records } = await DevNtwkTypeLink.retrieveDeviceNetworkTypeLinks({ deviceId: id })
-    if (records.length) {
-      device.networks = records.map(x => x.networkType.id)
-    }
-  }
-  catch (err) {
-    // ignore
-  }
-  return device
+  return loadDevice({ id })
 }
 
 // Update the device record.
