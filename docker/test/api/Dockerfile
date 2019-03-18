@@ -1,4 +1,4 @@
-FROM node:8
+FROM node:10.15
 
 # set working directory
 WORKDIR /app
@@ -8,14 +8,12 @@ RUN npm install -g mocha
 # Copy project file
 COPY package*.json ./
 
-# install ALL node_modules, including 'devDependencies'
-RUN npm ci
+# install all dependencies, not dev dependencies
+RUN npm install --production
 
 # copy all project
 COPY . .
 COPY test2.0 test2.0
 
-EXPOSE 3200
-
 # Override the command, to run the test instead of the application
-CMD ["mocha", "./test2.0/e2e", "--recursive", "--reporter", "spec", "--bail", "--exit", "--timeout", "100000"]
+CMD ["mocha", "./test2.0/api", "--recursive", "--reporter", "spec", "--exit", "--bail", "--timeout", "10000"]

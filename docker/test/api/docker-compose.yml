@@ -3,8 +3,9 @@ version: '3.5'
 services:
   api-test:
     image: lpwanserver/api-test:latest
+    container_name: lpwanserver_dev_api_test
     networks:
-      - lpwanserver_net
+      - lpwanserver_dev
     ports:
       - '3200:3200'
     environment:
@@ -23,5 +24,5 @@ services:
     volumes:
       - ../data/demo_data/redis:/data
 networks:
-  lpwanserver_net:
-    name: lpwanserver_net
+  lpwanserver_dev:
+    name: lpwanserver_dev

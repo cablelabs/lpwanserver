@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+
+# Remove old containers
+docker container rm \
+  lpwanserver_dev_unit_test \
+  lpwanserver_dev_prisma \
+  lpwanserver_dev_postgres --force
+
+# Remove old volumes
+docker volume rm \
+  lpwanserver_dev_postgres --force
+
+# Start prisma daemon
+docker-compose -f ./prisma/dev/docker-compose.yml up -d
+
+sleep 5s
+
+# Deploy prisma
+npm run prisma:dev deploy
+
+# npm run package-test
+node ./bin/test/package-unit.js
+
+# Run docker-compose with development configuration
+docker-compose \
+  -f ./docker/test/unit/docker-compose.yml up \
+  --abort-on-container-exit \
+  --exit-code-from unit-test
+
+# Stop prisma daemon
+docker-compose -f ./prisma/dev/docker-compose.yml down

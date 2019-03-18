@@ -10,12 +10,12 @@ services:
     ports:
       - 3200:3200
     networks:
-      - lpwanserver_net
+      - lpwanserver_dev
     environment:
       - port=3200
       - prisma_protocol=http
       - prisma_host=prisma
       - prisma_port=4466
 networks:
-  lpwanserver_net:
-    name: lpwanserver_net
+  lpwanserver_dev:
+    name: lpwanserver_dev

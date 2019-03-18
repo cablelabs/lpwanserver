@@ -4,10 +4,14 @@ var assert = require('assert')
 var chai = require('chai')
 // eslint-disable-next-line no-unused-vars
 var should = chai.should()
-var nconf = require('nconf')
+// Initiate config before importing tested files
+const nconf = require('nconf')
+nconf.file('defaults', { file: 'config/defaults.hjson', format: require('hjson') })
+
 var TestModule = require('../../../rest/models/IApplication')
-const testName = 'Application'
 const modelAPIMock = require('../../mock/ModelAPI-mock')
+
+const testName = 'Application'
 
 // content of index.js
 const http = require('http')
@@ -32,11 +36,10 @@ function assertAppProps (actual) {
 
 describe('Unit Tests for ' + testName, () => {
   let appId = ''
-  before('Setup ENV', async () => {
-    nconf.file('defaults', { file: 'config/defaults.hjson', format: require('hjson') })
-    console.log(nconf.get('impl_directory'))
+  before('Setup ENV', done => {
     server.listen(port, (err) => {
-      if (err) console.log('Server Error')
+      if (err) return done(err)
+      done()
     })
   })
   after('Shutdown', async () => {

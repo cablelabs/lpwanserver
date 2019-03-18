@@ -219,7 +219,7 @@ describe('Users', function () {
           res.should.have.status(200)
           var userObj = JSON.parse(res.text)
           userObj.username.should.equal('admin')
-          userObj.company.id.should.equal(1)
+          userObj.company.id.should.equal(2)
           expect(userObj.passwordHash).to.not.exist
           expect(userObj.lastVerifiedEmail).to.not.exist
           done()

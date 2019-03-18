@@ -3,8 +3,9 @@ version: '3.5'
 services:
   e2e-test:
     image: lpwanserver/e2e-test
+    container_name: lpwanserver_dev_e2e_test
     networks:
-      - lpwanserver_net
+      - lpwanserver_dev
     ports:
       - 3200:3200
     environment:
@@ -27,5 +28,5 @@ services:
     volumes:
       - ../data/demo_data/redis:/data
 networks:
-  lpwanserver_net:
-    name: lpwanserver_net
+  lpwanserver_dev:
+    name: lpwanserver_dev

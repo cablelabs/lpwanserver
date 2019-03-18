@@ -1,5 +1,5 @@
 const path = require('path')
-const { spawnSync, execSync } = require('child_process')
+const { execSync } = require('child_process')
 const component = require('../../component.json')
 
 const { registry, name, version } = component
@@ -8,14 +8,13 @@ let { RC_TAG } = process.env
 if (!RC_TAG) {
   const buildNumber = process.env.TRAVIS_BUILD_NUMBER || component.build
   RC_TAG = `${version}-${buildNumber}-rc`
-} 
+}
 
 const imageTags = {
-  base: `${registry}/${name}`,
   releaseCandidate: `${registry}/${name}:${RC_TAG}`,
   latest: `${registry}/${name}:latest`,
   version: `${registry}/${name}:${version}`,
-  test: `${registry}/test:latest`,
+  unitTest: `${registry}/unit-test:latest`,
   apiTest: `${registry}/api-test:latest`,
   e2eTest: `${registry}/e2e-test:latest`
 }
@@ -32,23 +31,15 @@ function packageRestServer () {
   execSync(`docker build -f docker/Dockerfile -t ${imageTags.releaseCandidate} -t ${imageTags.latest} .`, opts)
 }
 
-function packageTest () {
-  execSync(`docker build -f docker/Dockerfile.test -t ${imageTags.test} .`, opts)
-}
-
-function packageApiTest () {
-  execSync(`docker build -f docker/Dockerfile.apitest -t ${imageTags.apiTest} .`, opts)
-}
-
-function packageE2ETest () {
-  execSync(`docker build -f docker/Dockerfile.e2etest -t ${imageTags.e2eTest} .`, opts)
+const packageTest = type => () => {
+  execSync(`docker build -f docker/test/${type}/Dockerfile -t ${imageTags[`${type}Test`]} .`, opts)
 }
 
 module.exports = {
   imageTags,
   copyDemoData,
   packageRestServer,
-  packageTest,
-  packageApiTest,
-  packageE2ETest
+  packageUnitTest: packageTest('unit'),
+  packageApiTest: packageTest('api'),
+  packageE2ETest: packageTest('e2e')
 }

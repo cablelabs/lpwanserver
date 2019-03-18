@@ -4,12 +4,16 @@ const assert = require('assert')
 const chai = require('chai')
 // eslint-disable-next-line no-unused-vars
 const should = chai.should()
+// Initiate config before importing tested files
 const nconf = require('nconf')
+nconf.file('defaults', { file: 'config/defaults.hjson', format: require('hjson') })
+
 const TestModule = require('../../../rest/models/INetwork')
 const NetworkProviderModule = require('../../../rest/models/INetworkProvider')
 const NetworkProtocolModule = require('../../../rest/models/INetworkProtocol')
-const testName = 'Network'
 const modelAPIMock = require('../../mock/ModelAPI-mock')
+
+const testName = 'Network'
 
 function assertNetworkProps (actual) {
   actual.should.have.property('name')
@@ -26,7 +30,6 @@ describe('Unit Tests for ' + testName, () => {
   let networkProtocolId = ''
   let networkProviderId = ''
   before('Setup ENV', async () => {
-    nconf.file('defaults', { file: 'config/defaults.hjson', format: require('hjson') })
     // create network protocol and NetworkProvider
     const ntwkProtocolModule = new NetworkProtocolModule(modelAPIMock)
     const ntwkProviderModule = new NetworkProviderModule(modelAPIMock)
@@ -68,8 +71,8 @@ describe('Unit Tests for ' + testName, () => {
       id: networkId,
       name: 'test',
       networkTypeId: 1,
-      networkProviderId: 1,
-      networkProtocolId: 1,
+      networkProviderId,
+      networkProtocolId,
       baseUrl: 'http://localhost:7000'
     }
     const actual = await testModule.updateNetwork(updated, 'internal')

@@ -2,12 +2,10 @@ version: '3.5'
 
 services:
   unit-test:
-    build:
-      context: ../
-      dockerfile: docker/Dockerfile.test
     image: lpwanserver/unit-test:latest
+    container_name: lpwanerver_dev_unit_test
     networks:
-      - lpwanserver_net
+      - lpwanserver_dev
     ports:
       - '3200:3200'
     environment:
@@ -16,6 +14,11 @@ services:
       - prisma_protocol=http
       - prisma_host=prisma
       - prisma_port=4466
+    volumes:
+      - ../../../coverage:/app/coverage
 networks:
-  lpwanserver_net:
-    name: lpwanserver_net
+  lpwanserver_dev:
+    name: lpwanserver_dev
+volumes:
+  coverage:
+    name: lpwanserver_test_coverage

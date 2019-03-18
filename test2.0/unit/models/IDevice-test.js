@@ -4,10 +4,14 @@ const assert = require('assert')
 const chai = require('chai')
 // eslint-disable-next-line no-unused-vars
 const should = chai.should()
+// Initiate config before importing tested files
 const nconf = require('nconf')
+nconf.file('defaults', { file: 'config/defaults.hjson', format: require('hjson') })
+
 const TestModule = require('../../../rest/models/IDevice')
-const testName = 'Device'
 const modelAPIMock = require('../../mock/ModelAPI-mock')
+
+const testName = 'Device'
 
 function assertDeviceProps (actual) {
   actual.should.have.property('name')
@@ -19,10 +23,7 @@ function assertDeviceProps (actual) {
 
 describe('Unit Tests for ' + testName, () => {
   let deviceId = ''
-  before('Setup ENV', async () => {
-    nconf.file('defaults', { file: 'config/defaults.hjson', format: require('hjson') })
-    console.log(nconf.get('impl_directory'))
-  })
+  before('Setup ENV', async () => {})
   after('Shutdown', async () => {
   })
   it(testName + ' Construction', () => {

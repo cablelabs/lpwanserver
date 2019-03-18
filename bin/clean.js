@@ -1,15 +1,17 @@
 const { promisify } = require('util')
 const exec = promisify(require('child_process').exec)
-const component =require('../component.json')
+const { imageTags } = require('./lib/package')
 
-const rcImage = `${component.registry}/${component.name}:${component.version}-${component.build}-rc`
-const latestImage = `${component.registry}/${component.name}:latest`
+async function main () {
+  // remove docker images
+  const tags = Object.keys(imageTags.reduce((acc, x) => {
+    acc.push(imageTags[x])
+    return acc
+  }, []))
+  await exec(`docker rmi ${tags.join(' ')} --force`)
 
-async function clean () {
-  console.info(`Forcefully removing rc image [${rcImage}]`)
-  await exec(`docker rmi ${rcImage} --force`)
-  console.info(`Forcefully removing latest image [${latestImage}]`)
-  await exec(`docker rmi ${latestImage} --force`)
+  // remove node_modules
+  await exec('rm -rf node_modules')
 }
 
-clean().catch(console.error)
+main().catch(e => console.error(e))
