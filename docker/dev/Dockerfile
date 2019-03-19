@@ -11,7 +11,7 @@ COPY prisma/dev prisma/dev
 COPY restApp.js ./restApp.js
 COPY package*.json ./
 
-RUN npm ci
+RUN npm install --production
 
 EXPOSE 8080
 
