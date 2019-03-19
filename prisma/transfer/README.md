@@ -8,9 +8,9 @@ Copy your Sqlite database file into this folder.
 ### Setup docker-compose.yaml
 The `docker-compose.yaml` file is setup to start postgres in a container.  It then will build
 and run the transfer image, defined in `Dockerfile`.  The transfer container will transfer the
-sqlite database file into a database in the postgres container.
+sqlite database file into the postgres container.
 
-Change the build arg `DB_FILE` to the filename for your sqlite database.
+In the docker-compose file, change the build arg `DB_FILE` to the filename for your sqlite database.
 
 ### Run docker-compose
 
@@ -37,10 +37,33 @@ docker exec -ti lpwan_db_xfer_postgres pg_dump -O -U prisma prisma > lpwanserver
 
 Now you have a postgres backup of all the data that was in sqlite.
 
+### Modifications
+There are a couple of manual modifications required as workarounds to bugs that exist in
+Prisma when using it with a pre-existing Postgresql instance.
+
+#### Remove NOT NULL next to all reference fields
+Remove "NOT NULL" for all fields that are a reference.  If required, these fields
+will be required by Prisma, so there's no chance of them being null, unless inserted
+directly into Postgres.
+[prisma issue](https://github.com/prisma/prisma/issues/3319)
+
+#### Remove masterProtocol foreign key constraint
+The foreign key constraint on master protocol causes Prisma to behave irradically.
+Remove/comment-out these lines:
+```
+ALTER TABLE ONLY public."networkProtocols"
+    ADD CONSTRAINT "networkProtocols_masterProtocol_fkey" FOREIGN KEY ("masterProtocol") REFERENCES public."networkProtocols"(id) ON DELETE SET NULL;
+```
+[prisma issue](https://github.com/prisma/prisma/issues/4204)
+
 ### Customize
 This workflow is setup to create a database `prisma` which is owned by user `prisma`.
 These values align with how [Prisma](https://prisma.io) will be configured for development.
-You can configure Prisma to use any database and any Postgres user, so if you want change those, here is how.
+You can configure Prisma to use any database or user in Postgres, so if you want change those, here is how.
+If you're dumping the transfer to a file, the database name doesn't matter, because you
+can import it into any database.  If you include the "-O" option in the pg_dump command
+the tables won't belong to any user in the backup.  You can choose the table owner and database
+name when restoring Postgresql from the backup.
 
 #### Postgres User (also database name)
 Change the value of `POSTGRES_USER` in `docker-compose.yaml`.  When Postgres starts, it creates
