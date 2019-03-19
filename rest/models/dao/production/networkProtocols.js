@@ -126,36 +126,6 @@ async function retrieveNetworkProtocols ({ limit, offset, ...where } = {}) {
     prisma.networkProtocolsConnection({ where }).aggregate().count()
   ])
   return { totalCount, records }
-  // }
-  // return {
-  //   totalCount: 3,
-  //   records: [
-  //     {
-  //       id: 1,
-  //       name: 'LoRa Server',
-  //       protocolHandler: 'LoRaOpenSource_1.js',
-  //       networkType: { 'id': 1 },
-  //       masterProtocol: { 'id': 1 },
-  //       networkProtocolVersion: '1.0'
-  //     },
-  //     {
-  //       id: 2,
-  //       name: 'LoRa Server',
-  //       protocolHandler: 'LoRaOpenSource_2.js',
-  //       networkType: { 'id': 1 },
-  //       masterProtocol: { 'id': 1 },
-  //       networkProtocolVersion: '2.0'
-  //     },
-  //     {
-  //       id: 3,
-  //       name: 'The Things Network',
-  //       protocolHandler: 'TheThingsNetwork.js',
-  //       networkType: { 'id': 1 },
-  //       masterProtocol: { 'id': 3 },
-  //       networkProtocolVersion: '2.0'
-  //     }
-  //   ]
-  // }
 }
 
 //* *****************************************************************************

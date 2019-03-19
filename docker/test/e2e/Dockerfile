@@ -9,7 +9,7 @@ RUN npm install -g mocha
 COPY package*.json ./
 
 # install all dependencies, not dev dependencies
-RUN npm install --production
+RUN npm install
 
 # copy all project
 COPY . .
