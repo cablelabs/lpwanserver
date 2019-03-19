@@ -56,6 +56,11 @@ ALTER TABLE ONLY public."networkProtocols"
 ```
 [prisma issue](https://github.com/prisma/prisma/issues/4204)
 
+#### Remove User role Default 0
+
+Remove "DEFAULT 0" next to the role field in the user table.  There is no role with ID 0.
+The code adds a default if not included.
+
 ### Customize
 This workflow is setup to create a database `prisma` which is owned by user `prisma`.
 These values align with how [Prisma](https://prisma.io) will be configured for development.
