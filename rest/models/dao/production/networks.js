@@ -36,14 +36,10 @@ module.exports = {
 //                             login credentials.
 //
 // Returns the promise that will execute the create.
-async function createNetwork (name, networkProviderId, networkTypeId, networkProtocolId, baseUrl, securityData) {
-  const data = formatInputData({
-    name,
-    networkProviderId,
-    networkTypeId,
-    networkProtocolId,
-    baseUrl,
-    securityData: securityData && JSON.stringify(securityData)
+async function createNetwork (data) {
+  data = formatInputData({
+    ...data,
+    securityData: data.securityData && JSON.stringify(data.securityData)
   })
   return prisma.createNetwork(data).$fragment(fragments.internal)
 }

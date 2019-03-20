@@ -20,7 +20,7 @@ NetworkProtocol.prototype.retrieveNetworkProtocols = async function (options) {
   return {
     ...result,
     records: result.records.map(x => {
-      const { metaData } = require(path.join(handlerDir, x.protocolHandler))
+      const metaData = require(path.join(handlerDir, x.protocolHandler, 'metadata'))
       return { ...x, metaData }
     })
   }
@@ -28,7 +28,7 @@ NetworkProtocol.prototype.retrieveNetworkProtocols = async function (options) {
 
 NetworkProtocol.prototype.retrieveNetworkProtocol = async function (id) {
   let rec = await this.impl.retrieveNetworkProtocol(id)
-  const { metaData } = require(path.join(handlerDir, rec.protocolHandler))
+  const metaData = require(path.join(handlerDir, rec.protocolHandler, 'metadata'))
   return { ...rec, metaData }
 }
 

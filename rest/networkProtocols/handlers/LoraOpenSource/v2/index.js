@@ -3,7 +3,6 @@ var nconf = require('nconf')
 
 // General libraries in use in this module.
 var appLogger = require('../../lib/appLogger.js')
-// var appLogger = appLogger.logger
 
 /**
  * The LoRa Server Protocol Handler Module
@@ -14,50 +13,26 @@ var appLogger = require('../../lib/appLogger.js')
 module.exports = {}
 
 module.exports.activeApplicationNetworkProtocols = {}
-module.exports.metaData =
-  {
-    protocolHandlerName: 'LoRa Server',
-    version:
-      {
-        versionText: 'Version 1.0',
-        versionValue: '1.0'
-      },
-    networkType: 'Lora',
-    oauthUrl: '',
-    protocolHandlerNetworkFields: [
-      {
-        name: 'username',
-        description: 'The username of the LoraOS admin account',
-        help: '',
-        type: 'string',
-        label: 'Username',
-        value: '',
-        required: true,
-        placeholder: 'myLoraUsername',
-        oauthQueryParameter: ''
-      },
-      {
-        name: 'password',
-        description: 'The password of the LoraOS admin account',
-        help: '',
-        type: 'password',
-        label: 'Password',
-        value: '',
-        required: true,
-        placeholder: 'myLoraPassword',
-        oauthQueryParameter: ''
-      }
-    ]
-  }
 
 module.exports.register = async function register (networkProtocols) {
-  appLogger.log('LoraOpenSource:register')
-  await networkProtocols.upsertNetworkProtocol({
+  appLogger.log('LoraOpenSource:register', 'warn')
+  let me = {
     name: 'LoRa Server',
     networkTypeId: 1,
-    protocolHandler: 'LoRaOpenSource_1.js',
-    networkProtocolVersion: '1.0'
-  })
+    protocolHandler: 'LoRaOpenSource_2.js',
+    networkProtocolVersion: '2.0'
+  }
+  try {
+    const { records } = await networkProtocols.retrieveNetworkProtocols({ search: me.name, networkProtocolVersion: '1.0' })
+    console.log('REGISTER LORA 2: RECORDS', JSON.stringify(records))
+    if (records.length) {
+      me.masterProtocol = records[0].id
+    }
+  }
+  catch (err) {
+    // ignore error
+  }
+  await networkProtocols.upsertNetworkProtocol(me)
 }
 
 /**
@@ -100,10 +75,11 @@ module.exports.test = function (network, loginData) {
           }
         }
         else {
-          appLogger.log('Test Error: ' + error)
+          appLogger.log('Test Error: ', 'error')
           if (response && response.statusCode) {
             appLogger.log(response.statusCode)
           }
+          appLogger.log(error, 'error')
           reject(error)
         }
       })
@@ -269,6 +245,10 @@ async function getCompanyAccount (dataAPI, network, companyId, generateIfMissing
   return secData
 };
 
+function makeNetworkDataKey (networkId, dataName) {
+  return 'nwk:' + networkId + '/' + dataName
+}
+
 function makeCompanyDataKey (companyId, dataName) {
   return 'co:' + companyId + '/' + dataName
 }
@@ -308,7 +288,8 @@ function getANetworkServerID (network, connection) {
     request(options, async function (error, response, body) {
       if (error || response.statusCode >= 400) {
         if (error) {
-          appLogger.log('Error on get Network Server: ' + error)
+          appLogger.log('Error on get Network Server: ', 'error')
+          appLogger.log(error, 'error')
           reject(error)
         }
         else {
@@ -356,7 +337,8 @@ function getNetworkServerById (network, networkServerId, connection, dataAPI) {
     request(options, async function (error, response, body) {
       if (error || response.statusCode >= 400) {
         if (error) {
-          appLogger.log('Error on get Network Server: ' + error)
+          appLogger.log('Error on get Network Server: ', 'error')
+          appLogger.log(error, 'error')
           reject(error)
         }
         else {
@@ -369,9 +351,14 @@ function getNetworkServerById (network, networkServerId, connection, dataAPI) {
         }
       }
       else {
-        // Convert text to JSON array, use id from first element
-        var res = JSON.parse(body)
-        appLogger.log(res)
+        let res = ''
+        if (typeof body === 'object') {
+          res = body
+        }
+        else {
+          res = JSON.parse(body)
+        }
+        appLogger.log(res, 'warn')
         resolve(res)
       }
     })
@@ -393,17 +380,18 @@ function getDeviceProfileById (network, dpId, connection, dataAPI) {
       'secureProtocol': 'TLSv1_2_method',
       'rejectUnauthorized': false
     }
-    appLogger.log(options)
+    appLogger.log(options, 'warn')
     request(options, async function (error, response, body) {
       if (error || response.statusCode >= 400) {
         if (error) {
-          appLogger.log('Error on get Device Profile: ' + error)
+          appLogger.log('Error on get Device Profile: ', 'error')
+          appLogger.log(error, 'error')
           reject(error)
         }
         else {
           var bodyObj = JSON.parse(response.body)
           appLogger.log(bodyObj)
-          appLogger.log(options)
+          appLogger.log(options, 'warn')
           appLogger.log('Error on get Device Profile: ' +
             bodyObj.error +
             ' (' + response.statusCode + ')')
@@ -435,11 +423,12 @@ function getRemoteDeviceById (network, deviceId, connection) {
       'secureProtocol': 'TLSv1_2_method',
       'rejectUnauthorized': false
     }
-    appLogger.log(options)
+    appLogger.log(options, 'warn')
     request(options, async function (error, response, body) {
       if (error || response.statusCode >= 400) {
         if (error) {
-          appLogger.log('Error on get Device: ' + error)
+          appLogger.log('Error on get Device: ', 'error')
+          appLogger.log(error, 'error')
           reject(error)
         }
         else {
@@ -474,11 +463,12 @@ function getRemoteDeviceKey (network, device, connection) {
       'secureProtocol': 'TLSv1_2_method',
       'rejectUnauthorized': false
     }
-    appLogger.log(options)
+    appLogger.log(options, 'warn')
     request(options, async function (error, response, body) {
       if (error || response.statusCode >= 400) {
         if (error) {
-          appLogger.log('Error on get Device Keys: ' + error)
+          appLogger.log('Error on get Device Keys: ', 'error')
+          appLogger.log(error, 'error')
           reject(error)
         }
         else if (response.statusCode === 404) {
@@ -508,7 +498,7 @@ function getRemoteDeviceActivation (network, device, connection) {
   return new Promise(async function (resolve, reject) {
     let options = {}
     options.method = 'GET'
-    options.url = network.baseUrl + '/devices/' + device.devEUI + '/activation'
+    options.url = network.baseUrl + '/devices/' + device.device.devEUI + '/activation'
     options.headers = {
       'Content-Type': 'application/json',
       'Authorization': 'Bearer ' + connection
@@ -517,7 +507,7 @@ function getRemoteDeviceActivation (network, device, connection) {
       'secureProtocol': 'TLSv1_2_method',
       'rejectUnauthorized': false
     }
-    appLogger.log(options)
+    appLogger.log(options, 'warn')
     request(options, async function (error, response, body) {
       if (error || response.statusCode >= 400) {
         if (error) {
@@ -540,8 +530,7 @@ function getRemoteDeviceActivation (network, device, connection) {
       }
       else {
         let keys = JSON.parse(body)
-        appLogger.log(keys, 'info')
-        device.deviceActivation = keys
+        device.device.deviceActivation = keys.deviceActivation
         resolve(device)
       }
     })
@@ -568,7 +557,8 @@ function getServiceProfileById (network, serviceProfileId, connection, dataAPI) 
     request(options, async function (error, response, body) {
       if (error || response.statusCode >= 400) {
         if (error) {
-          appLogger.log('Error on get Service Profile: ' + error)
+          appLogger.log('Error on get Service Profile: ', 'error')
+          appLogger.log(error, 'error')
           reject(error)
         }
         else {
@@ -606,11 +596,12 @@ function getApplicationById (network, applicationId, connection) {
       'rejectUnauthorized': false
     }
 
-    appLogger.log(options)
+    appLogger.log(options, 'warn')
     request(options, async function (error, response, body) {
       if (error || response.statusCode >= 400) {
         if (error) {
-          appLogger.log('Error on get Application: ' + error)
+          appLogger.log('Error on get Application: ', 'error')
+          appLogger.log(error, 'error')
           reject(error)
         }
         else {
@@ -634,7 +625,7 @@ function getApplicationById (network, applicationId, connection) {
 
 // Get the Service Profile a for a Remote Org.
 function getServiceProfileForOrg (network, orgId, companyId, connection, dataAPI) {
-  appLogger.log('LoRaOpenSource: getNetworkServerForRemoteOrganization')
+  appLogger.log('LoRaOpenSource: getServiceProfileForOrg', 'debug')
   return new Promise(async function (resolve, reject) {
     var spOptions = {}
     spOptions.method = 'GET'
@@ -652,7 +643,8 @@ function getServiceProfileForOrg (network, orgId, companyId, connection, dataAPI
     request(spOptions, async function (error, response, body) {
       if (error || response.statusCode >= 400) {
         if (error) {
-          appLogger.log('Error getting Service Profile: ' + error)
+          appLogger.log('Error getting Service Profile: ', 'error')
+          appLogger.log(error, 'error')
           reject(error)
         }
         else {
@@ -672,11 +664,12 @@ function getServiceProfileForOrg (network, orgId, companyId, connection, dataAPI
         }
         else {
           let serviceProfile = body.result[0]
+          appLogger.log(serviceProfile, 'warn')
           await dataAPI.putProtocolDataForKey(
             network.id,
             network.networkProtocol.id,
             makeCompanyDataKey(companyId, 'coSPId'),
-            serviceProfile.serviceProfileID)
+            serviceProfile.id)
           // TODO: Remove this HACK.  Should not store the service profile locally
           //       in case it gets changed on the remote server.
           await dataAPI.putProtocolDataForKey(
@@ -793,7 +786,8 @@ module.exports.connect = function (network, loginData) {
     options.agentOptions = { 'secureProtocol': 'TLSv1_2_method', 'rejectUnauthorized': false }
     request(options, function (error, response, body) {
       if (error) {
-        appLogger.log('Error on signin: ' + error)
+        appLogger.log('Error on signin: ', 'error')
+        appLogger.log(error, 'error')
         reject(error)
       }
       else if (response.statusCode >= 400 || response.statusCode === 301) {
@@ -868,9 +862,11 @@ module.exports.addCompany = function (sessionData, network, companyId, dataAPI) 
     // No need to allow gateways on organizations we create (may be changed
     // locally by network admin, and that's fine - just start w/o gateways).
     options.json = {
-      'name': company.name,
-      'displayName': company.name,
-      'canHaveGateways': false
+      organization: {
+        'name': company.name,
+        'displayName': company.name,
+        'canHaveGateways': false
+      }
     }
     options.agentOptions = {
       'secureProtocol': 'TLSv1_2_method',
@@ -880,7 +876,8 @@ module.exports.addCompany = function (sessionData, network, companyId, dataAPI) 
     request(options, async function (error, response, body) {
       if (error || response.statusCode >= 400) {
         if (error) {
-          appLogger.log('Error on create company ' + company.name + ': ' + error)
+          appLogger.log('Error on create company ' + company.name + ': ', 'error')
+          appLogger.log(error, 'error')
           reject(error)
         }
         else {
@@ -893,6 +890,7 @@ module.exports.addCompany = function (sessionData, network, companyId, dataAPI) 
       else {
         try {
           // Save the company ID from the remote network.
+          appLogger.log(body)
           await dataAPI.putProtocolDataForKey(network.id,
             network.networkProtocol.id,
             makeCompanyDataKey(company.id, 'coNwkId'),
@@ -912,19 +910,21 @@ module.exports.addCompany = function (sessionData, network, companyId, dataAPI) 
           var creds = await getCompanyAccount(dataAPI, network, companyId, true)
 
           userOptions.json = {
-            'username': creds.username,
             'password': creds.password,
-            'isActive': true,
-            'isAdmin': false,
-            'sessionTTL': 0,
+            user: {
+              'username': creds.username,
+              'isActive': true,
+              'isAdmin': false,
+              'sessionTTL': 0,
+              'email': 'fake@emailaddress.com',
+              'note': 'Created by and for LPWAN Server'
+            },
             'organizations': [
               {
                 'isAdmin': true,
                 'organizationID': networkCoId
               }
-            ],
-            'email': 'fake@emailaddress.com',
-            'note': 'Created by and for LPWAN Server'
+            ]
           }
           userOptions.agentOptions = {
             'secureProtocol': 'TLSv1_2_method',
@@ -936,7 +936,8 @@ module.exports.addCompany = function (sessionData, network, companyId, dataAPI) 
               if (error) {
                 appLogger.log('Error creating ' + company.name +
                   "'s admin user " + userOptions.json.username +
-                  ': ' + error)
+                  ': ', 'error')
+                appLogger.log(error, 'error')
                 reject(error)
                 return
               }
@@ -970,10 +971,10 @@ module.exports.addCompany = function (sessionData, network, companyId, dataAPI) 
             }
 
             spOptions.json = {
-              'name': 'defaultForLPWANServer',
-              'networkServerID': networkServerId,
-              'organizationID': networkCoId,
               'serviceProfile': {
+                'name': 'defaultForLPWANServer',
+                'networkServerID': networkServerId,
+                'organizationID': networkCoId,
                 'addGWMetadata': true,
                 'devStatusReqFreq': 1,
                 'dlBucketSize': 0,
@@ -994,7 +995,8 @@ module.exports.addCompany = function (sessionData, network, companyId, dataAPI) 
             request(spOptions, async function (error, response, body) {
               if (error || response.statusCode >= 400) {
                 if (error) {
-                  appLogger.log('Error creating default Service Profile: ' + error)
+                  appLogger.log('Error creating default Service Profile: ', 'error')
+                  appLogger.log(error, 'error')
                   reject(error)
                 }
                 else {
@@ -1010,7 +1012,7 @@ module.exports.addCompany = function (sessionData, network, companyId, dataAPI) 
                   network.id,
                   network.networkProtocol.id,
                   makeCompanyDataKey(company.id, 'coSPId'),
-                  body.serviceProfileID)
+                  body.id)
                 // TODO: Remove this HACK.  Should not store the service profile locally
                 //       in case it gets changed on the remote server.
                 await dataAPI.putProtocolDataForKey(
@@ -1077,7 +1079,8 @@ module.exports.getCompany = function (sessionData, network, companyId, dataAPI) 
 
     request(options, function (error, response, body) {
       if (error) {
-        appLogger.log('Error getting company ' + company.name + ': ' + error)
+        appLogger.log('Error getting company ' + company.name + ': ', 'error')
+        appLogger.log(error, 'error')
         reject(error)
       }
       else {
@@ -1138,7 +1141,8 @@ module.exports.updateCompany = function (sessionData, network, companyId, dataAP
     request(options, function (error, response, body) {
       if (error) {
         appLogger.log('Error updating company ' + company.name +
-          ': ' + error)
+          ': ', 'error')
+        appLogger.log(error, 'error')
         reject(error)
       }
       else {
@@ -1197,7 +1201,8 @@ module.exports.deleteCompany = function (sessionData, network, companyId, dataAP
     }
     request(userOptions, function (error, response, body) {
       if (error) {
-        appLogger.log("Error on delete company's admin user: " + error)
+        appLogger.log("Error on delete company's admin user: ", 'error')
+        appLogger.log(error, 'error')
         reject(error)
       }
       else {
@@ -1216,7 +1221,8 @@ module.exports.deleteCompany = function (sessionData, network, companyId, dataAP
 
         request(options, async function (error, response, body) {
           if (error) {
-            appLogger.log('Error on delete company: ' + error)
+            appLogger.log('Error on delete company: ', 'error')
+            appLogger.log(error, 'error')
             reject(error)
           }
           else {
@@ -1379,11 +1385,13 @@ module.exports.pushDeviceProfile = function (sessionData, network, deviceProfile
   let me = this
   return new Promise(async function (resolve, reject) {
     // See if it already exists
+    appLogger.log(deviceProfile, 'info')
     dataAPI.getProtocolDataForKey(
       network.id,
       network.networkProtocol.id,
       makeDeviceProfileDataKey(deviceProfile.id, 'dpNwkId'))
       .then(dpNetworkId => {
+        appLogger.log(dpNetworkId, 'info')
         if (isUpdate && dpNetworkId) {
           me.updateDeviceProfile(sessionData, network, deviceProfile.id, dataAPI)
             .then(resolve)
@@ -1400,6 +1408,8 @@ module.exports.pushDeviceProfile = function (sessionData, network, deviceProfile
           })
         }
         else {
+          appLogger.log(dpNetworkId + '')
+
           reject(new Error('Something bad happened with the Protocol Table'))
         }
       })
@@ -1442,7 +1452,6 @@ module.exports.pushDevices = function (sessionData, network, modelAPI, dataAPI) 
 
 module.exports.pushDevice = function (sessionData, network, device, dataAPI, update = true) {
   let me = this
-  appLogger.log('Hello?')
   return new Promise(async function (resolve, reject) {
     // See if it already exists
     dataAPI.getProtocolDataForKey(
@@ -1560,17 +1569,18 @@ module.exports.setupOrganization = function (sessionData, network, modelAPI, dat
       'rejectUnauthorized': false
     }
 
-    appLogger.log(options)
+    appLogger.log(options, 'warn')
     request(options, function (error, response, body) {
       if (error) {
-        appLogger.log('Error getting operator ' + company.name + ' from network ' + network.name + ': ' + error)
+        appLogger.log('Error getting operator ' + company.name + ' from network ' + network.name + ': ', 'error')
+        appLogger.log(error, 'error')
         reject(error)
       }
       else {
         body = JSON.parse(body)
         appLogger.log(body)
-        if (body.totalCount === 0) {
-          appLogger.log('Adding company')
+        if (body.totalCount === '0') {
+          appLogger.log('Adding company to network ', 'warn')
           me.addCompany(sessionData, network, company.id, dataAPI)
             .then((networkSettings) => {
               appLogger.log(networkSettings)
@@ -1598,15 +1608,15 @@ module.exports.setupOrganization = function (sessionData, network, modelAPI, dat
               getNetworkServerById(network, networkSettings.networkServerID, sessionData.connection, dataAPI)
                 .then(networkServer => {
                   appLogger.log(networkServer, 'warn')
-                  lora1NetworkSettings.serviceProfileId = networkSettings.serviceProfileID
+                  lora1NetworkSettings.serviceProfileId = networkSettings.id
                   lora1NetworkSettings.networkServerId = networkSettings.networkServerID
                   lora1NetworkSettings.organizationId = organization.id
                   lora1NetworkSettings.networkId = network.id
 
                   companyNtl.networkSettings.serviceProfile = { region: networkServer.region }
                   companyNtl.networkSettings[network.name] = lora1NetworkSettings
-
                   appLogger.log(companyNtl, 'warn')
+
                   modelAPI.companyNetworkTypeLinks.updateRemoteCompanyNetworkTypeLink(companyNtl)
                     .then((result) => {
                       appLogger.log(result)
@@ -1657,10 +1667,11 @@ module.exports.pullDeviceProfiles = function (sessionData, network, modelAPI, co
       'rejectUnauthorized': false
     }
 
-    appLogger.log(options)
+    appLogger.log(options, 'warn')
     request(options, function (error, response, body) {
       if (error) {
-        appLogger.log('Error pulling device profiles from network ' + network.name + ': ' + error)
+        appLogger.log('Error pulling device profiles from network ' + network.name + ': ', 'error')
+        appLogger.log(error, 'error')
         reject(error)
       }
       else {
@@ -1675,6 +1686,7 @@ module.exports.pullDeviceProfiles = function (sessionData, network, modelAPI, co
         }
         Promise.all(promiseList)
           .then((devices) => {
+            appLogger.log(devices, 'info')
             resolve(devices)
           })
           .catch(err => {
@@ -1688,11 +1700,11 @@ module.exports.pullDeviceProfiles = function (sessionData, network, modelAPI, co
 
 module.exports.addRemoteDeviceProfile = function (sessionData, limitedRemoteDeviceProfile, network, modelAPI, dataAPI) {
   return new Promise(async function (resolve, reject) {
-    getDeviceProfileById(network, limitedRemoteDeviceProfile.deviceProfileID, sessionData.connection)
+    getDeviceProfileById(network, limitedRemoteDeviceProfile.id, sessionData.connection)
       .then((remoteDeviceProfile) => {
-        appLogger.log('Adding ' + remoteDeviceProfile.name)
+        appLogger.log('Adding ' + remoteDeviceProfile.deviceProfile.name)
         appLogger.log(remoteDeviceProfile)
-        modelAPI.deviceProfiles.retrieveDeviceProfiles({ search: remoteDeviceProfile.name })
+        modelAPI.deviceProfiles.retrieveDeviceProfiles({ search: remoteDeviceProfile.deviceProfile.name })
           .then(existingDeviceProfile => {
             if (existingDeviceProfile.totalCount > 0) {
               existingDeviceProfile = existingDeviceProfile.records[0]
@@ -1701,19 +1713,19 @@ module.exports.addRemoteDeviceProfile = function (sessionData, limitedRemoteDevi
               dataAPI.putProtocolDataForKey(network.id,
                 network.networkProtocol.id,
                 makeDeviceProfileDataKey(existingDeviceProfile.id, 'dpNwkId'),
-                remoteDeviceProfile.deviceProfile.deviceProfileID)
+                remoteDeviceProfile.deviceProfile.id)
 
               resolve({
                 localDeviceProfile: existingDeviceProfile.id,
-                remoteDeviceProfile: remoteDeviceProfile.deviceProfile.deviceProfileID
+                remoteDeviceProfile: remoteDeviceProfile.deviceProfile.id
               })
             }
             else {
-              appLogger.log('creating ' + remoteDeviceProfile.name)
+              appLogger.log('creating ' + remoteDeviceProfile.deviceProfile.name)
               let networkSpecificDeviceProfileInformation = normalizeDeviceProfileData(remoteDeviceProfile)
               appLogger.log(networkSpecificDeviceProfileInformation, 'error')
               modelAPI.deviceProfiles.createRemoteDeviceProfile(network.networkType.id, 2,
-                remoteDeviceProfile.name, 'Device Profile managed by LPWAN Server, perform changes via LPWAN',
+                remoteDeviceProfile.deviceProfile.name, 'Device Profile managed by LPWAN Server, perform changes via LPWAN',
                 networkSpecificDeviceProfileInformation)
                 .then((existingDeviceProfile) => {
                   appLogger.log(existingDeviceProfile)
@@ -1721,26 +1733,29 @@ module.exports.addRemoteDeviceProfile = function (sessionData, limitedRemoteDevi
                   dataAPI.putProtocolDataForKey(network.id,
                     network.networkProtocol.id,
                     makeDeviceProfileDataKey(existingDeviceProfile.id, 'dpNwkId'),
-                    remoteDeviceProfile.deviceProfile.deviceProfileID)
+                    remoteDeviceProfile.deviceProfile.id)
 
                   resolve({
                     localDeviceProfile: existingDeviceProfile.id,
-                    remoteDeviceProfile: remoteDeviceProfile.deviceProfile.deviceProfileID
+                    remoteDeviceProfile: remoteDeviceProfile.deviceProfile.id
                   })
                 })
                 .catch((error) => {
                   appLogger.log(error)
+                  appLogger.log(error, 'error')
                   reject(error)
                 })
             }
           })
           .catch((error) => {
             appLogger.log(error)
+            appLogger.log(error, 'error')
             reject(error)
           })
       })
       .catch((error) => {
         appLogger.log(error)
+        appLogger.log(error, 'error')
         reject(error)
       })
   })
@@ -1769,10 +1784,11 @@ module.exports.pullApplications = function (sessionData, network, modelAPI, data
       'rejectUnauthorized': false
     }
 
-    appLogger.log(options)
+    appLogger.log(options, 'warn')
     request(options, function (error, response, body) {
       if (error) {
-        appLogger.log('Error pulling applications from network ' + network.name + ': ' + error)
+        appLogger.log('Error pulling applications from network ' + network.name + ': ', 'error')
+        appLogger.log(error, 'error')
         reject(error)
       }
       else {
@@ -1801,14 +1817,14 @@ function addRemoteApplication (sessionData, limitedRemoteApplication, network, m
   let me = this
   return new Promise(async function (resolve, reject) {
     let remoteApplication = await getApplicationById(network, limitedRemoteApplication.id, sessionData.connection)
-    appLogger.log(remoteApplication)
-    let existingApplication = await modelAPI.applications.retrieveApplications({ search: remoteApplication.name })
+    appLogger.log(remoteApplication, 'error')
+    let existingApplication = await modelAPI.applications.retrieveApplications({ search: remoteApplication.application.name })
     if (existingApplication.totalCount > 0) {
       existingApplication = existingApplication.records[0]
       appLogger.log(existingApplication.name + ' already exists')
     }
     else {
-      existingApplication = await modelAPI.applications.createApplication(remoteApplication.name, remoteApplication.description, 2, 1, 'http://set.me.to.your.real.url:8888')
+      existingApplication = await modelAPI.applications.createApplication(remoteApplication.application.name, remoteApplication.application.description, 2, 1, 'http://set.me.to.your.real.url:8888')
       appLogger.log('Created ' + existingApplication.name)
     }
 
@@ -1824,9 +1840,9 @@ function addRemoteApplication (sessionData, limitedRemoteApplication, network, m
       await dataAPI.putProtocolDataForKey(network.id,
         network.networkProtocol.id,
         makeApplicationDataKey(existingApplication.id, 'appNwkId'),
-        remoteApplication.id)
+        remoteApplication.application.id)
     }
-    resolve({ localApplication: existingApplication.id, remoteApplication: remoteApplication.id })
+    resolve({ localApplication: existingApplication.id, remoteApplication: remoteApplication.application.id })
   })
 }
 
@@ -1843,10 +1859,11 @@ function addRemoteApplication (sessionData, limitedRemoteApplication, network, m
  * @returns {Promise<any>}
  */
 module.exports.pullDevices = function (sessionData, network, remoteApplicationId, localApplicationId, dpMap, modelAPI, dataAPI) {
+  let me = this
   return new Promise(async function (resolve, reject) {
     let options = {}
     options.method = 'GET'
-    options.url = network.baseUrl + '/applications/' + remoteApplicationId + '/devices' + '?limit=9999&offset=0'
+    options.url = network.baseUrl + '/devices' + '?limit=9999&offset=0&applicationID=' + remoteApplicationId
     options.headers = {
       'Content-Type': 'application/json',
       'Authorization': 'Bearer ' + sessionData.connection
@@ -1856,10 +1873,11 @@ module.exports.pullDevices = function (sessionData, network, remoteApplicationId
       'rejectUnauthorized': false
     }
 
-    appLogger.log(options)
+    appLogger.log(options, 'error')
     request(options, function (error, response, body) {
       if (error) {
-        appLogger.log('Error pulling devices from network ' + network.name + ': ' + error)
+        appLogger.log('Error pulling devices from network ' + network.name + ': ', 'error')
+        appLogger.log(error, 'error')
         reject(error)
       }
       else {
@@ -1869,7 +1887,7 @@ module.exports.pullDevices = function (sessionData, network, remoteApplicationId
         let promiseList = []
         for (let index in devices) {
           let device = devices[index]
-          promiseList.push(addRemoteDevice(sessionData, device, network, localApplicationId, dpMap, modelAPI, dataAPI))
+          promiseList.push(me.addRemoteDevice(sessionData, device, network, localApplicationId, dpMap, modelAPI, dataAPI))
         }
         Promise.all(promiseList)
           .then((apps) => {
@@ -1884,12 +1902,12 @@ module.exports.pullDevices = function (sessionData, network, remoteApplicationId
   })
 }
 
-function addRemoteDevice (sessionData, limitedRemoteDevice, network, applicationId, dpMap, modelAPI, dataAPI) {
+module.exports.addRemoteDevice = function (sessionData, limitedRemoteDevice, network, applicationId, dpMap, modelAPI, dataAPI) {
   return new Promise(async function (resolve, reject) {
     let remoteDevice = await getRemoteDeviceById(network, limitedRemoteDevice.devEUI, sessionData.connection, dataAPI)
-    appLogger.log('Adding ' + remoteDevice.name)
+    appLogger.log('Adding ' + remoteDevice.device.name)
     appLogger.log(remoteDevice)
-    let deviceProfileId = dpMap.find(o => o.remoteDeviceProfile === remoteDevice.deviceProfileID)
+    let deviceProfileId = dpMap.find(o => o.remoteDeviceProfile === remoteDevice.device.deviceProfileID)
     let deviceProfile = await dataAPI.getDeviceProfileById(deviceProfileId.localDeviceProfile)
     if (deviceProfile.supportsJoin) {
       remoteDevice = await getRemoteDeviceKey(network, remoteDevice, sessionData.connection)
@@ -1898,15 +1916,15 @@ function addRemoteDevice (sessionData, limitedRemoteDevice, network, application
       remoteDevice = await getRemoteDeviceActivation(network, remoteDevice, sessionData.connection)
     }
 
-    let existingDevice = await modelAPI.devices.retrieveDevices({ search: remoteDevice.name })
+    let existingDevice = await modelAPI.devices.retrieveDevices({ search: remoteDevice.device.name })
     appLogger.log(existingDevice)
     if (existingDevice.totalCount > 0) {
       existingDevice = existingDevice.records[0]
       appLogger.log(existingDevice.name + ' already exists')
     }
     else {
-      appLogger.log('creating ' + remoteDevice.name)
-      existingDevice = await modelAPI.devices.createDevice(remoteDevice.name, remoteDevice.description, applicationId)
+      appLogger.log('creating ' + remoteDevice.device.name)
+      existingDevice = await modelAPI.devices.createDevice(remoteDevice.device.name, remoteDevice.device.description, applicationId)
       appLogger.log('Created ' + existingDevice.name)
     }
 
@@ -1917,14 +1935,13 @@ function addRemoteDevice (sessionData, limitedRemoteDevice, network, application
     else {
       appLogger.log('creating Network Link for ' + existingDevice.name)
       let normalizedDeviceSettings = normalizeDeviceData(remoteDevice)
-      appLogger.log(normalizedDeviceSettings, 'info')
       existingDeviceNTL = await modelAPI.deviceNetworkTypeLinks.createRemoteDeviceNetworkTypeLink(existingDevice.id, network.networkType.id, deviceProfileId.localDeviceProfile, normalizedDeviceSettings, 2)
       appLogger.log(existingDeviceNTL)
     }
     dataAPI.putProtocolDataForKey(network.id,
       network.networkProtocol.id,
       makeDeviceDataKey(existingDevice.id, 'devNwkId'),
-      remoteDevice.devEUI)
+      remoteDevice.device.devEUI)
     resolve(existingDevice.id)
   })
 }
@@ -1953,15 +1970,17 @@ module.exports.pullIntegrations = function (sessionData, network, remoteApplicat
       'secureProtocol': 'TLSv1_2_method',
       'rejectUnauthorized': false
     }
-    appLogger.log(options)
+    appLogger.log(options, 'error')
     request(options, function (error, response, body) {
       if (error) {
-        appLogger.log('Error pulling integrations from network ' + network.name + ': ' + error)
+        appLogger.log('Error pulling integrations from network ' + network.name + ': ', 'error')
+        appLogger.log(error, 'error')
         reject(error)
       }
       else {
         let integration = JSON.parse(body)
-        appLogger.log(integration)
+        integration = integration.integration
+        appLogger.log(integration, 'warn')
         var deliveryURL = 'api/ingest/' + localApplicationId + '/' + network.id
         var reportingUrl = nconf.get('base_url') + deliveryURL
 
@@ -1971,12 +1990,12 @@ module.exports.pullIntegrations = function (sessionData, network, remoteApplicat
         else {
           modelAPI.applications.retrieveApplication(localApplicationId)
             .then(appToUpdate => {
-              appToUpdate.baseUrl = integration.dataUpURL
-              appLogger.log(appToUpdate)
+              appToUpdate.baseUrl = integration.uplinkDataURL
+              appLogger.log(appToUpdate, 'warn')
               delete appToUpdate.networks
               modelAPI.applications.updateApplication(appToUpdate)
                 .then(result => {
-                  appLogger.log(result)
+                  appLogger.log(result, 'warn')
                   let options2 = {}
                   options2.method = 'PUT'
                   options2.url = network.baseUrl + '/applications/' + remoteApplicationId + '/integrations/http'
@@ -1990,19 +2009,23 @@ module.exports.pullIntegrations = function (sessionData, network, remoteApplicat
                   }
 
                   options2.json = {
-                    ackNotificationURL: reportingUrl,
-                    dataUpURL: reportingUrl,
-                    errorNotificationURL: reportingUrl,
-                    id: integration.id,
-                    joinNotificationURL: reportingUrl
+                    integration: {
+                      ackNotificationURL: reportingUrl,
+                      uplinkDataURL: reportingUrl,
+                      errorNotificationURL: reportingUrl,
+                      id: integration.id,
+                      joinNotificationURL: reportingUrl
+                    }
                   }
                   appLogger.log(options2)
                   request(options2, function (error, response, body) {
                     if (error) {
-                      appLogger.log('Error updating integrations from network ' + network.name + ': ' + error)
+                      appLogger.log('Error updating integrations from network ' + network.name + ': ', 'error')
+                      appLogger.log(error, 'error')
                       reject(error)
                     }
                     else {
+                      appLogger.log('Success Setting Integrations', 'warn')
                       resolve()
                     }
                   })
@@ -2069,12 +2092,16 @@ module.exports.addApplication = function (sessionData, network, applicationId, d
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ' + sessionData.connection
       }
+      appLogger.log(coSPId, 'info')
+      appLogger.log(coNetworkId, 'info')
+
       options.json = deNormalizeApplicationData(
-        Object.assign({}, application, applicationData.networkSettings),
+        applicationData.networkSettings,
         coSPId,
         coNetworkId,
         application
       )
+
       options.agentOptions = {
         'secureProtocol': 'TLSv1_2_method',
         'rejectUnauthorized': false
@@ -2084,7 +2111,8 @@ module.exports.addApplication = function (sessionData, network, applicationId, d
       request(options, async function (error, response, body) {
         if (error || response.statusCode >= 400) {
           if (error) {
-            appLogger.log('Error on create application: ' + error)
+            appLogger.log('Error on create application: ', 'error')
+            appLogger.log(error, 'error')
             reject(error)
           }
           else {
@@ -2094,7 +2122,7 @@ module.exports.addApplication = function (sessionData, network, applicationId, d
         }
         else {
           try {
-            // Save the application ID from the remote network.
+          // Save the application ID from the remote network.
             await dataAPI.putProtocolDataForKey(network.id,
               network.networkProtocol.id,
               makeApplicationDataKey(application.id, 'appNwkId'),
@@ -2148,7 +2176,8 @@ module.exports.getApplication = function (sessionData, network, applicationId, d
 
     request(options, function (error, response, body) {
       if (error) {
-        appLogger.log('Error on get application: ' + error)
+        appLogger.log('Error on get application: ', 'error')
+        appLogger.log(error, 'error')
         reject(error)
       }
       else {
@@ -2174,16 +2203,16 @@ module.exports.getApplication = function (sessionData, network, applicationId, d
 module.exports.updateApplication = function (sessionData, network, applicationId, dataAPI) {
   return new Promise(async function (resolve, reject) {
     // Get the application data.
-    let application = await dataAPI.getApplicationById(applicationId)
-    let coNetworkId = await dataAPI.getProtocolDataForKey(
+    var application = await dataAPI.getApplicationById(applicationId)
+    var coNetworkId = await dataAPI.getProtocolDataForKey(
       network.id,
       network.networkProtocol.id,
       makeCompanyDataKey(application.company.id, 'coNwkId'))
-    let appNetworkId = await dataAPI.getProtocolDataForKey(
+    var appNetworkId = await dataAPI.getProtocolDataForKey(
       network.id,
       network.networkProtocol.id,
       makeApplicationDataKey(applicationId, 'appNwkId'))
-    let applicationData = await dataAPI.getApplicationNetworkType(applicationId, network.networkType.id)
+    var applicationData = await dataAPI.getApplicationNetworkType(applicationId, network.networkType.id)
     let coSPId = await dataAPI.getProtocolDataForKey(
       network.id,
       network.networkProtocol.id,
@@ -2206,13 +2235,7 @@ module.exports.updateApplication = function (sessionData, network, applicationId
     //   'payloadDecoderScript': '',
     //   'payloadEncoderScript': ''
     // }
-    options.json = deNormalizeApplicationData(
-      applicationData.networkSettings,
-      coSPId,
-      coNetworkId,
-      application
-    )
-
+    options.json = deNormalizeApplicationData(applicationData.networkSettings, coSPId, coNetworkId, application)
     options.agentOptions = {
       'secureProtocol': 'TLSv1_2_method',
       'rejectUnauthorized': false
@@ -2259,11 +2282,12 @@ module.exports.updateApplication = function (sessionData, network, applicationId
     }
     appLogger.log(application)
     appLogger.log(applicationData)
-    appLogger.log(options)
+    appLogger.log(options, 'warn')
 
     request(options, function (error, response, body) {
       if (error) {
-        appLogger.log('Error on update application: ' + error)
+        appLogger.log('Error on update application: ', 'error')
+        appLogger.log(error, 'error')
         reject(error)
       }
       else {
@@ -2310,7 +2334,8 @@ module.exports.deleteApplication = function (sessionData, network, applicationId
 
     request(options, async function (error, response, body) {
       if (error) {
-        appLogger.log('Error on delete application: ' + error)
+        appLogger.log('Error on delete application: ', 'error')
+        appLogger.log(error, 'error')
         reject(error)
       }
       else {
@@ -2375,7 +2400,8 @@ module.exports.startApplication = function (sessionData, network, applicationId,
 
       request(options, function (error, response, body) {
         if (error) {
-          appLogger.log('Error on add application data reporting: ' + error)
+          appLogger.log('Error on add application data reporting: ', 'error')
+          appLogger.log(error, 'error')
           reject(error)
         }
         else {
@@ -2442,7 +2468,8 @@ module.exports.stopApplication = function (sessionData, network, applicationId, 
     }
     request(options, function (error, response, body) {
       if (error) {
-        appLogger.log('Error on delete application notification: ' + error)
+        appLogger.log('Error on delete application notification: ', 'error')
+        appLogger.log(error, 'error')
         reject(error)
       }
       else {
@@ -2474,7 +2501,7 @@ module.exports.passDataToApplication = function (network, applicationId, data, d
         ' for applicationId ' + applicationId +
         '. The appliction is not in a running state.  Data = ' +
         JSON.stringify(data))
-      reject('Application not running')
+      reject(new Error('Application not running'))
       return
     }
 
@@ -2554,6 +2581,7 @@ module.exports.addDeviceProfile = function (sessionData, network, deviceProfileI
         network.networkProtocol.id,
         makeCompanyDataKey(company.id, 'coSPNwkId'))
 
+      // Set up the request options.
       var options = {}
       options.method = 'POST'
       options.url = network.baseUrl + '/device-profiles'
@@ -2571,11 +2599,12 @@ module.exports.addDeviceProfile = function (sessionData, network, deviceProfileI
         'rejectUnauthorized': false
       }
 
-      appLogger.log(options)
+      appLogger.log(options, 'warn')
       request(options, async function (error, response, body) {
         if (error || response.statusCode >= 400) {
           if (error) {
-            appLogger.log('Error on create deviceProfile ' + deviceProfile.name + ':  ' + error)
+            appLogger.log('Error on create deviceProfile ' + deviceProfile.name + ':  ', 'error')
+            appLogger.log(error, 'error')
             reject(error)
           }
           else {
@@ -2585,13 +2614,12 @@ module.exports.addDeviceProfile = function (sessionData, network, deviceProfileI
         }
         else {
           // Save the deviceProfile ID from the remote network.
-          appLogger.log(body)
           await dataAPI.putProtocolDataForKey(network.id,
             network.networkProtocol.id,
             makeDeviceProfileDataKey(deviceProfile.id, 'dpNwkId'),
-            body.deviceProfileID)
+            body.id)
 
-          resolve(body.deviceProfileID)
+          resolve(body.id)
         }
       })
     }
@@ -2644,7 +2672,8 @@ module.exports.getDeviceProfile = function (sessionData, network, deviceProfileI
     request(options, function (error, response, body) {
       if (error || response.statusCode >= 400) {
         if (error) {
-          appLogger.log('Error on get deviceProfile: ' + error)
+          appLogger.log('Error on get deviceProfile: ', 'error')
+          appLogger.log(error, 'error')
           reject(error)
         }
         else {
@@ -2781,7 +2810,8 @@ module.exports.updateDeviceProfile = function (sessionData, network, deviceProfi
     request(options, function (error, response, body) {
       if (error || response.statusCode >= 400) {
         if (error) {
-          appLogger.log('Error on put deviceProfile: ' + error)
+          appLogger.log('Error on put deviceProfile: ', 'error')
+          appLogger.log(error, 'error')
           reject(error)
         }
         else {
@@ -2845,7 +2875,8 @@ module.exports.deleteDeviceProfile = function (sessionData, network, deviceProfi
     request(options, function (error, response, body) {
       if (error || response.statusCode >= 400) {
         if (error) {
-          appLogger.log('Error on delete deviceProfile: ' + error)
+          appLogger.log('Error on delete deviceProfile: ', 'error')
+          appLogger.log(error, 'error')
           reject(error)
         }
         else {
@@ -2881,7 +2912,7 @@ module.exports.deleteDeviceProfile = function (sessionData, network, deviceProfi
 // device.  The promise returns the id of the created device to be added to the
 // deviceNetworkTypeLinks record by the caller.
 module.exports.addDevice = function (sessionData, network, deviceId, dataAPI) {
-  appLogger.log('Adding Device ' + deviceId + ' to Lora V1 Network')
+  appLogger.log('Adding Device ' + deviceId + ' to Lora V2 Network')
   return new Promise(async function (resolve, reject) {
     var device
     var dntl
@@ -2893,7 +2924,7 @@ module.exports.addDevice = function (sessionData, network, deviceId, dataAPI) {
       dntl = await dataAPI.getDeviceNetworkType(deviceId, network.networkType.id)
       deviceProfile = await dataAPI.getDeviceProfileById(dntl.deviceProfile.id)
       if (!dntl.networkSettings || !dntl.networkSettings.devEUI) {
-        appLogger.log('deviceNetworkTypeLink MUST have networkSettings which MUST have devEUI')
+        appLogger.log('deviceNetworkTypeLink MUST have networkSettings which MUST have devEUI', 'error')
         reject(400)
         return
       }
@@ -2905,9 +2936,10 @@ module.exports.addDevice = function (sessionData, network, deviceId, dataAPI) {
         network.id,
         network.networkProtocol.id,
         makeDeviceProfileDataKey(dntl.deviceProfile.id, 'dpNwkId'))
-
-      let loraV1Device = deNormalizeDeviceData(
+      // let loraV2Device = deNormalizeDeviceData(dntl.networkSettings, deviceProfile.networkSettings, appNwkId, dpNwkId)
+      let loraV2Device = deNormalizeDeviceData(
         Object.assign({}, device, dntl.networkSettings),
+        deviceProfile.networkSettings,
         appNwkId,
         dpNwkId
       )
@@ -2919,71 +2951,65 @@ module.exports.addDevice = function (sessionData, network, deviceId, dataAPI) {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ' + sessionData.connection
       }
-      // options.json = {
-      //   'applicationID': appNwkId,
-      //   'description': loraV1Device.description,
-      //   'devEUI': loraV1Device.devEUI,
-      //   'deviceProfileID': dpNwkId,
-      //   'name': loraV1Device.name,
-      //   'skipFCntCheck': loraV1Device.skipFCntCheck
-      // }
-      options.json = loraV1Device
+      options.json = {
+        device: loraV2Device.device
+      }
       options.agentOptions = {
         'secureProtocol': 'TLSv1_2_method',
         'rejectUnauthorized': false
       }
 
-      appLogger.log(options, 'info')
+      appLogger.log(options, 'warn')
       request(options, function (error, response, body) {
         if (error || response.statusCode >= 400) {
           if (error) {
-            appLogger.log('Error on create device: ' + error)
+            appLogger.log('Error on create device: ', 'error')
+            appLogger.lop(error, 'error')
+            appLogger.log(error, 'error')
             reject(error)
           }
           else {
-            appLogger.log('Error on create device (' + response.statusCode + '): ' + body.error)
+            appLogger.log('Error on create device (' + response.statusCode + '): ', 'error')
+            appLogger.log(body, 'error')
             reject(response.statusCode)
           }
         }
         else {
-        // LoRa Server uses the DevEUI as the node id.
           dataAPI.putProtocolDataForKey(network.id,
             network.networkProtocol.id,
             makeDeviceDataKey(device.id, 'devNwkId'),
-            options.json.devEUI)
+            loraV2Device.device.devEUI)
 
-          appLogger.log(loraV1Device, 'info')
+          appLogger.log(loraV2Device, 'warn')
 
-          // Devices have to do a second call to set up either the
-          // Application Key (OTAA) or the Keys for ABP.
-          if (deviceProfile.networkSettings.supportsJoin && loraV1Device.deviceKeys) {
-            // This is the OTAA path.
+          if (deviceProfile.networkSettings.supportsJoin && loraV2Device.deviceKeys) {
             options.url = network.baseUrl + '/devices/' +
-              loraV1Device.devEUI + '/keys'
+              loraV2Device.device.devEUI + '/keys'
             options.json = {
-              devEUI: loraV1Device.devEUI,
-              deviceKeys: loraV1Device.deviceKeys
+              deviceKeys: loraV2Device.deviceKeys
             }
           }
-          else if (loraV1Device.deviceActivation) {
-            // This is the ABP path.
-            options.url = network.baseUrl + '/devices/' +
-              loraV1Device.devEUI + '/activate'
-            options.json = loraV1Device.deviceActivation
-            appLogger.log('options.json = ' + JSON.stringify(options.json))
+          else if (loraV2Device.deviceActivation) {
+            options.url = network.baseUrl + '/devices/' + loraV2Device.device.devEUI + '/activate'
+            options.json = {
+              deviceActivation: loraV2Device.deviceActivation
+            }
           }
           else {
-            appLogger.log('Remote Device ' + loraV1Device.name + ' does not have authentication parameters')
+            appLogger.log('Remote Device ' + loraV2Device.name + ' does not have authentication parameters', 'error')
             resolve(dntl.networkSettings.devEUI)
             return
           }
+          appLogger.log(options, 'warn')
           request(options, function (error, response, body) {
             if (error || response.statusCode >= 400) {
               if (error) {
-                appLogger.log('Error on create device keys/activation: ' + error)
+                appLogger.log('Error on create device keys/activation: ', 'error')
+                appLogger.log(error)
               }
               else {
-                appLogger.log('Error on create device keys/activation (' + response.statusCode + '): ' + body.error)
+                appLogger.log('Error on create device keys/activation (' + response.statusCode + '): ', 'error')
+                appLogger.log(body, 'error')
               }
               resolve(dntl.networkSettings.devEUI)
             }
@@ -2995,7 +3021,8 @@ module.exports.addDevice = function (sessionData, network, deviceId, dataAPI) {
       })
     }
     catch (err) {
-      appLogger.log('Error getting data for remote network: ' + err)
+      appLogger.log('Error getting data for remote network: ', 'error')
+      appLogger.log(err, 'error')
       reject(err)
     }
   })
@@ -3043,7 +3070,8 @@ module.exports.getDevice = function (sessionData, network, deviceId, dataAPI) {
     request(options, function (error, response, body) {
       if (error || response.statusCode >= 400) {
         if (error) {
-          appLogger.log('Error on get device: ' + error)
+          appLogger.log('Error on get device: ', 'error')
+          appLogger.log(error, 'error')
           reject(error)
         }
         else {
@@ -3113,12 +3141,13 @@ module.exports.updateDevice = function (sessionData, network, deviceId, dataAPI)
       //   'deviceProfileID': dpNwkId,
       //   'name': device.name
       // }
-      let loraV1Device = deNormalizeDeviceData(
+      let loraV2Device = deNormalizeDeviceData(
         Object.assign({}, device, dntl.networkSettings),
+        deviceProfile,
         appNwkId,
         dpNwkId
       )
-      options.json = loraV1Device
+      options.json = loraV2Device
       options.agentOptions = {
         'secureProtocol': 'TLSv1_2_method',
         'rejectUnauthorized': false
@@ -3140,24 +3169,24 @@ module.exports.updateDevice = function (sessionData, network, deviceId, dataAPI)
         else {
           // Devices have to do a second call to set up either the
           // Application Key (OTAA) or the Keys for ABP.
-          if (deviceProfile.networkSettings.supportsJoin && loraV1Device.deviceKeys) {
+          if (deviceProfile.networkSettings.supportsJoin && loraV2Device.deviceKeys) {
             // This is the OTAA path.
             options.url = network.baseUrl + '/devices/' +
-              loraV1Device.devEUI + '/keys'
+              loraV2Device.devEUI + '/keys'
             options.json = {
-              devEUI: loraV1Device.devEUI,
-              deviceKeys: loraV1Device.deviceKeys
+              devEUI: loraV2Device.devEUI,
+              deviceKeys: loraV2Device.deviceKeys
             }
           }
-          else if (loraV1Device.deviceActivation) {
+          else if (loraV2Device.deviceActivation) {
             // This is the ABP path.
             options.url = network.baseUrl + '/devices/' +
-              loraV1Device.devEUI + '/activate'
-            options.json = loraV1Device.deviceActivation
+              loraV2Device.devEUI + '/activate'
+            options.json = loraV2Device.deviceActivation
             appLogger.log('options.json = ' + JSON.stringify(options.json))
           }
           else {
-            appLogger.log('Remote Device ' + loraV1Device.name + ' does not have authentication parameters')
+            appLogger.log('Remote Device ' + loraV2Device.name + ' does not have authentication parameters')
             resolve(dntl.networkSettings.devEUI)
             return
           }
@@ -3231,7 +3260,8 @@ module.exports.deleteDevice = function (sessionData, network, deviceId, dataAPI)
     request(options, async function (error, response, body) {
       if (error || response.statusCode >= 400) {
         if (error) {
-          appLogger.log('Error on delete device: ' + error)
+          appLogger.log('Error on delete device: ', 'error')
+          appLogger.log(error, 'error')
           reject(error)
         }
         else {
@@ -3256,7 +3286,7 @@ module.exports.deleteDevice = function (sessionData, network, deviceId, dataAPI)
         request(options, function (error, response, body) {
           if (error || response.statusCode >= 400) {
             if (error) {
-              appLogger.log('Error on delete device keys: ' + error)
+              appLogger.log('Error on delete device keys: ', 'error')
             }
             else {
               appLogger.log('Error on delete device keys (' + response.statusCode + '): ' + body.error)
@@ -3275,24 +3305,26 @@ module.exports.deleteDevice = function (sessionData, network, deviceId, dataAPI)
 
 function normalizeApplicationData (remoteApplication) {
   /*
-  "description": "string",
-      "id": "string",
-      "name": "string",
-      "organizationID": "string",
-      "payloadCodec": "string",
-      "payloadDecoderScript": "string",
-      "payloadEncoderScript": "string",
-      "serviceProfileID": "string"
+ "application": {
+        "description": "string",
+        "id": "string",
+        "name": "string",
+        "organizationID": "string",
+        "payloadCodec": "string",
+        "payloadDecoderScript": "string",
+        "payloadEncoderScript": "string",
+        "serviceProfileID": "string"
+      }
    */
   let normalized = {
-    description: remoteApplication.description,
-    id: remoteApplication.id,
-    name: remoteApplication.name,
-    organizationID: remoteApplication.organizationID,
-    payloadCodec: remoteApplication.payloadCodec,
-    payloadDecoderScript: remoteApplication.payloadDecoderScript,
-    payloadEncoderScript: remoteApplication.payloadEncoderScript,
-    serviceProfileID: remoteApplication.serviceProfileID,
+    description: remoteApplication.application.description,
+    id: remoteApplication.application.id,
+    name: remoteApplication.application.name,
+    organizationID: remoteApplication.application.organizationID,
+    payloadCodec: remoteApplication.application.payloadCodec,
+    payloadDecoderScript: remoteApplication.application.payloadDecoderScript,
+    payloadEncoderScript: remoteApplication.application.payloadEncoderScript,
+    serviceProfileID: remoteApplication.application.serviceProfileID,
     cansend: true,
     deviceLimit: null,
     devices: null,
@@ -3308,64 +3340,63 @@ function normalizeApplicationData (remoteApplication) {
 }
 
 function deNormalizeApplicationData (remoteApplication, serviceProfile, organizationId, application) {
-  let loraV1ApplicationData = {
-    'description': application.description || remoteApplication.description,
-    'id': remoteApplication.id,
-    'name': application.name || remoteApplication.name,
-    'organizationID': organizationId,
-    'payloadCodec': remoteApplication.payloadCodec,
-    'payloadDecoderScript': remoteApplication.payloadDecoderScript,
-    'payloadEncoderScript': remoteApplication.payloadEncoderScript,
-    'serviceProfileID': serviceProfile
+  let loraV2ApplicationData = {
+    application: {
+      'description': application.description,
+      'name': application.name,
+      'organizationID': organizationId,
+      'payloadCodec': remoteApplication.payloadCodec,
+      'payloadDecoderScript': remoteApplication.payloadDecoderScript,
+      'payloadEncoderScript': remoteApplication.payloadEncoderScript,
+      'serviceProfileID': serviceProfile
+    }
   }
-  appLogger.log(remoteApplication, 'info')
-  appLogger.log(loraV1ApplicationData, 'info')
-  return loraV1ApplicationData
+  return loraV2ApplicationData
 }
 
 function normalizeDeviceProfileData (remoteDeviceProfile) {
   /*
-  "createdAt": "string",
-    "deviceProfile": {
-      "classBTimeout": 0,
-      "classCTimeout": 0,
-      "deviceProfileID": "string",
-      "factoryPresetFreqs": [
-        0
-      ],
-      "macVersion": "string",
-      "maxDutyCycle": 0,
-      "maxEIRP": 0,
-      "pingSlotDR": 0,
-      "pingSlotFreq": 0,
-      "pingSlotPeriod": 0,
-      "regParamsRevision": "string",
-      "rfRegion": "string",
-      "rxDROffset1": 0,
-      "rxDataRate2": 0,
-      "rxDelay1": 0,
-      "rxFreq2": 0,
-      "supports32bitFCnt": true,
-      "supportsClassB": true,
-      "supportsClassC": true,
-      "supportsJoin": true
-    },
-    "name": "string",
-    "networkServerID": "string",
-    "organizationID": "string",
-    "updatedAt": "string"
+  "createdAt": "2018-09-05T05:28:09.681Z",
+      "deviceProfile": {
+        "classBTimeout": 0,
+        "classCTimeout": 0,
+        "factoryPresetFreqs": [
+          0
+        ],
+        "id": "string",
+        "macVersion": "string",
+        "maxDutyCycle": 0,
+        "maxEIRP": 0,
+        "name": "string",
+        "networkServerID": "string",
+        "organizationID": "string",
+        "pingSlotDR": 0,
+        "pingSlotFreq": 0,
+        "pingSlotPeriod": 0,
+        "regParamsRevision": "string",
+        "rfRegion": "string",
+        "rxDROffset1": 0,
+        "rxDataRate2": 0,
+        "rxDelay1": 0,
+        "rxFreq2": 0,
+        "supports32BitFCnt": true,
+        "supportsClassB": true,
+        "supportsClassC": true,
+        "supportsJoin": true
+      },
+      "updatedAt": "2018-09-05T05:28:09.682Z"
    */
   let normalized = {
     classBTimeout: remoteDeviceProfile.deviceProfile.classBTimeout,
     classCTimeout: remoteDeviceProfile.deviceProfile.classCTimeout,
     factoryPresetFreqs: remoteDeviceProfile.deviceProfile.factoryPresetFreqs,
-    id: remoteDeviceProfile.deviceProfile.deviceProfileID,
+    id: remoteDeviceProfile.deviceProfile.id,
     macVersion: remoteDeviceProfile.deviceProfile.macVersion,
     maxDutyCycle: remoteDeviceProfile.deviceProfile.maxDutyCycle,
     maxEIRP: remoteDeviceProfile.deviceProfile.maxEIRP,
-    name: remoteDeviceProfile.name,
-    networkServerID: remoteDeviceProfile.networkServerID,
-    organizationID: remoteDeviceProfile.organizationID,
+    name: remoteDeviceProfile.deviceProfile.name,
+    networkServerID: remoteDeviceProfile.deviceProfile.networkServerID,
+    organizationID: remoteDeviceProfile.deviceProfile.organizationID,
     pingSlotDR: remoteDeviceProfile.deviceProfile.pingSlotDR,
     pingSlotFreq: remoteDeviceProfile.deviceProfile.pingSlotFreq,
     pingSlotPeriod: remoteDeviceProfile.deviceProfile.pingSlotPeriod,
@@ -3384,11 +3415,41 @@ function normalizeDeviceProfileData (remoteDeviceProfile) {
 }
 
 function deNormalizeDeviceProfileData (remoteDeviceProfile, networkServerId, organizationId) {
-  let loraV1DeviceProfileData = {
+  /*
+    "createdAt": "2018-09-05T05:28:09.681Z",
+      "deviceProfile": {
+        "classBTimeout": 0,
+        "classCTimeout": 0,
+        "factoryPresetFreqs": [
+          0
+        ],
+        "id": "string",
+        "macVersion": "string",
+        "maxDutyCycle": 0,
+        "maxEIRP": 0,
+        "name": "string",
+        "networkServerID": "string",
+        "organizationID": "string",
+        "pingSlotDR": 0,
+        "pingSlotFreq": 0,
+        "pingSlotPeriod": 0,
+        "regParamsRevision": "string",
+        "rfRegion": "string",
+        "rxDROffset1": 0,
+        "rxDataRate2": 0,
+        "rxDelay1": 0,
+        "rxFreq2": 0,
+        "supports32BitFCnt": true,
+        "supportsClassB": true,
+        "supportsClassC": true,
+        "supportsJoin": true
+      },
+      "updatedAt": "2018-09-05T05:28:09.682Z"
+   */
+  let loraV2DeviceProfileData = {
     deviceProfile: {
       classBTimeout: remoteDeviceProfile.classBTimeout,
       classCTimeout: remoteDeviceProfile.classCTimeout,
-      deviceProfileID: `${remoteDeviceProfile.id}`,
       factoryPresetFreqs: remoteDeviceProfile.factoryPresetFreqs,
       macVersion: remoteDeviceProfile.macVersion,
       maxDutyCycle: remoteDeviceProfile.maxDutyCycle,
@@ -3402,111 +3463,129 @@ function deNormalizeDeviceProfileData (remoteDeviceProfile, networkServerId, org
       rxDataRate2: remoteDeviceProfile.rxDataRate2,
       rxDelay1: remoteDeviceProfile.rxDelay1,
       rxFreq2: remoteDeviceProfile.rxFreq2,
-      supports32bitFCnt: remoteDeviceProfile.supports32BitFCnt,
+      supports32BitFCnt: remoteDeviceProfile.supports32BitFCnt,
       supportsClassB: remoteDeviceProfile.supportsClassB,
       supportsClassC: remoteDeviceProfile.supportsClassC,
-      supportsJoin: remoteDeviceProfile.supportsJoin
-    },
-    name: remoteDeviceProfile.name,
-    networkServerID: networkServerId,
-    organizationID: organizationId
+      supportsJoin: remoteDeviceProfile.supportsJoin,
+      name: remoteDeviceProfile.name,
+      description: remoteDeviceProfile.description,
+      networkServerID: networkServerId,
+      organizationID: organizationId
+    }
+
   }
-  return loraV1DeviceProfileData
+  return loraV2DeviceProfileData
 }
 
 function normalizeDeviceData (remoteDevice) {
   /*
-      "applicationID": "string",
+        "applicationID": "string",
       "description": "string",
       "devEUI": "string",
       "deviceProfileID": "string",
+      "name": "string",
+      "skipFCntCheck": true,
       "deviceStatusBattery": 0,
       "deviceStatusMargin": 0,
-      "lastSeenAt": "string",
-      "name": "string",
-      "skipFCntCheck": true
+      "lastSeenAt": "2018-09-05T05:28:09.738Z"
+"deviceActivation": {
+    "aFCntDown": 0,
+    "appSKey": "string",
+    "devAddr": "string",
+    "devEUI": "string",
+    "fCntUp": 0,
+    "fNwkSIntKey": "string",
+    "nFCntDown": 0,
+    "nwkSEncKey": "string",
+    "sNwkSIntKey": "string"
+  }
+   "deviceKeys": {
+    "appKey": "string",
+    "devEUI": "string",
+    "nwkKey": "string"
+  }
    */
   let normalized = {
-    applicationID: remoteDevice.applicationID,
-    description: remoteDevice.description,
-    devEUI: remoteDevice.devEUI,
-    deviceProfileID: remoteDevice.deviceProfileID,
-    name: remoteDevice.name,
-    skipFCntCheck: remoteDevice.skipFCntCheck,
+    applicationID: remoteDevice.device.applicationID,
+    description: remoteDevice.device.description,
+    devEUI: remoteDevice.device.devEUI,
+    deviceProfileID: remoteDevice.device.deviceProfileID,
+    name: remoteDevice.device.name,
+    skipFCntCheck: remoteDevice.device.skipFCntCheck,
     deviceStatusBattery: remoteDevice.deviceStatusBattery,
     deviceStatusMargin: remoteDevice.deviceStatusMargin,
     lastSeenAt: remoteDevice.lastSeenAt
   }
-  if (remoteDevice.deviceKeys) {
+  if (remoteDevice.device.deviceKeys) {
     normalized.deviceKeys = {
-      appKey: remoteDevice.deviceKeys.appKey,
-      devEUI: remoteDevice.deviceKeys.devEUI,
-      nwkKey: remoteDevice.deviceKeys.appKey
+      appKey: remoteDevice.device.deviceKeys.appKey,
+      devEUI: remoteDevice.device.deviceKeys.devEUI,
+      nwkKey: remoteDevice.device.deviceKeys.nwkKey
     }
   }
-  /*
-  "devEUI": "",
-  "appSKey": "string",
-  "devAddr": "string",
-  "fCntDown": 0,
-  "fCntUp": 0,
-  "nwkSKey": "string",
-  "skipFCntCheck": true
-   */
-  if (remoteDevice.deviceActivation) {
+
+  if (remoteDevice.device.deviceActivation) {
     normalized.deviceActivation = {
-      devEUI: remoteDevice.deviceActivation.devEUI,
-      appSKey: remoteDevice.deviceActivation.appSKey,
-      devAddr: remoteDevice.deviceActivation.devAddr,
-      aFCntDown: remoteDevice.deviceActivation.fCntDown,
-      nFCntDown: remoteDevice.deviceActivation.fCntDown,
-      fCntUp: remoteDevice.deviceActivation.fCntUp,
-      nwkSEncKey: remoteDevice.deviceActivation.nwkSKey,
-      sNwkSIntKey: remoteDevice.deviceActivation.nwkSKey,
-      fNwkSIntKey: remoteDevice.deviceActivation.nwkSKey
+      aFCntDown: remoteDevice.device.deviceActivation.aFCntDown,
+      appSKey: remoteDevice.device.deviceActivation.appSKey,
+      devAddr: remoteDevice.device.deviceActivation.devAddr,
+      devEUI: remoteDevice.device.deviceActivation.devEUI,
+      fCntUp: remoteDevice.device.deviceActivation.fCntUp,
+      nFCntDown: remoteDevice.device.deviceActivation.nFCntDown,
+      nwkSEncKey: remoteDevice.device.deviceActivation.nwkSEncKey,
+      sNwkSIntKey: remoteDevice.device.deviceActivation.sNwkSIntKey,
+      fNwkSIntKey: remoteDevice.device.deviceActivation.fNwkSIntKey
     }
   }
   return normalized
 }
 
-function deNormalizeDeviceData (remoteDevice, appId, dpId) {
-  /*
-      "applicationID": "string",
-      "description": "string",
-      "devEUI": "string",
-      "deviceProfileID": "string",
-      "deviceStatusBattery": 0,
-      "deviceStatusMargin": 0,
-      "lastSeenAt": "string",
-      "name": "string",
-      "skipFCntCheck": true
-   */
-  let loraV1DeviceData = {
-    applicationID: appId,
-    description: remoteDevice.description,
-    devEUI: remoteDevice.devEUI,
-    deviceProfileID: dpId,
-    name: remoteDevice.name,
-    skipFCntCheck: remoteDevice.skipFCntCheck,
-    deviceStatusBattery: remoteDevice.deviceStatusBattery,
-    deviceStatusMargin: remoteDevice.deviceStatusMargin,
-    lastSeenAt: remoteDevice.lastSeenAt
+/**
+ * @see ./data/json/lora2.json
+ *
+ * @param remoteDevice
+ * @returns {{device: {applicationID: (*|string), description: *, devEUI: *, deviceProfileID: *, name: *, skipFCntCheck: (*|boolean)}, deviceStatusBattery: number, deviceStatusMargin: number, lastSeenAt: (string|null)}}
+ */
+function deNormalizeDeviceData (remoteDevice, deviceProfile, appId, dpId) {
+  let loraV2DeviceData = {
+    device: {
+      applicationID: appId,
+      description: remoteDevice.description,
+      devEUI: remoteDevice.devEUI,
+      deviceProfileID: dpId,
+      name: remoteDevice.name,
+      skipFCntCheck: remoteDevice.skipFCntCheck
+    }
   }
   if (remoteDevice.deviceKeys) {
-    loraV1DeviceData.deviceKeys = {
-      appKey: remoteDevice.deviceKeys.appKey
+    if (deviceProfile.macVersion === '1.1.0') {
+      loraV2DeviceData.deviceKeys = {
+        appKey: remoteDevice.deviceKeys.appKey,
+        nwkKey: remoteDevice.deviceKeys.nwkKey,
+        devEUI: remoteDevice.deviceKeys.devEUI
+      }
+    }
+    else {
+      loraV2DeviceData.deviceKeys = {
+        nwkKey: remoteDevice.deviceKeys.appKey,
+        devEUI: remoteDevice.deviceKeys.devEUI,
+        appKey: remoteDevice.deviceKeys.appKey
+      }
     }
   }
   if (remoteDevice.deviceActivation) {
-    loraV1DeviceData.deviceActivation = {
+    loraV2DeviceData.deviceActivation = {
       appSKey: remoteDevice.deviceActivation.appSKey,
       devAddr: remoteDevice.deviceActivation.devAddr,
-      devEUI: remoteDevice.deviceActivation.devEUI,
-      fCntDown: remoteDevice.deviceActivation.aFCntDown,
+      aFCntDown: remoteDevice.deviceActivation.aFCntDown,
+      nFCntDown: remoteDevice.deviceActivation.nFCntDown,
       fCntUp: remoteDevice.deviceActivation.fCntUp,
-      nwkSKey: remoteDevice.deviceActivation.nwkSEncKey,
-      skipFCntCheck: false
+      nwkSEncKey: remoteDevice.deviceActivation.nwkSEncKey,
+      sNwkSIntKey: remoteDevice.deviceActivation.sNwkSIntKey,
+      fNwkSIntKey: remoteDevice.deviceActivation.fNwkSIntKey
     }
   }
-  return loraV1DeviceData
+  appLogger.log(remoteDevice, 'warn')
+  appLogger.log(loraV2DeviceData, 'warn')
+  return loraV2DeviceData
 }

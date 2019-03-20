@@ -81,7 +81,7 @@ function ModelAPI (app) {
   this.networkTypeAPI = new NetworkTypeAPI(this)
 
   // The networkProtocol API, giving access to a specific remote network.
-  this.networkProtocolAPI = new NetworkProtocolAPI(this.networkProtocols)
+  this.networkProtocolAPI = new NetworkProtocolAPI(this)
 
   // The companyNetworkTypeLink model.
   this.companyNetworkTypeLinks = new CompanyNetworkTypeLinkModel(this)

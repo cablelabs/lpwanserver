@@ -2,6 +2,7 @@ var appLogger = require('./lib/appLogger.js')
 var restServer
 var modelAPI
 const { formatRelationshipsOut } = require('./lib/prisma')
+const R = require('ramda')
 
 exports.initialize = function (app, server) {
   restServer = server
@@ -315,105 +316,78 @@ exports.initialize = function (app, server) {
  * @apiSuccess {Number} id The new Network's id.
  * @apiVersion 0.1.0
  */
-  app.post('/api/networks', [restServer.isLoggedIn,
-    restServer.fetchCompany,
-    restServer.isAdminCompany],
-  function (req, res, next) {
-    var rec = req.body
-    // You can't specify an id.
-    if (rec.id) {
-      restServer.respond(res, 400, "Cannot specify the network's id in create")
-      return
-    }
+  app.post('/api/networks',
+    [restServer.isLoggedIn, restServer.fetchCompany, restServer.isAdminCompany],
+    async function (req, res, next) {
+      const { body } = req
 
-    // Verify that required fields exist.
-    if (!rec.name ||
-      !rec.networkProviderId ||
-      !rec.networkTypeId ||
-      !rec.networkProtocolId ||
-      !rec.baseUrl) {
-      restServer.respond(res, 400, 'Missing required data')
-      return
-    }
-
-    // Issue 176, Remove trailing '/' in the url if there
-    if (rec.baseUrl.charAt(rec.baseUrl.length - 1) === '/') {
-      rec.baseUrl = rec.baseUrl.substr(0, rec.baseUrl.length - 1)
-    }
-
-    if (!rec.securityData) {
-      rec.securityData = {
-        authorized: false,
-        message: 'Pending Authorization',
-        enabled: false
+      if (body.id) {
+        restServer.respond(res, 400, "Cannot specify the network's id in create")
+        return
       }
-    }
 
-    // Do the add.
-    modelAPI.networks.createNetwork(
-      rec.name,
-      rec.networkProviderId,
-      rec.networkTypeId,
-      rec.networkProtocolId,
-      rec.baseUrl,
-      rec.securityData)
-      .then(function (rec) {
-        modelAPI.networks.retrieveNetwork(rec.id, 'internal')
-          .then((network) => {
-            appLogger.log(network)
-            let temp = {
-              authorized: network.securityData.authorized,
-              message: network.securityData.message,
-              enabled: network.securityData.enabled
-            }
-            if (network.securityData.clientId) {
-              temp.clientId = network.securityData.clientId
-              temp.clientSecret = network.securityData.clientSecret
-            }
-            else if (network.securityData.apikey) {
-              temp.apikey = network.securityData.apikey
-            }
-            else if (network.securityData.username) {
-              temp.username = network.securityData.username
-              temp.password = network.securityData.password
-            }
-            network.securityData = temp
+      const required = ['name', 'networkProviderId', 'networkTypeId', 'networkProtocolId', 'baseUrl']
+      if (required.some(x => !body[x])) {
+        restServer.respond(res, 400, 'Missing required data')
+        return
+      }
 
-            if (network.securityData.authorized === false) {
-              restServer.respond(res, 201, network)
-            }
-            else {
-              modelAPI.networks.pullNetwork(network.id)
-                .then(result => {
-                  appLogger.log('Success pulling from network ' + network.name)
-                  modelAPI.networks.pushNetworks(network.networkType.id)
-                    .then(ret => {
-                      appLogger.log('Success pushing to networks')
-                      restServer.respond(res, 201, formatRelationshipsOut(network))
-                    }).catch(err => {
-                      appLogger.log('Error pushing to networks: ' + err)
-                      restServer.respond(res, err)
-                    })
-                })
-                .catch(err => {
-                  appLogger.log('Error pulling from network ' + network.id + ': ' + err)
-                  appLogger.log(network.securityData)
-                  if (!network.securityData.authorized) {
-                    network.securityData.message = 'Pending Authorization'
-                    restServer.respond(res, 201, formatRelationshipsOut(network))
-                  }
-                  else {
-                    restServer.respond(res, err)
-                  }
-                })
-            }
-          })
-      })
-      .catch(function (err) {
+      // Issue 176, Remove trailing '/' in the url if there
+      if (R.last(body.baseUrl) === '/') {
+        body.baseUrl = body.slice(0, body.baseUrl.length - 1)
+      }
+
+      if (!body.securityData) {
+        body.securityData = { enabled: false }
+      }
+
+      let network
+
+      try {
+        network = await modelAPI.networks.createNetwork(body)
+        appLogger.log(network)
+      }
+      catch (err) {
         appLogger.log('Error creating network' + err)
         restServer.respond(res, err)
-      })
-  })
+        return
+      }
+
+      let props = ['authorized', 'message', 'enabled']
+      if (network.securityData.clientId) props.push('clientId', 'clientSecret')
+      else if (network.securityData.apikey) props.push('apiKey')
+      else if (network.securityData.username) props.push('username', 'password')
+      network.securityData = R.pick(props, network.securityData)
+
+      if (!network.securityData.authorized) {
+        restServer.respond(res, 201, network)
+        return
+      }
+
+      try {
+        await modelAPI.networks.pullNetwork(network.id)
+        appLogger.log('Success pulling from network ' + network.name)
+      } catch (err) {
+        appLogger.log('Error pulling from network ' + network.id + ': ' + err)
+        appLogger.log(network.securityData)
+        if (!network.securityData.authorized) {
+          network.securityData.message = 'Pending Authorization'
+          restServer.respond(res, 201, formatRelationshipsOut(network))
+          return
+        }
+        restServer.respond(res, err)
+        return
+      }
+
+      try {
+        await modelAPI.networks.pushNetworks(network.networkType.id)
+        appLogger.log('Success pushing to networks')
+        restServer.respond(res, 201, formatRelationshipsOut(network))
+      } catch (err) {
+        appLogger.log('Error pushing to networks: ' + err)
+        restServer.respond(res, err)
+      }
+  }
 
   /**
  * @apiDescription Updates the Network record with the specified id.
