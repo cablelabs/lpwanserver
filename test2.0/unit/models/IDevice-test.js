@@ -4,77 +4,53 @@ const assert = require('assert')
 const chai = require('chai')
 // eslint-disable-next-line no-unused-vars
 const should = chai.should()
+// Initiate config before importing tested files
 const nconf = require('nconf')
-const Initializer = require('../../../rest/models/initializer')
+nconf.file('defaults', { file: 'config/defaults.hjson', format: require('hjson') })
+
 const TestModule = require('../../../rest/models/IDevice')
-const testName = 'Device'
 const modelAPIMock = require('../../mock/ModelAPI-mock')
+
+const testName = 'Device'
+
+function assertDeviceProps (actual) {
+  actual.should.have.property('name')
+  actual.should.have.property('description')
+  actual.application.should.have.property('id')
+  actual.should.have.property('deviceModel')
+  actual.should.have.property('id')
+}
 
 describe('Unit Tests for ' + testName, () => {
   let deviceId = ''
-  before('Setup ENV', async () => {
-    nconf.file('defaults', { file: 'config/defaults.hjson', format: require('hjson') })
-    let initializer = new Initializer()
-    initializer.init()
-    console.log(nconf.get('impl_directory'))
-    console.log(nconf.get('db_schema'))
-    console.log(nconf.get('db_create'))
-  })
+  before('Setup ENV', async () => {})
   after('Shutdown', async () => {
   })
   it(testName + ' Construction', () => {
     let testModule = new TestModule(modelAPIMock)
     should.exist(testModule)
   })
-  it(testName + ' Empty Retrieval', (done) => {
+  it(testName + ' Empty Retrieval', async () => {
     let testModule = new TestModule(modelAPIMock)
     should.exist(testModule)
-    testModule.retrieveDevices()
-      .then(actual => {
-        actual.should.have.property('totalCount')
-        actual.should.have.property('records')
-        // actual.totalCount.should.equal(0)
-        // actual.records.length.should.equal(0)
-        done()
-      })
-      .catch(err => {
-        done(err)
-      })
+    const actual = await testModule.retrieveDevices()
+    actual.should.have.property('totalCount')
+    actual.should.have.property('records')
   })
-  it(testName + ' Create', (done) => {
+  it(testName + ' Create', async () => {
     let testModule = new TestModule(modelAPIMock)
     should.exist(testModule)
-    testModule.createDevice('test', 'test application', '1', 'AR1')
-      .then(actual => {
-        actual.should.have.property('name')
-        actual.should.have.property('description')
-        actual.should.have.property('applicationId')
-        actual.should.have.property('deviceModel')
-        actual.should.have.property('id')
-        deviceId = actual.id
-        done()
-      })
-      .catch(err => {
-        done(err)
-      })
+    const actual = await testModule.createDevice('test', 'test application', 1, 'AR1')
+    assertDeviceProps(actual)
+    deviceId = actual.id
   })
-  it(testName + ' Retrieve', (done) => {
+  it(testName + ' Retrieve', async () => {
     let testModule = new TestModule(modelAPIMock)
     should.exist(testModule)
-    testModule.retrieveDevice(deviceId)
-      .then(actual => {
-        actual.should.have.property('name')
-        actual.should.have.property('description')
-        actual.should.have.property('applicationId')
-        actual.should.have.property('deviceModel')
-        actual.should.have.property('id')
-        done()
-      })
-      .catch(err => {
-        done(err)
-      })
+    const actual = await testModule.retrieveDevice(deviceId)
+    assertDeviceProps(actual)
   })
-  it(testName + ' Update', (done) => {
+  it(testName + ' Update', async () => {
     let testModule = new TestModule(modelAPIMock)
     should.exist(testModule)
     let updated = {
@@ -84,19 +60,9 @@ describe('Unit Tests for ' + testName, () => {
       applicationId: 1,
       deviceModel: 'AR2'
     }
-    testModule.updateDevice(updated)
-      .then(actual => {
-        actual.should.have.property('name')
-        actual.should.have.property('description')
-        actual.should.have.property('applicationId')
-        actual.should.have.property('deviceModel')
-        actual.should.have.property('id')
-        actual.description.should.equal(updated.description)
-        actual.deviceModel.should.equal(updated.deviceModel)
-        done()
-      })
-      .catch(err => {
-        done(err)
-      })
+    const actual = await testModule.updateDevice(updated)
+    assertDeviceProps(actual)
+    actual.description.should.equal(updated.description)
+    actual.deviceModel.should.equal(updated.deviceModel)
   })
 })

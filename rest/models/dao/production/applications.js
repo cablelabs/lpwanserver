@@ -1,13 +1,25 @@
 // Database implementation.
-var db = require('../../../lib/dbsqlite.js')
+const { prisma, formatInputData, formatRelationshipsIn } = require('../../../lib/prisma')
 
 // Error reporting
 var httpError = require('http-errors')
 
+// Utils
+const { onFail } = require('../../../lib/utils')
+
+const AppNtwkTypeLink = require('./applicationNetworkTypeLinks')
+
 //* *****************************************************************************
 // Applications database table.
 //* *****************************************************************************
-
+module.exports = {
+  createApplication,
+  retrieveApplication,
+  updateApplication,
+  deleteApplication,
+  retrieveAllApplications,
+  retrieveApplications
+}
 //* *****************************************************************************
 // CRUD support.
 //* *****************************************************************************
@@ -22,26 +34,21 @@ var httpError = require('http-errors')
 //                       application using the reporting protocol
 //
 // Returns the promise that will execute the create.
-exports.createApplication = function (name, description, companyId, reportingProtocolId, baseUrl) {
-  return new Promise(function (resolve, reject) {
-    // Create the user record.
-    var application = {}
-    application.name = name
-    application.description = description
-    application.companyId = companyId
-    application.reportingProtocolId = reportingProtocolId
-    application.baseUrl = baseUrl
-
-    // OK, save it!
-    db.insertRecord('applications', application, function (err, record) {
-      if (err) {
-        reject(err)
-      }
-      else {
-        resolve(record)
-      }
-    })
+function createApplication (name, description, companyId, reportingProtocolId, baseUrl) {
+  const data = formatInputData({
+    name,
+    description,
+    companyId,
+    reportingProtocolId,
+    baseUrl
   })
+  return prisma.createApplication(data).$fragment(fragments.basic)
+}
+
+async function loadApplication (uniqueKeyObj, fragement = 'basic') {
+  const rec = await onFail(400, () => prisma.application(uniqueKeyObj).$fragment(fragments[fragement]))
+  if (!rec) throw httpError(404, 'Application not found')
+  return rec
 }
 
 // Retrieve a application record by id.  This method retrieves not just the
@@ -51,32 +58,18 @@ exports.createApplication = function (name, description, companyId, reportingPro
 // id - the record id of the application.
 //
 // Returns a promise that executes the retrieval.
-exports.retrieveApplication = function (id) {
-  return new Promise(function (resolve, reject) {
-    db.fetchRecord('applications', 'id', id, function (err, rec) {
-      if (err) {
-        reject(err)
-      }
-      else if (!rec) {
-        reject(new httpError.NotFound())
-      }
-      else {
-        // Get the networks for this application.
-        var networksQuery = 'select networkTypeId from applicationNetworkTypeLinks where applicationId = ' + db.sqlValue(id)
-        db.select(networksQuery, function (err, rows) {
-          // Ignore bad returns and null sets here.
-          if (!err && rows && (rows.length > 0)) {
-            // Add the networks array to the returned record.
-            rec.networks = []
-            for (var i = 0; i < rows.length; ++i) {
-              rec.networks.push(rows[ i ].networkTypeId)
-            }
-          }
-          resolve(rec)
-        })
-      }
-    })
-  })
+async function retrieveApplication (id, fragment) {
+  const app = await loadApplication({ id }, fragment)
+  try {
+    const { records } = await AppNtwkTypeLink.retrieveApplicationNetworkTypeLinks({ applicationId: id })
+    if (records.length) {
+      app.networks = records.map(x => x.networkType.id)
+    }
+  }
+  catch (err) {
+    // ignore
+  }
+  return app
 }
 
 // Update the application record.
@@ -85,35 +78,19 @@ exports.retrieveApplication = function (id) {
 //               retrieval to guarantee the same record is updated.
 //
 // Returns a promise that executes the update.
-exports.updateApplication = function (application) {
-  return new Promise(function (resolve, reject) {
-    db.updateRecord('applications', 'id', application, function (err, row) {
-      if (err) {
-        reject(err)
-      }
-      else {
-        resolve(row)
-      }
-    })
-  })
+function updateApplication ({ id, ...data }) {
+  if (!id) throw httpError(400, 'No existing Application ID')
+  data = formatInputData(data)
+  return prisma.updateApplication({ data, where: { id } }).$fragment(fragments.basic)
 }
 
 // Delete the application record.
 //
-// applicationId - the id of the application record to delete.
+// id - the id of the application record to delete.
 //
 // Returns a promise that performs the delete.
-exports.deleteApplication = function (applicationId) {
-  return new Promise(function (resolve, reject) {
-    db.deleteRecord('applications', 'id', applicationId, function (err, rec) {
-      if (err) {
-        reject(err)
-      }
-      else {
-        resolve(rec)
-      }
-    })
-  })
+function deleteApplication (id) {
+  return onFail(400, () => prisma.deleteApplication({ id }))
 }
 
 //* *****************************************************************************
@@ -123,35 +100,27 @@ exports.deleteApplication = function (applicationId) {
 // Gets all applications from the database.
 //
 // Returns a promise that does the retrieval.
-exports.retrieveAllApplications = function () {
-  return new Promise(function (resolve, reject) {
-    var sql = 'SELECT * from applications;'
-    db.select(sql, function (err, rows) {
-      if (err) {
-        reject(err)
-      }
-      else {
-        resolve(rows)
-      }
-    })
-  })
+function retrieveAllApplications () {
+  return prisma.applications()
 }
 
 // Retrieve the application by name.
-//
 // Returns a promise that does the retrieval.
-exports.retrieveApplicationbyName = function (name) {
-  return new Promise(function (resolve, reject) {
-    db.fetchRecord('applications', 'name', name, function (err, rec) {
-      if (err) {
-        reject(err)
-      }
-      else {
-        resolve(rec)
-      }
-    })
-  })
-}
+// Application name is not required in schema.
+// Shouldn't load one doc based on non-unique property
+// Not used anywhere, so removing fn
+// exports.retrieveApplicationbyName = function (name) {
+//   return new Promise(function (resolve, reject) {
+//     db.fetchRecord('applications', 'name', name, function (err, rec) {
+//       if (err) {
+//         reject(err)
+//       }
+//       else {
+//         resolve(rec)
+//       }
+//     })
+//   })
+// }
 
 // Retrieves a subset of the applications in the system given the options.
 //
@@ -160,93 +129,36 @@ exports.retrieveApplicationbyName = function (name) {
 // search string on application name, a companyId, and a reportingProtocolId.
 // The returned totalCount shows the number of records that match the query,
 // ignoring any limit and/or offset.
-exports.retrieveApplications = function (options) {
-  return new Promise(function (resolve, reject) {
-    var sql = 'select * from applications'
-    var sqlTotalCount = 'select count(id) as count from applications'
-    if (options) {
-      if (options.search ||
-                 options.companyId ||
-                 options.reportingProtocolId) {
-        sql += ' where'
-        sqlTotalCount += ' where'
-        var needsAnd = false
-        if (options.search) {
-          sql += ' name like ' + db.sqlValue(options.search)
-          sqlTotalCount += ' name like ' + db.sqlValue(options.search)
-          needsAnd = true
-        }
-        if (options.companyId) {
-          if (needsAnd) {
-            sql += ' and'
-            sqlTotalCount += ' and'
-          }
-          sql += ' companyId = ' + db.sqlValue(options.companyId)
-          sqlTotalCount += ' companyId = ' + db.sqlValue(options.companyId)
-          needsAnd = true
-        }
-        if (options.reportingProtocolId) {
-          if (needsAnd) {
-            sql += ' and'
-            sqlTotalCount += ' and'
-          }
-          sql += ' reportingProtocolId = ' + db.sqlValue(options.reportingProtocolId)
-          sqlTotalCount += ' reportingProtocolId = ' + db.sqlValue(options.reportingProtocolId)
-        }
-      }
-      if (options.limit) {
-        sql += ' limit ' + db.sqlValue(options.limit)
-      }
-      if (options.offset) {
-        sql += ' offset ' + db.sqlValue(options.offset)
-      }
-    }
+async function retrieveApplications ({ limit, offset, ...where } = {}) {
+  where = formatRelationshipsIn(where)
+  if (where.search) {
+    where.name_contains = where.search
+    delete where.search
+  }
+  const query = { where }
+  if (limit) query.first = limit
+  if (offset) query.skip = offset
+  const [records, totalCount] = await Promise.all([
+    prisma.applications(query).$fragment(fragments.basic),
+    prisma.applicationsConnection({ where }).aggregate().count()
+  ])
+  return { totalCount, records }
+}
 
-    // Do the basic query.
-    db.select(sql, function (err, rows) {
-      if (err) {
-        reject(err)
-      }
-      else {
-        // Limit and/or offset requires a second search to get a
-        // total count.  Well, usually.  Can also skip if the returned
-        // count is less than the limit (add in the offset to the
-        // returned rows).
-        if (options &&
-                     (options.limit || options.offset)) {
-          // If we got back less than the limit rows, then the
-          // totalCount is the offset and the number of rows.  No
-          // need to run the other query.
-          // Handle if one or the other value is missing.
-          var limit = Number.MAX_VALUE
-          if (options.limit) {
-            limit = options.limit
-          }
-          var offset = 0
-          if (options.offset) {
-            offset = options.offset
-          }
-          if (rows.length < limit) {
-            resolve({ totalCount: offset + rows.length,
-              records: rows })
-          }
-          else {
-            // Must run counts query.
-            db.select(sqlTotalCount, function (err, count) {
-              if (err) {
-                reject(err)
-              }
-              else {
-                resolve({ totalCount: count[0].count,
-                  records: rows })
-              }
-            })
-          }
-        }
-        else {
-          resolve({ totalCount: rows.length, records: rows })
-        }
-      }
-    })
-  })
+//* *****************************************************************************
+// Fragments for how the data should be returned from Prisma.
+//* *****************************************************************************
+const fragments = {
+  basic: `fragment BasicApplication on Application {
+    id
+    name
+    description
+    baseUrl
+    company {
+      id
+    }
+    reportingProtocol {
+      id
+    }
+  }`
 }

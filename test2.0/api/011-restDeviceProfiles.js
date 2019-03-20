@@ -40,11 +40,12 @@ describe('DeviceProfiles', function () {
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .send({ 'networkTypeId': 1,
-          'companyId': 2,
+          'companyId': 1,
           'name': 'LoRaGPSNode',
           'description': 'GPS Node that works with LoRa',
           'networkSettings': { 'foo': 'bar' } })
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(200)
           var ret = JSON.parse(res.text)
           dpId1 = ret.id
@@ -59,11 +60,12 @@ describe('DeviceProfiles', function () {
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .send({ 'networkTypeId': 1,
-          'companyId': 2,
+          'companyId': 1,
           'name': 'LoRaWeatherNode',
           'description': 'GPS Node that works with LoRa',
           'networkSettings': { 'tempType': 'C' } })
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(200)
           var ret = JSON.parse(res.text)
           dpId2 = ret.id
@@ -78,12 +80,13 @@ describe('DeviceProfiles', function () {
         .set('Content-Type', 'application/json')
         .send()
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(200)
           var dpObj = JSON.parse(res.text)
           dpObj.name.should.equal('LoRaGPSNode')
           dpObj.description.should.equal('GPS Node that works with LoRa')
           dpObj.networkTypeId.should.equal(1)
-          dpObj.companyId.should.equal(2)
+          dpObj.companyId.should.equal(1)
           done()
         })
     })
@@ -96,6 +99,7 @@ describe('DeviceProfiles', function () {
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(200)
           var result = JSON.parse(res.text)
           result.records.should.be.instanceof(Array)
@@ -111,6 +115,7 @@ describe('DeviceProfiles', function () {
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(200)
           var result = JSON.parse(res.text)
           result.records.should.be.instanceof(Array)
@@ -127,6 +132,7 @@ describe('DeviceProfiles', function () {
         .set('Content-Type', 'application/json')
         .query({ 'limit': 2, 'offset': 1 })
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(200)
           var result = JSON.parse(res.text)
           result.records.should.be.instanceof(Array)
@@ -143,6 +149,7 @@ describe('DeviceProfiles', function () {
         .set('Content-Type', 'application/json')
         .query({ 'search': 'LoRa%' })
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(200)
           var result = JSON.parse(res.text)
           result.records.should.be.instanceof(Array)
@@ -159,6 +166,7 @@ describe('DeviceProfiles', function () {
         .set('Content-Type', 'application/json')
         .query({ 'search': 'LoRaGPS%' })
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(200)
           var result = JSON.parse(res.text)
           result.records.should.be.instanceof(Array)
@@ -175,11 +183,12 @@ describe('DeviceProfiles', function () {
         .set('Content-Type', 'application/json')
         .query({ 'search': 'L%' })
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(200)
           var result = JSON.parse(res.text)
           result.records.should.be.instanceof(Array)
-          result.records.should.have.length(2)
-          result.totalCount.should.equal(2)
+          result.records.should.have.length(3)
+          result.totalCount.should.equal(3)
           done()
         })
     })
@@ -192,6 +201,7 @@ describe('DeviceProfiles', function () {
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(200)
           done()
         })
@@ -203,6 +213,7 @@ describe('DeviceProfiles', function () {
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(200)
           var ret = JSON.parse(res.text)
           ret.id.should.equal(dpId1)
@@ -216,6 +227,7 @@ describe('DeviceProfiles', function () {
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(200)
           done()
         })
@@ -231,6 +243,7 @@ describe('DeviceProfiles', function () {
         .set('Content-Type', 'application/json')
         .send('{"name": "Funky DeviceProfile" }')
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(204)
           done()
         })
@@ -243,6 +256,7 @@ describe('DeviceProfiles', function () {
         .set('Content-Type', 'application/json')
         .send('{"name": "Funky Punky DeviceProfile" }')
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(204)
           done()
         })
@@ -255,6 +269,7 @@ describe('DeviceProfiles', function () {
         .set('Content-Type', 'application/json')
         .send()
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(200)
           var coObj = JSON.parse(res.text)
           coObj.name.should.equal('Funky Punky DeviceProfile')
@@ -270,6 +285,7 @@ describe('DeviceProfiles', function () {
         .delete('/api/deviceProfiles/' + dpId2)
         .set('Authorization', 'Bearer ' + adminToken)
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(200)
           done()
         })
@@ -282,6 +298,7 @@ describe('DeviceProfiles', function () {
         .set('Content-Type', 'application/json')
         .send()
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(404)
           done()
         })

@@ -1,29 +1,40 @@
-version: '3'
+version: '3.5'
 
 services:
-  rest:
+  lpwanserver:
     image: lpwanserver/lpwanserver
+    container_name: lpwanserver_demo
+    networks:
+      - lpwanserver_dev
+    ports:
+      - '3200:3200'
     depends_on:
       - loraserver
       - lora_appserver
+      - loraserver1
+      - lora_appserver1
     environment:
       - port=3200
-    ports:
-      - '3200:3200'
-
-  ui:
+      - prisma_protocol=http
+      - prisma_host=prisma
+      - prisma_port=4466
+  lpwanserver_ui:
     image: lpwanserver/lpwanserver-web-client
-    environment:
-      - LPWANSERVER_PROTOCOL=http
-      - LPWANSERVER_HOST=rest
-      - LPWANSERVER_PORT=3200
+    container_name: lpwanserver_demo_ui
+    networks:
+      - lpwanserver_dev
     ports:
       - '3000:8080'
-
+    environment:
+      - LPWANSERVER_PROTOCOL=http
+      - LPWANSERVER_HOST=lpwanserver
+      - LPWANSERVER_PORT=3200
   postgresql:
     volumes:
-      - ./configuration/postgresql/initdb-demo:/docker-entrypoint-initdb.d
-
+      - ./dev/loraserver/configuration/postgresql/initdb-demo:/docker-entrypoint-initdb.d
   redis:
     volumes:
       - ../data/demo_data/redis:/data
+networks:
+  lpwanserver_dev:
+    name: lpwanserver_dev

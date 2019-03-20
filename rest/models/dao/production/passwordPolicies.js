@@ -1,12 +1,23 @@
 // Database implementation.
-const db = require('../../../lib/dbsqlite.js')
+const { prisma } = require('../../../lib/prisma')
 
 // Error reporting
 const httpError = require('http-errors')
 
+// Utils
+const { onFail } = require('../../../lib/utils')
+
 //* *****************************************************************************
 // PasswordPolicies database table.
 //* *****************************************************************************
+
+module.exports = {
+  createPasswordPolicy,
+  retrievePasswordPolicy,
+  updatePasswordPolicy,
+  deletePasswordPolicy,
+  retrievePasswordPolicies
+}
 
 //* *****************************************************************************
 // CRUD support.
@@ -20,26 +31,14 @@ const httpError = require('http-errors')
 // companyId  - The id of the company that this rule if for (null for all).
 //
 // Returns the promise that will execute the create.
-exports.createPasswordPolicy = function (ruleText, ruleRegExp, companyId) {
-  return new Promise(function (resolve, reject) {
-    // Create the user record.
-    var passwordPolicy = {}
-    passwordPolicy.ruleText = ruleText
-    passwordPolicy.ruleRegExp = ruleRegExp
-    if (companyId) {
-      passwordPolicy.companyId = companyId
-    }
-
-    // OK, save it!
-    db.insertRecord('passwordPolicies', passwordPolicy, function (err, record) {
-      if (err) {
-        reject(err)
-      }
-      else {
-        resolve(record)
-      }
-    })
-  })
+async function createPasswordPolicy (ruleText, ruleRegExp, companyId) {
+  // verify regexp doesn't throw when created
+  const valid = new RegExp(ruleRegExp)
+  var data = { ruleText, ruleRegExp }
+  if (companyId) {
+    data.company = { connect: { id: companyId } }
+  }
+  return prisma.createPasswordPolicy(data)
 }
 
 // Retrieve a passwordPolicy record by id.
@@ -47,20 +46,10 @@ exports.createPasswordPolicy = function (ruleText, ruleRegExp, companyId) {
 // id - the record id of the passwordPolicy.
 //
 // Returns a promise that executes the retrieval.
-exports.retrievePasswordPolicy = function (id) {
-  return new Promise(function (resolve, reject) {
-    db.fetchRecord('passwordPolicies', 'id', id, function (err, rec) {
-      if (err) {
-        reject(err)
-      }
-      else if (!rec) {
-        reject(new httpError.NotFound())
-      }
-      else {
-        resolve(rec)
-      }
-    })
-  })
+async function retrievePasswordPolicy (id, fragementKey = 'basic') {
+  const rec = await onFail(400, () => prisma.passwordPolicy({ id }).$fragment(fragments[fragementKey]))
+  if (!rec) throw httpError(404, 'PasswordPolicy not found')
+  return rec
 }
 
 // Update the passwordPolicy record.
@@ -69,17 +58,13 @@ exports.retrievePasswordPolicy = function (id) {
 //                  retrieval to guarantee the same record is updated.
 //
 // Returns a promise that executes the update.
-exports.updatePasswordPolicy = function (passwordPolicy) {
-  return new Promise(function (resolve, reject) {
-    db.updateRecord('passwordPolicies', 'id', passwordPolicy, function (err, row) {
-      if (err) {
-        reject(err)
-      }
-      else {
-        resolve(row)
-      }
-    })
-  })
+async function updatePasswordPolicy ({ id, ...data }) {
+  if (!id) throw httpError(400, 'No existing PasswordPolicy ID')
+  if (data.companyId) {
+    data.company = { connect: { id: data.companyId } }
+    delete data.companyId
+  }
+  return prisma.updatePasswordPolicy({ data, where: { id } }).$fragment(fragments.basic)
 }
 
 // Delete the passwordPolicy record.
@@ -87,17 +72,8 @@ exports.updatePasswordPolicy = function (passwordPolicy) {
 // id - the id of the passwordPolicy record to delete.
 //
 // Returns a promise that performs the delete.
-exports.deletePasswordPolicy = function (id) {
-  return new Promise(function (resolve, reject) {
-    db.deleteRecord('passwordPolicies', 'id', id, function (err, rec) {
-      if (err) {
-        reject(err)
-      }
-      else {
-        resolve(rec)
-      }
-    })
-  })
+function deletePasswordPolicy (id) {
+  return onFail(400, () => prisma.deletePasswordPolicy({ id }))
 }
 
 //* *****************************************************************************
@@ -110,19 +86,23 @@ exports.deletePasswordPolicy = function (id) {
 // companyId - the id of the company record.
 //
 // Returns a promise that retrieves the passwordPolicies.
-exports.retrievePasswordPolicies = function (companyId) {
-  return new Promise(function (resolve, reject) {
-    var sql = 'select * ' +
-                  'from passwordPolicies pp ' +
-                  'where pp.companyId is null or pp.companyId = '
-    sql += db.sqlValue(companyId)
-    db.select(sql, function (err, rows) {
-      if (err) {
-        reject(err)
-      }
-      else {
-        resolve(rows)
-      }
-    })
-  })
+function retrievePasswordPolicies (companyId) {
+  const where = { OR: [
+    { company: { id: companyId } },
+    { company: null }
+  ] }
+  return prisma.passwordPolicies({ where })
+}
+
+//* *****************************************************************************
+// Fragments for how the data should be returned from Prisma.
+//* *****************************************************************************
+const fragments = {
+  basic: `fragment BasicPasswordPolicy on PasswordPolicy {
+    ruleText
+    ruleRegExp
+    company {
+      id
+    }
+  }`
 }

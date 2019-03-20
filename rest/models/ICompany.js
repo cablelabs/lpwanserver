@@ -135,7 +135,7 @@ Company.prototype.deleteCompany = function (id) {
       for (let i = 0; i < recs.length; ++i) {
         // We can get null companyIds for cross-company rules - don't
         // delete those.
-        if (id === recs[ i ].companyId) {
+        if (id === recs[ i ].company.id) {
           await modelAPI.passwordPolicies.deletePasswordPolicy(recs[ i ].id)
         }
       }

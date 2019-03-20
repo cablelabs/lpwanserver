@@ -75,7 +75,7 @@ function NetworkProtocolDataAccess (server, fdesc) {
 NetworkProtocolDataAccess.prototype.getNetworksOfType = function (networkTypeId) {
   let me = this
   return new Promise(function (resolve, reject) {
-    modelAPI.networks.retrieveNetworks({ 'networkTypeId': networkTypeId }).then(function (recs) {
+    modelAPI.networks.retrieveNetworks({ 'networkTypeId': networkTypeId }, 'internal').then(function (recs) {
       resolve(recs)
     })
       .catch(function (err) {
@@ -201,7 +201,7 @@ NetworkProtocolDataAccess.prototype.getCompanyByApplicationId = function (appId)
   return new Promise(async function (resolve, reject) {
     try {
       let app = await me.getApplicationById(appId)
-      let co = await me.getCompanyById(app.companyId)
+      let co = await me.getCompanyById(app.company.id)
       resolve(co)
     }
     catch (err) {
@@ -216,7 +216,7 @@ NetworkProtocolDataAccess.prototype.getCompanyByDeviceId = function (devId) {
   return new Promise(async function (resolve, reject) {
     try {
       let dev = await me.getDeviceById(devId)
-      let co = await me.getCompanyByApplicationId(dev.applicationId)
+      let co = await me.getCompanyByApplicationId(dev.application.id)
       resolve(co)
     }
     catch (err) {
@@ -231,7 +231,7 @@ NetworkProtocolDataAccess.prototype.getCompanyByDeviceProfileId = function (devP
   return new Promise(async function (resolve, reject) {
     try {
       let devPro = await me.getDeviceProfileById(devProId)
-      let co = await me.getCompanyById(devPro.companyId)
+      let co = await me.getCompanyById(devPro.company.id)
       resolve(co)
     }
     catch (err) {
@@ -246,7 +246,7 @@ NetworkProtocolDataAccess.prototype.getApplicationByDeviceId = function (devId) 
   return new Promise(async function (resolve, reject) {
     try {
       let dev = await me.getDeviceById(devId)
-      let app = await me.getApplicationById(dev.applicationId)
+      let app = await me.getApplicationById(dev.application.id)
       resolve(app)
     }
     catch (err) {
@@ -262,7 +262,7 @@ NetworkProtocolDataAccess.prototype.getDeviceProfileByDeviceIdNetworkTypeId = fu
   return new Promise(async function (resolve, reject) {
     try {
       let dnt = await me.getDeviceNetworkType(devId, ntId)
-      let devPro = await me.getDeviceProfileById(dnt.deviceProfileId)
+      let devPro = await me.getDeviceProfileById(dnt.deviceProfile.id)
       resolve(devPro)
     }
     catch (err) {

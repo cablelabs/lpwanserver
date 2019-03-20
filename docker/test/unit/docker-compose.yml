@@ -1,0 +1,24 @@
+version: '3.5'
+
+services:
+  unit-test:
+    image: lpwanserver/unit-test:latest
+    container_name: lpwanerver_dev_unit_test
+    networks:
+      - lpwanserver_dev
+    ports:
+      - '3200:3200'
+    environment:
+      - NODE_ENV=e2e
+      - port=3200
+      - prisma_protocol=http
+      - prisma_host=prisma
+      - prisma_port=4466
+    volumes:
+      - ../../../coverage:/app/coverage
+networks:
+  lpwanserver_dev:
+    name: lpwanserver_dev
+volumes:
+  coverage:
+    name: lpwanserver_test_coverage

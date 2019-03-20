@@ -1,6 +1,7 @@
 var appLogger = require('./lib/appLogger.js')
 var restServer
 var modelAPI
+const { formatRelationshipsOut } = require('./lib/prisma')
 
 exports.initialize = function (app, server) {
   restServer = server
@@ -55,7 +56,7 @@ exports.initialize = function (app, server) {
   function (req, res, next) {
     var options = {}
     // Limit by company, too, if not a system admin.
-    if (req.company.type !== modelAPI.companies.COMPANY_ADMIN) {
+    if (req.company.type.id !== modelAPI.companies.COMPANY_ADMIN) {
       options.companyId = req.company.id
     }
     if (req.query.networkTypeId) {
@@ -89,7 +90,8 @@ exports.initialize = function (app, server) {
       }
     }
     modelAPI.applicationNetworkTypeLinks.retrieveApplicationNetworkTypeLinks(options).then(function (networkTypes) {
-      restServer.respondJson(res, null, networkTypes)
+      const responseBody = { ...networkTypes, records: networkTypes.records.map(formatRelationshipsOut) }
+      restServer.respondJson(res, null, responseBody)
     })
       .catch(function (err) {
         appLogger.log('Error getting networkTypes: ' + err)
@@ -123,7 +125,7 @@ exports.initialize = function (app, server) {
   app.get('/api/applicationNetworkTypeLinks/:id', [restServer.isLoggedIn], function (req, res, next) {
     var id = parseInt(req.params.id, 10)
     modelAPI.applicationNetworkTypeLinks.retrieveApplicationNetworkTypeLink(id).then(function (np) {
-      restServer.respondJson(res, null, np)
+      restServer.respondJson(res, null, formatRelationshipsOut(np))
     })
       .catch(function (err) {
         appLogger.log('Error getting applicationNetworkTypeLink ' + id + ': ' + err)
@@ -178,7 +180,7 @@ exports.initialize = function (app, server) {
     // ID of the user into the query to verify that the application belongs
     // to that company.
     var companyId
-    if (modelAPI.companies.COMPANY_ADMIN !== req.company.type) {
+    if (modelAPI.companies.COMPANY_ADMIN !== req.company.type.id) {
       companyId = req.company.id
     }
 
@@ -256,7 +258,7 @@ exports.initialize = function (app, server) {
       }
       else {
         // Do the update.
-        // TODO: Get rid of companies.  For now it is always 2 HACK
+        // TODO: Get rid of companies.  For now it is always 1 HACK
         let companyId = 2
         modelAPI.applicationNetworkTypeLinks.updateApplicationNetworkTypeLink(data, companyId).then(function (rec) {
           restServer.respondJson(res, 200, { remoteAccessLogs: rec.remoteAccessLogs })
@@ -296,8 +298,8 @@ exports.initialize = function (app, server) {
     // If not an admin company, the applicationId better be associated
     // with the user's company.  We check that in the delete method.
     var companyId
-    if (req.company.type !== modelAPI.companies.COMPANY_ADMIN) {
-      companyId = req.user.companyId
+    if (req.company.type.id !== modelAPI.companies.COMPANY_ADMIN) {
+      companyId = req.user.company.id
     }
 
     modelAPI.applicationNetworkTypeLinks.deleteApplicationNetworkTypeLink(id, companyId).then(function (ret) {

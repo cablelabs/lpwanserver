@@ -10,24 +10,11 @@ var server = chai.request(app).keepOpen()
 describe('Applications', function () {
   var adminToken
 
-  before('User Sessions', function (done) {
-    var sessions = 0
-    var waitFunc = function () {
-      ++sessions
-      if (sessions >= 1) {
-        done()
-      }
-    }
-    server
+  before('User Sessions', async () => {
+    let res = await server
       .post('/api/sessions')
       .send({ 'login_username': 'admin', 'login_password': 'password' })
-      .end(function (err, res) {
-        if (err) {
-          return done(err)
-        }
-        adminToken = res.text
-        waitFunc()
-      })
+    adminToken = res.text
   })
 
   var appId1
@@ -38,12 +25,13 @@ describe('Applications', function () {
         .post('/api/applications')
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
-        .send({ 'companyId': 2,
+        .send({ 'companyId': 1,
           'name': 'MyGetRichQuickApp',
           'description': 'A really good idea that was boring',
           'baseUrl': 'http://localhost:5086',
           'reportingProtocolId': 1 })
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(200)
           var ret = JSON.parse(res.text)
           appId1 = ret.id
@@ -63,6 +51,7 @@ describe('Applications', function () {
           'baseUrl': 'http://localhost:5086',
           'reportingProtocolId': 1 })
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(200)
           var ret = JSON.parse(res.text)
           appId2 = ret.id
@@ -77,6 +66,7 @@ describe('Applications', function () {
         .set('Content-Type', 'application/json')
         .send()
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(200)
           var appObj = JSON.parse(res.text)
           appObj.name.should.equal('MyGetRichQuickApp')
@@ -94,6 +84,7 @@ describe('Applications', function () {
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(200)
           var result = JSON.parse(res.text)
           result.records.should.be.instanceof(Array)
@@ -110,6 +101,7 @@ describe('Applications', function () {
         .set('Content-Type', 'application/json')
         .query({ 'limit': 2, 'offset': 1 })
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(200)
           var result = JSON.parse(res.text)
           result.records.should.be.instanceof(Array)
@@ -126,6 +118,7 @@ describe('Applications', function () {
         .set('Content-Type', 'application/json')
         .query({ 'search': 'MyGetRich%' })
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(200)
           var result = JSON.parse(res.text)
           result.records.should.be.instanceof(Array)
@@ -142,6 +135,7 @@ describe('Applications', function () {
         .set('Content-Type', 'application/json')
         .query({ 'search': 'My%' })
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(200)
           var result = JSON.parse(res.text)
           result.records.should.be.instanceof(Array)
@@ -158,6 +152,7 @@ describe('Applications', function () {
         .set('Content-Type', 'application/json')
         .query({ 'search': 'My%' })
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(200)
           var result = JSON.parse(res.text)
           result.records.should.be.instanceof(Array)
@@ -175,6 +170,7 @@ describe('Applications', function () {
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(200)
           var ret = JSON.parse(res.text)
           ret.id.should.equal(appId2)
@@ -189,6 +185,7 @@ describe('Applications', function () {
         .set('Content-Type', 'application/json')
         .send()
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(200)
           var appObj = JSON.parse(res.text)
           appObj.name.should.equal('MyGetRichQuickApp')
@@ -203,6 +200,7 @@ describe('Applications', function () {
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(200)
           done()
         })
@@ -217,6 +215,7 @@ describe('Applications', function () {
         .set('Content-Type', 'application/json')
         .send('{"name": "Funky Application" }')
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(204)
           done()
         })
@@ -229,6 +228,7 @@ describe('Applications', function () {
         .set('Content-Type', 'application/json')
         .send()
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(200)
           var coObj = JSON.parse(res.text)
           coObj.name.should.equal('Funky Application')
@@ -244,6 +244,7 @@ describe('Applications', function () {
         .delete('/api/applications/' + appId2)
         .set('Authorization', 'Bearer ' + adminToken)
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(204)
           done()
         })
@@ -256,6 +257,7 @@ describe('Applications', function () {
         .set('Content-Type', 'application/json')
         .send()
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(404)
           done()
         })

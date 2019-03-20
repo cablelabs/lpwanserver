@@ -1,5 +1,8 @@
 // Database implementation.
-var db = require('../../../lib/dbsqlite.js')
+const { prisma, formatInputData, formatRelationshipsIn } = require('../../../lib/prisma')
+
+// Utils
+const { onFail } = require('../../../lib/utils')
 
 // Error reporting
 var httpError = require('http-errors')
@@ -7,7 +10,13 @@ var httpError = require('http-errors')
 //* *****************************************************************************
 // CompanyNetworkTypeLinks database table.
 //* *****************************************************************************
-
+module.exports = {
+  createCompanyNetworkTypeLink,
+  retrieveCompanyNetworkTypeLink,
+  updateCompanyNetworkTypeLink,
+  deleteCompanyNetworkTypeLink,
+  retrieveCompanyNetworkTypeLinks
+}
 //* *****************************************************************************
 // CRUD support.
 //* *****************************************************************************
@@ -20,25 +29,13 @@ var httpError = require('http-errors')
 //                   format
 //
 // Returns the promise that will execute the create.
-exports.createCompanyNetworkTypeLink = function (companyId, networkTypeId, networkSettings) {
-  return new Promise(function (resolve, reject) {
-    // Create the user record.
-    var cnl = {}
-    cnl.companyId = companyId
-    cnl.networkTypeId = networkTypeId
-    if (networkSettings) {
-      cnl.networkSettings = JSON.stringify(networkSettings)
-    }
-    // OK, save it!
-    db.insertRecord('companyNetworkTypeLinks', cnl, function (err, record) {
-      if (err) {
-        reject(err)
-      }
-      else {
-        resolve(record)
-      }
-    })
+function createCompanyNetworkTypeLink (companyId, networkTypeId, networkSettings) {
+  const data = formatInputData({
+    companyId,
+    networkTypeId,
+    networkSettings: networkSettings && JSON.stringify(networkSettings)
   })
+  return prisma.createCompanyNetworkTypeLink(data).$fragment(fragments.basic)
 }
 
 // Retrieve a companyNetworkTypeLinks record by id.
@@ -46,22 +43,10 @@ exports.createCompanyNetworkTypeLink = function (companyId, networkTypeId, netwo
 // id - the record id of the companyNetworkTypeLinks record.
 //
 // Returns a promise that executes the retrieval.
-exports.retrieveCompanyNetworkTypeLink = function (id) {
-  return new Promise(function (resolve, reject) {
-    db.fetchRecord('companyNetworkTypeLinks', 'id', id, function (err, rec) {
-      if (err) {
-        reject(err)
-      }
-      else if (!rec) {
-        reject(new httpError.NotFound())
-      }
-      else {
-        // Stored in the database as a string, make it an object.
-        rec.networkSettings = JSON.parse(rec.networkSettings)
-        resolve(rec)
-      }
-    })
-  })
+async function retrieveCompanyNetworkTypeLink (id) {
+  const rec = await onFail(400, () => prisma.companyNetworkTypeLink({ id }).$fragment(fragments.basic))
+  if (!rec) throw httpError(404, 'CompanyNetworkTypeLink not found')
+  return rec
 }
 
 // Update the companyNetworkTypeLinks record.
@@ -70,20 +55,12 @@ exports.retrieveCompanyNetworkTypeLink = function (id) {
 //                       from retrieval to guarantee the same record is updated.
 //
 // Returns a promise that executes the update.
-exports.updateCompanyNetworkTypeLink = function (companyNetworkTypeLink) {
-  return new Promise(function (resolve, reject) {
-    if (companyNetworkTypeLink.networkSettings) {
-      companyNetworkTypeLink.networkSettings = JSON.stringify(companyNetworkTypeLink.networkSettings)
-    }
-    db.updateRecord('companyNetworkTypeLinks', 'id', companyNetworkTypeLink, function (err, row) {
-      if (err) {
-        reject(err)
-      }
-      else {
-        resolve(row)
-      }
-    })
-  })
+function updateCompanyNetworkTypeLink ({ id, ...data }) {
+  if (data.networkSettings) {
+    data.networkSettings = JSON.stringify(data.networkSettings)
+  }
+  data = formatInputData(data)
+  return prisma.updateCompanyNetworkTypeLink({ data, where: { id } }).$fragment(fragments.basic)
 }
 
 // Delete the companyNetworkTypeLinks record.
@@ -91,17 +68,8 @@ exports.updateCompanyNetworkTypeLink = function (companyNetworkTypeLink) {
 // id - the id of the companyNetworkTypeLinks record to delete.
 //
 // Returns a promise that performs the delete.
-exports.deleteCompanyNetworkTypeLink = function (id) {
-  return new Promise(function (resolve, reject) {
-    db.deleteRecord('companyNetworkTypeLinks', 'id', id, function (err, rec) {
-      if (err) {
-        reject(err)
-      }
-      else {
-        resolve(rec)
-      }
-    })
-  })
+function deleteCompanyNetworkTypeLink (id) {
+  return onFail(400, () => prisma.deleteCompanyNetworkTypeLink({ id }))
 }
 
 //* *****************************************************************************
@@ -113,80 +81,30 @@ exports.deleteCompanyNetworkTypeLink = function (id) {
 // Options include the companyId, and the networkTypeId.
 //
 // Returns a promise that does the retrieval.
-exports.retrieveCompanyNetworkTypeLinks = function (options) {
-  return new Promise(function (resolve, reject) {
-    var sql = 'select * from companyNetworkTypeLinks'
-    var sqlTotalCount = 'select count(id) as count from companyNetworkTypeLinks'
-    if (options) {
-      if (options.companyId || options.networkTypeId) {
-        sql += ' where'
-        if (options.companyId) {
-          sql += ' companyId = ' + db.sqlValue(options.companyId)
-          sqlTotalCount += ' companyId = ' + db.sqlValue(options.companyId)
-          if (options.networkTypeId) {
-            sql += ' and'
-          }
-        }
-        if (options.networkTypeId) {
-          sql += ' networkTypeId = ' + db.sqlValue(options.networkTypeId)
-          sqlTotalCount += ' networkTypeId = ' + db.sqlValue(options.networkTypeId)
-        }
-      }
-      if (options.limit) {
-        sql += ' limit ' + db.sqlValue(options.limit)
-      }
-      if (options.offset) {
-        sql += ' offset ' + db.sqlValue(options.offset)
-      }
+async function retrieveCompanyNetworkTypeLinks ({ limit, offset, ...where } = {}) {
+  where = formatRelationshipsIn(where)
+  const query = { where }
+  if (limit) query.first = limit
+  if (offset) query.skip = offset
+  const [records, totalCount] = await Promise.all([
+    prisma.companyNetworkTypeLinks(query).$fragment(fragments.basic),
+    prisma.companyNetworkTypeLinksConnection({ where }).aggregate().count()
+  ])
+  return { totalCount, records }
+}
+
+//* *****************************************************************************
+// Fragments for how the data should be returned from Prisma.
+//* *****************************************************************************
+const fragments = {
+  basic: `fragment BasicCompanyNetworkTypeLink on CompanyNetworkTypeLink {
+    id
+    networkSettings
+    company {
+      id
     }
-    db.select(sql, function (err, rows) {
-      if (err) {
-        reject(err)
-      }
-      else {
-        rows.forEach(function (row) {
-          // Stored in the database as a string, make it an object.
-          row.networkSettings = JSON.parse(row.networkSettings)
-        })
-        // Limit and/or offset requires a second search to get a
-        // total count.  Well, usually.  Can also skip if the returned
-        // count is less than the limit (add in the offset to the
-        // returned rows).
-        if (options &&
-                     (options.limit || options.offset)) {
-          // If we got back less than the limit rows, then the
-          // totalCount is the offset and the number of rows.  No
-          // need to run the other query.
-          // Handle if one or the other value is missing.
-          var limit = Number.MAX_VALUE
-          if (options.limit) {
-            limit = options.limit
-          }
-          var offset = 0
-          if (options.offset) {
-            offset = options.offset
-          }
-          if (rows.length < limit) {
-            resolve({ totalCount: offset + rows.length,
-              records: rows })
-          }
-          else {
-            // Must run counts query.
-            db.select(sqlTotalCount, function (err, count) {
-              if (err) {
-                reject(err)
-              }
-              else {
-                resolve({ totalCount: count[0].count,
-                  records: rows })
-              }
-            })
-          }
-        }
-        else {
-          resolve({ totalCount: rows.length, records: rows })
-        }
-      }
-    })
-  })
+    networkType {
+      id
+    }
+  }`
 }

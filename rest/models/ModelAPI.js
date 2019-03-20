@@ -4,7 +4,6 @@
 var appLogger = require('../lib/appLogger.js')
 
 // Data models - what can be done with each data type.
-var Initializer = require('./initializer.js')
 var UserModel = require('./IUser.js')
 var CompanyModel = require('./ICompany.js')
 var PasswordPolicyModel = require('./IPasswordPolicy.js')
@@ -37,9 +36,6 @@ function ModelAPI (app) {
   // use the underlying data.  Each module gets the type from nconf.
   // Pass around the dependancies as well.
   modelAPI = this
-
-  var initializer = new Initializer()
-  initializer.init()
 
   // Companies.
   this.companies = new CompanyModel(this)

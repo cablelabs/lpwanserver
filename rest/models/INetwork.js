@@ -15,20 +15,21 @@ function Network (server) {
   modelAPI = server
 }
 
-Network.prototype.retrieveNetworks = function (options) {
+Network.prototype.retrieveNetworks = function (options, fragment) {
   let me = this
   return new Promise(async function (resolve, reject) {
     try {
-      let ret = await me.impl.retrieveNetworks(options)
+      let ret = await me.impl.retrieveNetworks(options, fragment)
       let dataAPI = new NetworkProtocolDataAccess(modelAPI, 'INetwork Retrieve bulk')
       // Don't do a forEach or map here.  We need this done NOW, so it
       // is converted for other code.
+      // ^^ forEach and map are synchronous
       for (let i = 0; i < ret.records.length; ++i) {
         let rec = ret.records[ i ]
         if (rec.securityData) {
           let k = await dataAPI.getProtocolDataForKey(
             rec.id,
-            rec.networkProtocolId,
+            rec.networkProtocol.id,
             genKey(rec.id))
           rec.securityData = await dataAPI.access(rec, rec.securityData, k)
         }
@@ -42,18 +43,18 @@ Network.prototype.retrieveNetworks = function (options) {
   })
 }
 
-Network.prototype.retrieveNetwork = function (id) {
+Network.prototype.retrieveNetwork = function (id, fragment) {
   let me = this
   return new Promise(async function (resolve, reject) {
     try {
-      let ret = await me.impl.retrieveNetwork(id)
+      let ret = await me.impl.retrieveNetwork(id, fragment)
       if (ret.securityData) {
         let dataAPI = new NetworkProtocolDataAccess(modelAPI, 'INetwork Retrieve')
         let k = await dataAPI.getProtocolDataForKey(id,
-          ret.networkProtocolId,
+          ret.networkProtocol.id,
           genKey(id))
         ret.securityData = await dataAPI.access(ret, ret.securityData, k)
-        let networkProtocol = await modelAPI.networkProtocols.retrieveNetworkProtocol(ret.networkProtocolId)
+        let networkProtocol = await modelAPI.networkProtocols.retrieveNetworkProtocol(ret.networkProtocol.id)
         ret.masterProtocol = networkProtocol.masterProtocol
       }
       resolve(ret)
@@ -157,8 +158,8 @@ Network.prototype.createNetwork = function (name, networkProviderId, networkType
 
 Network.prototype.updateNetwork = async function updateNetwork (record) {
   let dataAPI = new NetworkProtocolDataAccess(modelAPI, 'INetwork Update')
-  const old = await this.retrieveNetwork(record.id)
-  const k = await dataAPI.getProtocolDataForKey(record.id, old.networkProtocolId, genKey(record.id))
+  const old = await this.retrieveNetwork(record.id, 'internal')
+  const k = await dataAPI.getProtocolDataForKey(record.id, old.networkProtocol.id, genKey(record.id))
   if (!record.securityData) record.securityData = old.securityData
   const finalNetwork = await authorizeAndTest(record, modelAPI, k, this, dataAPI)
   appLogger.log(finalNetwork, 'debug')
@@ -177,7 +178,7 @@ Network.prototype.deleteNetwork = function (id) {
       let dataAPI = new NetworkProtocolDataAccess(modelAPI, 'INetwork Delete')
       let old = await me.impl.retrieveNetwork(id)
       await dataAPI.deleteProtocolDataForKey(id,
-        old.networkProtocolId,
+        old.networkProtocol.id,
         genKey(id))
       let ret = await me.impl.deleteNetwork(id)
       resolve(ret)
@@ -195,11 +196,11 @@ Network.prototype.deleteNetwork = function (id) {
 // Returns a promise that executes the pull.
 Network.prototype.pullNetwork = async function pullNetwork (networkId) {
   try {
-    let network = await this.retrieveNetwork(networkId)
+    let network = await this.retrieveNetwork(networkId, 'internal')
     if (!network.securityData.authorized) {
       throw new Error('Network is not authorized.  Cannot pull')
     }
-    let networkType = await modelAPI.networkTypes.retrieveNetworkTypes(network.networkTypeId)
+    let networkType = await modelAPI.networkTypes.retrieveNetworkTypes(network.networkType.id)
     var npda = new NetworkProtocolDataAccess(modelAPI, 'Pull Network')
     npda.initLog(networkType, network)
     appLogger.log(network)
@@ -217,7 +218,7 @@ Network.prototype.pushNetworks = function (networkTypeId) {
   let me = this
   return new Promise(async function (resolve, reject) {
     try {
-      let networks = await me.retrieveNetworks({ networkTypeId: networkTypeId })
+      let networks = await me.retrieveNetworks({ networkTypeId: networkTypeId }, 'internal')
       let networkType = await modelAPI.networkTypes.retrieveNetworkTypes(networkTypeId)
       var npda = new NetworkProtocolDataAccess(modelAPI, 'Push Network')
       npda.initLog(networkType, networks)
@@ -251,8 +252,8 @@ Network.prototype.pushNetwork = function (networkId) {
   return new Promise(async function (resolve, reject) {
     try {
       appLogger.log(networkId)
-      let network = await me.retrieveNetwork(networkId)
-      let networkType = await modelAPI.networkTypes.retrieveNetworkTypes(network.networkTypeId)
+      let network = await me.retrieveNetwork(networkId, 'internal')
+      let networkType = await modelAPI.networkTypes.retrieveNetworkTypes(network.networkType.id)
       var npda = new NetworkProtocolDataAccess(modelAPI, 'Push Network')
       npda.initLog(networkType, network)
       appLogger.log(network)

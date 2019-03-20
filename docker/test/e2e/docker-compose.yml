@@ -1,0 +1,32 @@
+version: '3.5'
+
+services:
+  e2e-test:
+    image: lpwanserver/e2e-test
+    container_name: lpwanserver_dev_e2e_test
+    networks:
+      - lpwanserver_dev
+    ports:
+      - 3200:3200
+    environment:
+      - NODE_ENV=e2e
+      - port=3200
+      - prisma_protocol=http
+      - prisma_host=prisma
+      - prisma_port=4466
+      - TTN=false
+    depends_on:
+      - loraserver
+      - loraserver1
+      - lora_appserver
+      - lora_appserver1
+      - postgresql
+  postgresql:
+    volumes:
+      - ./configuration/postgresql/initdb-demo:/docker-entrypoint-initdb.d
+  redis:
+    volumes:
+      - ../data/demo_data/redis:/data
+networks:
+  lpwanserver_dev:
+    name: lpwanserver_dev

@@ -30,12 +30,15 @@ exports.initialize = function (app, server) {
      * @apiVersion 0.1.0
      */
   app.post('/api/sessions', function (req, res, next) {
-    modelAPI.sessions.authorize(req, res, next).then(function (token) {
-      restServer.respond(res, null, token)
-    })
-      .catch(function (err) {
+    modelAPI.sessions.authorize(req, res, next).then(
+      token => {
+        restServer.respond(res, null, token)
+      },
+      err => {
+        console.log(err)
         restServer.respond(res, err)
-      })
+      }
+    )
   })
 
   /**

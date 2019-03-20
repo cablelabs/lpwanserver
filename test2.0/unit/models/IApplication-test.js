@@ -4,11 +4,14 @@ var assert = require('assert')
 var chai = require('chai')
 // eslint-disable-next-line no-unused-vars
 var should = chai.should()
-var nconf = require('nconf')
-var Initializer = require('../../../rest/models/initializer')
+// Initiate config before importing tested files
+const nconf = require('nconf')
+nconf.file('defaults', { file: 'config/defaults.hjson', format: require('hjson') })
+
 var TestModule = require('../../../rest/models/IApplication')
-const testName = 'Application'
 const modelAPIMock = require('../../mock/ModelAPI-mock')
+
+const testName = 'Application'
 
 // content of index.js
 const http = require('http')
@@ -22,17 +25,21 @@ const requestHandler = (request, response) => {
 
 const server = http.createServer(requestHandler)
 
+function assertAppProps (actual) {
+  actual.should.have.property('name')
+  actual.should.have.property('description')
+  actual.company.should.have.property('id')
+  actual.reportingProtocol.should.have.property('id')
+  actual.should.have.property('baseUrl')
+  actual.should.have.property('id')
+}
+
 describe('Unit Tests for ' + testName, () => {
   let appId = ''
-  before('Setup ENV', async () => {
-    nconf.file('defaults', { file: 'config/defaults.hjson', format: require('hjson') })
-    let initializer = new Initializer()
-    initializer.init()
-    console.log(nconf.get('impl_directory'))
-    console.log(nconf.get('db_schema'))
-    console.log(nconf.get('db_create'))
+  before('Setup ENV', done => {
     server.listen(port, (err) => {
-      if (err) console.log('Server Error')
+      if (err) return done(err)
+      done()
     })
   })
   after('Shutdown', async () => {
@@ -42,57 +49,27 @@ describe('Unit Tests for ' + testName, () => {
     let testModule = new TestModule({}, modelAPIMock)
     should.exist(testModule)
   })
-  it(testName + ' Empty Retrieval', (done) => {
+  it(testName + ' Empty Retrieval', async () => {
     let testModule = new TestModule({}, modelAPIMock)
     should.exist(testModule)
-    testModule.retrieveApplications()
-      .then(actual => {
-        actual.should.have.property('totalCount')
-        actual.should.have.property('records')
-        // actual.totalCount.should.equal(0)
-        // actual.records.length.should.equal(0)
-        done()
-      })
-      .catch(err => {
-        done(err)
-      })
+    const actual = await testModule.retrieveApplications()
+    actual.should.have.property('totalCount')
+    actual.should.have.property('records')
   })
-  it(testName + ' Create', (done) => {
+  it(testName + ' Create', async () => {
     let testModule = new TestModule({}, modelAPIMock)
     should.exist(testModule)
-    testModule.createApplication('test', 'test application', 1, 1, 'http://localhost:5000')
-      .then(actual => {
-        actual.should.have.property('name')
-        actual.should.have.property('description')
-        actual.should.have.property('companyId')
-        actual.should.have.property('reportingProtocolId')
-        actual.should.have.property('baseUrl')
-        actual.should.have.property('id')
-        appId = actual.id
-        done()
-      })
-      .catch(err => {
-        done(err)
-      })
+    const actual = await testModule.createApplication('test', 'test application', 1, 1, 'http://localhost:5000')
+    assertAppProps(actual)
+    appId = actual.id
   })
-  it(testName + ' Retrieve', (done) => {
+  it(testName + ' Retrieve', async () => {
     let testModule = new TestModule({}, modelAPIMock)
     should.exist(testModule)
-    testModule.retrieveApplication(appId)
-      .then(actual => {
-        actual.should.have.property('name')
-        actual.should.have.property('description')
-        actual.should.have.property('companyId')
-        actual.should.have.property('reportingProtocolId')
-        actual.should.have.property('baseUrl')
-        actual.should.have.property('id')
-        done()
-      })
-      .catch(err => {
-        done(err)
-      })
+    const actual = await testModule.retrieveApplication(appId)
+    assertAppProps(actual)
   })
-  it(testName + ' Update', (done) => {
+  it(testName + ' Update', async () => {
     let testModule = new TestModule({}, modelAPIMock)
     should.exist(testModule)
     let updated = {
@@ -103,67 +80,32 @@ describe('Unit Tests for ' + testName, () => {
       reportingProtocolId: 1,
       baseUrl: 'http://localhost:5000'
     }
-    testModule.updateApplication(updated)
-      .then(actual => {
-        actual.should.have.property('name')
-        actual.should.have.property('description')
-        actual.should.have.property('companyId')
-        actual.should.have.property('reportingProtocolId')
-        actual.should.have.property('baseUrl')
-        actual.should.have.property('id')
-        actual.description.should.equal(updated.description)
-        done()
-      })
-      .catch(err => {
-        done(err)
-      })
+    const actual = await testModule.updateApplication(updated)
+    assertAppProps(actual)
+    actual.description.should.equal(updated.description)
   })
-  it(testName + ' Start', (done) => {
+  it(testName + ' Start', async () => {
     let testModule = new TestModule({}, modelAPIMock)
     should.exist(testModule)
-    testModule.startApplication(appId)
-      .then(actual => {
-        console.log(actual)
-        done()
-      })
-      .catch(err => {
-        done(err)
-      })
+    const actual = await testModule.startApplication(appId)
+    console.log(actual)
   })
-  it(testName + ' Test', (done) => {
+  it(testName + ' Test', async () => {
     let testModule = new TestModule({}, modelAPIMock)
     should.exist(testModule)
-    testModule.testApplication(appId, { name: 'test' })
-      .then(actual => {
-        console.log(actual)
-        done()
-      })
-      .catch(err => {
-        done(err)
-      })
+    const actual = await testModule.testApplication(appId, { name: 'test' })
+    console.log(actual)
   })
-  it.skip(testName + ' Pass Data to Application', (done) => {
+  it.skip(testName + ' Pass Data to Application', async () => {
     let testModule = new TestModule({}, modelAPIMock)
     should.exist(testModule)
-    testModule.passDataToApplication(appId, 1, { name: 'test' })
-      .then(actual => {
-        console.log(actual)
-        done()
-      })
-      .catch(err => {
-        done(err)
-      })
+    const actual = await testModule.passDataToApplication(appId, 1, { name: 'test' })
+    actual.should.be(204)
   })
-  it(testName + ' Stop', (done) => {
+  it(testName + ' Stop', async () => {
     let testModule = new TestModule({}, modelAPIMock)
     should.exist(testModule)
-    testModule.stopApplication(appId)
-      .then(actual => {
-        console.log(actual)
-        done()
-      })
-      .catch(err => {
-        done(err)
-      })
+    const actual = await testModule.stopApplication(appId)
+    console.log(actual)
   })
 })

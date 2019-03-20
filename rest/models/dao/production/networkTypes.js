@@ -1,12 +1,24 @@
 // Database implementation.
-var db = require('../../../lib/dbsqlite.js')
+const { prisma } = require('../../../lib/prisma')
 
 // Error reporting
-var httpError = require('http-errors')
+const httpError = require('http-errors')
+
+// Utils
+const { onFail } = require('../../../lib/utils')
 
 //* *****************************************************************************
 // NetworkTypes database table.
 //* *****************************************************************************
+
+module.exports = {
+  createNetworkType,
+  retrieveNetworkType,
+  updateNetworkType,
+  deleteNetworkType,
+  retrieveAllNetworkTypes,
+  retrieveNetworkTypebyName
+}
 
 //* *****************************************************************************
 // CRUD support.
@@ -17,43 +29,22 @@ var httpError = require('http-errors')
 // name  - the name of the networkType
 //
 // Returns the promise that will execute the create.
-exports.createNetworkType = function (name) {
-  return new Promise(function (resolve, reject) {
-    // Create the record.
-    var networkType = {}
-    networkType.name = name
-
-    // OK, save it!
-    db.insertRecord('networkTypes', networkType, function (err, record) {
-      if (err) {
-        reject(err)
-      }
-      else {
-        resolve(record)
-      }
-    })
-  })
+function createNetworkType (name) {
+  return prisma.createNetworkType({ name })
 }
 
+async function loadNetworkType (uniqueKeyObj) {
+  const rec = await onFail(400, () => prisma.networkType(uniqueKeyObj))
+  if (!rec) throw httpError(404, 'NetworkType not found')
+  return rec
+}
 // Retrieve a networkType record by id.
 //
 // id - the record id of the networkType.
 //
 // Returns a promise that executes the retrieval.
-exports.retrieveNetworkType = function (id) {
-  return new Promise(function (resolve, reject) {
-    db.fetchRecord('networkTypes', 'id', id, function (err, rec) {
-      if (err) {
-        reject(err)
-      }
-      else if (!rec) {
-        reject(new httpError.NotFound())
-      }
-      else {
-        resolve(rec)
-      }
-    })
-  })
+async function retrieveNetworkType (id) {
+  return loadNetworkType({ id })
 }
 
 // Update the networkType record.
@@ -62,17 +53,9 @@ exports.retrieveNetworkType = function (id) {
 //               retrieval to guarantee the same record is updated.
 //
 // Returns a promise that executes the update.
-exports.updateNetworkType = function (networkType) {
-  return new Promise(function (resolve, reject) {
-    db.updateRecord('networkTypes', 'id', networkType, function (err, row) {
-      if (err) {
-        reject(err)
-      }
-      else {
-        resolve(row)
-      }
-    })
-  })
+function updateNetworkType ({ id, ...data }) {
+  if (!id) throw httpError(400, 'No existing NetworkType ID')
+  return prisma.updateNetworkType({ data, where: { id } })
 }
 
 // Delete the networkType record.
@@ -80,17 +63,8 @@ exports.updateNetworkType = function (networkType) {
 // networkTypeId - the id of the networkType record to delete.
 //
 // Returns a promise that performs the delete.
-exports.deleteNetworkType = function (networkTypeId) {
-  return new Promise(function (resolve, reject) {
-    db.deleteRecord('networkTypes', 'id', networkTypeId, function (err, rec) {
-      if (err) {
-        reject(err)
-      }
-      else {
-        resolve(rec)
-      }
-    })
-  })
+function deleteNetworkType (id) {
+  return onFail(400, () => prisma.deleteNetworkType({ id }))
 }
 
 //* *****************************************************************************
@@ -100,32 +74,13 @@ exports.deleteNetworkType = function (networkTypeId) {
 // Gets all networkTypes from the database.
 //
 // Returns a promise that does the retrieval.
-exports.retrieveAllNetworkTypes = function () {
-  return new Promise(function (resolve, reject) {
-    var sql = 'SELECT * from networkTypes;'
-    db.select(sql, function (err, rows) {
-      if (err) {
-        reject(err)
-      }
-      else {
-        resolve(rows)
-      }
-    })
-  })
+function retrieveAllNetworkTypes () {
+  return prisma.networkTypes()
 }
 
 // Retrieve the networkType by name.
 //
 // Returns a promise that does the retrieval.
-exports.retrieveNetworkTypebyName = function (name) {
-  return new Promise(function (resolve, reject) {
-    db.fetchRecord('networkTypes', 'name', name, function (err, rec) {
-      if (err) {
-        reject(err)
-      }
-      else {
-        resolve(rec)
-      }
-    })
-  })
+function retrieveNetworkTypebyName (name) {
+  return loadNetworkType({ name })
 }

@@ -1,11 +1,14 @@
-version: '3'
+version: '3.5'
 
 services:
-  rest:
-    image: lpwanserver/lpwanserver
+  lpwanserver:
+    image: lpwanserver/lpwanserver:latest
+    container_name: lpwanserver
     environment:
       - port=3200
-      - db_file=data/production.sqlite3
+      - prisma_protocol=http
+      - prisma_host=prisma
+      - prisma_port=4466
     ports:
       - 3200:3200
     networks:
@@ -14,9 +17,6 @@ services:
       - "../data/production.sqlite3:/app/data/production.sqlite3:consistent"
     deploy:
       replicas: 1
-      # Only run on swarm manager, for access to db volume
-      placement:
-        constraints: [node.role == manager]
       resources:
         limits:
           cpus: "0.5"
@@ -25,8 +25,9 @@ services:
         condition: on-failure
         max_attempts: 3
 
-  ui:
-    image: lpwanserver/lpwanserver-web-client
+  lpwanserver_ui:
+    image: lpwanserver/lpwanserver-web-client:latest
+    container_name: lpwanserver_ui
     environment:
       - LPWANSERVER_PROTOCOL=http
       - LPWANSERVER_HOST=rest
@@ -59,4 +60,5 @@ services:
 
 networks:
   lpwanserver:
+    name: lpwanserver
   

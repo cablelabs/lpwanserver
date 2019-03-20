@@ -6,6 +6,7 @@ var chai = require('chai')
 var should = chai.should()
 var TestModule = require('../../../rest/reportingProtocols/postHandler')
 const testName = 'Post Handler'
+const { promisify } = require('util')
 
 // content of index.js
 const http = require('http')
@@ -18,60 +19,41 @@ const requestHandler = (request, response) => {
 }
 
 const server = http.createServer(requestHandler)
+const serverListen = promisify(server.listen.bind(server))
+const serverClose = promisify(server.close.bind(server))
 
 describe('Unit Tests for ' + testName, () => {
   before('Setup ENV', async () => {
-    server.listen(port, (err) => {
-      if (err) console.log(err)
-    })
+    await serverListen(port)
   })
   after('Shutdown', async () => {
-    server.close()
+    await serverClose()
   })
-  it(testName + ' Report', (done) => {
+  it(testName + ' Report', async () => {
     let dataObject = { name: 'Hello App' }
-    TestModule.report(dataObject, 'http://localhost:5000', 'test')
-      .then(actual => {
-        actual.statusCode.should.equal(201)
-        actual.body.message.should.equal('Hello Client')
-        done()
-      })
-      .catch(err => {
-        done(err)
-      })
+    const actual = await TestModule.report(dataObject, 'http://localhost:5000', 'test')
+    actual.statusCode.should.equal(201)
+    actual.body.message.should.equal('Hello Client')
   })
-  it(testName + ' Report Empty', (done) => {
-    TestModule.report(null, 'http://localhost:5000', 'test')
-      .then(actual => {
-        actual.statusCode.should.equal(201)
-        actual.body.message.should.equal('Hello Client')
-        done()
-      })
-      .catch(err => {
-        done(err)
-      })
+  it(testName + ' Report Empty', async () => {
+    const actual = await TestModule.report(null, 'http://localhost:5000', 'test')
+    actual.statusCode.should.equal(201)
+    actual.body.message.should.equal('Hello Client')
   })
-  it(testName + ' Report No App', (done) => {
+  it(testName + ' Report No App', async () => {
     let dataObject = { name: 'Hello App' }
-    TestModule.report(dataObject, 'http://localhost:5000')
-      .then(actual => {
-        actual.statusCode.should.equal(201)
-        actual.body.message.should.equal('Hello Client')
-        done()
-      })
-      .catch(err => {
-        done(err)
-      })
+    const actual = await TestModule.report(dataObject, 'http://localhost:5000')
+    actual.statusCode.should.equal(201)
+    actual.body.message.should.equal('Hello Client')
   })
-  it(testName + ' Report Incorrect URL', (done) => {
+  it(testName + ' Report Incorrect URL', async () => {
     let dataObject = { name: 'Hello App' }
-    TestModule.report(dataObject, 'http://localhost:6000', 'test')
-      .then(actual => {
-        done(new Error('Should not connect to incorrect url'))
-      })
-      .catch(err => {
-        err.message.should.equal('connect ECONNREFUSED 127.0.0.1:6000')
-        done()
-      })
+    try {
+      await TestModule.report(dataObject, 'http://localhost:6000', 'test')
+      throw new Error('Should not connect to incorrect url')
+    }
+    catch (err) {
+      err.message.should.equal('connect ECONNREFUSED 127.0.0.1:6000')
+    }
   })
 })

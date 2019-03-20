@@ -1,6 +1,9 @@
 // Configuration access.
 var nconf = require('nconf')
 const appLogger = require('../lib/appLogger')
+const path = require('path')
+
+const handlerDir = path.join(__dirname, '../networkProtocols/handlers')
 
 //* *****************************************************************************
 // The NetworkProtocol interface.
@@ -12,23 +15,21 @@ function NetworkProtocol () {
 }
 
 NetworkProtocol.prototype.retrieveNetworkProtocols = async function (options) {
-  let recs = await this.impl.retrieveNetworkProtocols(options)
-  appLogger.log(recs)
-  let len = recs.records.length
-  for (let i = 0; i < len; i++) {
-    let rec = recs.records[i]
-    let handler = require('../networkProtocols/' + rec.protocolHandler)
-    rec.metaData = handler.metaData
-    recs.records[i] = rec
+  let result = await this.impl.retrieveNetworkProtocols(options)
+  
+  return {
+    ...result,
+    records: result.records.map(x => {
+      const { metaData } = require(path.join(handlerDir, x.protocolHandler))
+      return { ...x, metaData }
+    })
   }
-  return recs
 }
 
 NetworkProtocol.prototype.retrieveNetworkProtocol = async function (id) {
   let rec = await this.impl.retrieveNetworkProtocol(id)
-  let handler = require('../networkProtocols/' + rec.protocolHandler)
-  rec.metaData = handler.metaData
-  return rec
+  const { metaData } = require(path.join(handlerDir, rec.protocolHandler))
+  return { ...rec, metaData }
 }
 
 NetworkProtocol.prototype.createNetworkProtocol = function (name, networkTypeId, protocolHandler) {

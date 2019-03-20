@@ -1,6 +1,8 @@
 // General libraries in use in this module.
 var appLogger = require('../lib/appLogger.js')
 
+var httpError = require('http-errors')
+
 // Configuration access.
 var nconf = require('nconf')
 
@@ -94,7 +96,7 @@ DeviceNetworkTypeLink.prototype.updateDeviceNetworkTypeLink = function (deviceNe
   return new Promise(async function (resolve, reject) {
     try {
       var rec = await me.impl.updateDeviceNetworkTypeLink(deviceNetworkTypeLink, validateCompanyId)
-      var logs = await modelAPI.networkTypeAPI.pushDevice(rec.networkTypeId, rec, rec.networkSettings)
+      var logs = await modelAPI.networkTypeAPI.pushDevice(rec.networkType.id, rec, rec.networkSettings)
       rec.remoteAccessLogs = logs
       resolve(rec)
     }
@@ -121,7 +123,7 @@ DeviceNetworkTypeLink.prototype.pushDeviceNetworkTypeLink = function (deviceNetw
   return new Promise(async function (resolve, reject) {
     try {
       var rec = await me.impl.retrieveDeviceNetworkTypeLink(deviceNetworkTypeLink)
-      var logs = await modelAPI.networkTypeAPI.pushDevice(rec.networkTypeId, rec.deviceId, rec.networkSettings)
+      var logs = await modelAPI.networkTypeAPI.pushDevice(rec.networkType.id, rec.device.id, rec.networkSettings)
       rec.remoteAccessLogs = logs
       resolve(rec)
     }
@@ -149,15 +151,15 @@ DeviceNetworkTypeLink.prototype.deleteDeviceNetworkTypeLink = function (id, vali
       // Since we clear the remote networks before we delete the local
       // record, validate the company now, if required.
       if (validateCompanyId) {
-        var dev = await modelAPI.devices.retrieveDevice(rec.deviceId)
-        var app = await modelAPI.applications.retrieveApplication(dev.applicationId)
-        if (validateCompanyId !== app.companyId) {
+        var dev = await modelAPI.devices.retrieveDevice(rec.device.id)
+        var app = await modelAPI.applications.retrieveApplication(dev.application.id)
+        if (validateCompanyId !== app.company.id) {
           reject(new httpError.Unauthorized())
           return
         }
       }
       // Don't delete the local record until the remote operations complete.
-      var logs = await modelAPI.networkTypeAPI.deleteDevice(rec.networkTypeId, rec.deviceId)
+      var logs = await modelAPI.networkTypeAPI.deleteDevice(rec.networkType.id, rec.device.id)
       await me.impl.deleteDeviceNetworkTypeLink(id)
       resolve(logs)
     }

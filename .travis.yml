@@ -1,19 +1,28 @@
 language: node_js
 sudo: required
 node_js:
-  - "8.11"
+  - "10.15.3"
 services:
   - docker
+env:
+  - DOCKER_COMPOSE_VERSION=1.23.2
+before_install:
+  - sudo rm /usr/local/bin/docker-compose
+  - curl -L https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > docker-compose
+  - chmod +x docker-compose
+  - sudo mv docker-compose /usr/local/bin
 install:
-  - npm install
-  - npm install -D
+  - npm ci
+cache:
+  directories:
+    - "$HOME/.npm"
 before_script:
   - npm run package
-  - cd .. && git clone --depth 1 https://github.com/cablelabs/lpwanserver-web-client.git && cd lpwanserver
 script:
-  - ./bin/unit-tests
-  - npm run test-with-coverage
-  - ../lpwanserver-web-client/bin/e2e.js
+  - npm run test:unit
+  - npm run test:api
+  - npm run test:e2e
+after_success: npm run coverage
 before_deploy:
   - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
 deploy:

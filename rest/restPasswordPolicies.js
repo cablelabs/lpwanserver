@@ -1,6 +1,7 @@
 var appLogger = require('./lib/appLogger.js')
 var restServer
 var modelAPI
+const { formatRelationshipsOut } = require('./lib/prisma')
 
 exports.initialize = function (app, server) {
   restServer = server
@@ -40,7 +41,7 @@ exports.initialize = function (app, server) {
       var companyId = parseInt(req.params.companyId)
 
       // Must be admin user or part of the company.
-      if ((req.company.type !== modelAPI.companies.COMPANY_ADMIN) &&
+      if ((req.company.type.id !== modelAPI.companies.COMPANY_ADMIN) &&
               (req.company.id !== companyId)) {
         restServer.respond(res, 403)
         return
@@ -48,12 +49,12 @@ exports.initialize = function (app, server) {
 
       modelAPI.passwordPolicies.retrievePasswordPolicies(companyId).then(function (rules) {
         for (var i = 0; i < rules.length; ++i) {
-          if (rules[ i ].companyId) {
-            delete rules[ i ].companyId
+          if (rules[ i ].company) {
+            delete rules[ i ].company
           }
           else {
             // Usually is in the record as "null".
-            delete rules[ i ].companyId
+            delete rules[ i ].company
             rules[ i ].global = true
           }
         }
@@ -96,10 +97,10 @@ exports.initialize = function (app, server) {
       // it's global passwordPolicy rule or
       // the caller is part of the company that the passwordPolicy rule is
       // assigned to
-      if ((req.company.type === modelAPI.companies.COMPANY_ADMIN) ||
-                  (!pp.companyId) ||
-                  (pp.companyId === req.company.id)) {
-        restServer.respondJson(res, null, pp)
+      if ((req.company.type.id === modelAPI.companies.COMPANY_ADMIN) ||
+                  (!pp.company.id) ||
+                  (pp.company.id === req.company.id)) {
+        restServer.respondJson(res, null, formatRelationshipsOut(pp))
       }
       else {
         // Not a passwordPolicy this user should see.
@@ -160,7 +161,7 @@ exports.initialize = function (app, server) {
     }
 
     // If the user is not part of the admin group...
-    if (modelAPI.companies.COMPANY_ADMIN !== req.company.type) {
+    if (modelAPI.companies.COMPANY_ADMIN !== req.company.type.id) {
       // Did they specify the companyId?
       if (rec.companyId) {
         // It better match the company they are part of.
@@ -219,25 +220,25 @@ exports.initialize = function (app, server) {
     // We'll start by getting the passwordPolicy, as a read is much less
     // expensive than a write, and then we'll be able to tell if anything
     // really changed before we even try to write.
-    modelAPI.passwordPolicies.retrievePasswordPolicies(data.id).then(function (pp) {
+    modelAPI.passwordPolicies.retrievePasswordPolicy(data.id).then(function (pp) {
       // If a company admin, cannot change companyId.
-      if ((req.company.type !== modelAPI.companies.COMPANY_ADMIN) &&
+      if ((req.company.type.id !== modelAPI.companies.COMPANY_ADMIN) &&
                  (req.body.companyId) &&
-                 ((pp.companyId !== req.companyId) ||
-                   (req.body.companyId !== pp.companyId))) {
+                 ((pp.company.id !== req.companyId) ||
+                   (req.body.companyId !== pp.company.id))) {
         restServer.respond(res, 403, 'Company cannot be changed by non-system admin account')
         return
       }
       else if (req.body.companyId) {
-        if (req.body.companyId !== pp.companyId) {
+        if (req.body.companyId !== pp.company.id) {
           data.companyId = req.body.companyId
           ++changed
         }
       }
 
       // If a company admin, must be a passwordPolicy for that company.
-      if ((req.company.type !== modelAPI.companies.COMPANY_ADMIN) &&
-                 (!pp.companyId || pp.companyId !== req.company.Id)) {
+      if ((req.company.type.id !== modelAPI.companies.COMPANY_ADMIN) &&
+                 (!pp.company.id || pp.company.id !== req.company.id)) {
         restServer.respond(res, 403, 'Cannot change the passwordPolicy of another company or global passwordPolicies')
         return
       }
@@ -276,7 +277,7 @@ exports.initialize = function (app, server) {
       }
     })
       .catch(function (err) {
-        appLogger.log('Error getting company ' + req.body.name + ': ' + err)
+        appLogger.log('Error getting PasswordPolicy ' + req.params.id + ': ' + err)
         restServer.respond(res, err)
       })
   })
@@ -300,7 +301,7 @@ exports.initialize = function (app, server) {
   function (req, res, next) {
     var id = parseInt(req.params.id)
     // If the caller is a global admin, we can just delete.
-    if (req.company.type === modelAPI.companies.COMPANY_ADMIN) {
+    if (req.company.type.id === modelAPI.companies.COMPANY_ADMIN) {
       modelAPI.passwordPolicies.deletePasswordPolicy(id).then(function () {
         restServer.respond(res, 204)
       })
@@ -313,7 +314,7 @@ exports.initialize = function (app, server) {
       // We'll need to read first to make sure the record is for the
       // company the company admin is part of.
       modelAPI.passwordPolicies.retrievePasswordPolicy(id).then(function (pp) {
-        if (req.company.id !== pp.companyId) {
+        if (req.company.id !== pp.company.id) {
           restServer.respond(res, 400, 'Unauthorized to delete record')
         }
         else {

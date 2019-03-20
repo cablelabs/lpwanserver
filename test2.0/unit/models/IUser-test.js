@@ -4,78 +4,52 @@ const assert = require('assert')
 const chai = require('chai')
 // eslint-disable-next-line no-unused-vars
 const should = chai.should()
+// Initiate config before importing tested files
 const nconf = require('nconf')
-const Initializer = require('../../../rest/models/initializer')
+nconf.file('defaults', { file: 'config/defaults.hjson', format: require('hjson') })
+
 const TestModule = require('../../../rest/models/IUser')
-const testName = 'User'
 const modelAPIMock = require('../../mock/ModelAPI-mock')
+
+const testName = 'User'
+
+function assertUserProps (actual) {
+  actual.should.have.property('username')
+  actual.should.have.property('email')
+  actual.company.should.have.property('id')
+  actual.role.should.have.property('id')
+  actual.should.have.property('id')
+}
 
 describe('Unit Tests for ' + testName, () => {
   let userId = ''
-  before('Setup ENV', async () => {
-    nconf.file('defaults', { file: 'config/defaults.hjson', format: require('hjson') })
-    let initializer = new Initializer()
-    initializer.init()
-    console.log(nconf.get('impl_directory'))
-    console.log(nconf.get('db_schema'))
-    console.log(nconf.get('db_create'))
-  })
-  after('Shutdown', async () => {
-  })
+  before('Setup ENV', async () => {})
+  after('Shutdown', async () => {})
   it(testName + ' Construction', () => {
     let testModule = new TestModule(modelAPIMock)
     should.exist(testModule)
   })
-  it(testName + ' Empty Retrieval', (done) => {
+  it(testName + ' Empty Retrieval', async () => {
     let testModule = new TestModule(modelAPIMock)
     should.exist(testModule)
-    testModule.retrieveUsers()
-      .then(actual => {
-        console.log(actual)
-        actual.should.have.property('totalCount')
-        actual.should.have.property('records')
-        // actual.totalCount.should.equal(0)
-        // actual.records.length.should.equal(0)
-        done()
-      })
-      .catch(err => {
-        done(err)
-      })
+    const actual = await testModule.retrieveUsers()
+    actual.should.have.property('totalCount')
+    actual.should.have.property('records')
   })
-  it(testName + ' Create', (done) => {
+  it(testName + ' Create', async () => {
     let testModule = new TestModule(modelAPIMock)
     should.exist(testModule)
-    testModule.createUser('testuser', '123456', 'bob@aol.com', 1, 1)
-      .then(actual => {
-        actual.should.have.property('username')
-        actual.should.have.property('email')
-        actual.should.have.property('companyId')
-        actual.should.have.property('role')
-        actual.should.have.property('id')
-        userId = actual.id
-        done()
-      })
-      .catch(err => {
-        done(err)
-      })
+    const actual = await testModule.createUser('testuser', '123456', 'bob@aol.com', 1, 1)
+    assertUserProps(actual)
+    userId = actual.id
   })
-  it(testName + ' Retrieve', (done) => {
+  it(testName + ' Retrieve', async () => {
     let testModule = new TestModule(modelAPIMock)
     should.exist(testModule)
-    testModule.retrieveUser(userId)
-      .then(actual => {
-        actual.should.have.property('username')
-        actual.should.have.property('email')
-        actual.should.have.property('companyId')
-        actual.should.have.property('role')
-        actual.should.have.property('id')
-        done()
-      })
-      .catch(err => {
-        done(err)
-      })
+    const actual = await testModule.retrieveUser(userId)
+    assertUserProps(actual)
   })
-  it(testName + ' Update', (done) => {
+  it(testName + ' Update', async () => {
     let testModule = new TestModule(modelAPIMock)
     should.exist(testModule)
     let updated = {
@@ -85,18 +59,8 @@ describe('Unit Tests for ' + testName, () => {
       companyId: 1,
       role: 2
     }
-    testModule.updateUser(updated)
-      .then(actual => {
-        actual.should.have.property('username')
-        actual.should.have.property('email')
-        actual.should.have.property('companyId')
-        actual.should.have.property('role')
-        actual.should.have.property('id')
-        actual.role.should.equal(updated.role)
-        done()
-      })
-      .catch(err => {
-        done(err)
-      })
+    const actual = await testModule.updateUser(updated)
+    assertUserProps(actual)
+    actual.role.id.should.equal(updated.role)
   })
 })

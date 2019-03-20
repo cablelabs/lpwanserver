@@ -1,0 +1,21 @@
+
+version: '3.5'
+services:
+  lpwanserver:
+    build:
+      context: ../..
+      dockerfile: docker/dev/Dockerfile
+    volumes:
+      - ../../rest:/usr/src/app/rest
+    ports:
+      - 3200:3200
+    networks:
+      - lpwanserver_dev
+    environment:
+      - port=3200
+      - prisma_protocol=http
+      - prisma_host=prisma
+      - prisma_port=4466
+networks:
+  lpwanserver_dev:
+    name: lpwanserver_dev

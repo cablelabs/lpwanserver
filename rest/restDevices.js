@@ -2,6 +2,8 @@ var appLogger = require('./lib/appLogger.js')
 var restServer
 var modelAPI
 
+const { formatRelationshipsOut } = require('./lib/prisma')
+
 exports.initialize = function (app, server) {
   restServer = server
   modelAPI = server.modelAPI
@@ -51,18 +53,18 @@ exports.initialize = function (app, server) {
   app.get('/api/devices', [restServer.isLoggedIn, restServer.fetchCompany],
     function (req, res, next) {
       var options = {}
-      if (req.company.type !== modelAPI.companies.COMPANY_ADMIN) {
+      if (req.company.type.id !== modelAPI.companies.COMPANY_ADMIN) {
         // If they gave a applicationId, make sure it belongs to their
         // company.
         if (req.query.companyId) {
-          if (req.query.companyId !== req.user.companyId) {
+          if (req.query.companyId !== req.user.company.id) {
             restServer.respond(res, 403, 'Cannot request devices for another company')
             return
           }
         }
         else {
           // Force the search to be limited to the user's company
-          options.companyId = req.user.companyId
+          options.companyId = req.user.company.id
         }
       }
 
@@ -90,7 +92,8 @@ exports.initialize = function (app, server) {
         options.applicationId = req.query.applicationId
       }
       modelAPI.devices.retrieveDevices(options).then(function (cos) {
-        restServer.respondJson(res, null, cos)
+        const responseBody = { ...cos, records: cos.records.map(formatRelationshipsOut) }
+        restServer.respondJson(res, null, responseBody)
       })
         .catch(function (err) {
           appLogger.log('Error getting devices: ' + err)
@@ -124,12 +127,12 @@ exports.initialize = function (app, server) {
   function (req, res, next) {
     // Should have device and application in req due to
     // fetchDeviceApplication
-    if ((req.company.type !== modelAPI.companies.COMPANY_ADMIN) &&
-             (req.application.companyId !== req.user.companyId)) {
+    if ((req.company.type.id !== modelAPI.companies.COMPANY_ADMIN) &&
+             (req.application.company.id !== req.user.company.id)) {
       restServer.respond(res, 403)
     }
     else {
-      restServer.respondJson(res, null, req.device)
+      restServer.respondJson(res, null, formatRelationshipsOut(req.device))
     }
   })
 
@@ -177,8 +180,8 @@ exports.initialize = function (app, server) {
 
     // The user must be part of the admin group or the device's
     // application's company.
-    if ((modelAPI.companies.COMPANY_ADMIN !== req.company.type) &&
-             (req.application.companyId !== req.user.companyId)) {
+    if ((modelAPI.companies.COMPANY_ADMIN !== req.company.type.id) &&
+             (req.application.company.id !== req.user.company.id)) {
       restServer.respond(res, 403, "Can't create a device for another company's application")
     }
     else {
@@ -235,8 +238,8 @@ exports.initialize = function (app, server) {
     // We'll start with the device retrieved by fetchDeviceApplication as
     // a basis for comparison.
     // Verify that the user can make the change.
-    if ((modelAPI.companies.COMPANY_ADMIN !== req.company.type) &&
-             (req.user.companyId !== req.application.companyId)) {
+    if ((modelAPI.companies.COMPANY_ADMIN !== req.company.type.id) &&
+             (req.user.company.id !== req.application.company.id)) {
       respond(res, 403)
       return
     }
@@ -258,17 +261,17 @@ exports.initialize = function (app, server) {
     // Can only change the applicationId if an admin user, and the
     // new applicationId is part of the same company.
     if ((req.body.applicationId) &&
-             (req.body.applicationId !== req.device.applicationId)) {
+             (req.body.applicationId !== req.device.application.id)) {
       data.applicationId = req.body.applicationId
       ++changed
 
       // If this is not a user with an admin company, we have to make sure
       // that the company doesn't change with the application.
-      if (modelAPI.companies.COMPANY_ADMIN !== req.company.type) {
+      if (modelAPI.companies.COMPANY_ADMIN !== req.company.type.id) {
         // The new application must also be part of the same company.
         modelAPI.applications.retrieveApplication(req.body.applicationId)
           .then(function (newApp) {
-            if (newApp.companyId !== req.application.id) {
+            if (newApp.company.id !== req.application.id) {
               respond(res, 400, "Cannot change device's application to another company's application")
             }
             else {
@@ -343,8 +346,8 @@ exports.initialize = function (app, server) {
     var id = parseInt(req.params.id)
     // If the caller is a global admin, or the device is part of the company
     // admin's company, we can delete.
-    if ((req.company.type === modelAPI.companies.COMPANY_ADMIN) ||
-             (req.application.companyId === req.user.companyId)) {
+    if ((req.company.type.id === modelAPI.companies.COMPANY_ADMIN) ||
+             (req.application.company.id === req.user.company.id)) {
       modelAPI.devices.deleteDevice(id).then(function () {
         restServer.respond(res, 204)
       })

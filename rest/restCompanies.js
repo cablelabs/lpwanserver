@@ -49,7 +49,7 @@ exports.initialize = function (app, server) {
   function (req, res, next) {
     var options = {}
 
-    if (req.company.type !== modelAPI.companies.COMPANY_ADMIN) {
+    if (req.company.type.id !== modelAPI.companies.COMPANY_ADMIN) {
       // Must be company admin.  Can only get their own company, so just
       // give that.
       modelAPI.companies.retrieveCompany(req.company.id).then(function (co) {
@@ -117,7 +117,7 @@ exports.initialize = function (app, server) {
     restServer.fetchCompany],
   function (req, res, next) {
     var id = req.params.id
-    if ((req.company.type !== modelAPI.companies.COMPANY_ADMIN) &&
+    if ((req.company.type.id !== modelAPI.companies.COMPANY_ADMIN) &&
              (req.company.id !== id)) {
       restServer.respond(res, 403)
       return
@@ -228,7 +228,7 @@ exports.initialize = function (app, server) {
 
       if (req.body.type) {
         var type = modelAPI.companies.types[ req.body.type ]
-        if (type !== company.type) {
+        if (type !== company.type.id) {
           data.type = type
           ++changed
         }
@@ -237,8 +237,8 @@ exports.initialize = function (app, server) {
       // In order to update a company record, the logged in user must
       // either be part of the admin company, or a company admin for the
       // company.
-      if ((req.company.type !== modelAPI.companies.COMPANY_ADMIN) &&
-                 (req.user.companyId !== data.id)) {
+      if ((req.company.type.id !== modelAPI.companies.COMPANY_ADMIN) &&
+                 (req.user.company.id !== data.id)) {
         // Nope.  Not allowed.
         restServer.respond(res, 403)
         return

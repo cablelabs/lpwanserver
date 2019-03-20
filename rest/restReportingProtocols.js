@@ -143,7 +143,7 @@ exports.initialize = function (app, server) {
     // We'll start by getting the company, as a read is much less expensive than
     // a write, and then we'll be able to tell if anything really changed before
     // we even try to write.
-    modelAPI.reportingProtocols.retrieveReportingProtocol(req.params.id).then(function (rp) {
+    modelAPI.reportingProtocols.retrieveReportingProtocol(data.id).then(function (rp) {
       // Fields that may exist in the request body that can change.  Make
       // sure they actually differ, though.
       var changed = 0

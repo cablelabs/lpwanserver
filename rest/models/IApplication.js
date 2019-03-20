@@ -268,19 +268,12 @@ Application.prototype.testApplication = function (applicationId, data) {
 // data          - the data to be passed.
 //
 // Returns a promise that performs the pass.
-Application.prototype.passDataToApplication = function (applicationId, networkId, data) {
-  return new Promise(async function (resolve, reject) {
-    try {
-      let network = await modelAPI.networks.retrieveNetwork(networkId)
-      let proto = await modelAPI.networkProtocolAPI.getProtocol(network)
-      let dataAPI = new NetworkProtocolDataAccess(modelAPI, 'ReportingProtocol')
-      await proto.api.passDataToApplication(network, applicationId, data, dataAPI)
-      resolve(204)
-    }
-    catch (err) {
-      reject(err)
-    }
-  })
+Application.prototype.passDataToApplication = async function passDataToApplication (applicationId, networkId, data) {
+  let network = await modelAPI.networks.retrieveNetwork(networkId, 'internal')
+  let proto = await modelAPI.networkProtocolAPI.getProtocol(network)
+  let dataAPI = new NetworkProtocolDataAccess(modelAPI, 'ReportingProtocol')
+  await proto.api.passDataToApplication(network, applicationId, data, dataAPI)
+  return 204
 }
 // Start all of the applications we have - intended for system bringup.
 //

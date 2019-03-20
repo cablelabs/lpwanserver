@@ -3,6 +3,8 @@ const appLogger = require('../lib/appLogger.js')
 // Configuration access.
 const nconf = require('nconf')
 
+const DevNtwkTypeLink = require('./dao/production/deviceNetworkTypeLinks')
+
 var modelAPI
 var impl
 //* *****************************************************************************
@@ -38,8 +40,18 @@ Device.prototype.retrieveDevices = function (options) {
 // id - the record id of the device.
 //
 // Returns a promise that executes the retrieval.
-Device.prototype.retrieveDevice = function (id) {
-  return this.impl.retrieveDevice(id)
+Device.prototype.retrieveDevice = async function retrieveDevice (id) {
+  const dvc = await this.impl.retrieveDevice(id)
+  try {
+    const { records } = await DevNtwkTypeLink.retrieveDeviceNetworkTypeLinks({ deviceId: id })
+    if (records.length) {
+      dvc.networks = records.map(x => x.networkType.id)
+    }
+  }
+  catch (err) {
+    // ignore
+  }
+  return dvc
 }
 
 // Create the device record.
@@ -112,7 +124,7 @@ Device.prototype.fetchDeviceApplication = function (req, res, next) {
     .then(function (dev) {
       // Save the device.
       req.device = dev
-      modelAPI.applications.retrieveApplication(dev.applicationId).then(function (app) {
+      modelAPI.applications.retrieveApplication(dev.application.id).then(function (app) {
         req.application = app
         next()
       })

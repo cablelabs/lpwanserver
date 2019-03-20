@@ -2,6 +2,8 @@ var appLogger = require('./lib/appLogger.js')
 var restServer
 var modelAPI
 
+const { formatRelationshipsOut } = require('./lib/prisma')
+
 exports.initialize = function (app, server) {
   restServer = server
   modelAPI = server.modelAPI
@@ -52,7 +54,7 @@ exports.initialize = function (app, server) {
     restServer.fetchCompany], function (req, res, next) {
     var options = {}
     // Limit by company, too, if not a system admin.
-    if (req.company.type !== modelAPI.companies.COMPANY_ADMIN) {
+    if (req.company.type.id !== modelAPI.companies.COMPANY_ADMIN) {
       options.companyId = req.company.id
     }
     if (req.query.networkTypeId) {
@@ -86,7 +88,8 @@ exports.initialize = function (app, server) {
       }
     }
     modelAPI.deviceNetworkTypeLinks.retrieveDeviceNetworkTypeLinks(options).then(function (networks) {
-      restServer.respondJson(res, null, networks)
+      const responseBody = { ...networks, records: networks.records.map(formatRelationshipsOut) }
+      restServer.respondJson(res, null, responseBody)
     })
       .catch(function (err) {
         appLogger.log('Error getting networks: ' + err)
@@ -118,7 +121,7 @@ exports.initialize = function (app, server) {
   app.get('/api/deviceNetworkTypeLinks/:id', [restServer.isLoggedIn], function (req, res, next) {
     var id = parseInt(req.params.id, 10)
     modelAPI.deviceNetworkTypeLinks.retrieveDeviceNetworkTypeLink(id).then(function (np) {
-      restServer.respondJson(res, null, np)
+      restServer.respondJson(res, null, formatRelationshipsOut(np))
     })
       .catch(function (err) {
         appLogger.log('Error getting deviceNetworkTypeLink ' + id + ': ' + err)
@@ -174,7 +177,7 @@ exports.initialize = function (app, server) {
     // ID of the user into the query to verify that the device belongs
     // to that company.
     var companyId
-    if (modelAPI.companies.COMPANY_ADMIN !== req.company.type) {
+    if (modelAPI.companies.COMPANY_ADMIN !== req.company.type.id) {
       companyId = req.company.id
     }
 
@@ -254,8 +257,8 @@ exports.initialize = function (app, server) {
         // If not an admin company, the deviceId better be
         // associated  with the user's company
         var companyId
-        if (req.company.type !== modelAPI.companies.COMPANY_ADMIN) {
-          companyId = req.user.companyId
+        if (req.company.type.id !== modelAPI.companies.COMPANY_ADMIN) {
+          companyId = req.user.company.id
         }
 
         // Do the update.
@@ -295,8 +298,8 @@ exports.initialize = function (app, server) {
     // If not an admin company, the deviceId better be associated
     // with the user's company
     var companyId
-    if (req.company.type !== modelAPI.companies.COMPANY_ADMIN) {
-      companyId = req.user.companyId
+    if (req.company.type.id !== modelAPI.companies.COMPANY_ADMIN) {
+      companyId = req.user.company.id
     }
 
     modelAPI.deviceNetworkTypeLinks.deleteDeviceNetworkTypeLink(id, companyId).then(function (rec) {
@@ -327,10 +330,10 @@ exports.initialize = function (app, server) {
   function (req, res, next) {
     var id = parseInt(req.params.id, 10)
     // If the caller is a global admin, or the device is part of the company
-    // admin's company, we can delete.
-    if ((req.company.type === modelAPI.companies.COMPANY_ADMIN) ||
-                (req.application.companyId === req.user.companyId)) {
-      modelAPI.deviceNetworkTypeLinks.pushDeviceNetworkTypeLink(id, req.application.companyId).then(function (ret) {
+    // admin's company, we can delete.req.application.company.id
+    if ((req.company.type.id === modelAPI.companies.COMPANY_ADMIN) ||
+                (req.application.company.id === req.user.company.id)) {
+      modelAPI.deviceNetworkTypeLinks.pushDeviceNetworkTypeLink(id, req.application.company.id).then(function (ret) {
         restServer.respond(res, 204, ret)
       })
     }

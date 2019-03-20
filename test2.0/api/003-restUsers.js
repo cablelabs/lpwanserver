@@ -10,8 +10,6 @@ var server = chai.request(app).keepOpen()
 
 describe('Users', function () {
   var adminToken
-  var adminToken
-  var adminToken
 
   before('User Sessions', function (done) {
     var sessions = 0
@@ -25,9 +23,7 @@ describe('Users', function () {
       .post('/api/sessions')
       .send({ 'login_username': 'admin', 'login_password': 'password' })
       .end(function (err, res) {
-        if (err) {
-          return done(err)
-        }
+        if (err) return done(err)
         adminToken = res.text
         waitFunc()
       })
@@ -40,8 +36,10 @@ describe('Users', function () {
         .post('/api/users')
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
-        .send({ 'username': 'test1', 'password': 'test13', 'role': 'user', 'companyId': 2 })
+        .send({ 'username': 'test1', 'password': 'test13', 'role': 'user', 'companyId': 1 })
         .end(function (err, res) {
+          console.error(err)
+          if (err) return done(err)
           res.should.have.status(200)
           var ret = JSON.parse(res.text)
           userId1 = ret.id
@@ -56,6 +54,7 @@ describe('Users', function () {
         .set('Content-Type', 'application/json')
         .send()
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(200)
           var userObj = JSON.parse(res.text)
           userObj.username.should.equal('test1')
@@ -72,6 +71,7 @@ describe('Users', function () {
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(200)
           var result = JSON.parse(res.text)
           result.records.should.be.instanceof(Array)
@@ -81,19 +81,20 @@ describe('Users', function () {
         })
     })
 
-    it('should return 200 with 1 user on admin, limit 2, offset 4', function (done) {
+    it('should return 200 with 0 users on admin, limit 2, offset 4', function (done) {
       server
         .get('/api/users')
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .query({ 'limit': 2, 'offset': 4 })
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(200)
           var result = JSON.parse(res.text)
           console.log(result)
           result.records.should.be.instanceof(Array)
           result.records.should.have.length(0)
-          result.totalCount.should.equal(4)
+          result.totalCount.should.equal(2)
           done()
         })
     })
@@ -105,6 +106,7 @@ describe('Users', function () {
         .set('Content-Type', 'application/json')
         .query({ 'limit': 2, 'offset': 2 })
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(200)
           var result = JSON.parse(res.text)
           result.records.should.be.instanceof(Array)
@@ -121,6 +123,7 @@ describe('Users', function () {
         .set('Content-Type', 'application/json')
         .query({ 'search': 'test%' })
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(200)
           var result = JSON.parse(res.text)
           result.records.should.be.instanceof(Array)
@@ -138,6 +141,7 @@ describe('Users', function () {
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(200)
           done()
         })
@@ -150,6 +154,7 @@ describe('Users', function () {
         .set('Content-Type', 'application/json')
         .send()
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(200)
           var userObj = JSON.parse(res.text)
           userObj.username.should.equal('test1')
@@ -167,6 +172,7 @@ describe('Users', function () {
         .set('Content-Type', 'application/json')
         .send('{"username": "test1still" }')
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(204)
           done()
         })
@@ -179,6 +185,7 @@ describe('Users', function () {
         .set('Content-Type', 'application/json')
         .send('{"companyId": 1 }')
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(204)
           done()
         })
@@ -191,6 +198,7 @@ describe('Users', function () {
         .set('Content-Type', 'application/json')
         .send()
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(200)
           var userObj = JSON.parse(res.text)
           userObj.username.should.equal('test1still')
@@ -207,10 +215,11 @@ describe('Users', function () {
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(200)
           var userObj = JSON.parse(res.text)
           userObj.username.should.equal('admin')
-          userObj.companyId.should.equal(2)
+          userObj.company.id.should.equal(2)
           expect(userObj.passwordHash).to.not.exist
           expect(userObj.lastVerifiedEmail).to.not.exist
           done()
@@ -224,6 +233,7 @@ describe('Users', function () {
         .delete('/api/users/' + userId1)
         .set('Authorization', 'Bearer ' + adminToken)
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(204)
           done()
         })
@@ -236,6 +246,7 @@ describe('Users', function () {
         .set('Content-Type', 'application/json')
         .send()
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(404)
           done()
         })

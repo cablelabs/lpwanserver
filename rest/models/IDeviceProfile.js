@@ -88,7 +88,7 @@ DeviceProfile.prototype.updateDeviceProfile = function (deviceProfile) {
   return new Promise(async function (resolve, reject) {
     try {
       var rec = await me.impl.updateDeviceProfile(deviceProfile)
-      var logs = await modelAPI.networkTypeAPI.pushDeviceProfile(rec.networkTypeId, deviceProfile.id)
+      var logs = await modelAPI.networkTypeAPI.pushDeviceProfile(rec.networkType.id, deviceProfile.id)
       rec.remoteAccessLogs = logs
       resolve(rec)
     }
@@ -120,7 +120,7 @@ DeviceProfile.prototype.deleteDeviceProfile = function (id, validateCompanyId) {
       var rec = await me.impl.retrieveDeviceProfile(id)
 
       if (vci && (vci !== null)) {
-        if (vci !== rec.companyId) {
+        if (vci !== rec.company.id) {
           reject(new httpError.Unauthorized())
           return
         }
@@ -128,7 +128,7 @@ DeviceProfile.prototype.deleteDeviceProfile = function (id, validateCompanyId) {
 
       // Don't delete the local record until the remote operations
       // complete.
-      var logs = await modelAPI.networkTypeAPI.deleteDeviceProfile(rec.networkTypeId, id)
+      var logs = await modelAPI.networkTypeAPI.deleteDeviceProfile(rec.networkType.id, id)
       await me.impl.deleteDeviceProfile(id)
       resolve(logs)
     }
@@ -151,7 +151,7 @@ DeviceProfile.prototype.pushDeviceProfile = function (deviceProfile) {
   return new Promise(async function (resolve, reject) {
     try {
       var rec = await me.impl.retrieveDeviceProfile(deviceProfile)
-      var logs = await modelAPI.networkTypeAPI.pushDeviceProfile(rec.networkTypeId, deviceProfile.id)
+      var logs = await modelAPI.networkTypeAPI.pushDeviceProfile(rec.networkType.id, deviceProfile.id)
       rec.remoteAccessLogs = logs
       resolve(rec)
     }

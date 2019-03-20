@@ -9,28 +9,20 @@ var server = chai.request(app).keepOpen()
 
 describe('Networks', function () {
   var adminToken
-  var adminToken
-  var adminToken
   var npId1
+  var netProvId
 
-  before('User Sessions', function (done) {
-    var sessions = 0
-    var waitFunc = function () {
-      ++sessions
-      if (sessions >= 1) {
-        done()
-      }
-    }
-    server
+  before('User Sessions', async () => {
+    let res = await server
       .post('/api/sessions')
       .send({ 'login_username': 'admin', 'login_password': 'password' })
-      .end(function (err, res) {
-        if (err) {
-          return done(err)
-        }
-        adminToken = res.text
-        waitFunc()
-      })
+    adminToken = res.text
+    res = await server
+      .post('/api/networkProviders')
+      .set('Authorization', 'Bearer ' + adminToken)
+      .set('Content-Type', 'application/json')
+      .send({ 'name': 'Kyrio' })
+    netProvId = JSON.parse(res.text).id
   })
 
   var netId1
@@ -42,6 +34,7 @@ describe('Networks', function () {
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(200)
           var result = JSON.parse(res.text)
           result.records.should.be.instanceof(Array)
@@ -59,12 +52,13 @@ describe('Networks', function () {
         .set('Content-Type', 'application/json')
         .send({
           'name': 'MachQLoRa',
-          'networkProviderId': 1,
+          'networkProviderId': netProvId,
           'networkTypeId': 1,
           'baseUrl': 'https://localhost:9999/api',
           'networkProtocolId': npId1
         })
         .end(function (err, res) {
+          if (err) return done(err)
           console.log(res.text)
           res.should.have.status(201)
           var ret = JSON.parse(res.text)
@@ -80,13 +74,14 @@ describe('Networks', function () {
         .set('Content-Type', 'application/json')
         .send({
           'name': 'Funky network',
-          'networkProviderId': 1,
+          'networkProviderId': netProvId,
           'networkTypeId': 1,
           'baseUrl': 'https://lora_appserver1:8080/api/',
           'networkProtocolId': npId1,
           'securityData': { 'username': 'admin', 'password': 'admin' }
         })
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(201)
           var ret = JSON.parse(res.text)
           netId1 = ret.id
@@ -103,6 +98,7 @@ describe('Networks', function () {
         .set('Content-Type', 'application/json')
         .send()
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(200)
           var netObj = JSON.parse(res.text)
           netObj.name.should.equal('Funky network')
@@ -119,6 +115,7 @@ describe('Networks', function () {
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(200)
           var result = JSON.parse(res.text)
           result.records.should.be.instanceof(Array)
@@ -134,6 +131,7 @@ describe('Networks', function () {
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(200)
           var result = JSON.parse(res.text)
           result.records.should.be.instanceof(Array)
@@ -150,6 +148,7 @@ describe('Networks', function () {
         .set('Content-Type', 'application/json')
         .query({ 'limit': 2, 'offset': 1 })
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(200)
           var result = JSON.parse(res.text)
           result.records.should.be.instanceof(Array)
@@ -166,6 +165,7 @@ describe('Networks', function () {
         .set('Content-Type', 'application/json')
         .query({ 'search': '%Funky%' })
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(200)
           var result = JSON.parse(res.text)
           result.records.should.be.instanceof(Array)
@@ -183,6 +183,7 @@ describe('Networks', function () {
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(200)
           done()
         })
@@ -194,6 +195,7 @@ describe('Networks', function () {
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(200)
           var netObj = JSON.parse(res.text)
           netObj.name.should.equal('Funky network')
@@ -208,6 +210,7 @@ describe('Networks', function () {
         .set('Content-Type', 'application/json')
         .send()
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(200)
           var netObj = JSON.parse(res.text)
           netObj.name.should.equal('Funky network')
@@ -224,6 +227,7 @@ describe('Networks', function () {
         .set('Content-Type', 'application/json')
         .send('{"name": "KyrioLoRa" }')
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(200)
           done()
         })
@@ -236,6 +240,7 @@ describe('Networks', function () {
         .set('Content-Type', 'application/json')
         .send()
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(200)
           var netObj = JSON.parse(res.text)
           netObj.name.should.equal('KyrioLoRa')
@@ -250,6 +255,7 @@ describe('Networks', function () {
         .delete('/api/networks/' + netId2)
         .set('Authorization', 'Bearer ' + adminToken)
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(204)
           done()
         })
@@ -262,6 +268,7 @@ describe('Networks', function () {
         .set('Content-Type', 'application/json')
         .send()
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(404)
           done()
         })
