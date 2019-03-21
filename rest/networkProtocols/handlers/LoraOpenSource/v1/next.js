@@ -12,27 +12,8 @@ module.exports = class LoraOpenSourceV1 extends LoraOpenSource {
     })
   }
 
-  buildOrg (company) {
-    return {
-      name: company.name,
-      displayName: company.name,
-      canHaveGateways: false
-    }
-  }
-
   buildDefaultOrgUser (creds, organizationID) {
-    return {
-      password: creds.password,
-      username: creds.username,
-      isActive: true,
-      isAdmin: false,
-      sessionTTL: 0,
-      email: 'fake@emailaddress.com',
-      note: 'Created by and for LPWAN Server',
-      organizations: [
-        { isAdmin: true, organizationID }
-      ]
-    }
+    
   }
 
   buildDefaultServiceProfile (networkServerID, organizationID) {

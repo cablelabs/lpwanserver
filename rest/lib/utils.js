@@ -1,4 +1,5 @@
 var createError = require('http-errors')
+const R = require('ramda')
 
 function mutate (key, val, data) {
   data[key] = val
@@ -22,8 +23,13 @@ function tryCatch (promise) {
   )
 }
 
+function lift (props, obj) {
+  return R.mergeAll([ R.omit(props, obj), ...props.map(x => obj[x]) ])
+}
+
 module.exports = {
   mutate,
   onFail,
-  tryCatch
+  tryCatch,
+  lift
 }
