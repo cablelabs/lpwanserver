@@ -5,9 +5,18 @@ const appLogger = require('../../lib/appLogger.js')
 const { lift } = require('../../../lib/utils')
 
 module.exports = class LoraOpenSourceClient {
-  request (network, opts, session) {
-    opts.url = constructUrl({ network, path: opts.url })
-    return requestClient(this.addRequestDefaults(opts, session))
+  async request (network, opts, session, transform = R.identity) {
+    opts.url = this.constructUrl({ network, path: opts.url })
+    let body
+    try {
+      body = await requestClient(this.addRequestDefaults(opts, session))
+    }
+    catch (err) {
+      appLogger.log(`HTTP request to network server failed:  ${err}`, 'error')
+      appLogger.log(JSON.stringify(opts), 'error')
+      throw err
+    }
+    return transform(body)
   }
 
   addRequestDefaults (opts, session) {
@@ -22,249 +31,209 @@ module.exports = class LoraOpenSourceClient {
     return opts
   }
 
-  async login (network, body) {
-    const opts = { method: 'POST', url: '/internal/login', body }
-    const { jwt } = await appLogger.logOnThrow(
-      () => this.request(network, opts),
-      err => `Error on login: ${err}`
-    )
-    return jwt
+  constructUrl ({ network, url, params }) {
+    if (params && !R.isEmpty(params)) {
+      const qs = new URLSearchParams(params).toString()
+      url = `${url}?${qs}`
+    }
+    if (network) {
+      url = `${network.baseUrl}/${url}`
+    }
+    // remove possible double slash
+    return url.replace(/([^:]\/)\/+/g, '$1')
   }
 
-  async loadOrganization (network, session, id) {
+  login (network, body) {
+    const opts = { method: 'POST', url: '/internal/login', body }
+    return this.request(network, opts, null, R.prop('jwt'))
+  }
+
+  loadOrganization (network, session, id) {
     const opts = { url: `/organizations/${id}` }
-    const body = await appLogger.logOnThrow(
-      () => this.request(network, opts, session),
-      err => `Error on load organization ${id}: ${err}`
-    )
-    return lift(['organization'], body)
+    return this.request(network, opts, session, lift(['organization']))
   }
 
   listOrganizations (network, session, params) {
-    let opts = { url: constructUrl({ url: '/organizations', params }) }
-    return appLogger.logOnThrow(
-      () => this.request(network, opts, session),
-      err => `Error querying organizations: ${err}`
-    )
+    let opts = { url: this.constructUrl({ url: '/organizations', params }) }
+    return this.request(network, opts, session)
   }
 
   createOrganization (network, session, body) {
     const opts = { method: 'POST', url: '/organizations', body }
-    return appLogger.logOnThrow(
-      () => this.request(network, opts, session),
-      err => `Error on create organization ${body.name}: ${err}`
-    )
+    return this.request(network, opts, session)
   }
 
   replaceOrganization (network, session, body) {
     const opts = { method: 'PUT', url: `/organizations/${body.id}`, body }
-    return appLogger.logOnThrow(
-      () => this.request(network, opts, session),
-      err => `Error on replace organization ${body.id}: ${err}`
-    )
+    return this.request(network, opts, session)
   }
 
   deleteOrganization (network, session, id) {
     const opts = { method: 'DELETE', url: `/organizations/${id}` }
-    return appLogger.logOnThrow(
-      () => this.request(network, opts, session),
-      err => `Error on delete organization ${id}: ${err}`
-    )
+    return this.request(network, opts, session)
   }
 
   createUser (network, session, body) {
     const opts = { method: 'POST', url: '/users', body }
-    return appLogger.logOnThrow(
-      () => this.request(network, opts, session),
-      err => `Error on create user ${body.username}: ${err}`
-    )
+    return this.request(network, opts, session)
   }
 
   deleteUser (network, session, id) {
     const opts = { method: 'DELETE', url: `/users/${id}` }
-    return appLogger.logOnThrow(
-      () => this.request(network, opts, session),
-      err => `Error on delete user ${id}: ${err}`
-    )
+    return this.request(network, opts, session)
   }
 
   createServiceProfile (network, session, body) {
     const opts = { method: 'POST', url: '/service-profiles', body }
-    return appLogger.logOnThrow(
-      () => this.request(network, opts, session),
-      err => `Error creating service profile ${body.name}: ${err}`
-    )
+    return this.request(network, opts, session)
   }
 
   listNetworkServers (network, session, params) {
-    let opts = { url: constructUrl({ url: '/network-servers', params }) }
-    return appLogger.logOnThrow(
-      () => this.request(network, opts, session),
-      err => `Error querying network servers: ${err}`
-    )
+    let opts = { url: this.constructUrl({ url: '/network-servers', params }) }
+    return this.request(network, opts, session)
   }
 
-  async loadNetworkServer (network, session, id) {
+  loadNetworkServer (network, session, id) {
     const opts = { url: `/network-servers/${id}` }
-    const body = await appLogger.logOnThrow(
-      () => this.request(network, opts, session),
-      err => `Error on load network server: ${err}`
-    )
-    return lift(['networkServer'], body)
+    return this.request(network, opts, session, lift(['networkServer']))
   }
 
   listApplications (network, session, params) {
-    let opts = { url: constructUrl({ url: '/applications', params }) }
-    return appLogger.logOnThrow(
-      () => this.request(network, opts, session),
-      err => `Error querying applications: ${err}`
-    )
+    let opts = { url: this.constructUrl({ url: '/applications', params }) }
+    return this.request(network, opts, session)
   }
 
   createApplication (network, session, body) {
     const opts = { method: 'POST', url: '/applications', body }
-    return appLogger.logOnThrow(
-      () => this.request(network, opts, session),
-      err => `Error on create application ${body.name}: ${err}`
-    )
+    return this.request(network, opts, session)
   }
 
-  async loadApplication (network, session, id) {
+  loadApplication (network, session, id) {
     const opts = { url: `/applications/${id}` }
-    const body = await appLogger.logOnThrow(
-      () => this.request(network, opts, session),
-      err => `Error on get application ${id}: ${err}`
-    )
-    return lift(['application'], body)
+    return this.request(network, opts, session, lift(['application']))
   }
 
   replaceApplication (network, session, body) {
     const opts = { method: 'PUT', url: `/applications/${body.id}`, body }
-    return appLogger.logOnThrow(
-      () => this.request(network, opts, session),
-      err => `Error on replace application ${body.id}: ${err}`
-    )
+    return this.request(network, opts, session)
   }
 
   deleteApplication (network, session, id) {
     const opts = { method: 'DELETE', url: `/applications/${id}` }
-    return appLogger.logOnThrow(
-      () => this.request(network, opts, session),
-      err => `Error on delete application ${id}: ${err}`
-    )
+    return this.request(network, opts, session)
   }
 
-  async loadDeviceProfile (network, session, id) {
+  loadDeviceProfile (network, session, id) {
     const opts = { url: `/device-profiles/${id}` }
-    const body = await appLogger.logOnThrow(
-      () => this.request(network, opts, session),
-      err => `Error on get device profile ${id}: ${err}`
-    )
-    return lift(['deviceProfile'], body)
+    return this.request(network, opts, session, lift(['deviceProfile']))
   }
 
   listDeviceProfiles (network, session, params) {
-    let opts = { url: constructUrl({ url: '/device-profiles', params }) }
-    return appLogger.logOnThrow(
-      () => this.request(network, opts, session),
-      err => `Error querying device profiles: ${err}`
-    )
+    const opts = { url: this.constructUrl({ url: '/device-profiles', params }) }
+    return this.request(network, opts, session)
   }
 
-  async loadDevice (network, session, id) {
+  createDeviceProfile (network, session, body) {
+    const opts = { method: 'POST', url: '/device-profiles', body }
+    return this.request(network, opts, session)
+  }
+
+  replaceDeviceProfile (network, session, body) {
+    const opts = { method: 'PUT', url: `/device-profiles/${body.id}`, body }
+    return this.request(network, opts, session)
+  }
+
+  deleteDeviceProfile (network, session, id) {
+    const opts = { method: 'DELETE', url: `/device-profiles/${id}` }
+    return this.request(network, opts, session)
+  }
+
+  loadDevice (network, session, id) {
     const opts = { url: `/devices/${id}` }
-    const body = await appLogger.logOnThrow(
-      () => this.request(network, opts, session),
-      err => `Error on get device ${id}: ${err}`
-    )
-    return lift(['device'], body)
+    return this.request(network, opts, session, lift(['device']))
   }
 
   listDevices (network, session, params) {
-    let opts = { url: constructUrl({ url: '/devices', params }) }
-    return appLogger.logOnThrow(
-      () => this.request(network, opts, session),
-      err => `Error querying devices: ${err}`
-    )
+    // overwritten by all extending classes
   }
 
-  async loadDeviceKeys (network, session, devEUI, params) {
-    const opts = { url: constructUrl({ url: `/devices/${devEUI}/keys`, params }) }
-    const body = await appLogger.logOnThrow(
-      () => this.request(opts, network, session),
-      err => `Error on get keys for device ${devEUI}: ${err}`
-    )
-    return lift(['deviceKeys'], body)
+  createDevice (network, session, body) {
+    const opts = { url: '/devices', body }
+    return this.request(network, opts, session)
   }
 
-  async loadDeviceActivation (network, session, device) {
-    const opts = { url: `/devices/${device.devEUI}/activation` }
-    const body = await appLogger.logOnThrow(
-      () => this.request(opts, network, session),
-      err => `Error on get activation for device ${device.id}: ${err}`
-    )
-    return lift(['deviceActivation'], body)
+  loadDeviceKeys (network, session, devEUI) {
+    const opts = { url: `/devices/${devEUI}/keys` }
+    return this.request(opts, network, session, lift(['deviceKeys']))
   }
 
-  async loadServiceProfile (network, session, id) {
+  replaceDevice (network, session, devEUI, body) {
+    const opts = { method: 'PUT', url: `/devices/${devEUI}`, body }
+    return this.request(network, opts, session)
+  }
+
+  deleteDevice (network, session, devEUI) {
+    const opts = { method: 'DELETE', url: `/devices/${devEUI}` }
+    return this.request(network, opts, session)
+  }
+
+  createDeviceKeys (network, session, devEUI, body) {
+    const opts = { method: 'POST', url: `/devices/${devEUI}/keys`, body }
+    return this.request(network, opts, session)
+  }
+
+  replaceDeviceKeys (network, session, devEUI, body) {
+    const opts = { method: 'PUT', url: `/devices/${devEUI}/keys`, body }
+    return this.request(network, opts, session)
+  }
+
+  deleteDeviceKeys (network, session, devEUI) {
+    const opts = { method: 'DELETE', url: `/devices/${devEUI}/keys` }
+    return this.request(network, opts, session)
+  }
+
+  loadDeviceActivation (network, session, devEUI) {
+    const opts = { url: `/devices/${devEUI}/activation` }
+    return this.request(opts, network, session, lift(['deviceActivation']))
+  }
+
+  activateDevice (network, session, devEUI, body) {
+    const opts = { method: 'POST', url: `/devices/${devEUI}/activate`, body }
+    return this.request(network, opts, session)
+  }
+
+  deleteDeviceActivation (network, session, devEUI) {
+    const opts = { method: 'DELETE', url: `/devices/${devEUI}/activation` }
+    return this.request(network, opts, session)
+  }
+
+  loadServiceProfile (network, session, id) {
     const opts = { url: `/service-profiles/${id}` }
-    const body = await appLogger.logOnThrow(
-      () => this.request(network, opts, session),
-      err => `Error on get service profile ${id}: ${err}`
-    )
-    return lift(['serviceProfile'], body)
+    return this.request(network, opts, session, lift(['serviceProfile']))
   }
 
   listServiceProfiles (network, session, params) {
-    let opts = { url: constructUrl({ url: '/service-profiles', params }) }
-    return appLogger.logOnThrow(
-      () => this.request(network, opts, session),
-      err => `Error querying service profiles: ${err}`
-    )
+    let opts = { url: this.constructUrl({ url: '/service-profiles', params }) }
+    return this.request(network, opts, session)
   }
 
-  async loadApplicationIntegration (network, session, appId, id) {
+  loadApplicationIntegration (network, session, appId, id) {
     const opts = { url: `/applications/${appId}/integrations/${id}` }
-    const body = await appLogger.logOnThrow(
-      () => this.request(opts, network, session),
-      err => `Error on get http integration for application ${appId}: ${err}`
-    )
-    return lift(['integration'], body)
+    return this.request(opts, network, session, lift(['integration']))
   }
 
   createApplicationIntegration (network, session, appId, id, body) {
     const opts = { method: 'POST', url: `/applications/${appId}/integrations/${id}`, body }
-    return appLogger.logOnThrow(
-      () => this.request(opts, network, session),
-      err => `Error on create http integration for application ${appId}: ${err}`
-    )
+    return this.request(opts, network, session)
   }
 
-  replaceApplicationIntegration (network, session, appId, body) {
-    const opts = { method: 'PUT', url: `/applications/${appId}/integrations/${body.id}`, body }
-    return appLogger.logOnThrow(
-      () => this.request(network, opts, session),
-      err => `Error on replace ${body.id} integration for application ${appId}: ${err}`
-    )
+  replaceApplicationIntegration (network, session, appId, id, body) {
+    const opts = { method: 'PUT', url: `/applications/${appId}/integrations/${id}`, body }
+    return this.request(network, opts, session)
   }
 
   deleteApplicationIntegration (network, session, appId, id) {
     const opts = { method: 'DELETE', url: `/applications/${appId}/integrations/${id}` }
-    return appLogger.logOnThrow(
-      () => this.request(opts, network, session),
-      err => `Error on delete http integration for application ${appId}: ${err}`
-    )
+    return this.request(opts, network, session)
   }
-}
-
-function constructUrl ({ network, url, params }) {
-  if (params && !R.isEmpty(params)) {
-    const qs = new URLSearchParams(params).toString()
-    url = `${url}?${qs}`
-  }
-  if (network) {
-    url = `${network.baseUrl}/${url}`
-  }
-  // remove possible double slash
-  return url.replace(/([^:]\/)\/+/g, '$1')
 }

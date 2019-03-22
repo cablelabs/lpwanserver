@@ -25,6 +25,12 @@ function CompanyNetworkTypeLink (server) {
   modelAPI = server
 }
 
+function parseNetworkSettings (x) {
+  return typeof x.networkSettings === 'string'
+    ? { ...x, networkSettings: JSON.parse(x.networkSettings) }
+    : x
+}
+
 // Create the companyNetworkTypeLinks record.
 //
 // companyId       - The id for the company this link is being created for
@@ -40,7 +46,7 @@ CompanyNetworkTypeLink.prototype.createCompanyNetworkTypeLink = function (compan
       var rec = await me.impl.createCompanyNetworkTypeLink(companyId, networkTypeId, networkSettings)
       var logs = await modelAPI.networkTypeAPI.addCompany(networkTypeId, companyId, networkSettings)
       rec.remoteAccessLogs = logs
-      resolve(rec)
+      resolve(parseNetworkSettings(rec))
     }
     catch (err) {
       appLogger.log('Error creating companyNetworkTypeLink: ' + err)
@@ -55,7 +61,7 @@ CompanyNetworkTypeLink.prototype.createRemoteCompanyNetworkTypeLink = function (
     try {
       appLogger.log(companyId + ' ' + networkTypeId)
       var rec = await me.impl.createCompanyNetworkTypeLink(companyId, networkTypeId, networkSettings)
-      resolve(rec)
+      resolve(parseNetworkSettings(rec))
     }
     catch (err) {
       appLogger.log('Error creating companyNetworkTypeLink: ' + err)
@@ -70,8 +76,9 @@ CompanyNetworkTypeLink.prototype.createRemoteCompanyNetworkTypeLink = function (
 // id - the record id of the companyNetworkTypeLinks record.
 //
 // Returns a promise that executes the retrieval.
-CompanyNetworkTypeLink.prototype.retrieveCompanyNetworkTypeLink = function (id) {
-  return this.impl.retrieveCompanyNetworkTypeLink(id)
+CompanyNetworkTypeLink.prototype.retrieveCompanyNetworkTypeLink = async function (id) {
+  const rec = await this.impl.retrieveCompanyNetworkTypeLink(id)
+  return parseNetworkSettings(rec)
 }
 
 // Update the companyNetworkTypeLinks record.
@@ -87,7 +94,7 @@ CompanyNetworkTypeLink.prototype.updateCompanyNetworkTypeLink = function (compan
       var rec = await me.impl.updateCompanyNetworkTypeLink(companyNetworkTypeLink)
       var logs = await modelAPI.networkTypeAPI.pushCompany(rec.networkType.id, rec.company.id, rec.networkSettings)
       rec.remoteAccessLogs = logs
-      resolve(rec)
+      resolve(parseNetworkSettings(rec))
     }
     catch (err) {
       appLogger.log('Error updating companyNetworkTypeLink: ' + err)
@@ -101,7 +108,7 @@ CompanyNetworkTypeLink.prototype.updateRemoteCompanyNetworkTypeLink = function (
   return new Promise(async function (resolve, reject) {
     try {
       var rec = await me.impl.updateCompanyNetworkTypeLink(companyNetworkTypeLink)
-      resolve(rec)
+      resolve(parseNetworkSettings(rec))
     }
     catch (err) {
       appLogger.log('Error updating companyNetworkTypeLink: ' + err)
@@ -338,8 +345,9 @@ CompanyNetworkTypeLink.prototype.pullCompanyNetworkTypeLink = function (networkT
 // capability), the companyId, and the networkTypeId.
 //
 // Returns a promise that does the retrieval.
-CompanyNetworkTypeLink.prototype.retrieveCompanyNetworkTypeLinks = function (options) {
-  return this.impl.retrieveCompanyNetworkTypeLinks(options)
+CompanyNetworkTypeLink.prototype.retrieveCompanyNetworkTypeLinks = async function (options) {
+  const result = this.impl.retrieveCompanyNetworkTypeLinks(options)
+  return { ...result, records: result.records.map(parseNetworkSettings) }
 }
 
 module.exports = CompanyNetworkTypeLink

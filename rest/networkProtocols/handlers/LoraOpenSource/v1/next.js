@@ -7,33 +7,8 @@ module.exports = class LoraOpenSourceV1 extends LoraOpenSource {
     await networkProtocolModel.upsertNetworkProtocol({
       name: 'LoRa Server',
       networkTypeId: 1,
-      protocolHandler: 'LoRaOpenSource_1.js',
+      protocolHandler: 'LoRaOpenSource/v1',
       networkProtocolVersion: '1.0'
     })
-  }
-
-  buildDefaultOrgUser (creds, organizationID) {
-    
-  }
-
-  buildDefaultServiceProfile (networkServerID, organizationID) {
-    return {
-      name: 'defaultForLPWANServer',
-      networkServerID,
-      organizationID,
-      serviceProfile: {
-        addGWMetadata: true,
-        devStatusReqFreq: 1,
-        dlBucketSize: 0,
-        ulRate: 100000,
-        dlRate: 100000,
-        dlRatePolicy: 'DROP',
-        ulRatePolicy: 'DROP',
-        drMax: 3,
-        drMin: 0,
-        reportDevStatusBattery: true,
-        reportDevStatusMargin: true
-      }
-    }
   }
 }

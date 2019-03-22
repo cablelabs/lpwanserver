@@ -23,9 +23,9 @@ function tryCatch (promise) {
   )
 }
 
-function lift (props, obj) {
+const lift = R.curry(function lift (props, obj) {
   return R.mergeAll([ R.omit(props, obj), ...props.map(x => obj[x]) ])
-}
+})
 
 module.exports = {
   mutate,
