@@ -38,7 +38,7 @@ module.exports = class NetworkProtocol {
 
   // Placeholder
   // The default behavior is for networks that don't support companies
-  getCompanyAccount (dataAPI, network, companyId, generateIfMissing) {
+  getCompanyAccount (network, dataAPI, companyId, generateIfMissing) {
     return this.getCompanyAccessAccount(network)
   }
 
@@ -50,7 +50,7 @@ module.exports = class NetworkProtocol {
   //
   // Returns something that is passed to connect() as loginData to enable access
   // with the appropriate permissions to the remote network.
-  async getApplicationAccessAccount (dataAPI, network, applicationId) {
+  async getApplicationAccessAccount (network, dataAPI, applicationId) {
     const co = await dataAPI.getCompanyByApplicationId(applicationId)
     return this.getCompanyAccount(dataAPI, network, co.id, false)
   }
@@ -62,7 +62,7 @@ module.exports = class NetworkProtocol {
   //
   // Returns something that is passed to connect() as loginData to enable access
   // with the appropriate permissions to the remote network.
-  async getDeviceAccessAccount (dataAPI, network, deviceId) {
+  async getDeviceAccessAccount (network, dataAPI, deviceId) {
     const co = await dataAPI.getCompanyByDeviceId(deviceId)
     return this.getCompanyAccount(dataAPI, network, co.id, false)
   }
@@ -76,7 +76,7 @@ module.exports = class NetworkProtocol {
   //
   // Returns something that is passed to connect() as loginData to enable access
   // with the appropriate permissions to the remote network.
-  async getDeviceProfileAccessAccount (dataAPI, network, deviceId) {
+  async getDeviceProfileAccessAccount (network, dataAPI, deviceId) {
     const co = await dataAPI.getCompanyByDeviceProfileId(deviceId)
     return this.getCompanyAccount(dataAPI, network, co.id, false)
   }
@@ -125,6 +125,7 @@ module.exports = class NetworkProtocol {
   // local database record.  This method is called in an async manner against
   // lots of other networks, so logging should be done via the dataAPI.
   addCompany (session, network, companyId, dataAPI) {
+    return {}
   }
 
   // Get company.
@@ -137,6 +138,7 @@ module.exports = class NetworkProtocol {
   //
   // Returns a Promise that gets the company record from the remote system.
   getCompany (session, network, companyId) {
+    return {}
   }
 
   // Update company.
@@ -149,6 +151,7 @@ module.exports = class NetworkProtocol {
   //
   // Returns a Promise that updates the company record on the remote system.
   updateCompany (session, network, companyId) {
+    return {}
   }
 
   // Delete the company.
@@ -160,6 +163,7 @@ module.exports = class NetworkProtocol {
   //
   // Returns a Promise that deletes the company record from the remote system.
   deleteCompany (session, network, companyId) {
+    return {}
   }
 
   // Push the company, meaning update if it exists, and create if it doesn't.
@@ -171,6 +175,7 @@ module.exports = class NetworkProtocol {
   //
   // Returns a Promise that pushes the company record to the remote system.
   pushCompany (session, network, companyId) {
+    return {}
   }
 
   // Pull all company data from the remote network.
@@ -180,6 +185,7 @@ module.exports = class NetworkProtocol {
   //
   // Returns a Promise that pushes changes to the remote network of type.
   pullCompany (networkTypeId) {
+    return {}
   }
 
   //* *****************************************************************************

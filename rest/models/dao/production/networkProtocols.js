@@ -42,7 +42,7 @@ async function createNetworkProtocol (name, networkTypeId, protocolHandler, vers
   })
   let rec = await prisma.createNetworkProtocol(data).$fragment(fragments.basic)
   if (!masterProtocol) {
-    rec = await updateNetworkProtocol({ id: rec.id, masterProtocol })
+    rec = await updateNetworkProtocol({ id: rec.id, masterProtocol: rec.id })
   }
   return rec
 }

@@ -7,6 +7,7 @@ const { onFail } = require('../../../lib/utils')
 // Error reporting
 var httpError = require('http-errors')
 
+const appLogger = require('../../../lib/appLogger')
 //* *****************************************************************************
 // CompanyNetworkTypeLinks database table.
 //* *****************************************************************************

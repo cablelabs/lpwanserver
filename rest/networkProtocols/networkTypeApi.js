@@ -20,8 +20,8 @@ var protos
 //* *****************************************************************************
 function NetworkTypeApi (dataModel) {
   modelAPI = dataModel
-  protos = new NetworkProtocols(dataModel)
-  protos.register()
+  modelAPI.networkProtocolAPI.register()
+  protos = modelAPI.networkProtocolAPI
 }
 
 // Functions for createPromiseOperationForNetworksOfType() to track the
@@ -458,28 +458,12 @@ NetworkTypeApi.prototype.deleteDevice = function (networkTypeId, deviceId) {
     })
 }
 
-NetworkTypeApi.prototype.connect = function (network, loginData) {
-  return new Promise(async function (resolve, reject) {
-    protos.connect(network, loginData)
-      .then((connection) => {
-        resolve(connection)
-      })
-      .catch((err) => {
-        reject(err)
-      })
-  })
+NetworkTypeApi.prototype.connect = function connect (network, loginData) {
+  return protos.connect(network, loginData)
 }
 
-NetworkTypeApi.prototype.test = function (network, loginData) {
-  return new Promise(async function (resolve, reject) {
-    protos.test(network, loginData)
-      .then(() => {
-        resolve()
-      })
-      .catch((err) => {
-        reject(err)
-      })
-  })
+NetworkTypeApi.prototype.test = function (network, dataAPI) {
+  return protos.test(network, dataAPI)
 }
 
 module.exports = NetworkTypeApi

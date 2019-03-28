@@ -76,12 +76,12 @@ function ModelAPI (app) {
   // may need to add new endpoints to receive data from remote networks.
   this.applications = new ApplicationModel(app, this)
 
+  // The networkProtocol API, giving access to a specific remote network.
+  this.networkProtocolAPI = new NetworkProtocolAPI(this)
+
   // The networkType API, giving access to the various remote networks of a
   // given type.
   this.networkTypeAPI = new NetworkTypeAPI(this)
-
-  // The networkProtocol API, giving access to a specific remote network.
-  this.networkProtocolAPI = new NetworkProtocolAPI(this)
 
   // The companyNetworkTypeLink model.
   this.companyNetworkTypeLinks = new CompanyNetworkTypeLinkModel(this)

@@ -2,56 +2,59 @@ const LoraOpenSourceRestClient = require('../client')
 const R = require('ramda')
 
 module.exports = class LoraOpenSourceV1RestClient extends LoraOpenSourceRestClient {
-  createOrganization (network, session, body) {
-    return super.createOrganization(network, session, { organization: body })
+  createOrganization (session, network, body) {
+    return super.createOrganization(session, network, { organization: body })
   }
-  replaceOrganization (network, session, body) {
-    return super.replaceOrganization(network, session, { organization: body })
+  replaceOrganization (session, network, body) {
+    return super.replaceOrganization(session, network, { organization: body })
   }
-  async createUser (network, session, body) {
+  async createUser (session, network, body) {
     const props = ['organizations', 'password']
-    return super.createUser(network, session, {
+    return super.createUser(session, network, {
       ...R.pick(props, body),
       user: R.omit(props, body)
     })
   }
-  createServiceProfile (network, session, body) {
-    return super.createServiceProfile(network, session, { serviceProfile: body })
+  createServiceProfile (session, network, body) {
+    return super.createServiceProfile(session, network, { serviceProfile: body })
   }
-  createApplication (network, session, body) {
-    return super.createApplication(network, session, { application: body })
+  replaceServiceProfile (session, network, id, body) {
+    return super.createServiceProfile(session, network, id, { serviceProfile: body })
   }
-  replaceApplication (network, session, body) {
-    return super.replaceApplication(network, session, { application: body })
+  createApplication (session, network, body) {
+    return super.createApplication(session, network, { application: body })
   }
-  createApplicationIntegration (network, session, appId, id, body) {
-    return super.createApplication(network, session, appId, id, { integration: body })
+  replaceApplication (session, network, id, body) {
+    return super.replaceApplication(session, network, id, { application: body })
   }
-  replaceApplicationIntegration (network, session, appId, id, body) {
-    return super.replaceApplicationIntegration(network, session, appId, id, { integration: body })
+  createApplicationIntegration (session, network, appId, id, body) {
+    return super.createApplication(session, network, appId, id, { integration: body })
   }
-  createDeviceProfile (network, session, body) {
-    return super.createDeviceProfile(network, session, { deviceProfile: body })
+  replaceApplicationIntegration (session, network, appId, id, body) {
+    return super.replaceApplicationIntegration(session, network, appId, id, { integration: body })
   }
-  replaceDeviceProfile (network, session, body) {
-    return super.replaceDeviceProfile(network, session, { deviceProfile: body })
+  createDeviceProfile (session, network, body) {
+    return super.createDeviceProfile(session, network, { deviceProfile: body })
   }
-  createDevice (network, session, body) {
-    return super.createDevice(network, session, { device: body })
+  replaceDeviceProfile (session, network, id, body) {
+    return super.replaceDeviceProfile(session, network, id, { deviceProfile: body })
   }
-  replaceDevice (network, session, devEUI, body) {
-    return super.replaceDevice(network, session, devEUI, { device: body })
+  createDevice (session, network, body) {
+    return super.createDevice(session, network, { device: body })
   }
-  createDeviceKeys (network, session, devEUI, body) {
-    return super.createDeviceKeys(network, session, devEUI, { deviceKeys: body })
+  replaceDevice (session, network, devEUI, body) {
+    return super.replaceDevice(session, network, devEUI, { device: body })
   }
-  replaceDeviceKeys (network, session, devEUI, body) {
-    return super.replaceDevice(network, session, devEUI, { deviceKeys: body })
+  createDeviceKeys (session, network, devEUI, body) {
+    return super.createDeviceKeys(session, network, devEUI, { deviceKeys: body })
   }
-  activateDevice (network, session, devEUI, body) {
-    return super.activateDevice(network, session, devEUI, { deviceActivation: body })
+  replaceDeviceKeys (session, network, devEUI, body) {
+    return super.replaceDevice(session, network, devEUI, { deviceKeys: body })
   }
-  listDevices (network, session, params) {
+  activateDevice (session, network, devEUI, body) {
+    return super.activateDevice(session, network, devEUI, { deviceActivation: body })
+  }
+  listDevices (session, network, params) {
     const opts = { url: this.constructUrl({ url: '/devices', params }) }
     return this.request(network, opts, session)
   }

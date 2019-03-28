@@ -72,6 +72,7 @@ async function authorizeAndTest (network, modelAPI, k, me, dataAPI) {
   }
   try {
     const connection = await modelAPI.networkTypeAPI.connect(network, network.securityData)
+    appLogger.log(`AUTHORIZE_AND_TEST: ${connection}`)
     if (connection instanceof Object) {
       Object.assign(network.securityData, connection)
     }
@@ -80,7 +81,7 @@ async function authorizeAndTest (network, modelAPI, k, me, dataAPI) {
     }
     network.securityData.authorized = true
     try {
-      await modelAPI.networkTypeAPI.test(network, network.securityData)
+      await modelAPI.networkTypeAPI.test(network, dataAPI)
       appLogger.log('Test Success ' + network.name, 'info')
       network.securityData.authorized = true
       network.securityData.message = 'ok'
@@ -90,9 +91,8 @@ async function authorizeAndTest (network, modelAPI, k, me, dataAPI) {
       network.securityData.authorized = false
       network.securityData.message = err.toString()
     }
-    finally {
-      return network
-    }
+    await modelAPI.networks.updateNetwork(R.pick(['id', 'securityData'], network))
+    return network
   }
   catch (err) {
     if (err.code === 42) return network
@@ -132,6 +132,7 @@ Network.prototype.createNetwork = async function createNetwork (data) {
     const finalNetwork = await authorizeAndTest(record, modelAPI, k, this, dataAPI)
     finalNetwork.securityData = dataAPI.hide(null, finalNetwork.securityData, k)
     record = await this.impl.updateNetwork(finalNetwork)
+    record.securityData = dataAPI.access(null, record.securityData, k)
   }
   return record
 }

@@ -60,8 +60,19 @@ Company.prototype.retrieveCompanies = function (options) {
 // id - the record id of the company.
 //
 // Returns a promise that executes the retrieval.
-Company.prototype.retrieveCompany = function (id) {
-  return this.impl.retrieveCompany(id)
+Company.prototype.retrieveCompany = async function retrieveCompany (id) {
+  const company = await this.impl.retrieveCompany(id)
+  try {
+    const result = await this.modelAPI.companyNetworkTypeLinks.retrieveCompanyNetworkTypeLinks({ companyId: company.id })
+    appLogger.log(`iCompany: retrieveCompany: ${JSON.stringify(result)}`)
+    if (result && result.records && result.records.length) {
+      company.networks = result.records.map(x => x.id)
+    }
+  }
+  catch (err) {
+    // ignore
+  }
+  return company
 }
 
 // Create the company record.

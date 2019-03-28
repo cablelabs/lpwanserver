@@ -48,13 +48,12 @@ module.exports = class NetworkProtocolDataAccess {
     )
   }
   async cacheFirst (path, request, errMessage) {
-    const lens = R.lensPath(path)
-    const val = await appLogger.logOnThrow(
+    // Cache was causing errors.  Disabling.
+    // Next cache implementation should be Redis or Memcache at the model level.
+    return appLogger.logOnThrow(
       request,
       err => `${this.funcDesc}: ${errMessage}: ${err}`
     )
-    if (!R.view(lens, this.cache)) R.set(lens, val, this.cache)
-    return R.view(lens, this.cache)
   }
   getCompanyById (id) {
     return this.cacheFirst(
@@ -88,7 +87,7 @@ module.exports = class NetworkProtocolDataAccess {
       `Failed to load device ${id}`
     )
   }
-  getDeviceProfileById (id) {
+  async getDeviceProfileById (id) {
     return this.cacheFirst(
       ['deviceProfiles', `${id}`],
       () => this.models.deviceProfiles.retrieveDeviceProfile(id),
@@ -140,6 +139,7 @@ module.exports = class NetworkProtocolDataAccess {
   async getDeviceNetworkType (deviceId, networkTypeId) {
     const request = async () => {
       const { records } = await this.models.deviceNetworkTypeLinks.retrieveDeviceNetworkTypeLinks({ deviceId, networkTypeId })
+      appLogger.log(`GET_DEVICE_NETWORK_TYPE: ${JSON.stringify(records)}`)
       return records[0]
     }
     return this.cacheFirst(
@@ -151,8 +151,8 @@ module.exports = class NetworkProtocolDataAccess {
   async getDevicesForDeviceProfile (deviceProfileId) {
     const request = async () => {
       let devs = await this.models.devices.retrieveDevices({ 'deviceProfileId': deviceProfileId })
-      // Put devices in cache
-      devs.forEach(x => R.assocPath(['devices', `${x.id}`], x, this.cache))
+      // Put devices in cache (cache is disabled)
+      // devs.forEach(x => R.assocPath(['devices', `${x.id}`], x, this.cache))
       return devs.map(x => x.id)
     }
     const devIds = await this.cacheFirst(
@@ -177,7 +177,7 @@ module.exports = class NetworkProtocolDataAccess {
       message = formatObjectMessage(message)
     }
     const key = network ? network.id : 0
-    this.logs[key].push(message)
+    this.logs[key].logs.push(message)
   }
   getLogs () {
     // Filter out networks that have no logs

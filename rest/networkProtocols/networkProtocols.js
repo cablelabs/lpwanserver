@@ -1,14 +1,20 @@
 // General libraries in use in this module.
 const appLogger = require('../lib/appLogger.js')
-const fs = require('fs')
 const path = require('path')
 const R = require('ramda')
 const handlersDir = path.join(__dirname, 'handlers')
+const httpError = require('http-errors')
 
 // ******************************************************************************
 // Defines the generic cross-network API, and manages the network protocols
 // for the upper layers.
 // ******************************************************************************
+
+const handlers = [
+  'LoraOpenSource/v1',
+  'LoraOpenSource/v2',
+  'TheThingsNetwork/v2'
+]
 
 /**
  * Defines the generic cross-network API, and manages the network protocols
@@ -25,9 +31,9 @@ module.exports = class NetworkProtocolAccess {
   }
 
   async register () {
-    let fileList = fs.readdirSync(handlersDir).filter(x => x !== 'README.md')
-    for (let i = 0; i < fileList.length; i++) {
-      let proto = require(`${handlersDir}/${fileList[i]}`)
+    for (let i = 0; i < handlers.length; i++) {
+      let Proto = require(path.join(handlersDir, handlers[i]))
+      let proto = new Proto()
       await proto.register(this.npAPI)
     }
   }
@@ -49,14 +55,14 @@ module.exports = class NetworkProtocolAccess {
     const npMap = this.networkProtocolMap
     if (npMap[id]) return npMap[id]
     // We'll need the protocol for the network.
-    appLogger.log(network, 'info')
     const np = await appLogger.logOnThrow(
       () => this.npAPI.retrieveNetworkProtocol(network.networkProtocol.id),
       err => `Failed to load network protocol code: ${err}`
     )
+    const NetworkProtocol = require(`${handlersDir}/${np.protocolHandler}`)
     npMap[id] = {
       sessionData: {},
-      api: require(`${handlersDir}/${np.protocolHandler}`)
+      api: new NetworkProtocol()
     }
     return npMap[id]
   }
@@ -67,20 +73,14 @@ module.exports = class NetworkProtocolAccess {
    * @param loginData
    * @returns {Promise<any>}
    */
-  async test (network, loginData) {
-    const proto = await this.getProtocol(network)
-    try {
-      const body = await proto.api.test(network, loginData)
-      appLogger.log(body)
-      network.securityData.authorized = true
-      network.securityData.message = 'Ok'
+  async test (network, dataAPI) {
+    if (!network.securityData.authorized) {
+      throw httpError.Unauthorized()
     }
-    catch (err) {
-      appLogger.log('Connect failure with' + network.name + ': ' + err)
-      network.securityData.authorized = false
-      network.securityData.message = err
-      throw err
-    }
+    const getAccess = proto => proto.api.getCompanyAccessAccount(network, dataAPI)
+    const { proto, session } = await this.getSession(network, getAccess)
+    const body = await proto.api.test(session, network)
+    appLogger.log(body)
   }
 
   /**
@@ -91,6 +91,7 @@ module.exports = class NetworkProtocolAccess {
    */
   async connect (network, loginData) {
     appLogger.log('Inside NPA connect')
+    appLogger.log(JSON.stringify(loginData))
     const proto = await this.getProtocol(network)
     const connection = await proto.api.connect(network, loginData)
     if (!proto.sessionData[network.id]) proto.sessionData[network.id] = {}
@@ -165,12 +166,12 @@ module.exports = class NetworkProtocolAccess {
   async getSession (network, getAccess) {
     const netProto = await this.getProtocol(network)
     const loginData = await appLogger.logOnThrow(
-      () => getAccess(netProto.api.bind(netProto)),
+      () => getAccess(netProto),
       err => 'Unable to get login data for' + network.name + ': ' + err
     )
     const proto = await this.sessionWrapper(network, loginData)
     return {
-      protoApi: proto.api,
+      proto,
       session: proto.sessionData[network.id]
     }
   }
@@ -188,9 +189,9 @@ module.exports = class NetworkProtocolAccess {
   // can be used in lower-level (application, device) methods, or simply ignoring
   // this call and using a global admin account to add applications and devices.
   async addCompany (dataAPI, network, companyId) {
-    const getAccess = protoApi => protoApi.getCompanyAccessAccount(dataAPI, network)
-    const { protoApi, session } = await this.getSession(network, getAccess)
-    return protoApi.addCompany(session, network, companyId, dataAPI)
+    const getAccess = proto => proto.api.getCompanyAccessAccount(network, dataAPI)
+    const { proto, session } = await this.getSession(network, getAccess)
+    return proto.api.addCompany(session, network, companyId, dataAPI)
   }
 
   // Push company.  If the company exists on the remote system, update it to match
@@ -204,9 +205,9 @@ module.exports = class NetworkProtocolAccess {
   // or creates the remote company.  This may or may not do as promised (haha) -
   // the implementation is completely up to the developers of the protocols.
   async pushNetwork (dataAPI, network, modelAPI) {
-    const getAccess = protoApi => protoApi.getCompanyAccessAccount(dataAPI, network)
-    const { protoApi, session } = await this.getSession(network, getAccess)
-    return protoApi.pushNetwork(session, network, dataAPI, modelAPI)
+    const getAccess = proto => proto.api.getCompanyAccessAccount(network, dataAPI)
+    const { proto, session } = await this.getSession(network, getAccess)
+    return proto.api.pushNetwork(session, network, dataAPI, modelAPI)
   }
 
   // Pull company.  If the company exists on the remote system, update it to match
@@ -219,9 +220,10 @@ module.exports = class NetworkProtocolAccess {
   // or creates the remote company.  This may or may not do as promised (haha) -
   // the implementation is completely up to the developers of the protocols.
   async pullNetwork (dataAPI, network, modelAPI) {
-    const getAccess = protoApi => protoApi.getCompanyAccessAccount(dataAPI, network)
-    const { protoApi, session } = await this.getSession(network, getAccess)
-    return protoApi.pullNetwork(session, network, dataAPI, modelAPI)
+    const getAccess = proto => proto.api.getCompanyAccessAccount(network, dataAPI)
+    const { proto, session } = await this.getSession(network, getAccess)
+    appLogger.log(`networkProtcols: pullNetwork: session: ${JSON.stringify(session)}`)
+    return proto.api.pullNetwork(session, network, dataAPI, modelAPI)
   }
 
   // Delete the company.
@@ -232,9 +234,9 @@ module.exports = class NetworkProtocolAccess {
   //
   // Returns a Promise that gets the application record from the remote system.
   async deleteCompany (dataAPI, network, companyId) {
-    const getAccess = protoApi => protoApi.getCompanyAccessAccount(dataAPI, network)
-    const { protoApi, session } = await this.getSession(network, getAccess)
-    return protoApi.deleteCompany(session, network, companyId, dataAPI)
+    const getAccess = proto => proto.api.getCompanyAccessAccount(network, dataAPI)
+    const { proto, session } = await this.getSession(network, getAccess)
+    return proto.api.deleteCompany(session, network, companyId, dataAPI)
   }
   // Add application.
   //
@@ -245,9 +247,9 @@ module.exports = class NetworkProtocolAccess {
   // Returns a Promise that connects to the remote system and creates the
   // application.
   async addApplication (dataAPI, network, applicationId) {
-    const getAccess = protoApi => protoApi.getApplicationAccessAccount(dataAPI, network, applicationId)
-    const { protoApi, session } = await this.getSession(network, getAccess)
-    return protoApi.addApplication(session, network, applicationId, dataAPI)
+    const getAccess = proto => proto.api.getApplicationAccessAccount(network, dataAPI, applicationId)
+    const { proto, session } = await this.getSession(network, getAccess)
+    return proto.api.addApplication(session, network, applicationId, dataAPI)
   }
 
   // Push application.  If the application exists on the remote system, update it
@@ -261,9 +263,9 @@ module.exports = class NetworkProtocolAccess {
   // or creates the remote company.  This may or may not do as promised (haha) -
   // the implementation is completely up to the developers of the protocols.
   async pushApplication (dataAPI, network, application) {
-    const getAccess = protoApi => protoApi.getApplicationAccessAccount(dataAPI, network, application.id)
-    const { protoApi, session } = await this.getSession(network, getAccess)
-    return protoApi.pushApplication(session, network, application, dataAPI)
+    const getAccess = proto => proto.api.getApplicationAccessAccount(network, dataAPI, application.id)
+    const { proto, session } = await this.getSession(network, getAccess)
+    return proto.api.pushApplication(session, network, application, dataAPI)
   }
 
   // Pull company.  If the company exists on the remote system, update it to match
@@ -277,9 +279,9 @@ module.exports = class NetworkProtocolAccess {
   // the implementation is completely up to the developers of the protocols.
   // TODO: pullApplications? (plural)
   async pullApplication (dataAPI, network) {
-    const getAccess = protoApi => protoApi.getCompanyAccessAccount(dataAPI, network)
-    const { protoApi, session } = await this.getSession(network, getAccess)
-    return protoApi.getApplications(session, network, dataAPI)
+    const getAccess = proto => proto.api.getCompanyAccessAccount(network, dataAPI)
+    const { proto, session } = await this.getSession(network, getAccess)
+    return proto.api.getApplications(session, network, dataAPI)
   }
 
   // Delete the application.
@@ -290,9 +292,9 @@ module.exports = class NetworkProtocolAccess {
   //
   // Returns a Promise that deletes the application record from the remote system.
   async deleteApplication (dataAPI, network, applicationId) {
-    const getAccess = protoApi => protoApi.getApplicationAccessAccount(dataAPI, network, applicationId)
-    const { protoApi, session } = await this.getSession(network, getAccess)
-    return protoApi.deleteApplication(session, network, applicationId, dataAPI)
+    const getAccess = proto => proto.api.getApplicationAccessAccount(network, dataAPI, applicationId)
+    const { proto, session } = await this.getSession(network, getAccess)
+    return proto.api.deleteApplication(session, network, applicationId, dataAPI)
   }
   // Start the application.
   //
@@ -310,9 +312,9 @@ module.exports = class NetworkProtocolAccess {
   // network to the application target.
 
   async startApplication (dataAPI, network, applicationId) {
-    const getAccess = protoApi => protoApi.getApplicationAccessAccount(dataAPI, network, applicationId)
-    const { protoApi, session } = await this.getSession(network, getAccess)
-    return protoApi.startApplication(session, network, applicationId, dataAPI)
+    const getAccess = proto => proto.api.getApplicationAccessAccount(network, dataAPI, applicationId)
+    const { proto, session } = await this.getSession(network, getAccess)
+    return proto.api.startApplication(session, network, applicationId, dataAPI)
   }
 
   // Stop the application.
@@ -328,9 +330,9 @@ module.exports = class NetworkProtocolAccess {
   // Returns a Promise that stops the application data flowing from the remote
   // system.
   async stopApplication (dataAPI, network, applicationId) {
-    const getAccess = protoApi => protoApi.getApplicationAccessAccount(dataAPI, network, applicationId)
-    const { protoApi, session } = await this.getSession(network, getAccess)
-    return protoApi.stopApplication(session, network, applicationId, dataAPI)
+    const getAccess = proto => proto.api.getApplicationAccessAccount(network, dataAPI, applicationId)
+    const { proto, session } = await this.getSession(network, getAccess)
+    return proto.api.stopApplication(session, network, applicationId, dataAPI)
   }
 
   // Add device.
@@ -342,9 +344,9 @@ module.exports = class NetworkProtocolAccess {
   // Returns a Promise that connects to the remote system and creates the
   // device.
   async addDevice (dataAPI, network, deviceId) {
-    const getAccess = protoApi => protoApi.getDeviceAccessAccount(dataAPI, network, deviceId)
-    const { protoApi, session } = await this.getSession(network, getAccess)
-    return protoApi.addDevice(session, network, deviceId, dataAPI)
+    const getAccess = proto => proto.api.getDeviceAccessAccount(network, dataAPI, deviceId)
+    const { proto, session } = await this.getSession(network, getAccess)
+    return proto.api.addDevice(session, network, deviceId, dataAPI)
   }
 
   // Push device.  If the device exists on the remote system, update it
@@ -358,15 +360,15 @@ module.exports = class NetworkProtocolAccess {
   // or creates the remote company.  This may or may not do as promised (haha) -
   // the implementation is completely up to the developers of the protocols.
   async pushDevice (dataAPI, network, device) {
-    const getAccess = protoApi => protoApi.getDeviceAccessAccount(dataAPI, network, device.id)
-    const { protoApi, session } = await this.getSession(network, getAccess)
-    return protoApi.pushDevice(session, network, device, dataAPI)
+    const getAccess = proto => proto.api.getDeviceAccessAccount(network, dataAPI, device.id)
+    const { proto, session } = await this.getSession(network, getAccess)
+    return proto.api.pushDevice(session, network, device, dataAPI)
   }
 
   async pullDevices (dataAPI, network, applicationId) {
-    const getAccess = protoApi => protoApi.getCompanyAccessAccount(dataAPI, network)
-    const { protoApi, session } = await this.getSession(network, getAccess)
-    return protoApi.pullDevices(session, network, applicationId, dataAPI)
+    const getAccess = proto => proto.api.getCompanyAccessAccount(network, dataAPI)
+    const { proto, session } = await this.getSession(network, getAccess)
+    return proto.api.pullDevices(session, network, applicationId, dataAPI)
   }
 
   // Delete the device.
@@ -377,9 +379,9 @@ module.exports = class NetworkProtocolAccess {
   //
   // Returns a Promise that deletes the device record from the remote system.
   async deleteDevice (dataAPI, network, deviceId) {
-    const getAccess = protoApi => protoApi.getDeviceAccessAccount(dataAPI, network, deviceId)
-    const { protoApi, session } = await this.getSession(network, getAccess)
-    return protoApi.deleteDevice(session, network, deviceId, dataAPI)
+    const getAccess = proto => proto.api.getDeviceAccessAccount(network, dataAPI, deviceId)
+    const { proto, session } = await this.getSession(network, getAccess)
+    return proto.api.deleteDevice(session, network, deviceId, dataAPI)
   }
 
   // Add deviceProfile.
@@ -391,9 +393,9 @@ module.exports = class NetworkProtocolAccess {
   // Returns a Promise that connects to the remote system and creates the
   // deviceProfile.
   async addDeviceProfile (dataAPI, network, deviceProfileId) {
-    const getAccess = protoApi => protoApi.getDeviceProfileAccessAccount(dataAPI, network, deviceProfileId)
-    const { protoApi, session } = await this.getSession(network, getAccess)
-    return protoApi.addDeviceProfile(session, network, deviceProfileId, dataAPI)
+    const getAccess = proto => proto.api.getDeviceProfileAccessAccount(network, dataAPI, deviceProfileId)
+    const { proto, session } = await this.getSession(network, getAccess)
+    return proto.api.addDeviceProfile(session, network, deviceProfileId, dataAPI)
   }
 
   // Push deviceProfile.  If the deviceProfile exists on the remote system, update it
@@ -407,9 +409,9 @@ module.exports = class NetworkProtocolAccess {
   // or creates the remote company.  This may or may not do as promised (haha) -
   // the implementation is completely up to the developers of the protocols.
   async pushDeviceProfile (dataAPI, network, deviceProfileId) {
-    const getAccess = protoApi => protoApi.getDeviceProfileAccessAccount(dataAPI, network, deviceProfileId)
-    const { protoApi, session } = await this.getSession(network, getAccess)
-    return protoApi.pushDeviceProfile(session, network, deviceProfileId, dataAPI)
+    const getAccess = proto => proto.api.getDeviceProfileAccessAccount(network, dataAPI, deviceProfileId)
+    const { proto, session } = await this.getSession(network, getAccess)
+    return proto.api.pushDeviceProfile(session, network, deviceProfileId, dataAPI)
   }
 
   // Pull company.  If the company exists on the remote system, update it to match
@@ -422,9 +424,9 @@ module.exports = class NetworkProtocolAccess {
   // or creates the remote company.  This may or may not do as promised (haha) -
   // the implementation is completely up to the developers of the protocols.
   async pullDeviceProfile (dataAPI, network, deviceProfileId) {
-    const getAccess = protoApi => protoApi.getCompanyAccessAccount(dataAPI, network)
-    const { protoApi, session } = await this.getSession(network, getAccess)
-    return protoApi.pullDeviceProfile(session, network, deviceProfileId, dataAPI)
+    const getAccess = proto => proto.api.getCompanyAccessAccount(network, dataAPI)
+    const { proto, session } = await this.getSession(network, getAccess)
+    return proto.api.pullDeviceProfile(session, network, deviceProfileId, dataAPI)
   }
 
   // Delete the deviceProfile.
@@ -435,8 +437,8 @@ module.exports = class NetworkProtocolAccess {
   //
   // Returns a Promise that deletes the deviceProfile record from the remote system.
   async deleteDeviceProfile (dataAPI, network, deviceProfileId) {
-    const getAccess = protoApi => protoApi.getDeviceProfileAccessAccount(dataAPI, network, deviceProfileId)
-    const { protoApi, session } = await this.getSession(network, getAccess)
-    return protoApi.deleteDeviceProfile(session, network, deviceProfileId, dataAPI)
+    const getAccess = proto => proto.api.getDeviceProfileAccessAccount(network, dataAPI, deviceProfileId)
+    const { proto, session } = await this.getSession(network, getAccess)
+    return proto.api.deleteDeviceProfile(session, network, deviceProfileId, dataAPI)
   }
 }

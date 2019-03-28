@@ -320,6 +320,7 @@ exports.initialize = function (app, server) {
     [restServer.isLoggedIn, restServer.fetchCompany, restServer.isAdminCompany],
     async function (req, res, next) {
       const { body } = req
+      appLogger.log(`POST /networks: ${JSON.stringify(body)}`)
 
       if (body.id) {
         restServer.respond(res, 400, "Cannot specify the network's id in create")
@@ -334,7 +335,7 @@ exports.initialize = function (app, server) {
 
       // Issue 176, Remove trailing '/' in the url if there
       if (R.last(body.baseUrl) === '/') {
-        body.baseUrl = body.slice(0, body.baseUrl.length - 1)
+        body.baseUrl = body.baseUrl.slice(0, body.baseUrl.length - 1)
       }
 
       if (!body.securityData) {
@@ -359,20 +360,23 @@ exports.initialize = function (app, server) {
       else if (network.securityData.username) props.push('username', 'password')
       network.securityData = R.pick(props, network.securityData)
 
+      const pickSecDataProps = R.evolve({ securityData: R.pick(['authorized', 'message']) })
+
       if (!network.securityData.authorized) {
-        restServer.respond(res, 201, network)
+        restServer.respond(res, 201, formatRelationshipsOut(pickSecDataProps(network)))
         return
       }
 
       try {
         await modelAPI.networks.pullNetwork(network.id)
         appLogger.log('Success pulling from network ' + network.name)
-      } catch (err) {
+      }
+      catch (err) {
         appLogger.log('Error pulling from network ' + network.id + ': ' + err)
         appLogger.log(network.securityData)
         if (!network.securityData.authorized) {
           network.securityData.message = 'Pending Authorization'
-          restServer.respond(res, 201, formatRelationshipsOut(network))
+          restServer.respond(res, 201, formatRelationshipsOut(pickSecDataProps(network)))
           return
         }
         restServer.respond(res, err)
@@ -382,12 +386,14 @@ exports.initialize = function (app, server) {
       try {
         await modelAPI.networks.pushNetworks(network.networkType.id)
         appLogger.log('Success pushing to networks')
-        restServer.respond(res, 201, formatRelationshipsOut(network))
-      } catch (err) {
+        restServer.respond(res, 201, formatRelationshipsOut(pickSecDataProps(network)))
+      }
+      catch (err) {
         appLogger.log('Error pushing to networks: ' + err)
         restServer.respond(res, err)
       }
-  }
+    }
+  )
 
   /**
  * @apiDescription Updates the Network record with the specified id.

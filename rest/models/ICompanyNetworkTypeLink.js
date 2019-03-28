@@ -346,7 +346,7 @@ CompanyNetworkTypeLink.prototype.pullCompanyNetworkTypeLink = function (networkT
 //
 // Returns a promise that does the retrieval.
 CompanyNetworkTypeLink.prototype.retrieveCompanyNetworkTypeLinks = async function (options) {
-  const result = this.impl.retrieveCompanyNetworkTypeLinks(options)
+  const result = await this.impl.retrieveCompanyNetworkTypeLinks(options)
   return { ...result, records: result.records.map(parseNetworkSettings) }
 }
 
