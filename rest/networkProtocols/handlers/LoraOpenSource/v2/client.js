@@ -59,4 +59,3 @@ module.exports = class LoraOpenSourceV1RestClient extends LoraOpenSourceRestClie
     return this.request(network, opts, session)
   }
 }
-

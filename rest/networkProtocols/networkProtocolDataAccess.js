@@ -11,8 +11,6 @@ const al = 'a' + 'es-' + '25' + '6-' + 'c' + 'tr'
 
 const delimiter = '-'
 
-const R = require('ramda')
-
 //* *****************************************************************************
 // The NetworkProtocol Data Access object.
 //

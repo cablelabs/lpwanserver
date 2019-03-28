@@ -1,6 +1,5 @@
 const LoraOpenSourceRestClient = require('../client')
 const R = require('ramda')
-const appLogger = require('../../../../lib/appLogger.js')
 
 module.exports = class LoraOpenSourceV1RestClient extends LoraOpenSourceRestClient {
   async createDeviceProfile (session, network, body) {

@@ -4,10 +4,6 @@
  * support of a new networkProtocol.
  ***************************************************************************/
 
-// The request is used to access remote networks via a REST API.
-var request = require('request-promise')
-// NCONF can be used to access settings specified in the config.hjson file.
-var nconf = require('nconf')
 // AppLogger is a conole logger that adds timestamp, filename, and line number
 // information.  Usage: appLogger.log( <string> );
 var appLogger = require('../lib/appLogger.js')
@@ -38,7 +34,7 @@ module.exports = class NetworkProtocol {
 
   // Placeholder
   // The default behavior is for networks that don't support companies
-  getCompanyAccount (network, dataAPI, companyId, generateIfMissing) {
+  getCompanyAccount (network) {
     return this.getCompanyAccessAccount(network)
   }
 
@@ -95,7 +91,7 @@ module.exports = class NetworkProtocol {
   // connections like a login session, and it is up to the code in this module
   // to implement that concept.  The promise returns the opaque session data to
   // be passed into other methods.
-  async connect(network, loginData) {
+  async connect () {
     throw new Error('Connect method not implemented by network protocol handler.')
   }
 
@@ -104,7 +100,7 @@ module.exports = class NetworkProtocol {
   // connection - The data top use to drop the connection
   //
   // Returns a Promise that disconnects from the remote system.
-  disconnect (connection) {
+  disconnect () {
     // override this method if the protocol supports logout
   }
 
@@ -124,7 +120,7 @@ module.exports = class NetworkProtocol {
   // company.  The promise saves the id for the remote company, linked to the
   // local database record.  This method is called in an async manner against
   // lots of other networks, so logging should be done via the dataAPI.
-  addCompany (session, network, companyId, dataAPI) {
+  addCompany () {
     return {}
   }
 
@@ -137,7 +133,7 @@ module.exports = class NetworkProtocol {
   //               will be retrieved.
   //
   // Returns a Promise that gets the company record from the remote system.
-  getCompany (session, network, companyId) {
+  getCompany () {
     return {}
   }
 
@@ -150,7 +146,7 @@ module.exports = class NetworkProtocol {
   //               will be updated.
   //
   // Returns a Promise that updates the company record on the remote system.
-  updateCompany (session, network, companyId) {
+  updateCompany () {
     return {}
   }
 
@@ -162,7 +158,7 @@ module.exports = class NetworkProtocol {
   // companyId   - The company to be deleted on the remote system.
   //
   // Returns a Promise that deletes the company record from the remote system.
-  deleteCompany (session, network, companyId) {
+  deleteCompany () {
     return {}
   }
 
@@ -174,7 +170,7 @@ module.exports = class NetworkProtocol {
   // companyId   - The company to be deleted on the remote system.
   //
   // Returns a Promise that pushes the company record to the remote system.
-  pushCompany (session, network, companyId) {
+  pushCompany () {
     return {}
   }
 
@@ -184,7 +180,7 @@ module.exports = class NetworkProtocol {
   //                 to.
   //
   // Returns a Promise that pushes changes to the remote network of type.
-  pullCompany (networkTypeId) {
+  pullCompany () {
     return {}
   }
 
@@ -204,7 +200,7 @@ module.exports = class NetworkProtocol {
   // application.  The promise saves the id for the remote application, linked to
   // the local database record.  This method is called in an async manner against
   // lots of other networks, so logging should be done via the dataAPI.
-  addApplication (session, network, applicationId) {
+  addApplication () {
   }
 
   // Get application.
@@ -218,7 +214,7 @@ module.exports = class NetworkProtocol {
   // Returns a Promise that connects to the remote system and gets the
   // application.  This method is called in an async manner against lots of other
   // networks, so logging should be done via the dataAPI.
-  getApplication (session, network, applicationId) {
+  getApplication () {
   }
 
   // Update application.
@@ -232,7 +228,7 @@ module.exports = class NetworkProtocol {
   // Returns a Promise that connects to the remote system and updates the
   // application.  This method is called in an async manner against
   // lots of other networks, so logging should be done via the dataAPI.
-  updateApplication (session, network, applicationId) {
+  updateApplication () {
   }
 
   // Delete the application.
@@ -246,7 +242,7 @@ module.exports = class NetworkProtocol {
   // Returns a Promise that connects to the remote system and deletes the
   // application.  This method is called in an async manner against
   // lots of other networks, so logging should be done via the dataAPI.
-  deleteApplication (session, network, applicationId) {
+  deleteApplication () {
   }
 
   // Push the application, meaning update if it exists, and create if it doesn't.
@@ -257,7 +253,7 @@ module.exports = class NetworkProtocol {
   // applicationId - The company to be deleted on the remote system.
   //
   // Returns a Promise that pushes the application record to the remote system.
-  pushApplication (session, network, applicationId) {
+  pushApplication () {
   }
 
   //* *****************************************************************************
@@ -271,7 +267,7 @@ module.exports = class NetworkProtocol {
   //
   // Returns a Promise that starts the application data flowing from the remote
   // system.
-  startApplication (session, network, applicationId) {
+  startApplication () {
   }
 
   // Stop the application.
@@ -282,7 +278,7 @@ module.exports = class NetworkProtocol {
   //
   // Returns a Promise that stops the application data flowing from the remote
   // system.
-  stopApplication (session, network, applicationId) {
+  stopApplication () {
   }
 
   //* *****************************************************************************
@@ -302,7 +298,7 @@ module.exports = class NetworkProtocol {
   // linked to the local database record.  This method is called in an async
   // manner against lots of other networks, so logging should be done via the
   // dataAPI.
-  addDeviceProfile (session, network, deviceProfileId) {
+  addDeviceProfile () {
   }
 
   // Get deviceProfile.
@@ -316,7 +312,7 @@ module.exports = class NetworkProtocol {
   // Returns a Promise that connects to the remote system and gets the
   // deviceProfile.  This method is called in an async manner against lots of other
   // networks, so logging should be done via the dataAPI.
-  getDeviceProfile (session, network, deviceProfileId) {
+  getDeviceProfile () {
   }
 
   // Update deviceProfile.
@@ -330,7 +326,7 @@ module.exports = class NetworkProtocol {
   // Returns a Promise that connects to the remote system and updates the
   // deviceProfile.  This method is called in an async manner against
   // lots of other networks, so logging should be done via the dataAPI.
-  updateDeviceProfile (session, network, deviceProfileId) {
+  updateDeviceProfile () {
   }
 
   // Delete the deviceProfile.
@@ -344,7 +340,7 @@ module.exports = class NetworkProtocol {
   // Returns a Promise that connects to the remote system and deletes the
   // deviceProfile.  This method is called in an async manner against
   // lots of other networks, so logging should be done via the dataAPI.
-  deleteDeviceProfile (session, network, deviceProfileId) {
+  deleteDeviceProfile () {
   }
 
   // Push the deviceProfile, meaning update if it exists, and create if it
@@ -357,7 +353,7 @@ module.exports = class NetworkProtocol {
   // deviceProfileId - The company to be deleted on the remote system.
   //
   // Returns a Promise that pushes the application record to the remote system.
-  pushDeviceProfile (session, network, deviceProfileId) {
+  pushDeviceProfile () {
   }
 
   //* *****************************************************************************
@@ -380,7 +376,7 @@ module.exports = class NetworkProtocol {
   // Returns a Promise that connects to the remote system and creates the
   // device.  The promise returns the id of the created device to be added to the
   // deviceNetworkTypeLinks record by the caller.
-  addDevice (session, network, deviceId) {
+  addDevice () {
   }
 
   // Get device.
@@ -397,7 +393,7 @@ module.exports = class NetworkProtocol {
   //                   and network.
   //
   // Returns a Promise that gets the device data from the remote system.
-  getDevice (session, network, deviceId) {
+  getDevice () {
   }
 
   // Update device.
@@ -409,7 +405,7 @@ module.exports = class NetworkProtocol {
   // Returns a Promise that connects to the remote system and updates the
   // device.  This method is called in an async manner against lots of other
   // networks, so logging should be done via the dataAPI.
-  updateDevice (session, network, deviceId) {
+  updateDevice () {
   }
 
   // Delete the device.
@@ -426,7 +422,7 @@ module.exports = class NetworkProtocol {
   //                   and network.
   //
   // Returns a Promise that gets the application record from the remote system.
-  deleteDevice (session, network, deviceId) {
+  deleteDevice () {
   }
 
   // Push the device, meaning update if it exists, and create if it doesn't.
@@ -438,7 +434,7 @@ module.exports = class NetworkProtocol {
   // deviceId        - The device to be deleted on the remote system.
   //
   // Returns a Promise that pushes the device record to the remote system.
-  pushDevice (session, network, deviceId) {
+  pushDevice () {
   }
 }
 

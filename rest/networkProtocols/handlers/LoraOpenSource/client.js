@@ -160,7 +160,7 @@ module.exports = class LoraOpenSourceClient {
     return this.request(network, opts, session, lift(['device']))
   }
 
-  listDevices (session, network, params) {
+  listDevices () {
     // overwritten by all extending classes
   }
 

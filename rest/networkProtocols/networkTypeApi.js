@@ -5,9 +5,6 @@ var appLogger = require('../lib/appLogger.js')
 // multiple networks, preventing a lot of redundant database hits.
 var NetworkProtocolDataAccess = require('./networkProtocolDataAccess.js')
 
-// An object to access and cache the protocols for the various network types.
-var NetworkProtocols = require('./networkProtocols.js')
-
 // The dataModel API.
 var modelAPI
 

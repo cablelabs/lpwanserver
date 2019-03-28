@@ -6,8 +6,6 @@ var pwVal = require('./passwordPolicies.js')
 // Error reporting
 var httpError = require('http-errors')
 
-const appLogger = require('../../../lib/appLogger')
-
 // Utils
 const { onFail } = require('../../../lib/utils')
 

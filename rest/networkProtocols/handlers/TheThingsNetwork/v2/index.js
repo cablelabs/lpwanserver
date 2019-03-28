@@ -50,7 +50,7 @@ module.exports = class TheThingsNetworkV2 {
    * @param loginData - credentials
    * @returns {Promise<any>}
    */
-  async testNetwork (network, loginData) {
+  async test (network) {
     appLogger.log(network.securityData, 'debug')
     if (!network.securityData.authorized) {
       throw httpError.Unauthorized()
@@ -77,7 +77,7 @@ module.exports = class TheThingsNetworkV2 {
     if (network.securityData.authorized) {
       appLogger.log('Should be authorized')
       try {
-        await this.testNetwork(network, loginData)
+        await this.test(network, loginData)
         return loginData
       }
       catch (err) {
@@ -286,7 +286,7 @@ module.exports = class TheThingsNetworkV2 {
     }
   }
 
-  async addRemoteDeviceProfile (session, remoteDevice, application, network, modelAPI, dataAPI) {
+  async addRemoteDeviceProfile (session, remoteDevice, application, network, modelAPI) {
     let networkSpecificDeviceProfileInformation = this.normalizeDeviceProfileData(remoteDevice, application)
     appLogger.log(networkSpecificDeviceProfileInformation, 'error')
     try {
@@ -812,7 +812,7 @@ module.exports = class TheThingsNetworkV2 {
   async addDevice (session, network, deviceId, dataAPI) {
     let result
     let promiseList = [
-      dataAPI.getDeviceById(deviceId),
+      // dataAPI.getDeviceById(deviceId),
       dataAPI.getDeviceNetworkType(deviceId, network.networkType.id),
       dataAPI.getDeviceProfileByDeviceIdNetworkTypeId(deviceId, network.networkType.id),
       dataAPI.getApplicationByDeviceId(deviceId)
@@ -823,7 +823,7 @@ module.exports = class TheThingsNetworkV2 {
         appLogger.log('Could not retrieve local device, dntl, and device profile: ', 'error')
         throw new Error('Could not retrieve local device, dntl, and device profile: ')
       }
-      let [device, dntl, deviceProfile, application] = result[1]
+      let [dntl, deviceProfile, application] = result[1]
       result = await tryCatch(dataAPI.getApplicationNetworkType(application.id, network.networkType.id))
       if (result[0]) {
         appLogger.log('Could not retrieve application ntl: ', 'error')
@@ -1012,7 +1012,7 @@ module.exports = class TheThingsNetworkV2 {
    * @param dataAPI
    * @returns {Error}
    */
-  addDeviceProfile (session, network, deviceProfileId, dataAPI) {
+  addDeviceProfile () {
     appLogger.log('The Things Network: addDeviceProfile')
     appLogger.log('Device Profiles are not supported by The Things Network')
     let error = new Error('Device Profiles are not supported by The Things Network')
@@ -1028,7 +1028,7 @@ module.exports = class TheThingsNetworkV2 {
    * @param dataAPI
    * @returns {Error}
    */
-  getDeviceProfile (session, network, deviceProfileId, dataAPI) {
+  getDeviceProfile () {
     appLogger.log('The Things Network: getDeviceProfile')
     appLogger.log('Device Profiles are not supported by The Things Network')
     let error = new Error('Device Profiles are not supported by The Things Network')
@@ -1044,7 +1044,7 @@ module.exports = class TheThingsNetworkV2 {
    * @param dataAPI
    * @returns {Error}
    */
-  updateDeviceProfile (session, network, deviceProfileId, dataAPI) {
+  updateDeviceProfile () {
     appLogger.log('The Things Network: updateDeviceProfile')
     appLogger.log('Device Profiles are not supported by The Things Network')
     let error = new Error('Device Profiles are not supported by The Things Network')
@@ -1060,7 +1060,7 @@ module.exports = class TheThingsNetworkV2 {
    * @param dataAPI
    * @returns {Error}
    */
-  deleteDeviceProfile (session, network, deviceProfileId, dataAPI) {
+  deleteDeviceProfile () {
     appLogger.log('The Things Network: deleteDeviceProfile')
     appLogger.log('Device Profiles are not supported by The Things Network')
     let error = new Error('Device Profiles are not supported by The Things Network')
@@ -1076,7 +1076,7 @@ module.exports = class TheThingsNetworkV2 {
    * @param dataAPI
    * @returns {Error}
    */
-  pushDeviceProfile (session, network, deviceProfileId, dataAPI) {
+  pushDeviceProfile () {
     appLogger.log('The Things Network: pushDeviceProfile')
     appLogger.log('Device Profiles are not supported by The Things Network')
     let error = new Error('Device Profiles are not supported by The Things Network')
@@ -1093,7 +1093,7 @@ module.exports = class TheThingsNetworkV2 {
    * @param dataAPI
    * @returns {Promise<Device>}
    */
-  async getDeviceById (network, deviceId, connection, dataAPI) {
+  async getDeviceById (network, deviceId, connection) {
     appLogger.log('The Things Network: getDeviceById')
     try {
       return TTNRequest(connection, {
@@ -1109,7 +1109,7 @@ module.exports = class TheThingsNetworkV2 {
   normalizeApplicationData (remoteApplication, remoteApplicationMeta, network) {
     appLogger.log(remoteApplication.app_id, 'error')
     appLogger.log(remoteApplicationMeta, 'error')
-  
+
     let normalized = {
       description: remoteApplicationMeta.name,
       id: remoteApplication.app_id,
@@ -1127,7 +1127,7 @@ module.exports = class TheThingsNetworkV2 {
     }
     return normalized
   }
-  
+
   deNormalizeApplicationData (remoteApplication, application) {
     let magicId = remoteApplication.id + '-lpwanserver-' + uuid()
     magicId = magicId.substr(0, 36)
@@ -1186,7 +1186,7 @@ module.exports = class TheThingsNetworkV2 {
     else {
       normalized.supportsJoin = false
     }
-  
+
     if (normalized.networkServerID === 'ttn-handler-us-west') {
       normalized.rfRegion = 'US902'
     }
@@ -1534,7 +1534,7 @@ async function registerApplicationWithHandler (connection, network, ttnApplicati
   }
 }
 
-async function setApplication (connection, network, ttnApplication, ttnApplicationMeta, dataAPI) {
+async function setApplication (connection, network, ttnApplication, ttnApplicationMeta) {
   try {
     await TTNAppRequest(network, connection, ttnApplicationMeta.id, {
       method: 'PUT',

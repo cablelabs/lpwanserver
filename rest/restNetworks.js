@@ -318,7 +318,7 @@ exports.initialize = function (app, server) {
  */
   app.post('/api/networks',
     [restServer.isLoggedIn, restServer.fetchCompany, restServer.isAdminCompany],
-    async function (req, res, next) {
+    async function (req, res) {
       const { body } = req
       appLogger.log(`POST /networks: ${JSON.stringify(body)}`)
 

@@ -636,7 +636,7 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
     return localDevice.id
   }
 
-  async pullIntegrations (session, network, remoteAppId, localAppId, dpMap, modelAPI, dataAPI) {
+  async pullIntegrations (session, network, remoteAppId, localAppId, dpMap, modelAPI) {
     const integration = await this.client.loadApplicationIntegration(session, network, remoteAppId, 'http')
     appLogger.log(integration, 'warn')
     const deliveryURL = `api/ingest/${localAppId}/${network.id}`
