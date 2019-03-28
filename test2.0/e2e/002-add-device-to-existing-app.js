@@ -605,26 +605,23 @@ describe('E2E Test for Adding a Device to an Existing Application Use Case #190'
       }
       appLogger.log(options)
       request(options, function (error, response, body) {
-        if (error) {
-          done(error)
-        }
-        else {
-          let app = JSON.parse(body)
-          app.should.have.property('name')
-          app.should.have.property('devEUI')
-          app.should.have.property('applicationID')
-          app.should.have.property('description')
-          app.should.have.property('deviceProfileID')
-          app.should.have.property('deviceStatusBattery')
-          app.should.have.property('deviceStatusMargin')
-          app.should.have.property('lastSeenAt')
-          app.should.have.property('skipFCntCheck')
+        if (error) return done(error)
+        let app = JSON.parse(body)
+        console.log(body)
+        app.should.have.property('name')
+        app.should.have.property('devEUI')
+        app.should.have.property('applicationID')
+        app.should.have.property('description')
+        app.should.have.property('deviceProfileID')
+        app.should.have.property('deviceStatusBattery')
+        app.should.have.property('deviceStatusMargin')
+        app.should.have.property('lastSeenAt')
+        app.should.have.property('skipFCntCheck')
 
-          app.name.should.equal(deviceNTL.networkSettings.name)
-          app.devEUI.should.equal(deviceNTL.networkSettings.devEUI)
-          app.deviceProfileID.should.equal(remoteDeviceProfileId)
-          done()
-        }
+        app.name.should.equal(deviceNTL.networkSettings.name)
+        app.devEUI.should.equal(deviceNTL.networkSettings.devEUI)
+        app.deviceProfileID.should.equal(remoteDeviceProfileId)
+        done()
       })
     })
   })

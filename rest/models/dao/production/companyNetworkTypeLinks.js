@@ -6,7 +6,6 @@ const { onFail } = require('../../../lib/utils')
 
 // Error reporting
 var httpError = require('http-errors')
-
 //* *****************************************************************************
 // CompanyNetworkTypeLinks database table.
 //* *****************************************************************************

@@ -54,7 +54,15 @@ describe('Unit Tests for ' + testName, () => {
   it(testName + ' Create', async () => {
     let testModule = new TestModule(modelAPIMock)
     should.exist(testModule)
-    const actual = await testModule.createNetwork('tests', networkProviderId, 1, networkProtocolId, 'http://localhost:6000', {})
+    let body = {
+      name: 'tests',
+      networkProviderId,
+      networkTypeId: 1,
+      networkProtocolId,
+      baseUrl: 'http://localhost:6000',
+      securityData: {}
+    }
+    const actual = await testModule.createNetwork(body)
     assertNetworkProps(actual)
     networkId = actual.id
   })

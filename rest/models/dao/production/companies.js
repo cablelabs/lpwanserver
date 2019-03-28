@@ -9,8 +9,6 @@ var httpError = require('http-errors')
 // Utils
 const { onFail } = require('../../../lib/utils')
 
-const CompNtwkTypeLink = require('./companyNetworkTypeLinks')
-
 const COMPANY_VENDOR = 2
 const COMPANY_ADMIN = 1
 //* *****************************************************************************
@@ -59,17 +57,7 @@ async function loadCompany (uniqueKeyObj, fragementKey = 'basic') {
 //
 // Returns a promise that executes the retrieval.
 async function retrieveCompany (id) {
-  const company = await loadCompany({ id })
-  try {
-    const { records } = await CompNtwkTypeLink.retrieveCompanyNetworkTypeLinks({ companyId: id })
-    if (records.length) {
-      company.networks = records.map(x => x.networkType.id)
-    }
-  }
-  catch (err) {
-    // ignore
-  }
-  return company
+  return loadCompany({ id })
 }
 
 // Update the company record.

@@ -599,6 +599,7 @@ describe('E2E Test for Updating a Device Use Case #193', () => {
           done(error)
         }
         else {
+          console.log(body)
           let remoteDeviceProfile = JSON.parse(body)
           remoteDeviceProfile = remoteDeviceProfile.result
           for (let i = 0; i < remoteDeviceProfile.length; i++) {

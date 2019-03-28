@@ -4,7 +4,7 @@ var nconf = require('nconf')
 var stackTrace = require('stack-trace')
 var winston = require('winston')
 
-exports.logger = winston.createLogger({
+const logger = winston.createLogger({
   level: 'warn',
   transports: [
     new winston.transports.File({
@@ -17,10 +17,16 @@ exports.logger = winston.createLogger({
   ]
 })
 
-exports.loggingEnabled = true
-exports.loggingHeaders = true
+module.exports = {
+  logger,
+  loggingEnabled: true,
+  loggingHeaders: true,
+  initRESTCallLogger,
+  log,
+  logOnThrow
+}
 
-exports.initRESTCallLogger = function (app) {
+function initRESTCallLogger (app) {
   var logFormat = nconf.get('log_format_morgan')
   if (logFormat) {
     app.use(restCallLogger(logFormat))
@@ -31,7 +37,7 @@ exports.initRESTCallLogger = function (app) {
   this.loggingHeaders = nconf.get('logging_headers')
 }
 
-exports.log = function (msg, level) {
+function log (msg, level) {
   if (!level) level = 'info'
   if (this.loggingEnabled) {
     var header = ''
@@ -62,5 +68,15 @@ exports.log = function (msg, level) {
           msg)
       }
     }
+  }
+}
+
+function logOnThrow (fn, msg, level = 'error') {
+  try {
+    return fn()
+  }
+  catch (err) {
+    log(msg(err), level)
+    throw err
   }
 }

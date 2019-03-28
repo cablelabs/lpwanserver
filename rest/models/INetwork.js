@@ -2,6 +2,7 @@
 var nconf = require('nconf')
 var NetworkProtocolDataAccess = require('../networkProtocols/networkProtocolDataAccess')
 var appLogger = require('../lib/appLogger')
+const R = require('ramda')
 
 //* *****************************************************************************
 // The Network interface.
@@ -71,6 +72,7 @@ async function authorizeAndTest (network, modelAPI, k, me, dataAPI) {
   }
   try {
     const connection = await modelAPI.networkTypeAPI.connect(network, network.securityData)
+    appLogger.log(`AUTHORIZE_AND_TEST: ${connection}`)
     if (connection instanceof Object) {
       Object.assign(network.securityData, connection)
     }
@@ -79,7 +81,7 @@ async function authorizeAndTest (network, modelAPI, k, me, dataAPI) {
     }
     network.securityData.authorized = true
     try {
-      await modelAPI.networkTypeAPI.test(network, network.securityData)
+      await modelAPI.networkTypeAPI.test(network, dataAPI)
       appLogger.log('Test Success ' + network.name, 'info')
       network.securityData.authorized = true
       network.securityData.message = 'ok'
@@ -89,9 +91,8 @@ async function authorizeAndTest (network, modelAPI, k, me, dataAPI) {
       network.securityData.authorized = false
       network.securityData.message = err.toString()
     }
-    finally {
-      return network
-    }
+    await modelAPI.networks.updateNetwork(R.pick(['id', 'securityData'], network))
+    return network
   }
   catch (err) {
     if (err.code === 42) return network
@@ -112,48 +113,28 @@ async function authorizeAndTest (network, modelAPI, k, me, dataAPI) {
   }
 }
 
-Network.prototype.createNetwork = function (name, networkProviderId, networkTypeId, networkProtocolId, baseUrl, securityData) {
-  let me = this
-  return new Promise(async function (resolve, reject) {
-    let dataAPI = new NetworkProtocolDataAccess(modelAPI, 'INetwork Create')
-    let k = dataAPI.genKey()
-    if (securityData) {
-      if (!securityData.authorized) securityData.authorized = false
-      if (!securityData.message) securityData.message = 'Pending Authorization'
-      if (!securityData.enabled) securityData.enabled = true
-      securityData = dataAPI.hide(null, securityData, k)
+Network.prototype.createNetwork = async function createNetwork (data) {
+  let dataAPI = new NetworkProtocolDataAccess(modelAPI, 'INetwork Create')
+  let k = dataAPI.genKey()
+  if (data.securityData) {
+    const securityDataDefaults = {
+      authorized: false,
+      message: 'Pending Authorization',
+      enabled: true
     }
-    me.impl.createNetwork(name,
-      networkProviderId,
-      networkTypeId,
-      networkProtocolId,
-      baseUrl,
-      securityData)
-      .then(record => {
-        if (record.securityData) {
-          dataAPI.putProtocolDataForKey(record.id, networkProtocolId, genKey(record.id), k)
-          record.securityData = dataAPI.access(null, record.securityData, k)
-          authorizeAndTest(record, modelAPI, k, me, dataAPI)
-            .then(finalNetwork => {
-              appLogger.log(finalNetwork, 'debug')
-              finalNetwork.securityData = dataAPI.hide(null, finalNetwork.securityData, k)
-              me.impl.updateNetwork(finalNetwork)
-                .then((rec) => {
-                  resolve(rec)
-                })
-                .catch((err) => {
-                  reject(err)
-                })
-            })
-            .catch(err => {
-              reject(err)
-            })
-        }
-        else {
-          resolve(record)
-        }
-      })
-  })
+    data.securityData = R.merge(securityDataDefaults, data.securityData)
+    data.securityData = dataAPI.hide(null, data.securityData, k)
+  }
+  let record = await this.impl.createNetwork(data)
+  if (record.securityData) {
+    dataAPI.putProtocolDataForKey(record.id, data.networkProtocolId, genKey(record.id), k)
+    record.securityData = dataAPI.access(null, record.securityData, k)
+    const finalNetwork = await authorizeAndTest(record, modelAPI, k, this, dataAPI)
+    finalNetwork.securityData = dataAPI.hide(null, finalNetwork.securityData, k)
+    record = await this.impl.updateNetwork(finalNetwork)
+    record.securityData = dataAPI.access(null, record.securityData, k)
+  }
+  return record
 }
 
 Network.prototype.updateNetwork = async function updateNetwork (record) {
@@ -200,7 +181,7 @@ Network.prototype.pullNetwork = async function pullNetwork (networkId) {
     if (!network.securityData.authorized) {
       throw new Error('Network is not authorized.  Cannot pull')
     }
-    let networkType = await modelAPI.networkTypes.retrieveNetworkTypes(network.networkType.id)
+    let networkType = await modelAPI.networkTypes.retrieveNetworkType(network.networkType.id)
     var npda = new NetworkProtocolDataAccess(modelAPI, 'Pull Network')
     npda.initLog(networkType, network)
     appLogger.log(network)
