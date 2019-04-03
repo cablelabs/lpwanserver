@@ -83,25 +83,6 @@ describe('E2E Test for Adding a Device to an Existing Application Use Case #190'
     }
   }
 
-  let lora = {
-    loraV1: {
-      protocolId: '',
-      networkId: '',
-      apps: []
-    },
-    loraV2: {
-      protocolId: '',
-      networkId: '',
-      apps: []
-    },
-    ttn: {
-      protocolId: '',
-      networkId: '',
-      apps: []
-
-    }
-  }
-
   before((done) => {
     setup.start()
       .then(() => {

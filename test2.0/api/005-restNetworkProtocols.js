@@ -11,7 +11,6 @@ var server = chai.request(app).keepOpen()
 var npId1
 var npId2
 const NUMBER_PROTOCOLS = 4
-const NUMBER_PROTOCOL_HANDLERS = 4
 
 function waitForNetworkProtocolRegistration (ms) {
   return new Promise(resolve => setTimeout(resolve, ms))

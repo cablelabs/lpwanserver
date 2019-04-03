@@ -1,7 +1,6 @@
 const LoraOpenSource = require('../LoraOpenSource')
 const appLogger = require('../../../../lib/appLogger')
 const ApiClient = require('./client')
-const R = require('ramda')
 
 module.exports = class LoraOpenSourceV1 extends LoraOpenSource {
   constructor () {

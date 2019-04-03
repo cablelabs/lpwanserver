@@ -1,8 +1,6 @@
 var appLogger = require('./lib/appLogger.js')
-const fs = require('fs')
 var restServer
 var modelAPI
-const path = require('path')
 const { formatRelationshipsOut } = require('./lib/prisma')
 
 exports.initialize = function (app, server) {

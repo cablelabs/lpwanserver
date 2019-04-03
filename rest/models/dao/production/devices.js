@@ -1,6 +1,6 @@
 // Database implementation.
 const { prisma, formatInputData, formatRelationshipsIn } = require('../../../lib/prisma')
-const appLogger = require('../../../lib/appLogger')
+
 // Error reporting
 var httpError = require('http-errors')
 

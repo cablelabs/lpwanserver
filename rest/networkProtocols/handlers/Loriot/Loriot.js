@@ -1,7 +1,6 @@
 const NetworkProtocol = require('../../NetworkProtocol')
 const appLogger = require('../../../lib/appLogger.js')
 const R = require('ramda')
-const { renameKeys } = require('../../../lib/utils')
 const nconf = require('nconf')
 const httpError = require('http-errors')
 
