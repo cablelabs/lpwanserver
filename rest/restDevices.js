@@ -86,10 +86,10 @@ exports.initialize = function (app, server) {
       // This may be redundant, but we've already verified that if the
       // user is not part of the admin company, then this is their companyId.
       if (req.query.companyId) {
-        options.companyId = req.query.companyId
+        options.companyId = parseInt(req.query.companyId, 10)
       }
       if (req.query.applicationId) {
-        options.applicationId = req.query.applicationId
+        options.applicationId = parseInt(req.query.applicationId, 10)
       }
       modelAPI.devices.retrieveDevices(options).then(function (cos) {
         const responseBody = { ...cos, records: cos.records.map(formatRelationshipsOut) }
@@ -166,6 +166,7 @@ exports.initialize = function (app, server) {
     restServer.isAdmin,
     modelAPI.devices.fetchApplicationForNewDevice],
   function (req, res, next) {
+    appLogger.log(`POST api/devices: ${JSON.stringify(req.body)}`)
     var rec = req.body
     // You can't specify an id.
     if (rec.id) {
@@ -190,6 +191,7 @@ exports.initialize = function (app, server) {
         rec.description,
         rec.applicationId,
         rec.deviceModel).then(function (rec) {
+        appLogger.log(`DEVICE CREATED: ${JSON.stringify(rec)}`)
         var send = {}
         send.id = rec.id
         restServer.respondJson(res, 200, send) // TODO: Shouldn't this id be in the header per POST convention?

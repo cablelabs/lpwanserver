@@ -28,10 +28,10 @@ const deviceTemplates = {
       deviceProfile: {
         networkTypeId: 1,
         companyId,
-        name: 'LoRaWeatherNode',
+        name: `LoRaWeatherNode_${name}`,
         description: 'GPS Node that works with LoRa',
         networkSettings: {
-          name: 'LoRaWeatherNode',
+          name: `LoRaWeatherNode_${name}`,
           macVersion: '1.0.0',
           regParamsRevision: 'A',
           supportsJoin: true

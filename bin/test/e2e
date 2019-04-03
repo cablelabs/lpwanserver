@@ -35,6 +35,6 @@ docker-compose \
   -f ./docker/test/e2e/docker-compose.yml up \
   --abort-on-container-exit
   --exit-code-from e2e-test
-          
+
 # Stop Prisma
 docker-compose -f ./prisma/dev/docker-compose.yml down

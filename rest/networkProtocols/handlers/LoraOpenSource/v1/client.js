@@ -1,4 +1,4 @@
-const LoraOpenSourceRestClient = require('../client')
+const LoraOpenSourceRestClient = require('../LoraOpenSourceRestClient')
 const R = require('ramda')
 
 module.exports = class LoraOpenSourceV1RestClient extends LoraOpenSourceRestClient {
@@ -27,24 +27,10 @@ module.exports = class LoraOpenSourceV1RestClient extends LoraOpenSourceRestClie
     }
   }
 
-  replaceDeviceProfile (session, network, id, body) {
-    return super.replaceDeviceProfile(session, network, id, {
+  updateDeviceProfile (session, network, id, body) {
+    return super.updateDeviceProfile(session, network, id, {
       deviceProfile: { ...R.omit(['name', 'id'], body), deviceProfileID: body.id },
       ...R.pick(['name'], body)
-    })
-  }
-
-  createDeviceKeys (session, network, devEUI, body) {
-    return super.createDeviceKeys(session, network, devEUI, {
-      devEUI: body.devEUI,
-      deviceKeys: R.omit(['devEUI', 'nwkKey'], body)
-    })
-  }
-
-  replaceDeviceKeys (session, network, devEUI, body) {
-    return super.replaceDeviceKeys(session, network, devEUI, {
-      devEUI: body.devEUI,
-      deviceKeys: R.omit(['devEUI', 'nwkKey'], body)
     })
   }
 
@@ -73,16 +59,16 @@ module.exports = class LoraOpenSourceV1RestClient extends LoraOpenSourceRestClie
     }
   }
 
-  replaceServiceProfile (session, network, id, body) {
-    return super.replaceServiceProfile(session, network, id, {
+  updateServiceProfile (session, network, id, body) {
+    return super.updateServiceProfile(session, network, id, {
       serviceProfile: { ...R.omit(['name', 'id'], body), serviceProfileID: body.id },
       ...R.pick(['name'], body)
     })
   }
 
-  listDevices (session, network, params) {
-    const url = `/applications/${params.applicationID}/devices`
-    const opts = { url: this.constructUrl({ url, params: R.omit(['applicationID'], params) }) }
+  listDevices (session, network, appId, params) {
+    const url = `/applications/${appId}/devices`
+    const opts = { url: this.constructUrl({ url, params }) }
     return this.request(network, opts, session)
   }
 
@@ -93,28 +79,19 @@ module.exports = class LoraOpenSourceV1RestClient extends LoraOpenSourceRestClie
     })
   }
 
-  replaceApplicationIntegration (session, network, appId, id, body) {
-    return super.replaceApplicationIntegration(session, network, appId, id, {
+  updateApplicationIntegration (session, network, appId, id, body) {
+    return super.updateApplicationIntegration(session, network, appId, id, {
       ...R.omit(['uplinkDataURL'], body),
       dataUpURL: body.uplinkDataURL
     })
   }
 
-  async loadDeviceActivation (session, network, devEUI) {
-    const body = await super.loadDeviceActivation(session, network, devEUI)
-    return {
-      ...R.omit(['fCntDown', 'nwkSKey'], body),
-      aFCntDown: body.fCntDown,
-      nwkSEncKey: body.nwkSKey
-    }
-  }
-
-  activateDevice (session, network, devEUI, body) {
-    return super.activateDevice(session, network, devEUI, {
-      ...R.omit(['aFCntDown', 'nwkSEncKey', 'fNwkSIntKey', 'sNwkSIntKey', 'nFCntDown'], body),
-      fCntDown: body.aFCntDown,
-      nwkSKey: body.nwkSEncKey,
-      skipFCntCheck: false
+  createDeviceKeys (session, network, id, body) {
+    return super.createDeviceKeys(session, network, id, {
+      devEUI: body.devEUI,
+      deviceKeys: {
+        appKey: body.appKey
+      }
     })
   }
 }

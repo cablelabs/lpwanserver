@@ -4,10 +4,10 @@ const cry = require('cry' + 'pto')
 // Logging
 const appLogger = require('../lib/appLogger.js')
 
-var modelAPI
-
 // Breaking it up makes it harder to search via grep...
 const al = 'a' + 'es-' + '25' + '6-' + 'c' + 'tr'
+
+let modelAPI
 
 const delimiter = '-'
 
@@ -31,7 +31,7 @@ const delimiter = '-'
 //
 module.exports = class NetworkProtocolDataAccess {
   constructor (models, fdesc = 'Unspecified function') {
-    this.models = models
+    modelAPI = models
     this.fdesc = fdesc
     this.cache = {}
     this.logs = {}
@@ -41,7 +41,7 @@ module.exports = class NetworkProtocolDataAccess {
   // that creates this object, but it'll be common code across many operations.
   async getNetworksOfType (networkTypeId) {
     return appLogger.logOnThrow(
-      () => this.models.networks.retrieveNetworks({ 'networkTypeId': networkTypeId }, 'internal'),
+      () => modelAPI.networks.retrieveNetworks({ 'networkTypeId': networkTypeId }),
       err => `${this.funcDesc}: Failed to load networks of type ${networkTypeId}: ${err}`
     )
   }
@@ -56,14 +56,14 @@ module.exports = class NetworkProtocolDataAccess {
   getCompanyById (id) {
     return this.cacheFirst(
       ['companies', `${id}`],
-      () => this.models.companies.retrieveCompany(id),
+      () => modelAPI.companies.retrieveCompany(id),
       `Failed to load company ${id}`
     )
   }
   getApplicationById (id) {
     return this.cacheFirst(
       ['applications', `${id}`],
-      () => this.models.applications.retrieveApplication(id),
+      () => modelAPI.applications.retrieveApplication(id),
       `Failed to load application ${id}`
     )
   }
@@ -71,7 +71,7 @@ module.exports = class NetworkProtocolDataAccess {
     // reporting protocols cached by reportingProtocolAPIs
     try {
       let application = await this.getApplicationById(appId)
-      return this.models.reportingProtocolAPIs.getProtocol(application)
+      return modelAPI.reportingProtocolAPIs.getProtocol(application)
     }
     catch (err) {
       this._log(`${this.funcDesc}: Failed to load application ${appId} or it's reporting protocol`)
@@ -81,14 +81,14 @@ module.exports = class NetworkProtocolDataAccess {
   getDeviceById (id) {
     return this.cacheFirst(
       ['devices', `${id}`],
-      () => this.models.devices.retrieveDevice(id),
+      () => modelAPI.devices.retrieveDevice(id),
       `Failed to load device ${id}`
     )
   }
   async getDeviceProfileById (id) {
     return this.cacheFirst(
       ['deviceProfiles', `${id}`],
-      () => this.models.deviceProfiles.retrieveDeviceProfile(id),
+      () => modelAPI.deviceProfiles.retrieveDeviceProfile(id),
       `Failed to load device profile ${id}`
     )
   }
@@ -114,7 +114,7 @@ module.exports = class NetworkProtocolDataAccess {
   }
   async getCompanyNetworkType (companyId, networkTypeId) {
     const request = async () => {
-      const { records } = await this.models.companyNetworkTypeLinks.retrieveCompanyNetworkTypeLinks({ companyId, networkTypeId })
+      const { records } = await modelAPI.companyNetworkTypeLinks.retrieveCompanyNetworkTypeLinks({ companyId, networkTypeId })
       return records[0]
     }
     return this.cacheFirst(
@@ -125,7 +125,7 @@ module.exports = class NetworkProtocolDataAccess {
   }
   async getApplicationNetworkType (applicationId, networkTypeId) {
     const request = async () => {
-      const { records } = await this.models.applicationNetworkTypeLinks.retrieveApplicationNetworkTypeLinks({ applicationId, networkTypeId })
+      const { records } = await modelAPI.applicationNetworkTypeLinks.retrieveApplicationNetworkTypeLinks({ applicationId, networkTypeId })
       return records[0]
     }
     return this.cacheFirst(
@@ -136,7 +136,7 @@ module.exports = class NetworkProtocolDataAccess {
   }
   async getDeviceNetworkType (deviceId, networkTypeId) {
     const request = async () => {
-      const { records } = await this.models.deviceNetworkTypeLinks.retrieveDeviceNetworkTypeLinks({ deviceId, networkTypeId })
+      const { records } = await modelAPI.deviceNetworkTypeLinks.retrieveDeviceNetworkTypeLinks({ deviceId, networkTypeId })
       appLogger.log(`GET_DEVICE_NETWORK_TYPE: ${JSON.stringify(records)}`)
       return records[0]
     }
@@ -148,7 +148,7 @@ module.exports = class NetworkProtocolDataAccess {
   }
   async getDevicesForDeviceProfile (deviceProfileId) {
     const request = async () => {
-      let devs = await this.models.devices.retrieveDevices({ 'deviceProfileId': deviceProfileId })
+      let devs = await modelAPI.devices.retrieveDevices({ 'deviceProfileId': deviceProfileId })
       // Put devices in cache (cache is disabled)
       // devs.forEach(x => R.assocPath(['devices', `${x.id}`], x, this.cache))
       return devs.map(x => x.id)
@@ -184,26 +184,26 @@ module.exports = class NetworkProtocolDataAccess {
       return acc
     }, {})
   }
-  getProtocolDataForKey (networkId, networkProtocolId, key) {
-    return this.models.protocolData.retrieveProtocolData(networkId, networkProtocolId, key)
+  async getProtocolDataForKey (networkId, networkProtocolId, key) {
+    const rec = await modelAPI.protocolData.retrieveProtocolData(networkId, networkProtocolId, key)
+    return rec.dataValue
   }
   async putProtocolDataForKey (networkId, networkProtocolId, key, data) {
     try {
       // Try a create first.
-      await this.models.protocolData.createProtocolData(networkId, networkProtocolId, key, data)
+      await modelAPI.protocolData.createProtocolData(networkId, networkProtocolId, key, data)
     }
     catch (err) {
       // Nope?  Get and update!  (Need to get to get the record id.)
-      let rec = this.getProtocolDataForKey(networkId, networkProtocolId, key)
-      rec.data = data
-      await modelAPI.protocolData.updateProtocolData(rec)
+      const rec = await modelAPI.protocolData.retrieveProtocolData(networkId, networkProtocolId, key)
+      await modelAPI.protocolData.updateProtocolData({ id: rec.id, dataValue: data })
     }
   }
   deleteProtocolDataForKey (networkId, networkProtocolId, keyStartsWith) {
-    return this.models.protocolData.clearProtocolData(networkId, networkProtocolId, keyStartsWith)
+    return modelAPI.protocolData.clearProtocolData(networkId, networkProtocolId, keyStartsWith)
   }
   getProtocolDataWithData (networkId, keyLike, data) {
-    return this.models.protocolData.reverseLookupProtocolData(networkId, keyLike, data)
+    return modelAPI.protocolData.reverseLookupProtocolData(networkId, keyLike, data)
   }
   access (network, data, k) {
     let parts = data.split(delimiter)

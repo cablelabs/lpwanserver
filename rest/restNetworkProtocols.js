@@ -351,13 +351,8 @@ exports.initialize = function (app, server) {
      */
   app.get('/api/networkProtocolHandlers/', [restServer.isLoggedIn],
     function (req, res, next) {
-      const handlersDir = path.join(__dirname, './networkProtocols/handlers')
-      const handlerList = fs.readdirSync(handlersDir)
-        .filter(x => x !== 'README.md')
-        .map(x => ({
-          id: x,
-          name: x.split('.')[0]
-        }))
+      let { handlerList } = modelAPI.networkProtocolAPI
+      handlerList = handlerList.map(x => ({ id: x, name: x }))
       restServer.respondJson(res, null, handlerList)
     })
 }

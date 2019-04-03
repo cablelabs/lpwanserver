@@ -75,11 +75,9 @@ async function retrieveProtocolData (networkId, networkProtocolId, key) {
     networkProtocol: { id: networkProtocolId },
     dataIdentifier: key
   }
-  const records = await prisma.protocolDatas({ where })
-  if (!records.length) {
-    throw httpError.NotFound()
-  }
-  return records[0].dataValue
+  const [ record ] = await prisma.protocolDatas({ where })
+  if (!record) throw httpError.NotFound()
+  return record
 }
 
 // Update the protocolData record.

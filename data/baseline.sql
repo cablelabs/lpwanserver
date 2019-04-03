@@ -729,7 +729,7 @@ SELECT pg_catalog.setval('public."emailVerifications_id_seq"', 1, false);
 -- Name: networkProtocols_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public."networkProtocols_id_seq"', 4, false);
+SELECT pg_catalog.setval('public."networkProtocols_id_seq"', 1, false);
 
 
 --

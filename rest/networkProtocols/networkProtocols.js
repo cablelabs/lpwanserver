@@ -10,10 +10,11 @@ const httpError = require('http-errors')
 // for the upper layers.
 // ******************************************************************************
 
-const handlers = [
+const handlerList = [
   'LoraOpenSource/v1',
   'LoraOpenSource/v2',
-  'TheThingsNetwork/v2'
+  'TheThingsNetwork/v2',
+  'Loriot/v4'
 ]
 
 /**
@@ -28,11 +29,12 @@ module.exports = class NetworkProtocolAccess {
     this.npAPI = modelAPI.networkProtocols
     this.modelAPI = modelAPI
     this.networkProtocolMap = {}
+    this.handlerList = handlerList
   }
 
   async register () {
-    for (let i = 0; i < handlers.length; i++) {
-      let Proto = require(path.join(handlersDir, handlers[i]))
+    for (let i = 0; i < handlerList.length; i++) {
+      let Proto = require(path.join(handlersDir, handlerList[i]))
       let proto = new Proto()
       await proto.register(this.npAPI)
     }

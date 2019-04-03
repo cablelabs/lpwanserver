@@ -16,14 +16,19 @@ function formatRelationshipsIn (data) {
   const REF_PROP_RE = /^(.+)Id$/
   return R.keys(data).reduce((acc, x) => {
     if (!REF_PROP_RE.test(x)) return mutate(x, data[x], acc)
-    return mutate(x.replace(/Id$/, ''), { id: data[x] }, acc)
+    if (data[x] == null) return acc
+    const id = parseInt(data[x], 10)
+    return mutate(x.replace(/Id$/, ''), { id }, acc)
   }, {})
+}
+
+function isRelationshipRef (val) {
+  return val && typeof val === 'object' && 'id' in val && R.keys(val).length === 1
 }
 
 function formatRelationshipsOut (data) {
   return R.keys(data).reduce((acc, x) => {
-    const val = data[x]
-    if (val && typeof val === 'object' && 'id' in val && R.keys(val).length === 1) {
+    if (isRelationshipRef(data[x])) {
       return mutate(`${x}Id`, data[x].id, acc)
     }
     return mutate(x, data[x], acc)
@@ -32,7 +37,7 @@ function formatRelationshipsOut (data) {
 
 function connectRelationshipReferences (data) {
   return R.keys(data).reduce((acc, x) => {
-    if (typeof acc[x] === 'object' && 'id' in acc[x]) {
+    if (isRelationshipRef(acc[x])) {
       acc[x] = { connect: acc[x] }
     }
     return acc

@@ -35,8 +35,8 @@ function Company (server) {
   // Load the types from the database.
   this.impl.getTypes().then(function (typeList) {
     for (var i = 0; i < typeList.length; ++i) {
-      types[ typeList[ i ].name ] = typeList[ i ].type
-      reverseTypes[ typeList[ i ].type ] = typeList[ i ].name
+      types[ typeList[ i ].name ] = typeList[ i ].id
+      reverseTypes[ typeList[ i ].id ] = typeList[ i ].name
     }
   })
     .catch(function (err) {

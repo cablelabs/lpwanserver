@@ -1,6 +1,6 @@
 // Database implementation.
 const { prisma, formatInputData, formatRelationshipsIn } = require('../../../lib/prisma')
-
+const appLogger = require('../../../lib/appLogger')
 // Error reporting
 var httpError = require('http-errors')
 
@@ -37,6 +37,7 @@ function createDevice (name, description, applicationId, deviceModel) {
     applicationId,
     deviceModel
   })
+  appLogger.log(`devices: createDevice: ${JSON.stringify(data)}`)
   return prisma.createDevice(data).$fragment(fragments.basic)
 }
 

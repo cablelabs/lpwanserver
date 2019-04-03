@@ -1,6 +1,7 @@
 const LoraOpenSource = require('../LoraOpenSource')
 const appLogger = require('../../../../lib/appLogger')
 const ApiClient = require('./client')
+const R = require('ramda')
 
 module.exports = class LoraOpenSourceV2 extends LoraOpenSource {
   constructor () {
@@ -27,5 +28,21 @@ module.exports = class LoraOpenSourceV2 extends LoraOpenSource {
       // ignore error
     }
     await networkProtocolModel.upsertNetworkProtocol(me)
+  }
+
+  buildRemoteDevice (device, deviceNtl, deviceProfile, remoteAppId, remoteDeviceProfileId) {
+    const result = super.buildRemoteDevice(device, deviceNtl, deviceProfile, remoteAppId, remoteDeviceProfileId)
+    if (deviceNtl.networkSettings.deviceKeys) {
+      result.deviceKeys = { devEUI: deviceNtl.networkSettings.devEUI }
+      Object.assign(result.deviceKeys, deviceNtl.networkSettings.deviceKeys)
+      if (!result.deviceKeys.nwkKey) {
+        result.deviceKeys.nwkKey = result.deviceKeys.appKey
+      }
+    }
+    else if (deviceNtl.networkSettings.deviceActivation && deviceProfile.networkSettings.macVersion.slice(0, 3) === '1.1') {
+      result.deviceActivation = { devEUI: deviceNtl.networkSettings.devEUI }
+      Object.assign(result.deviceActivation, deviceNtl.networkSettings.deviceActivation)
+    }
+    return result
   }
 }

@@ -44,11 +44,11 @@ Network.prototype.retrieveNetworks = function (options, fragment) {
   })
 }
 
-Network.prototype.retrieveNetwork = function (id, fragment) {
+Network.prototype.retrieveNetwork = function (id) {
   let me = this
   return new Promise(async function (resolve, reject) {
     try {
-      let ret = await me.impl.retrieveNetwork(id, fragment)
+      let ret = await me.impl.retrieveNetwork(id)
       if (ret.securityData) {
         let dataAPI = new NetworkProtocolDataAccess(modelAPI, 'INetwork Retrieve')
         let k = await dataAPI.getProtocolDataForKey(id,
@@ -139,7 +139,7 @@ Network.prototype.createNetwork = async function createNetwork (data) {
 
 Network.prototype.updateNetwork = async function updateNetwork (record) {
   let dataAPI = new NetworkProtocolDataAccess(modelAPI, 'INetwork Update')
-  const old = await this.retrieveNetwork(record.id, 'internal')
+  const old = await this.retrieveNetwork(record.id)
   const k = await dataAPI.getProtocolDataForKey(record.id, old.networkProtocol.id, genKey(record.id))
   if (!record.securityData) record.securityData = old.securityData
   const finalNetwork = await authorizeAndTest(record, modelAPI, k, this, dataAPI)
@@ -177,7 +177,7 @@ Network.prototype.deleteNetwork = function (id) {
 // Returns a promise that executes the pull.
 Network.prototype.pullNetwork = async function pullNetwork (networkId) {
   try {
-    let network = await this.retrieveNetwork(networkId, 'internal')
+    let network = await this.retrieveNetwork(networkId)
     if (!network.securityData.authorized) {
       throw new Error('Network is not authorized.  Cannot pull')
     }
@@ -199,7 +199,7 @@ Network.prototype.pushNetworks = function (networkTypeId) {
   let me = this
   return new Promise(async function (resolve, reject) {
     try {
-      let networks = await me.retrieveNetworks({ networkTypeId: networkTypeId }, 'internal')
+      let networks = await me.retrieveNetworks({ networkTypeId: networkTypeId })
       let networkType = await modelAPI.networkTypes.retrieveNetworkTypes(networkTypeId)
       var npda = new NetworkProtocolDataAccess(modelAPI, 'Push Network')
       npda.initLog(networkType, networks)
@@ -233,7 +233,7 @@ Network.prototype.pushNetwork = function (networkId) {
   return new Promise(async function (resolve, reject) {
     try {
       appLogger.log(networkId)
-      let network = await me.retrieveNetwork(networkId, 'internal')
+      let network = await me.retrieveNetwork(networkId)
       let networkType = await modelAPI.networkTypes.retrieveNetworkTypes(network.networkType.id)
       var npda = new NetworkProtocolDataAccess(modelAPI, 'Push Network')
       npda.initLog(networkType, network)

@@ -1,28 +1,17 @@
-const requestClient = require('request-promise')
+const RestClient = require('../../RestClient')
 const R = require('ramda')
-const { URLSearchParams } = require('url')
-const appLogger = require('../../../lib/appLogger.js')
 const { lift } = require('../../../lib/utils')
 
-module.exports = class LoraOpenSourceClient {
-  async request (network, opts, session, transform = R.identity) {
+module.exports = class LoraOpenSourceRestClient extends RestClient {
+  async request (network, opts, session, transformResponse) {
     opts.url = this.constructUrl({ network, url: opts.url })
-    appLogger.log(JSON.stringify(opts), 'info')
-    let body
-    try {
-      body = await requestClient(this.addRequestDefaults(opts, session))
-      appLogger.log(JSON.stringify(body), 'info')
-    }
-    catch (err) {
-      appLogger.log(`HTTP request to network server failed:  ${err}`, 'error')
-      appLogger.log(JSON.stringify(opts), 'error')
-      throw err
-    }
-    return transform(body)
+    return super.request({
+      opts: this.addRequestDefaults(opts, session),
+      transformResponse
+    })
   }
 
   addRequestDefaults (opts, session) {
-    if (opts.json == null) opts.json = true
     opts.agentOptions = {
       secureProtocol: 'TLSv1_2_method',
       rejectUnauthorized: false
@@ -31,18 +20,6 @@ module.exports = class LoraOpenSourceClient {
       opts.headers = R.merge(opts.headers, { Authorization: `Bearer ${session.connection}` })
     }
     return opts
-  }
-
-  constructUrl ({ network, url, params }) {
-    if (params && !R.isEmpty(params)) {
-      const qs = new URLSearchParams(params).toString()
-      url = `${url}?${qs}`
-    }
-    if (network) {
-      url = `${network.baseUrl}/${url}`
-    }
-    // remove possible double slash
-    return url.replace(/([^:]\/)\/+/g, '$1')
   }
 
   login (network, body) {
@@ -65,7 +42,7 @@ module.exports = class LoraOpenSourceClient {
     return this.request(network, opts, session)
   }
 
-  replaceOrganization (session, network, id, body) {
+  updateOrganization (session, network, id, body) {
     const opts = { method: 'PUT', url: `/organizations/${id}`, body }
     return this.request(network, opts, session)
   }
@@ -90,7 +67,7 @@ module.exports = class LoraOpenSourceClient {
     return this.request(network, opts, session)
   }
 
-  replaceServiceProfile (session, network, id, body) {
+  updateServiceProfile (session, network, id, body) {
     const opts = { method: 'POST', url: `/service-profiles/${id}`, body }
     return this.request(network, opts, session)
   }
@@ -120,7 +97,7 @@ module.exports = class LoraOpenSourceClient {
     return this.request(network, opts, session, lift(['application']))
   }
 
-  replaceApplication (session, network, id, body) {
+  updateApplication (session, network, id, body) {
     const opts = { method: 'PUT', url: `/applications/${id}`, body }
     return this.request(network, opts, session)
   }
@@ -145,7 +122,7 @@ module.exports = class LoraOpenSourceClient {
     return this.request(network, opts, session)
   }
 
-  replaceDeviceProfile (session, network, id, body) {
+  updateDeviceProfile (session, network, id, body) {
     const opts = { method: 'PUT', url: `/device-profiles/${id}`, body }
     return this.request(network, opts, session)
   }
@@ -155,7 +132,7 @@ module.exports = class LoraOpenSourceClient {
     return this.request(network, opts, session)
   }
 
-  loadDevice (session, network, id) {
+  loadDevice (session, network, appId, id) {
     const opts = { url: `/devices/${id}` }
     return this.request(network, opts, session, lift(['device']))
   }
@@ -164,53 +141,53 @@ module.exports = class LoraOpenSourceClient {
     // overwritten by all extending classes
   }
 
-  createDevice (session, network, body) {
+  createDevice (session, network, appId, body) {
     const opts = { method: 'POST', url: '/devices', body }
     return this.request(network, opts, session)
   }
 
-  loadDeviceKeys (session, network, devEUI) {
-    const opts = { url: `/devices/${devEUI}/keys` }
+  updateDevice (session, network, appId, id, body) {
+    const opts = { method: 'PUT', url: `/devices/${id}`, body }
+    return this.request(network, opts, session)
+  }
+
+  deleteDevice (session, network, id) {
+    const opts = { method: 'DELETE', url: `/devices/${id}` }
+    return this.request(network, opts, session)
+  }
+
+  loadDeviceKeys (session, network, id) {
+    const opts = { url: `/devices/${id}/keys` }
     return this.request(network, opts, session, lift(['deviceKeys']))
   }
 
-  replaceDevice (session, network, devEUI, body) {
-    const opts = { method: 'PUT', url: `/devices/${devEUI}`, body }
+  createDeviceKeys (session, network, id, body) {
+    const opts = { method: 'POST', url: `/devices/${id}/keys`, body }
     return this.request(network, opts, session)
   }
 
-  deleteDevice (session, network, devEUI) {
-    const opts = { method: 'DELETE', url: `/devices/${devEUI}` }
+  updateDeviceKeys (session, network, id, body) {
+    const opts = { method: 'PUT', url: `/devices/${id}/keys`, body }
     return this.request(network, opts, session)
   }
 
-  createDeviceKeys (session, network, devEUI, body) {
-    const opts = { method: 'POST', url: `/devices/${devEUI}/keys`, body }
+  deleteDeviceKeys (session, network, id) {
+    const opts = { method: 'DELETE', url: `/devices/${id}/keys` }
     return this.request(network, opts, session)
   }
 
-  replaceDeviceKeys (session, network, devEUI, body) {
-    const opts = { method: 'PUT', url: `/devices/${devEUI}/keys`, body }
-    return this.request(network, opts, session)
-  }
-
-  deleteDeviceKeys (session, network, devEUI) {
-    const opts = { method: 'DELETE', url: `/devices/${devEUI}/keys` }
-    return this.request(network, opts, session)
-  }
-
-  loadDeviceActivation (session, network, devEUI) {
-    const opts = { url: `/devices/${devEUI}/activation` }
+  loadDeviceActivation (session, network, id) {
+    const opts = { url: `/devices/${id}/activation` }
     return this.request(network, opts, session, lift(['deviceActivation']))
   }
 
-  activateDevice (session, network, devEUI, body) {
-    const opts = { method: 'POST', url: `/devices/${devEUI}/activate`, body }
+  activateDevice (session, network, id, body) {
+    const opts = { method: 'POST', url: `/devices/${id}/activate`, body }
     return this.request(network, opts, session)
   }
 
-  deleteDeviceActivation (session, network, devEUI) {
-    const opts = { method: 'DELETE', url: `/devices/${devEUI}/activation` }
+  deleteDeviceActivation (session, network, id) {
+    const opts = { method: 'DELETE', url: `/devices/${id}/activation` }
     return this.request(network, opts, session)
   }
 
@@ -234,7 +211,7 @@ module.exports = class LoraOpenSourceClient {
     return this.request(network, opts, session)
   }
 
-  replaceApplicationIntegration (session, network, appId, id, body) {
+  updateApplicationIntegration (session, network, appId, id, body) {
     const opts = { method: 'PUT', url: `/applications/${appId}/integrations/${id}`, body }
     return this.request(network, opts, session)
   }

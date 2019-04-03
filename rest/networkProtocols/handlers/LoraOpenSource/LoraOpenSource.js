@@ -3,14 +3,9 @@ const R = require('ramda')
 const appLogger = require('../../../lib/appLogger.js')
 const httpError = require('http-errors')
 const nconf = require('nconf')
-const { mutate } = require('../../../lib/utils')
+// const { mutate } = require('../../../lib/utils')
 
 module.exports = class LoraOpenSource extends NetworkProtocol {
-  constructor () {
-    super()
-    this.activeApplicationNetworkProtocols = {}
-  }
-
   async connect (network, loginData) {
     return this.client.login(network, loginData)
   }
@@ -132,7 +127,7 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
   }
 
   async addDefaultOrgAdminUser (session, network, company, dataAPI, organizationId) {
-    var creds = await this.getCompanyAccount(dataAPI, network, company.id, true)
+    var creds = await this.getCompanyAccount(network, dataAPI, company.id, true)
     const body = await this.client.createUser(session, network, {
       password: creds.password,
       organizations: [
@@ -204,18 +199,6 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
     return nsList[0].id
   }
 
-  getDeviceProfileById (session, network, dpId) {
-    return this.client.loadDeviceProfile(session, network, dpId)
-  }
-
-  getRemoteDeviceById (session, network, deviceId) {
-    return this.client.loadDevice(session, network, deviceId)
-  }
-
-  async getServiceProfileById (session, network, serviceProfileId) {
-    return this.client.loadServiceProfile(session, network, serviceProfileId)
-  }
-
   async getServiceProfileForOrg (session, network, orgId, companyId, dataAPI) {
     const body = await this.client.listServiceProfiles(session, network, {
       organizationID: orgId,
@@ -268,7 +251,7 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
       ),
       err => `Company ${company.name} does not have a key for the remote network.  Company has not yet been created.  ${err}`
     )
-    await this.client.replaceOrganization(session, network, orgId, {
+    await this.client.updateOrganization(session, network, orgId, {
       'id': orgId,
       'name': company.name,
       'displayName': company.name,
@@ -573,7 +556,7 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
       await dataAPI.putProtocolDataForKey(
         network.id,
         network.networkProtocol.id,
-        makeApplicationDataKey(appNtl.id, 'appNwkId'),
+        makeApplicationDataKey(localApp.id, 'appNwkId'),
         remoteApp.id
       )
     }
@@ -581,16 +564,13 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
   }
 
   async pullDevices (session, network, remoteAppId, localAppId, dpMap, modelAPI, dataAPI) {
-    const { result } = await this.client.listDevices(session, network, {
-      limit: 9999,
-      offset: 0,
-      applicationID: remoteAppId
-    })
+    const params = { limit: 9999, offset: 0 }
+    const { result } = await this.client.listDevices(session, network, remoteAppId, params)
     return Promise.all(result.map(device => this.addRemoteDevice(session, network, device.devEUI, localAppId, dpMap, modelAPI, dataAPI)))
   }
 
   async addRemoteDevice (session, network, remoteDeviceId, localAppId, dpMap, modelAPI, dataAPI) {
-    const remoteDevice = await this.client.loadDevice(session, network, remoteDeviceId)
+    const remoteDevice = await this.client.loadDevice(session, network, null, remoteDeviceId)
     appLogger.log('Adding ' + remoteDevice.name)
     appLogger.log(remoteDevice)
     let deviceProfileIdMap = dpMap.find(o => o.remoteDeviceProfile === remoteDevice.deviceProfileID)
@@ -641,9 +621,9 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
     appLogger.log(integration, 'warn')
     const deliveryURL = `api/ingest/${localAppId}/${network.id}`
     const reportingUrl = `${nconf.get('base_url')}${deliveryURL}`
-    if (integration.dataUpURL === reportingUrl) return
+    if (integration.uplinkDataURL === reportingUrl) return
     await modelAPI.applications.updateApplication({ id: localAppId, baseUrl: integration.uplinkDataURL })
-    await this.client.replaceApplicationIntegration(session, network, remoteAppId, 'http', {
+    await this.client.updateApplicationIntegration(session, network, remoteAppId, 'http', {
       ackNotificationURL: reportingUrl,
       uplinkDataURL: reportingUrl,
       errorNotificationURL: reportingUrl,
@@ -731,7 +711,7 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
         reqBody.payloadCodec = applicationData.networkSettings.payloadCodec
       }
     }
-    await this.client.replaceApplication(session, network, reqBody.id, reqBody)
+    await this.client.updateApplication(session, network, reqBody.id, reqBody)
   }
 
   async deleteApplication (session, network, appId, dataAPI) {
@@ -931,7 +911,7 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
         'supportsClassC'
       ]
       Object.assign(reqBody, R.pick(props, deviceProfile.networkSettings))
-      await this.client.replaceDeviceProfile(session, network, reqBody.id, reqBody)
+      await this.client.updateDeviceProfile(session, network, reqBody.id, reqBody)
     }
   }
 
@@ -983,17 +963,16 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
       appNwkId,
       dpNwkId
     )
-    await this.client.createDevice(session, network, deviceData.device)
+    await this.client.createDevice(session, network, appNwkId, deviceData.device)
     dataAPI.putProtocolDataForKey(network.id,
       network.networkProtocol.id,
       makeDeviceDataKey(device.id, 'devNwkId'),
       deviceData.device.devEUI)
-    appLogger.log(`ADD_DEVICE: deviceProfile: ${JSON.stringify(deviceProfile)}`)
     if (deviceProfile.networkSettings.supportsJoin && deviceData.deviceKeys) {
       await this.client.createDeviceKeys(session, network, deviceData.device.devEUI, deviceData.deviceKeys)
     }
-    else if (deviceData.deviceActivation) {
-      await this.client.createDeviceActivation(session, network, deviceData.device.devEUI, deviceData.deviceActivation)
+    else if (deviceData.deviceActivation && deviceData.deviceActivation.fCntUp >= 0) {
+      await this.client.activateDevice(session, network, deviceData.device.devEUI, deviceData.deviceActivation)
     }
     else {
       appLogger.log('Remote Device ' + deviceData.device.name + ' does not have authentication parameters', 'error')
@@ -1034,9 +1013,9 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
       appNwkId,
       dpNwkId
     )
-    await this.client.replaceDevice(session, network, devNetworkId, deviceData.device)
+    await this.client.updateDevice(session, network, appNwkId, devNetworkId, deviceData.device)
     if (deviceProfile.networkSettings.supportsJoin && deviceData.deviceKeys) {
-      await this.client.replaceDeviceKeys(session, network, deviceData.device.devEUI, deviceData.deviceKeys)
+      await this.client.updateDeviceKeys(session, network, deviceData.device.devEUI, deviceData.deviceKeys)
     }
     else if (deviceData.deviceActivation) {
       // This is the ABP path.
@@ -1075,28 +1054,8 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
   }
 
   buildApplicationNetworkSettings (remoteApplication) {
-    /*
-    remoteApplication = {
-      "description": "string",
-      "id": "string",
-      "name": "string",
-      "organizationID": "string",
-      "payloadCodec": "string",
-      "payloadDecoderScript": "string",
-      "payloadEncoderScript": "string",
-      "serviceProfileID": "string"
-    }
-    */
-    const copyProps = ['description', 'id', 'name', 'organizationID', 'payloadCodec', 'payloadDecoderScript', 'payloadEncoderScript', 'serviceProfileID']
-    const nullProps = ['deviceLimit', 'devices', 'overbosity', 'ogwinfo', 'clientsLimit', 'joinServer']
-    return {
-      ...R.pick(copyProps, remoteApplication),
-      ...nullProps.reduce((acc, x) => mutate(x, null, acc), {}),
-      cansend: true,
-      orx: true,
-      canotaa: true,
-      suspended: false
-    }
+    const keys = ['payloadCodec', 'payloadDecoderScript', 'payloadEncoderScript']
+    return R.pick(keys, remoteApplication)
   }
 
   buildRemoteApplication (networkSettings, serviceProfileId, organizationId, app) {
@@ -1122,52 +1081,24 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
   }
 
   buildDeviceNetworkSettings (remoteDevice) {
-    let copyProps = [
-      'applicationID',
-      'description',
+    return R.pick([
       'devEUI',
-      'deviceProfileID',
-      'name',
       'skipFCntCheck',
       'deviceStatusBattery',
       'deviceStatusMargin',
-      'lastSeenAt'
-    ]
-    let result = R.pick(copyProps, remoteDevice)
-    if (remoteDevice.deviceKeys) {
-      result.deviceKeys = R.pick(['appKey', 'devEUI', 'nwkKey'], remoteDevice.deviceKeys)
-    }
-    if (remoteDevice.deviceActivation) {
-      copyProps = ['aFCntDown', 'appSKey', 'devAddr', 'devEUI', 'fCntUp', 'nFCntDown', 'nwkSEncKey', 'sNwkSIntKey', 'fNwkSIntKey']
-      result.deviceActivation = R.pick(copyProps, remoteDevice.deviceActivation)
-    }
-    return result
+      'lastSeenAt',
+      'deviceKeys',
+      'deviceActivation'
+    ], remoteDevice)
   }
 
   buildRemoteDevice (device, deviceNtl, deviceProfile, remoteAppId, remoteDeviceProfileId) {
-    const result = { device: {
+    return { device: {
       ...R.pick(['name', 'description'], device),
       ...R.pick(['devEUI', 'skipFCntCheck'], deviceNtl.networkSettings),
       applicationID: remoteAppId,
       deviceProfileID: remoteDeviceProfileId
     } }
-    if (deviceNtl.networkSettings.deviceKeys) {
-      if (deviceProfile.networkSettings.macVersion === '1.1.0') {
-        result.deviceKeys = R.pick(['appKey', 'nwkKey', 'devEUI'], deviceNtl.networkSettings.deviceKeys)
-      }
-      else {
-        result.deviceKeys = {
-          ...R.pick(['appKey', 'devEUI'], deviceNtl.networkSettings.deviceKeys),
-          nwkKey: deviceNtl.networkSettings.deviceKeys.appKey
-        }
-      }
-    }
-    if (deviceNtl.networkSettings.deviceActivation) {
-      let copyProps = ['appSKey', 'devAddr', 'aFCntDown', 'nFCntDown', 'fCntUp', 'nwkSEncKey', 'sNwkSIntKey', 'fNwkSIntKey']
-      result.deviceActivation = R.pick(copyProps, deviceNtl.networkSettings.deviceActivation)
-      result.deviceActivation.devEUI = deviceNtl.networkSettings.devEUI
-    }
-    return result
   }
 }
 

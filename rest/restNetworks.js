@@ -88,8 +88,8 @@ exports.initialize = function (app, server) {
       options.networkProtocolId = req.query.networkProtocolId
     }
     const isAdmin = req.company.type.id !== modelAPI.companies.COMPANY_ADMIN
-    const fragment = isAdmin ? 'internal' : 'basic'
-    modelAPI.networks.retrieveNetworks(options, fragment).then(function (networks) {
+    const mapSecurityData = isAdmin ? R.identity : R.pick(['authorized', 'message', 'enabled'])
+    modelAPI.networks.retrieveNetworks(options).then(function (networks) {
       for (let i = 0; i < networks.records.length; ++i) {
         if (networks.records[i].securityData) {
           let temp = {
@@ -109,10 +109,13 @@ exports.initialize = function (app, server) {
             temp.username = networks.records[i].securityData.username
             temp.password = networks.records[i].securityData.password
           }
-          networks.records[i].securityData = temp
+          networks.records[i].securityData = mapSecurityData(temp)
         }
       }
-      const responseBody = { ...networks, records: networks.records.map(formatRelationshipsOut) }
+      const responseBody = {
+        ...networks,
+        records: networks.records.map(formatRelationshipsOut)
+      }
       restServer.respond(res, 200, responseBody)
     })
       .catch(function (err) {
@@ -150,8 +153,8 @@ exports.initialize = function (app, server) {
       options.networkProtocolId = req.query.networkProtocolId
     }
     const isAdmin = req.company.type.id !== modelAPI.companies.COMPANY_ADMIN
-    const fragment = isAdmin ? 'internal' : 'basic'
-    modelAPI.networks.retrieveNetworks(options, fragment).then(function (networks) {
+    const mapSecurityData = isAdmin ? R.identity : R.pick(['authorized', 'message', 'enabled'])
+    modelAPI.networks.retrieveNetworks(options).then(function (networks) {
       modelAPI.networkProtocols.retrieveNetworkProtocols(options).then(function (recs) {
         let nps = {
           totalCount: recs.totalCount,
@@ -202,7 +205,7 @@ exports.initialize = function (app, server) {
               temp.username = networks.records[i].securityData.username
               temp.password = networks.records[i].securityData.password
             }
-            networks.records[i].securityData = temp
+            networks.records[i].securityData = mapSecurityData(temp)
           }
           // Add network to correct protocol
           for (let npIndex = 0; npIndex < nps.records.length; npIndex++) {
@@ -251,14 +254,13 @@ exports.initialize = function (app, server) {
   function (req, res, next) {
     var id = parseInt(req.params.id, 10)
     const isAdmin = req.company.type.id === modelAPI.companies.COMPANY_ADMIN
-    const fragment = isAdmin ? 'internal' : 'basic'
-    modelAPI.networks.retrieveNetwork(id, fragment).then(function (network) {
+    const mapSecurityData = isAdmin ? R.identity : R.pick(['authorized', 'message', 'enabled'])
+    modelAPI.networks.retrieveNetwork(id).then(function (network) {
       if (network.securityData) {
         let temp = {
           authorized: network.securityData.authorized,
           message: network.securityData.message,
           enabled: network.securityData.enabled
-  
         }
         if (network.securityData.clientId) {
           temp.clientId = network.securityData.clientId
@@ -271,7 +273,7 @@ exports.initialize = function (app, server) {
           temp.username = network.securityData.username
           temp.password = network.securityData.password
         }
-        network.securityData = temp
+        network.securityData = mapSecurityData(temp)
       }
       restServer.respond(res, 200, formatRelationshipsOut(network))
     })
@@ -327,7 +329,7 @@ exports.initialize = function (app, server) {
         return
       }
 
-      const required = ['name', 'networkProviderId', 'networkTypeId', 'networkProtocolId', 'baseUrl']
+      const required = ['name', 'networkTypeId', 'networkProtocolId', 'baseUrl']
       if (required.some(x => !body[x])) {
         restServer.respond(res, 400, 'Missing required data')
         return

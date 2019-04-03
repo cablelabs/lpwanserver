@@ -84,6 +84,10 @@ exports.initialize = function (app, server) {
       }
     }
 
+    if (options.companyId) {
+      options.companyId = parseInt(options.companyId, 10)
+    }
+
     if (req.query.limit) {
       var limitInt = parseInt(req.query.limit)
       if (!isNaN(limitInt)) {
@@ -100,7 +104,7 @@ exports.initialize = function (app, server) {
       options.search = req.query.search
     }
     if (req.query.networkTypeId) {
-      options.networkTypeId = req.query.networkTypeId
+      options.networkTypeId = parseInt(req.query.networkTypeId, 10)
     }
 
     modelAPI.deviceProfiles.retrieveDeviceProfiles(options).then(function (dps) {

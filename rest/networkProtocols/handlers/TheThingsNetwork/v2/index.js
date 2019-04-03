@@ -497,7 +497,7 @@ module.exports = class TheThingsNetworkV2 {
     }
   }
 
-  async getApplications (session, network, dataAPI) {
+  async getApplications (session, network) {
     try {
       return TTNRequest(session.connection.access_token, {
         url: network.baseUrl + '/api/v2/applications'

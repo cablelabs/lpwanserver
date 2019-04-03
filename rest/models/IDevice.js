@@ -63,6 +63,7 @@ Device.prototype.retrieveDevice = async function retrieveDevice (id) {
 //
 // Returns the promise that will execute the create.
 Device.prototype.createDevice = function (name, description, applicationId, deviceModel) {
+  appLogger.log(`IDevice ${name}, ${description}, ${applicationId}, ${deviceModel}`)
   return this.impl.createDevice(name, description, applicationId, deviceModel)
 }
 

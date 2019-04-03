@@ -2535,7 +2535,7 @@ export interface NetworkProviderUpdateInput {
 
 export interface NetworkUpdateWithoutNetworkProtocolDataInput {
   name?: String;
-  networkProvider?: NetworkProviderUpdateOneRequiredWithoutNetworksInput;
+  networkProvider?: NetworkProviderUpdateOneWithoutNetworksInput;
   networkType?: NetworkTypeUpdateOneRequiredWithoutNetworksInput;
   baseUrl?: String;
   securityData?: String;
@@ -2546,10 +2546,12 @@ export type ReportingProtocolWhereUniqueInput = AtLeastOne<{
   id: Int;
 }>;
 
-export interface NetworkProviderUpdateOneRequiredWithoutNetworksInput {
+export interface NetworkProviderUpdateOneWithoutNetworksInput {
   create?: NetworkProviderCreateWithoutNetworksInput;
   update?: NetworkProviderUpdateWithoutNetworksDataInput;
   upsert?: NetworkProviderUpsertWithoutNetworksInput;
+  delete?: Boolean;
+  disconnect?: Boolean;
   connect?: NetworkProviderWhereUniqueInput;
 }
 
@@ -2596,7 +2598,7 @@ export interface NetworkTypeUpdateOneRequiredWithoutNetworksInput {
 
 export interface NetworkUpdateInput {
   name?: String;
-  networkProvider?: NetworkProviderUpdateOneRequiredWithoutNetworksInput;
+  networkProvider?: NetworkProviderUpdateOneWithoutNetworksInput;
   networkType?: NetworkTypeUpdateOneRequiredWithoutNetworksInput;
   networkProtocol?: NetworkProtocolUpdateOneRequiredWithoutNetworksInput;
   baseUrl?: String;
@@ -2615,7 +2617,7 @@ export interface NetworkTypeUpdateWithoutNetworksDataInput {
 
 export interface NetworkCreateInput {
   name?: String;
-  networkProvider: NetworkProviderCreateOneWithoutNetworksInput;
+  networkProvider?: NetworkProviderCreateOneWithoutNetworksInput;
   networkType: NetworkTypeCreateOneWithoutNetworksInput;
   networkProtocol: NetworkProtocolCreateOneWithoutNetworksInput;
   baseUrl?: String;
@@ -3234,7 +3236,7 @@ export interface EmailVerificationUpdateManyDataInput {
 
 export interface NetworkCreateWithoutNetworkProtocolInput {
   name?: String;
-  networkProvider: NetworkProviderCreateOneWithoutNetworksInput;
+  networkProvider?: NetworkProviderCreateOneWithoutNetworksInput;
   networkType: NetworkTypeCreateOneWithoutNetworksInput;
   baseUrl?: String;
   securityData?: String;
@@ -3520,7 +3522,7 @@ export interface DeviceProfileUpsertWithWhereUniqueWithoutNetworkTypeInput {
 
 export interface NetworkCreateWithoutNetworkTypeInput {
   name?: String;
-  networkProvider: NetworkProviderCreateOneWithoutNetworksInput;
+  networkProvider?: NetworkProviderCreateOneWithoutNetworksInput;
   networkProtocol: NetworkProtocolCreateOneWithoutNetworksInput;
   baseUrl?: String;
   securityData?: String;
@@ -3611,7 +3613,7 @@ export interface DeviceProfileUpdateManyDataInput {
 
 export interface NetworkCreateWithoutProtocolDataInput {
   name?: String;
-  networkProvider: NetworkProviderCreateOneWithoutNetworksInput;
+  networkProvider?: NetworkProviderCreateOneWithoutNetworksInput;
   networkType: NetworkTypeCreateOneWithoutNetworksInput;
   networkProtocol: NetworkProtocolCreateOneWithoutNetworksInput;
   baseUrl?: String;
@@ -3862,7 +3864,7 @@ export interface DeviceWhereInput {
 
 export interface NetworkUpdateWithoutNetworkTypeDataInput {
   name?: String;
-  networkProvider?: NetworkProviderUpdateOneRequiredWithoutNetworksInput;
+  networkProvider?: NetworkProviderUpdateOneWithoutNetworksInput;
   networkProtocol?: NetworkProtocolUpdateOneRequiredWithoutNetworksInput;
   baseUrl?: String;
   securityData?: String;
@@ -4022,7 +4024,7 @@ export type CompanyNetworkTypeLinkWhereUniqueInput = AtLeastOne<{
 
 export interface NetworkUpdateWithoutProtocolDataDataInput {
   name?: String;
-  networkProvider?: NetworkProviderUpdateOneRequiredWithoutNetworksInput;
+  networkProvider?: NetworkProviderUpdateOneWithoutNetworksInput;
   networkType?: NetworkTypeUpdateOneRequiredWithoutNetworksInput;
   networkProtocol?: NetworkProtocolUpdateOneRequiredWithoutNetworksInput;
   baseUrl?: String;
