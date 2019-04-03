@@ -37,7 +37,6 @@ function createDevice (name, description, applicationId, deviceModel) {
     applicationId,
     deviceModel
   })
-  appLogger.log(`devices: createDevice: ${JSON.stringify(data)}`)
   return prisma.createDevice(data).$fragment(fragments.basic)
 }
 

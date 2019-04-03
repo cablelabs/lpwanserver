@@ -166,7 +166,6 @@ exports.initialize = function (app, server) {
     restServer.isAdmin,
     modelAPI.devices.fetchApplicationForNewDevice],
   function (req, res, next) {
-    appLogger.log(`POST api/devices: ${JSON.stringify(req.body)}`)
     var rec = req.body
     // You can't specify an id.
     if (rec.id) {
@@ -191,7 +190,6 @@ exports.initialize = function (app, server) {
         rec.description,
         rec.applicationId,
         rec.deviceModel).then(function (rec) {
-        appLogger.log(`DEVICE CREATED: ${JSON.stringify(rec)}`)
         var send = {}
         send.id = rec.id
         restServer.respondJson(res, 200, send) // TODO: Shouldn't this id be in the header per POST convention?

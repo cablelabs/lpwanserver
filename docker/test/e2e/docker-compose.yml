@@ -15,7 +15,7 @@ services:
       - prisma_host=prisma
       - prisma_port=4466
       - TTN=false
-      - LORIOT=true
+      - LORIOT=false
     depends_on:
       - loraserver
       - loraserver1
