@@ -69,7 +69,7 @@ describe('Unit Tests for ' + testName, () => {
   it(testName + ' Retrieve', async () => {
     let testModule = new TestModule(modelAPIMock)
     should.exist(testModule)
-    const actual = await testModule.retrieveNetwork(networkId, 'internal')
+    const actual = await testModule.retrieveNetwork(networkId)
     assertNetworkProps(actual)
   })
   it(testName + ' Update', async () => {
@@ -83,7 +83,7 @@ describe('Unit Tests for ' + testName, () => {
       networkProtocolId,
       baseUrl: 'http://localhost:7000'
     }
-    const actual = await testModule.updateNetwork(updated, 'internal')
+    const actual = await testModule.updateNetwork(updated)
     assertNetworkProps(actual)
     actual.baseUrl.should.equal(updated.baseUrl)
   })

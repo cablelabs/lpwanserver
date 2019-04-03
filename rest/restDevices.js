@@ -86,10 +86,10 @@ exports.initialize = function (app, server) {
       // This may be redundant, but we've already verified that if the
       // user is not part of the admin company, then this is their companyId.
       if (req.query.companyId) {
-        options.companyId = req.query.companyId
+        options.companyId = parseInt(req.query.companyId, 10)
       }
       if (req.query.applicationId) {
-        options.applicationId = req.query.applicationId
+        options.applicationId = parseInt(req.query.applicationId, 10)
       }
       modelAPI.devices.retrieveDevices(options).then(function (cos) {
         const responseBody = { ...cos, records: cos.records.map(formatRelationshipsOut) }

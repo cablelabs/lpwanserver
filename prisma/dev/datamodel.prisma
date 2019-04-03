@@ -2,7 +2,7 @@ type DeviceNetworkTypeLink @pgTable(name: "deviceNetworkTypeLinks") @indexes(val
   {name: "sqlite_autoindex_deviceNetworkTypeLinks_1", fields: ["device", "networkType"], unique: true}
 ]) {
   id: Int! @unique
-  device: Device! @pgRelation(column: "deviceId")
+  device: Device! @pgRelation(column: "deviceId") @relation(name: "DeviceLinks")
   networkType: NetworkType! @pgRelation(column: "networkTypeId")
   deviceProfile: DeviceProfile! @pgRelation(column: "deviceProfileId")
   networkSettings: String
@@ -15,8 +15,8 @@ type Application @pgTable(name: "applications") {
   description: String
   baseUrl: String
   reportingProtocol: ReportingProtocol @pgRelation(column: "reportingProtocolId")
-  applicationNetworkTypeLinks: [ApplicationNetworkTypeLink]
-  devices: [Device]
+  applicationNetworkTypeLinks: [ApplicationNetworkTypeLink] @relation(name: "ApplicationLinks" onDelete: CASCADE)
+  devices: [Device] @relation(name: "ApplicationDevices" onDelete: CASCADE)
 }
 
 type Company @pgTable(name: "companies") {
@@ -57,7 +57,7 @@ type ApplicationNetworkTypeLink @pgTable(name: "applicationNetworkTypeLinks") @i
   {name: "sqlite_autoindex_applicationNetworkTypeLinks_1", fields: ["application", "networkType"], unique: true}
 ]) {
   id: Int! @unique
-  application: Application! @pgRelation(column: "applicationId")
+  application: Application! @pgRelation(column: "applicationId") @relation(name: "ApplicationLinks")
   networkType: NetworkType! @pgRelation(column: "networkTypeId")
   networkSettings: String
 }
@@ -73,7 +73,7 @@ type ProtocolData @pgTable(name: "protocolData") @indexes(value: [
   {name: "protocolData_dataIdentifier_index", fields: ["dataIdentifier"]}
 ]) {
   id: Int! @unique
-  network: Network! @pgRelation(column: "networkId")
+  network: Network! @pgRelation(column: "networkId") @relation(name: "NetworkProtocolDatas")
   networkProtocol: NetworkProtocol! @pgRelation(column: "networkProtocolId")
   dataIdentifier: String
   dataValue: String
@@ -88,12 +88,12 @@ type UserRole @pgTable(name: "userRoles") {
 type Network @pgTable(name: "networks") {
   id: Int! @unique
   name: String
-  networkProvider: NetworkProvider! @pgRelation(column: "networkProviderId")
+  networkProvider: NetworkProvider @pgRelation(column: "networkProviderId")
   networkType: NetworkType! @pgRelation(column: "networkTypeId")
   networkProtocol: NetworkProtocol! @pgRelation(column: "networkProtocolId")
   baseUrl: String
   securityData: String
-  protocolData: [ProtocolData]
+  protocolData: [ProtocolData] @relation(name: "NetworkProtocolDatas" onDelete: CASCADE)
 }
 
 type PasswordPolicy @pgTable(name: "passwordPolicies") {
@@ -122,11 +122,11 @@ type NetworkProvider @pgTable(name: "networkProviders") {
 
 type Device @pgTable(name: "devices") {
   id: Int! @unique
-  application: Application! @pgRelation(column: "applicationId")
+  application: Application! @pgRelation(column: "applicationId") @relation(name: "ApplicationDevices")
   name: String
   description: String
   deviceModel: String
-  deviceNetworkTypeLinks: [DeviceNetworkTypeLink]
+  deviceNetworkTypeLinks: [DeviceNetworkTypeLink] @relation(name: "DeviceLinks" onDelete: CASCADE)
 }
 
 type DeviceProfile @pgTable(name: "deviceProfiles") {

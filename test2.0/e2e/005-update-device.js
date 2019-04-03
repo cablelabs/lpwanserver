@@ -32,10 +32,10 @@ describe('E2E Test for Updating a Device Use Case #193', () => {
   const deviceProfile = {
     'networkTypeId': 1,
     'companyId': companyId,
-    'name': 'LoRaSoilReader',
+    'name': 'LoRaSoilReaderB',
     'description': 'Soil Sensor that works with LoRa',
     'networkSettings': {
-      'name': 'LoRaSoilReader',
+      'name': 'LoRaSoilReaderB',
       'macVersion': '1.0.0',
       'regParamsRevision': 'A',
       'supportsJoin': true

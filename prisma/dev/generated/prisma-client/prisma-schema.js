@@ -2670,7 +2670,7 @@ enum MutationType {
 type Network {
   id: Int!
   name: String
-  networkProvider: NetworkProvider!
+  networkProvider: NetworkProvider
   networkType: NetworkType!
   networkProtocol: NetworkProtocol!
   baseUrl: String
@@ -2686,7 +2686,7 @@ type NetworkConnection {
 
 input NetworkCreateInput {
   name: String
-  networkProvider: NetworkProviderCreateOneWithoutNetworksInput!
+  networkProvider: NetworkProviderCreateOneWithoutNetworksInput
   networkType: NetworkTypeCreateOneWithoutNetworksInput!
   networkProtocol: NetworkProtocolCreateOneWithoutNetworksInput!
   baseUrl: String
@@ -2716,7 +2716,7 @@ input NetworkCreateOneWithoutProtocolDataInput {
 
 input NetworkCreateWithoutNetworkProtocolInput {
   name: String
-  networkProvider: NetworkProviderCreateOneWithoutNetworksInput!
+  networkProvider: NetworkProviderCreateOneWithoutNetworksInput
   networkType: NetworkTypeCreateOneWithoutNetworksInput!
   baseUrl: String
   securityData: String
@@ -2734,7 +2734,7 @@ input NetworkCreateWithoutNetworkProviderInput {
 
 input NetworkCreateWithoutNetworkTypeInput {
   name: String
-  networkProvider: NetworkProviderCreateOneWithoutNetworksInput!
+  networkProvider: NetworkProviderCreateOneWithoutNetworksInput
   networkProtocol: NetworkProtocolCreateOneWithoutNetworksInput!
   baseUrl: String
   securityData: String
@@ -2743,7 +2743,7 @@ input NetworkCreateWithoutNetworkTypeInput {
 
 input NetworkCreateWithoutProtocolDataInput {
   name: String
-  networkProvider: NetworkProviderCreateOneWithoutNetworksInput!
+  networkProvider: NetworkProviderCreateOneWithoutNetworksInput
   networkType: NetworkTypeCreateOneWithoutNetworksInput!
   networkProtocol: NetworkProtocolCreateOneWithoutNetworksInput!
   baseUrl: String
@@ -3211,10 +3211,12 @@ input NetworkProviderUpdateManyMutationInput {
   name: String
 }
 
-input NetworkProviderUpdateOneRequiredWithoutNetworksInput {
+input NetworkProviderUpdateOneWithoutNetworksInput {
   create: NetworkProviderCreateWithoutNetworksInput
   update: NetworkProviderUpdateWithoutNetworksDataInput
   upsert: NetworkProviderUpsertWithoutNetworksInput
+  delete: Boolean
+  disconnect: Boolean
   connect: NetworkProviderWhereUniqueInput
 }
 
@@ -3679,7 +3681,7 @@ input NetworkTypeWhereUniqueInput {
 
 input NetworkUpdateInput {
   name: String
-  networkProvider: NetworkProviderUpdateOneRequiredWithoutNetworksInput
+  networkProvider: NetworkProviderUpdateOneWithoutNetworksInput
   networkType: NetworkTypeUpdateOneRequiredWithoutNetworksInput
   networkProtocol: NetworkProtocolUpdateOneRequiredWithoutNetworksInput
   baseUrl: String
@@ -3749,7 +3751,7 @@ input NetworkUpdateOneRequiredWithoutProtocolDataInput {
 
 input NetworkUpdateWithoutNetworkProtocolDataInput {
   name: String
-  networkProvider: NetworkProviderUpdateOneRequiredWithoutNetworksInput
+  networkProvider: NetworkProviderUpdateOneWithoutNetworksInput
   networkType: NetworkTypeUpdateOneRequiredWithoutNetworksInput
   baseUrl: String
   securityData: String
@@ -3767,7 +3769,7 @@ input NetworkUpdateWithoutNetworkProviderDataInput {
 
 input NetworkUpdateWithoutNetworkTypeDataInput {
   name: String
-  networkProvider: NetworkProviderUpdateOneRequiredWithoutNetworksInput
+  networkProvider: NetworkProviderUpdateOneWithoutNetworksInput
   networkProtocol: NetworkProtocolUpdateOneRequiredWithoutNetworksInput
   baseUrl: String
   securityData: String
@@ -3776,7 +3778,7 @@ input NetworkUpdateWithoutNetworkTypeDataInput {
 
 input NetworkUpdateWithoutProtocolDataDataInput {
   name: String
-  networkProvider: NetworkProviderUpdateOneRequiredWithoutNetworksInput
+  networkProvider: NetworkProviderUpdateOneWithoutNetworksInput
   networkType: NetworkTypeUpdateOneRequiredWithoutNetworksInput
   networkProtocol: NetworkProtocolUpdateOneRequiredWithoutNetworksInput
   baseUrl: String

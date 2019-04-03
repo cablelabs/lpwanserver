@@ -14,6 +14,9 @@ var appLogger = require('../lib/appLogger.js')
 //* *****************************************************************************
 
 module.exports = class NetworkProtocol {
+  constructor () {
+    this.activeApplicationNetworkProtocols = {}
+  }
   // The login account data needed to manipulate companies.
   //
   // network - The network that we are to get the account info for that gives
@@ -91,7 +94,7 @@ module.exports = class NetworkProtocol {
   // connections like a login session, and it is up to the code in this module
   // to implement that concept.  The promise returns the opaque session data to
   // be passed into other methods.
-  async connect () {
+  connect () {
     throw new Error('Connect method not implemented by network protocol handler.')
   }
 
@@ -102,6 +105,10 @@ module.exports = class NetworkProtocol {
   // Returns a Promise that disconnects from the remote system.
   disconnect () {
     // override this method if the protocol supports logout
+  }
+
+  test () {
+    throw new Error('Test method not implemented by network protocol handler.')
   }
 
   //* *****************************************************************************
@@ -437,5 +444,3 @@ module.exports = class NetworkProtocol {
   pushDevice () {
   }
 }
-
-

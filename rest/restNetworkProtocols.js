@@ -1,8 +1,6 @@
 var appLogger = require('./lib/appLogger.js')
-const fs = require('fs')
 var restServer
 var modelAPI
-const path = require('path')
 const { formatRelationshipsOut } = require('./lib/prisma')
 
 exports.initialize = function (app, server) {
@@ -351,13 +349,8 @@ exports.initialize = function (app, server) {
      */
   app.get('/api/networkProtocolHandlers/', [restServer.isLoggedIn],
     function (req, res, next) {
-      const handlersDir = path.join(__dirname, './networkProtocols/handlers')
-      const handlerList = fs.readdirSync(handlersDir)
-        .filter(x => x !== 'README.md')
-        .map(x => ({
-          id: x,
-          name: x.split('.')[0]
-        }))
+      let { handlerList } = modelAPI.networkProtocolAPI
+      handlerList = handlerList.map(x => ({ id: x, name: x }))
       restServer.respondJson(res, null, handlerList)
     })
 }

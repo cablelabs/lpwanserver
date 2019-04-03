@@ -509,7 +509,7 @@ exports.initialize = function (app, server) {
     var data = req.body
 
     // make sure the network is enabled
-    modelAPI.networks.retrieveNetwork(networkId, 'internal')
+    modelAPI.networks.retrieveNetwork(networkId)
       .then(network => {
         if (network.securityData.enabled) {
           appLogger.log('Received data from network ' + networkId +

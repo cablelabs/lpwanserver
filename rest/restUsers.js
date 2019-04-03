@@ -132,7 +132,7 @@ exports.initialize = function (app, server) {
      */
   app.get('/api/users/me', [restServer.isLoggedIn], function (req, res, next) {
     restServer.respondJson(res, null, {
-      ...req.user,
+      ...formatRelationshipsOut(req.user),
       role: modelAPI.users.reverseRoles[req.user.role.id]
     })
   })

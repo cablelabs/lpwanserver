@@ -27,9 +27,14 @@ const lift = R.curry(function lift (props, obj) {
   return R.mergeAll([ R.omit(props, obj), ...props.map(x => obj[x]) ])
 })
 
+const renameKeys = R.curry((keysMap, obj) =>
+  R.reduce((acc, key) => mutate(keysMap[key] || key, obj[key], acc), {}, R.keys(obj))
+)
+
 module.exports = {
   mutate,
   onFail,
   tryCatch,
-  lift
+  lift,
+  renameKeys
 }

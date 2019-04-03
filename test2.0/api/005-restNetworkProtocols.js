@@ -10,8 +10,7 @@ var server = chai.request(app).keepOpen()
 
 var npId1
 var npId2
-const NUMBER_PROTOCOLS = 3
-const NUMBER_PROTOCOL_HANDLERS = 3
+const NUMBER_PROTOCOLS = 4
 
 function waitForNetworkProtocolRegistration (ms) {
   return new Promise(resolve => setTimeout(resolve, ms))
@@ -49,7 +48,7 @@ describe('NetworkProtocols', function () {
     })
   })
   describe('GET /api/networkProtocols', function () {
-    it('should return 200 with 3 protocols on admin', function (done) {
+    it('should return 200 with 4 protocols on admin', function (done) {
       server
         .get('/api/networkProtocols')
         .set('Authorization', 'Bearer ' + adminToken)

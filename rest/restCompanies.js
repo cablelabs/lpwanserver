@@ -123,7 +123,7 @@ exports.initialize = function (app, server) {
       return
     }
     modelAPI.companies.retrieveCompany(parseInt(req.params.id, 10)).then(function (co) {
-      co['type'] = modelAPI.companies.reverseTypes[co['type']]
+      co.type = modelAPI.companies.reverseTypes[co.type.id]
       restServer.respondJson(res, null, co)
     })
       .catch(function (err) {
