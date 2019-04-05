@@ -15,21 +15,19 @@ services:
       - lora_appserver1
     environment:
       - port=3200
-      - prisma_protocol=http
-      - prisma_host=prisma
-      - prisma_port=4466
+      - config_file=dev.json
 
-  # lpwanserver_ui:
-  #   image: lpwanserver/lpwanserver-web-client
-  #   container_name: lpwanserver_demo_ui
-  #   networks:
-  #     - lpwanserver_dev
-  #   ports:
-  #     - '3000:8080'
-  #   environment:
-  #     - LPWANSERVER_PROTOCOL=http
-  #     - LPWANSERVER_HOST=lpwanserver
-  #     - LPWANSERVER_PORT=3200
+  lpwanserver_ui:
+    image: lpwanserver/lpwanserver-web-client
+    container_name: lpwanserver_demo_ui
+    networks:
+      - lpwanserver_dev
+    ports:
+      - '3000:8080'
+    environment:
+      - LPWANSERVER_PROTOCOL=http
+      - LPWANSERVER_HOST=lpwanserver
+      - LPWANSERVER_PORT=3200
 
   loraserver:
     image: loraserver/loraserver:2

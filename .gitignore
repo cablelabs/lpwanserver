@@ -11,9 +11,6 @@ pids
 # *.seed
 # *.sqlite3
 data/deviceSchemas
-data/redis
-data/postgresql
-data/demo_data
 sessions
 .nyc_output
 
