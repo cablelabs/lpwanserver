@@ -14,9 +14,6 @@ services:
     environment:
       - port=3200
       - config_file=dev.json
-      - prisma_protocol=http
-      - prisma_host=prisma
-      - prisma_port=4466
 networks:
   lpwanserver_dev:
     name: lpwanserver_dev

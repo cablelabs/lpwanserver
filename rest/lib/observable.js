@@ -1,11 +1,12 @@
 const EventEmitter = require('events')
 const R = require('ramda')
 
-class Observable extends EventEmitter {
-  constructor ({ delimiter = '.' }) {
+module.exports = class Observable extends EventEmitter {
+  constructor ({ delimiter = '.', validate }) {
     super()
     this.values = {}
     this.delimiter = delimiter
+    this.validate = validate || (() => true)
   }
 
   previewSet (path, value) {
@@ -18,6 +19,8 @@ class Observable extends EventEmitter {
   }
 
   setAllValues (values) {
+    const valid = this.validate(values)
+    if (!valid) return valid
     this.values = values
     this.emit('change', this.values)
     return this
@@ -37,21 +40,4 @@ class Observable extends EventEmitter {
   mergeDeep (data) {
     return this.setAllValues(this.previewMergeDeep(data))
   }
-}
-
-class ValidatedObservable extends Observable {
-  constructor ({ validate, ...opts }) {
-    super(opts)
-    this.validate = validate || (() => true)
-  }
-
-  setAllValues (values) {
-    const valid = this.validate(values)
-    return valid && super.setAllValues(values)
-  }
-}
-
-module.exports = {
-  Observable,
-  ValidatedObservable
 }

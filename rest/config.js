@@ -1,33 +1,21 @@
 const path = require('path')
 const Ajv = require('ajv')
-const { ValidatedObservable } = require('./lib/observable')
+const Observable = require('./lib/observable')
 const schema = require('../config/schema.json')
 const R = require('ramda')
-const { mutate } = require('./lib/utils')
-
-const ajv = new Ajv()
-const ajvValidate = ajv.compile(schema)
-
-function validate (data) {
-  const valid = ajvValidate(data)
-  if (valid) return true
-  throw new Error(ajv.errorsText())
-}
-
-// test if a string is true or TRUE
-const trueRx = /^true$/i
 
 // using the keys from the config schema, build an
 // object using values from process.env
 function buildEnvironmentVariablesConfig (schema) {
+  const trueRx = /^true$/i
   const propertyKeys = Object.keys(schema.properties)
   let env = R.pick(propertyKeys, process.env)
   return Object.keys(env).reduce((acc, x) => {
     const { type } = schema.properties[x]
     switch (type) {
-      case 'integer': return mutate(x, parseInt(env[x], 10), acc)
-      case 'boolean': return mutate(x, trueRx.test(env[x]), acc)
-      default: return mutate(x, env[x], acc)
+      case 'integer': return R.assoc(x, parseInt(env[x], 10), acc)
+      case 'boolean': return R.assoc(x, trueRx.test(env[x]), acc)
+      default: return R.assoc(x, env[x], acc)
     }
   }, {})
 }
@@ -38,15 +26,16 @@ function buildConfigDefaults (schema, definitions) {
     let spec = schema.properties[prop]
     if (spec.$ref) {
       spec = definitions[spec.$ref.replace('#/definitions/', '')]
-      return mutate(prop, buildConfigDefaults(spec, definitions), acc)
+      return R.assoc(prop, buildConfigDefaults(spec, definitions), acc)
     }
-    return mutate(prop, spec.default, acc)
+    return R.assoc(prop, spec.default, acc)
   }, {})
 }
 
 // import the config file indicated by process.env.config_file
-function buildConfigFromFile (filePath, isAbsolutePath = false) {
+function buildConfigFromFile (filePath) {
   if (!filePath) return {}
+  const isAbsolutePath = filePath.charAt(0) === '/'
   return isAbsolutePath
     ? require(filePath)
     : require(path.join(__dirname, '../config', filePath))
@@ -56,7 +45,7 @@ function buildConfigFromFile (filePath, isAbsolutePath = false) {
 let configValues = R.merge(
   R.mergeDeepRight(
     buildConfigDefaults(schema, schema.definitions),
-    buildConfigFromFile(process.env.config_file, trueRx.test(process.env.config_file_absolute))
+    buildConfigFromFile(process.env.config_file)
   ),
   buildEnvironmentVariablesConfig(schema)
 )
@@ -68,7 +57,16 @@ Object.assign(
   R.pick(['prisma_protocol', 'prisma_host', 'prisma_port'], configValues)
 )
 
-const config = new ValidatedObservable({ validate })
+const ajv = new Ajv()
+const ajvValidate = ajv.compile(schema)
+
+function validate (data) {
+  const valid = ajvValidate(data)
+  if (valid) return true
+  throw new Error(ajv.errorsText())
+}
+
+const config = new Observable({ validate })
 config.setAllValues(configValues)
 
 module.exports = config
