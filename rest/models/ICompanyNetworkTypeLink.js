@@ -7,6 +7,8 @@ var protocolDataAccess = require('../networkProtocols/networkProtocolDataAccess'
 
 var modelAPI
 
+const R = require('ramda')
+
 //* *****************************************************************************
 // The CompanyNetworkTypeLink interface.
 //* *****************************************************************************
@@ -240,7 +242,12 @@ CompanyNetworkTypeLink.prototype.pullCompanyNetworkTypeLink = function (networkT
         else {
           appLogger.log('creating ' + JSON.stringify(application))
           let coIndex = nsCoId.indexOf(application.organizationID)
-          existingApplication = await modelAPI.applications.createApplication(application.name, application.description, localCoId[coIndex], 1, 'http://set.me.to.your.real.url:8888')
+          existingApplication = await modelAPI.applications.createApplication({
+            ...R.pick(['name', 'description'], application),
+            companyId: localCoId[coIndex],
+            reportingProtocolId: 1,
+            baseUrl: 'http://set.me.to.your.real.url:8888'
+          })
           localAppId.push(existingApplication.id)
         }
         // see if it exists first

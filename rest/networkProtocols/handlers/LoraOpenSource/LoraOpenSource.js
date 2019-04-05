@@ -542,7 +542,12 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
       appLogger.log(localApp.name + ' already exists')
     }
     else {
-      localApp = await modelAPI.applications.createApplication(remoteApp.name, remoteApp.description, 2, 1, 'http://set.me.to.your.real.url:8888')
+      localApp = await modelAPI.applications.createApplication({
+        ...R.pick(['name', 'description'], remoteApp),
+        companyId: 2,
+        reportingProtocolId: 1,
+        baseUrl: 'http://set.me.to.your.real.url:8888'
+      })
       appLogger.log('Created ' + localApp.name)
     }
     const { records: appNtls } = await modelAPI.applicationNetworkTypeLinks.retrieveApplicationNetworkTypeLinks({ applicationId: localApp.id })

@@ -161,7 +161,12 @@ module.exports = class TheThingsNetworkV2 {
         appLogger.log(normalizedApplication, 'info')
       }
       else {
-        existingApplication = await modelAPI.applications.createApplication(normalizedApplication.name, normalizedApplication.description, 2, network.networkType.id, 'http://set.me.to.your.real.url:8888')
+        existingApplication = await modelAPI.applications.createApplication({
+          ...R.pick(['name', 'description'], normalizedApplication),
+          companyId: 2,
+          reportingProtocolId: 1,
+          baseUrl: 'http://set.me.to.your.real.url:8888'
+        })
         appLogger.log('Created ' + existingApplication.name)
       }
 

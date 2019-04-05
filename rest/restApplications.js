@@ -2,6 +2,7 @@ var appLogger = require('./lib/appLogger.js')
 var restServer
 var modelAPI
 const { formatRelationshipsOut } = require('./lib/prisma')
+const R = require('ramda')
 
 exports.initialize = function (app, server) {
   restServer = server
@@ -209,11 +210,9 @@ exports.initialize = function (app, server) {
     }
 
     // Do the add.
-    modelAPI.applications.createApplication(rec.name,
-      rec.description,
-      rec.companyId,
-      rec.reportingProtocolId,
-      rec.baseUrl).then(function (rec) {
+    modelAPI.applications.createApplication(
+      R.pick(['name', 'description', 'companyId', 'reportingProtocolId', 'baseUrl'], rec)
+    ).then(function (rec) {
       var send = {}
       send.id = rec.id
       restServer.respondJson(res, 200, send)
