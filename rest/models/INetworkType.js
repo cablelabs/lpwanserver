@@ -1,5 +1,5 @@
 // Configuration access.
-var nconf = require('nconf')
+const config = require('../config')
 const appLogger = require('../lib/appLogger')
 
 // Error reporting
@@ -19,7 +19,7 @@ var httpError = require('http-errors')
 //
 function NetworkType () {
   this.impl = require('./dao/' +
-                             nconf.get('impl_directory') +
+                             config.get('impl_directory') +
                              '/networkTypes.js')
   // Maps a type name to a numeric value.
   this.types = {}

@@ -33,7 +33,7 @@ var modelAPI
 
 function ModelAPI (app) {
   // Based on the initialization type, create the models that will
-  // use the underlying data.  Each module gets the type from nconf.
+  // use the underlying data.  Each module gets the type from config.
   // Pass around the dependancies as well.
   modelAPI = this
 

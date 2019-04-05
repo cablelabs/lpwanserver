@@ -1,7 +1,7 @@
 const NetworkProtocol = require('../../NetworkProtocol')
 const appLogger = require('../../../lib/appLogger.js')
 const R = require('ramda')
-const nconf = require('nconf')
+const config = require('../../../config')
 const httpError = require('http-errors')
 
 module.exports = class Loriot extends NetworkProtocol {
@@ -201,7 +201,7 @@ module.exports = class Loriot extends NetworkProtocol {
     const [ integration ] = remoteApp.outputs.filter(x => x.output === 'httppush')
     appLogger.log(integration, 'warn')
     const deliveryURL = `api/ingest/${localAppId}/${network.id}`
-    const reportingUrl = `${nconf.get('base_url')}${deliveryURL}`
+    const reportingUrl = `${config.get('base_url')}${deliveryURL}`
     if (!integration || integration.osetup.url === reportingUrl) return
     await modelAPI.applications.updateApplication({ id: localAppId, baseUrl: integration.uplinkDataURL })
     const updatePayload = { output: 'httppush', osetup: { url: reportingUrl } }

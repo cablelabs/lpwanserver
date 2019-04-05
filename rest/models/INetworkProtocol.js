@@ -1,5 +1,5 @@
 // Configuration access.
-var nconf = require('nconf')
+const config = require('../config')
 const appLogger = require('../lib/appLogger')
 const path = require('path')
 
@@ -10,13 +10,13 @@ const handlerDir = path.join(__dirname, '../networkProtocols/handlers')
 //* *****************************************************************************
 function NetworkProtocol () {
   this.impl = require('./dao/' +
-                             nconf.get('impl_directory') +
+                             config.get('impl_directory') +
                              '/networkProtocols.js')
 }
 
 NetworkProtocol.prototype.retrieveNetworkProtocols = async function (options) {
   let result = await this.impl.retrieveNetworkProtocols(options)
-  
+
   return {
     ...result,
     records: result.records.map(x => {

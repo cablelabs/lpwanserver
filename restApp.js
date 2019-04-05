@@ -4,6 +4,7 @@
 // those operations.  This module also manages the login sessions and
 // permissions required to execute the various operations.
 
+const config = require('./rest/config')
 var express = require('express')
 var http = require('http')
 var https = require('https')
@@ -13,9 +14,6 @@ var cookieParser = require('cookie-parser')
 var bodyParser = require('body-parser')
 // var session = require('express-session');
 var fs = require('fs')
-// Setup/Import configuration
-require('./config')
-var nconf = require('nconf')
 // server
 var server = require('./rest/restServer.js')
 var appLogger = require('./rest/lib/appLogger.js')
@@ -31,11 +29,11 @@ process.on('unhandledRejection', (reason, p) => {
 var app = express()
 
 // Load the port binding info.
-var ipPort = nconf.get('port')
+var ipPort = config.get('port')
 
 // Load the ssl config
-var sslkeyName = nconf.get('ssl_key_file')
-var sslcertName = nconf.get('ssl_cert_file')
+var sslkeyName = config.get('ssl_key_file')
+var sslcertName = config.get('ssl_cert_file')
 
 if (sslkeyName && sslcertName) {
   // Load the files
@@ -117,7 +115,7 @@ app.use(bodyParser.urlencoded({ extended: false }))
 app.use(cookieParser())
 
 // Add the cors manager
-var whitelistStr = nconf.get('cors_whitelist')
+var whitelistStr = config.get('cors_whitelist')
 var whitelistRegExp = []
 for (var i = 0; i < whitelistStr.length; ++i) {
   whitelistRegExp[ i ] = new RegExp(whitelistStr[ i ])

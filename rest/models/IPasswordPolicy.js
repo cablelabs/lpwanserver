@@ -1,5 +1,5 @@
 // Configuration access.
-var nconf = require('nconf')
+const config = require('../config')
 
 //* *****************************************************************************
 // The PasswordPolicy interface.
@@ -7,7 +7,7 @@ var nconf = require('nconf')
 var pp
 function PasswordPolicy (companies) {
   this.impl = require('./dao/' +
-                             nconf.get('impl_directory') +
+                             config.get('impl_directory') +
                              '/passwordPolicies.js')
   this.companies = companies
   pp = this

@@ -1,5 +1,5 @@
 // Configuration access.
-var nconf = require('nconf')
+const config = require('../config')
 
 // General libraries in use in this module.
 var appLogger = require('../lib/appLogger.js')
@@ -25,7 +25,7 @@ var modelAPI
 //
 function Company (server) {
   this.impl = require('./dao/' +
-                             nconf.get('impl_directory') +
+                             config.get('impl_directory') +
                              '/companies.js')
   this.COMPANY_ADMIN = this.impl.COMPANY_ADMIN
   this.COMPANY_VENDOR = this.impl.COMPANY_VENDOR

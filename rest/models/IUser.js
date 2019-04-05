@@ -1,5 +1,5 @@
 // Configuration access.
-var nconf = require('nconf')
+const config = require('../config')
 
 //* *****************************************************************************
 // The User interface.
@@ -9,7 +9,7 @@ var reverseRoles = {}
 function User () {
   // Get the specified implementation.
   this.impl = require('./dao/' +
-                             nconf.get('impl_directory') +
+                             config.get('impl_directory') +
                              '/users.js')
 
   // Set up globals.

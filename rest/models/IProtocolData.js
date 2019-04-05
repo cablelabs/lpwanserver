@@ -1,12 +1,12 @@
 // Configuration access.
-var nconf = require('nconf')
+const config = require('../config')
 
 //* *****************************************************************************
 // The ProtocolData interface.
 //* *****************************************************************************
 function ProtocolData () {
   this.impl = require('./dao/' +
-                             nconf.get('impl_directory') +
+                             config.get('impl_directory') +
                              '/protocolData.js')
 }
 
