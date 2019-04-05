@@ -1,5 +1,5 @@
 // Configuration access.
-var nconf = require('nconf')
+const config = require('../config')
 
 // Json web token handling.
 var jwt = require('jsonwebtoken')
@@ -31,11 +31,11 @@ var thissessionmanager
 function SessionManager (users) {
   this.users = users
   this.jwtoptions = {
-    algorithm: nconf.get('jwt_algo'),
-    expiresIn: nconf.get('jwt_ttl'),
-    issuer: nconf.get('jwt_issuer')
+    algorithm: config.get('jwt_algo'),
+    expiresIn: config.get('jwt_ttl'),
+    issuer: config.get('jwt_issuer')
   }
-  this.secret = nconf.get('jwt_secret')
+  this.secret = config.get('jwt_secret')
   thissessionmanager = this
 }
 

@@ -1,5 +1,5 @@
 // Configuration access.
-var nconf = require('nconf')
+const config = require('../config')
 
 //* *****************************************************************************
 // The NetworkProvider interface.
@@ -14,7 +14,7 @@ var nconf = require('nconf')
 //
 function NetworkProvider () {
   this.impl = require('./dao/' +
-                             nconf.get('impl_directory') +
+                             config.get('impl_directory') +
                              '/networkProviders.js')
 }
 

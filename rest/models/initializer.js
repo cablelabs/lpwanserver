@@ -1,5 +1,5 @@
 // Configuration access.
-var nconf = require('nconf')
+const config = require('../config')
 
 //* *****************************************************************************
 // Initialize the REST library
@@ -16,7 +16,7 @@ var nconf = require('nconf')
 // implPath - The subdirectory to get the dao implementation from.
 function Initializer () {
   this.impl = require('./dao/' +
-                             nconf.get('impl_directory') +
+                             config.get('impl_directory') +
                              '/initializer.js')
 }
 

@@ -1,0 +1,106 @@
+{
+  "$id": "https://github.com/cablelabs/lpwanserver/blob/master/config/schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "LPWAN Server Config",
+  "type": "object",
+  "required": [
+    "jwt_secret",
+    "port",
+    "base_url",
+    "prisma_dir",
+    "prisma_host"
+  ],
+  "properties": {
+    "log_format_morgan": {
+      "type": "string",
+      "description": "Morgan log format.  Set to empty string to disable API access logging.",
+      "default": "dev"
+    },
+    "logging_enabled": {
+      "type": "boolean",
+      "description": "Enable logs in general.",
+      "default": true
+    },
+    "logging_headers": {
+      "type": "boolean",
+      "description": "Add headers of timestamps and file and line number.",
+      "default": true
+    },
+    "jwt_algo": {
+      "type": "string",
+      "description": "The algorithm to use for the signature.",
+      "default": "HS256"
+    },
+    "jwt_secret": {
+      "type": "string",
+      "description": "The secret passphrase for the signature.",
+      "default": ""
+    },
+    "jwt_ttl": {
+      "type": "string",
+      "description": "The time-to-live for a token (1d (1 day), 12h (12 hours), 20m (20 minutes))",
+      "default": "12h"
+    },
+    "jwt_issuer": {
+      "type": "string",
+      "description": "The content for the issuer field.  Just a string that we can check.",
+      "default": "lpwanserver"
+    },
+    "port": {
+      "type": "integer",
+      "description": "The port to bind the listener to",
+      "default": 8080,
+      "minimum": 0
+    },
+    "ssl_key_file": {
+      "type": "string",
+      "description": "Absolute path to SSL key file.",
+      "default": ""
+    },
+    "ssl_cert_file": {
+      "type": "string",
+      "description": "Absolute path to SSL certificate file.",
+      "default": ""
+    },
+    "base_url": {
+      "type": "string",
+      "description": "The base URL to use for links back to this site. Used for emails and application integrations.",
+      "default": ""
+    },
+    "impl_directory": {
+      "type": "string",
+      "description": "The directory to grab the DAO implementations from",
+      "default": "production"
+    },
+    "prisma_dir": {
+      "type": "string",
+      "description": "Prisma sub-folder that corresponds with this deployment.",
+      "default": ""
+    },
+    "prisma_protocol": {
+      "type": "string",
+      "description": "Protocol (http or https) for Prisma instance.",
+      "default": "http"
+    },
+    "prisma_host": {
+      "type": "string",
+      "description": "Host (e.g. localhost) for Prisma instance.",
+      "default": ""
+    },
+    "prisma_port": {
+      "type": "integer",
+      "description": "Port for Prisma instance",
+      "default": 4466,
+      "minimum": 0
+    },
+    "cors_whitelist": {
+      "type": "array",
+      "description": "Whitelist allowing remote access. Default value allows all origins.",
+      "items": {
+        "type": "string",
+        "description": "Regular expression for testing request origin"
+      },
+      "default": [".*"]
+    }
+  }
+}

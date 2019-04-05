@@ -1,5 +1,5 @@
 // Configuration access.
-var nconf = require('nconf')
+const config = require('../config')
 var NetworkProtocolDataAccess = require('../networkProtocols/networkProtocolDataAccess')
 var appLogger = require('../lib/appLogger')
 const R = require('ramda')
@@ -11,7 +11,7 @@ var modelAPI
 
 function Network (server) {
   this.impl = require('./dao/' +
-                             nconf.get('impl_directory') +
+                             config.get('impl_directory') +
                              '/networks.js')
   modelAPI = server
 }

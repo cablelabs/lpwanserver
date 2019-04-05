@@ -1,5 +1,5 @@
 // Configuration access.
-const nconf = require('nconf')
+const config = require('../config')
 
 // General libraries in use in this module.
 const appLogger = require('../lib/appLogger.js')
@@ -28,7 +28,7 @@ var running = new Map()
 //
 function Application (app, server) {
   this.impl = require('./dao/' +
-                             nconf.get('impl_directory') +
+                             config.get('impl_directory') +
                              '/applications.js')
 
   modelAPI = server

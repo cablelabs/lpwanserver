@@ -2,7 +2,7 @@ const NetworkProtocol = require('../../NetworkProtocol')
 const R = require('ramda')
 const appLogger = require('../../../lib/appLogger.js')
 const httpError = require('http-errors')
-const nconf = require('nconf')
+const config = require('../../../config')
 // const { mutate } = require('../../../lib/utils')
 
 module.exports = class LoraOpenSource extends NetworkProtocol {
@@ -620,7 +620,7 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
     const integration = await this.client.loadApplicationIntegration(session, network, remoteAppId, 'http')
     appLogger.log(integration, 'warn')
     const deliveryURL = `api/ingest/${localAppId}/${network.id}`
-    const reportingUrl = `${nconf.get('base_url')}${deliveryURL}`
+    const reportingUrl = `${config.get('base_url')}${deliveryURL}`
     if (integration.uplinkDataURL === reportingUrl) return
     await modelAPI.applications.updateApplication({ id: localAppId, baseUrl: integration.uplinkDataURL })
     await this.client.updateApplicationIntegration(session, network, remoteAppId, 'http', {
@@ -747,7 +747,7 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
 
     await this.client.createApplicationIntegration(session, network, appNwkId, {
       id: 'http',
-      dataUpURL: nconf.get('base_url') + deliveryURL
+      dataUpURL: config.get('base_url') + deliveryURL
     })
   }
 

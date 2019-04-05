@@ -31,7 +31,7 @@ var restServer
 
 function RestServer (app) {
   // Based on the initialization type, create the models that will
-  // use the underlying data.  Each module gets the type from nconf.
+  // use the underlying data.  Each module gets the type from config.
   // Pass around the dependancies as well.
   // Once a data model is initialized, set up the rest API path using the
   // local rest*API.initialize() method.

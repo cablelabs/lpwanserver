@@ -1,5 +1,5 @@
 // Configuration access.
-var nconf = require('nconf')
+const config = require('../config')
 
 //* *****************************************************************************
 // The Network interface.
@@ -11,7 +11,7 @@ var reverseProvisioningTables = {}
 
 function NetworkProvisioningField () {
   this.impl = require('./dao/' +
-                             nconf.get('impl_directory') +
+                             config.get('impl_directory') +
                              '/networkProvisioningFields.js')
 
   this.provisioningTables = provisioningTables

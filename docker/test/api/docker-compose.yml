@@ -10,10 +10,7 @@ services:
       - '3200:3200'
     environment:
       - NODE_ENV=e2e
-      - port=3200
-      - prisma_protocol=http
-      - prisma_host=prisma
-      - prisma_port=4466
+      - config_file=dev.json
     depends_on:
       - loraserver1
       - lora_appserver1

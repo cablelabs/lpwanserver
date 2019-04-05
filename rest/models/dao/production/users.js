@@ -2,7 +2,7 @@
 var appLogger = require('../../../lib/appLogger.js')
 
 // Config access.
-var nconf = require('nconf')
+const config = require('../../../config')
 
 // Database implementation.
 const { prisma, formatInputData, formatRelationshipsIn } = require('../../../lib/prisma')
@@ -100,7 +100,7 @@ async function createUser (username, password, email, companyId, roleId) {
   }
   if (user.email) {
     try {
-      await emailVerify(user.id, user.username, user.email, null, nconf.get('base_url'))
+      await emailVerify(user.id, user.username, user.email, null, config.get('base_url'))
     }
     catch (err) {
       // Log error, but resolve anyway.
@@ -182,7 +182,7 @@ async function updateUser ({ id, role, ...data }) {
         user.username,
         user.email,
         user.lastVerifiedEmail,
-        nconf.get('base_url')
+        config.get('base_url')
       )
     }
     catch (err) {

@@ -1,12 +1,3 @@
-// Configuration access.
-var nconf = require('nconf')
-
-// Json web token handling.
-var jwt = require('jsonwebtoken')
-
-// Errors.
-var httpError = require('http-errors')
-
 //* *****************************************************************************
 // The Session interface.
 //

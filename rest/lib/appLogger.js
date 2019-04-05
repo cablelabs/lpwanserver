@@ -1,8 +1,8 @@
 // Centralized logging system for the REST application.
 var restCallLogger = require('morgan')
-var nconf = require('nconf')
 var stackTrace = require('stack-trace')
 var winston = require('winston')
+const config = require('../config')
 
 const logger = winston.createLogger({
   level: 'warn',
@@ -27,14 +27,14 @@ module.exports = {
 }
 
 function initRESTCallLogger (app) {
-  var logFormat = nconf.get('log_format_morgan')
+  var logFormat = config.get('log_format_morgan')
   if (logFormat) {
     app.use(restCallLogger(logFormat))
   }
 
   // Also init whether we do general logging
-  this.loggingEnabled = nconf.get('logging_enabled')
-  this.loggingHeaders = nconf.get('logging_headers')
+  this.loggingEnabled = config.get('logging_enabled')
+  this.loggingHeaders = config.get('logging_headers')
 }
 
 function log (msg, level) {

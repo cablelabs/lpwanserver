@@ -4,9 +4,6 @@ const assert = require('assert')
 const chai = require('chai')
 // eslint-disable-next-line no-unused-vars
 const should = chai.should()
-// Initiate config before importing tested files
-const nconf = require('nconf')
-nconf.file('defaults', { file: 'config/defaults.hjson', format: require('hjson') })
 
 const TestModule = require('../../../rest/models/IUser')
 const modelAPIMock = require('../../mock/ModelAPI-mock')

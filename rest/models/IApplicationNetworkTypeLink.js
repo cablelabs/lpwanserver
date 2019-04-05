@@ -2,7 +2,7 @@
 var appLogger = require('../lib/appLogger.js')
 
 // Configuration access.
-var nconf = require('nconf')
+const config = require('../config')
 
 // Error reporting
 var httpError = require('http-errors')
@@ -23,7 +23,7 @@ var modelAPI
 //
 function ApplicationNetworkTypeLink (server) {
   this.impl = require('./dao/' +
-                             nconf.get('impl_directory') +
+                             config.get('impl_directory') +
                              '/applicationNetworkTypeLinks.js')
 
   modelAPI = server

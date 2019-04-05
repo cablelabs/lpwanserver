@@ -1,7 +1,7 @@
 var appLogger = require('../lib/appLogger.js')
 
 // Configuration access.
-var nconf = require('nconf')
+const config = require('../config')
 
 var protocolDataAccess = require('../networkProtocols/networkProtocolDataAccess')
 
@@ -19,7 +19,7 @@ var modelAPI
 //
 function CompanyNetworkTypeLink (server) {
   this.impl = require('./dao/' +
-                             nconf.get('impl_directory') +
+                             config.get('impl_directory') +
                              '/companyNetworkTypeLinks.js')
 
   modelAPI = server

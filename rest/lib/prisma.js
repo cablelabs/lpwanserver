@@ -1,14 +1,14 @@
 // Config access.
-var nconf = require('nconf')
 var path = require('path')
 const R = require('ramda')
 const { mutate } = require('./utils')
 const { prune } = require('dead-leaves')
+const config = require('../config')
 
 const prismaClientPath = path.join(
   __dirname,
   '../../prisma',
-  nconf.get('prisma_dir'),
+  config.get('prisma_dir'),
   'generated/prisma-client/index-dynamic-endpoint'
 )
 

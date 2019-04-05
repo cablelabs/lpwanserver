@@ -2,7 +2,7 @@
 var appLogger = require('../lib/appLogger.js')
 
 // Configuration access.
-var nconf = require('nconf')
+const config = require('../config')
 
 var modelAPI
 
@@ -20,7 +20,7 @@ var modelAPI
 //
 function DeviceProfile (server) {
   this.impl = require('./dao/' +
-                             nconf.get('impl_directory') +
+                             config.get('impl_directory') +
                              '/deviceProfiles.js')
 
   modelAPI = server

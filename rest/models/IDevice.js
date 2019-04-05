@@ -1,7 +1,7 @@
 const appLogger = require('../lib/appLogger.js')
 
 // Configuration access.
-const nconf = require('nconf')
+const config = require('../config')
 
 const DevNtwkTypeLink = require('./dao/production/deviceNetworkTypeLinks')
 
@@ -20,7 +20,7 @@ var impl
 //
 function Device (server) {
   this.impl = require('./dao/' +
-                             nconf.get('impl_directory') +
+                             config.get('impl_directory') +
                              '/devices.js')
   impl = this.impl
   modelAPI = server

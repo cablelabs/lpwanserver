@@ -1,12 +1,12 @@
 // Configuration access.
-var nconf = require('nconf')
+const config = require('../config')
 
 //* *****************************************************************************
 // The ReportingProtocol interface.
 //* *****************************************************************************
 function ReportingProtocol () {
   this.impl = require('./dao/' +
-                             nconf.get('impl_directory') +
+                             config.get('impl_directory') +
                              '/reportingProtocols.js')
 }
 

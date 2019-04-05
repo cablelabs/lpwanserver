@@ -7,9 +7,6 @@
 // The request is used to access remote networks via a REST API.
 var request = require('request')
 
-// NCONF can be used to access settings specified in the config.hjson file.
-var nconf = require('nconf')
-
 // General libraries in use in this module.
 // AppLogger is a conole logger that adds timestamp, filename, and line number
 // information.  Usage: appLogger.log( <string> );

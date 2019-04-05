@@ -1,5 +1,4 @@
 const request = require('request-promise')
-// const nconf = require('nconf')
 const appLogger = require('../../../../lib/appLogger')
 const uuid = require('uuid/v1')
 const R = require('ramda')
