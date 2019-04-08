@@ -1,179 +1,135 @@
-// Configuration access.
-const config = require('../config')
+const appLogger = require('../lib/appLogger.js')
+const { onFail } = require('../lib/utils')
+const { prisma } = require('../lib/prisma')
+var httpError = require('http-errors')
 
-// General libraries in use in this module.
-var appLogger = require('../lib/appLogger.js')
+module.exports = class Company {
+  constructor (modelAPI) {
+    this.modelAPI = modelAPI
+    this.COMPANY_ADMIN = 1
+    this.COMPANY_VENDOR = 2
+    this.types = {}
+    this.reverseTypes = {}
+  }
 
-//* *****************************************************************************
-// The Company interface.
-//* *****************************************************************************
-// Maps a type name to a numeric value.
-var types = {}
-// Maps a numeric value to the type name.
-var reverseTypes = {}
-
-// Gives access to oither data
-var modelAPI
-
-// Class constructor.
-//
-// Loads the implementation for the company interface based on the passed
-// subdirectory name.  The implementation file companies.js is to be found in
-// that subdirectory of the models/dao directory (Data Access Object).
-//
-// implPath - The subdirectory to get the dao implementation from.
-//
-function Company (server) {
-  this.impl = require('./dao/' +
-                             config.get('impl_directory') +
-                             '/companies.js')
-  this.COMPANY_ADMIN = this.impl.COMPANY_ADMIN
-  this.COMPANY_VENDOR = this.impl.COMPANY_VENDOR
-  this.types = types
-  this.reverseTypes = reverseTypes
-
-  // Load the types from the database.
-  this.impl.getTypes().then(function (typeList) {
-    for (var i = 0; i < typeList.length; ++i) {
-      types[ typeList[ i ].name ] = typeList[ i ].id
-      reverseTypes[ typeList[ i ].id ] = typeList[ i ].name
+  async init () {
+    try {
+      const types = await prisma.companyTypes()
+      for (var i = 0; i < types.length; ++i) {
+        this.types[ types[ i ].name ] = type[ i ].id
+        this.reverseTypes[ types[ i ].id ] = type[ i ].name
+      }
     }
-  })
-    .catch(function (err) {
-      throw 'Failed to load company types: ' + err
-    })
-
-  modelAPI = server
-}
-
-// Retrieves a subset of the companies in the system given the options.
-//
-// Options include limits on the number of companies returned, the offset to
-// the first company returned (together giving a paging capability), and a
-// search string on company name.
-Company.prototype.retrieveCompanies = function (options) {
-  return this.impl.retrieveCompanies(options)
-}
-
-// Retrieve a company record by id.
-//
-// id - the record id of the company.
-//
-// Returns a promise that executes the retrieval.
-Company.prototype.retrieveCompany = async function retrieveCompany (id) {
-  const company = await this.impl.retrieveCompany(id)
-  try {
-    const result = await this.modelAPI.companyNetworkTypeLinks.retrieveCompanyNetworkTypeLinks({ companyId: company.id })
-    appLogger.log(`iCompany: retrieveCompany: ${JSON.stringify(result)}`)
-    if (result && result.records && result.records.length) {
-      company.networks = result.records.map(x => x.id)
+    catch (err) {
+      appLogger.log('Failed to load company types: ' + err)
+      throw err
     }
   }
-  catch (err) {
-    // ignore
+
+  createCompany (name, type) {
+    const data = { name, type }
+    return prisma.createCompany(data)
   }
-  return company
-}
 
-// Create the company record.
-//
-// name  - the name of the company
-// type  - the company type. COMPANY_ADMIN can manage companies, etc.,
-//         COMPANY_VENDOR is the typical vendor who just manages their own apps
-//         and devices.
-//
-// Returns the promise that will execute the create.
-Company.prototype.createCompany = function (name, type) {
-  return this.impl.createCompany(name, type)
-}
+  updateCompany ({ id, ...data }) {
+    if (!id) throw httpError(400, 'No existing Company ID')
+    if (data.type) data.type = { connect: { id: data.type } }
+    return prisma.updateCompany({ data, where: { id } }).$fragment(fragments.basic)
+  }
 
-// Update the company record.
-//
-// company - the updated record.  Note that the id must be unchanged from
-//           retrieval to guarantee the same record is updated.
-//
-// Returns a promise that executes the update.
-Company.prototype.updateCompany = function (record) {
-  return this.impl.updateCompany(record)
-}
+  async retrieveCompany (id) {
+    const company = await loadCompany({ id })
+    try {
+      const { records } = await this.modelAPI.companyNetworkTypeLinks.retrieveCompanyNetworkTypeLinks({ companyId: id })
+      if (records.length) {
+        company.networks = records.map(x => x.id)
+      }
+    }
+    catch (err) {
+      // ignore
+    }
+    return company
+  }
 
-// Delete the company record.
-// deleteCo
-// companyId - the id of the company record to delete.
-//
-// Returns a promise that performs the delete.
-Company.prototype.deleteCompany = function (id) {
-  let me = this
-  return new Promise(async function (resolve, reject) {
+  async retrieveCompanies ({ limit, offset, ...where } = {}) {
+    if (where.search) {
+      where.name_contains = where.search
+      delete where.search
+    }
+    const query = { where }
+    if (limit) query.first = limit
+    if (offset) query.skip = offset
+    appLogger.log(`modelAPI.companies.retrieveCompanies: ${JSON.stringify(query)}`)
+    const [records, totalCount] = await Promise.all([
+      prisma.companies(query).$fragment(fragments.basic),
+      prisma.companiesConnection({ where }).aggregate().count()
+    ])
+    return { totalCount, records }
+  }
+
+  async deleteCompany (id) {
     // Delete my applications, users, and companyNetworkTypeLinks first.
     try {
       // Delete applications
-      let apps = await modelAPI.applications.retrieveApplications({ companyId: id })
-      let recs = apps.records
-      for (let i = 0; i < recs.length; ++i) {
-        await modelAPI.applications.deleteApplication(recs[ i ].id)
-      }
+      let { records: apps } = await this.modelAPI.applications.retrieveApplications({ companyId: id })
+      await Promise.all(apps.map(x => this.modelAPI.applications.deleteApplication(x.id)))
     }
     catch (err) {
       appLogger.log("Error deleting company's applications: " + err)
     }
     try {
       // Delete users
-      let users = await modelAPI.users.retrieveUsers({ companyId: id })
-      let recs = users.records
-      for (let i = 0; i < recs.length; ++i) {
-        await modelAPI.users.deleteUser(recs[ i ].id)
-      }
+      let { records: users } = await this.modelAPI.users.retrieveUsers({ companyId: id })
+      await Promise.all(users.map(x => this.modelAPI.users.deleteUser(x.id)))
     }
     catch (err) {
       appLogger.log("Error deleting company's users: " + err)
     }
     try {
       // Delete deviceProfiles
-      let dps = await modelAPI.deviceProfiles.retrieveDeviceProfiles({ companyId: id })
-      let recs = dps.records
-      for (let i = 0; i < recs.length; ++i) {
-        await modelAPI.deviceProfiles.deleteDeviceProfile(recs[ i ].id)
-      }
+      let { records: deviceProfiles } = await this.modelAPI.deviceProfiles.retrieveDeviceProfiles({ companyId: id })
+      await Promise.all(deviceProfiles.map(x => this.modelAPI.deviceProfiles.deleteDeviceProfile(x.id)))
     }
     catch (err) {
       appLogger.log("Error deleting company's deviceProfiles: " + err)
     }
     try {
       // Delete passwordPolicies
-      let pps = await modelAPI.passwordPolicies.retrievePasswordPolicies(id)
-      let recs = pps
-      for (let i = 0; i < recs.length; ++i) {
-        // We can get null companyIds for cross-company rules - don't
-        // delete those.
-        if (id === recs[ i ].company.id) {
-          await modelAPI.passwordPolicies.deletePasswordPolicy(recs[ i ].id)
-        }
-      }
+      let { records: pwdPolicies } = await this.modelAPI.passwordPolicies.retrievePasswordPolicies(id)
+      // We can get null companyIds for cross-company rules - don't delete those.
+      pwdPolicies = pwdPolicies.filter(x => x.company.id === id)
+      await Promise.all(pwdPolicies.map(x => this.modelAPI.passwordPolicies.deletePasswordPolicy(x.id)))
     }
     catch (err) {
       appLogger.log("Error deleting company's PasswordPolicies: " + err)
     }
     try {
       // Delete companyNetworkTypeLinks
-      let cntls = await modelAPI.companyNetworkTypeLinks.retrieveCompanyNetworkTypeLinks({ companyId: id })
-      recs = cntls.records
-      for (let i = 0; i < recs.length; ++i) {
-        let logs = await modelAPI.companyNetworkTypeLinks.deleteCompanyNetworkTypeLink(recs[ i ].id)
-      }
+      let { records: companyNtls } = await this.modelAPI.companyNetworkTypeLinks.retrieveCompanyNetworkTypeLinks({ companyId: id })
+      await Promise.all(companyNtls.map(x => this.modelAPI.companyNetworkTypeLinks.deleteCompanyNetworkTypeLink(x.id)))
     }
     catch (err) {
       appLogger.log("Error deleting company's networkTypeLinks: " + err)
     }
-
-    try {
-      await me.impl.deleteCompany(id)
-      resolve()
-    }
-    catch (err) {
-      reject(err)
-    }
-  })
+    await onFail(400, () => prisma.deleteCompany({ id }))
+  }
 }
 
-module.exports = Company
+async function loadCompany (uniqueKeyObj, fragementKey = 'basic') {
+  const rec = await onFail(400, () => prisma.company(uniqueKeyObj).$fragment(fragments[fragementKey]))
+  if (!rec) throw httpError(404, 'Company not found')
+  return rec
+}
+
+//* *****************************************************************************
+// Fragments for how the data should be returned from Prisma.
+//* *****************************************************************************
+const fragments = {
+  basic: `fragment BasicCompany on Company {
+    id
+    name
+    type {
+      id
+    }
+  }`
+}

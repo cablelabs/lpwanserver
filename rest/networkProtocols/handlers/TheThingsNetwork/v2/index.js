@@ -175,7 +175,17 @@ module.exports = class TheThingsNetworkV2 {
         appLogger.log(existingApplication.name + ' link already exists', 'info')
       }
       else {
-        existingApplicationNTL = await modelAPI.applicationNetworkTypeLinks.createRemoteApplicationNetworkTypeLink(existingApplication.id, network.networkType.id, normalizedApplication, existingApplication.company.id)
+        existingApplicationNTL = await modelAPI.applicationNetworkTypeLinks.createApplicationNetworkTypeLink(
+          {
+            applicationId: existingApplication.id,
+            networkTypeId: network.networkType.id,
+            networkSettings: normalizedApplication
+          },
+          {
+            companyId: existingApplication.company.id,
+            remoteOrigin: true
+          }
+        )
         appLogger.log(existingApplicationNTL, 'info')
         await dataAPI.putProtocolDataForKey(
           network.id,
@@ -458,7 +468,7 @@ module.exports = class TheThingsNetworkV2 {
       })
       applicationData.networkSettings.applicationEUI = body.euis[0]
       appLogger.log(applicationData, 'error')
-      await modelAPI.applicationNetworkTypeLinks.updateRemoteApplicationNetworkTypeLink(applicationData, 2)
+      await modelAPI.applicationNetworkTypeLinks.updateApplicationNetworkTypeLink(applicationData, { companyId: 2, remoteOrigin: true })
       await dataAPI.putProtocolDataForKey(
         network.id,
         network.networkProtocol.id,

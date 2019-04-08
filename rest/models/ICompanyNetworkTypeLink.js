@@ -257,7 +257,8 @@ CompanyNetworkTypeLink.prototype.pullCompanyNetworkTypeLink = function (networkT
         }
         else {
           appLogger.log('creating Network Link for ' + application.name)
-          modelAPI.applicationNetworkTypeLinks.createApplicationNetworkTypeLink(existingApplication.id, networkTypeId, {}, existingApplication.company.id)
+          const appNtlData = { applicationId: existingApplication.id, networkTypeId, networkSettings: {} }
+          modelAPI.applicationNetworkTypeLinks.createApplicationNetworkTypeLink(appNtlData, { companyId: existingApplication.company.id })
         }
       }
 

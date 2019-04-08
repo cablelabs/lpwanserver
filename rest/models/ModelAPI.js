@@ -21,6 +21,7 @@ var DeviceNetworkTypeLinkModel = require('./IDeviceNetworkTypeLink.js')
 var NetworkTypeModel = require('./INetworkType.js')
 var NetworkProviderModel = require('./INetworkProvider.js')
 var ProtocolDataModel = require('./IProtocolData.js')
+var EmailModel = require('./IEmail.js')
 
 // Network Protocol use.
 var NetworkTypeAPI = require('../networkProtocols/networkTypeApi.js')
@@ -39,14 +40,18 @@ function ModelAPI (app) {
 
   // Companies.
   this.companies = new CompanyModel(this)
+  this.companies.init()
 
   // Password policies.  Manages password rules for companies.
   this.passwordPolicies = new PasswordPolicyModel(this.companies)
 
   // Users.  And start the user email verification background task that
   // expires old email verification records.
-  this.users = new UserModel()
-  this.users.emailVerifyInit()
+  this.users = new UserModel(this)
+  this.users.init()
+
+  this.emails = new EmailModel(this.users)
+  this.emails.init()
 
   // The session model, which uses users (for login).
   this.sessions = new SessionManagerModel(this.users)

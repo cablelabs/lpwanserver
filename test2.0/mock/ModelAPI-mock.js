@@ -58,5 +58,10 @@ module.exports = {
         throw new Error('Application Not Found')
       }
     }
+  },
+  passwordPolicies: {
+    validatePassword () {
+      return true
+    }
   }
 }

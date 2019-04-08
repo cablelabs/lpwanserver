@@ -556,8 +556,17 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
       appLogger.log(localApp.name + ' link already exists')
     }
     else {
-      let networkSettings = this.buildApplicationNetworkSettings(remoteApp)
-      appNtl = await modelAPI.applicationNetworkTypeLinks.createRemoteApplicationNetworkTypeLink(localApp.id, network.networkType.id, networkSettings, localApp.company.id)
+      appNtl = await modelAPI.applicationNetworkTypeLinks.createApplicationNetworkTypeLink(
+        {
+          applicationId: localApp.id,
+          networkTypeId: network.networkType.id,
+          networkSettings: this.buildApplicationNetworkSettings(remoteApp)
+        },
+        {
+          companyId: localApp.company.id,
+          remoteOrigin: true
+        }
+      )
       await dataAPI.putProtocolDataForKey(
         network.id,
         network.networkProtocol.id,

@@ -1,67 +1,71 @@
-// Configuration access.
-const config = require('../config')
+const { prisma } = require('../lib/prisma')
+const httpError = require('http-errors')
+const { onFail } = require('../lib/utils')
 
-//* *****************************************************************************
-// The PasswordPolicy interface.
-//* *****************************************************************************
-var pp
-function PasswordPolicy (companies) {
-  this.impl = require('./dao/' +
-                             config.get('impl_directory') +
-                             '/passwordPolicies.js')
-  this.companies = companies
-  pp = this
-}
+module.exports = class PasswordPolicy {
+  constructor (companyModel) {
+    this.companies = companyModel
+  }
 
-PasswordPolicy.prototype.retrievePasswordPolicies = function (companyId) {
-  return new Promise(function (resolve, reject) {
+  async createPasswordPolicy (ruleText, ruleRegExp, companyId) {
+    // verify regexp doesn't throw when created
+    const valid = new RegExp(ruleRegExp)
+    var data = { ruleText, ruleRegExp }
+    if (companyId) {
+      data.company = { connect: { id: companyId } }
+    }
+    return prisma.createPasswordPolicy(data)
+  }
+
+  async retrievePasswordPolicy (id, fragementKey = 'basic') {
+    const rec = await onFail(400, () => prisma.passwordPolicy({ id }).$fragment(fragments[fragementKey]))
+    if (!rec) throw httpError(404, 'PasswordPolicy not found')
+    return rec
+  }
+
+  async retrievePasswordPolicies (companyId) {
     // Verify that the company exists.
-    pp.companies.retrieveCompany(companyId).then(function () {
-      pp.impl.retrievePasswordPolicies(companyId).then(function (rows) {
-        resolve(rows)
-      })
-    })
-      .catch(function (err) {
-        reject(err)
-      })
-  })
-}
+    await this.companies.retrieveCompany(companyId)
+    const where = { OR: [
+      { company: { id: companyId } },
+      { company: null }
+    ] }
+    return prisma.passwordPolicies({ where })
+  }
 
-PasswordPolicy.prototype.retrievePasswordPolicy = function (id) {
-  return this.impl.retrievePasswordPolicy(id)
-}
-
-PasswordPolicy.prototype.createPasswordPolicy = function (ruleText, ruleRegExp, companyId) {
-  return this.impl.createPasswordPolicy(ruleText, ruleRegExp, companyId)
-}
-
-PasswordPolicy.prototype.updatePasswordPolicy = function (passwordPolicy) {
-  return new Promise(function (resolve, reject) {
-    // Verify that any new company exists if passed in.
-    if (passwordPolicy.companyId) {
-      pp.companies.retrieveCompany(passwordPolicy.companyId).then(function () {
-        pp.impl.updatePasswordPolicy(passwordPolicy).then(function () {
-          resolve()
-        })
-      })
-        .catch(function (err) {
-          reject(err)
-        })
+  async updatePasswordPolicy ({ id, ...data }) {
+    if (!id) throw httpError(400, 'No existing PasswordPolicy ID')
+    if (data.companyId) {
+      // Verify that any new company exists if passed in.
+      await this.companies.retrieveCompany(passwordPolicy.companyId)
+      data.company = { connect: { id: data.companyId } }
+      delete data.companyId
     }
-    // Otherwise just update.
-    else {
-      pp.impl.updatePasswordPolicy(passwordPolicy).then(function () {
-        resolve()
-      })
-        .catch(function (err) {
-          reject(err)
-        })
+    return prisma.updatePasswordPolicy({ data, where: { id } }).$fragment(fragments.basic)
+  }
+
+  deletePasswordPolicy (id) {
+    return onFail(400, () => prisma.deletePasswordPolicy({ id }))
+  }
+
+  async validatePassword (companyId, password) {
+    // Get the rules from the passwordPolicies table
+    const pwPolicies = await this.retrievePasswordPolicies(companyId)
+    const failed = pwPolicies.filter(x => !(new RegExp(x.ruleRegExp).test(password)))
+    if (!failed.length) return true
+    throw new Error('Password failed these policies:', failed.map(x => x.ruleText).join('; '))
+  }
+}
+
+//* *****************************************************************************
+// Fragments for how the data should be returned from Prisma.
+//* *****************************************************************************
+const fragments = {
+  basic: `fragment BasicPasswordPolicy on PasswordPolicy {
+    ruleText
+    ruleRegExp
+    company {
+      id
     }
-  })
+  }`
 }
-
-PasswordPolicy.prototype.deletePasswordPolicy = function (id) {
-  return this.impl.deletePasswordPolicy(id)
-}
-
-module.exports = PasswordPolicy

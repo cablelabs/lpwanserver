@@ -185,16 +185,13 @@ exports.initialize = function (app, server) {
     }
 
     // Do the add.
-    modelAPI.applicationNetworkTypeLinks.createApplicationNetworkTypeLink(
-      rec.applicationId,
-      rec.networkTypeId,
-      rec.networkSettings,
-      companyId).then(function (rec) {
-      var send = {}
-      send.id = rec.id
-      send.remoteAccessLogs = rec.remoteAccessLogs
-      restServer.respondJson(res, 200, send)
-    })
+    modelAPI.applicationNetworkTypeLinks.createApplicationNetworkTypeLink(rec, { companyId })
+      .then(function (rec) {
+        var send = {}
+        send.id = rec.id
+        send.remoteAccessLogs = rec.remoteAccessLogs
+        restServer.respondJson(res, 200, send)
+      })
       .catch(function (err) {
         restServer.respond(res, err)
       })
@@ -260,7 +257,7 @@ exports.initialize = function (app, server) {
         // Do the update.
         // TODO: Get rid of companies.  For now it is always 2 HACK
         let companyId = 2
-        modelAPI.applicationNetworkTypeLinks.updateApplicationNetworkTypeLink(data, companyId).then(function (rec) {
+        modelAPI.applicationNetworkTypeLinks.updateApplicationNetworkTypeLink(data, { companyId }).then(function (rec) {
           restServer.respondJson(res, 200, { remoteAccessLogs: rec.remoteAccessLogs })
         })
           .catch(function (err) {
