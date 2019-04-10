@@ -16,8 +16,8 @@ module.exports = class Company {
     try {
       const types = await prisma.companyTypes()
       for (var i = 0; i < types.length; ++i) {
-        this.types[ types[ i ].name ] = type[ i ].id
-        this.reverseTypes[ types[ i ].id ] = type[ i ].name
+        this.types[ types[ i ].name ] = types[ i ].id
+        this.reverseTypes[ types[ i ].id ] = types[ i ].name
       }
     }
     catch (err) {
