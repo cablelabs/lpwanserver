@@ -36,5 +36,10 @@ docker-compose \
   --abort-on-container-exit \
   --exit-code-from api-test
 
+TEST_EXIT_CODE=$?
+
 # Stop Prisma
 docker-compose -f ./prisma/dev/docker-compose.yml down
+
+# Exit script with the code from the test
+exit $TEST_EXIT_CODE

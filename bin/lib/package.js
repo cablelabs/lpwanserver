@@ -22,11 +22,6 @@ const imageTags = {
 const ROOT = path.join(__dirname, '../..')
 const opts = { cwd: ROOT, stdio: 'inherit' }
 
-function copyDemoData () {
-  execSync('rm -rf ./data/demo_data', opts)
-  execSync('cp -r ./data/demo_baseline ./data/demo_data', opts)
-}
-
 function packageRestServer () {
   execSync(`docker build -f docker/Dockerfile -t ${imageTags.releaseCandidate} -t ${imageTags.latest} .`, opts)
 }
@@ -37,7 +32,6 @@ const packageTest = type => () => {
 
 module.exports = {
   imageTags,
-  copyDemoData,
   packageRestServer,
   packageUnitTest: packageTest('unit'),
   packageApiTest: packageTest('api'),

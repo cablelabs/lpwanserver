@@ -1,10 +1,39 @@
 #!/usr/bin/env bash
 
-docker system prune --force
+if [ "$1" = "stop" ]
+then
+  docker-compose -f docker/docker-compose.demo.yml down
+  docker-compose -f prisma/dev/docker-compose.yml down
+  exit 0
+fi
 
-npm run package
+# Remove old containers
+docker container rm \
+  lpwanserver_dev_prisma \
+  lpwanserver_dev_postgres \
+  lpwanserver_dev_loraserver2 \
+  lpwanserver_dev_loraserver1 \
+  lpwanserver_dev_loraappserver2 \
+  lpwanserver_dev_loraappserver1 \
+  lpwanserver_dev_loraserver_postgres \
+  lpwanserver_dev_loraserver_redis \
+  lpwanserver_dev_loraserver_mosquitto --force
 
-# Run docker-compose with development configuration
-docker-compose \
-  -f ./docker/docker-compose.loraserver.yml \
-  -f ./docker/docker-compose.demo.yml up
+# Remove old volumes
+docker volume rm \
+  lpwanserver_dev_postgres \
+  lpwanserver_dev_loraserver_postgres --force
+
+# Start Prisma
+docker-compose -f ./prisma/dev/docker-compose.yml up -d
+
+sleep 5s
+
+# Deploy Prisma
+npm run prisma:dev deploy
+
+# npm run package-test
+node bin/package.js
+
+# Start Lora Server and run tests
+docker-compose -f docker/docker-compose.demo.yml up -d
