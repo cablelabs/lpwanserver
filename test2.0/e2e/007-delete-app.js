@@ -13,7 +13,6 @@ chai.use(chaiHttp)
 let server = chai.request(app).keepOpen()
 
 const describeTTN = process.env.TTN === 'true' ? describe : describe.skip.bind(describe)
-const describeLoriot = process.env.LORIOT === 'true' ? describe : describe.skip.bind(describe)
 
 const state = {
   adminToken: '',

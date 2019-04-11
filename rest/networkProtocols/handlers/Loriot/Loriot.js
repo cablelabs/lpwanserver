@@ -131,23 +131,6 @@ module.exports = class Loriot extends NetworkProtocol {
     }
   }
 
-  async updateApplication (session, network, appId, dataAPI) {
-    // Get the application data.
-    // var localApp = await dataAPI.getApplicationById(appId)
-    // let appNetworkId = await dataAPI.getProtocolDataForKey(
-    //   network.id,
-    //   network.networkProtocol.id,
-    //   makeApplicationDataKey(appId, 'appNwkId')
-    // )
-    // appNetworkId = parseInt(appNetworkId, 10)
-    // var applicationData = await dataAPI.getApplicationNetworkType(appId, network.networkType.id)
-    // let body = this.buildRemoteApplication(
-    //   applicationData.networkSettings,
-    //   localApp
-    // )
-    // await this.client.updateApplication(session, network, appNetworkId, body)
-  }
-
   async deleteApplication (session, network, appId, dataAPI) {
     let appNetworkId = await dataAPI.getProtocolDataForKey(
       network.id,
@@ -396,7 +379,7 @@ module.exports = class Loriot extends NetworkProtocol {
     return R.pick(pick, remoteApplication)
   }
 
-  buildRemoteApplication (networkSettings, app) {
+  buildRemoteApplication (networkSettings) {
     const defaults = { cansend: true, orx: true, canotaa: true, suspended: false }
     const pick = [
       'overbosity', 'ogwinfo', 'joinServerId', 'publishAppSKey', 'orx', 'canotaa', 'joinrxw'
