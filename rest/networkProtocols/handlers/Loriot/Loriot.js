@@ -111,7 +111,6 @@ module.exports = class Loriot extends NetworkProtocol {
   }
 
   async addApplication (session, network, appId, dataAPI) {
-    appLogger.log(`LORIOT: addApplication: ${JSON.stringify({ session, network, appId })}`)
     try {
       // Get the local application data.
       const localApp = await dataAPI.getApplicationById(appId)

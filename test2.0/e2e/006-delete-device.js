@@ -53,7 +53,7 @@ const testData = {
   })
 }
 
-describe.skip('E2E Test for Deleting a Device Use Case #192', () => {
+describe('E2E Test for Deleting a Device Use Case #192', () => {
   before(() => setup.start())
 
   describe('Verify Login and Administration of Users Works', () => {
