@@ -11,7 +11,7 @@ let request = require('request')
 chai.use(chaiHttp)
 let server = chai.request(app).keepOpen()
 
-describe('E2E Test for Updating an Application Use Case #189', () => {
+describe.skip('E2E Test for Updating an Application Use Case #189', () => {
   let adminToken
   let appId1
   let anlId1

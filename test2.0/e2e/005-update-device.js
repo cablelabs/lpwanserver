@@ -20,6 +20,7 @@ describe('E2E Test for Updating a Device Use Case #193', () => {
   let dnlId1
   let remoteApp1
   let remoteApp2
+  let remoteAppLoriot
   let remoteDeviceProfileId
   let remoteDeviceProfileId2
 

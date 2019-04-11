@@ -51,7 +51,7 @@ module.exports = class NetworkProtocol {
   // with the appropriate permissions to the remote network.
   async getApplicationAccessAccount (network, dataAPI, applicationId) {
     const co = await dataAPI.getCompanyByApplicationId(applicationId)
-    return this.getCompanyAccount(dataAPI, network, co.id, false)
+    return this.getCompanyAccount(network, dataAPI, co.id, false)
   }
 
   // The login account data needed to manipulate devices.
@@ -63,7 +63,7 @@ module.exports = class NetworkProtocol {
   // with the appropriate permissions to the remote network.
   async getDeviceAccessAccount (network, dataAPI, deviceId) {
     const co = await dataAPI.getCompanyByDeviceId(deviceId)
-    return this.getCompanyAccount(dataAPI, network, co.id, false)
+    return this.getCompanyAccount(network, dataAPI, co.id, false)
   }
 
   // The login account data needed to manipulate deviceProfiles.
@@ -77,7 +77,7 @@ module.exports = class NetworkProtocol {
   // with the appropriate permissions to the remote network.
   async getDeviceProfileAccessAccount (network, dataAPI, deviceId) {
     const co = await dataAPI.getCompanyByDeviceProfileId(deviceId)
-    return this.getCompanyAccount(dataAPI, network, co.id, false)
+    return this.getCompanyAccount(network, dataAPI, co.id, false)
   }
 
   //* *****************************************************************************

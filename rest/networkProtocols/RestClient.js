@@ -10,7 +10,7 @@ module.exports = class RestClient {
     try {
       body = await requestClient(opts)
       appLogger.log(`NETWORK REQUEST: ${JSON.stringify(opts)}`, 'info')
-      appLogger.log(`NETWORK RESPONSE: ${JSON.stringify(body)}`, 'info')
+      appLogger.log(`NETWORK RESPONSE: ${JSON.stringify(body || {})}`, 'info')
     }
     catch (err) {
       appLogger.log(`NETWORK REQUEST: ${JSON.stringify(opts)}`, 'error')

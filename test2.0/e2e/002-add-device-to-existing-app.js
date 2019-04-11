@@ -10,7 +10,7 @@ let request = require('request')
 chai.use(chaiHttp)
 let server = chai.request(app).keepOpen()
 
-describe('E2E Test for Adding a Device to an Existing Application Use Case #190', () => {
+describe.skip('E2E Test for Adding a Device to an Existing Application Use Case #190', () => {
   let adminToken
   let appId1
   let anlId1
