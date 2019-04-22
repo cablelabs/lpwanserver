@@ -135,7 +135,6 @@ module.exports = class NetworkProtocolDataAccess {
   async getDeviceNetworkType (deviceId, networkTypeId) {
     const request = async () => {
       const { records } = await this.modelAPI.deviceNetworkTypeLinks.retrieveDeviceNetworkTypeLinks({ deviceId, networkTypeId })
-      appLogger.log(`GET_DEVICE_NETWORK_TYPE: ${JSON.stringify(records)}`)
       return records[0]
     }
     return this.cacheFirst(

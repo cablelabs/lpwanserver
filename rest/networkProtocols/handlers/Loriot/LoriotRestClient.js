@@ -59,6 +59,8 @@ module.exports = class LoraOpenSourceRestClient extends RestClient {
     return this.request(network, opts, session)
   }
 
+  // Causes 500 error on Loriot
+  // method is POST according to open-api spec
   updateApplication (session, network, id, body) {
     body = R.omit(['id'], body)
     const opts = { method: 'POST', url: `/app/${this.idHex(id)}`, body }
