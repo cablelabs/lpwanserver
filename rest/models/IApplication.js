@@ -32,8 +32,7 @@ class Application {
     const app = await loadApplication({ id }, fragment)
     app.running = this.running.has(id)
     try {
-      const { records } = await this.modelAPI.
-        applicationNetworkTypeLinks.retrieveApplicationNetworkTypeLinks({ applicationId: id })
+      const { records } = await this.modelAPI.applicationNetworkTypeLinks.retrieveApplicationNetworkTypeLinks({ applicationId: id })
       if (records.length) {
         app.networks = records.map(x => x.networkType.id)
       }

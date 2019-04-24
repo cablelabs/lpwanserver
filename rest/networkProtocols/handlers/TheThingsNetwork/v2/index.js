@@ -283,7 +283,7 @@ module.exports = class TheThingsNetworkV2 {
       appLogger.log(dp, 'info')
       let normalizedDevice = this.normalizeDeviceData(remoteDevice, dp.localDeviceProfile)
       appLogger.log(normalizedDevice)
-      const existingDeviceNTL = await modelAPI.deviceNetworkTypeLinks.createRemoteDeviceNetworkTypeLink(existingDevice.id, network.networkType.id, dp.localDeviceProfile, normalizedDevice, 2)
+      const existingDeviceNTL = await modelAPI.deviceNetworkTypeLinks.createDeviceNetworkTypeLink(existingDevice.id, network.networkType.id, dp.localDeviceProfile, normalizedDevice, 2, { remoteOrigin: true })
       appLogger.log(existingDeviceNTL)
       await dataAPI.putProtocolDataForKey(
         network.id,
@@ -304,12 +304,13 @@ module.exports = class TheThingsNetworkV2 {
     let networkSpecificDeviceProfileInformation = this.normalizeDeviceProfileData(remoteDevice, application)
     appLogger.log(networkSpecificDeviceProfileInformation, 'error')
     try {
-      const existingDeviceProfile = await modelAPI.deviceProfiles.createRemoteDeviceProfile(
+      const existingDeviceProfile = await modelAPI.deviceProfiles.createDeviceProfile(
         network.networkType.id,
         2,
         networkSpecificDeviceProfileInformation.name,
         'Device Profile managed by LPWAN Server, perform changes via LPWAN',
-        networkSpecificDeviceProfileInformation
+        networkSpecificDeviceProfileInformation,
+        { remoteOrigin: true }
       )
       return {
         localDeviceProfile: existingDeviceProfile.id,
