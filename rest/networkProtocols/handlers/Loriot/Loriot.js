@@ -145,6 +145,21 @@ module.exports = class Loriot extends NetworkProtocol {
     }
   }
 
+  async deleteApplication (session, network, appId, dataAPI) {
+    let appNetworkId = await dataAPI.getProtocolDataForKey(
+      network.id,
+      network.networkProtocol.id,
+      makeApplicationDataKey(appId, 'appNwkId')
+    )
+    appNetworkId = parseInt(appNetworkId, 10)
+    await this.client.deleteApplication(session, network, appNetworkId)
+    await dataAPI.deleteProtocolDataForKey(
+      network.id,
+      network.networkProtocol.id,
+      makeApplicationDataKey(appId, 'appNwkId')
+    )
+  }
+
   async pullDevices (session, network, remoteAppId, localAppId, modelAPI, dataAPI) {
     const params = { perPage: 9999, page: 1 }
     const { devices } = await this.client.listDevices(session, network, remoteAppId, params)
@@ -293,7 +308,7 @@ module.exports = class Loriot extends NetworkProtocol {
     dataAPI.putProtocolDataForKey(network.id,
       network.networkProtocol.id,
       makeDeviceDataKey(device.id, 'devNwkId'),
-      deviceData.device.devEUI)
+      deviceData.device.deveui)
     return dntl.networkSettings.devEUI
   }
 
@@ -320,12 +335,13 @@ module.exports = class Loriot extends NetworkProtocol {
       network.networkProtocol.id,
       makeApplicationDataKey(device.application.id, 'appNwkId'))
     appNwkId = parseInt(appNwkId, 10)
-    let deviceData = this.buildRemoteDevice(
-      device,
+    let deviceData = this.buildRemoteDeviceUpdate(
       dntl,
       deviceProfile
     )
-    await this.client.updateDevice(session, network, appNwkId, devNetworkId, deviceData.device)
+    // Unable to update device with a basic payload that should be allowed according to the docs
+    // The error is 400 with no message
+    // await this.client.updateDevice(session, network, appNwkId, devNetworkId, deviceData.device)
     if (deviceProfile.networkSettings.supportsJoin && deviceData.deviceKeys) {
       await this.client.updateDeviceKeys(session, network, appNwkId, deviceData.deviceKeys)
     }
@@ -339,19 +355,25 @@ module.exports = class Loriot extends NetworkProtocol {
 
   async deleteDevice (session, network, deviceId, dataAPI) {
     let device = await dataAPI.getDeviceById(deviceId)
-    var devNetworkId
+    let devNetworkId
+    let appNwkId
     try {
       devNetworkId = await dataAPI.getProtocolDataForKey(
         network.id,
         network.networkProtocol.id,
         makeDeviceDataKey(deviceId, 'devNwkId'))
+      appNwkId = await dataAPI.getProtocolDataForKey(
+        network.id,
+        network.networkProtocol.id,
+        makeApplicationDataKey(device.application.id, 'appNwkId'))
+      appNwkId = parseInt(appNwkId, 10)
     }
     catch (err) {
       // Can't delete without the remote ID.
       appLogger.log("Failed to get remote network's device ID: " + err)
       throw err
     }
-    await this.client.deleteDevice(session, network, device.application.id, devNetworkId)
+    await this.client.deleteDevice(session, network, appNwkId, devNetworkId)
     try {
       await dataAPI.deleteProtocolDataForKey(
         network.id,
@@ -361,30 +383,25 @@ module.exports = class Loriot extends NetworkProtocol {
     catch (err) {
       appLogger.log("Failed to delete remote network's device ID: " + err)
     }
-    await this.client.deleteDeviceKeys(session, network, devNetworkId)
   }
 
   buildApplicationNetworkSettings (remoteApplication) {
     const pick = [
-      'deviceLimit', 'devices', 'overbosity', 'ogwinfo', 'clientsLimit', 'joinServer', 'publishAppSKey',
+      'deviceLimit', 'devices', 'overbosity', 'ogwinfo', 'clientsLimit', 'joinServerId', 'publishAppSKey',
       'cansend', 'orx', 'canotaa', 'suspended'
     ]
     return R.pick(pick, remoteApplication)
   }
 
-  buildRemoteApplication (networkSettings, app, appEUI) {
+  buildRemoteApplication (networkSettings) {
     const defaults = { cansend: true, orx: true, canotaa: true, suspended: false }
     const pick = [
-      'deviceLimit', 'devices', 'overbosity', 'ogwinfo', 'clientsLimit', 'joinServer', 'publishAppSKey',
-      'cansend', 'orx', 'canotaa', 'suspended'
+      'overbosity', 'ogwinfo', 'joinServerId', 'publishAppSKey', 'orx', 'canotaa', 'joinrxw'
     ]
-    const result = {
+    return {
       ...defaults,
-      ...R.pick(pick, networkSettings),
-      ...R.pick(['name', 'description'], app)
+      ...R.pick(pick, networkSettings)
     }
-    if (appEUI) result.appeui = appEUI
-    return result
   }
 
   buildDeviceProfileNetworkSettings (remoteDevice) {
@@ -441,6 +458,36 @@ module.exports = class Loriot extends NetworkProtocol {
       let [major, minor, revision] = deviceProfile.networkSettings.macVersion.split('.')
       result.device.lorawan = { major, minor, revision }
     }
+
+    if (ns.deviceKeys) {
+      result.deviceKeys = {
+        deveui: ns.devEUI,
+        appkey: ns.deviceKeys.appKey
+      }
+    }
+    else if (ns.deviceActivation && deviceProfile.networkSettings.macVersion.slice(0, 3) === '1.0') {
+      result.deviceActivation = {
+        deveui: ns.devEUI,
+        seqno: ns.deviceActivation.fCntUp,
+        seqdn: ns.deviceActivation.fCntDwn,
+        devaddr: ns.deviceActivation.devAddr,
+        appskey: ns.deviceActivation.appSKey,
+        nwkskey: ns.deviceActivation.nwkSKey
+      }
+    }
+
+    return result
+  }
+
+  buildRemoteDeviceUpdate (deviceNtl, deviceProfile) {
+    const ns = deviceNtl.networkSettings
+    const result = { device: {
+      ...R.pick(['rxw', 'adrMin', 'adrMax', 'adrFix'], ns),
+      seqrelax: ns.skipFCntCheck
+    } }
+
+    const [higherClass] = ['C', 'B'].filter(x => deviceProfile.networkSettings[`supportsClass${x}`])
+    result.device.devclass = higherClass || 'A'
 
     if (ns.deviceKeys) {
       result.deviceKeys = {

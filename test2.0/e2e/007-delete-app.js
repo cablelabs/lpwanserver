@@ -4,23 +4,29 @@ let app = require('../../restApp.js')
 let setup = require('./setup.js')
 let appLogger = require('../../rest/lib/appLogger.js')
 let request = require('request')
+let requestP = require('request-promise')
 let Data = require('../data')
 const { assertEqualProps } = require('../lib/helpers')
 
-chai.should()
+var should = chai.should()
 chai.use(chaiHttp)
 let server = chai.request(app).keepOpen()
+
+const describeLoriot = process.env.LORIOT === 'true' ? describe : describe.skip.bind(describe)
 
 const state = {
   adminToken: '',
   remoteApp1: '',
   remoteApp2: '',
+  remoteAppLoriot: '',
   remoteDeviceProfileId: '',
   remoteDeviceProfileId2: '',
   lora1BaseUrl: 'https://lora_appserver1:8080/api',
   lora1Key: '',
   lora2BaseUrl: 'https://lora_appserver:8080/api',
   lora2Key: '',
+  loriotBaseUrl: 'https://us1.loriot.io/1/nwk',
+  loriotKey: 'AAAA-AXsZan9nB1apIzsnsW0Rlf5dAJLr0dGIfzLy6xOMd31o',
   lora: {
     loraV1: {
       protocolId: '',
@@ -36,7 +42,11 @@ const state = {
       protocolId: '',
       networkId: '',
       apps: []
-
+    },
+    loriot: {
+      protocolId: '',
+      networkId: '',
+      apps: []
     }
   }
 }
@@ -303,6 +313,7 @@ describe('E2E Test for Deleting an Application Use Case #191', () => {
         }
         else {
           let app = JSON.parse(body)
+          console.log(app)
           app.should.have.property('id')
           app.should.have.property('name')
           app.should.have.property('description')
@@ -604,6 +615,81 @@ describe('E2E Test for Deleting an Application Use Case #191', () => {
       })
     })
   })
+  describeLoriot('Verify Loriot has application', function () {
+    it('Verify the Loriot Application Exists', function (done) {
+      let options = {}
+      options.method = 'GET'
+      options.url = state.loriotBaseUrl + '/apps?page=1&perPage=100'
+      options.headers = {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + state.loriotKey
+      }
+      appLogger.log(options)
+      request(options, function (error, response, body) {
+        if (error) {
+          done(error)
+        }
+        else {
+          let { apps } = JSON.parse(body)
+          let app = apps.find(x => x.name === testData.app.name)
+          should.exist(app)
+          state.remoteAppLoriot = app._id
+          done()
+        }
+      })
+    })
+    it('Verify the LoRaServer V2 Application Exists', function (done) {
+      const appIdRest = state.remoteAppLoriot.toString(16).toUpperCase()
+      let options = {}
+      options.method = 'GET'
+      options.url = state.loriotBaseUrl + '/app/' + appIdRest
+      options.headers = {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + state.loriotKey
+      }
+      appLogger.log(options)
+      request(options, function (error, response, body) {
+        if (error) {
+          done(error)
+        }
+        else {
+          let app = JSON.parse(body)
+          console.log(app)
+          app.should.have.property('_id')
+          app.should.have.property('name')
+          app.name.should.equal(testData.app.name)
+          done()
+        }
+      })
+    })
+    it('Verify the Loriot Device Exists', function (done) {
+      const appIdRest = state.remoteAppLoriot.toString(16).toUpperCase()
+      let options = {}
+      options.method = 'GET'
+      options.url = state.loriotBaseUrl + '/app/' + appIdRest + '/device/' + testData.deviceNTL.networkSettings.devEUI
+      options.headers = {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + state.loriotKey
+      }
+      appLogger.log(options)
+      request(options, function (error, response, body) {
+        if (error) {
+          done(error)
+        }
+        else {
+          let device = JSON.parse(body)
+          console.log(device)
+          device.should.have.property('title')
+          device.should.have.property('deveui')
+          device.should.have.property('description')
+
+          device.title.should.equal(testData.deviceNTL.networkSettings.name)
+          device.deveui.should.equal(testData.deviceNTL.networkSettings.devEUI)
+          done()
+        }
+      })
+    })
+  })
   describe('Remove Device from Application', () => {
     it('Delete Device NTL', function (done) {
       server
@@ -760,6 +846,28 @@ describe('E2E Test for Deleting an Application Use Case #191', () => {
       })
     })
   })
+  describeLoriot('Verify Device Removed from Loriot', () => {
+    it('Verify the Loriot Device Does Not Exist', (done) => {
+      const appIdRest = state.remoteAppLoriot.toString(16).toUpperCase()
+      let options = {}
+      options.method = 'GET'
+      options.url = state.loriotBaseUrl + '/app/' + appIdRest + '/device/' + testData.deviceNTL.networkSettings.devEUI
+      options.headers = {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + state.loriotKey
+      }
+      appLogger.log(options)
+      request(options, function (error, response, body) {
+        if (error) {
+          done(error)
+        }
+        else {
+          response.statusCode.should.equal(404)
+          done()
+        }
+      })
+    })
+  })
   describe('Delete Application', () => {
     it('Delete Network Type Links for Application', function (done) {
       server
@@ -886,6 +994,68 @@ describe('E2E Test for Deleting an Application Use Case #191', () => {
         res.should.have.status(404)
         done()
       })
+    })
+  })
+  describeLoriot('Verify Loriot does not have application', function () {
+    it('Verify the Loriot Application Does Not Exist', function (done) {
+      let options = {}
+      options.method = 'GET'
+      options.url = state.loriotBaseUrl + '/apps?page=1&perPage=100'
+      options.headers = {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + state.loriotKey
+      }
+      appLogger.log(options)
+      request(options, function (error, response, body) {
+        if (error) return done(error)
+        let apps = JSON.parse(body)
+          .apps
+          .filter(x => x._id === state.remoteAppLoriot)
+        apps.should.have.length(0)
+        done()
+      })
+    })
+    it('Verify the Loriot Application Does Not Exist', function (done) {
+      const appIdRest = state.remoteAppLoriot.toString(16).toUpperCase()
+      let options = {}
+      options.method = 'GET'
+      options.url = state.loriotBaseUrl + '/app/' + appIdRest
+      options.headers = {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + state.loriotKey
+      }
+      appLogger.log(options)
+      request(options, function (error, res, body) {
+        if (error) return done(error)
+        res.should.have.status(403)
+        done()
+      })
+    })
+  })
+  describeLoriot('Remove Loriot apps and devices', () => {
+    it('Remove Loriot apps and devices', async () => {
+      let options = { method: 'GET', json: true }
+      options.url = state.loriotBaseUrl + '/apps?page=1&perPage=100'
+      options.headers = {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + state.loriotKey
+      }
+      let { apps } = await requestP(options)
+      apps = apps.filter(x => x.name !== 'ApiTest')
+      let appDevices = await Promise.all(apps.map(app => {
+        const appIdRest = app._id.toString(16).toUpperCase()
+        let opts = { ...options, url: `${state.loriotBaseUrl}/app/${appIdRest}/devices` }
+        return requestP(opts).then(x => ({ appIdRest, devices: x.devices }))
+      }))
+      await Promise.all(appDevices.map(async ({ appIdRest, devices }) => {
+        await Promise.all(devices.map(dev => requestP({
+          ...options,
+          method: 'DELETE',
+          url: `${state.loriotBaseUrl}/app/${appIdRest}/device/${dev._id}`
+        })))
+        let opts = { ...options, method: 'DELETE', url: `${state.loriotBaseUrl}/app/${appIdRest}` }
+        await requestP(opts)
+      }))
     })
   })
 })

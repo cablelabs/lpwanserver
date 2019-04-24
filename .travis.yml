@@ -19,8 +19,6 @@ cache:
 before_script:
   - npm run package
 script:
-  - npm run test:unit
-  - npm run test:api
   - npm run test:e2e
 after_success: npm run coverage
 before_deploy:
