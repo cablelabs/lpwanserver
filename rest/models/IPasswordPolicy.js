@@ -9,7 +9,7 @@ module.exports = class PasswordPolicy {
 
   async createPasswordPolicy (ruleText, ruleRegExp, companyId) {
     // verify regexp doesn't throw when created
-    const valid = new RegExp(ruleRegExp)
+    testRegExp(ruleRegExp)
     var data = { ruleText, ruleRegExp }
     if (companyId) {
       data.company = { connect: { id: companyId } }
@@ -37,7 +37,7 @@ module.exports = class PasswordPolicy {
     if (!id) throw httpError(400, 'No existing PasswordPolicy ID')
     if (data.companyId) {
       // Verify that any new company exists if passed in.
-      await this.companies.retrieveCompany(passwordPolicy.companyId)
+      await this.companies.retrieveCompany(data.companyId)
       data.company = { connect: { id: data.companyId } }
       delete data.companyId
     }
@@ -57,9 +57,17 @@ module.exports = class PasswordPolicy {
   }
 }
 
-//* *****************************************************************************
+// ******************************************************************************
+// Test RegExp
+// ******************************************************************************
+// Should throw an error if x is invalid regular expression
+function testRegExp (x) {
+  return new RegExp(x)
+}
+
+// ******************************************************************************
 // Fragments for how the data should be returned from Prisma.
-//* *****************************************************************************
+// ******************************************************************************
 const fragments = {
   basic: `fragment BasicPasswordPolicy on PasswordPolicy {
     ruleText

@@ -4,7 +4,7 @@ const os = require('os')
 const dns = require('dns')
 
 module.exports = class Email {
-  constructor (userModel) {
+  constructor () {
     this.hostUrl = 'localhost'
   }
 

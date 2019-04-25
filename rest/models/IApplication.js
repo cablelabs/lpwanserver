@@ -4,6 +4,7 @@ const reportingProtocol = require('../reportingProtocols/postHandler')
 const { prisma, formatInputData, formatRelationshipsIn } = require('../lib/prisma')
 var httpError = require('http-errors')
 const { onFail } = require('../lib/utils')
+const R = require('ramda')
 
 class Application {
   constructor (modelAPI) {
@@ -48,10 +49,10 @@ class Application {
     return prisma.createApplication(data).$fragment(fragments.basic)
   }
 
-  updateApplication ({ id, running, ...data }) {
+  updateApplication ({ id, ...data }) {
     // Throw away running prop, if present
     if (!id) throw httpError(400, 'No existing Application ID')
-    data = formatInputData(data)
+    data = formatInputData(R.omit(['running'], data))
     return prisma.updateApplication({ data, where: { id } }).$fragment(fragments.basic)
   }
 
@@ -102,7 +103,7 @@ class Application {
   async passDataToApplication (id, networkId, data) {
     let network = await this.modelAPI.networks.retrieveNetwork(networkId)
     let proto = await this.modelAPI.networkProtocolAPI.getProtocol(network)
-    let dataAPI = new NetworkProtocolDataAccess(modelAPI, 'ReportingProtocol')
+    let dataAPI = new NetworkProtocolDataAccess(this.modelAPI, 'ReportingProtocol')
     await proto.api.passDataToApplication(network, id, data, dataAPI)
     return 204
   }

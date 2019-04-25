@@ -85,7 +85,7 @@ module.exports = class DeviceNetworkTypeLink {
     }
   }
 
-  async pushDeviceNetworkTypeLink (deviceNetworkTypeLink, validateCompanyId) {
+  async pushDeviceNetworkTypeLink (deviceNetworkTypeLink) {
     try {
       var rec = await this.retrieveDeviceNetworkTypeLink(deviceNetworkTypeLink)
       var logs = await this.modelAPI.networkTypeAPI.pushDevice(rec.networkType.id, rec.device.id, rec.networkSettings)

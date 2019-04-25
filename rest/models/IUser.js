@@ -24,9 +24,26 @@ module.exports = class User {
     }
     // Expire records every 24 hours.
     // (24 hours * 60 minutes * 60 seconds * 1000 milliseconds)
-    setInterval(expireEmailVerify, 24 * 60 * 60 * 1000)
+    setInterval(this.expireEmailVerify.bind(this), 24 * 60 * 60 * 1000)
     // Run expiration code at startup as well.
-    expireEmailVerify()
+    this.expireEmailVerify()
+  }
+
+  // We run this "periodically" to delete old emailVerify records.  We user
+  // the handler code above with a "reject" type and an "expired" source so
+  // the handling and reporting code is in one place.
+  async expireEmailVerify () {
+    appLogger.log('Running expiration of email verify records')
+    // 14 day limit on email changes.
+    var timedOut = new Date()
+    // Move now back 14 days.
+    timedOut.setDate(timedOut.getDate() - 14)
+    const where = { changeRequested_lt: timedOut.toISOString() }
+    const records = await prisma.emailVerifications({ where })
+    appLogger.log(records.length + ' email verify records to be expired')
+    return Promise.all(
+      records.map(x => this.handleEmailVerifyResponse(x.uuid, 'reject', 'expired verification request'))
+    )
   }
 
   async createUser (username, password, email, companyId, roleId) {
@@ -185,7 +202,7 @@ module.exports = class User {
       })
     }
     try {
-      await updateUser(userUpdate)
+      await this.updateUser(userUpdate)
       await deleteEmailVerification(uuid)
     }
     catch (err) {
@@ -204,6 +221,9 @@ module.exports = class User {
   }
 }
 
+// *********************************************************************
+// Helpers
+// *********************************************************************
 async function loadUser (uniqueKeyObj, fragementKey = 'internal') {
   const rec = await onFail(400, () => prisma.user(uniqueKeyObj).$fragment(fragments[fragementKey]))
   if (!rec) throw httpError(404, 'User not found')
@@ -218,23 +238,6 @@ async function retrieveEmailVerification (uuid) {
 
 function deleteEmailVerification (uuid) {
   return onFail(400, () => prisma.deleteEmailVerification({ uuid }))
-}
-
-// We run this "periodically" to delete old emailVerify records.  We user
-// the handler code above with a "reject" type and an "expired" source so
-// the handling and reporting code is in one place.
-async function expireEmailVerify () {
-  appLogger.log('Running expiration of email verify records')
-  // 14 day limit on email changes.
-  var timedOut = new Date()
-  // Move now back 14 days.
-  timedOut.setDate(timedOut.getDate() - 14)
-  const where = { changeRequested_lt: timedOut.toISOString() }
-  const records = await prisma.emailVerifications({ where })
-  appLogger.log(records.length + ' email verify records to be expired')
-  return Promise.all(
-    records.map(x => handleEmailVerifyResponse(x.uuid, 'reject', 'expired verification request'))
-  )
 }
 
 

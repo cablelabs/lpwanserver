@@ -93,7 +93,7 @@ module.exports = class ApplicationNetworkTypeLink {
     }
   }
 
-  async pushApplicationNetworkTypeLink (id, { companyId } = {}) {
+  async pushApplicationNetworkTypeLink (id) {
     try {
       var rec = await this.retrieveApplicationNetworkTypeLink(id)
       // push devicenetworkTypeLinks
@@ -109,8 +109,7 @@ module.exports = class ApplicationNetworkTypeLink {
     }
   }
 
-  async pullApplicationNetworkTypeLink (networkTypeId) {
-    return
+  async pullApplicationNetworkTypeLink () {
   }
 
   async validateCompanyForApplication (companyId, applicationId) {

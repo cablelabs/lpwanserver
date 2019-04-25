@@ -62,7 +62,7 @@ module.exports = class Device {
       await Promise.all(records.map(x => this.modelAPI.deviceNetworkTypeLinks.deleteDeviceNetworkTypeLink(x.id)))
     }
     catch (err) {
-      appLogger.log('Error deleting device-dependant networkTypeLinks: ',err)
+      appLogger.log(`Error deleting device-dependant networkTypeLinks: ${err}`)
     }
     return onFail(400, () => prisma.deleteDevice({ id }))
   }
