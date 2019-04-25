@@ -1,7 +1,7 @@
 const appLogger = require('../lib/appLogger.js')
-const { prisma, formatInputData, formatRelationshipsIn } = require('../../lib/prisma')
+const { prisma, formatInputData, formatRelationshipsIn } = require('../lib/prisma')
 var httpError = require('http-errors')
-const { onFail } = require('../../lib/utils')
+const { onFail } = require('../lib/utils')
 
 module.exports = class Device {
   constructor (modelAPI) {
@@ -98,7 +98,7 @@ module.exports = class Device {
     try {
       const app = await this.modelAPI.applications.retrieveApplication(parseInt(req.body.applicationId, 10))
       req.application = app
-       next()
+      next()
     }
     catch (err) {
       res.status(400)

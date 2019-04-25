@@ -1,67 +1,39 @@
-// Configuration access.
-const config = require('../config')
+const { prisma } = require('../lib/prisma')
+const httpError = require('http-errors')
+const { onFail } = require('../lib/utils')
 
-//* *****************************************************************************
-// The NetworkProvider interface.
-//* *****************************************************************************
-// Class constructor.
-//
-// Loads the implementation for the networkProvider interface based on the passed
-// subdirectory name.  The implementation file networkProviders.js is to be found in
-// that subdirectory of the models/dao directory (Data Access Object).
-//
-// implPath - The subdirectory to get the dao implementation from.
-//
-function NetworkProvider () {
-  this.impl = require('./dao/' +
-                             config.get('impl_directory') +
-                             '/networkProviders.js')
+module.exports = class NetworkProvider {
+  createNetworkProvider (name) {
+    return prisma.createNetworkProvider({ name })
+  }
+
+  updateNetworkProvider ({ id, ...data }) {
+    if (!id) throw httpError(400, 'No existing NetworkProvider ID')
+    return prisma.updateNetworkProvider({ data, where: { id } })
+  }
+
+  async retrieveNetworkProvider (id) {
+    const rec = await onFail(400, () => prisma.networkProvider({ id }))
+    if (!rec) throw httpError(404, 'NetworkProvider not found')
+    return rec
+  }
+
+  async retrieveNetworkProviders ({ limit, offset, ...where } = {}) {
+    if (where.search) {
+      where.name_contains = where.search
+      delete where.search
+    }
+    const query = { where }
+    if (limit) query.first = limit
+    if (offset) query.skip = offset
+    const [records, totalCount] = await Promise.all([
+      prisma.networkProviders(query),
+      prisma.networkProvidersConnection({ where }).aggregate().count()
+    ])
+    return { totalCount, records }
+  }
+
+  deleteNetworkProvider (id) {
+    return onFail(400, () => prisma.deleteNetworkProvider({ id }))
+  }
 }
-
-// Retrieves a subset of the networkProviders in the system given the options.
-//
-// Options include limits on the number of networkProviders returned, the offset
-// to the first networkProvider returned (together giving a paging capability),
-// and a search string on networkProvider name.
-NetworkProvider.prototype.retrieveNetworkProviders = function (options) {
-  return this.impl.retrieveNetworkProviders(options)
-}
-
-// Retrieve a networkProvider record by id.
-//
-// id - the record id of the networkProvider.
-//
-// Returns a promise that executes the retrieval.
-NetworkProvider.prototype.retrieveNetworkProvider = function (id) {
-  return this.impl.retrieveNetworkProvider(id)
-}
-
-// Create the networkProvider record.
-//
-// name  - the name of the networkProvider
-//
-// Returns the promise that will execute the create.
-NetworkProvider.prototype.createNetworkProvider = function (name) {
-  return this.impl.createNetworkProvider(name)
-}
-
-// Update the networkProvider record.
-//
-// networkProvider - the updated record.  Note that the id must be unchanged from
-//           retrieval to guarantee the same record is updated.
-//
-// Returns a promise that executes the update.
-NetworkProvider.prototype.updateNetworkProvider = function (record) {
-  return this.impl.updateNetworkProvider(record)
-}
-
-// Delete the networkProvider record.
-//
-// networkProviderId - the id of the networkProvider record to delete.
-//
-// Returns a promise that performs the delete.
-NetworkProvider.prototype.deleteNetworkProvider = function (id) {
-  return this.impl.deleteNetworkProvider(id)
-}
-
-module.exports = NetworkProvider

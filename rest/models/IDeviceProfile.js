@@ -1,7 +1,7 @@
 var appLogger = require('../lib/appLogger.js')
-const { prisma, formatInputData, formatRelationshipsIn } = require('../../lib/prisma')
+const { prisma, formatInputData, formatRelationshipsIn } = require('../lib/prisma')
 var httpError = require('http-errors')
-const { onFail } = require('../../lib/utils')
+const { onFail } = require('../lib/utils')
 
 module.exports = class DeviceProfile {
   constructor (modelAPI) {
@@ -19,7 +19,7 @@ module.exports = class DeviceProfile {
       })
       const rec = await prisma.createDeviceProfile(data).$fragment(fragments.basic)
       if (!remoteOrigin) {
-        var logs = await modelAPI.networkTypeAPI.addDeviceProfile(networkTypeId, rec.id)
+        var logs = await this.modelAPI.networkTypeAPI.addDeviceProfile(networkTypeId, rec.id)
         rec.remoteAccessLogs = logs
       }
       return parseNetworkSettings(rec)
@@ -38,13 +38,13 @@ module.exports = class DeviceProfile {
       }
       data = formatInputData(data)
       const rec = await prisma.updateDeviceProfile({ data, where: { id } }).$fragment(fragments.basic)
-      var logs = await modelAPI.networkTypeAPI.pushDeviceProfile(rec.networkType.id, deviceProfile.id)
+      var logs = await this.modelAPI.networkTypeAPI.pushDeviceProfile(rec.networkType.id, id)
       rec.remoteAccessLogs = logs
       return rec
     }
     catch (err) {
       appLogger.log('Error updating deviceProfile:' + err)
-      reject(err)
+      throw err
     }
   }
 
@@ -80,33 +80,33 @@ module.exports = class DeviceProfile {
       // record, validate the company now, if required.  Also, we need the
       // networkTypeId from the record to delete it from the relevant
       // networks.  So get the record to start anyway.
-      var rec = await me.impl.retrieveDeviceProfile(id)
+      var rec = await this.retrieveDeviceProfile(id)
 
       if (validateCompanyId && validateCompanyId !== rec.company.id) {
-        throw new httpError.Unauthorized())
+        throw new httpError.Unauthorized()
       }
 
       // Don't delete the local record until the remote operations complete.
-      var logs = await modelAPI.networkTypeAPI.deleteDeviceProfile(rec.networkType.id, id)
+      var logs = await this.modelAPI.networkTypeAPI.deleteDeviceProfile(rec.networkType.id, id)
       await onFail(400, () => prisma.deleteDeviceProfile({ id }))
       return logs
     }
     catch (err) {
       appLogger.log('Error deleting deviceProfile: ' + err)
-      reject(err)
+      throw err
     }
   }
 
   async pushDeviceProfile (id) {
     try {
       var rec = await this.retrieveDeviceProfile(id)
-      var logs = await modelAPI.networkTypeAPI.pushDeviceProfile(rec.networkType.id, deviceProfile.id)
+      var logs = await this.modelAPI.networkTypeAPI.pushDeviceProfile(rec.networkType.id, id)
       rec.remoteAccessLogs = logs
       return rec
     }
     catch (err) {
       appLogger.log('Error pushing deviceProfile:' + err)
-      reject(err)
+      throw err
     }
   }
 }

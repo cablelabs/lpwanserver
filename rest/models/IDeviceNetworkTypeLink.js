@@ -1,7 +1,7 @@
 var appLogger = require('../lib/appLogger.js')
 var httpError = require('http-errors')
-const { prisma, formatInputData, formatRelationshipsIn } = require('../../lib/prisma')
-const { onFail } = require('../../lib/utils')
+const { prisma, formatInputData, formatRelationshipsIn } = require('../lib/prisma')
+const { onFail } = require('../lib/utils')
 
 module.exports = class DeviceNetworkTypeLink {
   constructor (modelAPI) {
@@ -72,6 +72,7 @@ module.exports = class DeviceNetworkTypeLink {
 
   async deleteDeviceNetworkTypeLink (id, validateCompanyId) {
     try {
+      const rec = await this.retrieveDeviceNetworkTypeLink(id)
       await this.validateCompanyForDeviceNetworkTypeLink(validateCompanyId, id)
       // Don't delete the local record until the remote operations complete.
       var logs = await this.modelAPI.networkTypeAPI.deleteDevice(rec.networkType.id, rec.device.id)

@@ -1,6 +1,6 @@
 var appLogger = require('../lib/appLogger.js')
-const { prisma, formatInputData, formatRelationshipsIn } = require('../../lib/prisma')
-const { onFail } = require('../../lib/utils')
+const { prisma, formatInputData, formatRelationshipsIn } = require('../lib/prisma')
+const { onFail } = require('../lib/utils')
 var httpError = require('http-errors')
 
 // var protocolDataAccess = require('../networkProtocols/networkProtocolDataAccess')
@@ -90,7 +90,7 @@ module.exports = class CompanyNetworkTypeLink {
     }
   }
 
-  async retrieveCompanyNetworkTypeLinks ({ limit, offset, ...where }) {
+  async retrieveCompanyNetworkTypeLinks ({ limit, offset, ...where } = {}) {
     where = formatRelationshipsIn(where)
     const query = { where }
     if (limit) query.first = limit

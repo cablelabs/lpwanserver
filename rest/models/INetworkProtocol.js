@@ -1,51 +1,94 @@
-// Configuration access.
-const config = require('../config')
-const appLogger = require('../lib/appLogger')
 const path = require('path')
+const { prisma, formatInputData, formatRelationshipsIn } = require('../lib/prisma')
+const httpError = require('http-errors')
+const { onFail } = require('../lib/utils')
 
 const handlerDir = path.join(__dirname, '../networkProtocols/handlers')
 
-//* *****************************************************************************
-// The NetworkProtocol interface.
-//* *****************************************************************************
-function NetworkProtocol () {
-  this.impl = require('./dao/' +
-                             config.get('impl_directory') +
-                             '/networkProtocols.js')
-}
-
-NetworkProtocol.prototype.retrieveNetworkProtocols = async function (options) {
-  let result = await this.impl.retrieveNetworkProtocols(options)
-
-  return {
-    ...result,
-    records: result.records.map(x => {
-      const metaData = require(path.join(handlerDir, x.protocolHandler, 'metadata'))
-      return { ...x, metaData }
+module.exports = class NetworkProtocol {
+  async createNetworkProtocol (name, networkTypeId, protocolHandler, version, masterProtocol) {
+    const data = formatInputData({
+      name,
+      protocolHandler,
+      networkProtocolVersion: version,
+      networkTypeId,
+      masterProtocol
     })
+    let rec = await prisma.createNetworkProtocol(data).$fragment(fragments.basic)
+    if (!masterProtocol) {
+      rec = await this.updateNetworkProtocol({ id: rec.id, masterProtocol: rec.id })
+    }
+    return rec
+  }
+
+  updateNetworkProtocol ({ id, ...data }) {
+    if (!id) throw httpError(400, 'No existing NetworkProtocol ID')
+    data = formatInputData(data)
+    return prisma.updateNetworkProtocol({ data, where: { id } }).$fragment(fragments.basic)
+  }
+
+  async upsertNetworkProtocol ({ networkProtocolVersion, ...np }) {
+    const { records } = await this.retrieveNetworkProtocols({ search: np.name, networkProtocolVersion })
+    if (records.length) {
+      return this.updateNetworkProtocol({ id: records[0].id, ...np })
+    }
+    return this.createNetworkProtocol(np.name, np.networkTypeId, np.protocolHandler, networkProtocolVersion, np.masterProtocol)
+  }
+
+  async retrieveNetworkProtocol (id) {
+    const rec = await onFail(400, () => prisma.networkProtocol({ id }).$fragment(fragments.basic))
+    if (!rec) throw httpError(404, 'NetworkProtocol not found')
+    return addMetadata(rec)
+  }
+
+  async retrieveNetworkProtocols ({ limit, offset, ...where } = {}) {
+    where = formatRelationshipsIn(where)
+    if (where.search) {
+      where.name_contains = where.search
+      delete where.search
+    }
+    if (where.networkProtocolVersion) {
+      where.networkProtocolVersion_contains = where.networkProtocolVersion
+      delete where.networkProtocolVersion
+    }
+    const query = { where }
+    if (limit) query.first = limit
+    if (offset) query.skip = offset
+    // if (Object.keys(where).length) {
+    const [records, totalCount] = await Promise.all([
+      prisma.networkProtocols(query).$fragment(fragments.basic),
+      prisma.networkProtocolsConnection({ where }).aggregate().count()
+    ])
+    return { totalCount, records: records.map(addMetadata) }
+  }
+
+  deleteNetworkProtocol (id) {
+    return onFail(400, () => prisma.deleteNetworkProtocol({ id }))
   }
 }
 
-NetworkProtocol.prototype.retrieveNetworkProtocol = async function (id) {
-  let rec = await this.impl.retrieveNetworkProtocol(id)
-  const metaData = require(path.join(handlerDir, rec.protocolHandler, 'metadata'))
-  return { ...rec, metaData }
+// ******************************************************************************
+// Helpers
+// ******************************************************************************
+function addMetadata (rec) {
+  return {
+    ...rec,
+    metaData: require(path.join(handlerDir, rec.protocolHandler, 'metadata'))
+  }
 }
 
-NetworkProtocol.prototype.createNetworkProtocol = function (name, networkTypeId, protocolHandler) {
-  return this.impl.createNetworkProtocol(name, networkTypeId, protocolHandler)
+// ******************************************************************************
+// Fragments for how the data should be returned from Prisma.
+// ******************************************************************************
+const fragments = {
+  basic: `fragment BasicNetworkProtocol on NetworkProtocol {
+    id
+    name
+    protocolHandler
+    networkProtocolVersion
+    masterProtocol
+    networkType {
+      id
+    }
+  }`
 }
-
-NetworkProtocol.prototype.updateNetworkProtocol = function (record) {
-  return this.impl.updateNetworkProtocol(record)
-}
-
-NetworkProtocol.prototype.deleteNetworkProtocol = function (id) {
-  return this.impl.deleteNetworkProtocol(id)
-}
-
-NetworkProtocol.prototype.upsertNetworkProtocol = function (record) {
-  return this.impl.upsertNetworkProtocol(record)
-}
-
-module.exports = NetworkProtocol

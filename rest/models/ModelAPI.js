@@ -11,7 +11,6 @@ var SessionManagerModel = require('./sessionManager.js')
 var NetworkProtocolModel = require('./INetworkProtocol.js')
 var NetworkModel = require('./INetwork.js')
 var CompanyNetworkTypeLinkModel = require('./ICompanyNetworkTypeLink.js')
-// var NetworkProvisioningFieldModel = require( './models/INetworkProvisioningField.js' );
 var ReportingProtocolModel = require('./IReportingProtocol.js')
 var { Application: ApplicationModel } = require('./IApplication.js')
 var ApplicationNetworkTypeLinkModel = require('./IApplicationNetworkTypeLink.js')

@@ -1,33 +1,29 @@
-// Configuration access.
-const config = require('../config')
+const { prisma } = require('../lib/prisma')
+const httpError = require('http-errors')
+const { onFail } = require('../lib/utils')
 
-//* *****************************************************************************
-// The ReportingProtocol interface.
-//* *****************************************************************************
-function ReportingProtocol () {
-  this.impl = require('./dao/' +
-                             config.get('impl_directory') +
-                             '/reportingProtocols.js')
+module.exports = class ReportingProtocol {
+  createReportingProtocol (name, protocolHandler) {
+    const data = { name, protocolHandler }
+    return prisma.createReportingProtocol(data)
+  }
+
+  updateReportingProtocol ({ id, ...data }) {
+    if (!id) throw httpError(400, 'No existing ReportingProtocol ID')
+    return prisma.updateReportingProtocol({ data, where: { id } })
+  }
+
+  async retrieveReportingProtocol (id) {
+    const rec = await onFail(400, () => prisma.reportingProtocol({ id }))
+    if (!rec) throw httpError(404, 'Reporting protocol not found')
+    return rec
+  }
+
+  retrieveReportingProtocols () {
+    return prisma.reportingProtocols()
+  }
+
+  deleteReportingProtocol (id) {
+    return onFail(400, () => prisma.deleteReportingProtocol({ id }))
+  }
 }
-
-ReportingProtocol.prototype.retrieveReportingProtocols = function () {
-  return this.impl.retrieveReportingProtocols()
-}
-
-ReportingProtocol.prototype.retrieveReportingProtocol = function (id) {
-  return this.impl.retrieveReportingProtocol(id)
-}
-
-ReportingProtocol.prototype.createReportingProtocol = function (name, protocolHandler) {
-  return this.impl.createReportingProtocol(name, protocolHandler)
-}
-
-ReportingProtocol.prototype.updateReportingProtocol = function (record) {
-  return this.impl.updateReportingProtocol(record)
-}
-
-ReportingProtocol.prototype.deleteReportingProtocol = function (id) {
-  return this.impl.deleteReportingProtocol(id)
-}
-
-module.exports = ReportingProtocol
