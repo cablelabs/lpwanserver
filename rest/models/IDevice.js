@@ -1,168 +1,132 @@
 const appLogger = require('../lib/appLogger.js')
+const { prisma, formatInputData, formatRelationshipsIn } = require('../lib/prisma')
+var httpError = require('http-errors')
+const { onFail } = require('../lib/utils')
 
-// Configuration access.
-const config = require('../config')
+module.exports = class Device {
+  constructor (modelAPI) {
+    this.modelAPI = modelAPI
+  }
 
-const DevNtwkTypeLink = require('./dao/production/deviceNetworkTypeLinks')
+  createDevice (name, description, applicationId, deviceModel) {
+    appLogger.log(`IDevice ${name}, ${description}, ${applicationId}, ${deviceModel}`)
+    const data = formatInputData({
+      name,
+      description,
+      applicationId,
+      deviceModel
+    })
+    return prisma.createDevice(data).$fragment(fragments.basic)
+  }
 
-var modelAPI
-var impl
-//* *****************************************************************************
-// The Device interface.
-//* *****************************************************************************
-// Class constructor.
-//
-// Loads the implementation for the device interface based on the passed
-// subdirectory name.  The implementation file devices.js is to be found in
-// that subdirectory of the models/dao directory (Data Access Object).
-//
-// implPath - The subdirectory to get the dao implementation from.
-//
-function Device (server) {
-  this.impl = require('./dao/' +
-                             config.get('impl_directory') +
-                             '/devices.js')
-  impl = this.impl
-  modelAPI = server
-};
-
-// Retrieves a subset of the devices in the system given the options.
-//
-// Options include limits on the number of devices returned, the offset to
-// the first device returned (together giving a paging capability), a
-// search string on device name, an applicationId, and a deviceProfileId.
-Device.prototype.retrieveDevices = function (options) {
-  return this.impl.retrieveDevices(options)
-}
-
-// Retrieve an device record by id.
-//
-// id - the record id of the device.
-//
-// Returns a promise that executes the retrieval.
-Device.prototype.retrieveDevice = async function retrieveDevice (id) {
-  const dvc = await this.impl.retrieveDevice(id)
-  try {
-    const { records } = await DevNtwkTypeLink.retrieveDeviceNetworkTypeLinks({ deviceId: id })
-    if (records.length) {
-      dvc.networks = records.map(x => x.networkType.id)
+  async retrieveDevice (id) {
+    const dvc = await loadDevice({ id })
+    try {
+      const { records } = await this.modelAPI.deviceNetworkTypeLinks.retrieveDeviceNetworkTypeLinks({ deviceId: id })
+      if (records.length) {
+        dvc.networks = records.map(x => x.networkType.id)
+      }
     }
+    catch (err) {
+      // ignore
+    }
+    return dvc
   }
-  catch (err) {
-    // ignore
+
+  async retrieveDevices ({ limit, offset, ...where } = {}) {
+    where = formatRelationshipsIn(where)
+    if (where.search) {
+      where.name_contains = where.search
+      delete where.search
+    }
+    const query = { where }
+    if (limit) query.first = limit
+    if (offset) query.skip = offset
+    const [records, totalCount] = await Promise.all([
+      prisma.devices(query).$fragment(fragments.basic),
+      prisma.devicesConnection({ where }).aggregate().count()
+    ])
+    return { totalCount, records }
   }
-  return dvc
-}
 
-// Create the device record.
-//
-// name          - the name of the device
-// description   - A description for the device
-// deviceModel   - Model information for the device.
-// applicationId - the id of the application this device belongs to
-//
-// Returns the promise that will execute the create.
-Device.prototype.createDevice = function (name, description, applicationId, deviceModel) {
-  appLogger.log(`IDevice ${name}, ${description}, ${applicationId}, ${deviceModel}`)
-  return this.impl.createDevice(name, description, applicationId, deviceModel)
-}
+  updateDevice ({ id, ...data }) {
+    if (!id) throw httpError(400, 'No existing Device ID')
+    data = formatInputData(data)
+    return prisma.updateDevice({ data, where: { id } }).$fragment(fragments.basic)
+  }
 
-// Update the device record.
-//
-// device - the updated record.  Note that the id must be unchanged from
-//          retrieval to guarantee the same record is updated.
-//
-// Returns a promise that executes the update.
-Device.prototype.updateDevice = function (record) {
-  return this.impl.updateDevice(record)
-}
-
-// Delete the device record.
-//
-// id - the id of the device record to delete.
-//
-// Returns a promise that performs the delete.
-Device.prototype.deleteDevice = function (id) {
-  let me = this
-  return new Promise(async function (resolve, reject) {
+  async deleteDevice (id) {
     // Delete my deviceNetworkTypeLinks first.
     try {
-      let dntls = await modelAPI.deviceNetworkTypeLinks.retrieveDeviceNetworkTypeLinks(
-        { deviceId: id })
-      let recs = dntls.records
-      for (let i = 0; i < recs.length; ++i) {
-        await modelAPI.deviceNetworkTypeLinks.deleteDeviceNetworkTypeLink(
-          recs[ i ].id)
-      }
+      let { records } = await this.modelAPI.deviceNetworkTypeLinks.retrieveDeviceNetworkTypeLinks({ deviceId: id })
+      await Promise.all(records.map(x => this.modelAPI.deviceNetworkTypeLinks.deleteDeviceNetworkTypeLink(x.id)))
     }
     catch (err) {
-      appLogger.log('Error deleting device-dependant networkTypeLinks: ',
-        err)
+      appLogger.log(`Error deleting device-dependant networkTypeLinks: ${err}`)
     }
+    return onFail(400, () => prisma.deleteDevice({ id }))
+  }
 
+  // Since device access often depends on the user's company, we'll often have to
+  // do a check.  But this makes the code very convoluted with promises and
+  // callbacks.  Eaiser to do this as a validation step.
+  //
+  // If called, req.params.id MUST exist, and we assume this is an existing
+  // device id if this function is called.  We then use this to get the device
+  // and the device's application, and put them into the req object for use by
+  // the REST code.  This means that the REST code can easily check ownership,
+  // and it keeps all of that validation in one place, not requiring promises in
+  // some cases but not others (e.g., when the user is part of an admin company).
+  async fetchDeviceApplication (req, res, next) {
     try {
-      await me.impl.deleteDevice(id)
-      resolve()
-    }
-    catch (err) {
-      reject(err)
-    }
-  })
-}
-
-// Since device access often depends on the user's company, we'll often have to
-// do a check.  But this makes the code very convoluted with promises and
-// callbacks.  Eaiser to do this as a validation step.
-//
-// If called, req.params.id MUST exist, and we assume this is an existing
-// device id if this function is called.  We then use this to get the device
-// and the device's application, and put them into the req object for use by
-// the REST code.  This means that the REST code can easily check ownership,
-// and it keeps all of that validation in one place, not requiring promises in
-// some cases but not others (e.g., when the user is part of an admin company).
-Device.prototype.fetchDeviceApplication = function (req, res, next) {
-  impl.retrieveDevice(parseInt(req.params.id, 10))
-    .then(function (dev) {
-      // Save the device.
+      const dev = await this.retrieveDevice(parseInt(req.params.id, 10))
       req.device = dev
-      modelAPI.applications.retrieveApplication(dev.application.id).then(function (app) {
-        req.application = app
-        next()
-      })
-        .catch(function (err) {
-          if (err.status) {
-            res.status(err.status)
-          }
-          else {
-            res.status(400)
-          }
-          res.end()
-        })
-    })
-    .catch(function (err) {
-      if (err.status) {
-        res.status(err.status)
-      }
-      else {
-        res.status(400)
-      }
-      res.end()
-    })
-}
-
-// This is similar to the previous method, except it looks for the
-// applicationId in the request body to get the application for the device we
-// want to create.
-Device.prototype.fetchApplicationForNewDevice = function (req, res, next) {
-  modelAPI.applications.retrieveApplication(parseInt(req.body.applicationId, 10))
-    .then(function (app) {
+      const app = await this.modelAPI.applications.retrieveApplication(dev.application.id)
       req.application = app
       next()
-    })
-    .catch(function (err) {
+    }
+    catch (err) {
+      res.status(err.status || 400)
+      res.end()
+    }
+  }
+
+  // This is similar to the previous method, except it looks for the
+  // applicationId in the request body to get the application for the device we
+  // want to create.
+  async fetchApplicationForNewDevice (req, res, next) {
+    try {
+      const app = await this.modelAPI.applications.retrieveApplication(parseInt(req.body.applicationId, 10))
+      req.application = app
+      next()
+    }
+    catch (err) {
       res.status(400)
       res.end()
-    })
+    }
+  }
 }
 
-module.exports = Device
+// ******************************************************************************
+// Helpers
+// ******************************************************************************
+async function loadDevice (uniqueKeyObj, fragementKey = 'basic') {
+  const rec = await onFail(400, () => prisma.device(uniqueKeyObj).$fragment(fragments[fragementKey]))
+  if (!rec) throw httpError(404, 'Device not found')
+  return rec
+}
+
+//* *****************************************************************************
+// Fragments for how the data should be returned from Prisma.
+//* *****************************************************************************
+const fragments = {
+  basic: `fragment BasicDevice on Device {
+    id
+    name
+    description
+    deviceModel
+    application {
+      id
+    }
+  }`
+}

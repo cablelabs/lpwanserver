@@ -1,195 +1,110 @@
 var appLogger = require('../lib/appLogger.js')
+const { prisma, formatInputData, formatRelationshipsIn } = require('../lib/prisma')
+const { onFail } = require('../lib/utils')
+var httpError = require('http-errors')
 
-// Configuration access.
-const config = require('../config')
+// var protocolDataAccess = require('../networkProtocols/networkProtocolDataAccess')
 
-var protocolDataAccess = require('../networkProtocols/networkProtocolDataAccess')
+const R = require('ramda')
 
-var modelAPI
+module.exports = class CompanyNetworkTypeLink {
+  constructor (modelAPI) {
+    this.modelAPI = modelAPI
+  }
 
-//* *****************************************************************************
-// The CompanyNetworkTypeLink interface.
-//* *****************************************************************************
-// Class constructor.
-//
-// Loads the implementation for the companyNetworkTypeLink interface based on the
-// configured subdirectory name.  The implementation file companyNetworkTypeLink.js
-// is to be found in that subdirectory of the models/dao directory (Data Access
-// Object).
-//
-function CompanyNetworkTypeLink (server) {
-  this.impl = require('./dao/' +
-                             config.get('impl_directory') +
-                             '/companyNetworkTypeLinks.js')
-
-  modelAPI = server
-}
-
-function parseNetworkSettings (x) {
-  return typeof x.networkSettings === 'string'
-    ? { ...x, networkSettings: JSON.parse(x.networkSettings) }
-    : x
-}
-
-// Create the companyNetworkTypeLinks record.
-//
-// companyId       - The id for the company this link is being created for
-// networkTypeId       - The id for the network the company is linked to
-// networkSettings - The settings required by the network protocol in json
-//                   format
-//
-// Returns the promise that will execute the create.
-CompanyNetworkTypeLink.prototype.createCompanyNetworkTypeLink = function (companyId, networkTypeId, networkSettings) {
-  var me = this
-  return new Promise(async function (resolve, reject) {
+  async createCompanyNetworkTypeLink (companyId, networkTypeId, networkSettings, { remoteOrigin = false } = {}) {
     try {
-      var rec = await me.impl.createCompanyNetworkTypeLink(companyId, networkTypeId, networkSettings)
-      var logs = await modelAPI.networkTypeAPI.addCompany(networkTypeId, companyId, networkSettings)
-      rec.remoteAccessLogs = logs
-      resolve(parseNetworkSettings(rec))
-    }
-    catch (err) {
-      appLogger.log('Error creating companyNetworkTypeLink: ' + err)
-      reject(err)
-    }
-  })
-}
-
-CompanyNetworkTypeLink.prototype.createRemoteCompanyNetworkTypeLink = function (companyId, networkTypeId, networkSettings) {
-  var me = this
-  return new Promise(async function (resolve, reject) {
-    try {
-      appLogger.log(companyId + ' ' + networkTypeId)
-      var rec = await me.impl.createCompanyNetworkTypeLink(companyId, networkTypeId, networkSettings)
-      resolve(parseNetworkSettings(rec))
-    }
-    catch (err) {
-      appLogger.log('Error creating companyNetworkTypeLink: ' + err)
-      appLogger.log(companyId + ' ' + networkTypeId)
-      reject(err)
-    }
-  })
-}
-
-// Retrieve a companyNetworkTypeLinks record by id.
-//
-// id - the record id of the companyNetworkTypeLinks record.
-//
-// Returns a promise that executes the retrieval.
-CompanyNetworkTypeLink.prototype.retrieveCompanyNetworkTypeLink = async function (id) {
-  const rec = await this.impl.retrieveCompanyNetworkTypeLink(id)
-  return parseNetworkSettings(rec)
-}
-
-// Update the companyNetworkTypeLinks record.
-//
-// companyNetworkTypeLinks - the updated record.  Note that the id must be unchanged
-//                       from retrieval to guarantee the same record is updated.
-//
-// Returns a promise that executes the update.
-CompanyNetworkTypeLink.prototype.updateCompanyNetworkTypeLink = function (companyNetworkTypeLink) {
-  var me = this
-  return new Promise(async function (resolve, reject) {
-    try {
-      var rec = await me.impl.updateCompanyNetworkTypeLink(companyNetworkTypeLink)
-      var logs = await modelAPI.networkTypeAPI.pushCompany(rec.networkType.id, rec.company.id, rec.networkSettings)
-      rec.remoteAccessLogs = logs
-      resolve(parseNetworkSettings(rec))
-    }
-    catch (err) {
-      appLogger.log('Error updating companyNetworkTypeLink: ' + err)
-      reject(err)
-    }
-  })
-}
-
-CompanyNetworkTypeLink.prototype.updateRemoteCompanyNetworkTypeLink = function (companyNetworkTypeLink) {
-  var me = this
-  return new Promise(async function (resolve, reject) {
-    try {
-      var rec = await me.impl.updateCompanyNetworkTypeLink(companyNetworkTypeLink)
-      resolve(parseNetworkSettings(rec))
-    }
-    catch (err) {
-      appLogger.log('Error updating companyNetworkTypeLink: ' + err)
-      reject(err)
-    }
-  })
-}
-
-// Delete the companyNetworkTypeLinks record.
-//
-// id - the id of the companyNetworkTypeLinks record to delete.
-//
-// Returns a promise that performs the delete.
-CompanyNetworkTypeLink.prototype.deleteCompanyNetworkTypeLink = function (id) {
-  var me = this
-  return new Promise(async function (resolve, reject) {
-    try {
-      var rec = await me.impl.retrieveCompanyNetworkTypeLink(id)
-      // Delete applicationNetworkTypeLinks
-      let antls = await modelAPI.applicationNetworkTypeLinks.retrieveApplicationNetworkTypeLinks({ companyId: rec.company.id })
-      let recs = antls.records
-      for (let i = 0; i < recs.length; ++i) {
-        await modelAPI.applicationNetworkTypeLinks.deleteApplicationNetworkTypeLink(recs[ i ].id)
+      const data = formatInputData({
+        companyId,
+        networkTypeId,
+        networkSettings: networkSettings && JSON.stringify(networkSettings)
+      })
+      const rec = await prisma.createCompanyNetworkTypeLink(data).$fragment(fragments.basic)
+      if (!remoteOrigin) {
+        var logs = await this.modelAPI.networkTypeAPI.addCompany(networkTypeId, companyId, networkSettings)
+        rec.remoteAccessLogs = logs
       }
+      return parseNetworkSettings(rec)
+    }
+    catch (err) {
+      appLogger.log('Error creating companyNetworkTypeLink: ' + err)
+      throw err
+    }
+  }
+
+  async retrieveCompanyNetworkTypeLink (id) {
+    const rec = await onFail(400, () => prisma.companyNetworkTypeLink({ id }).$fragment(fragments.basic))
+    if (!rec) throw httpError(404, 'CompanyNetworkTypeLink not found')
+    return parseNetworkSettings(rec)
+  }
+
+  async updateCompanyNetworkTypeLink ({ id, ...data }, { remoteOrigin = false } = {}) {
+    try {
+      if (data.networkSettings) {
+        data.networkSettings = JSON.stringify(data.networkSettings)
+      }
+      data = formatInputData(data)
+      const rec = await prisma.updateCompanyNetworkTypeLink({ data, where: { id } }).$fragment(fragments.basic)
+      if (!remoteOrigin) {
+        var logs = await this.modelAPI.networkTypeAPI.pushCompany(rec.networkType.id, rec.company.id, rec.networkSettings)
+        rec.remoteAccessLogs = logs
+      }
+      return parseNetworkSettings(rec)
+    }
+    catch (err) {
+      appLogger.log('Error updating companyNetworkTypeLink: ' + err)
+      throw err
+    }
+  }
+
+  async deleteCompanyNetworkTypeLink (id) {
+    try {
+      var rec = await this.retrieveCompanyNetworkTypeLink(id)
+      // Delete applicationNetworkTypeLinks
+      let { records } = await this.modelAPI.applicationNetworkTypeLinks.retrieveApplicationNetworkTypeLinks({ companyId: rec.company.id })
+      await Promise.all(records.map(x => this.modelAPI.applicationNetworkTypeLinks.deleteApplicationNetworkTypeLink(x.id)))
       // Don't delete the local record until the remote operations complete.
-      var logs = await modelAPI.networkTypeAPI.deleteCompany(rec.networkType.id, rec.company.id)
-      await me.impl.deleteCompanyNetworkTypeLink(id)
-      resolve(logs)
+      var logs = await this.modelAPI.networkTypeAPI.deleteCompany(rec.networkType.id, rec.company.id)
+      await onFail(400, () => prisma.deleteCompanyNetworkTypeLink({ id }))
+      return logs
     }
     catch (err) {
       appLogger.log('Error deleting companyNetworkTypeLink: ' + err)
-      reject(err)
+      throw err
     }
-  })
-}
+  }
 
-// Push the CompanyNetworkTypeLink record.
-//
-// CompanyNetworkTypeLink - the record to be pushed.  Note that the id must be
-//                           unchanged from retrieval to guarantee the same
-//                           record is updated.
-// validateCompanyId       - The id of the company this application SHOULD be
-//                           part of.  Usually this is tied to the user
-//                           creating the link, though a global admin could
-//                           supply null here (no need to validate).
-//
-// Returns a promise that executes the update.
-CompanyNetworkTypeLink.prototype.pushCompanyNetworkTypeLink = function (companyNetworkTypeLink, validateCompanyId) {
-  var me = this
-  return new Promise(async function (resolve, reject) {
+  async pushCompanyNetworkTypeLink (id) {
     try {
-      var rec = await me.impl.retrieveCompanyNetworkTypeLink(companyNetworkTypeLink)
-
+      var rec = await this.retrieveCompanyNetworkTypeLink(id)
       // push applicationNetworkTypeLinks
-      let antls = await modelAPI.applicationNetworkTypeLinks.retrieveApplicationNetworkTypeLinks({ companyId: rec.company.id })
-      let recs = antls.records
-      for (let i = 0; i < recs.length; ++i) {
-        await modelAPI.applicationNetworkTypeLinks.pushApplicationNetworkTypeLink(recs[i].id)
-      }
-      var logs = await modelAPI.networkTypeAPI.pushCompany(rec.networkType.id, rec.company.id, rec.networkSettings)
+      let { records } = await this.modelAPI.applicationNetworkTypeLinks.retrieveApplicationNetworkTypeLinks({ companyId: rec.company.id })
+      await Promise.all(records.map(x => this.modelAPI.applicationNetworkTypeLinks.pushApplicationNetworkTypeLink(x.id)))
+      var logs = await this.modelAPI.networkTypeAPI.pushCompany(rec.networkType.id, rec.company.id, rec.networkSettings)
       rec.remoteAccessLogs = logs
-      resolve(rec)
+      return rec
     }
     catch (err) {
       appLogger.log('Error updating companyNetworkTypeLink: ' + err)
-      reject(err)
+      throw err
     }
-  })
-}
+  }
 
-// Pull the companyNetworkTypeLinks record.
-//
-// companyNetworkTypeLinks - the record to be pushed.  Note that the id must be
-//                           unchanged from retrieval to guarantee the same
-//                           record is updated.
-//
-// Returns a promise that executes the update.
-CompanyNetworkTypeLink.prototype.pullCompanyNetworkTypeLink = function (networkTypeId) {
-  return new Promise(async function (resolve, reject) {
+  async retrieveCompanyNetworkTypeLinks ({ limit, offset, ...where } = {}) {
+    where = formatRelationshipsIn(where)
+    const query = { where }
+    if (limit) query.first = limit
+    if (offset) query.skip = offset
+    const [records, totalCount] = await Promise.all([
+      prisma.companyNetworkTypeLinks(query).$fragment(fragments.basic),
+      prisma.companyNetworkTypeLinksConnection({ where }).aggregate().count()
+    ])
+    return { totalCount, records: records.map(parseNetworkSettings) }
+  }
+
+  async pullCompanyNetworkTypeLink (networkTypeId) {
     try {
-      var logs = await modelAPI.networkTypeAPI.pullCompany(networkTypeId)
+      var logs = await this.modelAPI.networkTypeAPI.pullCompany(networkTypeId)
       let companies = JSON.parse(logs[Object.keys(logs)[0]].logs)
       appLogger.log(companies)
       let nsCoId = []
@@ -200,7 +115,7 @@ CompanyNetworkTypeLink.prototype.pullCompanyNetworkTypeLink = function (networkT
         nsCoId.push(company.id)
 
         // see if it exists first
-        let existingCompany = await modelAPI.companies.retrieveCompanies({ search: company.name })
+        let existingCompany = await this.modelAPI.companies.retrieveCompanies({ search: company.name })
         if (existingCompany.totalCount > 0) {
           existingCompany = existingCompany.records[0]
           appLogger.log(company.name + ' already exists')
@@ -208,20 +123,20 @@ CompanyNetworkTypeLink.prototype.pullCompanyNetworkTypeLink = function (networkT
         }
         else {
           appLogger.log('creating ' + company.name)
-          existingCompany = await modelAPI.companies.createCompany(company.name, modelAPI.companies.COMPANY_VENDOR)
+          existingCompany = await this.modelAPI.companies.createCompany(company.name, this.modelAPI.companies.COMPANY_VENDOR)
           localCoId.push(existingCompany.id)
         }
         // see if it exists first
-        let existingCompanyNTL = await modelAPI.companyNetworkTypeLinks.retrieveCompanyNetworkTypeLinks({ companyId: existingCompany.id })
+        let existingCompanyNTL = await this.modelAPI.companyNetworkTypeLinks.retrieveCompanyNetworkTypeLinks({ companyId: existingCompany.id })
         if (existingCompanyNTL.totalCount > 0) {
           appLogger.log(company.name + ' link already exists')
         }
         else {
           appLogger.log('creating Network Link for ' + company.name)
-          modelAPI.companyNetworkTypeLinks.createCompanyNetworkTypeLink(existingCompany.id, networkTypeId, { region: '' })
+          this.modelAPI.companyNetworkTypeLinks.createCompanyNetworkTypeLink(existingCompany.id, networkTypeId, { region: '' })
         }
       }
-      logs = await modelAPI.networkTypeAPI.pullApplication(networkTypeId)
+      logs = await this.modelAPI.networkTypeAPI.pullApplication(networkTypeId)
       let applications = JSON.parse(logs[Object.keys(logs)[0]].logs)
       appLogger.log(applications)
       let nsAppId = []
@@ -231,7 +146,7 @@ CompanyNetworkTypeLink.prototype.pullCompanyNetworkTypeLink = function (networkT
         nsAppId.push(application.id)
 
         // see if it exists first
-        let existingApplication = await modelAPI.applications.retrieveApplications({ search: application.name })
+        let existingApplication = await this.modelAPI.applications.retrieveApplications({ search: application.name })
         if (existingApplication.totalCount > 0) {
           existingApplication = existingApplication.records[0]
           localAppId.push(existingApplication.id)
@@ -240,21 +155,27 @@ CompanyNetworkTypeLink.prototype.pullCompanyNetworkTypeLink = function (networkT
         else {
           appLogger.log('creating ' + JSON.stringify(application))
           let coIndex = nsCoId.indexOf(application.organizationID)
-          existingApplication = await modelAPI.applications.createApplication(application.name, application.description, localCoId[coIndex], 1, 'http://set.me.to.your.real.url:8888')
+          existingApplication = await this.modelAPI.applications.createApplication({
+            ...R.pick(['name', 'description'], application),
+            companyId: localCoId[coIndex],
+            reportingProtocolId: 1,
+            baseUrl: 'http://set.me.to.your.real.url:8888'
+          })
           localAppId.push(existingApplication.id)
         }
         // see if it exists first
-        let existingApplicationNTL = await modelAPI.applicationNetworkTypeLinks.retrieveApplicationNetworkTypeLinks({ applicationId: existingApplication.id })
+        let existingApplicationNTL = await this.modelAPI.applicationNetworkTypeLinks.retrieveApplicationNetworkTypeLinks({ applicationId: existingApplication.id })
         if (existingApplicationNTL.totalCount > 0) {
           appLogger.log(application.name + ' link already exists')
         }
         else {
           appLogger.log('creating Network Link for ' + application.name)
-          modelAPI.applicationNetworkTypeLinks.createApplicationNetworkTypeLink(existingApplication.id, networkTypeId, {}, existingApplication.company.id)
+          const appNtlData = { applicationId: existingApplication.id, networkTypeId, networkSettings: {} }
+          this.modelAPI.applicationNetworkTypeLinks.createApplicationNetworkTypeLink(appNtlData, { companyId: existingApplication.company.id })
         }
       }
 
-      logs = await modelAPI.networkTypeAPI.pullDeviceProfiles(networkTypeId)
+      logs = await this.modelAPI.networkTypeAPI.pullDeviceProfiles(networkTypeId)
       let deviceProfiles = JSON.parse(logs[Object.keys(logs)[0]].logs)
       appLogger.log(JSON.stringify(deviceProfiles))
       let nsDpId = []
@@ -262,12 +183,12 @@ CompanyNetworkTypeLink.prototype.pullCompanyNetworkTypeLink = function (networkT
       for (var index in deviceProfiles.result) {
         let deviceProfile = deviceProfiles.result[index]
         nsDpId.push(deviceProfile.deviceProfileID)
-        let networkSettings = await modelAPI.networkTypeAPI.pullDeviceProfile(networkTypeId, deviceProfile.deviceProfileID)
+        let networkSettings = await this.modelAPI.networkTypeAPI.pullDeviceProfile(networkTypeId, deviceProfile.deviceProfileID)
         networkSettings = JSON.parse(networkSettings[Object.keys(logs)[0]].logs)
         networkSettings = networkSettings.deviceProfile
 
         // see if it exists first
-        let existingDeviceProfile = await modelAPI.deviceProfiles.retrieveDeviceProfiles({ search: deviceProfile.name })
+        let existingDeviceProfile = await this.modelAPI.deviceProfiles.retrieveDeviceProfiles({ search: deviceProfile.name })
         if (existingDeviceProfile.totalCount > 0) {
           existingDeviceProfile = existingDeviceProfile.records[0]
           localDpId.push(existingDeviceProfile.id)
@@ -275,26 +196,26 @@ CompanyNetworkTypeLink.prototype.pullCompanyNetworkTypeLink = function (networkT
           appLogger.log(JSON.stringify(existingDeviceProfile))
           existingDeviceProfile.networkSettings = networkSettings
           appLogger.log(JSON.stringify(existingDeviceProfile))
-          await modelAPI.deviceProfiles.updateDeviceProfile(existingDeviceProfile)
+          await this.modelAPI.deviceProfiles.updateDeviceProfile(existingDeviceProfile)
         }
         else {
           appLogger.log('creating ' + deviceProfile.name)
           let coIndex = nsCoId.indexOf(deviceProfile.organizationID)
           appLogger.log(networkTypeId, localCoId[coIndex], deviceProfile.name, networkSettings)
-          existingDeviceProfile = await modelAPI.deviceProfiles.createDeviceProfile(networkTypeId, localCoId[coIndex], deviceProfile.name, deviceProfile.description, networkSettings)
+          existingDeviceProfile = await this.modelAPI.deviceProfiles.createDeviceProfile(networkTypeId, localCoId[coIndex], deviceProfile.name, deviceProfile.description, networkSettings)
           localDpId.push(existingDeviceProfile.id)
         }
       }
 
       for (var appIndex in nsAppId) {
-        logs = await modelAPI.networkTypeAPI.pullDevices(networkTypeId, nsAppId[appIndex])
+        logs = await this.modelAPI.networkTypeAPI.pullDevices(networkTypeId, nsAppId[appIndex])
         let devices = JSON.parse(logs[Object.keys(logs)[0]].logs)
         appLogger.log(JSON.stringify(devices))
         for (var index in devices.result) {
           let device = devices.result[index]
 
           // see if it exists first
-          let existingDevice = await modelAPI.devices.retrieveDevices({ search: device.name })
+          let existingDevice = await this.modelAPI.devices.retrieveDevices({ search: device.name })
           if (existingDevice.totalCount > 0) {
             existingDevice = existingDevice.records[0]
             appLogger.log(device.name + ' already exists')
@@ -304,10 +225,10 @@ CompanyNetworkTypeLink.prototype.pullCompanyNetworkTypeLink = function (networkT
             appLogger.log('creating ' + JSON.stringify(device))
             let appIndex = nsAppId.indexOf(device.applicationID)
             appLogger.log('localAppId[' + appIndex + '] = ' + localAppId[appIndex])
-            existingDevice = await modelAPI.devices.createDevice(device.name, device.description, localAppId[appIndex])
+            existingDevice = await this.modelAPI.devices.createDevice(device.name, device.description, localAppId[appIndex])
           }
 
-          let existingDeviceNTL = await modelAPI.deviceNetworkTypeLinks.retrieveDeviceNetworkTypeLinks({ deviceId: existingDevice.id })
+          let existingDeviceNTL = await this.modelAPI.deviceNetworkTypeLinks.retrieveDeviceNetworkTypeLinks({ deviceId: existingDevice.id })
           if (existingDeviceNTL.totalCount > 0) {
             appLogger.log(device.name + ' link already exists')
           }
@@ -316,38 +237,44 @@ CompanyNetworkTypeLink.prototype.pullCompanyNetworkTypeLink = function (networkT
             let dpIndex = nsDpId.indexOf(device.deviceProfileID)
             // let coId = protocolDataAccess.prototype.getCompanyByApplicationId(existingDevice.applicationId);
 
-            let tempApp = await modelAPI.applications.retrieveApplication(localAppId[appIndex])
+            let tempApp = await this.modelAPI.applications.retrieveApplication(localAppId[appIndex])
             let coId = tempApp.company.id
 
-            modelAPI.deviceNetworkTypeLinks.createDeviceNetworkTypeLink(existingDevice.id, networkTypeId, localDpId[dpIndex], device, coId)
+            this.modelAPI.deviceNetworkTypeLinks.createDeviceNetworkTypeLink(existingDevice.id, networkTypeId, localDpId[dpIndex], device, coId)
           }
         }
       }
 
-      resolve(logs)
+      return logs
     }
     catch (err) {
       appLogger.log('Error pulling from Network : ' + networkTypeId + ' ' + err)
-      reject(err)
+      throw err
     }
-  })
+  }
+}
+
+// ******************************************************************************
+// Helpers
+// ******************************************************************************
+function parseNetworkSettings (x) {
+  return typeof x.networkSettings === 'string'
+    ? { ...x, networkSettings: JSON.parse(x.networkSettings) }
+    : x
 }
 
 //* *****************************************************************************
-// Custom retrieval functions.
+// Fragments for how the data should be returned from Prisma.
 //* *****************************************************************************
-
-// Retrieves a subset of the companyNetworkTypeLinks in the system given the
-// options.
-//
-// Options include limits on the number of companyNetworkTypeLinks returned, the
-// offset to the first companyNetworkTypeLink returned (together giving a paging
-// capability), the companyId, and the networkTypeId.
-//
-// Returns a promise that does the retrieval.
-CompanyNetworkTypeLink.prototype.retrieveCompanyNetworkTypeLinks = async function (options) {
-  const result = await this.impl.retrieveCompanyNetworkTypeLinks(options)
-  return { ...result, records: result.records.map(parseNetworkSettings) }
+const fragments = {
+  basic: `fragment BasicCompanyNetworkTypeLink on CompanyNetworkTypeLink {
+    id
+    networkSettings
+    company {
+      id
+    }
+    networkType {
+      id
+    }
+  }`
 }
-
-module.exports = CompanyNetworkTypeLink

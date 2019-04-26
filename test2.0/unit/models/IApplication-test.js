@@ -5,7 +5,7 @@ var chai = require('chai')
 // eslint-disable-next-line no-unused-vars
 var should = chai.should()
 
-var TestModule = require('../../../rest/models/IApplication')
+var { Application: TestModule } = require('../../../rest/models/IApplication')
 const modelAPIMock = require('../../mock/ModelAPI-mock')
 
 const testName = 'Application'
@@ -43,31 +43,37 @@ describe('Unit Tests for ' + testName, () => {
     server.close()
   })
   it(testName + ' Construction', () => {
-    let testModule = new TestModule({}, modelAPIMock)
+    let testModule = new TestModule(modelAPIMock)
     should.exist(testModule)
   })
   it(testName + ' Empty Retrieval', async () => {
-    let testModule = new TestModule({}, modelAPIMock)
+    let testModule = new TestModule(modelAPIMock)
     should.exist(testModule)
     const actual = await testModule.retrieveApplications()
     actual.should.have.property('totalCount')
     actual.should.have.property('records')
   })
   it(testName + ' Create', async () => {
-    let testModule = new TestModule({}, modelAPIMock)
+    let testModule = new TestModule(modelAPIMock)
     should.exist(testModule)
-    const actual = await testModule.createApplication('test', 'test application', 1, 1, 'http://localhost:5000')
+    const actual = await testModule.createApplication({
+      name: 'test',
+      description: 'test application',
+      companyId: 1,
+      reportingProtocolId: 1,
+      baseUrl: 'http://localhost:5000'
+    })
     assertAppProps(actual)
     appId = actual.id
   })
   it(testName + ' Retrieve', async () => {
-    let testModule = new TestModule({}, modelAPIMock)
+    let testModule = new TestModule(modelAPIMock)
     should.exist(testModule)
     const actual = await testModule.retrieveApplication(appId)
     assertAppProps(actual)
   })
   it(testName + ' Update', async () => {
-    let testModule = new TestModule({}, modelAPIMock)
+    let testModule = new TestModule(modelAPIMock)
     should.exist(testModule)
     let updated = {
       id: appId,
@@ -82,25 +88,25 @@ describe('Unit Tests for ' + testName, () => {
     actual.description.should.equal(updated.description)
   })
   it(testName + ' Start', async () => {
-    let testModule = new TestModule({}, modelAPIMock)
+    let testModule = new TestModule(modelAPIMock)
     should.exist(testModule)
     const actual = await testModule.startApplication(appId)
     console.log(actual)
   })
   it(testName + ' Test', async () => {
-    let testModule = new TestModule({}, modelAPIMock)
+    let testModule = new TestModule(modelAPIMock)
     should.exist(testModule)
     const actual = await testModule.testApplication(appId, { name: 'test' })
     console.log(actual)
   })
   it.skip(testName + ' Pass Data to Application', async () => {
-    let testModule = new TestModule({}, modelAPIMock)
+    let testModule = new TestModule(modelAPIMock)
     should.exist(testModule)
     const actual = await testModule.passDataToApplication(appId, 1, { name: 'test' })
     actual.should.be(204)
   })
   it(testName + ' Stop', async () => {
-    let testModule = new TestModule({}, modelAPIMock)
+    let testModule = new TestModule(modelAPIMock)
     should.exist(testModule)
     const actual = await testModule.stopApplication(appId)
     console.log(actual)

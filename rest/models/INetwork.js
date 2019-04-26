@@ -1,69 +1,190 @@
-// Configuration access.
-const config = require('../config')
-var NetworkProtocolDataAccess = require('../networkProtocols/networkProtocolDataAccess')
-var appLogger = require('../lib/appLogger')
+const NetworkProtocolDataAccess = require('../networkProtocols/networkProtocolDataAccess')
+const appLogger = require('../lib/appLogger')
 const R = require('ramda')
+const { prisma, formatRelationshipsIn, formatInputData } = require('../lib/prisma')
+const httpError = require('http-errors')
+const { onFail } = require('../lib/utils')
 
-//* *****************************************************************************
-// The Network interface.
-//* *****************************************************************************
-var modelAPI
+module.exports = class Network {
+  constructor (modelAPI) {
+    this.modelAPI = modelAPI
+  }
 
-function Network (server) {
-  this.impl = require('./dao/' +
-                             config.get('impl_directory') +
-                             '/networks.js')
-  modelAPI = server
-}
-
-Network.prototype.retrieveNetworks = function (options, fragment) {
-  let me = this
-  return new Promise(async function (resolve, reject) {
-    try {
-      let ret = await me.impl.retrieveNetworks(options, fragment)
-      let dataAPI = new NetworkProtocolDataAccess(modelAPI, 'INetwork Retrieve bulk')
-      // Don't do a forEach or map here.  We need this done NOW, so it
-      // is converted for other code.
-      // ^^ forEach and map are synchronous
-      for (let i = 0; i < ret.records.length; ++i) {
-        let rec = ret.records[ i ]
-        if (rec.securityData) {
-          let k = await dataAPI.getProtocolDataForKey(
-            rec.id,
-            rec.networkProtocol.id,
-            genKey(rec.id))
-          rec.securityData = await dataAPI.access(rec, rec.securityData, k)
-        }
-      };
-
-      resolve(ret)
-    }
-    catch (err) {
-      reject(err)
-    }
-  })
-}
-
-Network.prototype.retrieveNetwork = function (id) {
-  let me = this
-  return new Promise(async function (resolve, reject) {
-    try {
-      let ret = await me.impl.retrieveNetwork(id)
-      if (ret.securityData) {
-        let dataAPI = new NetworkProtocolDataAccess(modelAPI, 'INetwork Retrieve')
-        let k = await dataAPI.getProtocolDataForKey(id,
-          ret.networkProtocol.id,
-          genKey(id))
-        ret.securityData = await dataAPI.access(ret, ret.securityData, k)
-        let networkProtocol = await modelAPI.networkProtocols.retrieveNetworkProtocol(ret.networkProtocol.id)
-        ret.masterProtocol = networkProtocol.masterProtocol
+  async createNetwork (data) {
+    let dataAPI = new NetworkProtocolDataAccess(this.modelAPI, 'INetwork Create')
+    let k = dataAPI.genKey()
+    if (data.securityData) {
+      const securityDataDefaults = {
+        authorized: false,
+        message: 'Pending Authorization',
+        enabled: true
       }
-      resolve(ret)
+      data.securityData = R.merge(securityDataDefaults, data.securityData)
+      data.securityData = dataAPI.hide(null, data.securityData, k)
+    }
+    data = formatInputData(data)
+    let record = await prisma.createNetwork(data).$fragment(fragments.basic)
+    if (record.securityData) {
+      dataAPI.putProtocolDataForKey(record.id, record.networkProtocol.id, genKey(record.id), k)
+      record.securityData = dataAPI.access(null, record.securityData, k)
+      let { securityData } = await authorizeAndTest(record, this.modelAPI, k, this, dataAPI)
+      securityData = dataAPI.hide(null, securityData, k)
+      record = await prisma.updateNetwork({ data: { securityData }, where: { id: record.id } }).$fragment(fragments.basic)
+      record.securityData = dataAPI.access(null, record.securityData, k)
+    }
+    return record
+  }
+
+  async updateNetwork ({ id, ...data }) {
+    if (!id) throw httpError(400, 'No existing Network ID')
+    let dataAPI = new NetworkProtocolDataAccess(this.modelAPI, 'INetwork Update')
+    const old = await this.retrieveNetwork(id)
+    const k = await dataAPI.getProtocolDataForKey(id, old.networkProtocol.id, genKey(id))
+    const candidate = R.merge(old, data)
+    let { securityData } = await authorizeAndTest(candidate, this.modelAPI, k, this, dataAPI)
+    if (data.securityData) {
+      data.securityData = dataAPI.hide(null, securityData, k)
+    }
+    data = formatInputData(data)
+    await prisma.updateNetwork({ data, where: { id } }).$fragment(fragments.basic)
+    return this.retrieveNetwork(id)
+  }
+
+  async retrieveNetwork (id) {
+    const rec = await loadNetwork({ id })
+    if (rec.securityData) {
+      let dataAPI = new NetworkProtocolDataAccess(this.modelAPI, 'INetwork Retrieve')
+      let k = await dataAPI.getProtocolDataForKey(id,
+        rec.networkProtocol.id,
+        genKey(id))
+      rec.securityData = await dataAPI.access(rec, rec.securityData, k)
+      let networkProtocol = await this.modelAPI.networkProtocols.retrieveNetworkProtocol(rec.networkProtocol.id)
+      rec.masterProtocol = networkProtocol.masterProtocol
+    }
+    return rec
+  }
+
+  async retrieveNetworks ({ limit, offset, ...where } = {}) {
+    where = formatRelationshipsIn(where)
+    if (where.search) {
+      where.name_contains = where.search
+      delete where.search
+    }
+    const query = { where }
+    if (limit) query.first = limit
+    if (offset) query.skip = offset
+    let [records, totalCount] = await Promise.all([
+      prisma.networks(query).$fragment(fragments.basic),
+      prisma.networksConnection({ where }).aggregate().count()
+    ])
+    let dataAPI = new NetworkProtocolDataAccess(this.modelAPI, 'INetwork Retrieve bulk')
+    records = await Promise.all(records.map(async rec => {
+      if (!rec.securityData) return rec
+      let k = await dataAPI.getProtocolDataForKey(
+        rec.id,
+        rec.networkProtocol.id,
+        genKey(rec.id))
+      const securityData = await dataAPI.access(rec, rec.securityData, k)
+      return { ...rec, securityData }
+    }))
+    return { totalCount, records }
+  }
+
+  async deleteNetwork (id) {
+    let dataAPI = new NetworkProtocolDataAccess(this.modelAPI, 'INetwork Delete')
+    let old = await loadNetwork({ id })
+    await dataAPI.deleteProtocolDataForKey(id,
+      old.networkProtocol.id,
+      genKey(id))
+    return onFail(400, () => prisma.deleteNetwork({ id }))
+  }
+
+  async pullNetwork (id) {
+    try {
+      let network = await this.retrieveNetwork(id)
+      if (!network.securityData.authorized) {
+        throw new Error('Network is not authorized.  Cannot pull')
+      }
+      let networkType = await this.modelAPI.networkTypes.retrieveNetworkType(network.networkType.id)
+      var npda = new NetworkProtocolDataAccess(this.modelAPI, 'Pull Network')
+      npda.initLog(networkType, network)
+      appLogger.log(network)
+      let result = await this.modelAPI.networkProtocolAPI.pullNetwork(npda, network, this.modelAPI)
+      appLogger.log('Success pulling from Network : ' + id)
+      return result
     }
     catch (err) {
-      reject(err)
+      appLogger.log('Error pulling from Network : ' + id + ' ' + err)
+      throw err
     }
-  })
+  }
+
+  async pushNetwork (id) {
+    try {
+      let network = await this.retrieveNetwork(id)
+      let networkType = await this.modelAPI.networkTypes.retrieveNetworkTypes(network.networkType.id)
+      var npda = new NetworkProtocolDataAccess(this.modelAPI, 'Push Network')
+      npda.initLog(networkType, network)
+      appLogger.log(network)
+      let result = await this.modelAPI.networkProtocolAPI.pushNetwork(npda, network, this.modelAPI)
+      appLogger.log('Success pushing to Network : ' + id)
+      return result
+    }
+    catch (err) {
+      appLogger.log('Error pushing to Network : ' + id + ' ' + err)
+      throw err
+    }
+  }
+
+  async pushNetworks (networkTypeId) {
+    try {
+      let { records } = await this.retrieveNetworks({ networkTypeId })
+      let networkType = await this.modelAPI.networkTypes.retrieveNetworkType(networkTypeId)
+      var npda = new NetworkProtocolDataAccess(this.modelAPI, 'Push Network')
+      npda.initLog(networkType, records)
+      records = records.filter(R.path(['securityData', 'authorized']))
+      await Promise.all(records.map(rec => this.modelAPI.networkProtocolAPI.pushNetwork(npda, rec, this.modelAPI)))
+      appLogger.log('Success pushing to Networks')
+    }
+    catch (err) {
+      appLogger.log('Error pushing to Networks : ' + ' ' + err)
+      throw err
+    }
+  }
+}
+
+//* *****************************************************************************
+// Fragments for how the data should be returned from Prisma.
+//* *****************************************************************************
+const fragments = {
+  basic: `fragment BasicNetwork on Network {
+    id
+    name
+    baseUrl
+    securityData
+    networkProvider {
+      id
+    }
+    networkType {
+      id
+    }
+    networkProtocol {
+      id
+    }
+  }`
+}
+
+// ******************************************************************************
+// Helpers
+// ******************************************************************************
+async function loadNetwork (uniqueKeyObj, fragementKey = 'basic') {
+  const rec = await onFail(400, () => prisma.network(uniqueKeyObj).$fragment(fragments[fragementKey]))
+  if (!rec) throw httpError(404, 'Network not found')
+  return rec
+}
+
+const genKey = function (networkId) {
+  return 'nk' + networkId
 }
 
 async function authorizeAndTest (network, modelAPI, k, me, dataAPI) {
@@ -112,145 +233,3 @@ async function authorizeAndTest (network, modelAPI, k, me, dataAPI) {
     return network
   }
 }
-
-Network.prototype.createNetwork = async function createNetwork (data) {
-  let dataAPI = new NetworkProtocolDataAccess(modelAPI, 'INetwork Create')
-  let k = dataAPI.genKey()
-  if (data.securityData) {
-    const securityDataDefaults = {
-      authorized: false,
-      message: 'Pending Authorization',
-      enabled: true
-    }
-    data.securityData = R.merge(securityDataDefaults, data.securityData)
-    data.securityData = dataAPI.hide(null, data.securityData, k)
-  }
-  let record = await this.impl.createNetwork(data)
-  if (record.securityData) {
-    dataAPI.putProtocolDataForKey(record.id, data.networkProtocolId, genKey(record.id), k)
-    record.securityData = dataAPI.access(null, record.securityData, k)
-    const finalNetwork = await authorizeAndTest(record, modelAPI, k, this, dataAPI)
-    finalNetwork.securityData = dataAPI.hide(null, finalNetwork.securityData, k)
-    record = await this.impl.updateNetwork(finalNetwork)
-    record.securityData = dataAPI.access(null, record.securityData, k)
-  }
-  return record
-}
-
-Network.prototype.updateNetwork = async function updateNetwork (record) {
-  let dataAPI = new NetworkProtocolDataAccess(modelAPI, 'INetwork Update')
-  const old = await this.retrieveNetwork(record.id)
-  const k = await dataAPI.getProtocolDataForKey(record.id, old.networkProtocol.id, genKey(record.id))
-  if (!record.securityData) record.securityData = old.securityData
-  const finalNetwork = await authorizeAndTest(record, modelAPI, k, this, dataAPI)
-  appLogger.log(finalNetwork, 'debug')
-  finalNetwork.securityData = dataAPI.hide(null, finalNetwork.securityData, k)
-  let masterProtocol = finalNetwork.masterProtocol
-  delete finalNetwork.masterProtocol
-  const rec = await this.impl.updateNetwork(finalNetwork)
-  rec.masterProtocol = masterProtocol
-  return rec
-}
-
-Network.prototype.deleteNetwork = function (id) {
-  let me = this
-  return new Promise(async function (resolve, reject) {
-    try {
-      let dataAPI = new NetworkProtocolDataAccess(modelAPI, 'INetwork Delete')
-      let old = await me.impl.retrieveNetwork(id)
-      await dataAPI.deleteProtocolDataForKey(id,
-        old.networkProtocol.id,
-        genKey(id))
-      let ret = await me.impl.deleteNetwork(id)
-      resolve(ret)
-    }
-    catch (err) {
-      reject(err)
-    }
-  })
-}
-
-// Pull the organization, applications, device profiles, and devices record.
-//
-// networkId - the network to be pulled from.
-//
-// Returns a promise that executes the pull.
-Network.prototype.pullNetwork = async function pullNetwork (networkId) {
-  try {
-    let network = await this.retrieveNetwork(networkId)
-    if (!network.securityData.authorized) {
-      throw new Error('Network is not authorized.  Cannot pull')
-    }
-    let networkType = await modelAPI.networkTypes.retrieveNetworkType(network.networkType.id)
-    var npda = new NetworkProtocolDataAccess(modelAPI, 'Pull Network')
-    npda.initLog(networkType, network)
-    appLogger.log(network)
-    let result = await modelAPI.networkProtocolAPI.pullNetwork(npda, network, modelAPI)
-    appLogger.log('Success pulling from Network : ' + networkId)
-    return result
-  }
-  catch (err) {
-    appLogger.log('Error pulling from Network : ' + networkId + ' ' + err)
-    throw err
-  }
-}
-
-Network.prototype.pushNetworks = function (networkTypeId) {
-  let me = this
-  return new Promise(async function (resolve, reject) {
-    try {
-      let networks = await me.retrieveNetworks({ networkTypeId: networkTypeId })
-      let networkType = await modelAPI.networkTypes.retrieveNetworkTypes(networkTypeId)
-      var npda = new NetworkProtocolDataAccess(modelAPI, 'Push Network')
-      npda.initLog(networkType, networks)
-      appLogger.log(networks)
-
-      let promiseList = []
-      for (let i = 0; i < networks.records.length; ++i) {
-        if (networks.records[i].securityData.authorized) {
-          promiseList.push(modelAPI.networkProtocolAPI.pushNetwork(npda, networks.records[i], modelAPI))
-        }
-      }
-      Promise.all(promiseList)
-        .then(results => {
-          appLogger.log('Success pushing to Networks')
-          resolve()
-        })
-        .catch(err => {
-          appLogger.log('Error pushing to Networks : ' + ' ' + err)
-          reject(err)
-        })
-    }
-    catch (err) {
-      appLogger.log('Error pushing to Networks : ' + ' ' + err)
-      reject(err)
-    }
-  })
-}
-
-Network.prototype.pushNetwork = function (networkId) {
-  let me = this
-  return new Promise(async function (resolve, reject) {
-    try {
-      appLogger.log(networkId)
-      let network = await me.retrieveNetwork(networkId)
-      let networkType = await modelAPI.networkTypes.retrieveNetworkTypes(network.networkType.id)
-      var npda = new NetworkProtocolDataAccess(modelAPI, 'Push Network')
-      npda.initLog(networkType, network)
-      appLogger.log(network)
-      let result = await modelAPI.networkProtocolAPI.pushNetwork(npda, network, modelAPI)
-      appLogger.log('Success pushing to Network : ' + networkId)
-      resolve(result)
-    }
-    catch (err) {
-      appLogger.log('Error pushing to Network : ' + networkId + ' ' + err)
-      reject(err)
-    }
-  })
-}
-
-const genKey = function (networkId) {
-  return 'nk' + networkId
-}
-
-module.exports = Network

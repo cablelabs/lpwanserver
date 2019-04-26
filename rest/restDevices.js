@@ -123,7 +123,7 @@ exports.initialize = function (app, server) {
      */
   app.get('/api/devices/:id', [restServer.isLoggedIn,
     restServer.fetchCompany,
-    modelAPI.devices.fetchDeviceApplication],
+    modelAPI.devices.fetchDeviceApplication.bind(modelAPI.devices)],
   function (req, res, next) {
     // Should have device and application in req due to
     // fetchDeviceApplication
@@ -164,7 +164,7 @@ exports.initialize = function (app, server) {
   app.post('/api/devices', [restServer.isLoggedIn,
     restServer.fetchCompany,
     restServer.isAdmin,
-    modelAPI.devices.fetchApplicationForNewDevice],
+    modelAPI.devices.fetchApplicationForNewDevice.bind(modelAPI.devices)],
   function (req, res, next) {
     var rec = req.body
     // You can't specify an id.
@@ -231,7 +231,7 @@ exports.initialize = function (app, server) {
   app.put('/api/devices/:id', [restServer.isLoggedIn,
     restServer.fetchCompany,
     restServer.isAdmin,
-    modelAPI.devices.fetchDeviceApplication],
+    modelAPI.devices.fetchDeviceApplication.bind(modelAPI.devices)],
   function (req, res, next) {
     var data = {}
     data.id = parseInt(req.params.id)
@@ -341,7 +341,7 @@ exports.initialize = function (app, server) {
   app.delete('/api/devices/:id', [restServer.isLoggedIn,
     restServer.fetchCompany,
     restServer.isAdmin,
-    modelAPI.devices.fetchDeviceApplication],
+    modelAPI.devices.fetchDeviceApplication.bind(modelAPI.devices)],
   function (req, res, next) {
     var id = parseInt(req.params.id)
     // If the caller is a global admin, or the device is part of the company

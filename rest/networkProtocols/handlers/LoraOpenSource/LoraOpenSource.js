@@ -436,7 +436,7 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
     let companyNtl = await dataAPI.getCompanyNetworkType(company.id, network.networkType.id)
     let loraNetworkSettings = { network: network.id }
     if (!companyNtl) {
-      companyNtl = await modelAPI.companyNetworkTypeLinks.createRemoteCompanyNetworkTypeLink(company.id, network.networkType.id, {})
+      companyNtl = await modelAPI.companyNetworkTypeLinks.createCompanyNetworkTypeLink(company.id, network.networkType.id, {}, { remoteOrigin: true })
     }
     appLogger.log(company)
     appLogger.log(companyNtl)
@@ -451,7 +451,7 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
       let networkSettings = await this.addCompany(session, network, company.id, dataAPI)
       networkSettings = { ...companyNtl.networkSettings, networkSettings }
       // add serviceProfileId, networkServerId, and organizationId to networkSettings
-      return this.modelAPI.companyNetworkTypeLinks.updateRemoteCompanyNetworkTypeLink({ id: companyNtl.id, networkSettings })
+      return this.modelAPI.companyNetworkTypeLinks.updateCompanyNetworkTypeLink({ id: companyNtl.id, networkSettings }, { remoteOrigin: true })
     }
     appLogger.log('Setting up company to match network Organization', 'warn')
     let serviceProfile = await this.getServiceProfileForOrg(session, network, organization.id, company.id, dataAPI)
@@ -472,7 +472,7 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
     companyNtl.networkSettings.serviceProfile = { region: networkServer.region }
     companyNtl.networkSettings[network.name] = loraNetworkSettings
     appLogger.log(companyNtl, 'warn')
-    await modelAPI.companyNetworkTypeLinks.updateRemoteCompanyNetworkTypeLink(R.pick(['id', 'networkSettings'], companyNtl))
+    await modelAPI.companyNetworkTypeLinks.updateCompanyNetworkTypeLink(R.pick(['id', 'networkSettings'], companyNtl), { remoteOrigin: true })
     return loraNetworkSettings
   }
 
@@ -505,12 +505,13 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
     }
     appLogger.log('creating ' + remoteDeviceProfile.name)
     let networkSettings = this.buildDeviceProfileNetworkSettings(remoteDeviceProfile)
-    let localDp = await modelAPI.deviceProfiles.createRemoteDeviceProfile(
+    let localDp = await modelAPI.deviceProfiles.createDeviceProfile(
       network.networkType.id,
       2,
       remoteDeviceProfile.name,
       'Device Profile managed by LPWAN Server, perform changes via LPWAN',
-      networkSettings
+      networkSettings,
+      { remoteOrigin: true }
     )
     appLogger.log(localDp)
     dataAPI.putProtocolDataForKey(
@@ -542,7 +543,12 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
       appLogger.log(localApp.name + ' already exists')
     }
     else {
-      localApp = await modelAPI.applications.createApplication(remoteApp.name, remoteApp.description, 2, 1, 'http://set.me.to.your.real.url:8888')
+      localApp = await modelAPI.applications.createApplication({
+        ...R.pick(['name', 'description'], remoteApp),
+        companyId: 2,
+        reportingProtocolId: 1,
+        baseUrl: 'http://set.me.to.your.real.url:8888'
+      })
       appLogger.log('Created ' + localApp.name)
     }
     const { records: appNtls } = await modelAPI.applicationNetworkTypeLinks.retrieveApplicationNetworkTypeLinks({ applicationId: localApp.id })
@@ -551,8 +557,17 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
       appLogger.log(localApp.name + ' link already exists')
     }
     else {
-      let networkSettings = this.buildApplicationNetworkSettings(remoteApp)
-      appNtl = await modelAPI.applicationNetworkTypeLinks.createRemoteApplicationNetworkTypeLink(localApp.id, network.networkType.id, networkSettings, localApp.company.id)
+      appNtl = await modelAPI.applicationNetworkTypeLinks.createApplicationNetworkTypeLink(
+        {
+          applicationId: localApp.id,
+          networkTypeId: network.networkType.id,
+          networkSettings: this.buildApplicationNetworkSettings(remoteApp)
+        },
+        {
+          companyId: localApp.company.id,
+          remoteOrigin: true
+        }
+      )
       await dataAPI.putProtocolDataForKey(
         network.id,
         network.networkProtocol.id,
@@ -605,7 +620,7 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
     else {
       appLogger.log('creating Network Link for ' + localDevice.name)
       let networkSettings = this.buildDeviceNetworkSettings(remoteDevice)
-      await modelAPI.deviceNetworkTypeLinks.createRemoteDeviceNetworkTypeLink(localDevice.id, network.networkType.id, deviceProfile.id, networkSettings, 2)
+      await modelAPI.deviceNetworkTypeLinks.createDeviceNetworkTypeLink(localDevice.id, network.networkType.id, deviceProfile.id, networkSettings, 2, { remoteOrigin: true })
     }
     dataAPI.putProtocolDataForKey(
       network.id,

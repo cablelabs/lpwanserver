@@ -58,7 +58,12 @@ module.exports = class Loriot extends NetworkProtocol {
       appLogger.log(localApp.name + ' already exists')
     }
     else {
-      localApp = await modelAPI.applications.createApplication(remoteApp.name, remoteApp.description, 2, 1, 'http://set.me.to.your.real.url:8888')
+      localApp = await modelAPI.applications.createApplication({
+        ...R.pick(['name', 'description'], remoteApp),
+        companyId: 2,
+        reportingProtocolId: 1,
+        baseUrl: 'http://set.me.to.your.real.url:8888'
+      })
       appLogger.log('Created ' + localApp.name)
     }
     const { records: appNtls } = await modelAPI.applicationNetworkTypeLinks.retrieveApplicationNetworkTypeLinks({ applicationId: localApp.id })
@@ -67,8 +72,17 @@ module.exports = class Loriot extends NetworkProtocol {
       appLogger.log(localApp.name + ' link already exists')
     }
     else {
-      let networkSettings = this.buildApplicationNetworkSettings(remoteApp)
-      appNtl = await modelAPI.applicationNetworkTypeLinks.createRemoteApplicationNetworkTypeLink(localApp.id, network.networkType.id, networkSettings, localApp.company.id)
+      appNtl = await modelAPI.applicationNetworkTypeLinks.createApplicationNetworkTypeLink(
+        {
+          applicationId: localApp.id,
+          networkTypeId: network.networkType.id,
+          networkSettings: this.buildApplicationNetworkSettings(remoteApp)
+        },
+        {
+          companyId: localApp.company.id,
+          remoteOrigin: true
+        }
+      )
       await dataAPI.putProtocolDataForKey(
         network.id,
         network.networkProtocol.id,
@@ -177,7 +191,7 @@ module.exports = class Loriot extends NetworkProtocol {
       appLogger.log(dp, 'info')
       let networkSettings = this.buildDeviceNetworkSettings(remoteDevice, dp.localDeviceProfile)
       appLogger.log(networkSettings)
-      const deviceNtl = await modelAPI.deviceNetworkTypeLinks.createRemoteDeviceNetworkTypeLink(localDevice.id, network.networkType.id, dp.localDeviceProfile, networkSettings, 2)
+      const deviceNtl = await modelAPI.deviceNetworkTypeLinks.createDeviceNetworkTypeLink(localDevice.id, network.networkType.id, dp.localDeviceProfile, networkSettings, 2, { remoteOrigin: true })
       appLogger.log(deviceNtl)
     }
     dataAPI.putProtocolDataForKey(
@@ -193,12 +207,13 @@ module.exports = class Loriot extends NetworkProtocol {
     let networkSettings = this.buildDeviceProfileNetworkSettings(remoteDevice)
     appLogger.log(networkSettings, 'error')
     try {
-      const localDeviceProfile = await modelAPI.deviceProfiles.createRemoteDeviceProfile(
+      const localDeviceProfile = await modelAPI.deviceProfiles.createDeviceProfile(
         network.networkType.id,
         2,
         networkSettings.name,
         'Device Profile managed by LPWAN Server, perform changes via LPWAN',
-        networkSettings
+        networkSettings,
+        { remoteOrigin: true }
       )
       return {
         localDeviceProfile: localDeviceProfile.id,

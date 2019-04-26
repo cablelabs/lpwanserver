@@ -1,189 +1,131 @@
-// General libraries in use in this module.
 var appLogger = require('../lib/appLogger.js')
-
 var httpError = require('http-errors')
+const { prisma, formatInputData, formatRelationshipsIn } = require('../lib/prisma')
+const { onFail } = require('../lib/utils')
 
-// Configuration access.
-const config = require('../config')
+module.exports = class DeviceNetworkTypeLink {
+  constructor (modelAPI) {
+    this.modelAPI = modelAPI
+  }
 
-var modelAPI
-
-//* *****************************************************************************
-// The DeviceNetworkTypeLink interface.
-//* *****************************************************************************
-// Class constructor.
-//
-// Loads the implementation for the deviceNetworkTypeLink interface based on
-// the configured subdirectory name.  The implementation file
-// deviceNetworkTypeLink.js is to be found in that subdirectory of the
-// models/dao directory (Data Access Object).
-//
-// server - The modelAPI object, allowing use of the other APIs.
-//
-function DeviceNetworkTypeLink (server) {
-  this.impl = require('./dao/' +
-                             config.get('impl_directory') +
-                             '/deviceNetworkTypeLinks.js')
-
-  modelAPI = server
-}
-
-// Create the deviceNetworkTypeLinks record.
-//
-// deviceId          - The id for the device this link is being created for
-// networkTypeId     - The id for the network the device is linked to
-// deviceProfileId   - The id for the deviceProfile this device uses on the
-//                     networkType.
-// networkSettings   - The settings required or allowed by the network protocol
-//                     in json format
-// validateCompanyId - The id of the company this device SHOULD be part of.
-//                     Usually this is tied to the user creating the link,
-//                     though a global admin could supply null here.
-//
-// Returns the promise that will execute the create.
-DeviceNetworkTypeLink.prototype.createDeviceNetworkTypeLink = function (deviceId, networkTypeId, deviceProfileId, networkSettings, validateCompanyId) {
-  var me = this
-  return new Promise(async function (resolve, reject) {
+  async createDeviceNetworkTypeLink (deviceId, networkTypeId, deviceProfileId, networkSettings, validateCompanyId, { remoteOrigin = false } = {}) {
     try {
-      var rec = await me.impl.createDeviceNetworkTypeLink(deviceId, networkTypeId, deviceProfileId, networkSettings, validateCompanyId)
-      var logs = await modelAPI.networkTypeAPI.addDevice(networkTypeId, deviceId, networkSettings)
-      rec.remoteAccessLogs = logs
-      resolve(rec)
-    }
-    catch (err) {
-      appLogger.log('Error creating deviceNetworkTypeLink: ' + err)
-      reject(err)
-    }
-  })
-}
-
-DeviceNetworkTypeLink.prototype.createRemoteDeviceNetworkTypeLink = function (deviceId, networkTypeId, deviceProfileId, networkSettings, validateCompanyId) {
-  var me = this
-  return new Promise(async function (resolve, reject) {
-    try {
-      var rec = await me.impl.createDeviceNetworkTypeLink(deviceId, networkTypeId, deviceProfileId, networkSettings, validateCompanyId)
-      resolve(rec)
-    }
-    catch (err) {
-      appLogger.log('Error creating deviceNetworkTypeLink: ' + err)
-      reject(err)
-    }
-  })
-}
-
-// Retrieve a deviceNetworkTypeLinks record by id.
-//
-// id - the record id of the deviceNetworkTypeLinks record.
-//
-// Returns a promise that executes the retrieval.
-DeviceNetworkTypeLink.prototype.retrieveDeviceNetworkTypeLink = function (id) {
-  return this.impl.retrieveDeviceNetworkTypeLink(id)
-}
-
-// Update the deviceNetworkTypeLinks record.
-//
-// deviceNetworkTypeLinks - the updated record.  Note that the id must be
-//                      unchanged from retrieval to guarantee the same
-//                      record is updated.
-// validateCompanyId  - The id of the company this device SHOULD be
-//                      part of.  Usually this is tied to the user
-//                      creating the link, though a global admin could
-//                      supply null here (no need to validate).
-//
-// Returns a promise that executes the update.
-DeviceNetworkTypeLink.prototype.updateDeviceNetworkTypeLink = function (deviceNetworkTypeLink, validateCompanyId) {
-  var me = this
-  return new Promise(async function (resolve, reject) {
-    try {
-      var rec = await me.impl.updateDeviceNetworkTypeLink(deviceNetworkTypeLink, validateCompanyId)
-      var logs = await modelAPI.networkTypeAPI.pushDevice(rec.networkType.id, rec, rec.networkSettings)
-      rec.remoteAccessLogs = logs
-      resolve(rec)
-    }
-    catch (err) {
-      appLogger.log('Error updating deviceNetworkTypeLink: ' + err)
-      reject(err)
-    }
-  })
-}
-
-// Update the deviceNetworkTypeLinks record.
-//
-// deviceNetworkTypeLinks - the updated record.  Note that the id must be
-//                      unchanged from retrieval to guarantee the same
-//                      record is updated.
-// validateCompanyId  - The id of the company this device SHOULD be
-//                      part of.  Usually this is tied to the user
-//                      creating the link, though a global admin could
-//                      supply null here (no need to validate).
-//
-// Returns a promise that executes the update.
-DeviceNetworkTypeLink.prototype.pushDeviceNetworkTypeLink = function (deviceNetworkTypeLink, validateCompanyId) {
-  var me = this
-  return new Promise(async function (resolve, reject) {
-    try {
-      var rec = await me.impl.retrieveDeviceNetworkTypeLink(deviceNetworkTypeLink)
-      var logs = await modelAPI.networkTypeAPI.pushDevice(rec.networkType.id, rec.device.id, rec.networkSettings)
-      rec.remoteAccessLogs = logs
-      resolve(rec)
-    }
-    catch (err) {
-      appLogger.log('Error updating deviceNetworkTypeLink: ' + err)
-      reject(err)
-    }
-  })
-}
-
-// Delete the deviceNetworkTypeLinks record.
-//
-// id                - the id of the deviceNetworkTypeLinks record to delete.
-// validateCompanyId - The id of the company this device SHOULD be part of.
-//                     Usually this is tied to the user creating the link,
-//                     though a global admin could supply null here (no need to
-//                     validate).
-//
-// Returns a promise that performs the delete.
-DeviceNetworkTypeLink.prototype.deleteDeviceNetworkTypeLink = function (id, validateCompanyId) {
-  var me = this
-  return new Promise(async function (resolve, reject) {
-    try {
-      var rec = await me.impl.retrieveDeviceNetworkTypeLink(id)
-      // Since we clear the remote networks before we delete the local
-      // record, validate the company now, if required.
-      if (validateCompanyId) {
-        var dev = await modelAPI.devices.retrieveDevice(rec.device.id)
-        var app = await modelAPI.applications.retrieveApplication(dev.application.id)
-        if (validateCompanyId !== app.company.id) {
-          reject(new httpError.Unauthorized())
-          return
-        }
+      await this.validateCompanyForDevice(validateCompanyId, deviceId)
+      const data = formatInputData({
+        deviceId,
+        networkTypeId,
+        deviceProfileId,
+        networkSettings: JSON.stringify(networkSettings)
+      })
+      const rec = await prisma.createDeviceNetworkTypeLink(data).$fragment(fragments.basic)
+      if (!remoteOrigin) {
+        var logs = await this.modelAPI.networkTypeAPI.addDevice(networkTypeId, deviceId, networkSettings)
+        rec.remoteAccessLogs = logs
       }
+      return rec
+    }
+    catch (err) {
+      appLogger.log('Error creating deviceNetworkTypeLink: ' + err)
+      throw err
+    }
+  }
+
+  async updateDeviceNetworkTypeLink ({ id, ...data }, validateCompanyId) {
+    try {
+      await this.validateCompanyForDeviceNetworkTypeLink(validateCompanyId, id)
+      if (data.networkSettings) {
+        data.networkSettings = JSON.stringify(data.networkSettings)
+      }
+      data = formatInputData(data)
+      const rec = await prisma.updateDeviceNetworkTypeLink({ data, where: { id } }).$fragment(fragments.basic)
+      var logs = await this.modelAPI.networkTypeAPI.pushDevice(rec.networkType.id, rec, rec.networkSettings)
+      rec.remoteAccessLogs = logs
+      return rec
+    }
+    catch (err) {
+      appLogger.log('Error updating deviceNetworkTypeLink: ' + err)
+      throw err
+    }
+  }
+
+  async retrieveDeviceNetworkTypeLink (id) {
+    const rec = await onFail(400, () => prisma.deviceNetworkTypeLink({ id }).$fragment(fragments.basic))
+    if (!rec) throw httpError(404, 'DeviceNetworkTypeLink not found')
+    return rec
+  }
+
+  async retrieveDeviceNetworkTypeLinks ({ limit, offset, ...where } = {}) {
+    where = formatRelationshipsIn(where)
+    const query = { where }
+    if (limit) query.first = limit
+    if (offset) query.skip = offset
+    let [records, totalCount] = await Promise.all([
+      prisma.deviceNetworkTypeLinks(query).$fragment(fragments.basic),
+      prisma.deviceNetworkTypeLinksConnection({ where }).aggregate().count()
+    ])
+    records = records.map(x => ({
+      ...x,
+      networkSettings: JSON.parse(x.networkSettings)
+    }))
+    return { totalCount, records }
+  }
+
+  async deleteDeviceNetworkTypeLink (id, validateCompanyId) {
+    try {
+      const rec = await this.retrieveDeviceNetworkTypeLink(id)
+      await this.validateCompanyForDeviceNetworkTypeLink(validateCompanyId, id)
       // Don't delete the local record until the remote operations complete.
-      var logs = await modelAPI.networkTypeAPI.deleteDevice(rec.networkType.id, rec.device.id)
-      await me.impl.deleteDeviceNetworkTypeLink(id)
-      resolve(logs)
+      var logs = await this.modelAPI.networkTypeAPI.deleteDevice(rec.networkType.id, rec.device.id)
+      await onFail(400, () => prisma.deleteDeviceNetworkTypeLink({ id }))
+      return logs
     }
     catch (err) {
       appLogger.log('Error deleting deviceNetworkTypeLink: ' + err)
-      reject(err)
+      throw err
     }
-  })
+  }
+
+  async pushDeviceNetworkTypeLink (deviceNetworkTypeLink) {
+    try {
+      var rec = await this.retrieveDeviceNetworkTypeLink(deviceNetworkTypeLink)
+      var logs = await this.modelAPI.networkTypeAPI.pushDevice(rec.networkType.id, rec.device.id, rec.networkSettings)
+      rec.remoteAccessLogs = logs
+      return rec
+    }
+    catch (err) {
+      appLogger.log('Error updating deviceNetworkTypeLink: ' + err)
+      throw err
+    }
+  }
+
+  async validateCompanyForDevice (companyId, deviceId) {
+    if (!companyId) return
+    const d = await this.modelAPI.devices.retrieveDevice(deviceId)
+    await this.modelAPI.applicationNetworkTypeLinks.validateCompanyForApplication(companyId, d.application.id)
+  }
+
+  async validateCompanyForDeviceNetworkTypeLink (companyId, dnlId) {
+    if (!companyId) return
+    const dnl = await this.retrieveDeviceNetworkTypeLink(dnlId)
+    await this.validateCompanyForDevice(companyId, dnl.device.id)
+  }
 }
 
 //* *****************************************************************************
-// Custom retrieval functions.
+// Fragments for how the data should be returned from Prisma.
 //* *****************************************************************************
-
-// Retrieves a subset of the deviceNetworkTypeLinks in the system given the
-// options.
-//
-// Options include limits on the number of deviceNetworkTypeLinks returned, the
-// offset to the first deviceNetworkTypeLink returned (together giving a paging
-// capability), the deviceId, and the networkTypeId.
-//
-// Returns a promise that does the retrieval.
-DeviceNetworkTypeLink.prototype.retrieveDeviceNetworkTypeLinks = function (options) {
-  return this.impl.retrieveDeviceNetworkTypeLinks(options)
+const fragments = {
+  basic: `fragment BasicDeviceNetworkTypeLink on DeviceNetworkTypeLink {
+    id
+    networkSettings
+    device {
+      id
+    }
+    networkType {
+      id
+    }
+    deviceProfile {
+      id
+    }
+  }`
 }
-
-module.exports = DeviceNetworkTypeLink
