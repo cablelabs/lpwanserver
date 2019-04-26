@@ -10,8 +10,16 @@ var appLogger = require('../../rest/lib/appLogger.js')
 chai.use(chaiHttp)
 var server = chai.request(app).keepOpen()
 
-const describeTTN = process.env.TTN === 'true' ? describe : describe.skip.bind(describe)
-const describeLoriot = process.env.LORIOT === 'true' ? describe : describe.skip.bind(describe)
+const {
+  TTN_ENABLED,
+  LORIOT_ENABLED,
+  TTN_USERNAME,
+  TTN_PASSWORD,
+  LORIOT_API_KEY
+} = process.env
+
+const describeTTN = TTN_ENABLED === 'true' ? describe : describe.skip.bind(describe)
+const describeLoriot = LORIOT_ENABLED === 'true' ? describe : describe.skip.bind(describe)
 
 describe('E2E Test for Multiple Networks', () => {
   let adminToken
@@ -274,7 +282,7 @@ describe('E2E Test for Multiple Networks', () => {
             'baseUrl': 'https://us1.loriot.io/1/nwk',
             'networkProtocolId': lora.loriot.protocolId,
             'securityData': {
-              apiKey: 'AAAA-AXsZan9nB1apIzsnsW0Rlf5dAJLr0dGIfzLy6xOMd31o'
+              apiKey: LORIOT_API_KEY
             }
           })
           .end(function (err, res) {
@@ -323,10 +331,10 @@ describe('E2E Test for Multiple Networks', () => {
             'networkProtocolId': lora.ttn.protocolId,
             'securityData': {
               authorized: false,
-              username: 'dschrimpsherr',
-              password: 'Ultimum01',
-              clientId: 'lpwan-test-3',
-              clientSecret: 'ltMSL0cmIVkzBYQZndZ8slzF37qLMjRm7sXXt4qcekyCq3YEoLMf9rQr'
+              username: TTN_USERNAME,
+              password: TTN_PASSWORD,
+              clientId: TTN_CLIENT_ID,
+              clientSecret: TTN_CLIENT_SECRET
             }
           })
           .end(function (err, res) {

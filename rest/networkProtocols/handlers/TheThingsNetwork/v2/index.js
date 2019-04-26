@@ -1,3 +1,4 @@
+const NetworkProtocol = require('../../../NetworkProtocol')
 const request = require('request-promise')
 const appLogger = require('../../../../lib/appLogger')
 const uuid = require('uuid/v1')
@@ -21,8 +22,9 @@ const appRegion = R.compose(
  * @type {{activeApplicationNetworkProtocols: {}}}
  */
 
-module.exports = class TheThingsNetworkV2 {
+module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
   constructor () {
+    super()
     this.activeApplicationNetworkProtocols = {}
   }
 
@@ -49,13 +51,13 @@ module.exports = class TheThingsNetworkV2 {
    * @param loginData - credentials
    * @returns {Promise<any>}
    */
-  async test (network) {
+  async test (session, network) {
     appLogger.log(network.securityData, 'debug')
     if (!network.securityData.authorized) {
       throw httpError.Unauthorized()
     }
     try {
-      await TTNRequest(network.securityData.access_token, {
+      await TTNRequest(session.connection.access_token, {
         url: `${network.baseUrl}/api/v2/applications`
       })
     }
@@ -1144,8 +1146,10 @@ module.exports = class TheThingsNetworkV2 {
   }
 
   deNormalizeApplicationData (remoteApplication, application) {
-    let magicId = remoteApplication.id + '-lpwanserver-' + uuid()
+    let magicId = application.id + '-lpwanserver-' + uuid()
     magicId = magicId.substr(0, 36)
+    // No underscore or dash allowed in first or last position
+    magicId = magicId.replace(/^[_-]*|[_-]*$/, '')
     let ttnApplication = {
       ttnApplicationMeta: {
         id: magicId,

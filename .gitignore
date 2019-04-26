@@ -56,3 +56,6 @@ privkey.pem
 server.crt
 server.pem
 local
+
+credentials
+secrets
