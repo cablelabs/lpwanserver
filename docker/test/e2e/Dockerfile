@@ -16,4 +16,4 @@ COPY . .
 COPY test2.0 test2.0
 
 # Override the command, to run the test instead of the application
-CMD ["mocha", "./test2.0/e2e", "--recursive", "--reporter", "spec", "--bail", "--exit", "--timeout", "100000"]
+CMD ["mocha", "./test2.0/e2e/specs", "--recursive", "--reporter", "spec", "--bail", "--exit", "--timeout", "100000"]

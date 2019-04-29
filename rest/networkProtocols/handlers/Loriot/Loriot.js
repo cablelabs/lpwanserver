@@ -232,7 +232,7 @@ module.exports = class Loriot extends NetworkProtocol {
     appLogger.log(integration, 'warn')
     const deliveryURL = `api/ingest/${localAppId}/${network.id}`
     const reportingUrl = `${config.get('base_url')}${deliveryURL}`
-    if (!integration || integration.osetup.url === reportingUrl) return
+    if (integration && integration.osetup.url === reportingUrl) return
     await modelAPI.applications.updateApplication({ id: localAppId, baseUrl: integration.uplinkDataURL })
     const updatePayload = { output: 'httppush', osetup: { url: reportingUrl } }
     if (integration) {

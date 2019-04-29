@@ -1,10 +1,10 @@
 let assert = require('assert')
 let chai = require('chai')
 let chaiHttp = require('chai-http')
-let app = require('../../restApp.js')
+let app = require('../../../restApp.js')
 let should = chai.should()
-let setup = require('./setup.js')
-let appLogger = require('../../rest/lib/appLogger.js')
+let setup = require('../setup.js')
+let appLogger = require('../../../rest/lib/appLogger.js')
 let request = require('request')
 
 chai.use(chaiHttp)

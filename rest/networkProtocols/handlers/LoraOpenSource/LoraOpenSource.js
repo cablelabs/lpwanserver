@@ -632,18 +632,27 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
   }
 
   async pullIntegrations (session, network, remoteAppId, localAppId, dpMap, modelAPI) {
-    const integration = await this.client.loadApplicationIntegration(session, network, remoteAppId, 'http')
-    appLogger.log(integration, 'warn')
-    const deliveryURL = `api/ingest/${localAppId}/${network.id}`
+    let integration
+    const deliveryURL = `/api/ingest/${localAppId}/${network.id}`
     const reportingUrl = `${config.get('base_url')}${deliveryURL}`
-    if (integration.uplinkDataURL === reportingUrl) return
-    await modelAPI.applications.updateApplication({ id: localAppId, baseUrl: integration.uplinkDataURL })
-    await this.client.updateApplicationIntegration(session, network, remoteAppId, 'http', {
-      ackNotificationURL: reportingUrl,
-      uplinkDataURL: reportingUrl,
-      errorNotificationURL: reportingUrl,
-      joinNotificationURL: reportingUrl
+    const body = url => ({
+      ackNotificationURL: url,
+      uplinkDataURL: url,
+      errorNotificationURL: url,
+      joinNotificationURL: url
     })
+    const updateApp = () => modelAPI.applications.updateApplication({ id: localAppId, baseUrl: reportingUrl })
+    try {
+      integration = await this.client.loadApplicationIntegration(session, network, remoteAppId, 'http')
+      appLogger.log(integration, 'warn')
+      if (integration.uplinkDataURL === reportingUrl) return
+      await this.client.updateApplicationIntegration(session, network, remoteAppId, 'http', body(reportingUrl))
+      await updateApp()
+    }
+    catch (err) {
+      await this.client.createApplicationIntegration(session, network, remoteAppId, 'http', body(reportingUrl))
+      await updateApp()
+    }
   }
 
   async addApplication (session, network, appId, dataAPI) {

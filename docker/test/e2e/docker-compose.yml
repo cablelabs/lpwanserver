@@ -22,10 +22,10 @@ services:
       - loraserver1
       - lora_appserver
       - lora_appserver1
-      - postgresql
-  postgresql:
-    volumes:
-      - ./configuration/postgresql/initdb-demo:/docker-entrypoint-initdb.d
+      # - postgresql
+  # postgresql:
+  #   volumes:
+  #     - ./configuration/postgresql/initdb-demo:/docker-entrypoint-initdb.d
 networks:
   lpwanserver_dev:
     name: lpwanserver_dev
