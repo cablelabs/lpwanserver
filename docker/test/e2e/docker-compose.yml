@@ -10,12 +10,12 @@ services:
       - 3200:3200
     environment:
       - config_file=dev.json
-      - TTN_ENABLED=false
+      - TTN_ENABLED=${TTN_ENABLED:-false}
       - TTN_USERNAME=${TTN_USERNAME}
       - TTN_PASSWORD=${TTN_PASSWORD}
       - TTN_CLIENT_ID=${TTN_CLIENT_ID}
       - TTN_CLIENT_SECRET=${TTN_CLIENT_SECRET}
-      - LORIOT_ENABLED=false
+      - LORIOT_ENABLED=${LORIOT_ENABLED:-false}
       - LORIOT_API_KEY=${LORIOT_API_KEY}
     depends_on:
       - loraserver

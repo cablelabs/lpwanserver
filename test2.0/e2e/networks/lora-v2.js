@@ -35,6 +35,17 @@ module.exports = {
     description: 'Test Device for E2E',
     devEUI: '3344556677889900'
   },
+  deviceActivation: {
+    "aFCntDown": 0,
+    "appSKey": "290535e48e5e767d9810903db0e50298",
+    "devAddr": "f9bdf0ab",
+    "devEUI": "3344556677889900",
+    "fCntUp": 0,
+    "fNwkSIntKey": "0e0f3622c801729c1dd2d644bd477244",
+    "nFCntDown": 0,
+    "nwkSEncKey": "0e0f3622c801729c1dd2d644bd477244",
+    "sNwkSIntKey": "0e0f3622c801729c1dd2d644bd477244"
+  },
   _setNetworkServerId (id) {
     this.networkServer.id = id
     this.serviceProfile.networkServerID = id
@@ -58,9 +69,6 @@ module.exports = {
     this.application.id = id
     this.device.applicationID = id
   },
-  _setDeviceId (id) {
-    this.device.id = id
-  },
   async setup () {
     let res
     // Create Session
@@ -81,7 +89,8 @@ module.exports = {
     res = await client.createApplication(this.session, this.network, this.application)
     this._setApplicationId(res.id)
     // Create Device
-    res = await client.createDevice(this.session, this.network, this.application.id, this.device)
-    this._setDeviceId(res.id)
+    await client.createDevice(this.session, this.network, this.application.id, this.device)
+    // Activate Device
+    await client.activateDevice(this.session, this.network, this.device.devEUI, this.deviceActivation)
   }
 }

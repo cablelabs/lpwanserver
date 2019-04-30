@@ -15,7 +15,7 @@ module.exports = {
   device: {
     title: 'ApiTestDevice',
     description: 'Test Device for E2E',
-    devEUI: '0080000004001546',
+    deveui: '0080000004001546',
     devclass: 'A',
     lorawan: { major: '1', minor: '0', revision: '0' }
   },
@@ -31,8 +31,8 @@ module.exports = {
     res = await client.createApplication(this.session, this.network, this.application)
     this._setApplicationId(parseInt(res._id, 10))
     // Create Device
+    // Loriot automatically assigns the device ABP properties, so no need to activate
     res = await client.createDevice(this.session, this.network, this.application.id, this.device)
     this._setDeviceId(res._id)
-  },
-
+  }
 }

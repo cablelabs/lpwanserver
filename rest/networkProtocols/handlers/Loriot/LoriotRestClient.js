@@ -102,6 +102,16 @@ module.exports = class LoraOpenSourceRestClient extends RestClient {
     return this.request(network, opts, session)
   }
 
+  createOtaaDevice (session, network, appId, body) {
+    const opts = { method: 'POST', url: `/app/${this.idHex(appId)}/devices/otaa`, body }
+    return this.request(network, opts, session)
+  }
+
+  createAbpDevice (session, network, appId, body) {
+    const opts = { method: 'POST', url: `/app/${this.idHex(appId)}/devices/abp`, body }
+    return this.request(network, opts, session)
+  }
+
   loadDevice (session, network, appId, id) {
     const opts = { url: `/app/${this.idHex(appId)}/device/${id}` }
     return this.request(network, opts, session)
@@ -114,16 +124,6 @@ module.exports = class LoraOpenSourceRestClient extends RestClient {
 
   deleteDevice (session, network, appId, id) {
     const opts = { method: 'DELETE', url: `/app/${this.idHex(appId)}/device/${id}` }
-    return this.request(network, opts, session)
-  }
-
-  updateDeviceKeys (session, network, appId, body) {
-    const opts = { method: 'POST', url: `/app/${this.idHex(appId)}/devices/otaa`, body }
-    return this.request(network, opts, session)
-  }
-
-  activateDevice (session, network, appId, body) {
-    const opts = { method: 'POST', url: `/app/${this.idHex(appId)}/devices/abp`, body }
     return this.request(network, opts, session)
   }
 }
