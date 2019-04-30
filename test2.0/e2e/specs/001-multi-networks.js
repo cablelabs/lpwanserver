@@ -8,6 +8,7 @@ var setup = require('../setup.js')
 var appLogger = require('../../../rest/lib/appLogger.js')
 const Lora1 = require('../networks/lora-v1')
 const Lora2 = require('../networks/lora-v2')
+const Loriot = require('../networks/loriot')
 
 chai.use(chaiHttp)
 var server = chai.request(app).keepOpen()
@@ -59,8 +60,8 @@ describe('E2E Test for Multiple Networks', () => {
   before(async () => {
     await setup.start()
     await wait(10000)
-    await Lora1.setup()
-    await Lora2.setup()
+    await Promise.all([Lora1.setup(), Lora2.setup()])
+    if (LORIOT_ENABLED) await Loriot.setup()
   })
 
   describe('Verify Login and Administration of Users Works', () => {
@@ -266,7 +267,7 @@ describe('E2E Test for Multiple Networks', () => {
             'name': 'LocalLoriot',
             'networkProviderId': netProvId,
             'networkTypeId': 1,
-            'baseUrl': 'https://us1.loriot.io/1/nwk',
+            'baseUrl': Loriot.network.baseUrl,
             'networkProtocolId': lora.loriot.protocolId,
             'securityData': {
               apiKey: LORIOT_API_KEY
@@ -585,7 +586,7 @@ describe('E2E Test for Multiple Networks', () => {
             applications.should.have.property('totalCount')
             applications.should.have.property('records')
             // applications.totalCount.should.equal(2)
-            let application = applications.records.find(x => x.name === 'ApiTest')
+            let application = applications.records.find(x => x.name === Loriot.application.title)
             should.exist(application)
             lora.loriot.apps.push({
               appId: application.id,
@@ -988,7 +989,7 @@ describe('E2E Test for Multiple Networks', () => {
             deviceProfiles.should.have.property('totalCount')
             deviceProfiles.should.have.property('records')
             // deviceProfiles.totalCount.should.equal(2)
-            let deviceProfile = deviceProfiles.records.find(x => x.name === '00-80-00-00-04-00-15-46')
+            let deviceProfile = deviceProfiles.records.find(x => x.name === Loriot.device.title)
             should.exist(deviceProfile)
             deviceProfile.id.should.equal(3)
             lora.loriot.apps[0].deviceProfileIds.push(deviceProfile.id)
@@ -999,9 +1000,9 @@ describe('E2E Test for Multiple Networks', () => {
         let expected = {
           'id': 3,
           'applicationId': lora.loriot.apps[0].appId,
-          'name': '00-80-00-00-04-00-15-46',
+          'name': Loriot.device.title,
           'deviceModel': null,
-          'description': null
+          'description': Loriot.device.description
         }
         server
           .get('/api/devices')

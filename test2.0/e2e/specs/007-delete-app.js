@@ -16,7 +16,7 @@ const {
   LORIOT_API_KEY
 } = process.env
 
-const describeLoriot = process.env.LORIOT === 'true' ? describe : describe.skip.bind(describe)
+const describeLoriot = process.env.LORIOT_ENABLED === 'true' ? describe : describe.skip.bind(describe)
 
 const state = {
   adminToken: '',
@@ -1045,7 +1045,6 @@ describe('E2E Test for Deleting an Application Use Case #191', () => {
         'Authorization': 'Bearer ' + state.loriotKey
       }
       let { apps } = await requestP(options)
-      apps = apps.filter(x => x.name !== 'ApiTest')
       let appDevices = await Promise.all(apps.map(app => {
         const appIdRest = app._id.toString(16).toUpperCase()
         let opts = { ...options, url: `${state.loriotBaseUrl}/app/${appIdRest}/devices` }

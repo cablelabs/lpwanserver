@@ -641,17 +641,15 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
       errorNotificationURL: url,
       joinNotificationURL: url
     })
-    const updateApp = () => modelAPI.applications.updateApplication({ id: localAppId, baseUrl: reportingUrl })
     try {
       integration = await this.client.loadApplicationIntegration(session, network, remoteAppId, 'http')
       appLogger.log(integration, 'warn')
       if (integration.uplinkDataURL === reportingUrl) return
+      await modelAPI.applications.updateApplication({ id: localAppId, baseUrl: integration.uplinkDataURL })
       await this.client.updateApplicationIntegration(session, network, remoteAppId, 'http', body(reportingUrl))
-      await updateApp()
     }
     catch (err) {
       await this.client.createApplicationIntegration(session, network, remoteAppId, 'http', body(reportingUrl))
-      await updateApp()
     }
   }
 
