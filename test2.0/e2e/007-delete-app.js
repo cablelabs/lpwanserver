@@ -12,6 +12,10 @@ var should = chai.should()
 chai.use(chaiHttp)
 let server = chai.request(app).keepOpen()
 
+const {
+  LORIOT_API_KEY
+} = process.env
+
 const describeLoriot = process.env.LORIOT === 'true' ? describe : describe.skip.bind(describe)
 
 const state = {
@@ -26,7 +30,7 @@ const state = {
   lora2BaseUrl: 'https://lora_appserver:8080/api',
   lora2Key: '',
   loriotBaseUrl: 'https://us1.loriot.io/1/nwk',
-  loriotKey: 'AAAA-AXsZan9nB1apIzsnsW0Rlf5dAJLr0dGIfzLy6xOMd31o',
+  loriotKey: LORIOT_API_KEY,
   lora: {
     loraV1: {
       protocolId: '',

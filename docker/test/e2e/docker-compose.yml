@@ -9,10 +9,14 @@ services:
     ports:
       - 3200:3200
     environment:
-      - NODE_ENV=e2e
       - config_file=dev.json
-      - TTN=false
-      - LORIOT=false
+      - TTN_ENABLED=false
+      - TTN_USERNAME=${TTN_USERNAME}
+      - TTN_PASSWORD=${TTN_PASSWORD}
+      - TTN_CLIENT_ID=${TTN_CLIENT_ID}
+      - TTN_CLIENT_SECRET=${TTN_CLIENT_SECRET}
+      - LORIOT_ENABLED=false
+      - LORIOT_API_KEY=${LORIOT_API_KEY}
     depends_on:
       - loraserver
       - loraserver1
