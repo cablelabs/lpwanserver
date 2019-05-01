@@ -1412,14 +1412,7 @@ async function TTNRequest (token, opts) {
       'rejectUnauthorized': false
     }
   }, opts)
-  appLogger.log(R.merge(
-    opts,
-    {
-      headers: R.merge(opts.headers, {
-        authorization: 'Bearer OMIT TOKEN IN LOG'
-      })
-    }
-  ), 'info')
+  appLogger.log(opts)
   const response = await request(opts)
   checkResponse(response)
   appLogger.log(response.body)

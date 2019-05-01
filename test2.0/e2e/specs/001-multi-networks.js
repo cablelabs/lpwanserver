@@ -9,6 +9,7 @@ var appLogger = require('../../../rest/lib/appLogger.js')
 const Lora1 = require('../networks/lora-v1')
 const Lora2 = require('../networks/lora-v2')
 const Loriot = require('../networks/loriot')
+const Ttn = require('../networks/ttn')
 
 chai.use(chaiHttp)
 var server = chai.request(app).keepOpen()
@@ -62,6 +63,7 @@ describe('E2E Test for Multiple Networks', () => {
     await wait(10000)
     await Promise.all([Lora1.setup(), Lora2.setup()])
     if (LORIOT_ENABLED === 'true') await Loriot.setup()
+    if (TTN_ENABLED === 'true') await Ttn.setup()
   })
 
   describe('Verify Login and Administration of Users Works', () => {
@@ -315,15 +317,9 @@ describe('E2E Test for Multiple Networks', () => {
             'name': 'LocalTTN',
             'networkProviderId': netProvId,
             'networkTypeId': 1,
-            'baseUrl': 'https://account.thethingsnetwork.org',
+            'baseUrl': Ttn.network.baseUrl,
             'networkProtocolId': lora.ttn.protocolId,
-            'securityData': {
-              authorized: false,
-              username: TTN_USERNAME,
-              password: TTN_PASSWORD,
-              clientId: TTN_CLIENT_ID,
-              clientSecret: TTN_CLIENT_SECRET
-            }
+            securityData: Ttn.network.securityData
           })
           .end(function (err, res) {
             if (err) done(err)
@@ -347,7 +343,7 @@ describe('E2E Test for Multiple Networks', () => {
             res.should.have.status(200)
             let network = JSON.parse(res.text)
             network.name.should.equal('LocalTTN')
-            network.baseUrl.should.equal('https://account.thethingsnetwork.org')
+            network.baseUrl.should.equal(Ttn.network.baseUrl)
             network.securityData.authorized.should.equal(true)
             network.securityData.message.should.equal('ok')
             network.securityData.enabled.should.equal(true)
@@ -654,11 +650,9 @@ describe('E2E Test for Multiple Networks', () => {
             applications.should.have.property('totalCount')
             applications.should.have.property('records')
             appLogger.log(applications, 'error')
-            let application = applications.records.find(x => x.name === 'cablelabs-prototype')
+            let application = applications.records.find(x => x.name === Ttn.application.id)
             should.exist(application)
-            appLogger.log(application)
-            application.name.should.equal('cablelabs-prototype')
-            application.description.should.equal('Prototype Application for CableLabs Trial')
+            application.description.should.equal(Ttn.application.description)
             lora.ttn.apps.push({
               appId: application.id,
               appNTLId: '',
@@ -1099,17 +1093,10 @@ describe('E2E Test for Multiple Networks', () => {
             let deviceProfiles = JSON.parse(res.text)
             deviceProfiles.should.have.property('totalCount')
             deviceProfiles.should.have.property('records')
+            console.log(JSON.stringify(deviceProfiles.records))
             // deviceProfiles.totalCount.should.equal(2)
-            let deviceProfile1 = {}
-            let deviceProfile2 = {}
-            for (let index = 0; index < deviceProfiles.records.length; index++) {
-              if (deviceProfiles.records[index].name === 'CableLabs TTN Device ABP') {
-                deviceProfile1 = deviceProfiles.records[index]
-              }
-              else if (deviceProfiles.records[index].name === 'TTN Device Using OTAA') {
-                deviceProfile2 = deviceProfiles.records[index]
-              }
-            }
+            let deviceProfile1 = deviceProfiles.records.find(x => x.name === 'CableLabs TTN Device ABP')
+            let deviceProfile2 = deviceProfiles.records.find(x => x.name === 'TTN Device Using OTAA')
             should.exist(deviceProfile1)
             should.exist(deviceProfile2)
             // deviceProfile.should.eql(expected)
@@ -1139,8 +1126,8 @@ describe('E2E Test for Multiple Networks', () => {
             devices.should.have.property('records')
             appLogger.log(devices)
             // devices.totalCount.should.equal(2)
-            let device1 = devices.records.find(x => x.name === '00B7641AD008A5FC')
-            let device2 = devices.records.find(x => x.name === '1234567890987654')
+            let device1 = devices.records.find(x => x.name === '00A0A112727496D3')
+            let device2 = devices.records.find(x => x.name === '0099F6D395BD932A')
             should.exist(device1)
             should.exist(device2)
             lora.ttn.apps[0].deviceIds.push(device1.id)
