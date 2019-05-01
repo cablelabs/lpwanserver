@@ -220,4 +220,14 @@ module.exports = class LoraOpenSourceRestClient extends RestClient {
     const opts = { method: 'DELETE', url: `/applications/${appId}/integrations/${id}` }
     return this.request(network, opts, session)
   }
+
+  listNetworkServers (session, network) {
+    const opts = { method: 'GEt', url: `/network-servers` }
+    return this.request(network, opts, session)
+  }
+
+  createNetworkServer (session, network, body) {
+    const opts = { method: 'POST', url: '/network-servers', body }
+    return this.request(network, opts, session)
+  }
 }

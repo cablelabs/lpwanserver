@@ -2,10 +2,14 @@
 var assert = require('assert')
 var chai = require('chai')
 var chaiHttp = require('chai-http')
-var app = require('../../restApp.js')
+var app = require('../../../restApp.js')
 var should = chai.should()
-var setup = require('./setup.js')
-var appLogger = require('../../rest/lib/appLogger.js')
+var setup = require('../setup.js')
+var appLogger = require('../../../rest/lib/appLogger.js')
+const Lora1 = require('../networks/lora-v1')
+const Lora2 = require('../networks/lora-v2')
+const Loriot = require('../networks/loriot')
+const Ttn = require('../networks/ttn')
 
 chai.use(chaiHttp)
 var server = chai.request(app).keepOpen()
@@ -57,64 +61,52 @@ describe('E2E Test for Multiple Networks', () => {
   before(async () => {
     await setup.start()
     await wait(10000)
-
+    await Promise.all([Lora1.setup(), Lora2.setup()])
+    if (LORIOT_ENABLED === 'true') await Loriot.setup()
+    if (TTN_ENABLED === 'true') await Ttn.setup()
   })
+
   describe('Verify Login and Administration of Users Works', () => {
-    it('Admin Login to LPWan Server', (done) => {
-      server
+    it('Admin Login to LPWan Server', async () => {
+      const res = await server
         .post('/api/sessions')
         .send({'login_username': 'admin', 'login_password': 'password'})
-        .end(function (err, res) {
-          if (err) done(err)
-          res.should.have.status(200)
-          adminToken = res.text
-          done()
-        })
+      res.should.have.status(200)
+      adminToken = res.text
     })
 
-    it('Create a Application User Account', (done) => {
-      server
+    it('Create a Application User Account', async () => {
+      const res = await server
         .post('/api/users')
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .send({ 'username': 'bobmouse', 'password': 'mousetrap', 'role': 'user', 'companyId': 1 })
-        .end(function (err, res) {
-          if (err) done(err)
-          res.should.have.status(200)
-          let ret = JSON.parse(res.text)
-          ret.should.have.property('id')
-          userId = ret.id
-          done()
-        })
+      res.should.have.status(200)
+      let ret = JSON.parse(res.text)
+      ret.should.have.property('id')
+      userId = ret.id
     })
-    it('Verify Application User Exists', (done) => {
-      server
+    it('Verify Application User Exists', async () => {
+      const res = await server
         .get('/api/users/' + userId)
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .send()
-        .end(function (err, res) {
-          if (err) done(err)
-          res.should.have.status(200)
-          let userObj = JSON.parse(res.text)
-          userObj.username.should.equal('bobmouse')
-          userObj.role.should.equal('user')
-          done()
-        })
+      res.should.have.status(200)
+      let userObj = JSON.parse(res.text)
+      userObj.username.should.equal('bobmouse')
+      userObj.role.should.equal('user')
     })
-    it('Application User Login to LPWan Server', (done) => {
-      server
+    it('Application User Login to LPWan Server', async () => {
+      const res = await server
         .post('/api/sessions')
         .send({'login_username': 'bobmouse', 'login_password': 'mousetrap'})
-        .end(function (err, res) {
-          if (err) done(err)
-          res.should.have.status(200)
-          userToken = res.text
-          should.exist(userToken)
-          done()
-        })
+      res.should.have.status(200)
+      userToken = res.text
+      should.exist(userToken)
     })
   })
+
   describe('Setup Networks', () => {
     describe('Setup Lora 1.0 Network', () => {
       it('Create Network Provider', async () => {
@@ -125,24 +117,20 @@ describe('E2E Test for Multiple Networks', () => {
           .send({ 'name': 'Kyrio' })
         netProvId = JSON.parse(res.text).id
       })
-      it('Verify LoraOS 1.0 Protocol Exists', (done) => {
-        server
+      it('Verify LoraOS 1.0 Protocol Exists', async () => {
+        const res = await server
           .get('/api/networkProtocols?search=LoRa Server&networkProtocolVersion=1.0')
           .set('Authorization', 'Bearer ' + adminToken)
           .set('Content-Type', 'application/json')
-          .end(function (err, res) {
-            if (err) done(err)
-            res.should.have.status(200)
-            let result = JSON.parse(res.text)
-            appLogger.log(result)
-            result.records.should.be.instanceof(Array)
-            result.records.should.have.length(1)
-            result.totalCount.should.equal(1)
-            result.records[0].should.have.property('networkProtocolVersion')
-            result.records[0].networkProtocolVersion.should.equal('1.0')
-            lora.loraV1.protocolId = result.records[0].id
-            done()
-          })
+        res.should.have.status(200)
+        let result = JSON.parse(res.text)
+        appLogger.log(result)
+        result.records.should.be.instanceof(Array)
+        result.records.should.have.length(1)
+        result.totalCount.should.equal(1)
+        result.records[0].should.have.property('networkProtocolVersion')
+        result.records[0].networkProtocolVersion.should.equal('1.0')
+        lora.loraV1.protocolId = result.records[0].id
       })
       it('Create the Local LoraOS 1.0 Network', (done) => {
         server
@@ -153,9 +141,9 @@ describe('E2E Test for Multiple Networks', () => {
             'name': 'LocalLoraOS1_0',
             'networkProviderId': netProvId,
             'networkTypeId': 1,
-            'baseUrl': 'https://lora_appserver1:8080/api',
+            'baseUrl': Lora1.network.baseUrl,
             'networkProtocolId': lora.loraV1.protocolId,
-            'securityData': {authorized: false, 'username': 'admin', 'password': 'admin'}
+            'securityData': { authorized: false, ...Lora1.account }
           })
           .end(function (err, res) {
             if (err) done(err)
@@ -180,7 +168,7 @@ describe('E2E Test for Multiple Networks', () => {
             res.should.have.status(200)
             let network = JSON.parse(res.text)
             network.name.should.equal('LocalLoraOS1_0')
-            network.baseUrl.should.equal('https://lora_appserver1:8080/api')
+            network.baseUrl.should.equal(Lora1.network.baseUrl)
             network.securityData.authorized.should.equal(true)
             network.securityData.message.should.equal('ok')
             network.securityData.enabled.should.equal(true)
@@ -217,9 +205,9 @@ describe('E2E Test for Multiple Networks', () => {
             'name': 'LocalLoraOS2_0',
             'networkProviderId': netProvId,
             'networkTypeId': 1,
-            'baseUrl': 'https://lora_appserver:8080/api',
+            'baseUrl': Lora2.network.baseUrl,
             'networkProtocolId': lora.loraV2.protocolId,
-            'securityData': {authorized: false, 'username': 'admin', 'password': 'admin'}
+            'securityData': { authorized: false, ...Lora2.account }
           })
           .end(function (err, res) {
             if (err) done(err)
@@ -244,7 +232,7 @@ describe('E2E Test for Multiple Networks', () => {
             res.should.have.status(200)
             let network = JSON.parse(res.text)
             network.name.should.equal('LocalLoraOS2_0')
-            network.baseUrl.should.equal('https://lora_appserver:8080/api')
+            network.baseUrl.should.equal(Lora2.network.baseUrl)
             network.securityData.authorized.should.equal(true)
             network.securityData.message.should.equal('ok')
             network.securityData.enabled.should.equal(true)
@@ -281,7 +269,7 @@ describe('E2E Test for Multiple Networks', () => {
             'name': 'LocalLoriot',
             'networkProviderId': netProvId,
             'networkTypeId': 1,
-            'baseUrl': 'https://us1.loriot.io/1/nwk',
+            'baseUrl': Loriot.network.baseUrl,
             'networkProtocolId': lora.loriot.protocolId,
             'securityData': {
               apiKey: LORIOT_API_KEY
@@ -329,15 +317,9 @@ describe('E2E Test for Multiple Networks', () => {
             'name': 'LocalTTN',
             'networkProviderId': netProvId,
             'networkTypeId': 1,
-            'baseUrl': 'https://account.thethingsnetwork.org',
+            'baseUrl': Ttn.network.baseUrl,
             'networkProtocolId': lora.ttn.protocolId,
-            'securityData': {
-              authorized: false,
-              username: TTN_USERNAME,
-              password: TTN_PASSWORD,
-              clientId: TTN_CLIENT_ID,
-              clientSecret: TTN_CLIENT_SECRET
-            }
+            securityData: Ttn.network.securityData
           })
           .end(function (err, res) {
             if (err) done(err)
@@ -361,7 +343,7 @@ describe('E2E Test for Multiple Networks', () => {
             res.should.have.status(200)
             let network = JSON.parse(res.text)
             network.name.should.equal('LocalTTN')
-            network.baseUrl.should.equal('https://account.thethingsnetwork.org')
+            network.baseUrl.should.equal(Ttn.network.baseUrl)
             network.securityData.authorized.should.equal(true)
             network.securityData.message.should.equal('ok')
             network.securityData.enabled.should.equal(true)
@@ -447,15 +429,9 @@ describe('E2E Test for Multiple Networks', () => {
             applications.should.have.property('totalCount')
             applications.should.have.property('records')
             // applications.totalCount.should.equal(2)
-            let application = {}
-            for (let index = 0; index < applications.records.length; index++) {
-              if (applications.records[index].name === 'BobMouseTrapLv1') {
-                application = applications.records[index]
-              }
-            }
-            application.should.have.property('name')
-            application.name.should.equal('BobMouseTrapLv1')
-            application.description.should.equal('CableLabs Test Application')
+            let application = applications.records.find(x => x.name === Lora1.application.name)
+            application.name.should.equal(Lora1.application.name)
+            application.description.should.equal(Lora1.application.description)
             lora.loraV1.apps.push({
               appId: application.id,
               appNTLId: '',
@@ -507,15 +483,8 @@ describe('E2E Test for Multiple Networks', () => {
             appNTLs.should.have.property('totalCount')
             appNTLs.should.have.property('records')
             // appNTLs.totalCount.should.equal(2)
-            let appNTL = {}
-            for (let index = 0; index < appNTLs.records.length; index++) {
-              if (appNTLs.records[index].applicationId === lora.loraV1.apps[0].appId) {
-                appNTL = appNTLs.records[index]
-              }
-            }
+            let appNTL = appNTLs.records.find(x => x.applicationId === lora.loraV1.apps[0].appId)
             should.exist(appNTL)
-            appLogger.log(appNTL)
-            // appNTL.should.eql(expected)
             lora.loraV1.apps[0].appNTLId = appNTL.id
             done()
           })
@@ -536,16 +505,10 @@ describe('E2E Test for Multiple Networks', () => {
             applications.should.have.property('records')
             appLogger.log(applications, 'error')
             // applications.totalCount.should.equal(2)
-            let application = {}
-            for (let index = 0; index < applications.records.length; index++) {
-              if (applications.records[index].name === 'BobMouseTrapLv2') {
-                application = applications.records[index]
-              }
-            }
+            let application = applications.records.find(x => x.name === Lora2.application.name)
             should.exist(application)
-            appLogger.log(application)
-            application.name.should.equal('BobMouseTrapLv2')
-            application.description.should.equal('CableLabs Test Application')
+            application.name.should.equal(Lora2.application.name)
+            application.description.should.equal(Lora2.application.description)
             lora.loraV2.apps.push({
               appId: application.id,
               appNTLId: '',
@@ -597,15 +560,8 @@ describe('E2E Test for Multiple Networks', () => {
             appNTLs.should.have.property('totalCount')
             appNTLs.should.have.property('records')
             // appNTLs.totalCount.should.equal(2)
-            let appNTL = {}
-            for (let index = 0; index < appNTLs.records.length; index++) {
-              if (appNTLs.records[index].applicationId === lora.loraV2.apps[0].appId) {
-                appNTL = appNTLs.records[index]
-              }
-            }
+            let appNTL = appNTLs.records.find(x => x.applicationId === lora.loraV2.apps[0].appId)
             should.exist(appNTL)
-            appLogger.log(appNTL)
-            // appNTL.should.eql(expected)
             lora.loraV2.apps[0].appNTLId = appNTL.id
             done()
           })
@@ -626,7 +582,7 @@ describe('E2E Test for Multiple Networks', () => {
             applications.should.have.property('totalCount')
             applications.should.have.property('records')
             // applications.totalCount.should.equal(2)
-            let application = applications.records.find(x => x.name === 'ApiTest')
+            let application = applications.records.find(x => x.name === Loriot.application.title)
             should.exist(application)
             lora.loriot.apps.push({
               appId: application.id,
@@ -694,11 +650,9 @@ describe('E2E Test for Multiple Networks', () => {
             applications.should.have.property('totalCount')
             applications.should.have.property('records')
             appLogger.log(applications, 'error')
-            let application = applications.records.find(x => x.name === 'cablelabs-prototype')
+            let application = applications.records.find(x => x.name === Ttn.application.id)
             should.exist(application)
-            appLogger.log(application)
-            application.name.should.equal('cablelabs-prototype')
-            application.description.should.equal('Prototype Application for CableLabs Trial')
+            application.description.should.equal(Ttn.application.description)
             lora.ttn.apps.push({
               appId: application.id,
               appNTLId: '',
@@ -788,19 +742,14 @@ describe('E2E Test for Multiple Networks', () => {
             deviceProfiles.should.have.property('totalCount')
             deviceProfiles.should.have.property('records')
             // deviceProfiles.totalCount.should.equal(2)
-            let deviceProfile = {}
-            for (let index = 0; index < deviceProfiles.records.length; index++) {
-              if (deviceProfiles.records[index].name === 'BobMouseTrapDeviceProfileLv1') {
-                deviceProfile = deviceProfiles.records[index]
-              }
-            }
+            let deviceProfile = deviceProfiles.records.find(x => x.name === Lora1.deviceProfile.name)
             should.exist(deviceProfile)
             deviceProfile.description.should.equal('Device Profile managed by LPWAN Server, perform changes via LPWAN')
             deviceProfile.id.should.equal(1)
-            deviceProfile.name.should.equal('BobMouseTrapDeviceProfileLv1')
-            deviceProfile.networkSettings.name.should.equal('BobMouseTrapDeviceProfileLv1')
-            deviceProfile.networkSettings.networkServerID.should.equal('5')
-            deviceProfile.networkSettings.organizationID.should.equal('56')
+            deviceProfile.name.should.equal(Lora1.deviceProfile.name)
+            deviceProfile.networkSettings.name.should.equal(Lora1.deviceProfile.name)
+            deviceProfile.networkSettings.networkServerID.should.equal(Lora1.deviceProfile.networkServerID)
+            deviceProfile.networkSettings.organizationID.should.equal(Lora1.deviceProfile.organizationID)
             lora.loraV1.apps[0].deviceProfileIds.push(deviceProfile.id)
             done()
           })
@@ -809,9 +758,9 @@ describe('E2E Test for Multiple Networks', () => {
         let expected = {
           'id': 1,
           'applicationId': lora.loraV1.apps[0].appId,
-          'name': 'BobMouseTrapDeviceLv1',
+          'name': Lora1.device.name,
           'deviceModel': null,
-          'description': 'Test Device for E2E'
+          'description': Lora1.device.description
         }
         server
           .get('/api/devices')
@@ -825,14 +774,8 @@ describe('E2E Test for Multiple Networks', () => {
             devices.should.have.property('totalCount')
             devices.should.have.property('records')
             // devices.totalCount.should.equal(2)
-            let device = {}
-            for (let index = 0; index < devices.records.length; index++) {
-              if (devices.records[index].name === 'BobMouseTrapDeviceLv1') {
-                device = devices.records[index]
-              }
-            }
+            let device = devices.records.find(x => x.name === Lora1.device.name)
             should.exist(device)
-            appLogger.log(device)
             device.should.eql(expected)
             lora.loraV1.apps[0].deviceIds.push(device.id)
             done()
@@ -878,15 +821,8 @@ describe('E2E Test for Multiple Networks', () => {
             deviceNTLs.should.have.property('totalCount')
             deviceNTLs.should.have.property('records')
             // deviceNTLs.totalCount.should.equal(2)
-            let deviceNTL = {}
-            for (let index = 0; index < deviceNTLs.records.length; index++) {
-              if (deviceNTLs.records[index].deviceId === lora.loraV1.apps[0].deviceIds[0]) {
-                deviceNTL = deviceNTLs.records[index]
-              }
-            }
+            let deviceNTL = deviceNTLs.records.find(x => x.deviceId === lora.loraV1.apps[0].deviceIds[0])
             should.exist(deviceNTL)
-            appLogger.log(deviceNTL)
-            // deviceNTL.should.eql(expected)
             lora.loraV1.apps[0].deviceNTLIds.push(deviceNTL.id)
             done()
           })
@@ -930,19 +866,14 @@ describe('E2E Test for Multiple Networks', () => {
           .set('Authorization', 'Bearer ' + adminToken)
           .set('Content-Type', 'application/json')
           .end(function (err, res) {
-            if (err) done(err)
+            if (err) return done(err)
             res.should.have.status(200)
             res.should.have.property('text')
             let deviceProfiles = JSON.parse(res.text)
             deviceProfiles.should.have.property('totalCount')
             deviceProfiles.should.have.property('records')
             // deviceProfiles.totalCount.should.equal(2)
-            let deviceProfile = {}
-            for (let index = 0; index < deviceProfiles.records.length; index++) {
-              if (deviceProfiles.records[index].name === 'BobMouseTrapDeviceProfileLv2') {
-                deviceProfile = deviceProfiles.records[index]
-              }
-            }
+            let deviceProfile = deviceProfiles.records.find(x => x.name === Lora2.deviceProfile.name)
             should.exist(deviceProfile)
             // deviceProfile.should.eql(expected)
             lora.loraV2.apps[0].deviceProfileIds.push(deviceProfile.id)
@@ -969,12 +900,7 @@ describe('E2E Test for Multiple Networks', () => {
             devices.should.have.property('totalCount')
             devices.should.have.property('records')
             // devices.totalCount.should.equal(2)
-            let device = {}
-            for (let index = 0; index < devices.records.length; index++) {
-              if (devices.records[index].name === 'BobMouseTrapDeviceLv2') {
-                device = devices.records[index]
-              }
-            }
+            let device = devices.records.find(x => x.name === Lora2.device.name)
             should.exist(device)
             appLogger.log(device)
             // device.should.eql(expected)
@@ -1023,12 +949,7 @@ describe('E2E Test for Multiple Networks', () => {
             deviceNTLs.should.have.property('totalCount')
             deviceNTLs.should.have.property('records')
             // deviceNTLs.totalCount.should.equal(2)
-            let deviceNTL = {}
-            for (let index = 0; index < deviceNTLs.records.length; index++) {
-              if (deviceNTLs.records[index].deviceId === lora.loraV2.apps[0].deviceIds[0]) {
-                deviceNTL = deviceNTLs.records[index]
-              }
-            }
+            let deviceNTL = deviceNTLs.records.find(x => x.deviceId === lora.loraV2.apps[0].deviceIds[0])
             should.exist(deviceNTL)
             appLogger.log(deviceNTL)
             // deviceNTL.should.eql(expected)
@@ -1062,7 +983,7 @@ describe('E2E Test for Multiple Networks', () => {
             deviceProfiles.should.have.property('totalCount')
             deviceProfiles.should.have.property('records')
             // deviceProfiles.totalCount.should.equal(2)
-            let deviceProfile = deviceProfiles.records.find(x => x.name === '00-80-00-00-04-00-15-46')
+            let deviceProfile = deviceProfiles.records.find(x => x.name === Loriot.device.title)
             should.exist(deviceProfile)
             deviceProfile.id.should.equal(3)
             lora.loriot.apps[0].deviceProfileIds.push(deviceProfile.id)
@@ -1073,9 +994,9 @@ describe('E2E Test for Multiple Networks', () => {
         let expected = {
           'id': 3,
           'applicationId': lora.loriot.apps[0].appId,
-          'name': '00-80-00-00-04-00-15-46',
+          'name': Loriot.device.title,
           'deviceModel': null,
-          'description': null
+          'description': Loriot.device.description
         }
         server
           .get('/api/devices')
@@ -1172,17 +1093,10 @@ describe('E2E Test for Multiple Networks', () => {
             let deviceProfiles = JSON.parse(res.text)
             deviceProfiles.should.have.property('totalCount')
             deviceProfiles.should.have.property('records')
+            console.log(JSON.stringify(deviceProfiles.records))
             // deviceProfiles.totalCount.should.equal(2)
-            let deviceProfile1 = {}
-            let deviceProfile2 = {}
-            for (let index = 0; index < deviceProfiles.records.length; index++) {
-              if (deviceProfiles.records[index].name === 'CableLabs TTN Device ABP') {
-                deviceProfile1 = deviceProfiles.records[index]
-              }
-              else if (deviceProfiles.records[index].name === 'TTN Device Using OTAA') {
-                deviceProfile2 = deviceProfiles.records[index]
-              }
-            }
+            let deviceProfile1 = deviceProfiles.records.find(x => x.name === 'CableLabs TTN Device ABP')
+            let deviceProfile2 = deviceProfiles.records.find(x => x.name === 'TTN Device Using OTAA')
             should.exist(deviceProfile1)
             should.exist(deviceProfile2)
             // deviceProfile.should.eql(expected)
@@ -1212,16 +1126,8 @@ describe('E2E Test for Multiple Networks', () => {
             devices.should.have.property('records')
             appLogger.log(devices)
             // devices.totalCount.should.equal(2)
-            let device1 = {}
-            let device2 = {}
-            for (let index = 0; index < devices.records.length; index++) {
-              if (devices.records[index].name === '00B7641AD008A5FC') {
-                device1 = devices.records[index]
-              }
-              else if (devices.records[index].name === '1234567890987654') {
-                device2 = devices.records[index]
-              }
-            }
+            let device1 = devices.records.find(x => x.name === '00A0A112727496D3')
+            let device2 = devices.records.find(x => x.name === '0099F6D395BD932A')
             should.exist(device1)
             should.exist(device2)
             lora.ttn.apps[0].deviceIds.push(device1.id)
@@ -1273,12 +1179,7 @@ describe('E2E Test for Multiple Networks', () => {
             appLogger.log(deviceNTLs)
 
             // deviceNTLs.totalCount.should.equal(2)
-            let deviceNTL = {}
-            for (let index = 0; index < deviceNTLs.records.length; index++) {
-              if (deviceNTLs.records[index].deviceId === lora.loraV2.apps[0].deviceIds[0]) {
-                deviceNTL = deviceNTLs.records[index]
-              }
-            }
+            let deviceNTL = deviceNTLs.records.find(x => x.deviceId === lora.loraV2.apps[0].deviceIds[0])
             should.exist(deviceNTL)
             appLogger.log(deviceNTL)
             // deviceNTL.should.eql(expected)

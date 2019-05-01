@@ -1,12 +1,12 @@
 let chai = require('chai')
 let chaiHttp = require('chai-http')
-let app = require('../../restApp.js')
-let setup = require('./setup.js')
-let appLogger = require('../../rest/lib/appLogger.js')
+let app = require('../../../restApp.js')
+let setup = require('../setup.js')
+let appLogger = require('../../../rest/lib/appLogger.js')
 let request = require('request')
 let requestP = require('request-promise')
-let Data = require('../data')
-const { assertEqualProps } = require('../lib/helpers')
+let Data = require('../../data')
+const { assertEqualProps } = require('../../lib/helpers')
 
 var should = chai.should()
 chai.use(chaiHttp)
@@ -16,7 +16,7 @@ const {
   LORIOT_API_KEY
 } = process.env
 
-const describeLoriot = process.env.LORIOT === 'true' ? describe : describe.skip.bind(describe)
+const describeLoriot = process.env.LORIOT_ENABLED === 'true' ? describe : describe.skip.bind(describe)
 
 const state = {
   adminToken: '',
@@ -1045,7 +1045,6 @@ describe('E2E Test for Deleting an Application Use Case #191', () => {
         'Authorization': 'Bearer ' + state.loriotKey
       }
       let { apps } = await requestP(options)
-      apps = apps.filter(x => x.name !== 'ApiTest')
       let appDevices = await Promise.all(apps.map(app => {
         const appIdRest = app._id.toString(16).toUpperCase()
         let opts = { ...options, url: `${state.loriotBaseUrl}/app/${appIdRest}/devices` }

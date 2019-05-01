@@ -28,7 +28,7 @@ module.exports = class LoraOpenSourceV1RestClient extends LoraOpenSourceRestClie
     return super.updateApplication(session, network, id, { application: body })
   }
   createApplicationIntegration (session, network, appId, id, body) {
-    return super.createApplication(session, network, appId, id, { integration: body })
+    return super.createApplicationIntegration(session, network, appId, id, { integration: body })
   }
   updateApplicationIntegration (session, network, appId, id, body) {
     return super.updateApplicationIntegration(session, network, appId, id, { integration: body })
@@ -57,5 +57,8 @@ module.exports = class LoraOpenSourceV1RestClient extends LoraOpenSourceRestClie
   listDevices (session, network, appId, params) {
     const opts = { url: this.constructUrl({ url: '/devices', params: { ...params, applicationID: appId } }) }
     return this.request(network, opts, session)
+  }
+  createNetworkServer (session, network, body) {
+    return super.createNetworkServer(session, network, { networkServer: body })
   }
 }

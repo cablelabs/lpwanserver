@@ -232,10 +232,10 @@ module.exports = class Loriot extends NetworkProtocol {
     appLogger.log(integration, 'warn')
     const deliveryURL = `api/ingest/${localAppId}/${network.id}`
     const reportingUrl = `${config.get('base_url')}${deliveryURL}`
-    if (!integration || integration.osetup.url === reportingUrl) return
-    await modelAPI.applications.updateApplication({ id: localAppId, baseUrl: integration.uplinkDataURL })
+    if (integration && integration.osetup.url === reportingUrl) return
     const updatePayload = { output: 'httppush', osetup: { url: reportingUrl } }
     if (integration) {
+      await modelAPI.applications.updateApplication({ id: localAppId, baseUrl: integration.uplinkDataURL })
       await this.client.updateApplicationIntegrations(session, network, remoteApp._id, updatePayload)
     }
     else {
@@ -294,18 +294,23 @@ module.exports = class Loriot extends NetworkProtocol {
       dntl,
       deviceProfile
     )
-    // when creating a device on Loriot, keys and activation props can be included
     const data = deviceData.device
     if (deviceData.deviceKeys) {
       Object.assign(data, deviceData.deviceKeys)
+      // Unable to get this call to work, always throws "missing parameters" error
+      // but I supplied all parameters in docs (and more)
+      // await this.client.createOtaaDevice(session, network, appNwkId, data)
+      // substitute regular create method, which ignores the device keys and creates new ones
+      await this.client.createDevice(session, network, appNwkId, data)
     }
     else if (deviceData.deviceActivation) {
       Object.assign(data, deviceData.deviceActivation)
+      await this.client.createAbpDevice(session, network, appNwkId, data)
     }
     else {
       appLogger.log('Remote Device ' + deviceData.device.name + ' does not have authentication parameters')
+      await this.client.createDevice(session, network, appNwkId, data)
     }
-    await this.client.createDevice(session, network, appNwkId, data)
     dataAPI.putProtocolDataForKey(network.id,
       network.networkProtocol.id,
       makeDeviceDataKey(device.id, 'devNwkId'),
@@ -340,18 +345,18 @@ module.exports = class Loriot extends NetworkProtocol {
       dntl,
       deviceProfile
     )
-    // Unable to update device with a basic payload that should be allowed according to the docs
-    // The error is 400 with no message
-    // await this.client.updateDevice(session, network, appNwkId, devNetworkId, deviceData.device)
-    if (deviceProfile.networkSettings.supportsJoin && deviceData.deviceKeys) {
-      await this.client.updateDeviceKeys(session, network, appNwkId, deviceData.deviceKeys)
-    }
-    else if (deviceData.deviceActivation) {
-      await this.client.activateDevice(session, network, appNwkId, deviceData.deviceActivation)
-    }
-    else {
-      appLogger.log('Remote Device ' + deviceData.device.name + ' does not have authentication parameters')
-    }
+    // Loriot ignores updates on activation properties and device keys
+    // if (deviceProfile.networkSettings.supportsJoin && deviceData.deviceKeys) {
+    //   await this.client.updateDeviceKeys(session, network, appNwkId, deviceData.deviceKeys)
+    // }
+    // else if (deviceData.deviceActivation) {
+    //   await this.client.activateDevice(session, network, appNwkId, deviceData.deviceActivation)
+    // }
+    // else {
+    //   appLogger.log('Remote Device ' + deviceData.device.name + ' does not have authentication parameters')
+    // }
+    const data = R.omit(['deveui'], deviceData.device)
+    await this.client.updateDevice(session, network, appNwkId, devNetworkId, data)
   }
 
   async deleteDevice (session, network, deviceId, dataAPI) {
@@ -469,11 +474,11 @@ module.exports = class Loriot extends NetworkProtocol {
     else if (ns.deviceActivation && deviceProfile.networkSettings.macVersion.slice(0, 3) === '1.0') {
       result.deviceActivation = {
         deveui: ns.devEUI,
-        seqno: ns.deviceActivation.fCntUp,
-        seqdn: ns.deviceActivation.fCntDwn,
+        seqno: ns.deviceActivation.fCntUp || -1,
+        seqdn: ns.deviceActivation.fCntDwn || ns.deviceActivation.nFCntDown || 0,
         devaddr: ns.deviceActivation.devAddr,
         appskey: ns.deviceActivation.appSKey,
-        nwkskey: ns.deviceActivation.nwkSKey
+        nwkskey: ns.deviceActivation.nwkSKey || ns.deviceActivation.fNwkSIntKey
       }
     }
 

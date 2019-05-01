@@ -1,22 +1,7 @@
 const RestClient = require('../../RestClient')
 const R = require('ramda')
-// const { renameKeys } = require('../../../lib/utils')
 
-module.exports = class LoraOpenSourceRestClient extends RestClient {
-  // constructor () {
-  //   super()
-  //   this.transformId = renameKeys({ _id: 'id' })
-  //   const transformIdsInQuery = R.evolve({ result: R.map(this.transformId) })
-  //   this.transformAppQueryResponse = R.compose(
-  //     transformIdsInQuery,
-  //     renameKeys({ total: 'totalCount', apps: 'result' })
-  //   )
-  //   this.transformAppQueryResponse = R.compose(
-  //     transformIdsInQuery,
-  //     renameKeys({ total: 'totalCount', devices: 'result' })
-  //   )
-  // }
-
+module.exports = class LoriotRestClient extends RestClient {
   async request (network, opts, session, transformResponse) {
     opts.url = this.constructUrl({ network, url: opts.url })
     return super.request({
@@ -35,13 +20,6 @@ module.exports = class LoraOpenSourceRestClient extends RestClient {
   idHex (num) {
     return num.toString(16).toUpperCase()
   }
-
-  // formatQueryParams (params) {
-  //   const result = R.pick(['filter', 'sort'], params)
-  //   if (params.limit) result.perPage = params.limit
-  //   if (params.offset) result.page = Math.ceil(params.offset / params.limit)
-  //   return result
-  // }
 
   listApplications (session, network, params) {
     // params = this.formatParams(params)
@@ -102,6 +80,16 @@ module.exports = class LoraOpenSourceRestClient extends RestClient {
     return this.request(network, opts, session)
   }
 
+  createOtaaDevice (session, network, appId, body) {
+    const opts = { method: 'POST', url: `/app/${this.idHex(appId)}/devices/otaa`, body }
+    return this.request(network, opts, session)
+  }
+
+  createAbpDevice (session, network, appId, body) {
+    const opts = { method: 'POST', url: `/app/${this.idHex(appId)}/devices/abp`, body }
+    return this.request(network, opts, session)
+  }
+
   loadDevice (session, network, appId, id) {
     const opts = { url: `/app/${this.idHex(appId)}/device/${id}` }
     return this.request(network, opts, session)
@@ -114,16 +102,6 @@ module.exports = class LoraOpenSourceRestClient extends RestClient {
 
   deleteDevice (session, network, appId, id) {
     const opts = { method: 'DELETE', url: `/app/${this.idHex(appId)}/device/${id}` }
-    return this.request(network, opts, session)
-  }
-
-  updateDeviceKeys (session, network, appId, body) {
-    const opts = { method: 'POST', url: `/app/${this.idHex(appId)}/devices/otaa`, body }
-    return this.request(network, opts, session)
-  }
-
-  activateDevice (session, network, appId, body) {
-    const opts = { method: 'POST', url: `/app/${this.idHex(appId)}/devices/abp`, body }
     return this.request(network, opts, session)
   }
 }

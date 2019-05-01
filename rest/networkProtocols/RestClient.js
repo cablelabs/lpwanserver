@@ -25,7 +25,7 @@ module.exports = class RestClient {
       const qs = new URLSearchParams(params).toString()
       url = `${url}?${qs}`
     }
-    if (network) {
+    if (network && url.indexOf('http') !== 0) {
       url = `${network.baseUrl}/${url}`
     }
     // remove possible double slash
