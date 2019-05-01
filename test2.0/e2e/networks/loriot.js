@@ -2,11 +2,11 @@ const Client = require('../../../rest/networkProtocols/handlers/Loriot/v4/client
 const client = new Client()
 
 module.exports = {
-  session: {
-    connection: process.env.LORIOT_API_KEY
-  },
   network: {
-    baseUrl: 'https://us1.loriot.io/1/nwk'
+    baseUrl: 'https://us1.loriot.io/1/nwk',
+    securityData: {
+      apiKey: process.env.LORIOT_API_KEY
+    }
   },
   application: {
     title: 'ApiTest',
@@ -28,11 +28,11 @@ module.exports = {
   async setup () {
     let res
     // Create App
-    res = await client.createApplication(this.session, this.network, this.application)
+    res = await client.createApplication(this.network, this.application)
     this._setApplicationId(parseInt(res._id, 10))
     // Create Device
     // Loriot automatically assigns the device ABP properties, so no need to activate
-    res = await client.createDevice(this.session, this.network, this.application.id, this.device)
+    res = await client.createDevice(this.network, this.application.id, this.device)
     this._setDeviceId(res._id)
   }
 }

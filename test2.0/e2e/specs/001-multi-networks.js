@@ -70,7 +70,7 @@ describe('E2E Test for Multiple Networks', () => {
     it('Admin Login to LPWan Server', async () => {
       const res = await server
         .post('/api/sessions')
-        .send({'login_username': 'admin', 'login_password': 'password'})
+        .send({ 'login_username': 'admin', 'login_password': 'password' })
       res.should.have.status(200)
       adminToken = res.text
     })
@@ -143,7 +143,7 @@ describe('E2E Test for Multiple Networks', () => {
             'networkTypeId': 1,
             'baseUrl': Lora1.network.baseUrl,
             'networkProtocolId': lora.loraV1.protocolId,
-            'securityData': { authorized: false, ...Lora1.account }
+            'securityData': { authorized: false, ...Lora1.network.securityData }
           })
           .end(function (err, res) {
             if (err) done(err)
@@ -207,7 +207,7 @@ describe('E2E Test for Multiple Networks', () => {
             'networkTypeId': 1,
             'baseUrl': Lora2.network.baseUrl,
             'networkProtocolId': lora.loraV2.protocolId,
-            'securityData': { authorized: false, ...Lora2.account }
+            'securityData': { authorized: false, ...Lora2.network.securityData }
           })
           .end(function (err, res) {
             if (err) done(err)

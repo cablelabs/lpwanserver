@@ -32,7 +32,7 @@ module.exports = class Network {
       record = await prisma.updateNetwork({ data: { securityData }, where: { id: record.id } }).$fragment(fragments.basic)
       record.securityData = dataAPI.access(null, record.securityData, k)
     }
-    return record
+    return this.retrieveNetwork(record.id)
   }
 
   async updateNetwork ({ id, ...data }) {
@@ -187,24 +187,16 @@ const genKey = function (networkId) {
   return 'nk' + networkId
 }
 
-async function authorizeAndTest (network, modelAPI, k, me, dataAPI) {
+async function authorizeAndTest (network, modelAPI) {
   if (network.securityData.authorized) {
     return network
   }
   try {
-    const connection = await modelAPI.networkTypeAPI.connect(network, network.securityData)
-    appLogger.log(`AUTHORIZE_AND_TEST: ${connection}`)
-    if (connection instanceof Object) {
-      Object.assign(network.securityData, connection)
-    }
-    else {
-      network.securityData.access_token = connection
-    }
+    await modelAPI.networkProtocolAPI.connect(network)
     network.securityData.authorized = true
     try {
-      await modelAPI.networkTypeAPI.test(network, dataAPI)
+      await modelAPI.networkProtocolAPI.test(network)
       appLogger.log('Test Success ' + network.name, 'info')
-      network.securityData.authorized = true
       network.securityData.message = 'ok'
     }
     catch (err) {
@@ -212,7 +204,6 @@ async function authorizeAndTest (network, modelAPI, k, me, dataAPI) {
       network.securityData.authorized = false
       network.securityData.message = err.toString()
     }
-    await modelAPI.networks.updateNetwork(R.pick(['id', 'securityData'], network))
     return network
   }
   catch (err) {

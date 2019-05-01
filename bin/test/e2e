@@ -32,9 +32,9 @@ node bin/test/package-e2e.js
 # Run docker-compose with development configuration
 docker-compose \
   -f ./docker/dev/loraserver/docker-compose.yml \
-  -f ./docker/test/e2e/docker-compose.yml up \
-  --abort-on-container-exit \
-  --exit-code-from e2e-test
+  -f ./docker/test/e2e/docker-compose.yml up
+  # --abort-on-container-exit \
+  # --exit-code-from e2e-test
 
 TEST_EXIT_CODE=$?
 

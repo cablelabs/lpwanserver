@@ -4,6 +4,10 @@ const { URLSearchParams } = require('url')
 const appLogger = require('../lib/appLogger.js')
 
 module.exports = class RestClient {
+  constructor ({ cache } = {}) {
+    this.cache = cache || new Map()
+  }
+
   async request ({ opts, transformResponse = R.identity }) {
     if (opts.json == null) opts.json = true
     let body

@@ -1,14 +1,27 @@
 const RestClient = require('../../RestClient')
 const R = require('ramda')
 const { lift } = require('../../../lib/utils')
+const jwt = require('jsonwebtoken')
 
 module.exports = class LoraOpenSourceRestClient extends RestClient {
-  async request (network, opts, session, transformResponse) {
+  async request (network, opts, transformResponse) {
+    const session = await this.getSession(network)
     opts.url = this.constructUrl({ network, url: opts.url })
     return super.request({
       opts: this.addRequestDefaults(opts, session),
       transformResponse
     })
+  }
+
+  async getSession (network) {
+    const sessionKey = `session:${network.id}`
+    let session = this.cache.get(sessionKey)
+    if (!session || (session.data.exp * 1000) < Date.now()) {
+      const accessToken = await this.login(network)
+      session = { accessToken, data: jwt.decode(accessToken) }
+      this.cache.set(sessionKey, session)
+    }
+    return session
   }
 
   addRequestDefaults (opts, session) {
@@ -17,217 +30,216 @@ module.exports = class LoraOpenSourceRestClient extends RestClient {
       rejectUnauthorized: false
     }
     if (session) {
-      opts.headers = R.merge(opts.headers, { Authorization: `Bearer ${session.connection}` })
+      opts.headers = R.merge(opts.headers, { Authorization: `Bearer ${session.accessToken}` })
     }
     return opts
   }
 
-  login (network, body) {
-    const opts = { method: 'POST', url: '/internal/login', body }
-    return this.request(network, opts, null, R.prop('jwt'))
+  login (network) {
+    const opts = this.addRequestDefaults({
+      method: 'POST',
+      url: this.constructUrl({ network, url: '/internal/login' }),
+      body: R.pick(['username', 'password'], network.securityData)
+    })
+    return super.request({ opts, transformResponse: R.prop('jwt') })
   }
 
-  loadOrganization (session, network, id) {
+  loadOrganization (network, id) {
     const opts = { url: `/organizations/${id}` }
-    return this.request(network, opts, session, lift(['organization']))
+    return this.request(network, opts, lift(['organization']))
   }
 
-  listOrganizations (session, network, params) {
+  listOrganizations (network, params) {
     let opts = { url: this.constructUrl({ url: '/organizations', params }) }
-    return this.request(network, opts, session)
+    return this.request(network, opts)
   }
 
-  createOrganization (session, network, body) {
+  createOrganization (network, body) {
     const opts = { method: 'POST', url: '/organizations', body }
-    return this.request(network, opts, session)
+    return this.request(network, opts)
   }
 
-  updateOrganization (session, network, id, body) {
+  updateOrganization (network, id, body) {
     const opts = { method: 'PUT', url: `/organizations/${id}`, body }
-    return this.request(network, opts, session)
+    return this.request(network, opts)
   }
 
-  deleteOrganization (session, network, id) {
+  deleteOrganization (network, id) {
     const opts = { method: 'DELETE', url: `/organizations/${id}` }
-    return this.request(network, opts, session)
+    return this.request(network, opts)
   }
 
-  createUser (session, network, body) {
+  createUser (network, body) {
     const opts = { method: 'POST', url: '/users', body }
-    return this.request(network, opts, session)
+    return this.request(network, opts)
   }
 
-  deleteUser (session, network, id) {
+  deleteUser (network, id) {
     const opts = { method: 'DELETE', url: `/users/${id}` }
-    return this.request(network, opts, session)
+    return this.request(network, opts)
   }
 
-  createServiceProfile (session, network, body) {
+  createServiceProfile (network, body) {
     const opts = { method: 'POST', url: '/service-profiles', body }
-    return this.request(network, opts, session)
+    return this.request(network, opts)
   }
 
-  updateServiceProfile (session, network, id, body) {
+  updateServiceProfile (network, id, body) {
     const opts = { method: 'POST', url: `/service-profiles/${id}`, body }
-    return this.request(network, opts, session)
+    return this.request(network, opts)
   }
 
-  listNetworkServers (session, network, params) {
+  createNetworkServer (network, body) {
+    const opts = { method: 'POST', url: '/network-servers', body }
+    return this.request(network, opts)
+  }
+
+  listNetworkServers (network, params) {
     let opts = { url: this.constructUrl({ url: '/network-servers', params }) }
-    return this.request(network, opts, session)
+    return this.request(network, opts)
   }
 
-  loadNetworkServer (session, network, id) {
+  loadNetworkServer (network, id) {
     const opts = { url: `/network-servers/${id}` }
-    return this.request(network, opts, session, lift(['networkServer']))
+    return this.request(network, opts, lift(['networkServer']))
   }
 
-  listApplications (session, network, params) {
+  listApplications (network, params) {
     let opts = { url: this.constructUrl({ url: '/applications', params }) }
-    return this.request(network, opts, session)
+    return this.request(network, opts)
   }
 
-  createApplication (session, network, body) {
+  createApplication (network, body) {
     const opts = { method: 'POST', url: '/applications', body }
-    return this.request(network, opts, session)
+    return this.request(network, opts)
   }
 
-  loadApplication (session, network, id) {
+  loadApplication (network, id) {
     const opts = { url: `/applications/${id}` }
-    return this.request(network, opts, session, lift(['application']))
+    return this.request(network, opts, lift(['application']))
   }
 
-  updateApplication (session, network, id, body) {
+  updateApplication (network, id, body) {
     const opts = { method: 'PUT', url: `/applications/${id}`, body }
-    return this.request(network, opts, session)
+    return this.request(network, opts)
   }
 
-  deleteApplication (session, network, id) {
+  deleteApplication (network, id) {
     const opts = { method: 'DELETE', url: `/applications/${id}` }
-    return this.request(network, opts, session)
+    return this.request(network, opts)
   }
 
-  loadDeviceProfile (session, network, id) {
+  loadDeviceProfile (network, id) {
     const opts = { url: `/device-profiles/${id}` }
-    return this.request(network, opts, session, lift(['deviceProfile']))
+    return this.request(network, opts, lift(['deviceProfile']))
   }
 
-  listDeviceProfiles (session, network, params) {
+  listDeviceProfiles (network, params) {
     const opts = { url: this.constructUrl({ url: '/device-profiles', params }) }
-    return this.request(network, opts, session)
+    return this.request(network, opts)
   }
 
-  createDeviceProfile (session, network, body) {
+  createDeviceProfile (network, body) {
     const opts = { method: 'POST', url: '/device-profiles', body }
-    return this.request(network, opts, session)
+    return this.request(network, opts)
   }
 
-  updateDeviceProfile (session, network, id, body) {
+  updateDeviceProfile (network, id, body) {
     const opts = { method: 'PUT', url: `/device-profiles/${id}`, body }
-    return this.request(network, opts, session)
+    return this.request(network, opts)
   }
 
-  deleteDeviceProfile (session, network, id) {
+  deleteDeviceProfile (network, id) {
     const opts = { method: 'DELETE', url: `/device-profiles/${id}` }
-    return this.request(network, opts, session)
+    return this.request(network, opts)
   }
 
-  loadDevice (session, network, appId, id) {
+  loadDevice (network, appId, id) {
     const opts = { url: `/devices/${id}` }
-    return this.request(network, opts, session, lift(['device']))
+    return this.request(network, opts, lift(['device']))
   }
 
   listDevices () {
     // overwritten by all extending classes
   }
 
-  createDevice (session, network, appId, body) {
+  createDevice (network, appId, body) {
     const opts = { method: 'POST', url: '/devices', body }
-    return this.request(network, opts, session)
+    return this.request(network, opts)
   }
 
-  updateDevice (session, network, appId, id, body) {
+  updateDevice (network, appId, id, body) {
     const opts = { method: 'PUT', url: `/devices/${id}`, body }
-    return this.request(network, opts, session)
+    return this.request(network, opts)
   }
 
-  deleteDevice (session, network, id) {
+  deleteDevice (network, id) {
     const opts = { method: 'DELETE', url: `/devices/${id}` }
-    return this.request(network, opts, session)
+    return this.request(network, opts)
   }
 
-  loadDeviceKeys (session, network, id) {
+  loadDeviceKeys (network, id) {
     const opts = { url: `/devices/${id}/keys` }
-    return this.request(network, opts, session, lift(['deviceKeys']))
+    return this.request(network, opts, lift(['deviceKeys']))
   }
 
-  createDeviceKeys (session, network, id, body) {
+  createDeviceKeys (network, id, body) {
     const opts = { method: 'POST', url: `/devices/${id}/keys`, body }
-    return this.request(network, opts, session)
+    return this.request(network, opts)
   }
 
-  updateDeviceKeys (session, network, id, body) {
+  updateDeviceKeys (network, id, body) {
     const opts = { method: 'PUT', url: `/devices/${id}/keys`, body }
-    return this.request(network, opts, session)
+    return this.request(network, opts)
   }
 
-  deleteDeviceKeys (session, network, id) {
+  deleteDeviceKeys (network, id) {
     const opts = { method: 'DELETE', url: `/devices/${id}/keys` }
-    return this.request(network, opts, session)
+    return this.request(network, opts)
   }
 
-  loadDeviceActivation (session, network, id) {
+  loadDeviceActivation (network, id) {
     const opts = { url: `/devices/${id}/activation` }
-    return this.request(network, opts, session, lift(['deviceActivation']))
+    return this.request(network, opts, lift(['deviceActivation']))
   }
 
-  activateDevice (session, network, id, body) {
+  activateDevice (network, id, body) {
     const opts = { method: 'POST', url: `/devices/${id}/activate`, body }
-    return this.request(network, opts, session)
+    return this.request(network, opts)
   }
 
-  deleteDeviceActivation (session, network, id) {
+  deleteDeviceActivation (network, id) {
     const opts = { method: 'DELETE', url: `/devices/${id}/activation` }
-    return this.request(network, opts, session)
+    return this.request(network, opts)
   }
 
-  loadServiceProfile (session, network, id) {
+  loadServiceProfile (network, id) {
     const opts = { url: `/service-profiles/${id}` }
-    return this.request(network, opts, session, lift(['serviceProfile']))
+    return this.request(network, opts, lift(['serviceProfile']))
   }
 
-  listServiceProfiles (session, network, params) {
+  listServiceProfiles (network, params) {
     let opts = { url: this.constructUrl({ url: '/service-profiles', params }) }
-    return this.request(network, opts, session)
+    return this.request(network, opts)
   }
 
-  loadApplicationIntegration (session, network, appId, id) {
+  loadApplicationIntegration (network, appId, id) {
     const opts = { url: `/applications/${appId}/integrations/${id}` }
-    return this.request(network, opts, session, lift(['integration']))
+    return this.request(network, opts, lift(['integration']))
   }
 
-  createApplicationIntegration (session, network, appId, id, body) {
+  createApplicationIntegration (network, appId, id, body) {
     const opts = { method: 'POST', url: `/applications/${appId}/integrations/${id}`, body }
-    return this.request(network, opts, session)
+    return this.request(network, opts)
   }
 
-  updateApplicationIntegration (session, network, appId, id, body) {
+  updateApplicationIntegration (network, appId, id, body) {
     const opts = { method: 'PUT', url: `/applications/${appId}/integrations/${id}`, body }
-    return this.request(network, opts, session)
+    return this.request(network, opts)
   }
 
-  deleteApplicationIntegration (session, network, appId, id) {
+  deleteApplicationIntegration (network, appId, id) {
     const opts = { method: 'DELETE', url: `/applications/${appId}/integrations/${id}` }
-    return this.request(network, opts, session)
-  }
-
-  listNetworkServers (session, network) {
-    const opts = { method: 'GEt', url: `/network-servers` }
-    return this.request(network, opts, session)
-  }
-
-  createNetworkServer (session, network, body) {
-    const opts = { method: 'POST', url: '/network-servers', body }
-    return this.request(network, opts, session)
+    return this.request(network, opts)
   }
 }
