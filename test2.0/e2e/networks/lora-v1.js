@@ -2,7 +2,9 @@ const Client = require('../../../rest/networkProtocols/handlers/LoraOpenSource/v
 const client = new Client()
 
 module.exports = {
+  client,
   network: {
+    id: '1',
     baseUrl: 'https://lora_appserver1:8080/api',
     securityData: {
       username: 'admin',
@@ -87,6 +89,5 @@ module.exports = {
     await client.createDevice(this.network, this.application.id, this.device)
     // Activate Device
     await client.activateDevice(this.network, this.device.devEUI, this.deviceActivation)
-  },
-
+  }
 }

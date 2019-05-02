@@ -2,7 +2,9 @@ const Client = require('../../../rest/networkProtocols/handlers/LoraOpenSource/v
 const client = new Client()
 
 module.exports = {
+  client,
   network: {
+    id: '2',
     baseUrl: 'https://lora_appserver:8080/api',
     securityData: {
       username: 'admin',
