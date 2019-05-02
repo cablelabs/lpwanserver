@@ -94,4 +94,13 @@ module.exports = class LoraOpenSourceV1RestClient extends LoraOpenSourceRestClie
       }
     })
   }
+
+  updateDeviceKeys (network, id, body) {
+    return super.updateDeviceKeys(network, id, {
+      devEUI: body.devEUI,
+      deviceKeys: {
+        appKey: body.appKey
+      }
+    })
+  }
 }

@@ -154,7 +154,7 @@ module.exports = class LoraOpenSourceRestClient extends RestClient {
     return this.request(network, opts)
   }
 
-  loadDevice (network, appId, id) {
+  loadDevice (network, id) {
     const opts = { url: `/devices/${id}` }
     return this.request(network, opts, lift(['device']))
   }
@@ -163,12 +163,12 @@ module.exports = class LoraOpenSourceRestClient extends RestClient {
     // overwritten by all extending classes
   }
 
-  createDevice (network, appId, body) {
+  createDevice (network, body) {
     const opts = { method: 'POST', url: '/devices', body }
     return this.request(network, opts)
   }
 
-  updateDevice (network, appId, id, body) {
+  updateDevice (network, id, body) {
     const opts = { method: 'PUT', url: `/devices/${id}`, body }
     return this.request(network, opts)
   }

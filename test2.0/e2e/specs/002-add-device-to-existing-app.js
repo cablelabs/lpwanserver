@@ -1,11 +1,9 @@
-let assert = require('assert')
 let chai = require('chai')
 let chaiHttp = require('chai-http')
 let app = require('../../../restApp.js')
 let should = chai.should()
 let setup = require('../setup.js')
 let appLogger = require('../../../rest/lib/appLogger.js')
-let request = require('request')
 const Lora1 = require('../networks/lora-v1')
 const Lora2 = require('../networks/lora-v2')
 
@@ -35,10 +33,10 @@ describe('E2E Test for Adding a Device to an Existing Application Use Case #190'
   const deviceProfile = {
     'networkTypeId': 1,
     'companyId': companyId,
-    'name': 'LoRaWeatherNode',
+    'name': 'LoRaWeatherNodeA',
     'description': 'GPS Node that works with LoRa',
     'networkSettings': {
-      'name': 'LoRaWeatherNode',
+      'name': 'LoRaWeatherNodeA',
       'macVersion': '1.0.0',
       'regParamsRevision': 'A',
       'supportsJoin': true
@@ -290,7 +288,7 @@ describe('E2E Test for Adding a Device to an Existing Application Use Case #190'
   })
   describe('Verify LoRaServer V1 has application', () => {
     it('Verify the LoRaServer V1 Application Exists', async () => {
-      const { result } = await Lora1.client.listApplications(Lora1.network)
+      const { result } = await Lora1.client.listApplications(Lora1.network, { limit: 100 })
       const app = result.find(x => x.name === appName)
       should.exist(app)
       remoteApp1 = app.id
@@ -308,8 +306,9 @@ describe('E2E Test for Adding a Device to an Existing Application Use Case #190'
       app.name.should.equal(appName)
     })
     it('Verify the LoRaServer V1 Device Profile Exists', async () => {
-      const { result } = await Lora1.client.listDeviceProfiles(Lora1.network)
+      const { result } = await Lora1.client.listDeviceProfiles(Lora1.network, { limit: 100 })
       const dp = result.find(x => x.name === deviceProfile.networkSettings.name)
+      should.exist(dp)
       remoteDeviceProfileId = dp.id
     })
     it('Verify the LoRaServer V1 Device Profile Exists', async () => {
@@ -320,11 +319,10 @@ describe('E2E Test for Adding a Device to an Existing Application Use Case #190'
       dp.should.have.property('networkServerID')
       dp.should.have.property('createdAt')
       dp.should.have.property('updatedAt')
-      dp.should.have.property('deviceProfile')
-      dp.deviceProfile.should.have.property('macVersion')
-      dp.deviceProfile.should.have.property('regParamsRevision')
-      dp.deviceProfile.macVersion.should.equal(deviceProfile.networkSettings.macVersion)
-      dp.deviceProfile.regParamsRevision.should.equal(deviceProfile.networkSettings.regParamsRevision)
+      dp.should.have.property('macVersion')
+      dp.should.have.property('regParamsRevision')
+      dp.macVersion.should.equal(deviceProfile.networkSettings.macVersion)
+      dp.regParamsRevision.should.equal(deviceProfile.networkSettings.regParamsRevision)
     })
     it('Verify the LoRaServer V1 Device Exists', async () => {
       const device = await Lora1.client.loadDevice(Lora1.network, deviceNTL.networkSettings.devEUI)
@@ -344,8 +342,9 @@ describe('E2E Test for Adding a Device to an Existing Application Use Case #190'
   })
   describe('Verify LoRaServer V2 has application', function () {
     it('Verify the LoRaServer V2 Application Exists', async () => {
-      const { result } = await Lora2.client.listApplications(Lora2.network)
+      const { result } = await Lora2.client.listApplications(Lora2.network, { limit: 100 })
       const app = result.find(x => x.name === appName)
+      should.exist(app)
       remoteApp2 = app.id
     })
     it('Verify the LoRaServer V2 Application Exists', async () => {
@@ -361,8 +360,9 @@ describe('E2E Test for Adding a Device to an Existing Application Use Case #190'
       app.name.should.equal(appName)
     })
     it('Verify the LoRaServer V2 Device Profile Exists', async () => {
-      const { result } = await Lora2.client.listDeviceProfiles(Lora2.network)
+      const { result } = await Lora2.client.listDeviceProfiles(Lora2.network, { limit: 100 })
       const dp = result.find(x => x.name === deviceProfile.name)
+      should.exist(dp)
       remoteDeviceProfileId2 = dp.id
     })
     it('Verify the LoRaServer V2 Device Profile Exists', async () => {
@@ -458,34 +458,11 @@ describe('E2E Test for Adding a Device to an Existing Application Use Case #190'
     })
   })
   describe('Verify LoRaServer V1 has 2nd application', function () {
-    it('Verify the LoRaServer V1 Application Exists', function (done) {
-      let options = {}
-      options.method = 'GET'
-      options.url = baseUrl + '/applications?limit=100'
-      options.headers = {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + loraKey
-      }
-      options.agentOptions = {
-        'secureProtocol': 'TLSv1_2_method',
-        'rejectUnauthorized': false
-      }
-      appLogger.log(options)
-      request(options, function (error, response, body) {
-        if (error) {
-          done(error)
-        }
-        else {
-          let app = JSON.parse(body)
-          app = app.result
-          for (let i = 0; i < app.length; i++) {
-            if (app[i].name === appName) {
-              remoteApp1 = app[i].id
-            }
-          }
-          done()
-        }
-      })
+    it('Verify the LoRaServer V2 Application Exists', async () => {
+      const { result } = await Lora1.client.listApplications(Lora1.network, { limit: 100 })
+      const app = result.find(x => x.name === appName)
+      should.exist(app)
+      remoteApp1 = app.id
     })
     it('Verify the LoRaServer V1 Application Exists', async () => {
       const app = await Lora1.client.loadApplication(Lora1.network, remoteApp1)
@@ -500,26 +477,27 @@ describe('E2E Test for Adding a Device to an Existing Application Use Case #190'
       app.name.should.equal(appName)
     })
     it('Verify the LoRaServer V1 Device Profile Exists', async () => {
-      const { result } = await Lora1.listDeviceProfiles(Lora1.network)
+      const { result } = await Lora1.client.listDeviceProfiles(Lora1.network, { limit: 100 })
       const dp = result.find(x => x.name === deviceProfile.networkSettings.name)
+      should.exist(dp)
       remoteDeviceProfileId = dp.id
     })
     it('Verify the LoRaServer V1 Device Profile Exists', async () => {
-      const dp = await Lora1.loadDeviceProfile(Lora1.network, remoteDeviceProfileId)
+      const dp = await Lora1.client.loadDeviceProfile(Lora1.network, remoteDeviceProfileId)
+      console.log(JSON.stringify(dp))
       dp.should.have.property('name')
       dp.name.should.equal(deviceProfile.networkSettings.name)
       dp.should.have.property('organizationID')
       dp.should.have.property('networkServerID')
       dp.should.have.property('createdAt')
       dp.should.have.property('updatedAt')
-      dp.should.have.property('deviceProfile')
-      dp.deviceProfile.should.have.property('macVersion')
-      dp.deviceProfile.should.have.property('regParamsRevision')
-      dp.deviceProfile.macVersion.should.equal(deviceProfile.networkSettings.macVersion)
-      dp.deviceProfile.regParamsRevision.should.equal(deviceProfile.networkSettings.regParamsRevision)
+      dp.should.have.property('macVersion')
+      dp.should.have.property('regParamsRevision')
+      dp.macVersion.should.equal(deviceProfile.networkSettings.macVersion)
+      dp.regParamsRevision.should.equal(deviceProfile.networkSettings.regParamsRevision)
     })
     it('Verify the LoRaServer V1 2nd Device Exists', async () => {
-      const device = await Lora1.loadDevice(Lora1.network, device2NTL.networkSettings.devEUI)
+      const device = await Lora1.client.loadDevice(Lora1.network, device2NTL.networkSettings.devEUI)
       device.should.have.property('name')
       device.should.have.property('devEUI')
       device.should.have.property('applicationID')
@@ -536,8 +514,9 @@ describe('E2E Test for Adding a Device to an Existing Application Use Case #190'
   })
   describe('Verify LoRaServer V2 has 2nd application', function () {
     it('Verify the LoRaServer V2 Application Exists', async () => {
-      const { result } = await Lora2.client.listApplications(Lora2.network)
+      const { result } = await Lora2.client.listApplications(Lora2.network, { limit: 100 })
       const app = result.find(x => x.name === appName)
+      should.exist(app)
       remoteApp2 = app.id
     })
     it('Verify the LoRaServer V2 Application Exists', async () => {
@@ -553,12 +532,13 @@ describe('E2E Test for Adding a Device to an Existing Application Use Case #190'
       app.name.should.equal(appName)
     })
     it('Verify the LoRaServer V2 Device Profile Exists', async () => {
-      const { result } = await Lora2.listDeviceProfiles(Lora2.network)
+      const { result } = await Lora2.client.listDeviceProfiles(Lora2.network, { limit: 100 })
       const dp = result.find(x => x.name === deviceProfile.name)
+      should.exist(dp)
       remoteDeviceProfileId2 = dp.id
     })
     it('Verify the LoRaServer V2 Device Profile Exists', async () => {
-      const dp = await Lora2.loadDeviceProfile(Lora2.network, remoteDeviceProfileId2)
+      const dp = await Lora2.client.loadDeviceProfile(Lora2.network, remoteDeviceProfileId2)
       dp.should.have.property('name')
       dp.name.should.equal(deviceProfile.networkSettings.name)
       dp.should.have.property('organizationID')
@@ -569,7 +549,7 @@ describe('E2E Test for Adding a Device to an Existing Application Use Case #190'
       dp.regParamsRevision.should.equal(deviceProfile.networkSettings.regParamsRevision)
     })
     it('Verify the LoRaServer V2 2nd Device Exists', async () => {
-      const device = await Lora2.loadDevice(Lora2.network, device2NTL.networkSettings.devEUI)
+      const device = await Lora2.client.loadDevice(Lora2.network, device2NTL.networkSettings.devEUI)
       device.should.have.property('name')
       device.should.have.property('devEUI')
       device.should.have.property('applicationID')

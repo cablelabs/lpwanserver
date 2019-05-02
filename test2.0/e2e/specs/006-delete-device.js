@@ -3,41 +3,36 @@ let chaiHttp = require('chai-http')
 let app = require('../../../restApp.js')
 let setup = require('../setup.js')
 let appLogger = require('../../../rest/lib/appLogger.js')
-let request = require('request')
 let Data = require('../../data')
 const { assertEqualProps } = require('../../lib/helpers')
+const Lora1 = require('../networks/lora-v1')
+const Lora2 = require('../networks/lora-v2')
 
-chai.should()
+const should = chai.should()
 chai.use(chaiHttp)
 let server = chai.request(app).keepOpen()
 
-const state = {
-  adminToken: '',
-  remoteApp1: '',
-  remoteApp2: '',
-  remoteDeviceProfileId: '',
-  remoteDeviceProfileId2: '',
-  lora1BaseUrl: 'https://lora_appserver1:8080/api',
-  lora1Key: '',
-  lora2BaseUrl: 'https://lora_appserver:8080/api',
-  lora2Key: '',
-  lora: {
-    loraV1: {
-      protocolId: '',
-      networkId: '',
-      apps: []
-    },
-    loraV2: {
-      protocolId: '',
-      networkId: '',
-      apps: []
-    },
-    ttn: {
-      protocolId: '',
-      networkId: '',
-      apps: []
+let adminToken = ''
+let remoteApp1 = ''
+let remoteApp2 = ''
+let remoteDeviceProfileId = ''
+let remoteDeviceProfileId2 = ''
+let lora = {
+  loraV1: {
+    protocolId: '',
+    networkId: '',
+    apps: []
+  },
+  loraV2: {
+    protocolId: '',
+    networkId: '',
+    apps: []
+  },
+  ttn: {
+    protocolId: '',
+    networkId: '',
+    apps: []
 
-    }
   }
 }
 
@@ -64,7 +59,7 @@ describe('E2E Test for Deleting a Device Use Case #192', () => {
         .end(function (err, res) {
           if (err) done(err)
           res.should.have.status(200)
-          state.adminToken = res.text
+          adminToken = res.text
           done()
         })
     })
@@ -73,7 +68,7 @@ describe('E2E Test for Deleting a Device Use Case #192', () => {
     it('should return 200 on admin', function (done) {
       server
         .post('/api/applications')
-        .set('Authorization', 'Bearer ' + state.adminToken)
+        .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .send(testData.app)
         .end(function (err, res) {
@@ -88,7 +83,7 @@ describe('E2E Test for Deleting a Device Use Case #192', () => {
     it('should return 200 on get', function (done) {
       server
         .get('/api/applications/' + testData.app.id)
-        .set('Authorization', 'Bearer ' + state.adminToken)
+        .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .send()
         .end(function (err, res) {
@@ -105,7 +100,7 @@ describe('E2E Test for Deleting a Device Use Case #192', () => {
     it('Create Network Type Links for Application', function (done) {
       server
         .post('/api/applicationNetworkTypeLinks')
-        .set('Authorization', 'Bearer ' + state.adminToken)
+        .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .send(testData.appNTL)
         .end(function (err, res) {
@@ -118,7 +113,7 @@ describe('E2E Test for Deleting a Device Use Case #192', () => {
     it('should return 200 on get', function (done) {
       server
         .get('/api/applicationNetworkTypeLinks/' + testData.appNTL.id)
-        .set('Authorization', 'Bearer ' + state.adminToken)
+        .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .send()
         .end(function (err, res) {
@@ -133,7 +128,7 @@ describe('E2E Test for Deleting a Device Use Case #192', () => {
     it('Create Device Profile', function (done) {
       server
         .post('/api/deviceProfiles')
-        .set('Authorization', 'Bearer ' + state.adminToken)
+        .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .send(testData.deviceProfile)
         .end(function (err, res) {
@@ -147,7 +142,7 @@ describe('E2E Test for Deleting a Device Use Case #192', () => {
     it('should return 200 on get', function (done) {
       server
         .get('/api/deviceProfiles/' + testData.deviceProfile.id)
-        .set('Authorization', 'Bearer ' + state.adminToken)
+        .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .send()
         .end(function (err, res) {
@@ -165,7 +160,7 @@ describe('E2E Test for Deleting a Device Use Case #192', () => {
     it('POST Device', function (done) {
       server
         .post('/api/devices')
-        .set('Authorization', 'Bearer ' + state.adminToken)
+        .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .send(testData.device)
         .end(function (err, res) {
@@ -181,7 +176,7 @@ describe('E2E Test for Deleting a Device Use Case #192', () => {
     it('should return 200 on get', function (done) {
       server
         .get('/api/devices/' + testData.device.id)
-        .set('Authorization', 'Bearer ' + state.adminToken)
+        .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .send()
         .end(function (err, res) {
@@ -199,7 +194,7 @@ describe('E2E Test for Deleting a Device Use Case #192', () => {
     it('Create Device NTL', function (done) {
       server
         .post('/api/deviceNetworkTypeLinks')
-        .set('Authorization', 'Bearer ' + state.adminToken)
+        .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .send(testData.deviceNTL)
         .end(function (err, res) {
@@ -214,7 +209,7 @@ describe('E2E Test for Deleting a Device Use Case #192', () => {
     it('should return 200 on get', function (done) {
       server
         .get('/api/deviceNetworkTypeLinks/' + testData.deviceNTL.id)
-        .set('Authorization', 'Bearer ' + state.adminToken)
+        .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .send()
         .end(function (err, res) {
@@ -230,385 +225,116 @@ describe('E2E Test for Deleting a Device Use Case #192', () => {
     })
   })
   describe('Verify LoRaServer V1 has application', function () {
-    it('Get LoRaServer V1 Session', function (done) {
-      let options = {}
-      options.method = 'POST'
-      options.url = state.lora1BaseUrl + '/internal/login'
-      options.headers = {'Content-Type': 'application/json'}
-      options.json = {username: 'admin', password: 'admin'}
-      options.agentOptions = {'secureProtocol': 'TLSv1_2_method', 'rejectUnauthorized': false}
-      request(options, function (error, response, body) {
-        if (error) {
-          appLogger.log('Error on signin: ' + error)
-          done(error)
-        }
-        else if (response.statusCode >= 400 || response.statusCode === 301) {
-          appLogger.log('Error on signin: ' + response.statusCode + ', ' + response.body.error)
-          done(response.statusCode)
-        }
-        else if (!body.jwt) {
-          done(new Error('No token'))
-        }
-        else {
-          state.lora1Key = body.jwt
-          done()
-        }
-      })
+    it('Verify the LoRaServer V1 Application Exists', async () => {
+      const { result } = await Lora1.client.listApplications(Lora1.network, { limit: 100 })
+      const app = result.find(x => x.name === testData.app.name)
+      should.exist(app)
+      remoteApp1 = app.id
     })
-    it('Verify the LoRaServer V1 Application Exists', function (done) {
-      let options = {}
-      options.method = 'GET'
-      options.url = state.lora1BaseUrl + '/applications?limit=100'
-      options.headers = {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + state.lora1Key
-      }
-      options.agentOptions = {
-        'secureProtocol': 'TLSv1_2_method',
-        'rejectUnauthorized': false
-      }
-      appLogger.log(options)
-      request(options, function (error, response, body) {
-        if (error) {
-          done(error)
-        }
-        else {
-          let app = JSON.parse(body)
-          app = app.result
-          for (let i = 0; i < app.length; i++) {
-            if (app[i].name === testData.app.name) {
-              state.remoteApp1 = app[i].id
-            }
-          }
-          done()
-        }
-      })
+    it('Verify the LoRaServer V1 Application Exists', async () => {
+      const app = await Lora1.client.loadApplication(Lora1.network, remoteApp1)
+      app.should.have.property('id')
+      app.should.have.property('name')
+      app.should.have.property('description')
+      app.should.have.property('organizationID')
+      app.should.have.property('serviceProfileID')
+      app.should.have.property('payloadCodec')
+      app.should.have.property('payloadEncoderScript')
+      app.should.have.property('payloadDecoderScript')
+      app.name.should.equal(testData.app.name)
     })
-    it('Verify the LoRaServer V1 Application Exists', function (done) {
-      let options = {}
-      options.method = 'GET'
-      options.url = state.lora1BaseUrl + '/applications/' + state.remoteApp1
-      options.headers = {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + state.lora1Key
-      }
-      options.agentOptions = {
-        'secureProtocol': 'TLSv1_2_method',
-        'rejectUnauthorized': false
-      }
-      appLogger.log(options)
-      request(options, function (error, response, body) {
-        if (error) {
-          done(error)
-        }
-        else {
-          let app = JSON.parse(body)
-          app.should.have.property('id')
-          app.should.have.property('name')
-          app.should.have.property('description')
-          app.should.have.property('organizationID')
-          app.should.have.property('serviceProfileID')
-          app.should.have.property('payloadCodec')
-          app.should.have.property('payloadEncoderScript')
-          app.should.have.property('payloadDecoderScript')
-          app.name.should.equal(testData.app.name)
-          done()
-        }
-      })
+    it('Verify the LoRaServer V1 Device Profile Exists', async () => {
+      const { result } = await Lora1.client.listDeviceProfiles(Lora1.network, { limit: 100 })
+      const dp = result.find(x => x.name === testData.deviceProfile.networkSettings.name)
+      should.exist(dp)
+      remoteDeviceProfileId = dp.id
     })
-    it('Verify the LoRaServer V1 Device Profile Exists', function (done) {
-      let options = {}
-      options.method = 'GET'
-      options.url = state.lora1BaseUrl + '/device-profiles?limit=100'
-      options.headers = {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + state.lora1Key
-      }
-      options.agentOptions = {
-        'secureProtocol': 'TLSv1_2_method',
-        'rejectUnauthorized': false
-      }
-      appLogger.log(options)
-      request(options, function (error, response, body) {
-        if (error) {
-          done(error)
-        }
-        else {
-          let remoteDeviceProfile = JSON.parse(body)
-          remoteDeviceProfile = remoteDeviceProfile.result
-          console.log(remoteDeviceProfile)
-          for (let i = 0; i < remoteDeviceProfile.length; i++) {
-            if (remoteDeviceProfile[i].name === testData.deviceProfile.networkSettings.name) {
-              state.remoteDeviceProfileId = remoteDeviceProfile[i].deviceProfileID
-            }
-          }
-          state.remoteDeviceProfileId.should.not.equal('')
-          done()
-        }
-      })
+    it('Verify the LoRaServer V1 Device Profile Exists', async () => {
+      const dp = await Lora1.client.loadDeviceProfile(Lora1.network, remoteDeviceProfileId)
+      dp.should.have.property('name')
+      dp.name.should.equal(testData.deviceProfile.networkSettings.name)
+      dp.should.have.property('organizationID')
+      dp.should.have.property('networkServerID')
+      dp.should.have.property('createdAt')
+      dp.should.have.property('updatedAt')
+      dp.should.have.property('macVersion')
+      dp.should.have.property('regParamsRevision')
+      dp.macVersion.should.equal(testData.deviceProfile.networkSettings.macVersion)
+      dp.regParamsRevision.should.equal(testData.deviceProfile.networkSettings.regParamsRevision)
     })
-    it('Verify the LoRaServer V1 Device Profile Exists', function (done) {
-      let options = {}
-      options.method = 'GET'
-      options.url = state.lora1BaseUrl + '/device-profiles/' + state.remoteDeviceProfileId
-      options.headers = {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + state.lora1Key
-      }
-      options.agentOptions = {
-        'secureProtocol': 'TLSv1_2_method',
-        'rejectUnauthorized': false
-      }
-      appLogger.log(options)
-      request(options, function (error, response, body) {
-        if (error) {
-          done(error)
-        }
-        else {
-          let app = JSON.parse(body)
-          appLogger.log(app)
-          app.should.have.property('name')
-          app.name.should.equal(testData.deviceProfile.networkSettings.name)
-          app.should.have.property('organizationID')
-          app.should.have.property('networkServerID')
-          app.should.have.property('createdAt')
-          app.should.have.property('updatedAt')
-          app.should.have.property('deviceProfile')
-          app.deviceProfile.should.have.property('macVersion')
-          app.deviceProfile.should.have.property('regParamsRevision')
-          app.deviceProfile.macVersion.should.equal(testData.deviceProfile.networkSettings.macVersion)
-          app.deviceProfile.regParamsRevision.should.equal(testData.deviceProfile.networkSettings.regParamsRevision)
-
-          done()
-        }
-      })
-    })
-    it('Verify the LoRaServer V1 Device Exists', function (done) {
-      let options = {}
-      options.method = 'GET'
-      options.url = state.lora1BaseUrl + '/devices/' + testData.deviceNTL.networkSettings.devEUI
-      options.headers = {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + state.lora1Key
-      }
-      options.agentOptions = {
-        'secureProtocol': 'TLSv1_2_method',
-        'rejectUnauthorized': false
-      }
-      appLogger.log(options)
-      request(options, function (error, response, body) {
-        if (error) {
-          done(error)
-        }
-        else {
-          let app = JSON.parse(body)
-          app.should.have.property('name')
-          app.should.have.property('devEUI')
-          app.should.have.property('applicationID')
-          app.should.have.property('description')
-          app.should.have.property('deviceProfileID')
-          app.should.have.property('deviceStatusBattery')
-          app.should.have.property('deviceStatusMargin')
-          app.should.have.property('lastSeenAt')
-          app.should.have.property('skipFCntCheck')
-
-          app.name.should.equal(testData.deviceNTL.networkSettings.name)
-          app.devEUI.should.equal(testData.deviceNTL.networkSettings.devEUI)
-          app.deviceProfileID.should.equal(state.remoteDeviceProfileId)
-          done()
-        }
-      })
+    it('Verify the LoRaServer V1 Device Exists', async () => {
+      const device = await Lora1.client.loadDevice(Lora1.network, testData.deviceNTL.networkSettings.devEUI)
+      device.should.have.property('name')
+      device.should.have.property('devEUI')
+      device.should.have.property('applicationID')
+      device.should.have.property('description')
+      device.should.have.property('deviceProfileID')
+      device.should.have.property('deviceStatusBattery')
+      device.should.have.property('deviceStatusMargin')
+      device.should.have.property('lastSeenAt')
+      device.should.have.property('skipFCntCheck')
+      device.name.should.equal(testData.deviceNTL.networkSettings.name)
+      device.devEUI.should.equal(testData.deviceNTL.networkSettings.devEUI)
+      device.deviceProfileID.should.equal(remoteDeviceProfileId)
     })
   })
   describe('Verify LoRaServer V2 has application', function () {
-    it('Get LoRaServer V2 Session', function (done) {
-      let options = {}
-      options.method = 'POST'
-      options.url = state.lora2BaseUrl + '/internal/login'
-      options.headers = {'Content-Type': 'application/json'}
-      options.json = {username: 'admin', password: 'admin'}
-      options.agentOptions = {'secureProtocol': 'TLSv1_2_method', 'rejectUnauthorized': false}
-      request(options, function (error, response, body) {
-        if (error) {
-          appLogger.log('Error on signin: ' + error)
-          done(error)
-        }
-        else if (response.statusCode >= 400 || response.statusCode === 301) {
-          appLogger.log('Error on signin: ' + response.statusCode + ', ' + response.body.error)
-          done(response.statusCode)
-        }
-        else if (!body.jwt) {
-          done(new Error('No token'))
-        }
-        else {
-          state.lora2Key = body.jwt
-          done()
-        }
-      })
+    it('Verify the LoRaServer V2 Application Exists', async () => {
+      const { result } = await Lora2.client.listApplications(Lora2.network, { limit: 100 })
+      const app = result.find(x => x.name === testData.app.name)
+      should.exist(app)
+      remoteApp2 = app.id
     })
-    it('Verify the LoRaServer V2 Application Exists', function (done) {
-      let options = {}
-      options.method = 'GET'
-      options.url = state.lora2BaseUrl + '/applications?limit=100'
-      options.headers = {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + state.lora2Key
-      }
-      options.agentOptions = {
-        'secureProtocol': 'TLSv1_2_method',
-        'rejectUnauthorized': false
-      }
-      appLogger.log(options)
-      request(options, function (error, response, body) {
-        if (error) {
-          done(error)
-        }
-        else {
-          let app = JSON.parse(body)
-          app = app.result
-          for (let i = 0; i < app.length; i++) {
-            if (app[i].name === testData.app.name) {
-              state.remoteApp2 = app[i].id
-            }
-          }
-          done()
-        }
-      })
+    it('Verify the LoRaServer V2 Application Exists', async () => {
+      const app = await Lora2.client.loadApplication(Lora2.network, remoteApp2)
+      app.should.have.property('id')
+      app.should.have.property('name')
+      app.should.have.property('description')
+      app.should.have.property('organizationID')
+      app.should.have.property('serviceProfileID')
+      app.should.have.property('payloadCodec')
+      app.should.have.property('payloadEncoderScript')
+      app.should.have.property('payloadDecoderScript')
+      app.name.should.equal(testData.app.name)
     })
-    it('Verify the LoRaServer V2 Application Exists', function (done) {
-      let options = {}
-      options.method = 'GET'
-      options.url = state.lora2BaseUrl + '/applications/' + state.remoteApp2
-      options.headers = {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + state.lora2Key
-      }
-      options.agentOptions = {
-        'secureProtocol': 'TLSv1_2_method',
-        'rejectUnauthorized': false
-      }
-      appLogger.log(options)
-      request(options, function (error, response, body) {
-        if (error) {
-          done(error)
-        }
-        else {
-          let app = JSON.parse(body)
-          app = app.application
-          console.log(app)
-          app.should.have.property('id')
-          app.should.have.property('name')
-          app.should.have.property('description')
-          app.should.have.property('organizationID')
-          app.should.have.property('serviceProfileID')
-          app.should.have.property('payloadCodec')
-          app.should.have.property('payloadEncoderScript')
-          app.should.have.property('payloadDecoderScript')
-          app.name.should.equal(testData.app.name)
-          done()
-        }
-      })
+    it('Verify the LoRaServer V2 Device Profile Exists', async () => {
+      const { result } = await Lora2.client.listDeviceProfiles(Lora2.network, { limit: 100 })
+      const dp = result.find(x => x.name === testData.deviceProfile.name)
+      should.exist(dp)
+      remoteDeviceProfileId2 = dp.id
     })
-    it('Verify the LoRaServer V2 Device Profile Exists', function (done) {
-      let options = {}
-      options.method = 'GET'
-      options.url = state.lora2BaseUrl + '/device-profiles?limit=100'
-      options.headers = {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + state.lora2Key
-      }
-      options.agentOptions = {
-        'secureProtocol': 'TLSv1_2_method',
-        'rejectUnauthorized': false
-      }
-      appLogger.log(options)
-      request(options, function (error, response, body) {
-        if (error) {
-          done(error)
-        }
-        else {
-          let remoteDeviceProfile = JSON.parse(body).result
-          state.remoteDeviceProfileId2 = remoteDeviceProfile.find(x => x.name === testData.deviceProfile.name).id
-          done()
-        }
-      })
+    it('Verify the LoRaServer V2 Device Profile Exists', async () => {
+      const dp = await Lora2.client.loadDeviceProfile(Lora2.network, remoteDeviceProfileId2)
+      dp.should.have.property('name')
+      dp.name.should.equal(testData.deviceProfile.networkSettings.name)
+      dp.should.have.property('organizationID')
+      dp.should.have.property('networkServerID')
+      dp.should.have.property('macVersion')
+      dp.should.have.property('regParamsRevision')
+      dp.macVersion.should.equal(testData.deviceProfile.networkSettings.macVersion)
+      dp.regParamsRevision.should.equal(testData.deviceProfile.networkSettings.regParamsRevision)
     })
-    it('Verify the LoRaServer V2 Device Profile Exists', function (done) {
-      let options = {}
-      options.method = 'GET'
-      options.url = state.lora2BaseUrl + '/device-profiles/' + state.remoteDeviceProfileId2
-      options.headers = {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + state.lora2Key
-      }
-      options.agentOptions = {
-        'secureProtocol': 'TLSv1_2_method',
-        'rejectUnauthorized': false
-      }
-      appLogger.log(options)
-      request(options, function (error, response, body) {
-        if (error) {
-          done(error)
-        }
-        else {
-          let app = JSON.parse(body)
-          console.log(app)
-          app = app.deviceProfile
-          app.should.have.property('name')
-          app.name.should.equal(testData.deviceProfile.networkSettings.name)
-          app.should.have.property('organizationID')
-          app.should.have.property('networkServerID')
-          app.should.have.property('macVersion')
-          app.should.have.property('regParamsRevision')
-          app.macVersion.should.equal(testData.deviceProfile.networkSettings.macVersion)
-          app.regParamsRevision.should.equal(testData.deviceProfile.networkSettings.regParamsRevision)
-          done()
-        }
-      })
-    })
-    it('Verify the LoRaServer V2 Device Exists', function (done) {
-      let options = {}
-      options.method = 'GET'
-      options.url = state.lora2BaseUrl + '/devices/' + testData.deviceNTL.networkSettings.devEUI
-      options.headers = {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + state.lora2Key
-      }
-      options.agentOptions = {
-        'secureProtocol': 'TLSv1_2_method',
-        'rejectUnauthorized': false
-      }
-      appLogger.log(options)
-      request(options, function (error, response, body) {
-        if (error) {
-          done(error)
-        }
-        else {
-          let app = JSON.parse(body)
-          let device = app.device
-          device.should.have.property('name')
-          device.should.have.property('devEUI')
-          device.should.have.property('applicationID')
-          device.should.have.property('description')
-          device.should.have.property('deviceProfileID')
-          device.should.have.property('skipFCntCheck')
-          app.should.have.property('deviceStatusBattery')
-          app.should.have.property('deviceStatusMargin')
-          app.should.have.property('lastSeenAt')
-
-          device.name.should.equal(testData.deviceNTL.networkSettings.name)
-          device.devEUI.should.equal(testData.deviceNTL.networkSettings.devEUI)
-          device.deviceProfileID.should.equal(state.remoteDeviceProfileId2)
-          done()
-        }
-      })
+    it('Verify the LoRaServer V2 Device Exists', async () => {
+      const device = await Lora2.client.loadDevice(Lora2.network, testData.deviceNTL.networkSettings.devEUI)
+      device.should.have.property('name')
+      device.should.have.property('devEUI')
+      device.should.have.property('applicationID')
+      device.should.have.property('description')
+      device.should.have.property('deviceProfileID')
+      device.should.have.property('skipFCntCheck')
+      device.should.have.property('deviceStatusBattery')
+      device.should.have.property('deviceStatusMargin')
+      device.should.have.property('lastSeenAt')
+      device.name.should.equal(testData.deviceNTL.networkSettings.name)
+      device.devEUI.should.equal(testData.deviceNTL.networkSettings.devEUI)
+      device.deviceProfileID.should.equal(remoteDeviceProfileId2)
     })
   })
   describe('Remove Device from Application', () => {
     it('Delete Device NTL', function (done) {
       server
         .delete(`/api/deviceNetworkTypeLinks/${testData.deviceNTL.id}`)
-        .set('Authorization', 'Bearer ' + state.adminToken)
+        .set('Authorization', 'Bearer ' + adminToken)
         .send()
         .end(function (err, res) {
           res.should.have.status(204)
@@ -618,7 +344,7 @@ describe('E2E Test for Deleting a Device Use Case #192', () => {
     it('should return 404 on get', function (done) {
       server
         .get(`/api/deviceNetworkTypeLinks/${testData.deviceNTL.id}`)
-        .set('Authorization', 'Bearer ' + state.adminToken)
+        .set('Authorization', 'Bearer ' + adminToken)
         .send()
         .end(function (err, res) {
           res.should.have.status(404)
@@ -628,7 +354,7 @@ describe('E2E Test for Deleting a Device Use Case #192', () => {
     it('Delete Device', function (done) {
       server
         .delete(`/api/devices/${testData.device.id}`)
-        .set('Authorization', 'Bearer ' + state.adminToken)
+        .set('Authorization', 'Bearer ' + adminToken)
         .send()
         .end(function (err, res) {
           res.should.have.status(204)
@@ -638,7 +364,7 @@ describe('E2E Test for Deleting a Device Use Case #192', () => {
     it('should return 404 on get', function (done) {
       server
         .get(`/api/devices/${testData.device.id}`)
-        .set('Authorization', 'Bearer ' + state.adminToken)
+        .set('Authorization', 'Bearer ' + adminToken)
         .send()
         .end(function (err, res) {
           res.should.have.status(404)
@@ -648,7 +374,7 @@ describe('E2E Test for Deleting a Device Use Case #192', () => {
     it('Delete Device Profile', function (done) {
       server
         .delete('/api/deviceProfiles/' + testData.deviceProfile.id)
-        .set('Authorization', 'Bearer ' + state.adminToken)
+        .set('Authorization', 'Bearer ' + adminToken)
         .send()
         .end(function (err, res) {
           res.should.have.status(200)
@@ -658,7 +384,7 @@ describe('E2E Test for Deleting a Device Use Case #192', () => {
     it('should return 404 on get', function (done) {
       server
         .get('/api/deviceProfiles/' + testData.deviceProfile.id)
-        .set('Authorization', 'Bearer ' + state.adminToken)
+        .set('Authorization', 'Bearer ' + adminToken)
         .send()
         .end(function (err, res) {
           res.should.have.status(404)
@@ -666,98 +392,38 @@ describe('E2E Test for Deleting a Device Use Case #192', () => {
         })
     })
   })
-  describe('Verify Device Removed from LoRaServer V1', () => {
-    it('Verify the LoRaServer V1 Device Does Not Exist', (done) => {
-      let options = {}
-      options.method = 'GET'
-      options.url = state.lora1BaseUrl + '/devices/' + testData.deviceNTL.networkSettings.devEUI
-      options.headers = {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + state.lora1Key
+  describe('Verify Device Removed from LoRaServers', () => {
+    it('Verify the LoRaServer V1 Device Does Not Exist', async () => {
+      try {
+        await Lora1.client.loadDevice(Lora1.network, testData.deviceNTL.networkSettings.devEUI)
       }
-      options.agentOptions = {
-        'secureProtocol': 'TLSv1_2_method',
-        'rejectUnauthorized': false
+      catch (err) {
+        err.statusCode.should.equal(404)
       }
-      appLogger.log(options)
-      request(options, function (error, response, body) {
-        if (error) {
-          done(error)
-        }
-        else {
-          response.statusCode.should.equal(404)
-          done()
-        }
-      })
     })
-    it('Verify the LoRaServer V1 Device Profile Does Not Exist', function (done) {
-      let options = {}
-      options.method = 'GET'
-      options.url = state.lora1BaseUrl + '/device-profiles/' + state.remoteDeviceProfileId
-      options.headers = {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + state.lora1Key
+    it('Verify the LoRaServer V1 Device Profile Does Not Exist', async () => {
+      try {
+        await Lora1.client.loadDeviceProfile(Lora1.network, remoteDeviceProfileId)
       }
-      options.agentOptions = {
-        'secureProtocol': 'TLSv1_2_method',
-        'rejectUnauthorized': false
+      catch (err) {
+        err.statusCode.should.equal(404)
       }
-      appLogger.log(options)
-      request(options, function (error, response, body) {
-        if (error) {
-          done(error)
-        }
-        else {
-          response.statusCode.should.equal(404)
-          done()
-        }
-      })
     })
-    it('Verify the LoRaServer V2 Device Does Not Exist', function (done) {
-      let options = {}
-      options.method = 'GET'
-      options.url = state.lora2BaseUrl + '/devices/' + testData.deviceNTL.networkSettings.devEUI
-      options.headers = {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + state.lora2Key
+    it('Verify the LoRaServer V2 Device Does Not Exist', async () => {
+      try {
+        await Lora2.client.loadDevice(Lora2.network, testData.deviceNTL.networkSettings.devEUI)
       }
-      options.agentOptions = {
-        'secureProtocol': 'TLSv1_2_method',
-        'rejectUnauthorized': false
+      catch (err) {
+        err.statusCode.should.equal(404)
       }
-      appLogger.log(options)
-      request(options, function (error, response, body) {
-        if (error) {
-          done(error)
-        }
-        else {
-          response.statusCode.should.equal(404)
-          done()
-        }
-      })
     })
-    it('Verify the LoRaServer V2 Device Profile Does Not Exist', function (done) {
-      let options = {}
-      options.method = 'GET'
-      options.url = state.lora2BaseUrl + '/device-profiles/' + state.remoteDeviceProfileId2
-      options.headers = {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + state.lora2Key
+    it('Verify the LoRaServer V2 Device Profile Does Not Exist', async () => {
+      try {
+        await Lora2.client.loadDeviceProfile(Lora2.network, remoteDeviceProfileId2)
       }
-      options.agentOptions = {
-        'secureProtocol': 'TLSv1_2_method',
-        'rejectUnauthorized': false
+      catch (err) {
+        err.statusCode.should.equal(404)
       }
-      appLogger.log(options)
-      request(options, function (error, response, body) {
-        if (error) {
-          done(error)
-        }
-        else {
-          response.statusCode.should.equal(404)
-          done()
-        }
-      })
     })
   })
 })
