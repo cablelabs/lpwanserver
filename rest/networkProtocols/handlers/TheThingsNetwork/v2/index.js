@@ -3,7 +3,6 @@ const appLogger = require('../../../../lib/appLogger')
 const uuid = require('uuid/v1')
 const R = require('ramda')
 const { tryCatch } = require('../../../../lib/utils')
-const httpError = require('http-errors')
 const ApiClient = require('./client')
 
 /**********************************************************************************************************************
