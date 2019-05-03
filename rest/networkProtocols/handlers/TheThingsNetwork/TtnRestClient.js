@@ -1,7 +1,6 @@
 const RestClient = require('../../RestClient')
 const R = require('ramda')
 const jwt = require('jsonwebtoken')
-const httpError = require('http-errors')
 
 module.exports = class TtnRestClient extends RestClient {
   _request (network, opts, session, transformResponse) {
