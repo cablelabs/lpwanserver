@@ -5,53 +5,46 @@ const config = require('../../../config')
 const httpError = require('http-errors')
 
 module.exports = class Loriot extends NetworkProtocol {
-  getCompanyAccessAccount (network) {
-    const { securityData } = network
-    if (!securityData || !securityData.apiKey) {
-      appLogger.log('Network security data is incomplete for ' + network.name)
-      return null
+  async connect (network) {
+    if (!network.securityData.apiKey) {
+      return httpError.Unauthorized()
     }
-    return securityData
   }
 
-  async connect (network, loginData) {
-    return loginData.apiKey
-  }
-
-  async test (session, network) {
-    await this.client.listApplications(session, network, { perPage: 20, page: 1 })
+  async test (network) {
+    await this.client.listApplications(network, { perPage: 20, page: 1 })
     return true
   }
 
-  async pullNetwork (session, network, dataAPI, modelAPI) {
-    const apps = await this.pullApplications(session, network, modelAPI, dataAPI)
+  async pullNetwork (network, dataAPI, modelAPI) {
+    const apps = await this.pullApplications(network, modelAPI, dataAPI)
     await Promise.all(apps.reduce((acc, x) => {
-      acc.push(this.pullDevices(session, network, x.remoteApp._id, x.localApp.id, modelAPI, dataAPI))
-      acc.push(this.pullIntegrations(session, network, x.remoteApp._id, x.localApp.id, modelAPI, dataAPI))
+      acc.push(this.pullDevices(network, x.remoteApp._id, x.localApp.id, modelAPI, dataAPI))
+      acc.push(this.pullIntegrations(network, x.remoteApp._id, x.localApp.id, modelAPI, dataAPI))
       return acc
     }, []))
   }
 
-  async pushNetwork (session, network, dataAPI, modelAPI) {
-    await this.pushApplications(session, network, modelAPI, dataAPI)
-    await this.pushDevices(session, network, modelAPI, dataAPI)
+  async pushNetwork (network, dataAPI, modelAPI) {
+    await this.pushApplications(network, modelAPI, dataAPI)
+    await this.pushDevices(network, modelAPI, dataAPI)
   }
 
-  async pullApplications (session, network, modelAPI, dataAPI) {
-    let { apps } = await this.client.listApplications(session, network, {
+  async pullApplications (network, modelAPI, dataAPI) {
+    let { apps } = await this.client.listApplications(network, {
       perPage: 9999,
       page: 1
     })
-    return Promise.all(apps.map(app => this.addRemoteApplication(session, network, app._id, modelAPI, dataAPI)))
+    return Promise.all(apps.map(app => this.addRemoteApplication(network, app._id, modelAPI, dataAPI)))
   }
 
-  async pushApplications (session, network, modelAPI, dataAPI) {
+  async pushApplications (network, modelAPI, dataAPI) {
     let { records } = await modelAPI.applications.retrieveApplications()
-    await Promise.all(records.map(x => this.pushApplication(session, network, x, dataAPI, false)))
+    await Promise.all(records.map(x => this.pushApplication(network, x, dataAPI, false)))
   }
 
-  async addRemoteApplication (session, network, remoteAppId, modelAPI, dataAPI) {
-    const remoteApp = await this.client.loadApplication(session, network, remoteAppId)
+  async addRemoteApplication (network, remoteAppId, modelAPI, dataAPI) {
+    const remoteApp = await this.client.loadApplication(network, remoteAppId)
     const { records: localApps } = await modelAPI.applications.retrieveApplications({ search: remoteApp.name })
     let localApp = localApps[0]
     if (localApp) {
@@ -99,7 +92,7 @@ module.exports = class Loriot extends NetworkProtocol {
     return { localApp, remoteApp }
   }
 
-  async pushApplication (session, network, app, dataAPI, update = true) {
+  async pushApplication (network, app, dataAPI, update = true) {
     let appNetworkId
     try {
       appNetworkId = await dataAPI.getProtocolDataForKey(
@@ -109,7 +102,7 @@ module.exports = class Loriot extends NetworkProtocol {
       )
       if (appNetworkId) appNetworkId = parseInt(appNetworkId, 10)
       if (update && appNetworkId) {
-        return this.updateApplication(session, network, app.id, dataAPI)
+        return this.updateApplication(network, app.id, dataAPI)
       }
       else if (appNetworkId) {
         appLogger.log('Ignoring Application  ' + app.id + ' already on network ' + network.name)
@@ -118,19 +111,19 @@ module.exports = class Loriot extends NetworkProtocol {
       throw new Error('Bad things in the Protocol Table')
     }
     catch (err) {
-      appNetworkId = await this.addApplication(session, network, app.id, dataAPI)
+      appNetworkId = await this.addApplication(network, app.id, dataAPI)
       appLogger.log('Added application ' + app.id + ' to network ' + network.name)
       return { localApplication: app.id, remoteApplication: appNetworkId }
     }
   }
 
-  async addApplication (session, network, appId, dataAPI) {
+  async addApplication (network, appId, dataAPI) {
     try {
       // Get the local application data.
       const localApp = await dataAPI.getApplicationById(appId)
       // Loriot only accepts "title" and "capacity" (both required) when creating new apps
       // Title is called name when fetching the app, only it's title on create.
-      const body = await this.client.createApplication(session, network, { title: localApp.name, capacity: 10 })
+      const body = await this.client.createApplication(network, { title: localApp.name, capacity: 10 })
       // Save the application ID from the remote network.
       await dataAPI.putProtocolDataForKey(
         network.id,
@@ -145,14 +138,14 @@ module.exports = class Loriot extends NetworkProtocol {
     }
   }
 
-  async deleteApplication (session, network, appId, dataAPI) {
+  async deleteApplication (network, appId, dataAPI) {
     let appNetworkId = await dataAPI.getProtocolDataForKey(
       network.id,
       network.networkProtocol.id,
       makeApplicationDataKey(appId, 'appNwkId')
     )
     appNetworkId = parseInt(appNetworkId, 10)
-    await this.client.deleteApplication(session, network, appNetworkId)
+    await this.client.deleteApplication(network, appNetworkId)
     await dataAPI.deleteProtocolDataForKey(
       network.id,
       network.networkProtocol.id,
@@ -160,14 +153,14 @@ module.exports = class Loriot extends NetworkProtocol {
     )
   }
 
-  async pullDevices (session, network, remoteAppId, localAppId, modelAPI, dataAPI) {
+  async pullDevices (network, remoteAppId, localAppId, modelAPI, dataAPI) {
     const params = { perPage: 9999, page: 1 }
-    const { devices } = await this.client.listDevices(session, network, remoteAppId, params)
-    return Promise.all(devices.map(device => this.addRemoteDevice(session, network, device._id, remoteAppId, localAppId, modelAPI, dataAPI)))
+    const { devices } = await this.client.listDevices(network, remoteAppId, params)
+    return Promise.all(devices.map(device => this.addRemoteDevice(network, device._id, remoteAppId, localAppId, modelAPI, dataAPI)))
   }
 
-  async addRemoteDevice (session, network, remoteDeviceId, remoteAppId, localAppId, modelAPI, dataAPI) {
-    const remoteDevice = await this.client.loadDevice(session, network, remoteAppId, remoteDeviceId)
+  async addRemoteDevice (network, remoteDeviceId, remoteAppId, localAppId, modelAPI, dataAPI) {
+    const remoteDevice = await this.client.loadDevice(network, remoteAppId, remoteDeviceId)
     appLogger.log('Adding ' + remoteDevice.title)
     appLogger.log(remoteDevice)
     let { records } = await modelAPI.devices.retrieveDevices({ search: remoteDevice.title })
@@ -226,8 +219,8 @@ module.exports = class Loriot extends NetworkProtocol {
     }
   }
 
-  async pullIntegrations (session, network, remoteAppId, localAppId, modelAPI) {
-    const remoteApp = await this.client.loadApplication(session, network, remoteAppId)
+  async pullIntegrations (network, remoteAppId, localAppId, modelAPI) {
+    const remoteApp = await this.client.loadApplication(network, remoteAppId)
     const [ integration ] = remoteApp.outputs.filter(x => x.output === 'httppush')
     appLogger.log(integration, 'warn')
     const deliveryURL = `api/ingest/${localAppId}/${network.id}`
@@ -236,19 +229,19 @@ module.exports = class Loriot extends NetworkProtocol {
     const updatePayload = { output: 'httppush', osetup: { url: reportingUrl } }
     if (integration) {
       await modelAPI.applications.updateApplication({ id: localAppId, baseUrl: integration.uplinkDataURL })
-      await this.client.updateApplicationIntegrations(session, network, remoteApp._id, updatePayload)
+      await this.client.updateApplicationIntegrations(network, remoteApp._id, updatePayload)
     }
     else {
-      await this.client.createApplicationIntegration(session, network, remoteApp._id, updatePayload)
+      await this.client.createApplicationIntegration(network, remoteApp._id, updatePayload)
     }
   }
 
-  async pushDevices (session, network, modelAPI, dataAPI) {
+  async pushDevices (network, modelAPI, dataAPI) {
     let { records } = await modelAPI.devices.retrieveDevices()
-    await Promise.all(records.map(x => this.pushDevice(session, network, x, dataAPI, false)))
+    await Promise.all(records.map(x => this.pushDevice(network, x, dataAPI, false)))
   }
 
-  async pushDevice (session, network, device, dataAPI, update = true) {
+  async pushDevice (network, device, dataAPI, update = true) {
     let devNetworkId
     try {
       devNetworkId = await dataAPI.getProtocolDataForKey(
@@ -257,7 +250,7 @@ module.exports = class Loriot extends NetworkProtocol {
         makeDeviceDataKey(device.id, 'devNwkId')
       )
       if (update && devNetworkId) {
-        return this.updateDevice(session, network, device.id, dataAPI)
+        return this.updateDevice(network, device.id, dataAPI)
       }
       else if (devNetworkId) {
         appLogger.log('Ignoring Device  ' + device.id + ' already on network ' + network.name)
@@ -266,13 +259,13 @@ module.exports = class Loriot extends NetworkProtocol {
       throw new Error('Bad things in the Protocol Table')
     }
     catch (err) {
-      devNetworkId = await this.addDevice(session, network, device.id, dataAPI)
+      devNetworkId = await this.addDevice(network, device.id, dataAPI)
       appLogger.log('Added Device ' + device.id + ' to network ' + network.name)
       return { localDevice: device.id, remoteDevice: devNetworkId }
     }
   }
 
-  async addDevice (session, network, deviceId, dataAPI) {
+  async addDevice (network, deviceId, dataAPI) {
     appLogger.log(`Adding Device ${deviceId} to ${network.name}`)
     const device = await dataAPI.getDeviceById(deviceId)
     appLogger.log(JSON.stringify(device))
@@ -299,17 +292,17 @@ module.exports = class Loriot extends NetworkProtocol {
       Object.assign(data, deviceData.deviceKeys)
       // Unable to get this call to work, always throws "missing parameters" error
       // but I supplied all parameters in docs (and more)
-      // await this.client.createOtaaDevice(session, network, appNwkId, data)
+      // await this.client.createOtaaDevice(network, appNwkId, data)
       // substitute regular create method, which ignores the device keys and creates new ones
-      await this.client.createDevice(session, network, appNwkId, data)
+      await this.client.createDevice(network, appNwkId, data)
     }
     else if (deviceData.deviceActivation) {
       Object.assign(data, deviceData.deviceActivation)
-      await this.client.createAbpDevice(session, network, appNwkId, data)
+      await this.client.createAbpDevice(network, appNwkId, data)
     }
     else {
       appLogger.log('Remote Device ' + deviceData.device.name + ' does not have authentication parameters')
-      await this.client.createDevice(session, network, appNwkId, data)
+      await this.client.createDevice(network, appNwkId, data)
     }
     dataAPI.putProtocolDataForKey(network.id,
       network.networkProtocol.id,
@@ -318,16 +311,16 @@ module.exports = class Loriot extends NetworkProtocol {
     return dntl.networkSettings.devEUI
   }
 
-  async getDevice (session, network, deviceId, dataAPI) {
+  async getDevice (network, deviceId, dataAPI) {
     const device = dataAPI.getDeviceById(deviceId)
     var devNetworkId = await dataAPI.getProtocolDataForKey(
       network.id,
       network.networkProtocol.id,
       makeDeviceDataKey(deviceId, 'devNwkId'))
-    return this.client.loadDevice(session, network, device.application.id, devNetworkId)
+    return this.client.loadDevice(network, device.application.id, devNetworkId)
   }
 
-  async updateDevice (session, network, deviceId, dataAPI) {
+  async updateDevice (network, deviceId, dataAPI) {
     let device = await dataAPI.getDeviceById(deviceId)
     const dntl = await dataAPI.getDeviceNetworkType(device.id, network.networkType.id)
     const deviceProfile = await dataAPI.getDeviceProfileById(dntl.deviceProfile.id)
@@ -347,19 +340,19 @@ module.exports = class Loriot extends NetworkProtocol {
     )
     // Loriot ignores updates on activation properties and device keys
     // if (deviceProfile.networkSettings.supportsJoin && deviceData.deviceKeys) {
-    //   await this.client.updateDeviceKeys(session, network, appNwkId, deviceData.deviceKeys)
+    //   await this.client.updateDeviceKeys(network, appNwkId, deviceData.deviceKeys)
     // }
     // else if (deviceData.deviceActivation) {
-    //   await this.client.activateDevice(session, network, appNwkId, deviceData.deviceActivation)
+    //   await this.client.activateDevice(network, appNwkId, deviceData.deviceActivation)
     // }
     // else {
     //   appLogger.log('Remote Device ' + deviceData.device.name + ' does not have authentication parameters')
     // }
     const data = R.omit(['deveui'], deviceData.device)
-    await this.client.updateDevice(session, network, appNwkId, devNetworkId, data)
+    await this.client.updateDevice(network, appNwkId, devNetworkId, data)
   }
 
-  async deleteDevice (session, network, deviceId, dataAPI) {
+  async deleteDevice (network, deviceId, dataAPI) {
     let device = await dataAPI.getDeviceById(deviceId)
     let devNetworkId
     let appNwkId
@@ -379,7 +372,7 @@ module.exports = class Loriot extends NetworkProtocol {
       appLogger.log("Failed to get remote network's device ID: " + err)
       throw err
     }
-    await this.client.deleteDevice(session, network, appNwkId, devNetworkId)
+    await this.client.deleteDevice(network, appNwkId, devNetworkId)
     try {
       await dataAPI.deleteProtocolDataForKey(
         network.id,

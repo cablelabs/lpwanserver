@@ -1,20 +1,13 @@
 const NetworkProtocol = require('../../../NetworkProtocol')
-const request = require('request-promise')
 const appLogger = require('../../../../lib/appLogger')
 const uuid = require('uuid/v1')
 const R = require('ramda')
 const { tryCatch } = require('../../../../lib/utils')
-const httpError = require('http-errors')
+const ApiClient = require('./client')
 
 /**********************************************************************************************************************
  * Bookeeping: Register, Test, Connect
  *********************************************************************************************************************/
-const appRegion = R.compose(
-  R.replace('ttn-handler-', ''),
-  x => x.handler || x.serviceProfileID
-  // R.tap(x => console.log('**appRegion**', require('util').inspect(x)))
-)
-
 /**
  * The Things Network Protocol Handler Module
  * @module networkProtocols/The Things Network
@@ -26,6 +19,7 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
   constructor () {
     super()
     this.activeApplicationNetworkProtocols = {}
+    this.client = new ApiClient()
   }
 
   /**
@@ -51,20 +45,9 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
    * @param loginData - credentials
    * @returns {Promise<any>}
    */
-  async test (session, network) {
-    appLogger.log(network.securityData, 'debug')
-    if (!network.securityData.authorized) {
-      throw httpError.Unauthorized()
-    }
-    try {
-      await TTNRequest(session.connection.access_token, {
-        url: `${network.baseUrl}/api/v2/applications`
-      })
-    }
-    catch (err) {
-      appLogger.log('Test Error: ' + err)
-      throw err
-    }
+  async test (network) {
+    await this.client.listApplications(network)
+    return true
   }
 
   /**
@@ -73,46 +56,29 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
    * @param loginData -
    * @returns {Promise<BearerToken>}
    */
-  async connect (network, loginData) {
-    appLogger.log('Inside TTN connect ' + JSON.stringify(loginData))
-    if (network.securityData.authorized) {
-      appLogger.log('Should be authorized')
-      try {
-        await this.test(network, loginData)
-        return loginData
-      }
-      catch (err) {
-        appLogger.log('Authorized but test failed.  Attempting to login.')
-      }
+  async connect (network) {
+    const sd = network.securityData
+    if (!((sd.username && sd.password) && !(sd.code && sd.redirect_uri))) {
+      const error = new Error('LPWan does not have credentials for TTN')
+      error.code = 42
+      throw error
     }
-    if (loginData.refresh_token) {
-      return authorizeWithRefreshToken(network, loginData)
-    }
-    if (loginData.username && loginData.password) {
-      return authorizeWithPassword(network, loginData)
-    }
-    if (loginData.code) {
-      return authorizeWithCode(network, loginData)
-    }
-    const error = new Error('LPWan does not have credentials for TTN')
-    error.code = 42
-    throw error
+    await this.client.getSession(network)
   }
 
   /**
    * Pull remote resources on TTN v2.0 Server
    *
-   * @param session - authentication
    * @param network - network information
    * @param dataAPI - id mappings
    * @param modelAPI - DB access
    * @returns {Promise<Empty>}
    */
-  async pullNetwork (session, network, dataAPI, modelAPI) {
+  async pullNetwork (network, dataAPI, modelAPI) {
     try {
-      const pulledResources = await this.pullApplications(session, network, modelAPI, dataAPI)
+      const pulledResources = await this.pullApplications(network, modelAPI, dataAPI)
       const devices = await Promise.all(pulledResources.map(x =>
-        this.pullDevices(session, network, x.remoteApplication, x.localApplication, {}, modelAPI, dataAPI)
+        this.pullDevices(network, x.remoteApplication, x.localApplication, {}, modelAPI, dataAPI)
       ))
       appLogger.log(devices, 'info')
       appLogger.log('Success Pulling Network ' + network.name, 'info')
@@ -128,23 +94,16 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
    * 1. Pulls application on TTN Account Server
    * 2. Pulls specific application from US-West Handler
    *
-   * @param session
    * @param network
    * @param dataAPI
    * @param modelAPI
    * @returns {Promise<Array[Remote to Local Application Id Mapping]>}
    */
-  async pullApplications (session, network, modelAPI, dataAPI) {
-    const accessToken = R.path(['connection', 'access_token'], session || {})
-    if (!accessToken) {
-      throw new Error('Network ' + network.name + ' is not authorized')
-    }
+  async pullApplications (network, modelAPI, dataAPI) {
     try {
-      const apps = await TTNRequest(accessToken, {
-        url: 'https://console.thethingsnetwork.org/api/applications'
-      })
+      const apps = await this.client.listApplications(network)
       network.securityData.appKeys = apps.map(x => ({ app: x.id, key: x.access_keys[0].key }))
-      return Promise.all(apps.map(x => this.addRemoteApplication(session, x, network, modelAPI, dataAPI)))
+      return Promise.all(apps.map(x => this.addRemoteApplication(x, network, modelAPI, dataAPI)))
     }
     catch (e) {
       appLogger.log('Error pulling applications from network ' + network.name + ': ' + e)
@@ -152,9 +111,9 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
     }
   }
 
-  async addRemoteApplication (session, limitedRemoteApplication, network, modelAPI, dataAPI) {
+  async addRemoteApplication (limitedRemoteApplication, network, modelAPI, dataAPI) {
     try {
-      let remoteApplication = await this.getApplicationById(network, limitedRemoteApplication, session.connection)
+      let remoteApplication = await this.client.loadHandlerApplication(network, limitedRemoteApplication.id)
       let normalizedApplication = this.normalizeApplicationData(remoteApplication, limitedRemoteApplication, network)
       let existingApplication = await modelAPI.applications.retrieveApplications({ search: normalizedApplication.name })
       if (existingApplication.totalCount > 0) {
@@ -204,31 +163,8 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
     }
   }
 
-  // Get the NetworkServer using the Service Profile a ServiceProfile.
-  async getApplicationById (network, appOrId, connection) {
-    appLogger.log('LoRaOpenSource: getApplicationById', 'debug')
-    let app = appOrId
-    let appId = typeof app === 'string' ? app : app.id
-    try {
-      if (typeof app === 'string' || !app.handler) {
-        app = await TTNAppRequest(network, connection, appId, {
-          url: `https://console.thethingsnetwork.org/api/applications/${appId}`
-        })
-      }
-
-      return TTNAppRequest(network, connection, appId, {
-        url: `http://${appRegion(app)}.thethings.network:8084/applications/${appId}`
-      })
-    }
-    catch (e) {
-      appLogger.log('Error on get Application: ' + e)
-      throw e
-    }
-  }
-
   /**
    * Pull remote devices from a TTN server
-   * @param session
    * @param network
    * @param companyId
    * @param dpMap
@@ -238,14 +174,11 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
    * @param modelAPI
    * @returns {Promise<any>}
    */
-  async pullDevices (session, network, remoteApplication, localApplication, dpMap, modelAPI, dataAPI) {
+  async pullDevices (network, remoteApplication, localApplication, dpMap, modelAPI, dataAPI) {
     try {
-      const body = await TTNAppRequest(network, session.connection, remoteApplication.id, {
-        url: `http://${appRegion(remoteApplication)}.thethings.network:8084/applications/${remoteApplication.id}/devices`
-      })
-      const { devices = [] } = body
+      const { devices = [] } = await this.client.listDevices(network, remoteApplication)
       await Promise.all(devices.map(device => {
-        return this.addRemoteDevice(session, device, network, localApplication.id, dpMap, modelAPI, dataAPI)
+        return this.addRemoteDevice(device, network, localApplication.id, dpMap, modelAPI, dataAPI)
       }))
       return devices
     }
@@ -256,7 +189,7 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
     }
   }
 
-  async addRemoteDevice (session, remoteDevice, network, applicationId, dpMap, modelAPI, dataAPI) {
+  async addRemoteDevice (remoteDevice, network, applicationId, dpMap, modelAPI, dataAPI) {
     appLogger.log('Adding ' + remoteDevice.deveui)
     appLogger.log(remoteDevice)
     let existingDevice = await modelAPI.devices.retrieveDevices({ search: remoteDevice.lorawan_device.dev_eui })
@@ -281,7 +214,7 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
     }
     appLogger.log('creating Network Link for ' + existingDevice.name)
     try {
-      const dp = await this.addRemoteDeviceProfile(session, remoteDevice, existingApplicationNTL, network, modelAPI, dataAPI)
+      const dp = await this.addRemoteDeviceProfile(remoteDevice, existingApplicationNTL, network, modelAPI, dataAPI)
       appLogger.log(dp, 'info')
       let normalizedDevice = this.normalizeDeviceData(remoteDevice, dp.localDeviceProfile)
       appLogger.log(normalizedDevice)
@@ -302,7 +235,7 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
     }
   }
 
-  async addRemoteDeviceProfile (session, remoteDevice, application, network, modelAPI) {
+  async addRemoteDeviceProfile (remoteDevice, application, network, modelAPI) {
     let networkSpecificDeviceProfileInformation = this.normalizeDeviceProfileData(remoteDevice, application)
     appLogger.log(networkSpecificDeviceProfileInformation, 'error')
     try {
@@ -328,16 +261,15 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
   /**
    * Push all information out to the network server
    *
-   * @param session
    * @param network
    * @param dataAPI
    * @param modelAPI
    * @returns {Promise<any>}
    */
-  async pushNetwork (session, network, dataAPI, modelAPI) {
+  async pushNetwork (network, dataAPI, modelAPI) {
     try {
-      await this.pushApplications(session, network, dataAPI, modelAPI)
-      const pushedResource = await this.pushDevices(session, network, dataAPI, modelAPI)
+      await this.pushApplications(network, dataAPI, modelAPI)
+      const pushedResource = await this.pushDevices(network, dataAPI, modelAPI)
       appLogger.log('Success Pushing Network ' + network.name, 'info')
       appLogger.log(pushedResource, 'info')
     }
@@ -347,12 +279,12 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
     }
   }
 
-  async pushApplications (session, network, dataAPI, modelAPI) {
+  async pushApplications (network, dataAPI, modelAPI) {
     try {
       let existingApplications = await modelAPI.applications.retrieveApplications()
       appLogger.log(existingApplications, 'info')
       const pushedResources = await Promise.all(existingApplications.records.map(record => {
-        return this.pushApplication(session, network, record, dataAPI, modelAPI)
+        return this.pushApplication(network, record, dataAPI, modelAPI)
       }))
       appLogger.log('Success Pushing Applications', 'info')
       appLogger.log(pushedResources, 'info')
@@ -364,7 +296,7 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
     }
   }
 
-  async pushApplication (session, network, application, dataAPI, modelAPI) {
+  async pushApplication (network, application, dataAPI, modelAPI) {
     appLogger.log(application, 'error')
     const badProtocolTableError = new Error('Bad things in the Protocol Table')
     try {
@@ -384,7 +316,7 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
       if (e === badProtocolTableError) throw e
       try {
         appLogger.log('Pushing Application ' + application.name, 'info')
-        const appNetworkId = await this.addApplication(session, network, application.id, dataAPI, modelAPI)
+        const appNetworkId = await this.addApplication(network, application.id, dataAPI, modelAPI)
         appLogger.log('Added application ' + application.id + ' to network ' + network.name, 'info')
         return { localApplication: application.id, remoteApplication: appNetworkId }
       }
@@ -395,11 +327,11 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
     }
   }
 
-  async pushDevices (sessionData, network, dataAPI, modelAPI) {
+  async pushDevices (network, dataAPI, modelAPI) {
     try {
       let existingDevices = await modelAPI.devices.retrieveDevices()
       const pushedResources = await Promise.all(existingDevices.records.map(record => {
-        return this.pushDevice(sessionData, network, record, dataAPI)
+        return this.pushDevice(network, record, dataAPI)
       }))
       appLogger.log(pushedResources)
       return pushedResources
@@ -410,7 +342,7 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
     }
   }
 
-  async pushDevice (sessionData, network, device, dataAPI) {
+  async pushDevice (network, device, dataAPI) {
     const badProtocolTableError = new Error('Something bad happened with the Protocol Table')
     try {
       const devNetworkId = await dataAPI.getProtocolDataForKey(
@@ -429,7 +361,7 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
       if (e === badProtocolTableError) throw e
       try {
         appLogger.log('Adding Device  ' + device.id + ' to network ' + network.name, 'info')
-        const devNetworkId = await this.addDevice(sessionData, network, device.id, dataAPI)
+        const devNetworkId = await this.addDevice(network, device.id, dataAPI)
         appLogger.log('Added Device  ' + device.id + ' to network ' + network.name, 'info')
         return { localDevice: device.id, remoteDevice: devNetworkId }
       }
@@ -443,14 +375,12 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
   /**
    * @desc Add a new application to the The Things Network network
    *
-   * @param session - The session information for the user, including the connection
-   *                      data for the The Things Network system
    * @param network - The networks record for the The Things Network network
    * @param applicationId - The application id for the application to create on the The Things Network network
    * @param dataAPI - access to the data records and error tracking
    * @returns {Promise<string>} - Remote (The Things Network) id of the new application
    */
-  async addApplication (session, network, applicationId, dataAPI, modelAPI) {
+  async addApplication (network, applicationId, dataAPI, modelAPI) {
     let application
     let applicationData
     try {
@@ -464,21 +394,17 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
     }
     let ttnApplication = this.deNormalizeApplicationData(applicationData.networkSettings, application)
     try {
-      const body = await TTNRequest(session.connection.access_token, {
-        method: 'POST',
-        url: network.baseUrl + '/applications',
-        body: ttnApplication.ttnApplicationMeta
-      })
-      applicationData.networkSettings.applicationEUI = body.euis[0]
+      const res = await this.client.createApplication(network, ttnApplication.ttnApplicationMeta)
+      applicationData.networkSettings.applicationEUI = res.euis[0]
       appLogger.log(applicationData, 'error')
       await modelAPI.applicationNetworkTypeLinks.updateApplicationNetworkTypeLink(applicationData, { companyId: 2, remoteOrigin: true })
       await dataAPI.putProtocolDataForKey(
         network.id,
         network.networkProtocol.id,
         makeApplicationDataKey(application.id, 'appNwkId'),
-        body.id
+        res.id
       )
-      return registerApplicationWithHandler(session.connection, network, ttnApplication.ttnApplicationData, body, dataAPI)
+      return registerApplicationWithHandler(network, ttnApplication.ttnApplicationData, res, dataAPI)
     }
     catch (err) {
       appLogger.log('Error on create application: ' + err, 'error')
@@ -490,23 +416,19 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
   /**
    * @desc get an application from the The Things Network network
    *
-   * @param session - The session information for the user, including the connection
-   *                      data for the The Things Network system
    * @param network - The networks record for the The Things Network network
    * @param applicationId - The application id to fetch from the The Things Network network
    * @param dataAPI - access to the data records and error tracking
    * @returns {Promise<Application>} - Remote application data
    */
-  async getApplication (session, network, applicationId, dataAPI) {
+  async getApplication (network, applicationId, dataAPI) {
     try {
       let appNetworkId = await dataAPI.getProtocolDataForKey(
         network.id,
         network.networkProtocol.id,
         makeApplicationDataKey(applicationId, 'appNwkId')
       )
-      return TTNAppRequest(network, session.connection, true, {
-        url: network.baseUrl + '/applications/' + appNetworkId
-      })
+      return this.client.loadApplication(network, appNetworkId)
     }
     catch (e) {
       appLogger.log('Error on get application: ' + e, 'error')
@@ -514,29 +436,15 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
     }
   }
 
-  async getApplications (session, network) {
-    try {
-      return TTNRequest(session.connection.access_token, {
-        url: network.baseUrl + '/api/v2/applications'
-      })
-    }
-    catch (e) {
-      appLogger.log('Error on get application: ', 'error')
-      throw e
-    }
-  }
-
   /**
    * @desc Update an application on the The Things Network network
    *
-   * @param session - The session information for the user, including the connection
-   *                      data for the The Things Network system
    * @param network - The networks record for the The Things Network network
    * @param applicationId - The application id for the application to update on the The Things Network network
    * @param dataAPI - access to the data records and error tracking
    * @returns {Promise<?>} - Empty promise means application was updated on The Things Network network
    */
-  async updateApplication (session, network, applicationId, dataAPI) {
+  async updateApplication (network, applicationId, dataAPI) {
     try {
       // Get the application data.
       let application = await dataAPI.getApplicationById(applicationId)
@@ -604,11 +512,7 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
       appLogger.log(application)
       appLogger.log(applicationData)
 
-      await TTNAppRequest(network, session.connection, appNetworkId, {
-        method: 'PUT',
-        url: network.baseUrl + '/applications/' + appNetworkId,
-        body
-      })
+      await this.client.updateApplication(network, appNetworkId, body)
       return
     }
     catch (e) {
@@ -620,14 +524,12 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
   /**
    * @desc Delete an application to the The Things Network network
    *
-   * @param session - The session information for the user, including the connection
-   *                      data for the The Things Network system
    * @param network - The networks record for the The Things Network network
    * @param applicationId - The application id for the application to delete on the The Things Network network
    * @param dataAPI - access to the data records and error tracking
    * @returns {Promise<?>} - Empty promise means the application was deleted.
    */
-  async deleteApplication (session, network, applicationId, dataAPI) {
+  async deleteApplication (network, applicationId, dataAPI) {
     try {
       // Get the application data.
       let appNetworkId = await dataAPI.getProtocolDataForKey(
@@ -635,10 +537,7 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
         network.networkProtocol.id,
         makeApplicationDataKey(applicationId, 'appNwkId')
       )
-      await TTNAppRequest(network, session.connection, appNetworkId, {
-        method: 'DELETE',
-        url: network.baseUrl + '/applications/' + appNetworkId
-      })
+      await this.client.deleteApplication(network, appNetworkId)
       await dataAPI.deleteProtocolDataForKey(
         network.id,
         network.networkProtocol.id,
@@ -653,7 +552,6 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
 
   // Start the application.
   //
-  // session   - The session data to access the account on the network.
   // network       - The networks record for the network that uses this
   // applicationId - The application's record id.
   // dataAPI       - Gives access to the data records and error tracking for the
@@ -661,7 +559,7 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
   //
   // Returns a Promise that starts the application data flowing from the remote
   // system.
-  async startApplication (session, network, applicationId, dataAPI) {
+  async startApplication (network, applicationId, dataAPI) {
     try {
       // Create a new endpoint to get POSTs, and call the deliveryFunc.
       // Use the local applicationId and the networkId to create a unique
@@ -678,10 +576,7 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
         network.networkProtocol.id,
         makeApplicationDataKey(applicationId, 'appNwkId')
       )
-      await TTNAppRequest(network, session.connection, appNwkId, {
-        method: 'POST',
-        url: network.baseUrl + '/applications/' + appNwkId + '/integrations/http'
-      })
+      await this.client.createApplicationIntegration(network, appNwkId, 'http')
     }
     catch (err) {
       appLogger.log('Error on add application data reporting: ' + err)
@@ -691,7 +586,6 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
 
   // Stop the application.
   //
-  // session   - The session data to access the account on the network.
   // network       - The networks record for the network that uses this protocol.
   // applicationId - The local application's id to be stopped.
   // dataAPI       - Gives access to the data records and error tracking for the
@@ -699,7 +593,7 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
   //
   // Returns a Promise that stops the application data flowing from the remote
   // system.
-  async stopApplication (session, network, applicationId, dataAPI) {
+  async stopApplication (network, applicationId, dataAPI) {
     let appNwkId
     // Can't delete if not running on the network.
     if (this.activeApplicationNetworkProtocols['' + applicationId + ':' + network.id] === undefined) {
@@ -726,10 +620,7 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
     }
     // Kill the Forwarding with LoRa App Server
     try {
-      await TTNAppRequest(network, session.connection, appNwkId, {
-        method: 'DELETE',
-        url: network.baseUrl + '/applications/' + appNwkId + '/integrations/http'
-      })
+      await this.client.deleteApplicationIntegration(network, appNwkId, 'http')
       delete this.activeApplicationNetworkProtocols['' + applicationId + ':' + network.id]
     }
     catch (err) {
@@ -801,17 +692,13 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
     })
   }
 
-  async postSingleDevice (session, network, device, deviceProfile, application, remoteApplicationId, dataAPI) {
+  async postSingleDevice (network, device, deviceProfile, application, remoteApplicationId, dataAPI) {
     try {
       console.log('******postSingleDevice******')
       console.log(JSON.stringify(device, null, 2))
       let ttnDevice = this.deNormalizeDeviceData(device.networkSettings, deviceProfile.networkSettings, application.networkSettings, remoteApplicationId)
       delete ttnDevice.attributes
-      await TTNAppRequest(network, session.connection, ttnDevice.app_id, {
-        method: 'POST',
-        url: `http://us-west.thethings.network:8084/applications/${ttnDevice.app_id}/devices`,
-        body: ttnDevice
-      })
+      await this.client.createDevice(network, ttnDevice.app_id, ttnDevice)
       await dataAPI.putProtocolDataForKey(
         network.id,
         network.networkProtocol.id,
@@ -826,7 +713,7 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
     }
   }
 
-  async addDevice (session, network, deviceId, dataAPI) {
+  async addDevice (network, deviceId, dataAPI) {
     let result
     let promiseList = [
       // dataAPI.getDeviceById(deviceId),
@@ -858,7 +745,7 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
       }
       const remoteApplicationId = result[1]
       appLogger.log('Moment of Truth', 'error')
-      const postDeviceResult = await this.postSingleDevice(session, network, dntl, deviceProfile, applicationData, remoteApplicationId, dataAPI)
+      const postDeviceResult = await this.postSingleDevice(network, dntl, deviceProfile, applicationData, remoteApplicationId, dataAPI)
       appLogger.log('Success Adding Device ' + ' to ' + network.name, 'info')
       return postDeviceResult
     }
@@ -871,23 +758,19 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
   /**
    * @desc get a device from the The Things Network network
    *
-   * @param session - The session information for the user, including the connection
-   *                      data for the The Things Network system
    * @param network - The networks record for the The Things Network network
    * @param deviceId - The device id to fetch from the The Things Network network
    * @param dataAPI - access to the data records and error tracking
    * @returns {Promise<Application>} - Remote device data
    */
-  async getDevice (session, network, deviceId, dataAPI) {
+  async getDevice (network, deviceId, dataAPI) {
     try {
       let devNetworkId = await dataAPI.getProtocolDataForKey(
         network.id,
         network.networkProtocol.id,
         makeDeviceDataKey(deviceId, 'devNwkId')
       )
-      return TTNRequest(session.connection.access_token, {
-        url: network.baseUrl + '/devices/' + devNetworkId
-      })
+      return this.client.loadDevice(network, devNetworkId)
     }
     catch (err) {
       appLogger.log('Error on get device: ', 'error')
@@ -898,14 +781,12 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
   /**
    * @desc Update a device on the The Things Network network
    *
-   * @param session - The session information for the user, including the connection
-   *                      data for the The Things Network system
    * @param network - The networks record for the The Things Network network
    * @param applicationId - The device id for the device to update on the The Things Network network
    * @param dataAPI - access to the data records and error tracking
    * @returns {Promise<?>} - Empty promise means device was updated on The Things Network network
    */
-  async updateDevice (session, network, deviceId, dataAPI) {
+  async updateDevice (network, deviceId, dataAPI) {
     let device
     let devNetworkId
     let appNwkId
@@ -935,26 +816,19 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
     }
 
     try {
-      await TTNRequest(session.connection.access_token, {
-        method: 'PUT',
-        url: network.baseUrl + '/devices/' + devNetworkId,
-        body: {
-          'applicationID': appNwkId,
-          'description': device.name,
-          'devEUI': dntl.networkSettings.devEUI,
-          'deviceProfileID': dpNwkId,
-          'name': device.name
-        }
+      await this.client.updateDevice(network, devNetworkId, {
+        'applicationID': appNwkId,
+        'description': device.name,
+        'devEUI': dntl.networkSettings.devEUI,
+        'deviceProfileID': dpNwkId,
+        'name': device.name
       })
       // Devices have a separate API for appkeys...
       try {
-        await TTNRequest(session.connection.access_token, {
-          url: network.baseUrl + '/devices/' + dntl.networkSettings.devEUI + '/keys',
-          body: {
-            'devEUI': dntl.networkSettings.devEUI,
-            'deviceKeys': {
-              'appKey': dntl.networkSettings.appKey
-            }
+        await this.client.updateDeviceKeys(network, dntl.networkSettings.devEUI, {
+          'devEUI': dntl.networkSettings.devEUI,
+          'deviceKeys': {
+            'appKey': dntl.networkSettings.appKey
           }
         })
       }
@@ -972,14 +846,12 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
   /**
    * @desc Delete a device to the The Things Network network
    *
-   * @param session - The session information for the user, including the connection
-   *                      data for the The Things Network system
    * @param network - The networks record for the The Things Network network
    * @param applicationId - The device id for the device to delete on the The Things Network network
    * @param dataAPI - access to the data records and error tracking
    * @returns {Promise<?>} - Empty promise means the device was deleted.
    */
-  async deleteDevice (session, network, deviceId, dataAPI) {
+  async deleteDevice (network, deviceId, dataAPI) {
     let devNetworkId
     try {
       devNetworkId = await dataAPI.getProtocolDataForKey(
@@ -994,10 +866,7 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
     }
 
     try {
-      await TTNRequest(session.connection.access_token, {
-        method: 'DELETE',
-        url: network.baseUrl + '/devices/' + devNetworkId
-      })
+      await this.client.deleteDevice(network, devNetworkId)
       // Deleted device, network key is no longer valid.
       try {
         await dataAPI.deleteProtocolDataForKey(
@@ -1009,10 +878,7 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
         appLogger.log("Failed to delete remote network's device ID: " + err)
       }
       // Devices have a separate API for appkeys...
-      await TTNRequest(session.connection.access_token, {
-        method: 'DELETE',
-        url: network.baseUrl + '/devices/' + devNetworkId + '/keys'
-      })
+      await this.client.deleteDeviceKeys(network, devNetworkId)
     }
     catch (err) {
       appLogger.log('Error on delete device: ', 'error')
@@ -1023,7 +889,6 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
   /**
    * Device Profiles are not supported by The Things Network
    *
-   * @param session
    * @param network
    * @param deviceProfileId
    * @param dataAPI
@@ -1039,7 +904,6 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
 
   /**
    * Device Profiles are not supported by The Things Network
-   * @param session
    * @param network
    * @param deviceProfileId
    * @param dataAPI
@@ -1055,7 +919,6 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
 
   /**
    * Device Profiles are not supported by The Things Network
-   * @param session
    * @param network
    * @param deviceProfileId
    * @param dataAPI
@@ -1071,7 +934,6 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
 
   /**
    * Device Profiles are not supported by The Things Network
-   * @param session
    * @param network
    * @param deviceProfileId
    * @param dataAPI
@@ -1087,7 +949,6 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
 
   /**
    * Device Profiles are not supported by The Things Network
-   * @param session
    * @param network
    * @param deviceProfileId
    * @param dataAPI
@@ -1099,28 +960,6 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
     let error = new Error('Device Profiles are not supported by The Things Network')
     appLogger.log('Error on pushDeviceProfile: ', 'error')
     return (error)
-  }
-
-  /**
-   * @access private
-   *
-   * @param network
-   * @param deviceId
-   * @param connection
-   * @param dataAPI
-   * @returns {Promise<Device>}
-   */
-  async getDeviceById (network, deviceId, connection) {
-    appLogger.log('The Things Network: getDeviceById')
-    try {
-      return TTNRequest(connection, {
-        url: network.baseUrl + '/devices/' + deviceId
-      })
-    }
-    catch (err) {
-      appLogger.log('Error on get Device: ', 'error')
-      throw err
-    }
   }
 
   normalizeApplicationData (remoteApplication, remoteApplicationMeta, network) {
@@ -1399,146 +1238,28 @@ function makeDeviceProfileDataKey (deviceProfileId, dataName) {
   return 'dp:' + deviceProfileId + '/' + dataName
 }
 
-async function TTNRequest (token, opts) {
-  opts = Object.assign({
-    method: 'GET',
-    json: true,
-    resolveWithFullResponse: true,
-    headers: {
-      authorization: `Bearer ${token}`
-    },
-    agentOptions: {
-      'secureProtocol': 'TLSv1_2_method',
-      'rejectUnauthorized': false
-    }
-  }, opts)
-  appLogger.log(opts)
-  const response = await request(opts)
-  checkResponse(response)
-  appLogger.log(response.body)
-  return response.body
-}
+// async function authorizeWithRefreshToken (network, loginData) {
+//   try {
+//     const body = await TTNAuthenticationRequest(network, loginData, {
+//       body: {
+//         grant_type: 'refresh_token',
+//         refresh_token: loginData.refresh_token,
+//         redirect_url: loginData.redirect_uri
+//       }
+//     })
+//     body.username = 'TTNUser'
+//     return body
+//   }
+//   catch (e) {
+//     appLogger.log('Error on signin: ' + e)
+//     throw e
+//   }
+// }
 
-async function TTNAppRequest (network, connection, appId, opts, secondAttempt = false) {
-  if (!connection.appTokens) connection.appTokens = {}
-  if (!connection.appTokens[appId]) {
-    try {
-      const body = await TTNRequest(connection.access_token, {
-        method: 'POST',
-        url: `${network.baseUrl}/users/restrict-token`,
-        body: {
-          scope: [`apps:${appId}`]
-        }
-      })
-      connection.appTokens[appId] = body.access_token
-    }
-    catch (err) {
-      appLogger.log(`Error fetching token for app ${appId}. ${err.message}`, err)
-      throw err
-    }
-  }
+async function registerApplicationWithHandler (network, ttnApplication, ttnApplicationMeta, dataAPI) {
   try {
-    return TTNRequest(connection.appTokens[appId], opts)
-  }
-  catch (err) {
-    if (secondAttempt || (err.statusCode !== 401 && err.statusCode !== 403)) throw err
-    delete connection.appTokens[appId]
-    return TTNAppRequest(network, connection, appId, opts, true)
-  }
-}
-
-async function TTNAuthenticationRequest (network, loginData, opts = {}) {
-  let auth = Buffer
-    .from(`${loginData.clientId}:${loginData.clientSecret}`)
-    .toString('base64')
-  const body = await TTNRequest(null, Object.assign({
-    method: 'POST',
-    url: `${network.baseUrl}/users/token`,
-    headers: {
-      authorization: `Basic ${auth}`
-    }
-  }, opts))
-  if (!body.access_token) {
-    throw new Error('No Token')
-  }
-  return body
-}
-
-async function authorizeWithPassword (network, loginData, scope) {
-  if (!scope || !scope.length) {
-    scope = ['apps', 'gateways', 'components', 'apps:cable-labs-prototype']
-  }
-  try {
-    return TTNAuthenticationRequest(network, loginData, {
-      body: {
-        grant_type: 'password',
-        username: loginData.username,
-        password: loginData.password,
-        scope
-      }
-    })
-  }
-  catch (e) {
-    appLogger.log('Error on signin: ' + e)
-    throw e
-  }
-}
-
-async function authorizeWithCode (network, loginData) {
-  try {
-    return TTNAuthenticationRequest(network, loginData, {
-      body: {
-        grant_type: 'authorization_code',
-        code: loginData.code,
-        redirect_url: loginData.redirect_uri
-      }
-    })
-  }
-  catch (e) {
-    appLogger.log('Error on signin: ' + e)
-    throw e
-  }
-}
-
-async function authorizeWithRefreshToken (network, loginData) {
-  try {
-    const body = await TTNAuthenticationRequest(network, loginData, {
-      body: {
-        grant_type: 'refresh_token',
-        refresh_token: loginData.refresh_token,
-        redirect_url: loginData.redirect_uri
-      }
-    })
-    body.username = 'TTNUser'
-    return body
-  }
-  catch (e) {
-    appLogger.log('Error on signin: ' + e)
-    throw e
-  }
-}
-
-function checkResponse ({ statusCode, body }) {
-  if (statusCode >= 200 && statusCode < 300) return
-  switch (statusCode) {
-    case 401: return httpError.Unauthorized()
-    case 404: return httpError.NotFound()
-    case 400:
-      appLogger.log(body)
-      return httpError.BadRequest()
-    default:
-      return httpError(statusCode, body)
-  }
-}
-
-async function registerApplicationWithHandler (connection, network, ttnApplication, ttnApplicationMeta, dataAPI) {
-  try {
-    await TTNAppRequest(network, connection, ttnApplication.app_id, {
-      method: 'POST',
-      url: `http://us-west.thethings.network:8084/applications`,
-      body: { app_id: ttnApplication.app_id }
-    })
-    return setApplication(connection, network, ttnApplication, ttnApplicationMeta, dataAPI)
+    await this.client.registerApplicationWithHandler(network, ttnApplication.app_id)
+    return setApplication(network, ttnApplication, ttnApplicationMeta, dataAPI)
   }
   catch (e) {
     appLogger.log('Error on register Application: ' + e, 'error')
@@ -1546,13 +1267,9 @@ async function registerApplicationWithHandler (connection, network, ttnApplicati
   }
 }
 
-async function setApplication (connection, network, ttnApplication, ttnApplicationMeta) {
+async function setApplication (network, ttnApplication, ttnApplicationMeta) {
   try {
-    await TTNAppRequest(network, connection, ttnApplicationMeta.id, {
-      method: 'PUT',
-      url: `http://us-west.thethings.network:8084/applications/${ttnApplicationMeta.id}`,
-      body: ttnApplication
-    })
+    await this.client.updateHandlerApplication(network, ttnApplicationMeta.id, ttnApplication)
     return ttnApplicationMeta.id
   }
   catch (e) {

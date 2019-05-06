@@ -2,13 +2,12 @@ const Client = require('../../../rest/networkProtocols/handlers/LoraOpenSource/v
 const client = new Client()
 
 module.exports = {
-  account: {
-    username: 'admin',
-    password: 'admin'
-  },
-  session: {},
   network: {
-    baseUrl: 'https://lora_appserver:8080/api'
+    baseUrl: 'https://lora_appserver:8080/api',
+    securityData: {
+      username: 'admin',
+      password: 'admin'
+    }
   },
   networkServer: {
     name: 'LoraOS2',
@@ -28,7 +27,7 @@ module.exports = {
   },
   application: {
     name: 'BobMouseTrapLv2',
-    description: 'CableLabs Test Application',
+    description: 'CableLabs Test Application'
   },
   device: {
     name: 'BobMouseTrapDeviceLv2',
@@ -36,15 +35,15 @@ module.exports = {
     devEUI: '3344556677889900'
   },
   deviceActivation: {
-    "aFCntDown": 0,
-    "appSKey": "290535e48e5e767d9810903db0e50298",
-    "devAddr": "f9bdf0ab",
-    "devEUI": "3344556677889900",
-    "fCntUp": 0,
-    "fNwkSIntKey": "0e0f3622c801729c1dd2d644bd477244",
-    "nFCntDown": 0,
-    "nwkSEncKey": "0e0f3622c801729c1dd2d644bd477244",
-    "sNwkSIntKey": "0e0f3622c801729c1dd2d644bd477244"
+    'aFCntDown': 0,
+    'appSKey': '290535e48e5e767d9810903db0e50298',
+    'devAddr': 'f9bdf0ab',
+    'devEUI': '3344556677889900',
+    'fCntUp': 0,
+    'fNwkSIntKey': '0e0f3622c801729c1dd2d644bd477244',
+    'nFCntDown': 0,
+    'nwkSEncKey': '0e0f3622c801729c1dd2d644bd477244',
+    'sNwkSIntKey': '0e0f3622c801729c1dd2d644bd477244'
   },
   _setNetworkServerId (id) {
     this.networkServer.id = id
@@ -71,26 +70,24 @@ module.exports = {
   },
   async setup () {
     let res
-    // Create Session
-    this.session.connection = await client.login(this.network, this.account)
     // Create Network Server
-    res = await client.createNetworkServer(this.session, this.network, this.networkServer)
+    res = await client.createNetworkServer(this.network, this.networkServer)
     this._setNetworkServerId(res.id)
     // Create Org
-    res = await client.createOrganization(this.session, this.network, this.organization)
+    res = await client.createOrganization(this.network, this.organization)
     this._setOrgId(res.id)
     // Create Service Profile
-    res = await client.createServiceProfile(this.session, this.network, this.serviceProfile)
+    res = await client.createServiceProfile(this.network, this.serviceProfile)
     this._setServiceProfileId(res.id)
     // Create Device Profile
-    res = await client.createDeviceProfile(this.session, this.network, this.deviceProfile)
+    res = await client.createDeviceProfile(this.network, this.deviceProfile)
     this._setDeviceProfileId(res.id)
     // Create App
-    res = await client.createApplication(this.session, this.network, this.application)
+    res = await client.createApplication(this.network, this.application)
     this._setApplicationId(res.id)
     // Create Device
-    await client.createDevice(this.session, this.network, this.application.id, this.device)
+    await client.createDevice(this.network, this.application.id, this.device)
     // Activate Device
-    await client.activateDevice(this.session, this.network, this.device.devEUI, this.deviceActivation)
+    await client.activateDevice(this.network, this.device.devEUI, this.deviceActivation)
   }
 }

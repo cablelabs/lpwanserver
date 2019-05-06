@@ -1,8 +1,7 @@
-const Client = require('../../../rest/networkProtocols/handlers/TheThingsNetwork/TtnRestClient')
-const client = new Client()
+// const Client = require('../../../rest/networkProtocols/handlers/TheThingsNetwork/TtnRestClient')
+// const client = new Client()
 
 module.exports = {
-  session: {},
   network: {
     baseUrl: 'https://account.thethingsnetwork.org',
     securityData: {
@@ -36,12 +35,9 @@ module.exports = {
   },
   async setup () {
     // let res
-    // // Login
-    // res = await client.authorizeWithPassword(this.network)
-    // this.session.connection = res.access_token
     // // Create App
-    // await client.createApplication(this.session, this.network, this.application)
-    // await client.registerApplicationWithHandler(this.session, this.network, this.application.id)
+    // await client.createApplication(this.network, this.application)
+    // await client.registerApplicationWithHandler(this.network, this.application.id)
     // No device currently on TTN
   }
 }

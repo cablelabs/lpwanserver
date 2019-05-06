@@ -17,92 +17,17 @@ module.exports = class NetworkProtocol {
   constructor () {
     this.activeApplicationNetworkProtocols = {}
   }
-  // The login account data needed to manipulate companies.
-  //
-  // network - The network that we are to get the account info for that gives
-  //           access at the "create company and company admin account" level.
-  //           Usually, this is an admin account on the remote network.
-  //
-  // Returns something that is passed to connect() as loginData to enable access
-  // with the appropriate permissions to the remote network.
-  getCompanyAccessAccount (network) {
-    const { securityData } = network
-    if (!securityData || !securityData.username || !securityData.password) {
-      appLogger.log('Network security data is incomplete for ' + network.name)
-      appLogger.log('Network security data is incomplete for ' + network.name)
-      return null
-    }
-    return securityData
-  }
-
-  // Placeholder
-  // The default behavior is for networks that don't support companies
-  getCompanyAccount (network) {
-    return this.getCompanyAccessAccount(network)
-  }
-
-  // The login account data needed to manipulate applications.
-  //
-  // network       - The network that we are to get the application account info
-  //                 for.
-  // applicationId - The id of the local application record.
-  //
-  // Returns something that is passed to connect() as loginData to enable access
-  // with the appropriate permissions to the remote network.
-  async getApplicationAccessAccount (network, dataAPI, applicationId) {
-    const co = await dataAPI.getCompanyByApplicationId(applicationId)
-    return this.getCompanyAccount(network, dataAPI, co.id, false)
-  }
-
-  // The login account data needed to manipulate devices.
-  //
-  // network  - The network that we are to get the application account info for.
-  // deviceId - The id of the local device record.
-  //
-  // Returns something that is passed to connect() as loginData to enable access
-  // with the appropriate permissions to the remote network.
-  async getDeviceAccessAccount (network, dataAPI, deviceId) {
-    const co = await dataAPI.getCompanyByDeviceId(deviceId)
-    return this.getCompanyAccount(network, dataAPI, co.id, false)
-  }
-
-  // The login account data needed to manipulate deviceProfiles.
-  //
-  // network         - The network that we are to get the application account info
-  //                   for. For LoRa Server, this is a company account.
-  // deviceProfileId - The id of the local device record, used to get to the
-  //                   company.
-  //
-  // Returns something that is passed to connect() as loginData to enable access
-  // with the appropriate permissions to the remote network.
-  async getDeviceProfileAccessAccount (network, dataAPI, deviceId) {
-    const co = await dataAPI.getCompanyByDeviceProfileId(deviceId)
-    return this.getCompanyAccount(network, dataAPI, co.id, false)
-  }
 
   //* *****************************************************************************
   // Login/logout
   //* *****************************************************************************
 
-  // Connect with the remote system.
-  //
-  // network     - The networks record for the network that uses this
-  //               protocol.
-  // loginData   - The companyNetworkTypeLinks record for this company and network.
-  //
-  // Returns a Promise that connects to the remote system.  We treat all
-  // connections like a login session, and it is up to the code in this module
-  // to implement that concept.  The promise returns the opaque session data to
-  // be passed into other methods.
+  // Initiate the session with the remote network
   connect () {
     throw new Error('Connect method not implemented by network protocol handler.')
   }
 
   // Disconnect with the remote system.
-  //
-  // connection - The data top use to drop the connection
-  //
-  // Returns a Promise that disconnects from the remote system.
   disconnect () {
     // override this method if the protocol supports logout
   }
@@ -117,7 +42,6 @@ module.exports = class NetworkProtocol {
 
   // Add company.
   //
-  // session     - The session information for the user, including the //                   connection data for the remote system.
   // network         - The networks record for the network that uses this
   //                   protocol.
   // companyId       - The companyNetworkTypeLinks record id for this company and
@@ -133,7 +57,6 @@ module.exports = class NetworkProtocol {
 
   // Get company.
   //
-  // session - The session information for the user, including the //               connection data for the remote system.
   // network     - The networks record for the network that uses this
   //               protocol.
   // companyId   - The id for the local company data, for which the remote data
@@ -146,7 +69,6 @@ module.exports = class NetworkProtocol {
 
   // Update company.
   //
-  // session - The session information for the user, including the //               connection data for the remote system.
   // network     - The networks record for the network that uses this
   //               protocol.
   // companyId   - The id for the local company data, from which the remote data
@@ -159,8 +81,6 @@ module.exports = class NetworkProtocol {
 
   // Delete the company.
   //
-  // session - The session information for the user, including the connection
-  //               data for the remote system.
   // network     - The networks record for the network that uses this protocol.
   // companyId   - The company to be deleted on the remote system.
   //
@@ -171,8 +91,6 @@ module.exports = class NetworkProtocol {
 
   // Push the company, meaning update if it exists, and create if it doesn't.
   //
-  // session - The session information for the user, including the connection
-  //               data for the remote system.
   // network     - The networks record for the network that uses this protocol.
   // companyId   - The company to be deleted on the remote system.
   //
@@ -197,7 +115,6 @@ module.exports = class NetworkProtocol {
 
   // Add application.
   //
-  // session     - The session information for the user, including the //                   connection data for the remote system.
   // network         - The networks record for the network that uses this
   //                   protocol.
   // applicationId   - The application id for the application to create on the
@@ -212,7 +129,6 @@ module.exports = class NetworkProtocol {
 
   // Get application.
   //
-  // session     - The session information for the user, including the //                   connection data for the remote system.
   // network         - The networks record for the network that uses this
   //                   protocol.
   // applicationId   - The application id for the application to create on the
@@ -226,7 +142,6 @@ module.exports = class NetworkProtocol {
 
   // Update application.
   //
-  // session     - The session information for the user, including the //                   connection data for the remote system.
   // network         - The networks record for the network that uses this
   //                   protocol.
   // applicationId   - The application id for the application to create on the
@@ -240,7 +155,6 @@ module.exports = class NetworkProtocol {
 
   // Delete the application.
   //
-  // session     - The session information for the user, including the //                   connection data for the remote system.
   // network         - The networks record for the network that uses this
   //                   protocol.
   // applicationId   - The application id for the application to create on the
@@ -254,8 +168,6 @@ module.exports = class NetworkProtocol {
 
   // Push the application, meaning update if it exists, and create if it doesn't.
   //
-  // session   - The session information for the user, including the
-  //                 connection data for the remote system.
   // network       - The networks record for the network that uses this protocol.
   // applicationId - The company to be deleted on the remote system.
   //
@@ -268,7 +180,6 @@ module.exports = class NetworkProtocol {
   //* *****************************************************************************
   // Start the application.
   //
-  // session   - The session data to access the account on the network.
   // network       - The networks record for the network that uses this
   // applicationId - The application's record id.
   //
@@ -279,7 +190,6 @@ module.exports = class NetworkProtocol {
 
   // Stop the application.
   //
-  // session   - The session data to access the account on the network.
   // network       - The networks record for the network that uses this protocol.
   // applicationId - The local application's id to be stopped.
   //
@@ -294,7 +204,6 @@ module.exports = class NetworkProtocol {
 
   // Add deviceProfile.
   //
-  // session     - The session information for the user, including the //                   connection data for the remote system.
   // network         - The networks record for the network that uses this
   //                   protocol.
   // deviceProfileId - The application id for the application to create on the
@@ -310,7 +219,6 @@ module.exports = class NetworkProtocol {
 
   // Get deviceProfile.
   //
-  // session     - The session information for the user, including the //                   connection data for the remote system.
   // network         - The networks record for the network that uses this
   //                   protocol.
   // deviceProfileId - The deviceProfile id for the deviceProfile to get from the
@@ -324,7 +232,6 @@ module.exports = class NetworkProtocol {
 
   // Update deviceProfile.
   //
-  // session     - The session information for the user, including the //                   connection data for the remote system.
   // network         - The networks record for the network that uses this
   //                   protocol.
   // deviceProfileId - The deviceProfile id for the deviceProfile to update on the
@@ -338,7 +245,6 @@ module.exports = class NetworkProtocol {
 
   // Delete the deviceProfile.
   //
-  // session     - The session information for the user, including the //                   connection data for the remote system.
   // network         - The networks record for the network that uses this
   //                   protocol.
   // deviceProfileId - The application id for the deviceProfile to delete on the
@@ -353,8 +259,6 @@ module.exports = class NetworkProtocol {
   // Push the deviceProfile, meaning update if it exists, and create if it
   // doesn't.
   //
-  // session     - The session information for the user, including the
-  //                   connection data for the remote system.
   // network         - The networks record for the network that uses this
   //                   protocol.
   // deviceProfileId - The company to be deleted on the remote system.
@@ -369,7 +273,6 @@ module.exports = class NetworkProtocol {
 
   // Add device.
   //
-  // session     - The session information for the user, including the //                   connection data for the remote system.
   // network         - The networks record for the network that uses this
   //                   protocol.
   // companyData     - The companyNetworkTypeLinks record for this company and
@@ -388,7 +291,6 @@ module.exports = class NetworkProtocol {
 
   // Get device.
   //
-  // session     - The session information for the user, including the //                   connection data for the remote system.
   // network         - The networks record for the network that uses this
   //                   protocol.
   // companyData     - The companyNetworkTypeLinks record for this company and
@@ -405,7 +307,6 @@ module.exports = class NetworkProtocol {
 
   // Update device.
   //
-  // session - The session information for the user, including the connection //               data for the remote system.
   // network     - The networks record for the network that uses this protocol.
   // deviceId    - The device id for the device to create on the remote network.
   //
@@ -417,7 +318,6 @@ module.exports = class NetworkProtocol {
 
   // Delete the device.
   //
-  // session     - The session information for the user, including the //                   connection data for the remote system.
   // network         - The networks record for the network that uses this
   //                   protocol.
   // companyData     - The companyNetworkTypeLinks record for this company and
@@ -434,8 +334,6 @@ module.exports = class NetworkProtocol {
 
   // Push the device, meaning update if it exists, and create if it doesn't.
   //
-  // session     - The session information for the user, including the
-  //                   connection data for the remote system.
   // network         - The networks record for the network that uses this
   //                   protocol.
   // deviceId        - The device to be deleted on the remote system.

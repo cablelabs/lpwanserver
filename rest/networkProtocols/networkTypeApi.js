@@ -455,8 +455,8 @@ NetworkTypeApi.prototype.deleteDevice = function (networkTypeId, deviceId) {
     })
 }
 
-NetworkTypeApi.prototype.connect = function connect (network, loginData) {
-  return protos.connect(network, loginData)
+NetworkTypeApi.prototype.connect = function connect (network) {
+  return protos.connect(network)
 }
 
 NetworkTypeApi.prototype.test = function (network, dataAPI) {

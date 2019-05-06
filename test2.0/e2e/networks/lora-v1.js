@@ -2,13 +2,12 @@ const Client = require('../../../rest/networkProtocols/handlers/LoraOpenSource/v
 const client = new Client()
 
 module.exports = {
-  account: {
-    username: 'admin',
-    password: 'admin'
-  },
-  session: {},
   network: {
-    baseUrl: 'https://lora_appserver1:8080/api'
+    baseUrl: 'https://lora_appserver1:8080/api',
+    securityData: {
+      username: 'admin',
+      password: 'admin'
+    }
   },
   networkServer: {
     name: 'LoraOS1',
@@ -28,7 +27,7 @@ module.exports = {
   },
   application: {
     name: 'BobMouseTrapLv1',
-    description: 'CableLabs Test Application',
+    description: 'CableLabs Test Application'
   },
   device: {
     name: 'BobMouseTrapDeviceLv1',
@@ -69,27 +68,25 @@ module.exports = {
   },
   async setup () {
     let res
-    // Create Session
-    this.session.connection = await client.login(this.network, this.account)
     // Create Network Server
-    res = await client.createNetworkServer(this.session, this.network, this.networkServer)
+    res = await client.createNetworkServer(this.network, this.networkServer)
     this._setNetworkServerId(res.id)
     // Create Org
-    res = await client.createOrganization(this.session, this.network, this.organization)
+    res = await client.createOrganization(this.network, this.organization)
     this._setOrgId(res.id)
     // Create Service Profile
-    res = await client.createServiceProfile(this.session, this.network, this.serviceProfile)
+    res = await client.createServiceProfile(this.network, this.serviceProfile)
     this._setServiceProfileId(res.id)
     // Create Device Profile
-    res = await client.createDeviceProfile(this.session, this.network, this.deviceProfile)
+    res = await client.createDeviceProfile(this.network, this.deviceProfile)
     this._setDeviceProfileId(res.id)
     // Create App
-    res = await client.createApplication(this.session, this.network, this.application)
+    res = await client.createApplication(this.network, this.application)
     this._setApplicationId(res.id)
     // Create Device
-    await client.createDevice(this.session, this.network, this.application.id, this.device)
+    await client.createDevice(this.network, this.application.id, this.device)
     // Activate Device
-    await client.activateDevice(this.session, this.network, this.device.devEUI, this.deviceActivation)
+    await client.activateDevice(this.network, this.device.devEUI, this.deviceActivation)
   },
 
 }
