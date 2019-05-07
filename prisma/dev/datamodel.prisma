@@ -14,6 +14,7 @@ type Application @pgTable(name: "applications") {
   name: String
   description: String
   baseUrl: String
+  enabled: Boolean @default(value: true)
   reportingProtocol: ReportingProtocol @pgRelation(column: "reportingProtocolId")
   applicationNetworkTypeLinks: [ApplicationNetworkTypeLink] @relation(name: "ApplicationLinks" onDelete: CASCADE)
   devices: [Device] @relation(name: "ApplicationDevices" onDelete: CASCADE)

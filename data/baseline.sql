@@ -69,7 +69,8 @@ CREATE TABLE public.applications (
     name text,
     description text,
     "baseUrl" text,
-    "reportingProtocolId" bigint
+    "reportingProtocolId" bigint,
+    "enabled" boolean DEFAULT true
 );
 
 
@@ -520,7 +521,7 @@ COPY public."applicationNetworkTypeLinks" (id, "applicationId", "networkTypeId",
 -- Data for Name: applications; Type: TABLE DATA; Schema: public; Owner: -
 --
 
-COPY public.applications (id, "companyId", name, description, "baseUrl", "reportingProtocolId") FROM stdin;
+COPY public.applications (id, "companyId", name, description, "baseUrl", "reportingProtocolId", "enabled") FROM stdin;
 \.
 
 

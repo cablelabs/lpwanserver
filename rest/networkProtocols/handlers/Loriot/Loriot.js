@@ -3,6 +3,7 @@ const appLogger = require('../../../lib/appLogger.js')
 const R = require('ramda')
 const config = require('../../../config')
 const httpError = require('http-errors')
+const { joinUrl } = require('../../../lib/utils')
 
 module.exports = class Loriot extends NetworkProtocol {
   async connect (network) {
@@ -18,11 +19,9 @@ module.exports = class Loriot extends NetworkProtocol {
 
   async pullNetwork (network, dataAPI, modelAPI) {
     const apps = await this.pullApplications(network, modelAPI, dataAPI)
-    await Promise.all(apps.reduce((acc, x) => {
-      acc.push(this.pullDevices(network, x.remoteApp._id, x.localApp.id, modelAPI, dataAPI))
-      acc.push(this.pullIntegrations(network, x.remoteApp._id, x.localApp.id, modelAPI, dataAPI))
-      return acc
-    }, []))
+    await Promise.all(apps.map(x =>
+      this.pullDevices(network, x.remoteApp._id, x.localApp.id, modelAPI, dataAPI)
+    ))
   }
 
   async pushNetwork (network, dataAPI, modelAPI) {
@@ -45,18 +44,17 @@ module.exports = class Loriot extends NetworkProtocol {
 
   async addRemoteApplication (network, remoteAppId, modelAPI, dataAPI) {
     const remoteApp = await this.client.loadApplication(network, remoteAppId)
+    const [ integration ] = remoteApp.outputs.filter(x => x.output === 'httppush')
     const { records: localApps } = await modelAPI.applications.retrieveApplications({ search: remoteApp.name })
     let localApp = localApps[0]
-    if (localApp) {
-      appLogger.log(localApp.name + ' already exists')
-    }
-    else {
-      localApp = await modelAPI.applications.createApplication({
+    if (!localApp) {
+      let localAppData = {
         ...R.pick(['name', 'description'], remoteApp),
         companyId: 2,
-        reportingProtocolId: 1,
-        baseUrl: 'http://set.me.to.your.real.url:8888'
-      })
+        reportingProtocolId: 1
+      }
+      if (integration) localAppData.baseUrl = integration.url
+      localApp = await modelAPI.applications.createApplication(localAppData)
       appLogger.log('Created ' + localApp.name)
     }
     const { records: appNtls } = await modelAPI.applicationNetworkTypeLinks.retrieveApplicationNetworkTypeLinks({ applicationId: localApp.id })
@@ -89,6 +87,7 @@ module.exports = class Loriot extends NetworkProtocol {
         remoteApp.appeui
       )
     }
+    if (localApp.baseUrl) await this.startApplication(network, localApp.id, dataAPI)
     return { localApp, remoteApp }
   }
 
@@ -151,6 +150,54 @@ module.exports = class Loriot extends NetworkProtocol {
       network.networkProtocol.id,
       makeApplicationDataKey(appId, 'appNwkId')
     )
+  }
+
+  async startApplication (network, appId, dataAPI) {
+    // Create a new endpoint to get POSTs, and call the deliveryFunc.
+    // Use the local applicationId and the networkId to create a unique
+    // URL.
+    const url = joinUrl(config.get('base_url'), 'api/ingest', appId, network.id)
+
+    // Set up the Forwarding with LoRa App Server
+    var appNwkId = await dataAPI.getProtocolDataForKey(
+      network.id,
+      network.networkProtocol.id,
+      makeApplicationDataKey(appId, 'appNwkId')
+    )
+
+    const body = { output: 'httppush', osetup: { url } }
+
+    try {
+      await this.client.loadApplicationIntegration(network, appNwkId)
+      await this.client.updateApplicationIntegration(network, appNwkId, body)
+    }
+    catch (err) {
+      if (err.statusCode !== 404) throw err
+      await this.client.createApplicationIntegration(network, appNwkId, body)
+    }
+  }
+
+  async stopApplication (network, appId, dataAPI) {
+    let appNwkId
+    try {
+      appNwkId = await dataAPI.getProtocolDataForKey(
+        network.id,
+        network.networkProtocol.id,
+        makeApplicationDataKey(appId, 'appNwkId')
+      )
+      try {
+        await this.client.loadApplicationIntegration(network, appNwkId, 'http')
+      }
+      catch (err) {
+        if (err.statusCode === 404) return
+        throw err
+      }
+      await this.client.deleteApplicationIntegration(network, appNwkId, 'httppush')
+    }
+    catch (err) {
+      appLogger.log(`Cannot delete http integration for application ${appId} on network ${network.name}: ${err}`)
+      throw err
+    }
   }
 
   async pullDevices (network, remoteAppId, localAppId, modelAPI, dataAPI) {
@@ -216,23 +263,6 @@ module.exports = class Loriot extends NetworkProtocol {
     catch (e) {
       appLogger.log(e)
       throw e
-    }
-  }
-
-  async pullIntegrations (network, remoteAppId, localAppId, modelAPI) {
-    const remoteApp = await this.client.loadApplication(network, remoteAppId)
-    const [ integration ] = remoteApp.outputs.filter(x => x.output === 'httppush')
-    appLogger.log(integration, 'warn')
-    const deliveryURL = `api/ingest/${localAppId}/${network.id}`
-    const reportingUrl = `${config.get('base_url')}${deliveryURL}`
-    if (integration && integration.osetup.url === reportingUrl) return
-    const updatePayload = { output: 'httppush', osetup: { url: reportingUrl } }
-    if (integration) {
-      await modelAPI.applications.updateApplication({ id: localAppId, baseUrl: integration.uplinkDataURL })
-      await this.client.updateApplicationIntegrations(network, remoteApp._id, updatePayload)
-    }
-    else {
-      await this.client.createApplicationIntegration(network, remoteApp._id, updatePayload)
     }
   }
 

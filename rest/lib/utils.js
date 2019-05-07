@@ -31,10 +31,15 @@ const renameKeys = R.curry((keysMap, obj) =>
   R.reduce((acc, key) => mutate(keysMap[key] || key, obj[key], acc), {}, R.keys(obj))
 )
 
+function joinUrl (...args) {
+  return args.join('/').replace(/([^:]\/)\/+/g, '$1')
+}
+
 module.exports = {
   mutate,
   onFail,
   tryCatch,
   lift,
-  renameKeys
+  renameKeys,
+  joinUrl
 }

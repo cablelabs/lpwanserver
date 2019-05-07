@@ -21,40 +21,12 @@ function NetworkTypeApi (dataModel) {
   protos = modelAPI.networkProtocolAPI
 }
 
-// Functions for createPromiseOperationForNetworksOfType() to track the
-// promises to be executed in a pass, and to resolve on the last one.  We
-// will track counters using an id in case we are accessing this from more
-// than one caller at a time.
-var doneTracker = {}
-
-function allDoneInit (count) {
-  // Set up an id for this operation.  Unix timestamp should be sufficient.
-  let id = Math.floor(new Date())
-  // But just in case we're running really tight operations...
-  while (doneTracker[id]) {
-    ++id
-  }
-  // Set up tracking for the id.
-  doneTracker[id] = {}
-  doneTracker[id].targetCount = count
-  doneTracker[id].soFar = 0
-
-  // Caller uses the id to specify each call has completed.
-  return id
-}
-
-function done (id, logs, resolve) {
-  // Get the tracker and make sure it exists.
-  let tracker = doneTracker[id]
-  if (tracker) {
-    // Increment the soFar, add the logs to the global logs.
-    ++tracker.soFar
-    if (tracker.targetCount === tracker.soFar) {
-      resolve(logs)
-    }
-  }
-  else {
-    appLogger.log('Call to done() with invalid id!')
+// Wait for all promises to complete, then resolve with the
+// NetworkProtocolDataAccess logs
+function tracker (total, npda, resolve) {
+  let count = 0
+  return () => {
+    if (++count === total) resolve(npda.getLogs())
   }
 }
 
@@ -78,7 +50,7 @@ function done (id, logs, resolve) {
 function createPromiseOperationForNetworksOfType (operationName,
   networkTypeId,
   operationFunction) {
-  return new Promise(async function (resolve, reject) {
+  return new Promise(async resolve => {
     // Get the data access object/cache set up for this operation across all
     // networks associated with the networkType.  This object keeps a cache
     // of local database queries, keeps track of log messages, and provides
@@ -108,24 +80,20 @@ function createPromiseOperationForNetworksOfType (operationName,
       // Just resolve.
       resolve(npda.getLogs())
     }
-    // Start the promises that will do the operation for each network.
-    // Last one will resolve via done() function.
-    let id = allDoneInit(networks.records.length)
-    for (var i = 0; i < networks.records.length; ++i) {
-      let network = networks.records[i]
 
+    const done = tracker(networks.records.length, npda, resolve)
+
+    networks.records.forEach(network => {
       // Initialize the logging for this network.
       npda.initLog(networkType, network)
-
-      // Run the promise for the operation.
-      operationFunction(npda, network).then(function () {
-        done(id, npda.getLogs(), resolve)
-      })
-        .catch(function (err) {
+      operationFunction(npda, network).then(
+        done,
+        err => {
           npda.addLog(network, err)
-          done(id, npda.getLogs(), resolve)
-        })
-    }
+          done()
+        }
+      )
+    })
   })
 }
 

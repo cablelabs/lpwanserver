@@ -3,13 +3,12 @@ const NetworkProtocolDataAccess = require('../networkProtocols/networkProtocolDa
 const reportingProtocol = require('../reportingProtocols/postHandler')
 const { prisma, formatInputData, formatRelationshipsIn } = require('../lib/prisma')
 var httpError = require('http-errors')
-const { onFail } = require('../lib/utils')
+const { onFail, renameKeys } = require('../lib/utils')
 const R = require('ramda')
 
 class Application {
   constructor (modelAPI) {
     this.modelAPI = modelAPI
-    this.running = new Map()
   }
 
   async retrieveApplications ({ limit, offset, ...where } = {}) {
@@ -25,13 +24,12 @@ class Application {
       prisma.applications(query).$fragment(fragments.basic),
       prisma.applicationsConnection({ where }).aggregate().count()
     ])
-    records = records.map(x => ({ ...x, running: this.running.has(x.id) }))
+    records = records.map(renameEnabledToRunning)
     return { totalCount, records }
   }
 
   async retrieveApplication (id, fragment) {
     const app = await loadApplication({ id }, fragment)
-    app.running = this.running.has(id)
     try {
       const { records } = await this.modelAPI.applicationNetworkTypeLinks.retrieveApplicationNetworkTypeLinks({ applicationId: id })
       if (records.length) {
@@ -41,10 +39,14 @@ class Application {
     catch (err) {
       // ignore
     }
-    return app
+    return renameEnabledToRunning(app)
   }
 
   createApplication (data) {
+    if (data.running) {
+      data.enabled = data.running
+      delete data.running
+    }
     data = formatInputData(data)
     return prisma.createApplication(data).$fragment(fragments.basic)
   }
@@ -73,19 +75,32 @@ class Application {
     catch (err) {
       appLogger.log(`Error deleting application's networkTypeLinks: ${err}`, 'error')
     }
+    const app = await loadApplication({ id })
     // Kill the application if it's running.
-    if (this.running.has(id)) await this.stopApplication(id)
+    if (app.enabled) await this.stopApplication(id, false)
     // Delete application record
     return onFail(400, () => prisma.deleteApplication({ id }))
   }
 
   async startApplication (id) {
-    this.running.set(id, true)
-    return ({})
+    // Ensure app has baseUrl
+    let app = await loadApplication({ id })
+    if (!app.baseUrl) {
+      throw httpError(400, 'Base URL required to start application.')
+    }
+    app = await prisma.updateApplication({ data: { enabled: true }, where: { id } }).$fragment(fragments.basic)
+    // Call startApplication on NetworkTypes
+    let { records } = await this.modelAPI.applicationNetworkTypeLinks.retrieveApplicationNetworkTypeLinks({ application: { id } })
+    const logs = await Promise.all(records.map(x => this.modelAPI.networkTypeAPI.startApplication(x.networkType.id, id)))
+    return R.flatten(logs)
   }
 
-  async stopApplication (id) {
-    this.running.set(id, false)
+  async stopApplication (id, update = true) {
+    if (update) await prisma.updateApplication({ data: { enabled: false }, where: { id } })
+    // Call stopApplication on NetworkTypes
+    let { records } = await this.modelAPI.applicationNetworkTypeLinks.retrieveApplicationNetworkTypeLinks({ application: { id } })
+    const logs = await Promise.all(records.map(x => this.modelAPI.networkTypeAPI.stopApplication(x.networkType.id, id)))
+    return R.flatten(logs)
   }
 
   async testApplication (id, data) {
@@ -101,22 +116,20 @@ class Application {
   }
 
   async passDataToApplication (id, networkId, data) {
-    let network = await this.modelAPI.networks.retrieveNetwork(networkId)
+    // Ensure application is running
+    const app = await loadApplication({ id })
+    if (!app.enabled) return
+    // Ensure network is enabled
+    const network = await this.modelAPI.networks.retrieveNetwork(networkId)
+    if (!network.securityData.enabled) return
+    // Ensure applicationNetworkTypeLink exists
+    const appNtlQuery = { application: { id }, network: { id: networkId }, limit: 1 }
+    let { records } = await this.modelAPI.applicationNetworkTypeLinks.retrieveApplicationNetworkTypeLinks(appNtlQuery)
+    if (!records.length) return
+    // Pass data
     let proto = await this.modelAPI.networkProtocolAPI.getProtocol(network)
     let dataAPI = new NetworkProtocolDataAccess(this.modelAPI, 'ReportingProtocol')
-    await proto.api.passDataToApplication(network, id, data, dataAPI)
-    return 204
-  }
-
-  async startApplications () {
-    try {
-      const recs = await prisma.applications().$fragment(fragments.id)
-      await Promise.all(recs.map(x => this.startApplication(x.id)))
-    }
-    catch (err) {
-      appLogger.log('Failed to start applications: ' + err, 'error')
-      throw err
-    }
+    await proto.passDataToApplication(network, id, data, dataAPI)
   }
 }
 
@@ -125,6 +138,8 @@ async function loadApplication (uniqueKeyObj, fragement = 'basic') {
   if (!rec) throw httpError(404, 'Application not found')
   return rec
 }
+
+const renameEnabledToRunning = renameKeys({ enabled: 'running' })
 
 //* *****************************************************************************
 // Fragments for how the data should be returned from Prisma.

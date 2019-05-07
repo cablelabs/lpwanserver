@@ -391,43 +391,29 @@ exports.initialize = function (app, server) {
      * @apiVersion 0.1.0
      */
   // Yeah, yeah, this isn't a pure REST call.  So sue me.  Gets the job done.
-  app.post('/api/applications/:id/start', [restServer.isLoggedIn,
-    restServer.fetchCompany,
-    restServer.isAdmin],
-  function (req, res, next) {
+  async function startApplication (req, res) {
     var id = parseInt(req.params.id, 10)
-    // If the caller is a global admin, we can just start.
-    if (req.company.type.id === modelAPI.companies.COMPANY_ADMIN) {
-      modelAPI.applications.startApplication(id).then(function (logs) {
-        restServer.respond(res, 200, logs.remoteAccessLogs)
-      })
-        .catch(function (err) {
-          appLogger.log('Error starting application ' + id + ': ' + err)
-          restServer.respond(res, err)
-        })
+    if (req.company.type.id !== modelAPI.companies.COMPANY_ADMIN) {
+      const app = await modelAPI.applications.retrieveApplication(id)
+      if (req.user.company.id !== app.company.id) {
+        restServer.respond(res, 403)
+        return
+      }
     }
-    // Company admin
-    else {
-      modelAPI.applications.retrieveApplication(req.params.id).then(function (app) {
-        // Verify that the user can start.
-        if (req.user.company.id !== app.company.id) {
-          restServer.respond(res, 403)
-          return
-        }
-        modelAPI.applications.startApplication(id).then(function (logs) {
-          restServer.respond(res, 200, logs.remoteAccessLogs)
-        })
-          .catch(function (err) {
-            appLogger.log('Error starting application ' + id + ': ' + err)
-            restServer.respond(res, err)
-          })
-      })
-        .catch(function (err) {
-          appLogger.log('Error finding application ' + id + ' to start: ' + err)
-          restServer.respond(res, err)
-        })
+    try {
+      const logs = await modelAPI.applications.startApplication(id)
+      restServer.respond(res, 200, logs)
     }
-  })
+    catch (err) {
+      appLogger.log('Error starting application ' + id + ': ' + err)
+      restServer.respond(res, err)
+    }
+  }
+  app.post(
+    '/api/applications/:id/start',
+    [restServer.isLoggedIn, restServer.fetchCompany, restServer.isAdmin],
+    startApplication
+  )
 
   /**
      * @apiDescription Stops serving the data from the Networks to the
@@ -441,44 +427,29 @@ exports.initialize = function (app, server) {
      * @apiVersion 0.1.0
      */
   // Yeah, yeah, this isn't a pure REST call.  So sue me.  Gets the job done.
-  app.post('/api/applications/:id/stop', [restServer.isLoggedIn,
-    restServer.fetchCompany,
-    restServer.isAdmin],
-  function (req, res, next) {
+  async function stopApplication (req, res) {
     var id = parseInt(req.params.id, 10)
-    // If the caller is a global admin, we can just stop.
-    if (req.company.type.id === modelAPI.companies.COMPANY_ADMIN) {
-      modelAPI.applications.stopApplication(id).then(function (logs) {
-        restServer.respond(res, 200, logs)
-      })
-        .catch(function (err) {
-          appLogger.log('Error stopping application ' + id + ': ' + err)
-          restServer.respond(res, err)
-        })
+    if (req.company.type.id !== modelAPI.companies.COMPANY_ADMIN) {
+      const app = await modelAPI.applications.retrieveApplication(id)
+      if (req.user.company.id !== app.company.id) {
+        restServer.respond(res, 403)
+        return
+      }
     }
-    // Company admin
-    else {
-      modelAPI.applications.retrieveApplication(req.params.id).then(function (app) {
-        // Verify that the user can stop this app.
-        if (req.user.company.id !== app.company.id) {
-          restServer.respond(res, 403)
-          return
-        }
-
-        modelAPI.applications.stopApplication(id).then(function (logs) {
-          restServer.respond(res, 200, logs.remoteAccessLogs)
-        })
-          .catch(function (err) {
-            appLogger.log('Error stopping application ' + id + ': ' + err)
-            restServer.respond(res, err)
-          })
-      })
-        .catch(function (err) {
-          appLogger.log('Error finding application ' + id + ' to start: ' + err)
-          restServer.respond(res, err)
-        })
+    try {
+      const logs = await modelAPI.applications.stopApplication(id)
+      restServer.respond(res, 200, logs)
     }
-  })
+    catch (err) {
+      appLogger.log('Error stopping application ' + id + ': ' + err)
+      restServer.respond(res, err)
+    }
+  }
+  app.post(
+    '/api/applications/:id/stop',
+    [restServer.isLoggedIn, restServer.fetchCompany, restServer.isAdmin],
+    stopApplication
+  )
 
   /**
      * Tests serving the data as if it came from a network.
@@ -502,37 +473,19 @@ exports.initialize = function (app, server) {
      *   logged in.  We will reject messages for unknown applicationIds and/or
      *   networkIds with a generic 404.
      */
-  app.post('/api/ingest/:applicationId/:networkId', function (req, res, next) {
-    var applicationId = parseInt(req.params.applicationId, 10)
-    var networkId = parseInt(req.params.networkId, 10)
-    var data = req.body
+  async function uplinkHandler (req, res) {
+    var appId = parseInt(req.params.applicationId, 10)
+    var nwkId = parseInt(req.params.networkId, 10)
 
-    // make sure the network is enabled
-    modelAPI.networks.retrieveNetwork(networkId)
-      .then(network => {
-        if (network.securityData.enabled) {
-          appLogger.log('Received data from network ' + networkId +
-            ' for application ' + applicationId +
-            ': ' + JSON.stringify(data))
-
-          modelAPI.applications.passDataToApplication(applicationId, networkId,
-            data).then(function () {
-            restServer.respond(res, 200)
-          })
-            .catch(function (err) {
-              appLogger.log('Error passing data from network ' + networkId +
-                ' to application ' + applicationId + ': ' + err)
-              restServer.respond(res, err)
-            })
-        }
-        else {
-          restServer.respond(res, 200)
-        }
-      })
-  })
-
-  // Now that the API is initialized, start the known apps.
-  modelAPI.applications.startApplications()
-    .then(() => appLogger.log('Applications Started.'))
-    .catch((err) => appLogger.log('Applications Startup Failed: ' + err))
+    try {
+      await modelAPI.applications.passDataToApplication(appId, nwkId, req.body)
+      restServer.respond(res, 204)
+    }
+    catch (err) {
+      appLogger.log(`Error passing data from network ${nwkId} to application ${appId}: ${err}`)
+      restServer.respond(res, err)
+    }
+  }
+  app.post('/api/ingest/:applicationId/:networkId', uplinkHandler)
+  app.post('/api/uplink/:applicationId/:networkId', uplinkHandler)
 }
