@@ -313,7 +313,6 @@ describe('E2E Test for Creating an Application Use Case #188', () => {
     })
     it('Verify the LoRaServer V1 Device Profile Exists', async () => {
       const { result } = await Lora1.client.listDeviceProfiles(Lora1.network, { limit: 100 })
-      console.log
       const dp = result.find(x => x.name === deviceProfile.networkSettings.name)
       should.exist(dp)
       remoteDeviceProfileId = dp.id
