@@ -14,7 +14,7 @@ var should = chai.should()
 chai.use(chaiHttp)
 let server = chai.request(app).keepOpen()
 
-const describeTTN = process.env.TTN_ENABLED === 'true' ? describe.only.bind(describe) : describe.skip.bind(describe)
+const describeTTN = process.env.TTN_ENABLED === 'true' ? describe : describe.skip.bind(describe)
 const describeLoriot = process.env.LORIOT_ENABLED === 'true' ? describe : describe.skip.bind(describe)
 
 let adminToken = ''
@@ -36,7 +36,7 @@ const testData = {
   })
 }
 
-describe.only('E2E Test for Deleting an Application Use Case #191', () => {
+describe('E2E Test for Deleting an Application Use Case #191', () => {
   before(() => setup.start())
 
   describe('Verify Login and Administration of Users Works', () => {
