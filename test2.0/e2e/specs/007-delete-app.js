@@ -8,11 +8,13 @@ const { assertEqualProps } = require('../../lib/helpers')
 const Lora1 = require('../networks/lora-v1')
 const Lora2 = require('../networks/lora-v2')
 const Loriot = require('../networks/loriot')
+const Ttn = require('../networks/ttn')
 
 var should = chai.should()
 chai.use(chaiHttp)
 let server = chai.request(app).keepOpen()
 
+const describeTTN = process.env.TTN_ENABLED === 'true' ? describe : describe.skip.bind(describe)
 const describeLoriot = process.env.LORIOT_ENABLED === 'true' ? describe : describe.skip.bind(describe)
 
 let adminToken = ''
@@ -517,15 +519,31 @@ describe('E2E Test for Deleting an Application Use Case #191', () => {
   describeLoriot('Remove Loriot apps and devices', () => {
     it('Remove Loriot apps and devices', async () => {
       let { apps } = Loriot.client.listApplications(Loriot.network, { page: 1, perPage: 100 })
-      let appDevices = await Promise.all(apps.map(app => {
+      let appDevices = await Promise.all(apps.map(async app => {
         const appId = parseInt(app._id, 10)
-        return Loriot.client.listDevices(Loriot.network, appId, { page: 1, perPage: 100 })
-          .then(x => ({ appId, devices: x.devices }))
+        const { devices } = await Loriot.client.listDevices(Loriot.network, appId, { page: 1, perPage: 100 })
+        return { appId, devices }
       }))
       await Promise.all(appDevices.map(async ({ appId, devices }) => {
-        await Promise.all(devices.map(dev => Loriot.client.deleteDevice(Loriot.network, appId, dev._id)))
+        await Promise.all(devices.map(dev => Loriot.client.deleteDevice(Loriot.network, appId, dev.id)))
         await Loriot.client.deleteApplication(Loriot.network, appId)
       }))
+    })
+  })
+  describeTTN('Remove TTN apps and devices', () => {
+    it('Remove TTN apps and devices', async () => {
+      const deleteApp = async app => {
+        try {
+          const devices = await Ttn.client.listDevices(Ttn.network, app.id)
+          await Promise.all(devices.map(dev => Ttn.client.deleteDevice(Ttn.network, app.id, dev.id)))
+          await Ttn.client.unregisterApplication(Ttn.network, app.id)
+        }
+        catch (err) {
+        }
+        await Ttn.client.deleteAccountApplication(Ttn.network, app.id)
+      }
+      let apps = await Ttn.client.listApplications(Ttn.network)
+      await Promise.all(apps.map(deleteApp))
     })
   })
 })

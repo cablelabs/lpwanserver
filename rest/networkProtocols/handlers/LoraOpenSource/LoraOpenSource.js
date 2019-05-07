@@ -1,6 +1,7 @@
 const NetworkProtocol = require('../../NetworkProtocol')
 const R = require('ramda')
 const appLogger = require('../../../lib/appLogger.js')
+const { joinUrl } = require('../../../lib/utils')
 const httpError = require('http-errors')
 const config = require('../../../config')
 // const { mutate } = require('../../../lib/utils')
@@ -424,11 +425,9 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
       this.pullDeviceProfiles(network, modelAPI, companyNtl, dataAPI),
       this.pullApplications(network, modelAPI, dataAPI, companyNtl)
     ])
-    await Promise.all(pulledApps.reduce((acc, x) => {
-      acc.push(this.pullDevices(network, x.remoteApplication, x.localApplication, pulledDevProfiles, modelAPI, dataAPI))
-      acc.push(this.pullIntegrations(network, x.remoteApplication, x.localApplication, pulledDevProfiles, modelAPI, dataAPI))
-      return acc
-    }, []))
+    await Promise.all(pulledApps.map(x =>
+      this.pullDevices(network, x.remoteApplication, x.localApplication, pulledDevProfiles, modelAPI, dataAPI)
+    ))
   }
 
   async setupOrganization (network, modelAPI, dataAPI) {
@@ -537,18 +536,24 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
 
   async addRemoteApplication (network, remoteAppId, modelAPI, dataAPI) {
     const remoteApp = await this.client.loadApplication(network, remoteAppId)
+    let integration
+    try {
+      integration = await this.client.loadApplicationIntegration(network, remoteAppId, 'http')
+    }
+    catch (err) {
+      if (err.statusCode !== 404) throw err
+    }
+    // Check for local app with the same name
     const { records: localApps } = await modelAPI.applications.retrieveApplications({ search: remoteApp.name })
     let localApp = localApps[0]
-    if (localApp) {
-      appLogger.log(localApp.name + ' already exists')
-    }
-    else {
-      localApp = await modelAPI.applications.createApplication({
+    if (!localApp) {
+      let localAppData = {
         ...R.pick(['name', 'description'], remoteApp),
         companyId: 2,
-        reportingProtocolId: 1,
-        baseUrl: 'http://set.me.to.your.real.url:8888'
-      })
+        reportingProtocolId: 1
+      }
+      if (integration) localAppData.baseUrl = integration.uplinkDataURL
+      localApp = await modelAPI.applications.createApplication(localAppData)
       appLogger.log('Created ' + localApp.name)
     }
     const { records: appNtls } = await modelAPI.applicationNetworkTypeLinks.retrieveApplicationNetworkTypeLinks({ applicationId: localApp.id })
@@ -575,6 +580,7 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
         remoteApp.id
       )
     }
+    if (localApp.baseUrl) await this.startApplication(network, localApp.id, dataAPI)
     return { localApplication: localApp.id, remoteApplication: remoteApp.id }
   }
 
@@ -629,28 +635,6 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
       remoteDevice.devEUI
     )
     return localDevice.id
-  }
-
-  async pullIntegrations (network, remoteAppId, localAppId, dpMap, modelAPI) {
-    let integration
-    const deliveryURL = `/api/ingest/${localAppId}/${network.id}`
-    const reportingUrl = `${config.get('base_url')}${deliveryURL}`
-    const body = url => ({
-      ackNotificationURL: url,
-      uplinkDataURL: url,
-      errorNotificationURL: url,
-      joinNotificationURL: url
-    })
-    try {
-      integration = await this.client.loadApplicationIntegration(network, remoteAppId, 'http')
-      appLogger.log(integration, 'warn')
-      if (integration.uplinkDataURL === reportingUrl) return
-      await modelAPI.applications.updateApplication({ id: localAppId, baseUrl: integration.uplinkDataURL })
-      await this.client.updateApplicationIntegration(network, remoteAppId, 'http', body(reportingUrl))
-    }
-    catch (err) {
-      await this.client.createApplicationIntegration(network, remoteAppId, 'http', body(reportingUrl))
-    }
   }
 
   async addApplication (network, appId, dataAPI) {
@@ -754,11 +738,7 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
     // Create a new endpoint to get POSTs, and call the deliveryFunc.
     // Use the local applicationId and the networkId to create a unique
     // URL.
-    var deliveryURL = 'api/ingest/' + appId + '/' + network.id
-    var reportingAPI = await dataAPI.getReportingAPIByApplicationId(appId)
-
-    // Link the reporting API to the application and network.
-    this.activeApplicationNetworkProtocols['' + appId + ':' + network.id] = reportingAPI
+    const url = joinUrl(config.get('base_url'), 'api/ingest', appId, network.id)
 
     // Set up the Forwarding with LoRa App Server
     var appNwkId = await dataAPI.getProtocolDataForKey(
@@ -767,19 +747,26 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
       makeApplicationDataKey(appId, 'appNwkId')
     )
 
-    await this.client.createApplicationIntegration(network, appNwkId, {
-      id: 'http',
-      dataUpURL: config.get('base_url') + deliveryURL
-    })
+    const body = {
+      ackNotificationURL: url,
+      errorNotificationURL: url,
+      joinNotificationURL: url,
+      uplinkDataURL: url,
+      statusNotificationURL: url,
+      locationNotificationURL: url
+    }
+
+    try {
+      await this.client.loadApplicationIntegration(network, appNwkId, 'http')
+      await this.client.updateApplicationIntegration(network, appNwkId, 'http', body)
+    }
+    catch (err) {
+      if (err.statusCode !== 404) throw err
+      await this.client.createApplicationIntegration(network, appNwkId, 'http', body)
+    }
   }
 
   async stopApplication (network, appId, dataAPI) {
-    // Can't delete if not running on the network.
-    if (this.activeApplicationNetworkProtocols['' + appId + ':' + network.id] === undefined) {
-      // We don't think the app is running on this network.
-      appLogger.log('Application ' + appId + ' is not running on network ' + network.id)
-      throw httpError.NotFound()
-    }
     let appNwkId
     try {
       appNwkId = await dataAPI.getProtocolDataForKey(
@@ -787,54 +774,19 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
         network.networkProtocol.id,
         makeApplicationDataKey(appId, 'appNwkId')
       )
+      try {
+        await this.client.loadApplicationIntegration(network, appNwkId, 'http')
+      }
+      catch (err) {
+        if (err.statusCode === 404) return
+        throw err
+      }
+      await this.client.deleteApplicationIntegration(network, appNwkId, 'http')
     }
     catch (err) {
-      appLogger.log('Cannot delete application data forwarding for application ' +
-      appId +
-        ' and network ' +
-        network.name +
-        ': ' + err)
+      appLogger.log(`Cannot delete http integration for application ${appId} on network ${network.name}: ${err}`)
       throw err
     }
-    await this.client.deleteApplicationIntegration(network, appNwkId, 'http')
-    delete this.activeApplicationNetworkProtocols['' + appId + ':' + network.id]
-  }
-
-  async passDataToApplication (network, appId, data, dataAPI) {
-    // Get the reporting API, reject data if not running.
-    var reportingAPI = this.activeApplicationNetworkProtocols['' + appId + ':' + network.id]
-
-    if (!reportingAPI) {
-      appLogger.log('Rejecting received data from networkId ' + network.id +
-        ' for applicationId ' + appId +
-        '. The appliction is not in a running state.  Data = ' +
-        JSON.stringify(data)
-      )
-      throw new Error('Application not running')
-    }
-    var deviceId
-    if (data.devEUI) {
-      var recs = await dataAPI.getProtocolDataWithData(
-        network.id,
-        'dev:%/devNwkId',
-        data.devEUI
-      )
-      if (recs && (recs.length > 0)) {
-        let splitOnSlash = recs[0].dataIdentifier.split('/')
-        let splitOnColon = splitOnSlash[0].split(':')
-        deviceId = parseInt(splitOnColon[1], 10)
-
-        let device = await dataAPI.getDeviceById(deviceId)
-        data.devieInfo = R.pick(['name', 'description'], device)
-        data.deviceInfo.model = device.deviceModel
-      }
-    }
-
-    let app = await dataAPI.getApplicationById(appId)
-
-    data.applicationInfo = { name: app.name }
-    data.networkInfo = { name: network.name }
-    await reportingAPI.report(data, app.baseUrl, app.name)
   }
 
   async addDeviceProfile (network, deviceProfileId, dataAPI) {

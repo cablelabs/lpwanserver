@@ -2,8 +2,11 @@ const NetworkProtocol = require('../../../NetworkProtocol')
 const appLogger = require('../../../../lib/appLogger')
 const uuid = require('uuid/v1')
 const R = require('ramda')
-const { tryCatch } = require('../../../../lib/utils')
+const { tryCatch, renameKeys } = require('../../../../lib/utils')
+// const config = require('../../../../config')
 const ApiClient = require('./client')
+
+// const HTTP_INTEGRATION_PROCESS_ID = 'lpwanserver-httppush'
 
 /**********************************************************************************************************************
  * Bookeeping: Register, Test, Connect
@@ -76,8 +79,8 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
    */
   async pullNetwork (network, dataAPI, modelAPI) {
     try {
-      const pulledResources = await this.pullApplications(network, modelAPI, dataAPI)
-      const devices = await Promise.all(pulledResources.map(x =>
+      const apps = await this.pullApplications(network, modelAPI, dataAPI)
+      const devices = await Promise.all(apps.map(x =>
         this.pullDevices(network, x.remoteApplication, x.localApplication, {}, modelAPI, dataAPI)
       ))
       appLogger.log(devices, 'info')
@@ -102,7 +105,6 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
   async pullApplications (network, modelAPI, dataAPI) {
     try {
       const apps = await this.client.listApplications(network)
-      network.securityData.appKeys = apps.map(x => ({ app: x.id, key: x.access_keys[0].key }))
       return Promise.all(apps.map(x => this.addRemoteApplication(x, network, modelAPI, dataAPI)))
     }
     catch (e) {
@@ -111,51 +113,53 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
     }
   }
 
-  async addRemoteApplication (limitedRemoteApplication, network, modelAPI, dataAPI) {
+  async addRemoteApplication (accountServerApp, network, modelAPI, dataAPI) {
     try {
-      let remoteApplication = await this.client.loadHandlerApplication(network, limitedRemoteApplication.id)
-      let normalizedApplication = this.normalizeApplicationData(remoteApplication, limitedRemoteApplication, network)
-      let existingApplication = await modelAPI.applications.retrieveApplications({ search: normalizedApplication.name })
-      if (existingApplication.totalCount > 0) {
-        existingApplication = existingApplication.records[0]
-        appLogger.log(existingApplication.name + ' already exists', 'info')
-        appLogger.log(normalizedApplication, 'info')
+      let handlerApp = await this.client.loadHandlerApplication(network, accountServerApp.id)
+      let integration
+      try {
+        // integration = await this.client.loadApplicationIntegration(network, accountServerApp.id, HTTP_INTEGRATION_PROCESS_ID)
       }
-      else {
-        existingApplication = await modelAPI.applications.createApplication({
+      catch (err) {
+        if (err.statusCode !== 404) throw err
+      }
+      let normalizedApplication = this.normalizeApplicationData(handlerApp, accountServerApp, network)
+      const { records: localApps } = await modelAPI.applications.retrieveApplications({ search: accountServerApp.name })
+      let localApp = localApps[0]
+      if (!localApp) {
+        const localAppData = {
           ...R.pick(['name', 'description'], normalizedApplication),
           companyId: 2,
-          reportingProtocolId: 1,
-          baseUrl: 'http://set.me.to.your.real.url:8888'
-        })
-        appLogger.log('Created ' + existingApplication.name)
+          reportingProtocolId: 1
+        }
+        if (integration) localAppData.baseUrl = integration.settings.TTI_URL
+        localApp = await modelAPI.applications.createApplication(localAppData)
+        appLogger.log('Created ' + localApp.name)
       }
 
-      let existingApplicationNTL = await modelAPI.applicationNetworkTypeLinks.retrieveApplicationNetworkTypeLinks({ applicationId: existingApplication.id })
-      if (existingApplicationNTL.totalCount > 0) {
-        appLogger.log(existingApplication.name + ' link already exists', 'info')
-      }
-      else {
-        existingApplicationNTL = await modelAPI.applicationNetworkTypeLinks.createApplicationNetworkTypeLink(
+      let { records: appNtls } = await modelAPI.applicationNetworkTypeLinks.retrieveApplicationNetworkTypeLinks({ applicationId: localApp.id })
+      let appNtl = appNtls[0]
+      if (!appNtl) {
+        appNtl = await modelAPI.applicationNetworkTypeLinks.createApplicationNetworkTypeLink(
           {
-            applicationId: existingApplication.id,
+            applicationId: localApp.id,
             networkTypeId: network.networkType.id,
             networkSettings: normalizedApplication
           },
           {
-            companyId: existingApplication.company.id,
+            companyId: localApp.company.id,
             remoteOrigin: true
           }
         )
-        appLogger.log(existingApplicationNTL, 'info')
         await dataAPI.putProtocolDataForKey(
           network.id,
           network.networkProtocol.id,
-          makeApplicationDataKey(existingApplication.id, 'appNwkId'),
+          makeApplicationDataKey(localApp.id, 'appNwkId'),
           normalizedApplication.id
         )
       }
-      return { localApplication: existingApplication, remoteApplication: normalizedApplication }
+      // if (localApp.baseUrl) await this.startApplication(network, localApp.id, dataAPI)
+      return { localApplication: localApp, remoteApplication: normalizedApplication }
     }
     catch (e) {
       appLogger.log(e, 'error')
@@ -174,11 +178,11 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
    * @param modelAPI
    * @returns {Promise<any>}
    */
-  async pullDevices (network, remoteApplication, localApplication, dpMap, modelAPI, dataAPI) {
+  async pullDevices (network, remoteApp, localApp, dpMap, modelAPI, dataAPI) {
     try {
-      const { devices = [] } = await this.client.listDevices(network, remoteApplication)
+      const { devices = [] } = await this.client.listDevices(network, remoteApp.id)
       await Promise.all(devices.map(device => {
-        return this.addRemoteDevice(device, network, localApplication.id, dpMap, modelAPI, dataAPI)
+        return this.addRemoteDevice(device, network, localApp.id, dpMap, modelAPI, dataAPI)
       }))
       return devices
     }
@@ -189,7 +193,7 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
     }
   }
 
-  async addRemoteDevice (remoteDevice, network, applicationId, dpMap, modelAPI, dataAPI) {
+  async addRemoteDevice (remoteDevice, network, localAppId, dpMap, modelAPI, dataAPI) {
     appLogger.log('Adding ' + remoteDevice.deveui)
     appLogger.log(remoteDevice)
     let existingDevice = await modelAPI.devices.retrieveDevices({ search: remoteDevice.lorawan_device.dev_eui })
@@ -201,12 +205,12 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
     }
     else {
       appLogger.log('creating ' + remoteDevice.lorawan_device.dev_eui)
-      existingDevice = await modelAPI.devices.createDevice(remoteDevice.lorawan_device.dev_eui, remoteDevice.description, applicationId)
+      existingDevice = await modelAPI.devices.createDevice(remoteDevice.lorawan_device.dev_eui, remoteDevice.description, localAppId)
       appLogger.log('Created ' + existingDevice.name)
     }
 
     let existingDeviceNTL = await modelAPI.deviceNetworkTypeLinks.retrieveDeviceNetworkTypeLinks({ deviceId: existingDevice.id })
-    let existingApplicationNTL = await modelAPI.applicationNetworkTypeLinks.retrieveApplicationNetworkTypeLink(applicationId)
+    let existingApplicationNTL = await modelAPI.applicationNetworkTypeLinks.retrieveApplicationNetworkTypeLink(localAppId)
 
     if (existingDeviceNTL.totalCount > 0) {
       appLogger.log(existingDevice.name + ' link already exists')
@@ -392,19 +396,19 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
       appLogger.log('Failed to get required data for addApplication: ' + applicationId, 'error')
       throw err
     }
-    let ttnApplication = this.deNormalizeApplicationData(applicationData.networkSettings, application)
+    let { handlerApp, accountServerApp } = this.deNormalizeApplicationData(applicationData.networkSettings, application)
     try {
-      const res = await this.client.createApplication(network, ttnApplication.ttnApplicationMeta)
-      applicationData.networkSettings.applicationEUI = res.euis[0]
+      accountServerApp = await this.client.createApplication(network, accountServerApp)
+      applicationData.networkSettings.applicationEUI = accountServerApp.euis[0]
       appLogger.log(applicationData, 'error')
       await modelAPI.applicationNetworkTypeLinks.updateApplicationNetworkTypeLink(applicationData, { companyId: 2, remoteOrigin: true })
       await dataAPI.putProtocolDataForKey(
         network.id,
         network.networkProtocol.id,
         makeApplicationDataKey(application.id, 'appNwkId'),
-        res.id
+        accountServerApp.id
       )
-      return registerApplicationWithHandler(network, ttnApplication.ttnApplicationData, res, dataAPI)
+      return this.registerApplicationWithHandler(network, handlerApp, accountServerApp, dataAPI)
     }
     catch (err) {
       appLogger.log('Error on create application: ' + err, 'error')
@@ -537,7 +541,7 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
         network.networkProtocol.id,
         makeApplicationDataKey(applicationId, 'appNwkId')
       )
-      await this.client.deleteApplication(network, appNetworkId)
+      await this.client.deleteAccountApplication(network, appNetworkId)
       await dataAPI.deleteProtocolDataForKey(
         network.id,
         network.networkProtocol.id,
@@ -559,29 +563,39 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
   //
   // Returns a Promise that starts the application data flowing from the remote
   // system.
-  async startApplication (network, applicationId, dataAPI) {
-    try {
-      // Create a new endpoint to get POSTs, and call the deliveryFunc.
-      // Use the local applicationId and the networkId to create a unique
-      // URL.
-      // let deliveryURL = 'api/ingest/' + applicationId + '/' + network.id
-      let reportingAPI = await dataAPI.getReportingAPIByApplicationId(applicationId)
+  async startApplication () {
+    // Unable to determine how to manage integrations except via TTN console.
 
-      // Link the reporting API to the application and network.
-      this.activeApplicationNetworkProtocols['' + applicationId + ':' + network.id] = reportingAPI
+    // const url = joinUrl(config.get('base_url'), 'api/ingest', appId, network.id)
 
-      // Set up the Forwarding with LoRa App Server
-      let appNwkId = await dataAPI.getProtocolDataForKey(
-        network.id,
-        network.networkProtocol.id,
-        makeApplicationDataKey(applicationId, 'appNwkId')
-      )
-      await this.client.createApplicationIntegration(network, appNwkId, 'http')
-    }
-    catch (err) {
-      appLogger.log('Error on add application data reporting: ' + err)
-      throw err
-    }
+    // // Set up the Forwarding with LoRa App Server
+    // let appNwkId = await dataAPI.getProtocolDataForKey(
+    //   network.id,
+    //   network.networkProtocol.id,
+    //   makeApplicationDataKey(appId, 'appNwkId')
+    // )
+
+    // const remoteApp = await this.client.loadApplication(network, appNwkId)
+    // const TTN_APP_ACCESS_KEY = remoteApp.access_keys[0].key
+
+    // const body = {
+    //   process_id: HTTP_INTEGRATION_PROCESS_ID,
+    //   settings: {
+    //     TTI_URL: url,
+    //     TTI_METHOD: 'POST',
+    //     TTN_APP_ACCESS_KEY,
+    //     TTI_AUTHORIZATION: null
+    //   }
+    // }
+
+    // try {
+    //   await this.client.loadApplicationIntegration(network, appNwkId, HTTP_INTEGRATION_PROCESS_ID)
+    //   await this.client.updateApplicationIntegration(network, appNwkId, 'http', R.pick(['settings'], body))
+    // }
+    // catch (err) {
+    //   if (err.statusCode !== 404) throw err
+    //   await this.client.createApplicationIntegration(network, appNwkId, body)
+    // }
   }
 
   // Stop the application.
@@ -593,103 +607,27 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
   //
   // Returns a Promise that stops the application data flowing from the remote
   // system.
-  async stopApplication (network, applicationId, dataAPI) {
-    let appNwkId
-    // Can't delete if not running on the network.
-    if (this.activeApplicationNetworkProtocols['' + applicationId + ':' + network.id] === undefined) {
-      // We don't think the app is running on this network.
-      const msg = 'Application ' + applicationId + ' is not running on network ' + network.id
-      appLogger.log(msg)
-      throw new Error(msg)
-    }
-
-    try {
-      appNwkId = await dataAPI.getProtocolDataForKey(
-        network.id,
-        network.networkProtocol.id,
-        makeApplicationDataKey(applicationId, 'appNwkId')
-      )
-    }
-    catch (err) {
-      appLogger.log('Cannot delete application data forwarding for application ' +
-        applicationId +
-        ' and network ' +
-        network.name +
-        ': ' + err)
-      throw err
-    }
-    // Kill the Forwarding with LoRa App Server
-    try {
-      await this.client.deleteApplicationIntegration(network, appNwkId, 'http')
-      delete this.activeApplicationNetworkProtocols['' + applicationId + ':' + network.id]
-    }
-    catch (err) {
-      appLogger.log('Error on delete application notification: ', 'error')
-      throw err
-    }
-  }
-
-  // Post the data to the remote application server.
-  //
-  // networkId     - The network's id that the data is coming from.
-  // applicationId - The local application's id.
-  // data          - The data sent.
-  //
-  // Redirects the data to the application's server.  Uses the data from the
-  // remote network to look up the device to include that data as well.
-  passDataToApplication (network, applicationId, data, dataAPI) {
-    return new Promise(async function (resolve, reject) {
-      // Get the reporting API, reject data if not running.
-      let reportingAPI = this.activeApplicationNetworkProtocols['' + applicationId + ':' + network.id]
-
-      if (!reportingAPI) {
-        appLogger.log('Rejecting received data from networkId ' + network.id +
-          ' for applicationId ' + applicationId +
-          '. The appliction is not in a running state.  Data = ' +
-          JSON.stringify(data))
-        reject(new Error('Application ' + applicationId +
-          ' is not running on network ' + network.id))
-      }
-
-      // This is a stand-alone call, so we'll generate our own data API to access
-      // the protocolData.
-      // Look up the DevEUI to get the deviceId to pass to the reportingAPI.
-      try {
-        let deviceId
-        if (data.devEUI) {
-          let recs = await dataAPI.getProtocolDataWithData(
-            network.id,
-            'dev:%/devNwkId',
-            data.devEUI)
-          if (recs && (recs.length > 0)) {
-            let splitOnSlash = recs[0].dataIdentifier.split('/')
-            let splitOnColon = splitOnSlash[0].split(':')
-            deviceId = parseInt(splitOnColon[1])
-
-            let device = await dataAPI.getDeviceById(deviceId)
-            data.deviceInfo = {}
-            data.deviceInfo.name = device.name
-            data.deviceInfo.description = device.description
-            data.deviceInfo.model = device.deviceModel
-          }
-        }
-
-        let app = await dataAPI.getApplicationById(applicationId)
-
-        data.applicationInfo = {}
-        data.applicationInfo.name = app.name
-
-        data.networkInfo = {}
-        data.networkInfo.name = network.name
-
-        await reportingAPI.report(data, app.baseUrl, app.name)
-      }
-      catch (err) {
-        reject(err)
-      }
-
-      resolve()
-    })
+  async stopApplication () {
+    // let appNwkId
+    // try {
+    //   appNwkId = await dataAPI.getProtocolDataForKey(
+    //     network.id,
+    //     network.networkProtocol.id,
+    //     makeApplicationDataKey(appId, 'appNwkId')
+    //   )
+    //   try {
+    //     await this.client.loadApplicationIntegration(network, appNwkId, HTTP_INTEGRATION_PROCESS_ID)
+    //   }
+    //   catch (err) {
+    //     if (err.statusCode === 404) return
+    //     throw err
+    //   }
+    //   await this.client.deleteApplicationIntegration(network, appNwkId, HTTP_INTEGRATION_PROCESS_ID)
+    // }
+    // catch (err) {
+    //   appLogger.log(`Cannot delete http integration for application ${appId} on network ${network.name}: ${err}`)
+    //   throw err
+    // }
   }
 
   async postSingleDevice (network, device, deviceProfile, application, remoteApplicationId, dataAPI) {
@@ -962,24 +900,46 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
     return (error)
   }
 
-  normalizeApplicationData (remoteApplication, remoteApplicationMeta, network) {
-    appLogger.log(remoteApplication.app_id, 'error')
-    appLogger.log(remoteApplicationMeta, 'error')
+  async registerApplicationWithHandler (network, handlerApp, accountServerApp, dataAPI) {
+    try {
+      await this.client.registerApplication(network, handlerApp.appId)
+      return this.setApplication(network, handlerApp, accountServerApp, dataAPI)
+    }
+    catch (e) {
+      appLogger.log('Error on register Application: ' + e, 'error')
+      throw e
+    }
+  }
+
+  async setApplication (network, handlerApp, accountServerApp) {
+    try {
+      await this.client.updateHandlerApplication(network, accountServerApp.id, handlerApp)
+      return accountServerApp.id
+    }
+    catch (e) {
+      appLogger.log('Error on get Application: ' + e, 'error')
+      throw e
+    }
+  }
+
+  normalizeApplicationData (handlerApp, accountServerApp, network) {
+    appLogger.log(handlerApp.appId, 'error')
+    appLogger.log(accountServerApp, 'error')
 
     let normalized = {
-      description: remoteApplicationMeta.name,
-      id: remoteApplication.app_id,
-      name: remoteApplication.app_id,
-      key: remoteApplicationMeta.access_keys[0].key,
-      payloadCodec: remoteApplication.payload_format,
-      payloadEncoderScript: remoteApplication.encoder,
-      payloadDecoderScript: remoteApplication.decoder,
-      validationScript: remoteApplication.validator,
-      serviceProfileID: remoteApplicationMeta.handler,
+      description: accountServerApp.name,
+      id: handlerApp.app_id,
+      name: handlerApp.app_id,
+      key: accountServerApp.access_keys[0].key,
+      payloadCodec: handlerApp.payload_format,
+      payloadEncoderScript: handlerApp.encoder,
+      payloadDecoderScript: handlerApp.decoder,
+      validationScript: handlerApp.validator,
+      serviceProfileID: accountServerApp.handler,
       organizationID: network.securityData.username
     }
-    if (remoteApplicationMeta.euis && remoteApplicationMeta.euis.length > 0) {
-      normalized.applicationEUI = remoteApplicationMeta.euis[0]
+    if (accountServerApp.euis && accountServerApp.euis.length > 0) {
+      normalized.applicationEUI = accountServerApp.euis[0]
     }
     return normalized
   }
@@ -990,7 +950,7 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
     // No underscore or dash allowed in first or last position
     magicId = magicId.replace(/^[_-]*|[_-]*$/, '')
     let ttnApplication = {
-      ttnApplicationMeta: {
+      accountServerApp: {
         id: magicId,
         name: application.name,
         rights: [
@@ -1011,8 +971,8 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
           }
         ]
       },
-      ttnApplicationData: {
-        app_id: magicId,
+      handlerApp: {
+        appId: magicId,
         decoder: remoteApplication.payloadDecoderScript,
         encoder: remoteApplication.payloadEncoderScript,
         payload_format: remoteApplication.payloadCodec,
@@ -1021,7 +981,7 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
     }
 
     if (remoteApplication.applicationEUI) {
-      ttnApplication.ttnApplicationMeta.euis = [remoteApplication.applicationEUI]
+      ttnApplication.accountServerApp.euis = [remoteApplication.applicationEUI]
     }
 
     return ttnApplication
@@ -1135,6 +1095,7 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
    * @returns {{device: {applicationID: (*|string), description: *, devEUI: *, deviceProfileID: *, name: *, skipFCntCheck: (*|boolean)}, deviceStatusBattery: number, deviceStatusMargin: number, lastSeenAt: (string|null)}}
    */
   deNormalizeDeviceData (localDevice, localDeviceProfile, application, remoteApplicationId) {
+
     let ttnDeviceData = {
       altitude: 0,
       app_id: remoteApplicationId,
@@ -1162,32 +1123,28 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
       ttnDeviceData.lorawan_device.app_key = localDevice.deviceKeys.appKey
     }
     else if (localDevice.deviceActivation) {
-      ttnDeviceData.lorawan_device.activation_constraints = 'abp'
-      ttnDeviceData.lorawan_device.app_s_key = localDevice.deviceActivation.appSKey
-      ttnDeviceData.lorawan_device.nwk_s_key = localDevice.deviceActivation.nwkSEncKey
-      ttnDeviceData.lorawan_device.dev_addr = localDevice.deviceActivation.devAddr
-      ttnDeviceData.lorawan_device.f_cnt_down = localDevice.deviceActivation.nFCntDown
-      ttnDeviceData.lorawan_device.f_cnt_up = localDevice.deviceActivation.fCntUp
-      ttnDeviceData.lorawan_device.disable_f_cnt_check = false
+      const activationKeyMap = {
+        appSKey: 'app_s_key',
+        nwkSEncKey: 'nwk_s_key',
+        devAddr: 'dev_addr',
+        nFCntDown: 'f_cnt_down',
+        fCntUp: 'f_cnt_up'
+      }
+      Object.assign(
+        ttnDeviceData.lorawan_device,
+        renameKeys(activationKeyMap, localDevice.deviceActivation),
+        { activation_constraints: 'abp', disable_f_cnt_check: false }
+      )
     }
 
-    ttnDeviceData.attributes = []
-    if (localDeviceProfile.classBTimeout) ttnDeviceData.attributes.push({ key: 'classBTimeout', value: localDeviceProfile.classBTimeout })
-    if (localDeviceProfile.classCTimeout) ttnDeviceData.attributes.push({ key: 'classCTimeout', value: localDeviceProfile.classCTimeout })
-    if (localDeviceProfile.factoryPresetFreqs) ttnDeviceData.attributes.push({ key: 'factoryPresetFreqs', value: localDeviceProfile.factoryPresetFreqs })
-    if (localDeviceProfile.macVersion) ttnDeviceData.attributes.push({ key: 'factoryPresetFreqs', value: localDeviceProfile.macVersion })
-    if (localDeviceProfile.maxDutyCycle) ttnDeviceData.attributes.push({ key: 'maxDutyCycle', value: localDeviceProfile.maxDutyCycle })
-    if (localDeviceProfile.maxEIRP) ttnDeviceData.attributes.push({ key: 'maxEIRP', value: localDeviceProfile.maxEIRP })
-    if (localDeviceProfile.pingSlotDR) ttnDeviceData.attributes.push({ key: 'pingSlotDR', value: localDeviceProfile.pingSlotDR })
-    if (localDeviceProfile.pingSlotFreq) ttnDeviceData.attributes.push({ key: 'pingSlotFreq', value: localDeviceProfile.pingSlotFreq })
-    if (localDeviceProfile.pingSlotPeriod) ttnDeviceData.attributes.push({ key: 'pingSlotPeriod', value: localDeviceProfile.pingSlotPeriod })
-    if (localDeviceProfile.regParamsRevision) ttnDeviceData.attributes.push({ key: 'pingSlotPeriod', value: localDeviceProfile.regParamsRevision })
-    if (localDeviceProfile.rxDROffset1) ttnDeviceData.attributes.push({ key: 'rxDROffset1', value: localDeviceProfile.rxDROffset1 })
-    if (localDeviceProfile.rxDataRate2) ttnDeviceData.attributes.push({ key: 'rxDataRate2', value: localDeviceProfile.rxDataRate2 })
-    if (localDeviceProfile.rxDelay1) ttnDeviceData.attributes.push({ key: 'rxDelay1', value: localDeviceProfile.rxDelay1 })
-    if (localDeviceProfile.rxFreq2) ttnDeviceData.attributes.push({ key: 'rxFreq2', value: localDeviceProfile.rxFreq2 })
-    if (localDeviceProfile.supportsClassB) ttnDeviceData.attributes.push({ key: 'supportsClassB', value: localDeviceProfile.supportsClassB })
-    if (localDeviceProfile.supportsClassC) ttnDeviceData.attributes.push({ key: 'supportsClassC', value: localDeviceProfile.supportsClassC })
+    const attributes = [
+      'classBTimeout', 'classCTimeout', 'factoryPresetFreqs', 'factoryPresetFreqs', 'maxDutyCycle', 'maxEIRP',
+      'pingSlotDR', 'pingSlotFreq', 'pingSlotPeriod', 'regParamsRevision', 'rxDROffset1', 'rxDataRate2',
+      'rxDelay1', 'rxFreq2', 'supportsClassB', 'supportsClassC'
+    ]
+    ttnDeviceData.attributes = attributes
+      .filter(key => key in localDeviceProfile)
+      .map(key => ({ key, value: localDeviceProfile[key] }))
 
     appLogger.log(ttnDeviceData, 'info')
     return ttnDeviceData
@@ -1255,25 +1212,3 @@ function makeDeviceProfileDataKey (deviceProfileId, dataName) {
 //     throw e
 //   }
 // }
-
-async function registerApplicationWithHandler (network, ttnApplication, ttnApplicationMeta, dataAPI) {
-  try {
-    await this.client.registerApplicationWithHandler(network, ttnApplication.app_id)
-    return setApplication(network, ttnApplication, ttnApplicationMeta, dataAPI)
-  }
-  catch (e) {
-    appLogger.log('Error on register Application: ' + e, 'error')
-    throw e
-  }
-}
-
-async function setApplication (network, ttnApplication, ttnApplicationMeta) {
-  try {
-    await this.client.updateHandlerApplication(network, ttnApplicationMeta.id, ttnApplication)
-    return ttnApplicationMeta.id
-  }
-  catch (e) {
-    appLogger.log('Error on get Application: ' + e, 'error')
-    throw e
-  }
-}

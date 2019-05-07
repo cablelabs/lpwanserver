@@ -652,7 +652,7 @@ describe('E2E Test for Multiple Networks', () => {
             appLogger.log(applications, 'error')
             let application = applications.records.find(x => x.name === Ttn.application.id)
             should.exist(application)
-            application.description.should.equal(Ttn.application.description)
+            application.description.should.equal(Ttn.application.name)
             lora.ttn.apps.push({
               appId: application.id,
               appNTLId: '',
@@ -1095,8 +1095,8 @@ describe('E2E Test for Multiple Networks', () => {
             deviceProfiles.should.have.property('records')
             console.log(JSON.stringify(deviceProfiles.records))
             // deviceProfiles.totalCount.should.equal(2)
-            let deviceProfile1 = deviceProfiles.records.find(x => x.name === 'CableLabs TTN Device ABP')
-            let deviceProfile2 = deviceProfiles.records.find(x => x.name === 'TTN Device Using OTAA')
+            let deviceProfile1 = deviceProfiles.records.find(x => x.name === Ttn.abpDevice.description)
+            let deviceProfile2 = deviceProfiles.records.find(x => x.name === Ttn.otaaDevice.description)
             should.exist(deviceProfile1)
             should.exist(deviceProfile2)
             // deviceProfile.should.eql(expected)
@@ -1126,8 +1126,8 @@ describe('E2E Test for Multiple Networks', () => {
             devices.should.have.property('records')
             appLogger.log(devices)
             // devices.totalCount.should.equal(2)
-            let device1 = devices.records.find(x => x.name === '00A0A112727496D3')
-            let device2 = devices.records.find(x => x.name === '0099F6D395BD932A')
+            let device1 = devices.records.find(x => x.name === Ttn.abpDevice.lorawan_device.dev_eui)
+            let device2 = devices.records.find(x => x.name === Ttn.otaaDevice.lorawan_device.dev_eui)
             should.exist(device1)
             should.exist(device2)
             lora.ttn.apps[0].deviceIds.push(device1.id)

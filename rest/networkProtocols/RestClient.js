@@ -2,6 +2,7 @@ const requestClient = require('request-promise')
 const R = require('ramda')
 const { URLSearchParams } = require('url')
 const appLogger = require('../lib/appLogger.js')
+const { joinUrl } = require('../lib/utils')
 
 module.exports = class RestClient {
   constructor ({ cache } = {}) {
@@ -30,7 +31,7 @@ module.exports = class RestClient {
       url = `${url}?${qs}`
     }
     if (network && url.indexOf('http') !== 0) {
-      url = `${network.baseUrl}/${url}`
+      url = joinUrl(network.baseUrl, url)
     }
     // remove possible double slash
     return url.replace(/([^:]\/)\/+/g, '$1')

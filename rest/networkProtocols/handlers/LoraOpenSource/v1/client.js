@@ -74,16 +74,21 @@ module.exports = class LoraOpenSourceV1RestClient extends LoraOpenSourceRestClie
 
   createApplicationIntegration (network, appId, id, body) {
     return super.createApplicationIntegration(network, appId, id, {
-      ...R.omit(['uplinkDataURL'], body),
+      ...R.omit(['uplinkDataURL', 'statusNotificationURL', 'locationNotificationURL'], body),
       dataUpURL: body.uplinkDataURL
     })
   }
 
   updateApplicationIntegration (network, appId, id, body) {
     return super.updateApplicationIntegration(network, appId, id, {
-      ...R.omit(['uplinkDataURL'], body),
+      ...R.omit(['uplinkDataURL', 'statusNotificationURL', 'locationNotificationURL'], body),
       dataUpURL: body.uplinkDataURL
     })
+  }
+
+  async loadApplicationIntegration (network, appId, id) {
+    const body = await super.loadApplicationIntegration(network, appId, id)
+    return { ...R.omit(['dataUpURL'], body), uplinkDataURL: body.dataUpURL }
   }
 
   createDeviceKeys (network, id, body) {

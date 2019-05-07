@@ -7,6 +7,7 @@
 // AppLogger is a conole logger that adds timestamp, filename, and line number
 // information.  Usage: appLogger.log( <string> );
 var appLogger = require('../lib/appLogger.js')
+const R = require('ramda')
 
 //* *****************************************************************************
 // Maps the standard remote network API to the <remote network> server.
@@ -196,6 +197,34 @@ module.exports = class NetworkProtocol {
   // Returns a Promise that stops the application data flowing from the remote
   // system.
   stopApplication () {
+  }
+
+  // Pass data to application
+  async passDataToApplication (network, appId, data, dataAPI) {
+    var reportingAPI = await dataAPI.getReportingAPIByApplicationId(appId)
+    var deviceId
+    if (data.devEUI) {
+      var recs = await dataAPI.getProtocolDataWithData(
+        network.id,
+        'dev:%/devNwkId',
+        data.devEUI
+      )
+      if (recs && (recs.length > 0)) {
+        let splitOnSlash = recs[0].dataIdentifier.split('/')
+        let splitOnColon = splitOnSlash[0].split(':')
+        deviceId = parseInt(splitOnColon[1], 10)
+
+        let device = await dataAPI.getDeviceById(deviceId)
+        data.deviceInfo = R.pick(['name', 'description'], device)
+        data.deviceInfo.model = device.deviceModel
+      }
+    }
+
+    let app = await dataAPI.getApplicationById(appId)
+
+    data.applicationInfo = { name: app.name }
+    data.networkInfo = { name: network.name }
+    await reportingAPI.report(data, app.baseUrl, app.name)
   }
 
   //* *****************************************************************************

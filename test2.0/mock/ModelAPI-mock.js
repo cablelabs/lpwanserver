@@ -63,5 +63,10 @@ module.exports = {
     validatePassword () {
       return true
     }
+  },
+  applicationNetworkTypeLinks: {
+    async retrieveApplicationNetworkTypeLinks () {
+      return { records: [] }
+    }
   }
 }
