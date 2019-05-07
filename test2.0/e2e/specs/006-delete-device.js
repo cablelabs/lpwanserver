@@ -17,24 +17,6 @@ let remoteApp1 = ''
 let remoteApp2 = ''
 let remoteDeviceProfileId = ''
 let remoteDeviceProfileId2 = ''
-let lora = {
-  loraV1: {
-    protocolId: '',
-    networkId: '',
-    apps: []
-  },
-  loraV2: {
-    protocolId: '',
-    networkId: '',
-    apps: []
-  },
-  ttn: {
-    protocolId: '',
-    networkId: '',
-    apps: []
-
-  }
-}
 
 const testData = {
   ...Data.applicationTemplates.default({
