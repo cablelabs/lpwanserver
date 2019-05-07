@@ -585,7 +585,7 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
   }
 
   async addRemoteDevice (network, remoteDeviceId, localAppId, dpMap, modelAPI, dataAPI) {
-    const remoteDevice = await this.client.loadDevice(network, null, remoteDeviceId)
+    const remoteDevice = await this.client.loadDevice(network, remoteDeviceId)
     appLogger.log('Adding ' + remoteDevice.name)
     appLogger.log(remoteDevice)
     let deviceProfileIdMap = dpMap.find(o => o.remoteDeviceProfile === remoteDevice.deviceProfileID)
@@ -985,7 +985,7 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
       appNwkId,
       dpNwkId
     )
-    await this.client.createDevice(network, appNwkId, deviceData.device)
+    await this.client.createDevice(network, deviceData.device)
     dataAPI.putProtocolDataForKey(network.id,
       network.networkProtocol.id,
       makeDeviceDataKey(device.id, 'devNwkId'),
@@ -1035,7 +1035,7 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
       appNwkId,
       dpNwkId
     )
-    await this.client.updateDevice(network, appNwkId, devNetworkId, deviceData.device)
+    await this.client.updateDevice(network, devNetworkId, deviceData.device)
     if (deviceProfile.networkSettings.supportsJoin && deviceData.deviceKeys) {
       await this.client.updateDeviceKeys(network, deviceData.device.devEUI, deviceData.deviceKeys)
     }

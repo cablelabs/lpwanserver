@@ -39,17 +39,17 @@ module.exports = class LoraOpenSourceV1RestClient extends LoraOpenSourceRestClie
   updateDeviceProfile (network, id, body) {
     return super.updateDeviceProfile(network, id, { deviceProfile: body })
   }
-  createDevice (network, appId, body) {
-    return super.createDevice(network, appId, { device: body })
+  createDevice (network, body) {
+    return super.createDevice(network, { device: body })
   }
-  updateDevice (network, appId, id, body) {
-    return super.updateDevice(network, appId, id, { device: body })
+  updateDevice (network, id, body) {
+    return super.updateDevice(network, id, { device: body })
   }
   createDeviceKeys (network, id, body) {
     return super.createDeviceKeys(network, id, { deviceKeys: body })
   }
   updateDeviceKeys (network, id, body) {
-    return super.updateDevice(network, id, { deviceKeys: body })
+    return super.updateDeviceKeys(network, id, { deviceKeys: body })
   }
   activateDevice (network, id, body) {
     return super.activateDevice(network, id, { deviceActivation: body })

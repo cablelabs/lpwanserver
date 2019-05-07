@@ -2,7 +2,9 @@ const Client = require('../../../rest/networkProtocols/handlers/Loriot/v4/client
 const client = new Client()
 
 module.exports = {
+  client,
   network: {
+    id: '3',
     baseUrl: 'https://us1.loriot.io/1/nwk',
     securityData: {
       apiKey: process.env.LORIOT_API_KEY
