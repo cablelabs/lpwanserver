@@ -1,14 +1,7 @@
 const express = require('express')
 const R = require('ramda')
 const uuid = require('uuid')
-
-// *******************************************************
-// Configuration
-// *******************************************************
-const {
-  PORT = 8080,
-  MAX_REQUEST_AGE = 30000
-} = process.env
+const httpErrors = require('http-errors')
 
 // *******************************************************
 // Models
@@ -33,24 +26,43 @@ const {
 //   timestamp: Number
 // }
 
-// *******************************************************
-// State
-// *******************************************************
-const state = {
-  requestSummaries: [],
-  queryResponses: []
+module.exports = function createRcServer ({ port, maxRequestAge }) {
+  return new Promise((resolve, reject) => {
+    // State
+    const state = {
+      requestSummaries: [],
+      queryResponses: []
+    }
+
+    const app = express()
+    app.use(express.json())
+    const respondToQueries = resolveFoundOrExpiredQueries(state, maxRequestAge)
+    app.use(queueRequest(state))
+    app.listen(port, err => {
+      if (err) return reject(err)
+      console.log(`RC Server listening on port ${port}!`)
+      setInterval(respondToQueries, 5000)
+      resolve({
+        port,
+        app,
+        listRequests: listRequests(state, respondToQueries)
+      })
+    })
+  })
 }
 
 // *******************************************************
 // Express middleware/handlers
 // *******************************************************
-// Endpoint for querying requests received by the server
+// Function for querying requests received by the server
 // These requests are excluded from the request queue
 // If not found, the request is kept open
-const requestQueryHandler = R.curry(function requestQueryHandler (state, req, res) {
-  const queryResponse = { id: uuid.v4(), response: res, query: req.body, timestamp: Date.now() }
-  state.queryResponses.push(queryResponse)
-  respondToQueries([queryResponse])
+const listRequests = R.curry(function listRequests (state, respondToQueries, query) {
+  return new Promise((resolve, reject) => {
+    const queryResponse = { id: uuid.v4(), query, timestamp: Date.now(), resolve, reject }
+    state.queryResponses.push(queryResponse)
+    respondToQueries([queryResponse])
+  })
 })
 
 // Push a RequestSummary onto the queue for each request
@@ -69,14 +81,14 @@ function resolveFoundOrExpiredQueries (state, maxAge) {
     if (!queryResponses) queryResponses = state.queryResponses
     const responses = queryResponses.map(qr => {
       const found = state.requestSummaries.filter(partialObjectEqual(qr.query))
-      if (found) return { ...qr, found }
+      if (found.length) return { ...qr, found }
       return { ...qr, isExpired: isExpired(qr) }
     })
     const removeIds = idsOfQueryResponsesToRemove(responses)
     state.queryResponses = state.queryResponses.filter(x => !removeIds.includes(x.id))
     responses.forEach(x => {
-      if (x.found) return x.response.json(x.found)
-      x.response.status(404).end()
+      if (x.found) return x.resolve(x.found)
+      x.reject(httpErrors.NotFound())
     })
   }
 }
@@ -96,13 +108,3 @@ const idsOfQueryResponsesToRemove = R.compose(
   R.map(R.prop('id')),
   R.filter(R.either(R.prop('found'), R.prop('isExpired')))
 )
-
-// *******************************************************
-// Express App
-// *******************************************************
-const app = express()
-const respondToQueries = resolveFoundOrExpiredQueries(state, MAX_REQUEST_AGE)
-app.post('/request-query', requestQueryHandler(state))
-app.use(queueRequest(state))
-app.listen(PORT, () => console.log(`RC Server listening on port ${PORT}!`))
-setInterval(respondToQueries, 5000)

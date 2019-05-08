@@ -263,7 +263,6 @@ exports.initialize = function (app, server) {
     // expensive than a write, and then we'll be able to tell if anything
     // really changed before we even try to write.
     modelAPI.applications.retrieveApplication(data.id).then(function (app) {
-      console.log('APP***', JSON.stringify(app), JSON.stringify(req.company), JSON.stringify(req.user))
       // Verify that the user can make the change.
       if ((modelAPI.companies.COMPANY_ADMIN !== req.company.type.id) &&
                  (req.user.company.id !== app.company.id)) {
@@ -316,6 +315,7 @@ exports.initialize = function (app, server) {
       else {
         // Do the update.
         modelAPI.applications.updateApplication(data).then(function (rec) {
+          console.log('*** UPDATED APP***', JSON.stringify(rec))
           restServer.respond(res, 204)
         })
           .catch(function (err) {

@@ -5,6 +5,7 @@ var chaiHttp = require('chai-http')
 var app = require('../../../restApp.js')
 var should = chai.should()
 var setup = require('../setup.js')
+const { wait } = require('../../lib/helpers')
 var appLogger = require('../../../rest/lib/appLogger.js')
 const Lora1 = require('../networks/lora-v1')
 const Lora2 = require('../networks/lora-v2')
@@ -55,8 +56,6 @@ describe('E2E Test for Multiple Networks', () => {
 
     }
   }
-
-  const wait = ms => new Promise(resolve => setTimeout(resolve, ms))
 
   before(async () => {
     await setup.start()
@@ -217,6 +216,7 @@ describe('E2E Test for Multiple Networks', () => {
             network.securityData.authorized.should.equal(true)
             network.securityData.message.should.equal('ok')
             lora.loraV2.networkId = network.id
+            Lora2.network.id = network.id
             done()
           })
       })
