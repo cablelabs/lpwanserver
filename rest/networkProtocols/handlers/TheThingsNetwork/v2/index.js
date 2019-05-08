@@ -6,7 +6,7 @@ const { tryCatch, renameKeys } = require('../../../../lib/utils')
 // const config = require('../../../../config')
 const ApiClient = require('./client')
 
-const HTTP_INTEGRATION_PROCESS_ID = 'lpwanserver-httppush'
+// const HTTP_INTEGRATION_PROCESS_ID = 'lpwanserver-httppush'
 
 /**********************************************************************************************************************
  * Bookeeping: Register, Test, Connect
@@ -180,7 +180,7 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
    */
   async pullDevices (network, remoteApp, localApp, dpMap, modelAPI, dataAPI) {
     try {
-      const {devices = [] } = await this.client.listDevices(network, remoteApp.id)
+      const { devices = [] } = await this.client.listDevices(network, remoteApp.id)
       await Promise.all(devices.map(device => {
         return this.addRemoteDevice(device, network, localApp.id, dpMap, modelAPI, dataAPI)
       }))
@@ -563,7 +563,7 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
   //
   // Returns a Promise that starts the application data flowing from the remote
   // system.
-  async startApplication (network, appId, dataAPI) {
+  async startApplication () {
     // Unable to determine how to manage integrations except via TTN console.
 
     // const url = joinUrl(config.get('base_url'), 'api/ingest', appId, network.id)
@@ -607,7 +607,7 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
   //
   // Returns a Promise that stops the application data flowing from the remote
   // system.
-  async stopApplication (network, appId, dataAPI) {
+  async stopApplication () {
     // let appNwkId
     // try {
     //   appNwkId = await dataAPI.getProtocolDataForKey(

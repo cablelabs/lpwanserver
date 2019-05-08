@@ -7,6 +7,7 @@
 // AppLogger is a conole logger that adds timestamp, filename, and line number
 // information.  Usage: appLogger.log( <string> );
 var appLogger = require('../lib/appLogger.js')
+const R = require('ramda')
 
 //* *****************************************************************************
 // Maps the standard remote network API to the <remote network> server.
