@@ -11,12 +11,7 @@ var should = chai.should()
 chai.use(chaiHttp)
 let server = chai.request(app).keepOpen()
 
-const send = (request, data) => request
-  .set('Authorization', 'Bearer ' + adminToken)
-  .set('Content-Type', 'application/json')
-  .send(data)
-
-describe.only('E2E Test for Uplink/Downlink Device Messaging', () => {
+describe('E2E Test for Uplink/Downlink Device Messaging', () => {
   let adminToken = ''
   let rcServer
   let lora2AppId = ''
