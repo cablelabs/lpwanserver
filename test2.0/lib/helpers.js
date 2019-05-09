@@ -5,6 +5,9 @@ const assertEqualProps = R.curry((props, obj1, obj2) => {
   pickProps(obj1).should.deep.equal(pickProps(obj2))
 })
 
+const wait = ms => new Promise(resolve => setTimeout(resolve, ms))
+
 module.exports = {
-  assertEqualProps
+  assertEqualProps,
+  wait
 }

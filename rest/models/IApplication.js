@@ -123,7 +123,7 @@ class Application {
     const network = await this.modelAPI.networks.retrieveNetwork(networkId)
     if (!network.securityData.enabled) return
     // Ensure applicationNetworkTypeLink exists
-    const appNtlQuery = { application: { id }, network: { id: networkId }, limit: 1 }
+    const appNtlQuery = { application: { id }, networkType: { id: network.networkType.id }, limit: 1 }
     let { records } = await this.modelAPI.applicationNetworkTypeLinks.retrieveApplicationNetworkTypeLinks(appNtlQuery)
     if (!records.length) return
     // Pass data
@@ -150,6 +150,7 @@ const fragments = {
     name
     description
     baseUrl
+    enabled
     company {
       id
     }
