@@ -18,6 +18,7 @@
     "coverage": "cat ./coverage/lcov.info | codacy-coverage"
   },
   "dependencies": {
+    "@hapi/joi": "^15.0.2",
     "ajv": "^6.10.0",
     "async": "~2.6.1",
     "body-parser": "^1.18.3",
@@ -33,7 +34,6 @@
     "express": "^4.16.4",
     "express-busboy": "^7.0.1",
     "express-session": "^1.15.6",
-    "hjson": "^3.1.2",
     "jsmin": "~1.0.1",
     "jsonwebtoken": "^8.4.0",
     "mkdirp": "~0.5.1",

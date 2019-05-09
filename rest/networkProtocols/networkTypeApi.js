@@ -423,6 +423,20 @@ NetworkTypeApi.prototype.deleteDevice = function (networkTypeId, deviceId) {
     })
 }
 
+// Pass data to devices.
+//
+// networkTypeId - The ID of the networkType to get the new company.
+// appId     - The ID of the application record
+// deviceID  - The ID of the device record
+NetworkTypeApi.prototype.passDataToDevice = function (networkTypeId, appId, deviceId, data) {
+  return createPromiseOperationForNetworksOfType(
+    'Pass data to device',
+    networkTypeId,
+    function (npda, network) {
+      return protos.passDataToDevice(npda, network, appId, deviceId, data)
+    })
+}
+
 NetworkTypeApi.prototype.connect = function connect (network) {
   return protos.connect(network)
 }

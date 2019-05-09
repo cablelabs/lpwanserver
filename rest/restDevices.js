@@ -362,4 +362,21 @@ exports.initialize = function (app, server) {
       restServer.respond(res, 403, "Cannot delete another company's device.")
     }
   })
+
+    /**
+   * Accepts the data from the application server to pass to devices
+   */
+  async function unicastDownlinkHandler (req, res) {
+    const deviceId = parseInt(req.params.deviceId, 10)
+
+    try {
+      const logs = await modelAPI.devices.passDataToDevice(deviceId, req.body)
+      restServer.respond(res, 200, logs)
+    }
+    catch (err) {
+      appLogger.log(`Error passing data to device ${deviceId}: ${err}`)
+      restServer.respond(res, err)
+    }
+  }
+  app.post('/api/devices/:deviceId/downlink', unicastDownlinkHandler)
 }

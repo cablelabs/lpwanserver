@@ -2,6 +2,8 @@ const appLogger = require('../lib/appLogger.js')
 const { prisma, formatInputData, formatRelationshipsIn } = require('../lib/prisma')
 var httpError = require('http-errors')
 const { onFail } = require('../lib/utils')
+const R = require('ramda')
+const Joi = require('@hapi/joi');
 
 module.exports = class Device {
   constructor (modelAPI) {
@@ -67,6 +69,21 @@ module.exports = class Device {
     return onFail(400, () => prisma.deleteDevice({ id }))
   }
 
+  async passDataToDevice (id, data) {
+    // check for required fields
+    let { error } = Joi.validate(data, unicastDownlinkSchema)
+    if (error) throw httpError(400, error.message)
+    const device = await loadDevice({ id })
+    const app = await this.modelAPI.applications.retrieveApplication(device.application.id)
+    if (!app.running) return
+    // Get all device networkType links
+    const devNtlQuery = { device: { id } }
+    let { records } = await this.modelAPI.deviceNetworkTypeLinks.retrieveDeviceNetworkTypeLinks(devNtlQuery)
+    appLogger.log(`DEVICE_NETWORK_TYPE_LINKS: ${JSON.stringify(records)}`)
+    const logs = await Promise.all(records.map(x => this.modelAPI.networkTypeAPI.passDataToDevice(x.networkType.id, app.id, id, data)))
+    return R.flatten(logs)
+  }
+
   // Since device access often depends on the user's company, we'll often have to
   // do a check.  But this makes the code very convoluted with promises and
   // callbacks.  Eaiser to do this as a validation step.
@@ -115,6 +132,13 @@ async function loadDevice (uniqueKeyObj, fragementKey = 'basic') {
   if (!rec) throw httpError(404, 'Device not found')
   return rec
 }
+
+const unicastDownlinkSchema = Joi.object().keys({
+  fCnt: Joi.number().integer().min(0).required(),
+  fPort: Joi.number().integer().min(1).required(),
+  data: Joi.string().when('jsonData', { is: Joi.exist(), then: Joi.optional(), otherwise: Joi.required() }),
+  jsonData: Joi.object().optional()
+})
 
 //* *****************************************************************************
 // Fragments for how the data should be returned from Prisma.

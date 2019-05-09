@@ -80,7 +80,7 @@ module.exports = class ApplicationNetworkTypeLink {
       const { records: devices } = await this.modelAPI.devices.retrieveDevices({ applicationId: rec.application.id })
       const dntlQuery = { device: { id_in: devices.map(x => x.id) } }
       let { records: deviceNtls } = await this.modelAPI.deviceNetworkTypeLinks.retrieveDeviceNetworkTypeLinks(dntlQuery)
-      await Promise.all(deviceNtls.map(x => this.modelAPI.deviceNetworkTypeLinks.deleteApplicationNetworkTypeLink(x.id)))
+      await Promise.all(deviceNtls.map(x => this.modelAPI.deviceNetworkTypeLinks.deleteDeviceNetworkTypeLink(x.id)))
 
       // Don't delete the local record until the remote operations complete.
       var logs = await this.modelAPI.networkTypeAPI.deleteApplication(rec.networkType.id, rec.application.id)

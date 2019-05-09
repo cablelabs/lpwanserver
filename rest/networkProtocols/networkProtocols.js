@@ -347,4 +347,10 @@ module.exports = class NetworkProtocolAccess {
     const proto = await this.getProtocol(network)
     return proto.deleteDeviceProfile(network, deviceProfileId, dataAPI)
   }
+
+  // Pass data to devices
+  async passDataToDevice (dataAPI, network, appId, deviceId, data) {
+    const proto = await this.getProtocol(network)
+    return proto.passDataToDevice(network, appId, deviceId, data, dataAPI)
+  }
 }

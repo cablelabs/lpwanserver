@@ -28,7 +28,7 @@ const {
 const describeTTN = TTN_ENABLED === 'true' ? describe : describe.skip.bind(describe)
 const describeLoriot = LORIOT_ENABLED === 'true' ? describe : describe.skip.bind(describe)
 
-describe('E2E Test for Multiple Networks', () => {
+describe.only('E2E Test for Multiple Networks', () => {
   let adminToken
   let userId
   let userToken

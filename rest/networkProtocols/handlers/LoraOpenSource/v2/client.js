@@ -58,6 +58,13 @@ module.exports = class LoraOpenSourceV1RestClient extends LoraOpenSourceRestClie
     const opts = { url: this.constructUrl({ url: '/devices', params: { ...params, applicationID: appId } }) }
     return this.request(network, opts)
   }
+  createDeviceMessage (network, id, body) {
+    return super.createDeviceMessage(network, id, { deviceQueueItem: body })
+  }
+  async listDeviceMessages (network, id) {
+    const { deviceQueueItems } = await super.listDeviceMessages(network, id)
+    return { result: deviceQueueItems }
+  }
   createNetworkServer (network, body) {
     return super.createNetworkServer(network, { networkServer: body })
   }
