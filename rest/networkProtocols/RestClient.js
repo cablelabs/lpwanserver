@@ -3,9 +3,11 @@ const R = require('ramda')
 const { URLSearchParams } = require('url')
 const appLogger = require('../lib/appLogger.js')
 const { joinUrl } = require('../lib/utils')
+const EventEmitter = require('events')
 
-module.exports = class RestClient {
+module.exports = class RestClient extends EventEmitter {
   constructor ({ cache } = {}) {
+    super()
     this.cache = cache || new Map()
   }
 

@@ -15,8 +15,8 @@ const R = require('ramda')
 //* *****************************************************************************
 
 module.exports = class NetworkProtocol {
-  constructor () {
-    this.activeApplicationNetworkProtocols = {}
+  constructor ({ modelAPI }) {
+    this.modelAPI = modelAPI
   }
 
   //* *****************************************************************************

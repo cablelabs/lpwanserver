@@ -74,18 +74,8 @@ module.exports = class Loriot extends NetworkProtocol {
           remoteOrigin: true
         }
       )
-      await dataAPI.putProtocolDataForKey(
-        network.id,
-        network.networkProtocol.id,
-        makeApplicationDataKey(localApp.id, 'appNwkId'),
-        `${remoteApp._id}`
-      )
-      await dataAPI.putProtocolDataForKey(
-        network.id,
-        network.networkProtocol.id,
-        makeApplicationDataKey(localApp.id, 'appEUI'),
-        remoteApp.appeui
-      )
+      await this.modelAPI.protocolData.upsert(network, makeApplicationDataKey(localApp.id, 'appNwkId'), `${remoteApp._id}`)
+      await this.modelAPI.protocolData.upsert(network, makeApplicationDataKey(localApp.id, 'appEUI'), remoteApp.appeui)
     }
     if (localApp.baseUrl) await this.startApplication(network, localApp.id, dataAPI)
     return { localApp, remoteApp }
@@ -94,11 +84,7 @@ module.exports = class Loriot extends NetworkProtocol {
   async pushApplication (network, app, dataAPI, update = true) {
     let appNetworkId
     try {
-      appNetworkId = await dataAPI.getProtocolDataForKey(
-        network.id,
-        network.networkProtocol.id,
-        makeApplicationDataKey(app.id, 'appNwkId')
-      )
+      appNetworkId = await this.modelAPI.protocolData.loadValue(network, makeApplicationDataKey(app.id, 'appNwkId'))
       if (appNetworkId) appNetworkId = parseInt(appNetworkId, 10)
       if (update && appNetworkId) {
         return this.updateApplication(network, app.id, dataAPI)
@@ -124,12 +110,7 @@ module.exports = class Loriot extends NetworkProtocol {
       // Title is called name when fetching the app, only it's title on create.
       const body = await this.client.createApplication(network, { title: localApp.name, capacity: 10 })
       // Save the application ID from the remote network.
-      await dataAPI.putProtocolDataForKey(
-        network.id,
-        network.networkProtocol.id,
-        makeApplicationDataKey(localApp.id, 'appNwkId'),
-        `${body._id}`
-      )
+      await this.modelAPI.protocolData.upsert(network, makeApplicationDataKey(localApp.id, 'appNwkId'), `${body._id}`)
     }
     catch (err) {
       appLogger.log('Failed to get required data for addApplication: ' + err)
@@ -138,11 +119,7 @@ module.exports = class Loriot extends NetworkProtocol {
   }
 
   async deleteApplication (network, appId, dataAPI) {
-    let appNetworkId = await dataAPI.getProtocolDataForKey(
-      network.id,
-      network.networkProtocol.id,
-      makeApplicationDataKey(appId, 'appNwkId')
-    )
+    let appNetworkId = await this.modelAPI.protocolData.loadValue(network, makeApplicationDataKey(appId, 'appNwkId'))
     appNetworkId = parseInt(appNetworkId, 10)
     await this.client.deleteApplication(network, appNetworkId)
     await dataAPI.deleteProtocolDataForKey(
@@ -152,18 +129,14 @@ module.exports = class Loriot extends NetworkProtocol {
     )
   }
 
-  async startApplication (network, appId, dataAPI) {
+  async startApplication (network, appId) {
     // Create a new endpoint to get POSTs, and call the deliveryFunc.
     // Use the local applicationId and the networkId to create a unique
     // URL.
     const url = joinUrl(config.get('base_url'), 'api/ingest', appId, network.id)
 
     // Set up the Forwarding with LoRa App Server
-    var appNwkId = await dataAPI.getProtocolDataForKey(
-      network.id,
-      network.networkProtocol.id,
-      makeApplicationDataKey(appId, 'appNwkId')
-    )
+    var appNwkId = await this.modelAPI.protocolData.loadValue(network, makeApplicationDataKey(appId, 'appNwkId'))
 
     const body = { output: 'httppush', osetup: { url } }
 
@@ -177,14 +150,10 @@ module.exports = class Loriot extends NetworkProtocol {
     }
   }
 
-  async stopApplication (network, appId, dataAPI) {
+  async stopApplication (network, appId) {
     let appNwkId
     try {
-      appNwkId = await dataAPI.getProtocolDataForKey(
-        network.id,
-        network.networkProtocol.id,
-        makeApplicationDataKey(appId, 'appNwkId')
-      )
+      appNwkId = await this.modelAPI.protocolData.loadValue(network, makeApplicationDataKey(appId, 'appNwkId'))
       try {
         await this.client.loadApplicationIntegration(network, appNwkId, 'http')
       }
@@ -234,12 +203,7 @@ module.exports = class Loriot extends NetworkProtocol {
       const deviceNtl = await modelAPI.deviceNetworkTypeLinks.createDeviceNetworkTypeLink(localDevice.id, network.networkType.id, dp.localDeviceProfile, networkSettings, 2, { remoteOrigin: true })
       appLogger.log(deviceNtl)
     }
-    dataAPI.putProtocolDataForKey(
-      network.id,
-      network.networkProtocol.id,
-      makeDeviceDataKey(localDevice.id, 'devNwkId'),
-      remoteDevice._id
-    )
+    await this.modelAPI.protocolData.upsert(network, makeDeviceDataKey(localDevice.id, 'devNwkId'), remoteDevice._id)
     return localDevice.id
   }
 
@@ -274,11 +238,7 @@ module.exports = class Loriot extends NetworkProtocol {
   async pushDevice (network, device, dataAPI, update = true) {
     let devNetworkId
     try {
-      devNetworkId = await dataAPI.getProtocolDataForKey(
-        network.id,
-        network.networkProtocol.id,
-        makeDeviceDataKey(device.id, 'devNwkId')
-      )
+      devNetworkId = await this.modelAPI.protocolData.loadValue(network, makeDeviceDataKey(device.id, 'devNwkId'))
       if (update && devNetworkId) {
         return this.updateDevice(network, device.id, dataAPI)
       }
@@ -307,10 +267,7 @@ module.exports = class Loriot extends NetworkProtocol {
       appLogger.log('deviceNetworkTypeLink MUST have networkSettings which MUST have devEUI', 'error')
       throw httpError.BadRequest()
     }
-    let appNwkId = await dataAPI.getProtocolDataForKey(
-      network.id,
-      network.networkProtocol.id,
-      makeApplicationDataKey(device.application.id, 'appNwkId'))
+    let appNwkId = await this.modelAPI.protocolData.loadValue(network, makeApplicationDataKey(device.application.id, 'appNwkId'))
     appNwkId = parseInt(appNwkId, 10)
     let deviceData = this.buildRemoteDevice(
       device,
@@ -334,19 +291,13 @@ module.exports = class Loriot extends NetworkProtocol {
       appLogger.log('Remote Device ' + deviceData.device.name + ' does not have authentication parameters')
       await this.client.createDevice(network, appNwkId, data)
     }
-    dataAPI.putProtocolDataForKey(network.id,
-      network.networkProtocol.id,
-      makeDeviceDataKey(device.id, 'devNwkId'),
-      deviceData.device.deveui)
+    await this.modelAPI.protocolData.upsert(network, makeDeviceDataKey(device.id, 'devNwkId'), deviceData.device.deveui)
     return dntl.networkSettings.devEUI
   }
 
   async getDevice (network, deviceId, dataAPI) {
     const device = dataAPI.getDeviceById(deviceId)
-    var devNetworkId = await dataAPI.getProtocolDataForKey(
-      network.id,
-      network.networkProtocol.id,
-      makeDeviceDataKey(deviceId, 'devNwkId'))
+    var devNetworkId = await this.modelAPI.protocolData.loadValue(network, makeDeviceDataKey(deviceId, 'devNwkId'))
     return this.client.loadDevice(network, device.application.id, devNetworkId)
   }
 
@@ -354,15 +305,9 @@ module.exports = class Loriot extends NetworkProtocol {
     let device = await dataAPI.getDeviceById(deviceId)
     const dntl = await dataAPI.getDeviceNetworkType(device.id, network.networkType.id)
     const deviceProfile = await dataAPI.getDeviceProfileById(dntl.deviceProfile.id)
-    let devNetworkId = await dataAPI.getProtocolDataForKey(
-      network.id,
-      network.networkProtocol.id,
-      makeDeviceDataKey(dntl.id, 'devNwkId'))
+    let devNetworkId = await this.modelAPI.protocolData.loadValue(network, makeDeviceDataKey(dntl.id, 'devNwkId'))
     devNetworkId = parseInt(devNetworkId, 10)
-    let appNwkId = await dataAPI.getProtocolDataForKey(
-      network.id,
-      network.networkProtocol.id,
-      makeApplicationDataKey(device.application.id, 'appNwkId'))
+    let appNwkId = await this.modelAPI.protocolData.loadValue(network, makeApplicationDataKey(device.application.id, 'appNwkId'))
     appNwkId = parseInt(appNwkId, 10)
     let deviceData = this.buildRemoteDeviceUpdate(
       dntl,
@@ -387,14 +332,8 @@ module.exports = class Loriot extends NetworkProtocol {
     let devNetworkId
     let appNwkId
     try {
-      devNetworkId = await dataAPI.getProtocolDataForKey(
-        network.id,
-        network.networkProtocol.id,
-        makeDeviceDataKey(deviceId, 'devNwkId'))
-      appNwkId = await dataAPI.getProtocolDataForKey(
-        network.id,
-        network.networkProtocol.id,
-        makeApplicationDataKey(device.application.id, 'appNwkId'))
+      devNetworkId = await this.modelAPI.protocolData.loadValue(network, makeDeviceDataKey(deviceId, 'devNwkId'))
+      appNwkId = await this.modelAPI.protocolData.loadValue(network, makeApplicationDataKey(device.application.id, 'appNwkId'))
       appNwkId = parseInt(appNwkId, 10)
     }
     catch (err) {
@@ -414,16 +353,13 @@ module.exports = class Loriot extends NetworkProtocol {
     }
   }
 
-  async passDataToDevice (network, appId, deviceId, body, dataAPI) {
+  async passDataToDevice (network, appId, deviceId, body) {
     // Ensure network is enabled
     if (!network.securityData.enabled) return
     if (!body.data) {
       throw httpError(400, 'Downlinks to Loriot don\'t support JSON payloads')
     }
-    const devNwkId = await dataAPI.getProtocolDataForKey(
-      network.id,
-      network.networkProtocol.id,
-      makeDeviceDataKey(deviceId, 'devNwkId'))
+    const devNwkId = await this.modelAPI.protocolData.loadValue(network, makeDeviceDataKey(deviceId, 'devNwkId'))
     body = {
       cmd: 'tx',
       EUI: devNwkId,
