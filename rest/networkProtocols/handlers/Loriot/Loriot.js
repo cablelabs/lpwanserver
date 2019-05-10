@@ -3,7 +3,7 @@ const appLogger = require('../../../lib/appLogger.js')
 const R = require('ramda')
 const config = require('../../../config')
 const httpError = require('http-errors')
-const { joinUrl, renameKeys } = require('../../../lib/utils')
+const { joinUrl } = require('../../../lib/utils')
 
 module.exports = class Loriot extends NetworkProtocol {
   async connect (network) {

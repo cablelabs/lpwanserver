@@ -3,7 +3,7 @@ const { prisma, formatInputData, formatRelationshipsIn } = require('../lib/prism
 var httpError = require('http-errors')
 const { onFail } = require('../lib/utils')
 const R = require('ramda')
-const Joi = require('@hapi/joi');
+const Joi = require('@hapi/joi')
 
 module.exports = class Device {
   constructor (modelAPI) {

@@ -104,9 +104,4 @@ module.exports = class LoriotRestClient extends RestClient {
     const opts = { method: 'DELETE', url: `/app/${this.idHex(appId)}/device/${id}` }
     return this.request(network, opts)
   }
-
-  async createDeviceMessage (network, appId, id, body) {
-    // const opts = { method: 'POST', url: `/app/${this.idHex(appId)}/device/${id}`, body }
-    // return this.request(network, opts)
-  }
 }

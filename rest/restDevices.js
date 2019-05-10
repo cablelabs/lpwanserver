@@ -363,7 +363,7 @@ exports.initialize = function (app, server) {
     }
   })
 
-    /**
+  /**
    * Accepts the data from the application server to pass to devices
    */
   async function unicastDownlinkHandler (req, res) {
