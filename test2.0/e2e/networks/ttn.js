@@ -3,7 +3,7 @@ const client = new Client()
 const { key } = require('ttn')
 const crypto = require('crypto')
 
-const randomString = crypto.randomBytes(6).toString('base64').toLowerCase()
+// const randomString = crypto.randomBytes(6).toString('base64').toLowerCase()
 const APP_ID = `lpwansvr-e2e-app-hmoxiloq`
 
 module.exports = {
