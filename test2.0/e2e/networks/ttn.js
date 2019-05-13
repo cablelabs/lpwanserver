@@ -1,7 +1,7 @@
 const Client = require('../../../rest/networkProtocols/handlers/TheThingsNetwork/TtnRestClient')
 const client = new Client()
 const { key } = require('ttn')
-const crypto = require('crypto')
+// const crypto = require('crypto')
 
 // const randomString = crypto.randomBytes(6).toString('base64').toLowerCase()
 const APP_ID = `lpwansvr-e2e-app-hmoxiloq`
