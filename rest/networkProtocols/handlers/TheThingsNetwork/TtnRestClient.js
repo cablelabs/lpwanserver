@@ -128,7 +128,7 @@ module.exports = class TtnRestClient extends RestClient {
     if (accessToken !== session.accessToken) {
       this.ttn[network.id] = {
         accessToken: session.accessToken,
-        acountClient: ttn.account(session.accessToken),
+        accountClient: ttn.account(session.accessToken),
         apps: {}
       }
     }
@@ -140,7 +140,7 @@ module.exports = class TtnRestClient extends RestClient {
     if (!nwkTtn.apps[appId]) {
       const session = await this.getAppSession(network, appId)
       nwkTtn.apps[appId] = {
-        appClient: ttn.application(appId, session.accessToken)
+        appClient: await ttn.application(appId, session.accessToken)
       }
     }
     return nwkTtn.apps[appId]
@@ -153,7 +153,7 @@ module.exports = class TtnRestClient extends RestClient {
       item = {
         nwkId: network.id,
         appId,
-        dataClient: await ttn.data(appId, app.accessKeys[0].key)
+        dataClient: await ttn.data(appId, app.access_keys[0].key)
       }
       this.ttnDataClients.push(item)
     }
@@ -185,7 +185,6 @@ module.exports = class TtnRestClient extends RestClient {
     const logReq = () => appLogger.log(`TTN APP REQUEST: APP_ID: ${clientOpts.appId}: ${clientOpts.client || 'application'}.${method}: ${JSON.stringify(args)}`)
     try {
       let { appClient: client } = await this.getAppClients(network, clientOpts.appId)
-      appLogger.log(`PRE_REQUEST: ${clientOpts.appId}: ${client.appID}: ${client.netAddress}`)
       if (clientOpts.client === 'account') client = client.accountClient
       const res = await (args.length ? client[method](...args) : client[method]())
       logReq()
@@ -284,9 +283,13 @@ module.exports = class TtnRestClient extends RestClient {
 
   async subscribeToApplicationData (network, appId) {
     const item = await this.getDataClient(network, appId)
-    if (item.uplinkHandler) return
+    if (item.uplinkHandler) {
+      item.dataClient.off('uplink', item.uplinkHandler)
+    }
     let networkId = network.id
-    item.uplinkHandler = (_, payload) => this.emit('uplink', { networkId, appId, payload })
+    item.uplinkHandler = (_, payload) => {
+      this.emit('uplink', { networkId, appId, payload })
+    }
     item.dataClient.on('uplink', item.uplinkHandler)
   }
 
@@ -298,6 +301,9 @@ module.exports = class TtnRestClient extends RestClient {
   }
 
   async createDeviceMessage (network, appId, devId, body) {
+    if (body.data) {
+      body = R.merge(body, { data: Buffer.from(body.data, 'base64').toString('hex') })
+    }
     const { dataClient } = await this.getDataClient(network, appId)
     dataClient.send(devId, body.data || body.jsonData, body.fPort, !!body.confirmed)
   }

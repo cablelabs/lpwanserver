@@ -15,11 +15,11 @@ module.exports = class ProtocolData {
 
   async upsert (network, dataId, dataValue) {
     try {
-      const rec = await this.retrieveProtocolData(network.id, network.protocolData.id, dataId)
+      const rec = await this.retrieveProtocolData(network.id, network.networkProtocol.id, dataId)
       return this.updateProtocolData({ id: rec.id, dataValue })
     }
     catch (err) {
-      return this.createProtocolData(network.id, network.protocolData.id, dataId, dataValue)
+      return this.createProtocolData(network.id, network.networkProtocol.id, dataId, dataValue)
     }
   }
 
