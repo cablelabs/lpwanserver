@@ -414,6 +414,27 @@ module.exports = class Loriot extends NetworkProtocol {
     }
   }
 
+  async passDataToDevice (network, appId, deviceId, body, dataAPI) {
+    // Ensure network is enabled
+    if (!network.securityData.enabled) return
+    if (!body.data) {
+      throw httpError(400, 'Downlinks to Loriot don\'t support JSON payloads')
+    }
+    const devNwkId = await dataAPI.getProtocolDataForKey(
+      network.id,
+      network.networkProtocol.id,
+      makeDeviceDataKey(deviceId, 'devNwkId'))
+    body = {
+      cmd: 'tx',
+      EUI: devNwkId,
+      port: body.fPort,
+      confirmed: body.confirmed,
+      data: body.data
+    }
+    // API endpoint for sending downlinks unknown
+    // return this.client.createDeviceMessage(network, appId, devNwkId, body)
+  }
+
   buildApplicationNetworkSettings (remoteApplication) {
     const pick = [
       'deviceLimit', 'devices', 'overbosity', 'ogwinfo', 'clientsLimit', 'joinServerId', 'publishAppSKey',

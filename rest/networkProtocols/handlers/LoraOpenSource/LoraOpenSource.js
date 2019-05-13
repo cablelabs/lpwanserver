@@ -1027,6 +1027,16 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
     await this.client.deleteDeviceKeys(network, devNetworkId)
   }
 
+  async passDataToDevice (network, appId, deviceId, body, dataAPI) {
+    // Ensure network is enabled
+    if (!network.securityData.enabled) return
+    const devNwkId = await dataAPI.getProtocolDataForKey(
+      network.id,
+      network.networkProtocol.id,
+      makeDeviceDataKey(deviceId, 'devNwkId'))
+    return this.client.createDeviceMessage(network, devNwkId, { ...body, devEUI: devNwkId })
+  }
+
   buildApplicationNetworkSettings (remoteApplication) {
     const keys = ['payloadCodec', 'payloadDecoderScript', 'payloadEncoderScript']
     return R.pick(keys, remoteApplication)

@@ -487,5 +487,4 @@ exports.initialize = function (app, server) {
     }
   }
   app.post('/api/ingest/:applicationId/:networkId', uplinkHandler)
-  app.post('/api/uplink/:applicationId/:networkId', uplinkHandler)
 }

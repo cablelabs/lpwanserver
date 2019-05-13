@@ -108,4 +108,9 @@ module.exports = class LoraOpenSourceV1RestClient extends LoraOpenSourceRestClie
       }
     })
   }
+
+  async listDeviceMessages (network, id) {
+    const { items } = await super.listDeviceMessages(network, id)
+    return { result: items }
+  }
 }

@@ -242,4 +242,13 @@ module.exports = class LoraOpenSourceRestClient extends RestClient {
     const opts = { method: 'DELETE', url: `/applications/${appId}/integrations/${id}` }
     return this.request(network, opts)
   }
+
+  createDeviceMessage (network, id, body) {
+    const opts = { method: 'POST', url: `/devices/${id}/queue`, body }
+    return this.request(network, opts)
+  }
+
+  listDeviceMessages (network, id) {
+    return this.request(network, { url: `/devices/${id}/queue` })
+  }
 }
