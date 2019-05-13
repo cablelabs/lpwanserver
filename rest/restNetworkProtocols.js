@@ -71,7 +71,7 @@ exports.initialize = function (app, server) {
       if (req.query.networkProtocolVersion) {
         options.networkProtocolVersion = req.query.networkProtocolVersion
       }
-      modelAPI.networkProtocols.retrieveNetworkProtocols(options).then(function (nps) {
+      modelAPI.networkProtocols.list(options).then(function (nps) {
         // restServer.respondJson(res, null, nps)
         const responseBody = { ...nps, records: nps.records.map(formatRelationshipsOut) }
         restServer.respond(res, 200, responseBody)
@@ -103,7 +103,7 @@ exports.initialize = function (app, server) {
       if (req.query.networkTypeId) {
         options.networkTypeId = req.query.networkTypeId
       }
-      modelAPI.networkProtocols.retrieveNetworkProtocols(options).then(function (recs) {
+      modelAPI.networkProtocols.list(options).then(function (recs) {
         let nps = {
           totalCount: recs.totalCount,
           records: []
@@ -161,7 +161,7 @@ exports.initialize = function (app, server) {
      */
   app.get('/api/networkProtocols/:id', [restServer.isLoggedIn],
     function (req, res, next) {
-      modelAPI.networkProtocols.retrieveNetworkProtocol(parseInt(req.params.id, 10)).then(function (np) {
+      modelAPI.networkProtocols.load(parseInt(req.params.id, 10)).then(function (np) {
         // restServer.respondJson(res, null, np)
         restServer.respond(res, 200, formatRelationshipsOut(np))
       })
@@ -215,7 +215,7 @@ exports.initialize = function (app, server) {
     // }
     //
     // // Do the add.
-    // modelAPI.networkProtocols.createNetworkProtocol(
+    // modelAPI.networkProtocols.create(
     //   rec.name,
     //   rec.networkTypeId,
     //   rec.protocolHandler).then(function (rec) {
@@ -261,7 +261,7 @@ exports.initialize = function (app, server) {
     // We'll start by getting the company, as a read is much less expensive
     // than a write, and then we'll be able to tell if anything really
     // changed before we even try to write.
-    modelAPI.networkProtocols.retrieveNetworkProtocol(req.params.id).then(function (np) {
+    modelAPI.networkProtocols.load(req.params.id).then(function (np) {
       // Fields that may exist in the request body that can change.  Make
       // sure they actually differ, thnetworkProtocolHandlersough.
       var changed = 0
@@ -292,7 +292,7 @@ exports.initialize = function (app, server) {
       }
       else {
         // Do the update.
-        modelAPI.networkProtocols.updateNetworkProtocol(data).then(function (rec) {
+        modelAPI.networkProtocols.update(data).then(function (rec) {
           restServer.respond(res, 204)
         })
           .catch(function (err) {
@@ -327,7 +327,7 @@ exports.initialize = function (app, server) {
     }
     restServer.respond(res, 405, methodNotAllowed)
     // var id = parseInt(req.params.id, 10)
-    // modelAPI.networkProtocols.deleteNetworkProtocol(id).then(function () {
+    // modelAPI.networkProtocols.remove(id).then(function () {
     //   restServer.respond(res, 204)
     // })
     //   .catch(function (err) {

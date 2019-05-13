@@ -6,7 +6,7 @@ const { onFail } = require('../lib/utils')
 const handlerDir = path.join(__dirname, '../networkProtocols/handlers')
 
 module.exports = class NetworkProtocol {
-  async createNetworkProtocol (name, networkTypeId, protocolHandler, version, masterProtocol) {
+  async create (name, networkTypeId, protocolHandler, version, masterProtocol) {
     const data = formatInputData({
       name,
       protocolHandler,
@@ -16,32 +16,32 @@ module.exports = class NetworkProtocol {
     })
     let rec = await prisma.createNetworkProtocol(data).$fragment(fragments.basic)
     if (!masterProtocol) {
-      rec = await this.updateNetworkProtocol({ id: rec.id, masterProtocol: rec.id })
+      rec = await this.update({ id: rec.id, masterProtocol: rec.id })
     }
     return rec
   }
 
-  updateNetworkProtocol ({ id, ...data }) {
+  async upsert ({ networkProtocolVersion, ...np }) {
+    const { records } = await this.list({ search: np.name, networkProtocolVersion })
+    if (records.length) {
+      return this.update({ id: records[0].id, ...np })
+    }
+    return this.create(np.name, np.networkTypeId, np.protocolHandler, networkProtocolVersion, np.masterProtocol)
+  }
+
+  update ({ id, ...data }) {
     if (!id) throw httpError(400, 'No existing NetworkProtocol ID')
     data = formatInputData(data)
     return prisma.updateNetworkProtocol({ data, where: { id } }).$fragment(fragments.basic)
   }
 
-  async upsertNetworkProtocol ({ networkProtocolVersion, ...np }) {
-    const { records } = await this.retrieveNetworkProtocols({ search: np.name, networkProtocolVersion })
-    if (records.length) {
-      return this.updateNetworkProtocol({ id: records[0].id, ...np })
-    }
-    return this.createNetworkProtocol(np.name, np.networkTypeId, np.protocolHandler, networkProtocolVersion, np.masterProtocol)
-  }
-
-  async retrieveNetworkProtocol (id) {
+  async load (id) {
     const rec = await onFail(400, () => prisma.networkProtocol({ id }).$fragment(fragments.basic))
     if (!rec) throw httpError(404, 'NetworkProtocol not found')
     return addMetadata(rec)
   }
 
-  async retrieveNetworkProtocols ({ limit, offset, ...where } = {}) {
+  async list ({ limit, offset, ...where } = {}) {
     where = formatRelationshipsIn(where)
     if (where.search) {
       where.name_contains = where.search

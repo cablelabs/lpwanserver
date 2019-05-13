@@ -54,14 +54,14 @@ NetworkTypeApi.prototype.forAllNetworksOfType = function forAllNetworksOfType (o
     var npda = new NetworkProtocolDataAccess(this.modelAPI, operationName)
 
     // Init the logs for this module.
-    let networkType = await this.modelAPI.networkTypes.retrieveNetworkType(networkTypeId)
+    let networkType = await this.modelAPI.networkTypes.load(networkTypeId)
     npda.initLog(networkType, null)
 
     var networks
     try {
       // Get the networks we'll be operating on that support the
       // networkType.
-      networks = await this.modelAPI.networks.retrieveNetworks({ 'networkTypeId': networkTypeId })
+      networks = await this.modelAPI.networks.list({ 'networkTypeId': networkTypeId })
     }
     catch (err) {
       appLogger.log('Error retrieving networks for type ID ' + networkTypeId)

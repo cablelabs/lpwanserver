@@ -26,21 +26,21 @@ module.exports = class Company {
     }
   }
 
-  createCompany (name, type) {
+  create (name, type) {
     const data = { name, type }
     return prisma.createCompany(data)
   }
 
-  updateCompany ({ id, ...data }) {
+  update ({ id, ...data }) {
     if (!id) throw httpError(400, 'No existing Company ID')
     if (data.type) data.type = { connect: { id: data.type } }
     return prisma.updateCompany({ data, where: { id } }).$fragment(fragments.basic)
   }
 
-  async retrieveCompany (id) {
+  async load (id) {
     const company = await loadCompany({ id })
     try {
-      const { records } = await this.modelAPI.companyNetworkTypeLinks.retrieveCompanyNetworkTypeLinks({ companyId: id })
+      const { records } = await this.modelAPI.companyNetworkTypeLinks.list({ companyId: id })
       if (records.length) {
         company.networks = records.map(x => x.id)
       }
@@ -51,7 +51,7 @@ module.exports = class Company {
     return company
   }
 
-  async retrieveCompanies ({ limit, offset, ...where } = {}) {
+  async list ({ limit, offset, ...where } = {}) {
     if (where.search) {
       where.name_contains = where.search
       delete where.search
@@ -59,7 +59,7 @@ module.exports = class Company {
     const query = { where }
     if (limit) query.first = limit
     if (offset) query.skip = offset
-    appLogger.log(`modelAPI.companies.retrieveCompanies: ${JSON.stringify(query)}`)
+    appLogger.log(`modelAPI.companies.list: ${JSON.stringify(query)}`)
     const [records, totalCount] = await Promise.all([
       prisma.companies(query).$fragment(fragments.basic),
       prisma.companiesConnection({ where }).aggregate().count()
@@ -67,28 +67,28 @@ module.exports = class Company {
     return { totalCount, records }
   }
 
-  async deleteCompany (id) {
+  async remove (id) {
     // Delete my applications, users, and companyNetworkTypeLinks first.
     try {
       // Delete applications
-      let { records: apps } = await this.modelAPI.applications.retrieveApplications({ companyId: id })
-      await Promise.all(apps.map(x => this.modelAPI.applications.deleteApplication(x.id)))
+      let { records: apps } = await this.modelAPI.applications.list({ companyId: id })
+      await Promise.all(apps.map(x => this.modelAPI.applications.remove(x.id)))
     }
     catch (err) {
       appLogger.log("Error deleting company's applications: " + err)
     }
     try {
       // Delete users
-      let { records: users } = await this.modelAPI.users.retrieveUsers({ companyId: id })
-      await Promise.all(users.map(x => this.modelAPI.users.deleteUser(x.id)))
+      let { records: users } = await this.modelAPI.users.list({ companyId: id })
+      await Promise.all(users.map(x => this.modelAPI.users.remove(x.id)))
     }
     catch (err) {
       appLogger.log("Error deleting company's users: " + err)
     }
     try {
       // Delete deviceProfiles
-      let { records: deviceProfiles } = await this.modelAPI.deviceProfiles.retrieveDeviceProfiles({ companyId: id })
-      await Promise.all(deviceProfiles.map(x => this.modelAPI.deviceProfiles.deleteDeviceProfile(x.id)))
+      let { records: deviceProfiles } = await this.modelAPI.deviceProfiles.list({ companyId: id })
+      await Promise.all(deviceProfiles.map(x => this.modelAPI.deviceProfiles.remove(x.id)))
     }
     catch (err) {
       appLogger.log("Error deleting company's deviceProfiles: " + err)
@@ -105,8 +105,8 @@ module.exports = class Company {
     }
     try {
       // Delete companyNetworkTypeLinks
-      let { records: companyNtls } = await this.modelAPI.companyNetworkTypeLinks.retrieveCompanyNetworkTypeLinks({ companyId: id })
-      await Promise.all(companyNtls.map(x => this.modelAPI.companyNetworkTypeLinks.deleteCompanyNetworkTypeLink(x.id)))
+      let { records: companyNtls } = await this.modelAPI.companyNetworkTypeLinks.list({ companyId: id })
+      await Promise.all(companyNtls.map(x => this.modelAPI.companyNetworkTypeLinks.remove(x.id)))
     }
     catch (err) {
       appLogger.log("Error deleting company's networkTypeLinks: " + err)

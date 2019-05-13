@@ -2,7 +2,7 @@
 module.exports = {
   dataValue: null,
   networks: {
-    async retrieveNetwork (networkId) {
+    async load (networkId) {
       return {
         networkId: 1,
         networkProtocolId: 1
@@ -10,7 +10,7 @@ module.exports = {
     }
   },
   networkProtocols: {
-    async retrieveNetworkProtocol (networkProtocolId) {
+    async load (networkProtocolId) {
       return ({})
     }
   },
@@ -20,6 +20,10 @@ module.exports = {
         sessionData: {},
         api: require('../../../rest/networkProtocols/LoRaOpenSource_2.js')
       }
+    },
+    async connect () {
+    },
+    async test () {
     }
   },
   networkTypeAPI: {
@@ -37,18 +41,21 @@ module.exports = {
     }
   },
   protocolData: {
-    async retrieveProtocolData () {
+    async load () {
       return { dataValue: this.dataValue }
     },
-    async createProtocolData (networkId, networkProtocolId, key, data) {
+    async create (networkId, networkProtocolId, key, data) {
       this.dataValue = data
     },
     async loadValue () {
       return this.dataValue
+    },
+    async upsert (network, key, data) {
+      this.dataValue = data
     }
   },
   reportingProtocols: {
-    async retrieveReportingProtocol (id) {
+    async load (id) {
       if (id === 1) {
         return (
           {
@@ -68,7 +75,7 @@ module.exports = {
     }
   },
   applicationNetworkTypeLinks: {
-    async retrieveApplicationNetworkTypeLinks () {
+    async list () {
       return { records: [] }
     }
   }

@@ -8,7 +8,7 @@ module.exports = class DeviceProfile {
     this.modelAPI = modelAPI
   }
 
-  async createDeviceProfile (networkTypeId, companyId, name, description, networkSettings, { remoteOrigin = false } = {}) {
+  async create (networkTypeId, companyId, name, description, networkSettings, { remoteOrigin = false } = {}) {
     try {
       const data = formatInputData({
         networkTypeId,
@@ -30,7 +30,7 @@ module.exports = class DeviceProfile {
     }
   }
 
-  async updateDeviceProfile ({ id, ...data }) {
+  async update ({ id, ...data }) {
     try {
       if (!id) throw httpError(400, 'No existing DeviceProfile ID')
       if (data.networkSettings) {
@@ -48,13 +48,13 @@ module.exports = class DeviceProfile {
     }
   }
 
-  async retrieveDeviceProfile (id) {
+  async load (id) {
     const rec = await onFail(400, () => prisma.deviceProfile({ id }).$fragment(fragments.basic))
     if (!rec) throw httpError(404, 'DeviceProfile not found')
     return parseNetworkSettings(rec)
   }
 
-  async retrieveDeviceProfiles ({ limit, offset, ...where } = {}) {
+  async list ({ limit, offset, ...where } = {}) {
     where = formatRelationshipsIn(where)
     if (where.search) {
       where.name_contains = where.search
@@ -74,13 +74,13 @@ module.exports = class DeviceProfile {
     return { totalCount, records }
   }
 
-  async deleteDeviceProfile (id, validateCompanyId) {
+  async remove (id, validateCompanyId) {
     try {
       // Since we clear the remote networks before we delete the local
       // record, validate the company now, if required.  Also, we need the
       // networkTypeId from the record to delete it from the relevant
       // networks.  So get the record to start anyway.
-      var rec = await this.retrieveDeviceProfile(id)
+      var rec = await this.load(id)
 
       if (validateCompanyId && validateCompanyId !== rec.company.id) {
         throw new httpError.Unauthorized()
@@ -99,7 +99,7 @@ module.exports = class DeviceProfile {
 
   async pushDeviceProfile (id) {
     try {
-      var rec = await this.retrieveDeviceProfile(id)
+      var rec = await this.load(id)
       var logs = await this.modelAPI.networkTypeAPI.pushDeviceProfile(rec.networkType.id, id)
       rec.remoteAccessLogs = logs
       return rec

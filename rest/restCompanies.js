@@ -52,7 +52,7 @@ exports.initialize = function (app, server) {
     if (req.company.type.id !== modelAPI.companies.COMPANY_ADMIN) {
       // Must be company admin.  Can only get their own company, so just
       // give that.
-      modelAPI.companies.retrieveCompany(req.company.id).then(function (co) {
+      modelAPI.companies.load(req.company.id).then(function (co) {
         if (co) {
           co['type'] = modelAPI.companies.reverseTypes[co['type']]
           // Return the company as a single element array to keep in line
@@ -84,7 +84,7 @@ exports.initialize = function (app, server) {
     if (req.query.search) {
       options.search = req.query.search
     }
-    modelAPI.companies.retrieveCompanies(options).then(function (cos) {
+    modelAPI.companies.list(options).then(function (cos) {
       for (var i = 0; i < cos.records.length; i++) {
         cos.records[i].type = modelAPI.companies.reverseTypes[cos.records[i].type]
       }
@@ -122,7 +122,7 @@ exports.initialize = function (app, server) {
       restServer.respond(res, 403)
       return
     }
-    modelAPI.companies.retrieveCompany(parseInt(req.params.id, 10)).then(function (co) {
+    modelAPI.companies.load(parseInt(req.params.id, 10)).then(function (co) {
       co.type = modelAPI.companies.reverseTypes[co.type.id]
       restServer.respondJson(res, null, co)
     })
@@ -178,7 +178,7 @@ exports.initialize = function (app, server) {
     }
 
     // Do the add.
-    modelAPI.companies.createCompany(rec.name,
+    modelAPI.companies.create(rec.name,
       rec.type).then(function (rec) {
       var send = {}
       send.id = rec.id
@@ -216,7 +216,7 @@ exports.initialize = function (app, server) {
     // We'll start by getting the company, as a read is much less expensive
     // than a write, and then we'll be able to tell if anything really
     // changed before we even try to write.
-    modelAPI.companies.retrieveCompany(req.params.id).then(function (company) {
+    modelAPI.companies.load(req.params.id).then(function (company) {
       // Fields that may exist in the request body that anyone (with permissions)
       // can change.  Make sure they actually differ, though.
       var changed = 0
@@ -253,7 +253,7 @@ exports.initialize = function (app, server) {
       }
       else {
         // Do the update.
-        modelAPI.companies.updateCompany(data).then(function (rec) {
+        modelAPI.companies.update(data).then(function (rec) {
           restServer.respond(res, 204)
         })
           .catch(function (err) {
@@ -283,7 +283,7 @@ exports.initialize = function (app, server) {
     restServer.isAdminCompany],
   function (req, res, next) {
     let id = parseInt(req.params.id, 10)
-    modelAPI.companies.deleteCompany(id).then(function () {
+    modelAPI.companies.remove(id).then(function () {
       restServer.respond(res, 204)
     })
       .catch(function (err) {

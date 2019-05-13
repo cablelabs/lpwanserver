@@ -46,7 +46,7 @@ module.exports = class User {
     )
   }
 
-  async createUser (username, password, email, companyId, roleId) {
+  async create (username, password, email, companyId, roleId) {
     // Create the user record.
     const data = formatInputData({
       username,
@@ -89,23 +89,19 @@ module.exports = class User {
     return dropInternalProps(user)
   }
 
-  retrieveUser (id, fragment = 'basic') {
+  load (id, fragment = 'basic') {
     return loadUser({ id }, fragment)
   }
 
-  retrieveUserByUsername (username, fragment = 'basic') {
+  loadByUsername (username, fragment = 'basic') {
     return loadUser({ username }, fragment)
   }
 
-  retrieveUserProfile (username) {
-    return loadUser({ username }, 'profile')
-  }
-
-  async updateUser ({ id, role, ...data }) {
+  async update ({ id, role, ...data }) {
     // MUST have at least an ID field in the passed update record.
     if (!id) throw httpError(400, 'No existing user ID')
 
-    let originalUser = await this.retrieveUser(id)
+    let originalUser = await this.load(id)
     data = formatInputData({ ...data, roleId: role })
 
     if (data.password) {
@@ -153,7 +149,7 @@ module.exports = class User {
     return dropInternalProps(user)
   }
 
-  async retrieveUsers ({ limit, offset, ...where } = {}) {
+  async list ({ limit, offset, ...where } = {}) {
     where = formatRelationshipsIn(where)
     if (where.search) {
       where.username_contains = where.search
@@ -169,13 +165,13 @@ module.exports = class User {
     return { totalCount, records }
   }
 
-  deleteUser (id) {
+  remove (id) {
     return onFail(400, () => prisma.deleteUser({ id }))
   }
 
   async authorizeUser (username, password) {
     try {
-      const user = await this.retrieveUserByUsername(username, 'internal')
+      const user = await this.loadByUsername(username, 'internal')
       const matches = await crypto.verifyPassword(password, user.passwordHash)
       if (!matches) throw new Error(`authorizeUser: passwords don't match username "${username}`)
       return dropInternalProps(user)
@@ -202,7 +198,7 @@ module.exports = class User {
       })
     }
     try {
-      await this.updateUser(userUpdate)
+      await this.update(userUpdate)
       await deleteEmailVerification(uuid)
     }
     catch (err) {

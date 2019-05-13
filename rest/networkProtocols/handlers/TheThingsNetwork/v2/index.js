@@ -33,7 +33,7 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
    */
   async register (networkProtocols) {
     appLogger.log('TTN:register', 'info')
-    const rec = await networkProtocols.upsertNetworkProtocol({
+    const rec = await networkProtocols.upsert({
       name: 'The Things Network',
       networkTypeId: 1,
       protocolHandler: 'TheThingsNetwork/v2',
@@ -45,10 +45,10 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
 
   async subscribeToDataForEnabledApps () {
     const antlQuery = { networkType: { id: 1 } }
-    const { records: antls } = await this.modelAPI.applicationNetworkTypeLinks.retrieveApplicationNetworkTypeLinks(antlQuery)
+    const { records: antls } = await this.modelAPI.applicationNetworkTypeLinks.list(antlQuery)
     let appIds = antls.map(R.path(['application', 'id']))
     const networkQuery = { networkProtocol: { id: this.networkProtocolId } }
-    const { records: networks } = await this.modelAPI.networks.retrieveNetworks(networkQuery)
+    const { records: networks } = await this.modelAPI.networks.list(networkQuery)
     try {
       const promises = R.flatten(networks.map(nwk => appIds.map(id => this.startApplication(nwk, id))))
       await Promise.all(promises)
@@ -141,7 +141,7 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
         if (err.statusCode !== 404) throw err
       }
       let normalizedApplication = this.normalizeApplicationData(handlerApp, accountServerApp, network)
-      const { records: localApps } = await modelAPI.applications.retrieveApplications({ search: accountServerApp.name })
+      const { records: localApps } = await modelAPI.applications.list({ search: accountServerApp.name })
       let localApp = localApps[0]
       if (!localApp) {
         const localAppData = {
@@ -150,14 +150,14 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
           reportingProtocolId: 1
         }
         if (integration) localAppData.baseUrl = integration.settings.TTI_URL
-        localApp = await modelAPI.applications.createApplication(localAppData)
+        localApp = await modelAPI.applications.create(localAppData)
         appLogger.log('Created ' + localApp.name)
       }
 
-      let { records: appNtls } = await modelAPI.applicationNetworkTypeLinks.retrieveApplicationNetworkTypeLinks({ applicationId: localApp.id })
+      let { records: appNtls } = await modelAPI.applicationNetworkTypeLinks.list({ applicationId: localApp.id })
       let appNtl = appNtls[0]
       if (!appNtl) {
-        appNtl = await modelAPI.applicationNetworkTypeLinks.createApplicationNetworkTypeLink(
+        appNtl = await modelAPI.applicationNetworkTypeLinks.create(
           {
             applicationId: localApp.id,
             networkTypeId: network.networkType.id,
@@ -208,7 +208,7 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
   async addRemoteDevice (remoteDevice, network, localAppId, dpMap, modelAPI, dataAPI) {
     appLogger.log('Adding ' + remoteDevice.deveui)
     appLogger.log(remoteDevice)
-    let existingDevice = await modelAPI.devices.retrieveDevices({ search: remoteDevice.lorawan_device.dev_eui })
+    let existingDevice = await modelAPI.devices.list({ search: remoteDevice.lorawan_device.dev_eui })
 
     appLogger.log(existingDevice)
     if (existingDevice.totalCount > 0) {
@@ -217,12 +217,12 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
     }
     else {
       appLogger.log('creating ' + remoteDevice.lorawan_device.dev_eui)
-      existingDevice = await modelAPI.devices.createDevice(remoteDevice.lorawan_device.dev_eui, remoteDevice.description, localAppId)
+      existingDevice = await modelAPI.devices.create(remoteDevice.lorawan_device.dev_eui, remoteDevice.description, localAppId)
       appLogger.log('Created ' + existingDevice.name)
     }
 
-    let existingDeviceNTL = await modelAPI.deviceNetworkTypeLinks.retrieveDeviceNetworkTypeLinks({ deviceId: existingDevice.id })
-    let existingApplicationNTL = await modelAPI.applicationNetworkTypeLinks.retrieveApplicationNetworkTypeLink(localAppId)
+    let existingDeviceNTL = await modelAPI.deviceNetworkTypeLinks.list({ deviceId: existingDevice.id })
+    let existingApplicationNTL = await modelAPI.applicationNetworkTypeLinks.load(localAppId)
 
     if (existingDeviceNTL.totalCount > 0) {
       appLogger.log(existingDevice.name + ' link already exists')
@@ -234,7 +234,7 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
       appLogger.log(dp, 'info')
       let normalizedDevice = this.normalizeDeviceData(remoteDevice, dp.localDeviceProfile)
       appLogger.log(normalizedDevice)
-      const existingDeviceNTL = await modelAPI.deviceNetworkTypeLinks.createDeviceNetworkTypeLink(existingDevice.id, network.networkType.id, dp.localDeviceProfile, normalizedDevice, 2, { remoteOrigin: true })
+      const existingDeviceNTL = await modelAPI.deviceNetworkTypeLinks.create(existingDevice.id, network.networkType.id, dp.localDeviceProfile, normalizedDevice, 2, { remoteOrigin: true })
       appLogger.log(existingDeviceNTL)
       await this.modelAPI.protocolData.upsert(network, makeDeviceDataKey(existingDevice.id, 'devNwkId'), remoteDevice.dev_id)
       appLogger.log({ localDevice: existingDevice.id, remoteDevice: remoteDevice.dev_id })
@@ -250,7 +250,7 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
     let networkSpecificDeviceProfileInformation = this.normalizeDeviceProfileData(remoteDevice, application)
     appLogger.log(networkSpecificDeviceProfileInformation, 'error')
     try {
-      const existingDeviceProfile = await modelAPI.deviceProfiles.createDeviceProfile(
+      const existingDeviceProfile = await modelAPI.deviceProfiles.create(
         network.networkType.id,
         2,
         networkSpecificDeviceProfileInformation.name,
@@ -292,7 +292,7 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
 
   async pushApplications (network, dataAPI, modelAPI) {
     try {
-      let existingApplications = await modelAPI.applications.retrieveApplications()
+      let existingApplications = await modelAPI.applications.list()
       appLogger.log(existingApplications, 'info')
       const pushedResources = await Promise.all(existingApplications.records.map(record => {
         return this.pushApplication(network, record, dataAPI, modelAPI)
@@ -336,7 +336,7 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
 
   async pushDevices (network, dataAPI, modelAPI) {
     try {
-      let existingDevices = await modelAPI.devices.retrieveDevices()
+      let existingDevices = await modelAPI.devices.list()
       const pushedResources = await Promise.all(existingDevices.records.map(record => {
         return this.pushDevice(network, record, dataAPI)
       }))
@@ -400,7 +400,7 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
       accountServerApp = await this.client.createApplication(network, accountServerApp)
       applicationData.networkSettings.applicationEUI = accountServerApp.euis[0]
       appLogger.log(applicationData, 'error')
-      await modelAPI.applicationNetworkTypeLinks.updateApplicationNetworkTypeLink(applicationData, { companyId: 2, remoteOrigin: true })
+      await modelAPI.applicationNetworkTypeLinks.update(applicationData, { companyId: 2, remoteOrigin: true })
       await this.modelAPI.protocolData.upsert(network, makeApplicationDataKey(application.id, 'appNwkId'), accountServerApp.id)
       return this.registerApplicationWithHandler(network, handlerApp, accountServerApp, dataAPI)
     }

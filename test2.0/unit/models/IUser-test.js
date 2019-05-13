@@ -29,21 +29,21 @@ describe('Unit Tests for ' + testName, () => {
   it(testName + ' Empty Retrieval', async () => {
     let testModule = new TestModule(modelAPIMock)
     should.exist(testModule)
-    const actual = await testModule.retrieveUsers()
+    const actual = await testModule.list()
     actual.should.have.property('totalCount')
     actual.should.have.property('records')
   })
   it(testName + ' Create', async () => {
     let testModule = new TestModule(modelAPIMock)
     should.exist(testModule)
-    const actual = await testModule.createUser('testuser', '123456', 'bob@aol.com', 1, 1)
+    const actual = await testModule.create('testuser', '123456', 'bob@aol.com', 1, 1)
     assertUserProps(actual)
     userId = actual.id
   })
   it(testName + ' Retrieve', async () => {
     let testModule = new TestModule(modelAPIMock)
     should.exist(testModule)
-    const actual = await testModule.retrieveUser(userId)
+    const actual = await testModule.load(userId)
     assertUserProps(actual)
   })
   it(testName + ' Update', async () => {
@@ -56,7 +56,7 @@ describe('Unit Tests for ' + testName, () => {
       companyId: 1,
       role: 2
     }
-    const actual = await testModule.updateUser(updated)
+    const actual = await testModule.update(updated)
     assertUserProps(actual)
     actual.role.id.should.equal(updated.role)
   })

@@ -10,7 +10,7 @@ module.exports = class Device {
     this.modelAPI = modelAPI
   }
 
-  createDevice (name, description, applicationId, deviceModel) {
+  create (name, description, applicationId, deviceModel) {
     appLogger.log(`IDevice ${name}, ${description}, ${applicationId}, ${deviceModel}`)
     const data = formatInputData({
       name,
@@ -21,10 +21,10 @@ module.exports = class Device {
     return prisma.createDevice(data).$fragment(fragments.basic)
   }
 
-  async retrieveDevice (id) {
+  async load (id) {
     const dvc = await loadDevice({ id })
     try {
-      const { records } = await this.modelAPI.deviceNetworkTypeLinks.retrieveDeviceNetworkTypeLinks({ deviceId: id })
+      const { records } = await this.modelAPI.deviceNetworkTypeLinks.list({ deviceId: id })
       if (records.length) {
         dvc.networks = records.map(x => x.networkType.id)
       }
@@ -35,7 +35,7 @@ module.exports = class Device {
     return dvc
   }
 
-  async retrieveDevices ({ limit, offset, ...where } = {}) {
+  async list ({ limit, offset, ...where } = {}) {
     where = formatRelationshipsIn(where)
     if (where.search) {
       where.name_contains = where.search
@@ -51,17 +51,17 @@ module.exports = class Device {
     return { totalCount, records }
   }
 
-  updateDevice ({ id, ...data }) {
+  update ({ id, ...data }) {
     if (!id) throw httpError(400, 'No existing Device ID')
     data = formatInputData(data)
     return prisma.updateDevice({ data, where: { id } }).$fragment(fragments.basic)
   }
 
-  async deleteDevice (id) {
+  async remove (id) {
     // Delete my deviceNetworkTypeLinks first.
     try {
-      let { records } = await this.modelAPI.deviceNetworkTypeLinks.retrieveDeviceNetworkTypeLinks({ deviceId: id })
-      await Promise.all(records.map(x => this.modelAPI.deviceNetworkTypeLinks.deleteDeviceNetworkTypeLink(x.id)))
+      let { records } = await this.modelAPI.deviceNetworkTypeLinks.list({ deviceId: id })
+      await Promise.all(records.map(x => this.modelAPI.deviceNetworkTypeLinks.remove(x.id)))
     }
     catch (err) {
       appLogger.log(`Error deleting device-dependant networkTypeLinks: ${err}`)
@@ -74,11 +74,11 @@ module.exports = class Device {
     let { error } = Joi.validate(data, unicastDownlinkSchema)
     if (error) throw httpError(400, error.message)
     const device = await loadDevice({ id })
-    const app = await this.modelAPI.applications.retrieveApplication(device.application.id)
+    const app = await this.modelAPI.applications.load(device.application.id)
     if (!app.running) return
     // Get all device networkType links
     const devNtlQuery = { device: { id } }
-    let { records } = await this.modelAPI.deviceNetworkTypeLinks.retrieveDeviceNetworkTypeLinks(devNtlQuery)
+    let { records } = await this.modelAPI.deviceNetworkTypeLinks.list(devNtlQuery)
     appLogger.log(`DEVICE_NETWORK_TYPE_LINKS: ${JSON.stringify(records)}`)
     const logs = await Promise.all(records.map(x => this.modelAPI.networkTypeAPI.passDataToDevice(x.networkType.id, app.id, id, data)))
     return R.flatten(logs)
@@ -96,9 +96,9 @@ module.exports = class Device {
   // some cases but not others (e.g., when the user is part of an admin company).
   async fetchDeviceApplication (req, res, next) {
     try {
-      const dev = await this.retrieveDevice(parseInt(req.params.id, 10))
+      const dev = await this.load(parseInt(req.params.id, 10))
       req.device = dev
-      const app = await this.modelAPI.applications.retrieveApplication(dev.application.id)
+      const app = await this.modelAPI.applications.load(dev.application.id)
       req.application = app
       next()
     }
@@ -113,7 +113,7 @@ module.exports = class Device {
   // want to create.
   async fetchApplicationForNewDevice (req, res, next) {
     try {
-      const app = await this.modelAPI.applications.retrieveApplication(parseInt(req.body.applicationId, 10))
+      const app = await this.modelAPI.applications.load(parseInt(req.body.applicationId, 10))
       req.application = app
       next()
     }

@@ -102,7 +102,7 @@ module.exports = class SessionManager {
       // Assuming the verified data due to encryption is enough.
       // Get the user record into the request structure for use in the
       // methods.
-      const user = await this.users.retrieveUserByUsername(verified.user)
+      const user = await this.users.loadByUsername(verified.user)
       req.user = user
       // Make sure we have a session for this user.
       if (!this.sessionsMap[ user.id ]) {

@@ -89,7 +89,7 @@ exports.initialize = function (app, server) {
     }
     const isAdmin = req.company.type.id !== modelAPI.companies.COMPANY_ADMIN
     const mapSecurityData = isAdmin ? R.identity : R.pick(['authorized', 'message', 'enabled'])
-    modelAPI.networks.retrieveNetworks(options).then(function (networks) {
+    modelAPI.networks.list(options).then(function (networks) {
       for (let i = 0; i < networks.records.length; ++i) {
         if (networks.records[i].securityData) {
           let temp = {
@@ -154,8 +154,8 @@ exports.initialize = function (app, server) {
     }
     const isAdmin = req.company.type.id !== modelAPI.companies.COMPANY_ADMIN
     const mapSecurityData = isAdmin ? R.identity : R.pick(['authorized', 'message', 'enabled'])
-    modelAPI.networks.retrieveNetworks(options).then(function (networks) {
-      modelAPI.networkProtocols.retrieveNetworkProtocols(options).then(function (recs) {
+    modelAPI.networks.list(options).then(function (networks) {
+      modelAPI.networkProtocols.list(options).then(function (recs) {
         let nps = {
           totalCount: recs.totalCount,
           records: []
@@ -255,7 +255,7 @@ exports.initialize = function (app, server) {
     var id = parseInt(req.params.id, 10)
     const isAdmin = req.company.type.id === modelAPI.companies.COMPANY_ADMIN
     const mapSecurityData = isAdmin ? R.identity : R.pick(['authorized', 'message', 'enabled'])
-    modelAPI.networks.retrieveNetwork(id).then(function (network) {
+    modelAPI.networks.load(id).then(function (network) {
       if (network.securityData) {
         let temp = {
           authorized: network.securityData.authorized,
@@ -347,11 +347,11 @@ exports.initialize = function (app, server) {
       let network
 
       try {
-        network = await modelAPI.networks.createNetwork(body)
+        network = await modelAPI.networks.create(body)
         appLogger.log(network)
       }
       catch (err) {
-        appLogger.log('Error creating network' + err)
+        appLogger.log('Error creating network: ' + err)
         restServer.respond(res, err)
         return
       }
@@ -438,9 +438,9 @@ exports.initialize = function (app, server) {
     var data = req.body
     var pullFlag = (data.securityData && data.securityData.authorized === false)
     data.id = parseInt(req.params.id, 10)
-    modelAPI.networks.updateNetwork(data)
+    modelAPI.networks.update(data)
       .then(function (rec) {
-        modelAPI.networks.retrieveNetwork(rec.id)
+        modelAPI.networks.load(rec.id)
           .then((network) => {
             if (!network.securityData) {
               network.securityData = {
@@ -521,7 +521,7 @@ exports.initialize = function (app, server) {
   function (req, res, next) {
     var id = parseInt(req.params.id, 10)
     // If the caller is a global admin, we can just delete.
-    modelAPI.networks.deleteNetwork(id).then(function () {
+    modelAPI.networks.remove(id).then(function () {
       restServer.respond(res, 204)
     })
       .catch(function (err) {
@@ -569,7 +569,7 @@ exports.initialize = function (app, server) {
     restServer.isAdmin],
   function (req, res, next) {
     var networkId = parseInt(req.params.networkId, 10)
-    modelAPI.networks.retrieveNetwork(networkId)
+    modelAPI.networks.load(networkId)
       .then((network) => {
         modelAPI.networkTypeAPI.test(network, network.securityData).then(() => {
           restServer.respond(res, 200, { status: 'success' })

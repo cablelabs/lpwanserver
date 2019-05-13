@@ -12,7 +12,7 @@ module.exports = class CompanyNetworkTypeLink {
     this.modelAPI = modelAPI
   }
 
-  async createCompanyNetworkTypeLink (companyId, networkTypeId, networkSettings, { remoteOrigin = false } = {}) {
+  async create (companyId, networkTypeId, networkSettings, { remoteOrigin = false } = {}) {
     try {
       const data = formatInputData({
         companyId,
@@ -32,13 +32,13 @@ module.exports = class CompanyNetworkTypeLink {
     }
   }
 
-  async retrieveCompanyNetworkTypeLink (id) {
+  async load (id) {
     const rec = await onFail(400, () => prisma.companyNetworkTypeLink({ id }).$fragment(fragments.basic))
     if (!rec) throw httpError(404, 'CompanyNetworkTypeLink not found')
     return parseNetworkSettings(rec)
   }
 
-  async updateCompanyNetworkTypeLink ({ id, ...data }, { remoteOrigin = false } = {}) {
+  async update ({ id, ...data }, { remoteOrigin = false } = {}) {
     try {
       if (data.networkSettings) {
         data.networkSettings = JSON.stringify(data.networkSettings)
@@ -57,12 +57,12 @@ module.exports = class CompanyNetworkTypeLink {
     }
   }
 
-  async deleteCompanyNetworkTypeLink (id) {
+  async remove (id) {
     try {
-      var rec = await this.retrieveCompanyNetworkTypeLink(id)
+      var rec = await this.load(id)
       // Delete applicationNetworkTypeLinks
-      let { records } = await this.modelAPI.applicationNetworkTypeLinks.retrieveApplicationNetworkTypeLinks({ companyId: rec.company.id })
-      await Promise.all(records.map(x => this.modelAPI.applicationNetworkTypeLinks.deleteApplicationNetworkTypeLink(x.id)))
+      let { records } = await this.modelAPI.applicationNetworkTypeLinks.list({ companyId: rec.company.id })
+      await Promise.all(records.map(x => this.modelAPI.applicationNetworkTypeLinks.remove(x.id)))
       // Don't delete the local record until the remote operations complete.
       var logs = await this.modelAPI.networkTypeAPI.deleteCompany(rec.networkType.id, rec.company.id)
       await onFail(400, () => prisma.deleteCompanyNetworkTypeLink({ id }))
@@ -76,9 +76,9 @@ module.exports = class CompanyNetworkTypeLink {
 
   async pushCompanyNetworkTypeLink (id) {
     try {
-      var rec = await this.retrieveCompanyNetworkTypeLink(id)
+      var rec = await this.load(id)
       // push applicationNetworkTypeLinks
-      let { records } = await this.modelAPI.applicationNetworkTypeLinks.retrieveApplicationNetworkTypeLinks({ companyId: rec.company.id })
+      let { records } = await this.modelAPI.applicationNetworkTypeLinks.list({ companyId: rec.company.id })
       await Promise.all(records.map(x => this.modelAPI.applicationNetworkTypeLinks.pushApplicationNetworkTypeLink(x.id)))
       var logs = await this.modelAPI.networkTypeAPI.pushCompany(rec.networkType.id, rec.company.id, rec.networkSettings)
       rec.remoteAccessLogs = logs
@@ -90,7 +90,7 @@ module.exports = class CompanyNetworkTypeLink {
     }
   }
 
-  async retrieveCompanyNetworkTypeLinks ({ limit, offset, ...where } = {}) {
+  async list ({ limit, offset, ...where } = {}) {
     where = formatRelationshipsIn(where)
     const query = { where }
     if (limit) query.first = limit
@@ -115,7 +115,7 @@ module.exports = class CompanyNetworkTypeLink {
         nsCoId.push(company.id)
 
         // see if it exists first
-        let existingCompany = await this.modelAPI.companies.retrieveCompanies({ search: company.name })
+        let existingCompany = await this.modelAPI.companies.list({ search: company.name })
         if (existingCompany.totalCount > 0) {
           existingCompany = existingCompany.records[0]
           appLogger.log(company.name + ' already exists')
@@ -123,17 +123,17 @@ module.exports = class CompanyNetworkTypeLink {
         }
         else {
           appLogger.log('creating ' + company.name)
-          existingCompany = await this.modelAPI.companies.createCompany(company.name, this.modelAPI.companies.COMPANY_VENDOR)
+          existingCompany = await this.modelAPI.companies.create(company.name, this.modelAPI.companies.COMPANY_VENDOR)
           localCoId.push(existingCompany.id)
         }
         // see if it exists first
-        let existingCompanyNTL = await this.modelAPI.companyNetworkTypeLinks.retrieveCompanyNetworkTypeLinks({ companyId: existingCompany.id })
+        let existingCompanyNTL = await this.modelAPI.companyNetworkTypeLinks.list({ companyId: existingCompany.id })
         if (existingCompanyNTL.totalCount > 0) {
           appLogger.log(company.name + ' link already exists')
         }
         else {
           appLogger.log('creating Network Link for ' + company.name)
-          this.modelAPI.companyNetworkTypeLinks.createCompanyNetworkTypeLink(existingCompany.id, networkTypeId, { region: '' })
+          this.modelAPI.companyNetworkTypeLinks.create(existingCompany.id, networkTypeId, { region: '' })
         }
       }
       logs = await this.modelAPI.networkTypeAPI.pullApplication(networkTypeId)
@@ -146,7 +146,7 @@ module.exports = class CompanyNetworkTypeLink {
         nsAppId.push(application.id)
 
         // see if it exists first
-        let existingApplication = await this.modelAPI.applications.retrieveApplications({ search: application.name })
+        let existingApplication = await this.modelAPI.applications.list({ search: application.name })
         if (existingApplication.totalCount > 0) {
           existingApplication = existingApplication.records[0]
           localAppId.push(existingApplication.id)
@@ -155,7 +155,7 @@ module.exports = class CompanyNetworkTypeLink {
         else {
           appLogger.log('creating ' + JSON.stringify(application))
           let coIndex = nsCoId.indexOf(application.organizationID)
-          existingApplication = await this.modelAPI.applications.createApplication({
+          existingApplication = await this.modelAPI.applications.create({
             ...R.pick(['name', 'description'], application),
             companyId: localCoId[coIndex],
             reportingProtocolId: 1,
@@ -164,14 +164,14 @@ module.exports = class CompanyNetworkTypeLink {
           localAppId.push(existingApplication.id)
         }
         // see if it exists first
-        let existingApplicationNTL = await this.modelAPI.applicationNetworkTypeLinks.retrieveApplicationNetworkTypeLinks({ applicationId: existingApplication.id })
+        let existingApplicationNTL = await this.modelAPI.applicationNetworkTypeLinks.list({ applicationId: existingApplication.id })
         if (existingApplicationNTL.totalCount > 0) {
           appLogger.log(application.name + ' link already exists')
         }
         else {
           appLogger.log('creating Network Link for ' + application.name)
           const appNtlData = { applicationId: existingApplication.id, networkTypeId, networkSettings: {} }
-          this.modelAPI.applicationNetworkTypeLinks.createApplicationNetworkTypeLink(appNtlData, { companyId: existingApplication.company.id })
+          this.modelAPI.applicationNetworkTypeLinks.create(appNtlData, { companyId: existingApplication.company.id })
         }
       }
 
@@ -188,7 +188,7 @@ module.exports = class CompanyNetworkTypeLink {
         networkSettings = networkSettings.deviceProfile
 
         // see if it exists first
-        let existingDeviceProfile = await this.modelAPI.deviceProfiles.retrieveDeviceProfiles({ search: deviceProfile.name })
+        let existingDeviceProfile = await this.modelAPI.deviceProfiles.list({ search: deviceProfile.name })
         if (existingDeviceProfile.totalCount > 0) {
           existingDeviceProfile = existingDeviceProfile.records[0]
           localDpId.push(existingDeviceProfile.id)
@@ -196,13 +196,13 @@ module.exports = class CompanyNetworkTypeLink {
           appLogger.log(JSON.stringify(existingDeviceProfile))
           existingDeviceProfile.networkSettings = networkSettings
           appLogger.log(JSON.stringify(existingDeviceProfile))
-          await this.modelAPI.deviceProfiles.updateDeviceProfile(existingDeviceProfile)
+          await this.modelAPI.deviceProfiles.update(existingDeviceProfile)
         }
         else {
           appLogger.log('creating ' + deviceProfile.name)
           let coIndex = nsCoId.indexOf(deviceProfile.organizationID)
           appLogger.log(networkTypeId, localCoId[coIndex], deviceProfile.name, networkSettings)
-          existingDeviceProfile = await this.modelAPI.deviceProfiles.createDeviceProfile(networkTypeId, localCoId[coIndex], deviceProfile.name, deviceProfile.description, networkSettings)
+          existingDeviceProfile = await this.modelAPI.deviceProfiles.create(networkTypeId, localCoId[coIndex], deviceProfile.name, deviceProfile.description, networkSettings)
           localDpId.push(existingDeviceProfile.id)
         }
       }
@@ -215,7 +215,7 @@ module.exports = class CompanyNetworkTypeLink {
           let device = devices.result[index]
 
           // see if it exists first
-          let existingDevice = await this.modelAPI.devices.retrieveDevices({ search: device.name })
+          let existingDevice = await this.modelAPI.devices.list({ search: device.name })
           if (existingDevice.totalCount > 0) {
             existingDevice = existingDevice.records[0]
             appLogger.log(device.name + ' already exists')
@@ -225,10 +225,10 @@ module.exports = class CompanyNetworkTypeLink {
             appLogger.log('creating ' + JSON.stringify(device))
             let appIndex = nsAppId.indexOf(device.applicationID)
             appLogger.log('localAppId[' + appIndex + '] = ' + localAppId[appIndex])
-            existingDevice = await this.modelAPI.devices.createDevice(device.name, device.description, localAppId[appIndex])
+            existingDevice = await this.modelAPI.devices.create(device.name, device.description, localAppId[appIndex])
           }
 
-          let existingDeviceNTL = await this.modelAPI.deviceNetworkTypeLinks.retrieveDeviceNetworkTypeLinks({ deviceId: existingDevice.id })
+          let existingDeviceNTL = await this.modelAPI.deviceNetworkTypeLinks.list({ deviceId: existingDevice.id })
           if (existingDeviceNTL.totalCount > 0) {
             appLogger.log(device.name + ' link already exists')
           }
@@ -237,10 +237,10 @@ module.exports = class CompanyNetworkTypeLink {
             let dpIndex = nsDpId.indexOf(device.deviceProfileID)
             // let coId = protocolDataAccess.prototype.getCompanyByApplicationId(existingDevice.applicationId);
 
-            let tempApp = await this.modelAPI.applications.retrieveApplication(localAppId[appIndex])
+            let tempApp = await this.modelAPI.applications.load(localAppId[appIndex])
             let coId = tempApp.company.id
 
-            this.modelAPI.deviceNetworkTypeLinks.createDeviceNetworkTypeLink(existingDevice.id, networkTypeId, localDpId[dpIndex], device, coId)
+            this.modelAPI.deviceNetworkTypeLinks.create(existingDevice.id, networkTypeId, localDpId[dpIndex], device, coId)
           }
         }
       }

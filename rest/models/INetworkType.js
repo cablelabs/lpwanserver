@@ -33,30 +33,30 @@ module.exports = class NetworkType {
     }
   }
 
-  async createNetworkType (name) {
+  async create (name) {
     const rec = await prisma.createNetworkType({ name })
     await this.reloadCache()
     return rec
   }
 
-  async updateNetworkType ({ id, ...data }) {
+  async update ({ id, ...data }) {
     if (!id) throw httpError(400, 'No existing NetworkType ID')
     const rec = await prisma.updateNetworkType({ data, where: { id } })
     await this.reloadCache()
     return rec
   }
 
-  async deleteNetworkType (id) {
+  async remove (id) {
     await onFail(400, () => prisma.deleteNetworkType({ id }))
     await this.reloadCache()
   }
 
-  async retrieveNetworkTypes () {
+  async list () {
     // return prisma.networkTypes()
     return this.typeList
   }
 
-  async retrieveNetworkType (id) {
+  async load (id) {
     // const rec = await onFail(400, () => prisma.networkType({ id }))
     const rec = this.typeList.find(x => x.id === id)
     if (!rec) throw httpError(404, 'NetworkType not found')

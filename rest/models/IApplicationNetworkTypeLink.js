@@ -8,7 +8,7 @@ module.exports = class ApplicationNetworkTypeLink {
     this.modelAPI = modelAPI
   }
 
-  async createApplicationNetworkTypeLink (data, { companyId, remoteOrigin = false } = {}) {
+  async create (data, { companyId, remoteOrigin = false } = {}) {
     try {
       if (companyId) {
         await this.validateCompanyForApplication(companyId, data.applicationId)
@@ -30,13 +30,13 @@ module.exports = class ApplicationNetworkTypeLink {
     }
   }
 
-  async retrieveApplicationNetworkTypeLink (id) {
+  async load (id) {
     const rec = await onFail(400, () => prisma.applicationNetworkTypeLink({ id }).$fragment(fragments.basic))
     if (!rec) throw httpError(404, 'ApplicationNetworkTypeLink not found')
     return { ...rec, networkSettings: JSON.parse(rec.networkSettings) }
   }
 
-  async retrieveApplicationNetworkTypeLinks ({ limit, offset, ...where } = {}) {
+  async list ({ limit, offset, ...where } = {}) {
     where = formatRelationshipsIn(where)
     const query = { where }
     if (limit) query.first = limit
@@ -52,7 +52,7 @@ module.exports = class ApplicationNetworkTypeLink {
     return { totalCount, records }
   }
 
-  async updateApplicationNetworkTypeLink ({ id, ...data }, { companyId, remoteOrigin = false } = {}) {
+  async update ({ id, ...data }, { companyId, remoteOrigin = false } = {}) {
     try {
       await this.validateCompanyForApplicationNetworkTypeLink(companyId, id)
       if (typeof data.networkSettings !== 'string') {
@@ -72,15 +72,15 @@ module.exports = class ApplicationNetworkTypeLink {
     }
   }
 
-  async deleteApplicationNetworkTypeLink (id, { companyId } = {}) {
+  async remove (id, { companyId } = {}) {
     await this.validateCompanyForApplicationNetworkTypeLink(companyId, id)
     try {
-      var rec = await this.retrieveApplicationNetworkTypeLink(id)
+      var rec = await this.load(id)
       // Delete devicenetworkTypeLinks
-      const { records: devices } = await this.modelAPI.devices.retrieveDevices({ applicationId: rec.application.id })
+      const { records: devices } = await this.modelAPI.devices.list({ applicationId: rec.application.id })
       const dntlQuery = { device: { id_in: devices.map(x => x.id) } }
-      let { records: deviceNtls } = await this.modelAPI.deviceNetworkTypeLinks.retrieveDeviceNetworkTypeLinks(dntlQuery)
-      await Promise.all(deviceNtls.map(x => this.modelAPI.deviceNetworkTypeLinks.deleteDeviceNetworkTypeLink(x.id)))
+      let { records: deviceNtls } = await this.modelAPI.deviceNetworkTypeLinks.list(dntlQuery)
+      await Promise.all(deviceNtls.map(x => this.modelAPI.deviceNetworkTypeLinks.remove(x.id)))
 
       // Don't delete the local record until the remote operations complete.
       var logs = await this.modelAPI.networkTypeAPI.deleteApplication(rec.networkType.id, rec.application.id)
@@ -95,9 +95,9 @@ module.exports = class ApplicationNetworkTypeLink {
 
   async pushApplicationNetworkTypeLink (id) {
     try {
-      var rec = await this.retrieveApplicationNetworkTypeLink(id)
+      var rec = await this.load(id)
       // push devicenetworkTypeLinks
-      let { records: deviceNtls } = await this.modelAPI.deviceNetworkTypeLinks.retrieveDeviceNetworkTypeLinks({ applicationId: rec.application.id })
+      let { records: deviceNtls } = await this.modelAPI.deviceNetworkTypeLinks.list({ applicationId: rec.application.id })
       await Promise.all(deviceNtls.map(x => this.modelAPI.deviceNetworkTypeLinks.pushDeviceNetworkTypeLink(x.id)))
       var logs = await this.modelAPI.networkTypeAPI.pushApplication(rec.networkType.id, rec.application.id, rec.networkSettings)
       rec.remoteAccessLogs = logs
@@ -115,7 +115,7 @@ module.exports = class ApplicationNetworkTypeLink {
   async validateCompanyForApplication (companyId, applicationId) {
     if (!companyId) return
     try {
-      const application = await this.modelAPI.applications.retrieveApplication(applicationId)
+      const application = await this.modelAPI.applications.load(applicationId)
       if (application.company.id !== companyId) {
         throw new httpError.Unauthorized()
       }
@@ -129,7 +129,7 @@ module.exports = class ApplicationNetworkTypeLink {
   async validateCompanyForApplicationNetworkTypeLink (companyId, antlId) {
     if (!companyId) return
     try {
-      var antl = await this.retrieveApplicationNetworkTypeLink(antlId)
+      var antl = await this.load(antlId)
       await this.validateCompanyForApplication(companyId, antl.application.id)
     }
     catch (err) {

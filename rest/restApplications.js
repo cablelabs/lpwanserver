@@ -101,7 +101,7 @@ exports.initialize = function (app, server) {
     if (req.query.networkProtocolId) {
       options.networkProtocolId = req.query.networkProtocolId
     }
-    modelAPI.applications.retrieveApplications(options).then(function (cos) {
+    modelAPI.applications.list(options).then(function (cos) {
       const responseBody = { ...cos, records: cos.records.map(formatRelationshipsOut) }
       restServer.respondJson(res, null, responseBody)
     })
@@ -139,7 +139,7 @@ exports.initialize = function (app, server) {
   app.get('/api/applications/:id', [restServer.isLoggedIn,
     restServer.fetchCompany],
   function (req, res, next) {
-    modelAPI.applications.retrieveApplication(parseInt(req.params.id, 10)).then(function (app) {
+    modelAPI.applications.load(parseInt(req.params.id, 10)).then(function (app) {
       if ((req.company.type.id !== modelAPI.companies.COMPANY_ADMIN) &&
                  (app.company.id !== req.user.company.id)) {
         restServer.respond(res, 403)
@@ -210,7 +210,7 @@ exports.initialize = function (app, server) {
     }
 
     // Do the add.
-    modelAPI.applications.createApplication(
+    modelAPI.applications.create(
       R.pick(['name', 'description', 'companyId', 'reportingProtocolId', 'baseUrl'], rec)
     ).then(function (rec) {
       var send = {}
@@ -262,7 +262,7 @@ exports.initialize = function (app, server) {
     // We'll start by getting the application, as a read is much less
     // expensive than a write, and then we'll be able to tell if anything
     // really changed before we even try to write.
-    modelAPI.applications.retrieveApplication(data.id).then(function (app) {
+    modelAPI.applications.load(data.id).then(function (app) {
       // Verify that the user can make the change.
       if ((modelAPI.companies.COMPANY_ADMIN !== req.company.type.id) &&
                  (req.user.company.id !== app.company.id)) {
@@ -314,7 +314,7 @@ exports.initialize = function (app, server) {
       }
       else {
         // Do the update.
-        modelAPI.applications.updateApplication(data).then(function (rec) {
+        modelAPI.applications.update(data).then(function (rec) {
           console.log('*** UPDATED APP***', JSON.stringify(rec))
           restServer.respond(res, 204)
         })
@@ -347,7 +347,7 @@ exports.initialize = function (app, server) {
     var id = parseInt(req.params.id, 10)
     // If the caller is a global admin, we can just delete.
     if (req.company.type.id === modelAPI.companies.COMPANY_ADMIN) {
-      modelAPI.applications.deleteApplication(id).then(function () {
+      modelAPI.applications.remove(id).then(function () {
         restServer.respond(res, 204)
       })
         .catch(function (err) {
@@ -357,13 +357,13 @@ exports.initialize = function (app, server) {
     }
     // Company admin
     else {
-      modelAPI.applications.retrieveApplication(req.params.id).then(function (app) {
+      modelAPI.applications.load(req.params.id).then(function (app) {
         // Verify that the user can delete.
         if (req.user.company.id !== app.company.id) {
           restServer.respond(res, 403)
           return
         }
-        modelAPI.applications.deleteApplication(id).then(function () {
+        modelAPI.applications.remove(id).then(function () {
           restServer.respond(res, 204)
         })
           .catch(function (err) {
@@ -394,7 +394,7 @@ exports.initialize = function (app, server) {
   async function startApplication (req, res) {
     var id = parseInt(req.params.id, 10)
     if (req.company.type.id !== modelAPI.companies.COMPANY_ADMIN) {
-      const app = await modelAPI.applications.retrieveApplication(id)
+      const app = await modelAPI.applications.load(id)
       if (req.user.company.id !== app.company.id) {
         restServer.respond(res, 403)
         return
@@ -430,7 +430,7 @@ exports.initialize = function (app, server) {
   async function stopApplication (req, res) {
     var id = parseInt(req.params.id, 10)
     if (req.company.type.id !== modelAPI.companies.COMPANY_ADMIN) {
-      const app = await modelAPI.applications.retrieveApplication(id)
+      const app = await modelAPI.applications.load(id)
       if (req.user.company.id !== app.company.id) {
         restServer.respond(res, 403)
         return

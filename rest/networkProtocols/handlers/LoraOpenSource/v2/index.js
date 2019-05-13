@@ -18,7 +18,7 @@ module.exports = class LoraOpenSourceV2 extends LoraOpenSource {
       networkProtocolVersion: '2.0'
     }
     try {
-      const { records } = await networkProtocolModel.retrieveNetworkProtocols({ search: me.name, networkProtocolVersion: '1.0' })
+      const { records } = await networkProtocolModel.list({ search: me.name, networkProtocolVersion: '1.0' })
       console.log('REGISTER LORA 2: RECORDS', JSON.stringify(records))
       if (records.length) {
         me.masterProtocol = records[0].id
@@ -27,7 +27,7 @@ module.exports = class LoraOpenSourceV2 extends LoraOpenSource {
     catch (err) {
       // ignore error
     }
-    await networkProtocolModel.upsertNetworkProtocol(me)
+    await networkProtocolModel.upsert(me)
   }
 
   buildRemoteDevice (device, deviceNtl, deviceProfile, remoteAppId, remoteDeviceProfileId) {

@@ -58,7 +58,7 @@ module.exports = class NetworkProtocolAccess {
     if (this.networkProtocolsById[npId]) return this.networkProtocolsById[npId]
     // We'll need the protocol for the network.
     const np = await appLogger.logOnThrow(
-      () => this.modelAPI.networkProtocols.retrieveNetworkProtocol(npId),
+      () => this.modelAPI.networkProtocols.load(npId),
       err => `Failed to load network protocol code: ${err}`
     )
     const { protocolHandler: handler } = np

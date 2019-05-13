@@ -11,7 +11,7 @@ module.exports = class Network {
     this.modelAPI = modelAPI
   }
 
-  async createNetwork (data) {
+  async create (data) {
     let dataAPI = new NetworkProtocolDataAccess(this.modelAPI, 'INetwork Create')
     let k = genKey()
     if (data.securityData) {
@@ -30,16 +30,15 @@ module.exports = class Network {
       record.securityData = decrypt(record.securityData, k)
       let { securityData } = await authorizeAndTest(record, this.modelAPI, k, this, dataAPI)
       securityData = encrypt(securityData, k)
-      record = await prisma.updateNetwork({ data: { securityData }, where: { id: record.id } }).$fragment(fragments.basic)
-      record.securityData = decrypt(record.securityData, k)
+      await prisma.updateNetwork({ data: { securityData }, where: { id: record.id } }).$fragment(fragments.basic)
     }
-    return this.retrieveNetwork(record.id)
+    return this.load(record.id)
   }
 
-  async updateNetwork ({ id, ...data }) {
+  async update ({ id, ...data }) {
     if (!id) throw httpError(400, 'No existing Network ID')
     let dataAPI = new NetworkProtocolDataAccess(this.modelAPI, 'INetwork Update')
-    const old = await this.retrieveNetwork(id)
+    const old = await this.load(id)
     const k = await this.modelAPI.protocolData.loadValue(old, genNwkKey(id))
     const candidate = R.merge(old, data)
     let { securityData } = await authorizeAndTest(candidate, this.modelAPI, k, this, dataAPI)
@@ -48,21 +47,21 @@ module.exports = class Network {
     }
     data = formatInputData(data)
     await prisma.updateNetwork({ data, where: { id } }).$fragment(fragments.basic)
-    return this.retrieveNetwork(id)
+    return this.load(id)
   }
 
-  async retrieveNetwork (id) {
-    const rec = await loadNetwork({ id })
+  async load (id) {
+    const rec = await load({ id })
     if (rec.securityData) {
       let k = await this.modelAPI.protocolData.loadValue(rec, genNwkKey(id))
       rec.securityData = await decrypt(rec.securityData, k)
-      let networkProtocol = await this.modelAPI.networkProtocols.retrieveNetworkProtocol(rec.networkProtocol.id)
+      let networkProtocol = await this.modelAPI.networkProtocols.load(rec.networkProtocol.id)
       rec.masterProtocol = networkProtocol.masterProtocol
     }
     return rec
   }
 
-  async retrieveNetworks ({ limit, offset, ...where } = {}) {
+  async list ({ limit, offset, ...where } = {}) {
     where = formatRelationshipsIn(where)
     if (where.search) {
       where.name_contains = where.search
@@ -84,9 +83,9 @@ module.exports = class Network {
     return { totalCount, records }
   }
 
-  async deleteNetwork (id) {
+  async remove (id) {
     let dataAPI = new NetworkProtocolDataAccess(this.modelAPI, 'INetwork Delete')
-    let old = await loadNetwork({ id })
+    let old = await load({ id })
     await dataAPI.deleteProtocolDataForKey(id,
       old.networkProtocol.id,
       genNwkKey(id))
@@ -95,11 +94,11 @@ module.exports = class Network {
 
   async pullNetwork (id) {
     try {
-      let network = await this.retrieveNetwork(id)
+      let network = await this.load(id)
       if (!network.securityData.authorized) {
         throw new Error('Network is not authorized.  Cannot pull')
       }
-      let networkType = await this.modelAPI.networkTypes.retrieveNetworkType(network.networkType.id)
+      let networkType = await this.modelAPI.networkTypes.load(network.networkType.id)
       var npda = new NetworkProtocolDataAccess(this.modelAPI, 'Pull Network')
       npda.initLog(networkType, network)
       appLogger.log(network)
@@ -115,8 +114,8 @@ module.exports = class Network {
 
   async pushNetwork (id) {
     try {
-      let network = await this.retrieveNetwork(id)
-      let networkType = await this.modelAPI.networkTypes.retrieveNetworkTypes(network.networkType.id)
+      let network = await this.load(id)
+      let networkType = await this.modelAPI.networkTypes.list(network.networkType.id)
       var npda = new NetworkProtocolDataAccess(this.modelAPI, 'Push Network')
       npda.initLog(networkType, network)
       appLogger.log(network)
@@ -132,8 +131,8 @@ module.exports = class Network {
 
   async pushNetworks (networkTypeId) {
     try {
-      let { records } = await this.retrieveNetworks({ networkTypeId })
-      let networkType = await this.modelAPI.networkTypes.retrieveNetworkType(networkTypeId)
+      let { records } = await this.list({ networkTypeId })
+      let networkType = await this.modelAPI.networkTypes.load(networkTypeId)
       var npda = new NetworkProtocolDataAccess(this.modelAPI, 'Push Network')
       npda.initLog(networkType, records)
       records = records.filter(R.path(['securityData', 'authorized']))
@@ -171,7 +170,7 @@ const fragments = {
 // ******************************************************************************
 // Helpers
 // ******************************************************************************
-async function loadNetwork (uniqueKeyObj, fragementKey = 'basic') {
+async function load (uniqueKeyObj, fragementKey = 'basic') {
   const rec = await onFail(400, () => prisma.network(uniqueKeyObj).$fragment(fragments[fragementKey]))
   if (!rec) throw httpError(404, 'Network not found')
   return rec

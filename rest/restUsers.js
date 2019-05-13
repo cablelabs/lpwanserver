@@ -96,7 +96,7 @@ exports.initialize = function (app, server) {
     if (req.query.search) {
       options.search = req.query.search
     }
-    modelAPI.users.retrieveUsers(options).then(function (result) {
+    modelAPI.users.list(options).then(function (result) {
       let records = result.records.map(x => ({
         ...formatRelationshipsOut(x),
         role: modelAPI.users.reverseRoles[x.role.id]
@@ -159,7 +159,7 @@ exports.initialize = function (app, server) {
       * @apiVersion 0.1.0
       */
   app.get('/api/users/:id', [restServer.isLoggedIn, restServer.fetchCompany], function (req, res, next) {
-    modelAPI.users.retrieveUser(parseInt(req.params.id, 10)).then(function (user) {
+    modelAPI.users.load(parseInt(req.params.id, 10)).then(function (user) {
       if ((req.company.type.id !== modelAPI.companies.COMPANY_ADMIN) &&
                  ((req.user.role.id !== modelAPI.users.ROLE_ADMIN) ||
                    (req.user.company.id !== user.company.id)) &&
@@ -253,7 +253,7 @@ exports.initialize = function (app, server) {
     }
 
     // Do the add.
-    modelAPI.users.createUser(rec.username,
+    modelAPI.users.create(rec.username,
       rec.password,
       rec.email,
       rec.companyId,
@@ -301,7 +301,7 @@ exports.initialize = function (app, server) {
     // We'll start by getting the user, as a read is much less expensive
     // than a write, and then we'll be able to tell if anything really
     // changed before we even try to write.
-    modelAPI.users.retrieveUser(data.id).then(function (user) {
+    modelAPI.users.load(data.id).then(function (user) {
       // Fields that may exist in the request body that anyone (with permissions)
       // can change.  Make sure they actually differ, though.
       var changed = 0
@@ -388,7 +388,7 @@ exports.initialize = function (app, server) {
       }
       else {
         // Do the update.
-        modelAPI.users.updateUser(data).then(function (rec) {
+        modelAPI.users.update(data).then(function (rec) {
           restServer.respond(res, 204)
         })
           .catch(function (err) {
@@ -428,7 +428,7 @@ exports.initialize = function (app, server) {
 
     // If the caller is a global admin, we can just delete.
     if (req.company.type.id === modelAPI.companies.COMPANY_ADMIN) {
-      modelAPI.users.deleteUser(id).then(function () {
+      modelAPI.users.remove(id).then(function () {
         restServer.respond(res, 204)
       })
         .catch(function (err) {
@@ -438,13 +438,13 @@ exports.initialize = function (app, server) {
     }
     else if (req.user.role.id === modelAPI.users.ROLE_ADMIN) {
       // Admin for a company.  Get the user and verify the same company.
-      modelAPI.users.retrieveUser(id).then(function (user) {
+      modelAPI.users.load(id).then(function (user) {
         if (user.company.id !== req.user.company.id) {
           restServer.respond(res, 403, 'Cannot delete a user from another company')
         }
         else {
           // OK to delete.
-          modelAPI.users.deleteUser(id).then(function () {
+          modelAPI.users.remove(id).then(function () {
             restServer.respond(res, 204)
           })
             .catch(function (err) {
