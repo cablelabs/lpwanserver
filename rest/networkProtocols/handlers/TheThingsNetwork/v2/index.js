@@ -15,14 +15,14 @@ const ApiClient = require('./client')
  * The Things Network Protocol Handler Module
  * @module networkProtocols/The Things Network
  * @see module:networkProtocols/networkProtocols
- * @type {{activeApplicationNetworkProtocols: {}}}
  */
 
 module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
-  constructor () {
-    super()
-    this.activeApplicationNetworkProtocols = {}
+  constructor (opts) {
+    super(opts)
     this.client = new ApiClient()
+    this.networkProtocolId = null
+    this.client.on('uplink', x => this.modelAPI.applications.passDataToApplication(x.appId, x.networkId, x.payload))
   }
 
   /**
@@ -33,12 +33,29 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
    */
   async register (networkProtocols) {
     appLogger.log('TTN:register', 'info')
-    await networkProtocols.upsertNetworkProtocol({
+    const rec = await networkProtocols.upsertNetworkProtocol({
       name: 'The Things Network',
       networkTypeId: 1,
       protocolHandler: 'TheThingsNetwork/v2',
       networkProtocolVersion: '2.0'
     })
+    this.networkProtocolId = rec.id
+    await this.subscribeToDataForEnabledApps()
+  }
+
+  async subscribeToDataForEnabledApps () {
+    const antlQuery = { networkType: { id: 1 } }
+    const { records: antls } = await this.modelAPI.applicationNetworkTypeLinks.retrieveApplicationNetworkTypeLinks(antlQuery)
+    let appIds = antls.map(R.path(['application', 'id']))
+    const networkQuery = { networkProtocol: { id: this.networkProtocolId } }
+    const { records: networks } = await this.modelAPI.networks.retrieveNetworks(networkQuery)
+    try {
+      const promises = R.flatten(networks.map(nwk => appIds.map(id => this.startApplication(nwk, id))))
+      await Promise.all(promises)
+    }
+    catch (err) {
+      appLogger.log(`Error subscribing to TTN data: ${err}`, 'error')
+    }
   }
 
   /**
@@ -151,14 +168,9 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
             remoteOrigin: true
           }
         )
-        await dataAPI.putProtocolDataForKey(
-          network.id,
-          network.networkProtocol.id,
-          makeApplicationDataKey(localApp.id, 'appNwkId'),
-          normalizedApplication.id
-        )
+        await this.modelAPI.protocolData.upsert(network, makeApplicationDataKey(localApp.id, 'appNwkId'), normalizedApplication.id)
       }
-      // if (localApp.baseUrl) await this.startApplication(network, localApp.id, dataAPI)
+      if (localApp.baseUrl) await this.startApplication(network, localApp.id)
       return { localApplication: localApp, remoteApplication: normalizedApplication }
     }
     catch (e) {
@@ -224,12 +236,7 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
       appLogger.log(normalizedDevice)
       const existingDeviceNTL = await modelAPI.deviceNetworkTypeLinks.createDeviceNetworkTypeLink(existingDevice.id, network.networkType.id, dp.localDeviceProfile, normalizedDevice, 2, { remoteOrigin: true })
       appLogger.log(existingDeviceNTL)
-      await dataAPI.putProtocolDataForKey(
-        network.id,
-        network.networkProtocol.id,
-        makeDeviceDataKey(existingDevice.id, 'devNwkId'),
-        remoteDevice.dev_id
-      )
+      await this.modelAPI.protocolData.upsert(network, makeDeviceDataKey(existingDevice.id, 'devNwkId'), remoteDevice.dev_id)
       appLogger.log({ localDevice: existingDevice.id, remoteDevice: remoteDevice.dev_id })
       return { localDevice: existingDevice.id, remoteDevice: remoteDevice.dev_id }
     }
@@ -305,11 +312,7 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
     const badProtocolTableError = new Error('Bad things in the Protocol Table')
     try {
       // See if it already exists
-      const appNetworkId = await dataAPI.getProtocolDataForKey(
-        network.id,
-        network.networkProtocol.id,
-        makeApplicationDataKey(application.id, 'appNwkId')
-      )
+      const appNetworkId = await this.modelAPI.protocolData.loadValue(network, makeApplicationDataKey(application.id, 'appNwkId'))
       if (!appNetworkId) {
         throw badProtocolTableError
       }
@@ -349,11 +352,7 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
   async pushDevice (network, device, dataAPI) {
     const badProtocolTableError = new Error('Something bad happened with the Protocol Table')
     try {
-      const devNetworkId = await dataAPI.getProtocolDataForKey(
-        network.id,
-        network.networkProtocol.id,
-        makeDeviceDataKey(device.id, 'devNwkId')
-      )
+      const devNetworkId = await this.modelAPI.protocolData.loadValue(network, makeDeviceDataKey(device.id, 'devNwkId'))
       appLogger.log('Ignoring Device  ' + device.id + ' already on network ' + network.name, 'info')
       if (devNetworkId) {
         return { localDevice: device.id, remoteDevice: devNetworkId }
@@ -402,12 +401,7 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
       applicationData.networkSettings.applicationEUI = accountServerApp.euis[0]
       appLogger.log(applicationData, 'error')
       await modelAPI.applicationNetworkTypeLinks.updateApplicationNetworkTypeLink(applicationData, { companyId: 2, remoteOrigin: true })
-      await dataAPI.putProtocolDataForKey(
-        network.id,
-        network.networkProtocol.id,
-        makeApplicationDataKey(application.id, 'appNwkId'),
-        accountServerApp.id
-      )
+      await this.modelAPI.protocolData.upsert(network, makeApplicationDataKey(application.id, 'appNwkId'), accountServerApp.id)
       return this.registerApplicationWithHandler(network, handlerApp, accountServerApp, dataAPI)
     }
     catch (err) {
@@ -425,13 +419,9 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
    * @param dataAPI - access to the data records and error tracking
    * @returns {Promise<Application>} - Remote application data
    */
-  async getApplication (network, applicationId, dataAPI) {
+  async getApplication (network, applicationId) {
     try {
-      let appNetworkId = await dataAPI.getProtocolDataForKey(
-        network.id,
-        network.networkProtocol.id,
-        makeApplicationDataKey(applicationId, 'appNwkId')
-      )
+      let appNetworkId = await this.modelAPI.protocolData.loadValue(network, makeApplicationDataKey(applicationId, 'appNwkId'))
       return this.client.loadApplication(network, appNetworkId)
     }
     catch (e) {
@@ -452,14 +442,8 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
     try {
       // Get the application data.
       let application = await dataAPI.getApplicationById(applicationId)
-      let coNetworkId = await dataAPI.getProtocolDataForKey(
-        network.id,
-        network.networkProtocol.id,
-        makeCompanyDataKey(application.company.id, 'coNwkId'))
-      let appNetworkId = await dataAPI.getProtocolDataForKey(
-        network.id,
-        network.networkProtocol.id,
-        makeApplicationDataKey(applicationId, 'appNwkId'))
+      let coNetworkId = await this.modelAPI.protocolData.loadValue(network, makeCompanyDataKey(application.company.id, 'coNwkId'))
+      let appNetworkId = await this.modelAPI.protocolData.loadValue(network, makeApplicationDataKey(applicationId, 'appNwkId'))
       let applicationData = await dataAPI.getApplicationNetworkType(applicationId, network.networkType.id)
 
       // build body
@@ -536,11 +520,7 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
   async deleteApplication (network, applicationId, dataAPI) {
     try {
       // Get the application data.
-      let appNetworkId = await dataAPI.getProtocolDataForKey(
-        network.id,
-        network.networkProtocol.id,
-        makeApplicationDataKey(applicationId, 'appNwkId')
-      )
+      let appNetworkId = await this.modelAPI.protocolData.loadValue(network, makeApplicationDataKey(applicationId, 'appNwkId'))
       await this.client.deleteAccountApplication(network, appNetworkId)
       await dataAPI.deleteProtocolDataForKey(
         network.id,
@@ -558,76 +538,24 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
   //
   // network       - The networks record for the network that uses this
   // applicationId - The application's record id.
-  // dataAPI       - Gives access to the data records and error tracking for the
-  //                 operation.
   //
   // Returns a Promise that starts the application data flowing from the remote
   // system.
-  async startApplication () {
-    // Unable to determine how to manage integrations except via TTN console.
-
-    // const url = joinUrl(config.get('base_url'), 'api/ingest', appId, network.id)
-
-    // // Set up the Forwarding with LoRa App Server
-    // let appNwkId = await dataAPI.getProtocolDataForKey(
-    //   network.id,
-    //   network.networkProtocol.id,
-    //   makeApplicationDataKey(appId, 'appNwkId')
-    // )
-
-    // const remoteApp = await this.client.loadApplication(network, appNwkId)
-    // const TTN_APP_ACCESS_KEY = remoteApp.access_keys[0].key
-
-    // const body = {
-    //   process_id: HTTP_INTEGRATION_PROCESS_ID,
-    //   settings: {
-    //     TTI_URL: url,
-    //     TTI_METHOD: 'POST',
-    //     TTN_APP_ACCESS_KEY,
-    //     TTI_AUTHORIZATION: null
-    //   }
-    // }
-
-    // try {
-    //   await this.client.loadApplicationIntegration(network, appNwkId, HTTP_INTEGRATION_PROCESS_ID)
-    //   await this.client.updateApplicationIntegration(network, appNwkId, 'http', R.pick(['settings'], body))
-    // }
-    // catch (err) {
-    //   if (err.statusCode !== 404) throw err
-    //   await this.client.createApplicationIntegration(network, appNwkId, body)
-    // }
+  async startApplication (network, appId) {
+    const appNwkId = await this.modelAPI.protocolData.loadValue(network, makeApplicationDataKey(appId, 'appNwkId'))
+    await this.client.subscribeToApplicationData(network, appNwkId)
   }
 
   // Stop the application.
   //
   // network       - The networks record for the network that uses this protocol.
   // applicationId - The local application's id to be stopped.
-  // dataAPI       - Gives access to the data records and error tracking for the
-  //                 operation.
   //
   // Returns a Promise that stops the application data flowing from the remote
   // system.
-  async stopApplication () {
-    // let appNwkId
-    // try {
-    //   appNwkId = await dataAPI.getProtocolDataForKey(
-    //     network.id,
-    //     network.networkProtocol.id,
-    //     makeApplicationDataKey(appId, 'appNwkId')
-    //   )
-    //   try {
-    //     await this.client.loadApplicationIntegration(network, appNwkId, HTTP_INTEGRATION_PROCESS_ID)
-    //   }
-    //   catch (err) {
-    //     if (err.statusCode === 404) return
-    //     throw err
-    //   }
-    //   await this.client.deleteApplicationIntegration(network, appNwkId, HTTP_INTEGRATION_PROCESS_ID)
-    // }
-    // catch (err) {
-    //   appLogger.log(`Cannot delete http integration for application ${appId} on network ${network.name}: ${err}`)
-    //   throw err
-    // }
+  async stopApplication (network, appId) {
+    const appNwkId = await this.modelAPI.protocolData.loadValue(network, makeApplicationDataKey(appId, 'appNwkId'))
+    await this.client.unsubscribeFromApplicationData(network, appNwkId)
   }
 
   async postSingleDevice (network, device, deviceProfile, application, remoteApplicationId, dataAPI) {
@@ -637,12 +565,7 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
       let ttnDevice = this.deNormalizeDeviceData(device.networkSettings, deviceProfile.networkSettings, application.networkSettings, remoteApplicationId)
       delete ttnDevice.attributes
       await this.client.createDevice(network, ttnDevice.app_id, ttnDevice)
-      await dataAPI.putProtocolDataForKey(
-        network.id,
-        network.networkProtocol.id,
-        makeDeviceDataKey(device.id, 'devNwkId'),
-        ttnDevice.dev_id
-      )
+      await this.modelAPI.protocolData.upsert(network, makeDeviceDataKey(device.id, 'devNwkId'), ttnDevice.dev_id)
       return ttnDevice.dev_id
     }
     catch (err) {
@@ -672,11 +595,7 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
         throw new Error('Could not retrieve application ntl')
       }
       const applicationData = result[1]
-      result = await tryCatch(dataAPI.getProtocolDataForKey(
-        network.id,
-        network.networkProtocol.id,
-        makeApplicationDataKey(application.id, 'appNwkId')
-      ))
+      result = await tryCatch(this.modelAPI.protocolData.loadValue(network, makeApplicationDataKey(application.id, 'appNwkId')))
       if (result[0]) {
         appLogger.log('Error fetching Remote Application Id', 'error')
         throw result[0]
@@ -701,13 +620,9 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
    * @param dataAPI - access to the data records and error tracking
    * @returns {Promise<Application>} - Remote device data
    */
-  async getDevice (network, deviceId, dataAPI) {
+  async getDevice (network, deviceId) {
     try {
-      let devNetworkId = await dataAPI.getProtocolDataForKey(
-        network.id,
-        network.networkProtocol.id,
-        makeDeviceDataKey(deviceId, 'devNwkId')
-      )
+      let devNetworkId = await this.modelAPI.protocolData.loadValue(network, makeDeviceDataKey(deviceId, 'devNwkId'))
       return this.client.loadDevice(network, devNetworkId)
     }
     catch (err) {
@@ -735,18 +650,9 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
       device = await dataAPI.getDeviceById(deviceId)
       let dp = await dataAPI.getDeviceProfileByDeviceIdNetworkTypeId(deviceId, network.networkType.id)
       dntl = await dataAPI.getDeviceNetworkType(deviceId, network.networkType.id)
-      devNetworkId = await dataAPI.getProtocolDataForKey(
-        network.id,
-        network.networkProtocol.id,
-        makeDeviceDataKey(deviceId, 'devNwkId'))
-      appNwkId = await dataAPI.getProtocolDataForKey(
-        network.id,
-        network.networkProtocol.id,
-        makeApplicationDataKey(device.application.id, 'appNwkId'))
-      dpNwkId = await dataAPI.getProtocolDataForKey(
-        network.id,
-        network.networkProtocol.id,
-        makeDeviceProfileDataKey(dp.id, 'dpNwkId'))
+      devNetworkId = await this.modelAPI.protocolData.loadValue(network, makeDeviceDataKey(deviceId, 'devNwkId'))
+      appNwkId = await this.modelAPI.protocolData.loadValue(network, makeApplicationDataKey(device.application.id, 'appNwkId'))
+      dpNwkId = await this.modelAPI.protocolData.loadValue(network, makeDeviceProfileDataKey(dp.id, 'dpNwkId'))
     }
     catch (err) {
       appLogger.log('Failed to get supporting data for updateDevice: ' + err)
@@ -792,10 +698,7 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
   async deleteDevice (network, deviceId, dataAPI) {
     let devNetworkId
     try {
-      devNetworkId = await dataAPI.getProtocolDataForKey(
-        network.id,
-        network.networkProtocol.id,
-        makeDeviceDataKey(deviceId, 'devNwkId'))
+      devNetworkId = await this.modelAPI.protocolData.loadValue(network, makeDeviceDataKey(deviceId, 'devNwkId'))
     }
     catch (err) {
       // Can't delete without the remote ID.
@@ -920,6 +823,14 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
       appLogger.log('Error on get Application: ' + e, 'error')
       throw e
     }
+  }
+
+  async passDataToDevice (network, appId, deviceId, body) {
+    // Ensure network is enabled
+    if (!network.securityData.enabled) return
+    const devNwkId = await this.modelAPI.protocolData.loadValue(network, makeDeviceDataKey(deviceId, 'devNwkId'))
+    const appNwkId = await this.modelAPI.protocolData.loadValue(network, makeApplicationDataKey(appId, 'appNwkId'))
+    return this.client.createDeviceMessage(network, appNwkId, devNwkId, body)
   }
 
   normalizeApplicationData (handlerApp, accountServerApp, network) {
@@ -1095,7 +1006,6 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
    * @returns {{device: {applicationID: (*|string), description: *, devEUI: *, deviceProfileID: *, name: *, skipFCntCheck: (*|boolean)}, deviceStatusBattery: number, deviceStatusMargin: number, lastSeenAt: (string|null)}}
    */
   deNormalizeDeviceData (localDevice, localDeviceProfile, application, remoteApplicationId) {
-
     let ttnDeviceData = {
       altitude: 0,
       app_id: remoteApplicationId,

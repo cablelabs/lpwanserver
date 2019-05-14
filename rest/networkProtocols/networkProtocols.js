@@ -1,7 +1,6 @@
 // General libraries in use in this module.
 const appLogger = require('../lib/appLogger.js')
 const path = require('path')
-const R = require('ramda')
 const handlersDir = path.join(__dirname, 'handlers')
 const httpError = require('http-errors')
 
@@ -26,26 +25,28 @@ const handlerList = [
 module.exports = class NetworkProtocolAccess {
   // Constructor - gets the database API for the networkProtocols
   constructor (modelAPI) {
-    this.npAPI = modelAPI.networkProtocols
     this.modelAPI = modelAPI
-    this.networkProtocolMap = {}
+    this.networkProtocolsById = {}
+    this.networkProtocolsByHandler = {}
     this.handlerList = handlerList
   }
 
   async register () {
     for (let i = 0; i < handlerList.length; i++) {
       let Proto = require(path.join(handlersDir, handlerList[i]))
-      let proto = new Proto()
-      await proto.register(this.npAPI)
+      let proto = new Proto({ modelAPI: this.modelAPI })
+      this.networkProtocolsByHandler[handlerList[i]] = proto
+      await proto.register(this.modelAPI.networkProtocols)
     }
   }
 
   clearProtocolMap () {
-    this.networkProtocolMap = {}
+    this.networkProtocolsById = {}
+    this.networkProtocolsByHandler = {}
   }
 
   clearProtocol ({ id }) {
-    if (this.networkProtocolMap[id]) delete this.networkProtocolMap[id]
+    delete this.networkProtocolsById[id]
   }
 
   /**
@@ -53,17 +54,22 @@ module.exports = class NetworkProtocolAccess {
    * @returns {Promise<Protocol>} - Protocol Handler for this network.
    */
   async getProtocol (network) {
-    const { id } = network.networkProtocol
-    const npMap = this.networkProtocolMap
-    if (npMap[id]) return npMap[id]
+    const { id: npId } = network.networkProtocol
+    if (this.networkProtocolsById[npId]) return this.networkProtocolsById[npId]
     // We'll need the protocol for the network.
     const np = await appLogger.logOnThrow(
-      () => this.npAPI.retrieveNetworkProtocol(network.networkProtocol.id),
+      () => this.modelAPI.networkProtocols.retrieveNetworkProtocol(npId),
       err => `Failed to load network protocol code: ${err}`
     )
-    const NetworkProtocol = require(`${handlersDir}/${np.protocolHandler}`)
-    npMap[id] = new NetworkProtocol()
-    return npMap[id]
+    const { protocolHandler: handler } = np
+    if (this.networkProtocolsByHandler[handler]) {
+      this.networkProtocolsById[npId] = this.networkProtocolsByHandler[handler]
+      return this.networkProtocolsById[npId]
+    }
+    const Proto = require(`${handlersDir}/${np.protocolHandler}`)
+    const proto = new Proto({ modelAPI: this.modelAPI })
+    this.networkProtocolsById[npId] = this.networkProtocolsByHandler[handler] = proto
+    return proto
   }
 
   /**

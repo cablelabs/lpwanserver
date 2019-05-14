@@ -62,7 +62,7 @@ describe('E2E Test for Multiple Networks', () => {
     await wait(10000)
     await Promise.all([Lora1.setup(), Lora2.setup()])
     if (LORIOT_ENABLED === 'true') await Loriot.setup()
-    if (TTN_ENABLED === 'true') await Ttn.setup()
+    // if (TTN_ENABLED === 'true') await Ttn.setup()
   })
 
   describe('Verify Login and Administration of Users Works', () => {

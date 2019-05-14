@@ -1,15 +1,15 @@
 const RestClient = require('../../RestClient')
 const R = require('ramda')
 const jwt = require('jsonwebtoken')
-const { account, application } = require('ttn')
+const ttn = require('ttn')
 const appLogger = require('../../../lib/appLogger')
 const { joinUrl } = require('../../../lib/utils')
 
 module.exports = class TtnRestClient extends RestClient {
   constructor ({ cache } = {}) {
     super({ cache })
-    if (!this.cache.get('appKeys')) this.cache.set('appKeys', {})
-    this.ttnClients = { apps: {} }
+    this.ttn = {}
+    this.ttnDataClients = []
   }
 
   _request (network, opts, session, transformResponse) {
@@ -122,34 +122,54 @@ module.exports = class TtnRestClient extends RestClient {
     return appSession
   }
 
-  async getAccountClient (network) {
+  async getTtnClients (network) {
     const session = await this.getSession(network)
-    this.ttnClients.account = account(session.accessToken)
-    return this.ttnClients
-  }
-
-  async getAppClient (network, appId) {
-    const session = await this.getAppSession(network, appId)
-    const { client, accessToken } = this.ttnClients.apps[appId] || {}
-    if (!client || accessToken !== session.accessToken) {
-      this.ttnClients.apps[appId] = {
+    const { accessToken } = this.ttn[network.id] || {}
+    if (accessToken !== session.accessToken) {
+      this.ttn[network.id] = {
         accessToken: session.accessToken,
-        client: application(appId, session.accessToken)
+        accountClient: ttn.account(session.accessToken),
+        apps: {}
       }
     }
-    return this.ttnClients.apps[appId].client
+    return this.ttn[network.id]
+  }
+
+  async getAppClients (network, appId) {
+    const nwkTtn = await this.getTtnClients(network)
+    if (!nwkTtn.apps[appId]) {
+      const session = await this.getAppSession(network, appId)
+      nwkTtn.apps[appId] = {
+        appClient: await ttn.application(appId, session.accessToken)
+      }
+    }
+    return nwkTtn.apps[appId]
+  }
+
+  async getDataClient (network, appId) {
+    let item = this.ttnDataClients.find(x => x.nwkId === network.id && x.appId === appId)
+    if (!item) {
+      const app = await this.loadAccountApplication(network, appId)
+      item = {
+        nwkId: network.id,
+        appId,
+        dataClient: await ttn.data(appId, app.access_keys[0].key)
+      }
+      this.ttnDataClients.push(item)
+    }
+    return item
   }
 
   async appRegion (network, appId) {
-    const client = await this.getAppClient(network, appId)
-    return client.netAddress.split('.')[0]
+    const { appClient } = await this.getAppClients(network, appId)
+    return appClient.netAddress.split('.')[0]
   }
 
   async accountClientRequest (network, method, ...args) {
     const logReq = () => appLogger.log(`TTN REQUEST: ${method}: ${JSON.stringify(args)}`)
     try {
-      const { account } = await this.getAccountClient(network)
-      const res = await (args.length ? account[method](...args) : account[method]())
+      const { accountClient } = await this.getTtnClients(network)
+      const res = await (args.length ? accountClient[method](...args) : accountClient[method]())
       logReq()
       appLogger.log(`TTN RESPONSE: ${JSON.stringify(res)}`)
       return res
@@ -164,8 +184,7 @@ module.exports = class TtnRestClient extends RestClient {
   async appClientRequest (network, clientOpts, method, ...args) {
     const logReq = () => appLogger.log(`TTN APP REQUEST: APP_ID: ${clientOpts.appId}: ${clientOpts.client || 'application'}.${method}: ${JSON.stringify(args)}`)
     try {
-      let client = await this.getAppClient(network, clientOpts.appId)
-      appLogger.log(`PRE_REQUEST: ${clientOpts.appId}: ${client.appID}: ${client.netAddress}`)
+      let { appClient: client } = await this.getAppClients(network, clientOpts.appId)
       if (clientOpts.client === 'account') client = client.accountClient
       const res = await (args.length ? client[method](...args) : client[method]())
       logReq()
@@ -229,27 +248,6 @@ module.exports = class TtnRestClient extends RestClient {
     // return this.appClientRequest(network, { appId }, 'get')
   }
 
-  createApplicationIntegration (network, appId, body) {
-    const url = `https://console.thethingsnetwork.org/api/applications/${appId}/integrations/http-ttn`
-    return this.appHttpRequest(network, appId, { method: 'POST', url, body })
-  }
-
-  updateApplicationIntegration (network, appId, id, body) {
-    const url = `https://console.thethingsnetwork.org/api/applications/${appId}/integrations/http-ttn/${id}`
-    return this.appHttpRequest(network, appId, { method: 'PATCH', url, body })
-  }
-
-  loadApplicationIntegration (network, appId, id) {
-    // https://integrations.thethingsnetwork.org/ttn-eu/api/v2/down/my-app-id/my-process-id?key=ttn-account-v2.secret
-    const url = `https://console.thethingsnetwork.org/api/applications/${appId}/integrations/http-ttn/${id}`
-    return this.appHttpRequest(network, appId, { url })
-  }
-
-  deleteApplicationIntegration (network, appId, id) {
-    const opts = { method: 'DELETE', url: `applications/${appId}/integrations/${id}` }
-    return this.appHttpRequest(network, appId, opts)
-  }
-
   createDevice (network, appId, body) {
     return this.regionHttpRequest(network, appId, { method: 'POST', url: `applications/${appId}/devices`, body })
     // return this.appClientRequest(network, { appId }, 'registerDevice', body.dev_id, body)
@@ -281,5 +279,32 @@ module.exports = class TtnRestClient extends RestClient {
 
   deleteDeviceKeys (network, id) {
     return this.httpRequest(network, { method: 'DELETE', url: `devices/${id}/keys` })
+  }
+
+  async subscribeToApplicationData (network, appId) {
+    const item = await this.getDataClient(network, appId)
+    if (item.uplinkHandler) {
+      item.dataClient.off('uplink', item.uplinkHandler)
+    }
+    let networkId = network.id
+    item.uplinkHandler = (_, payload) => {
+      this.emit('uplink', { networkId, appId, payload })
+    }
+    item.dataClient.on('uplink', item.uplinkHandler)
+  }
+
+  async unsubscribeFromApplicationData (network, appId) {
+    const item = await this.getDataClient(network, appId)
+    if (!item) return
+    item.dataClient.off('uplink', item.uplinkHandler)
+    delete item.uplinkHandler
+  }
+
+  async createDeviceMessage (network, appId, devId, body) {
+    if (body.data) {
+      body = R.merge(body, { data: Buffer.from(body.data, 'base64').toString('hex') })
+    }
+    const { dataClient } = await this.getDataClient(network, appId)
+    dataClient.send(devId, body.data || body.jsonData, body.fPort, !!body.confirmed)
   }
 }

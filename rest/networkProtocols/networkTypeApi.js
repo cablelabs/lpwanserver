@@ -5,20 +5,14 @@ var appLogger = require('../lib/appLogger.js')
 // multiple networks, preventing a lot of redundant database hits.
 var NetworkProtocolDataAccess = require('./networkProtocolDataAccess.js')
 
-// The dataModel API.
-var modelAPI
-
-// The protocol access API.
-var protos
-
 //* *****************************************************************************
 // Defines the generic cross-network API from the perspective of a networkType,
 // that propogates calls the the individual networks on behalf of the caller.
 //* *****************************************************************************
-function NetworkTypeApi (dataModel) {
-  modelAPI = dataModel
-  modelAPI.networkProtocolAPI.register()
-  protos = modelAPI.networkProtocolAPI
+function NetworkTypeApi (modelAPI) {
+  this.modelAPI = modelAPI
+  this.modelAPI.networkProtocolAPI.register()
+  this.protos = this.modelAPI.networkProtocolAPI
 }
 
 // Wait for all promises to complete, then resolve with the
@@ -47,7 +41,7 @@ function tracker (total, npda, resolve) {
 //                    against.
 // operationFunction - A callback function that returns a promise for the passed
 //                     network, using the passed NetworkProtocolDataAccess.
-function createPromiseOperationForNetworksOfType (operationName,
+NetworkTypeApi.prototype.forAllNetworksOfType = function forAllNetworksOfType (operationName,
   networkTypeId,
   operationFunction) {
   return new Promise(async resolve => {
@@ -57,17 +51,17 @@ function createPromiseOperationForNetworksOfType (operationName,
     // a key/value store for the network protocols to store data regarding
     // useful data for the remote network (e.g., the id for the remote
     // company, admin account credetials for the company).
-    var npda = new NetworkProtocolDataAccess(modelAPI, operationName)
+    var npda = new NetworkProtocolDataAccess(this.modelAPI, operationName)
 
     // Init the logs for this module.
-    let networkType = await modelAPI.networkTypes.retrieveNetworkType(networkTypeId)
+    let networkType = await this.modelAPI.networkTypes.retrieveNetworkType(networkTypeId)
     npda.initLog(networkType, null)
 
     var networks
     try {
       // Get the networks we'll be operating on that support the
       // networkType.
-      networks = await npda.getNetworksOfType(networkTypeId)
+      networks = await this.modelAPI.networks.retrieveNetworks({ 'networkTypeId': networkTypeId })
     }
     catch (err) {
       appLogger.log('Error retrieving networks for type ID ' + networkTypeId)
@@ -109,12 +103,11 @@ function createPromiseOperationForNetworksOfType (operationName,
 // Returns a Promise that connects to the remote systems and creates the
 // company.
 NetworkTypeApi.prototype.addCompany = function (networkTypeId, companyId) {
-  return createPromiseOperationForNetworksOfType(
+  return this.forAllNetworksOfType(
     'Create Company',
     networkTypeId,
-    function (npda, network) {
-      return protos.addCompany(npda, network, companyId)
-    })
+    (npda, network) => this.protos.addCompany(npda, network, companyId)
+  )
 }
 
 // Push the local company data to the remote companies by "pushing" changes.
@@ -125,12 +118,11 @@ NetworkTypeApi.prototype.addCompany = function (networkTypeId, companyId) {
 //
 // Returns a Promise that pushes changes to the remote network of type.
 NetworkTypeApi.prototype.pushCompany = function (networkTypeId, companyId) {
-  return createPromiseOperationForNetworksOfType(
+  return this.forAllNetworksOfType(
     'Push Company',
     networkTypeId,
-    function (npda, network) {
-      return protos.pushCompany(npda, network, companyId)
-    })
+    (npda, network) => this.protos.pushCompany(npda, network, companyId)
+  )
 }
 
 // Pull all company data from the remote network.
@@ -140,12 +132,11 @@ NetworkTypeApi.prototype.pushCompany = function (networkTypeId, companyId) {
 //
 // Returns a Promise that pushes changes to the remote network of type.
 NetworkTypeApi.prototype.pullCompany = function (networkTypeId) {
-  return createPromiseOperationForNetworksOfType(
+  return this.forAllNetworksOfType(
     'Pull Company',
     networkTypeId,
-    function (npda, network) {
-      return protos.pullCompany(npda, network)
-    })
+    (npda, network) => this.protos.pullCompany(npda, network)
+  )
 }
 
 // Delete the company.
@@ -157,12 +148,11 @@ NetworkTypeApi.prototype.pullCompany = function (networkTypeId) {
 //
 // Returns a Promise that deletes the company record from the remote system.
 NetworkTypeApi.prototype.deleteCompany = function (networkTypeId, companyId) {
-  return createPromiseOperationForNetworksOfType(
+  return this.forAllNetworksOfType(
     'Delete Company',
     networkTypeId,
-    function (npda, network) {
-      return protos.deleteCompany(npda, network, companyId)
-    })
+    (npda, network) => this.protos.deleteCompany(npda, network, companyId)
+  )
 }
 
 //* *****************************************************************************
@@ -179,12 +169,11 @@ NetworkTypeApi.prototype.deleteCompany = function (networkTypeId, companyId) {
 // Returns a Promise that connects to the remote systems and creates the
 // application.
 NetworkTypeApi.prototype.addApplication = function (networkTypeId, applicationId) {
-  return createPromiseOperationForNetworksOfType(
+  return this.forAllNetworksOfType(
     'Create Application',
     networkTypeId,
-    function (npda, network) {
-      return protos.addApplication(npda, network, applicationId)
-    })
+    (npda, network) => this.protos.addApplication(npda, network, applicationId)
+  )
 }
 
 // Push the local application data to the remote networks by "pushing" changes.
@@ -196,12 +185,11 @@ NetworkTypeApi.prototype.addApplication = function (networkTypeId, applicationId
 //
 // Returns a Promise that pushes changes to the remote network of type.
 NetworkTypeApi.prototype.pushApplication = function (networkTypeId, application) {
-  return createPromiseOperationForNetworksOfType(
+  return this.forAllNetworksOfType(
     'Push Application',
     networkTypeId,
-    function (npda, network) {
-      return protos.pushApplication(npda, network, application)
-    })
+    (npda, network) => this.protos.pushApplication(npda, network, application)
+  )
 }
 
 // Pull all application data from the remote network.
@@ -211,12 +199,11 @@ NetworkTypeApi.prototype.pushApplication = function (networkTypeId, application)
 //
 // Returns a Promise that pushes changes to the remote network of type.
 NetworkTypeApi.prototype.pullApplication = function (networkTypeId) {
-  return createPromiseOperationForNetworksOfType(
+  return this.forAllNetworksOfType(
     'Pull Application',
     networkTypeId,
-    function (npda, network) {
-      return protos.pullApplication(npda, network)
-    })
+    (npda, network) => this.protos.pullApplication(npda, network)
+  )
 }
 
 // Delete the application.
@@ -227,12 +214,11 @@ NetworkTypeApi.prototype.pullApplication = function (networkTypeId) {
 //
 // Returns a Promise that deletes the application record from the remote system.
 NetworkTypeApi.prototype.deleteApplication = function (networkTypeId, applicationId) {
-  return createPromiseOperationForNetworksOfType(
+  return this.forAllNetworksOfType(
     'Delete Application',
     networkTypeId,
-    function (npda, network) {
-      return protos.deleteApplication(npda, network, applicationId)
-    })
+    (npda, network) => this.protos.deleteApplication(npda, network, applicationId)
+  )
 }
 
 //* *****************************************************************************
@@ -252,12 +238,11 @@ NetworkTypeApi.prototype.deleteApplication = function (networkTypeId, applicatio
 // Returns a Promise that starts the application data flowing from the remote
 // system.
 NetworkTypeApi.prototype.startApplication = function (networkTypeId, applicationId) {
-  return createPromiseOperationForNetworksOfType(
+  return this.forAllNetworksOfType(
     'Start Application',
     networkTypeId,
-    function (npda, network) {
-      return protos.startApplication(npda, network, applicationId)
-    })
+    (npda, network) => this.protos.startApplication(npda, network, applicationId)
+  )
 }
 
 // Stop the application.
@@ -273,12 +258,11 @@ NetworkTypeApi.prototype.startApplication = function (networkTypeId, application
 // Returns a Promise that stops the application data flowing from the remote
 // system.
 NetworkTypeApi.prototype.stopApplication = function (networkTypeId, applicationId) {
-  return createPromiseOperationForNetworksOfType(
+  return this.forAllNetworksOfType(
     'Stop Application',
     networkTypeId,
-    function (npda, network) {
-      return protos.stopApplication(npda, network, applicationId)
-    })
+    (npda, network) => this.protos.stopApplication(npda, network, applicationId)
+  )
 }
 
 //* *****************************************************************************
@@ -295,12 +279,11 @@ NetworkTypeApi.prototype.stopApplication = function (networkTypeId, applicationI
 // Returns a Promise that connects to the remote systems and creates the
 // deviceProfile.
 NetworkTypeApi.prototype.addDeviceProfile = function (networkTypeId, deviceProfileId) {
-  return createPromiseOperationForNetworksOfType(
+  return this.forAllNetworksOfType(
     'Create DeviceProfile',
     networkTypeId,
-    function (npda, network) {
-      return protos.addDeviceProfile(npda, network, deviceProfileId)
-    })
+    (npda, network) => this.protos.addDeviceProfile(npda, network, deviceProfileId)
+  )
 }
 
 // Push the local deviceProfile data to the remote networks by "pushing"
@@ -313,12 +296,11 @@ NetworkTypeApi.prototype.addDeviceProfile = function (networkTypeId, deviceProfi
 //
 // Returns a Promise that pushes changes to the remote network of type.
 NetworkTypeApi.prototype.pushDeviceProfile = function (networkTypeId, deviceProfileId) {
-  return createPromiseOperationForNetworksOfType(
+  return this.forAllNetworksOfType(
     'Push DeviceProfile',
     networkTypeId,
-    function (npda, network) {
-      return protos.pushDeviceProfile(npda, network, deviceProfileId)
-    })
+    (npda, network) => this.protos.pushDeviceProfile(npda, network, deviceProfileId)
+  )
 }
 
 // Pull all deviceProfile data from the remote network.
@@ -328,21 +310,19 @@ NetworkTypeApi.prototype.pushDeviceProfile = function (networkTypeId, deviceProf
 //
 // Returns a Promise that pulls changes to the remote network of type.
 NetworkTypeApi.prototype.pullDeviceProfiles = function (networkTypeId) {
-  return createPromiseOperationForNetworksOfType(
+  return this.forAllNetworksOfType(
     'Pull DeviceProfile',
     networkTypeId,
-    function (npda, network) {
-      return protos.pullDeviceProfiles(npda, network)
-    })
+    (npda, network) => this.protos.pullDeviceProfiles(npda, network)
+  )
 }
 
 NetworkTypeApi.prototype.pullDeviceProfile = function (networkTypeId, deviceProfileId) {
-  return createPromiseOperationForNetworksOfType(
+  return this.forAllNetworksOfType(
     'Pull DeviceProfile',
     networkTypeId,
-    function (npda, network) {
-      return protos.pullDeviceProfile(npda, network, deviceProfileId)
-    })
+    (npda, network) => this.protos.pullDeviceProfile(npda, network, deviceProfileId)
+  )
 }
 
 // Delete the deviceProfile.
@@ -353,12 +333,11 @@ NetworkTypeApi.prototype.pullDeviceProfile = function (networkTypeId, deviceProf
 //
 // Returns a Promise that deletes the deviceProfile record from the remote system.
 NetworkTypeApi.prototype.deleteDeviceProfile = function (networkTypeId, deviceProfileId) {
-  return createPromiseOperationForNetworksOfType(
+  return this.forAllNetworksOfType(
     'Delete DeviceProfile',
     networkTypeId,
-    function (npda, network) {
-      return protos.deleteDeviceProfile(npda, network, deviceProfileId)
-    })
+    (npda, network) => this.protos.deleteDeviceProfile(npda, network, deviceProfileId)
+  )
 }
 
 //* *****************************************************************************
@@ -374,12 +353,11 @@ NetworkTypeApi.prototype.deleteDeviceProfile = function (networkTypeId, devicePr
 // Returns a Promise that connects to the remote systems and creates the
 // device.
 NetworkTypeApi.prototype.addDevice = function (networkTypeId, deviceId) {
-  return createPromiseOperationForNetworksOfType(
+  return this.forAllNetworksOfType(
     'Create Device',
     networkTypeId,
-    function (npda, network) {
-      return protos.addDevice(npda, network, deviceId)
-    })
+    (npda, network) => this.protos.addDevice(npda, network, deviceId)
+  )
 }
 
 // Push the local device data to the remote networks by "pushing" changes.
@@ -390,21 +368,19 @@ NetworkTypeApi.prototype.addDevice = function (networkTypeId, deviceId) {
 //
 // Returns a Promise that pushes changes to the remote network of type.
 NetworkTypeApi.prototype.pushDevice = function (networkTypeId, device) {
-  return createPromiseOperationForNetworksOfType(
+  return this.forAllNetworksOfType(
     'Push Device',
     networkTypeId,
-    function (npda, network) {
-      return protos.pushDevice(npda, network, device)
-    })
+    (npda, network) => this.protos.pushDevice(npda, network, device)
+  )
 }
 
 NetworkTypeApi.prototype.pullDevices = function (networkTypeId, applicationId) {
-  return createPromiseOperationForNetworksOfType(
+  return this.forAllNetworksOfType(
     'Pull Devices',
     networkTypeId,
-    function (npda, network) {
-      return protos.pullDevices(npda, network, applicationId)
-    })
+    (npda, network) => this.protos.pullDevices(npda, network, applicationId)
+  )
 }
 
 // Delete the device.
@@ -415,12 +391,11 @@ NetworkTypeApi.prototype.pullDevices = function (networkTypeId, applicationId) {
 //
 // Returns a Promise that deletes the device record from the remote system.
 NetworkTypeApi.prototype.deleteDevice = function (networkTypeId, deviceId) {
-  return createPromiseOperationForNetworksOfType(
+  return this.forAllNetworksOfType(
     'Delete Device',
     networkTypeId,
-    function (npda, network) {
-      return protos.deleteDevice(npda, network, deviceId)
-    })
+    (npda, network) => this.protos.deleteDevice(npda, network, deviceId)
+  )
 }
 
 // Pass data to devices.
@@ -429,20 +404,19 @@ NetworkTypeApi.prototype.deleteDevice = function (networkTypeId, deviceId) {
 // appId     - The ID of the application record
 // deviceID  - The ID of the device record
 NetworkTypeApi.prototype.passDataToDevice = function (networkTypeId, appId, deviceId, data) {
-  return createPromiseOperationForNetworksOfType(
+  return this.forAllNetworksOfType(
     'Pass data to device',
     networkTypeId,
-    function (npda, network) {
-      return protos.passDataToDevice(npda, network, appId, deviceId, data)
-    })
+    (npda, network) => this.protos.passDataToDevice(npda, network, appId, deviceId, data)
+  )
 }
 
 NetworkTypeApi.prototype.connect = function connect (network) {
-  return protos.connect(network)
+  return this.protos.connect(network)
 }
 
 NetworkTypeApi.prototype.test = function (network, dataAPI) {
-  return protos.test(network, dataAPI)
+  return this.protos.test(network, dataAPI)
 }
 
 module.exports = NetworkTypeApi

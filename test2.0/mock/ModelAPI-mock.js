@@ -37,11 +37,14 @@ module.exports = {
     }
   },
   protocolData: {
-    async retrieveProtocolData (networkId, networkProtocolId, key) {
+    async retrieveProtocolData () {
       return { dataValue: this.dataValue }
     },
     async createProtocolData (networkId, networkProtocolId, key, data) {
       this.dataValue = data
+    },
+    async loadValue () {
+      return this.dataValue
     }
   },
   reportingProtocols: {

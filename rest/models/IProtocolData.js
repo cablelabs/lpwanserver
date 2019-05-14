@@ -13,11 +13,26 @@ module.exports = class ProtocolData {
     return prisma.createProtocolData(data).$fragment(fragments.basic)
   }
 
+  async upsert (network, dataId, dataValue) {
+    try {
+      const rec = await this.retrieveProtocolData(network.id, network.networkProtocol.id, dataId)
+      return this.updateProtocolData({ id: rec.id, dataValue })
+    }
+    catch (err) {
+      return this.createProtocolData(network.id, network.networkProtocol.id, dataId, dataValue)
+    }
+  }
+
   async retrieveProtocolData (networkId, networkProtocolId, dataIdentifier) {
     const where = formatRelationshipsIn({ networkId, networkProtocolId, dataIdentifier })
     const [ record ] = await prisma.protocolDatas({ where })
     if (!record) throw httpError.NotFound()
     return record
+  }
+
+  async loadValue (network, dataId) {
+    const rec = await this.retrieveProtocolData(network.id, network.networkProtocol.id, dataId)
+    return rec.dataValue
   }
 
   updateProtocolData ({ id, ...data }) {

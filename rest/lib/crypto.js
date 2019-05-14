@@ -1,5 +1,7 @@
 const crypto = require('crypto')
 
+const ALGORITHM = 'aes-256-ctr'
+
 // larger numbers mean better security
 var passwordOpts = {
   // size of the generated hash
@@ -80,7 +82,31 @@ function verifyPassword (password, passwordHash) {
   })
 }
 
+function encrypt (data, key, delimiter = '-') {
+  let vec = crypto.randomBytes(16)
+  let cfr = crypto.createCipheriv(ALGORITHM, Buffer.from(key, 'base64'), vec)
+  let en = cfr.update(JSON.stringify(data), 'utf8', 'base64')
+  en += cfr.final('base64')
+  return `${vec.toString('base64')}${delimiter}${en}`
+}
+
+function decrypt (encData, key, delimiter = '-') {
+  let parts = encData.split(delimiter)
+  let vec = Buffer.from(parts[0], 'base64')
+  let dec = crypto.createDecipheriv(ALGORITHM, Buffer.from(key, 'base64'), vec)
+  let res = dec.update(parts[1], 'base64', 'utf8')
+  res += dec.final('utf8')
+  return JSON.parse(res)
+}
+
+function genKey (length = 32) {
+  return crypto.randomBytes(length).toString('base64')
+}
+
 module.exports = {
   hashPassword,
-  verifyPassword
+  verifyPassword,
+  encrypt,
+  decrypt,
+  genKey
 }

@@ -4,6 +4,7 @@ const R = require('ramda')
 const { prisma, formatRelationshipsIn, formatInputData } = require('../lib/prisma')
 const httpError = require('http-errors')
 const { onFail } = require('../lib/utils')
+const { encrypt, decrypt, genKey } = require('../lib/crypto')
 
 module.exports = class Network {
   constructor (modelAPI) {
@@ -12,7 +13,7 @@ module.exports = class Network {
 
   async createNetwork (data) {
     let dataAPI = new NetworkProtocolDataAccess(this.modelAPI, 'INetwork Create')
-    let k = dataAPI.genKey()
+    let k = genKey()
     if (data.securityData) {
       const securityDataDefaults = {
         authorized: false,
@@ -20,17 +21,17 @@ module.exports = class Network {
         enabled: true
       }
       data.securityData = R.merge(securityDataDefaults, data.securityData)
-      data.securityData = dataAPI.hide(null, data.securityData, k)
+      data.securityData = encrypt(data.securityData, k)
     }
     data = formatInputData(data)
     let record = await prisma.createNetwork(data).$fragment(fragments.basic)
     if (record.securityData) {
-      dataAPI.putProtocolDataForKey(record.id, record.networkProtocol.id, genKey(record.id), k)
-      record.securityData = dataAPI.access(null, record.securityData, k)
+      await this.modelAPI.protocolData.upsert(record, genNwkKey(record.id), k)
+      record.securityData = decrypt(record.securityData, k)
       let { securityData } = await authorizeAndTest(record, this.modelAPI, k, this, dataAPI)
-      securityData = dataAPI.hide(null, securityData, k)
+      securityData = encrypt(securityData, k)
       record = await prisma.updateNetwork({ data: { securityData }, where: { id: record.id } }).$fragment(fragments.basic)
-      record.securityData = dataAPI.access(null, record.securityData, k)
+      record.securityData = decrypt(record.securityData, k)
     }
     return this.retrieveNetwork(record.id)
   }
@@ -39,11 +40,11 @@ module.exports = class Network {
     if (!id) throw httpError(400, 'No existing Network ID')
     let dataAPI = new NetworkProtocolDataAccess(this.modelAPI, 'INetwork Update')
     const old = await this.retrieveNetwork(id)
-    const k = await dataAPI.getProtocolDataForKey(id, old.networkProtocol.id, genKey(id))
+    const k = await this.modelAPI.protocolData.loadValue(old, genNwkKey(id))
     const candidate = R.merge(old, data)
     let { securityData } = await authorizeAndTest(candidate, this.modelAPI, k, this, dataAPI)
     if (data.securityData) {
-      data.securityData = dataAPI.hide(null, securityData, k)
+      data.securityData = encrypt(securityData, k)
     }
     data = formatInputData(data)
     await prisma.updateNetwork({ data, where: { id } }).$fragment(fragments.basic)
@@ -53,11 +54,8 @@ module.exports = class Network {
   async retrieveNetwork (id) {
     const rec = await loadNetwork({ id })
     if (rec.securityData) {
-      let dataAPI = new NetworkProtocolDataAccess(this.modelAPI, 'INetwork Retrieve')
-      let k = await dataAPI.getProtocolDataForKey(id,
-        rec.networkProtocol.id,
-        genKey(id))
-      rec.securityData = await dataAPI.access(rec, rec.securityData, k)
+      let k = await this.modelAPI.protocolData.loadValue(rec, genNwkKey(id))
+      rec.securityData = await decrypt(rec.securityData, k)
       let networkProtocol = await this.modelAPI.networkProtocols.retrieveNetworkProtocol(rec.networkProtocol.id)
       rec.masterProtocol = networkProtocol.masterProtocol
     }
@@ -77,14 +75,10 @@ module.exports = class Network {
       prisma.networks(query).$fragment(fragments.basic),
       prisma.networksConnection({ where }).aggregate().count()
     ])
-    let dataAPI = new NetworkProtocolDataAccess(this.modelAPI, 'INetwork Retrieve bulk')
     records = await Promise.all(records.map(async rec => {
       if (!rec.securityData) return rec
-      let k = await dataAPI.getProtocolDataForKey(
-        rec.id,
-        rec.networkProtocol.id,
-        genKey(rec.id))
-      const securityData = await dataAPI.access(rec, rec.securityData, k)
+      let k = await this.modelAPI.protocolData.loadValue(rec, genNwkKey(rec.id))
+      const securityData = await decrypt(rec.securityData, k)
       return { ...rec, securityData }
     }))
     return { totalCount, records }
@@ -95,7 +89,7 @@ module.exports = class Network {
     let old = await loadNetwork({ id })
     await dataAPI.deleteProtocolDataForKey(id,
       old.networkProtocol.id,
-      genKey(id))
+      genNwkKey(id))
     return onFail(400, () => prisma.deleteNetwork({ id }))
   }
 
@@ -183,7 +177,7 @@ async function loadNetwork (uniqueKeyObj, fragementKey = 'basic') {
   return rec
 }
 
-const genKey = function (networkId) {
+const genNwkKey = function (networkId) {
   return 'nk' + networkId
 }
 

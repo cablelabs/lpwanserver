@@ -1,13 +1,5 @@
-// Configuration access.
-const cry = require('cry' + 'pto')
-
 // Logging
 const appLogger = require('../lib/appLogger.js')
-
-// Breaking it up makes it harder to search via grep...
-const al = 'a' + 'es-' + '25' + '6-' + 'c' + 'tr'
-
-const delimiter = '-'
 
 //* *****************************************************************************
 // The NetworkProtocol Data Access object.
@@ -33,15 +25,6 @@ module.exports = class NetworkProtocolDataAccess {
     this.fdesc = fdesc
     this.cache = {}
     this.logs = {}
-  }
-  // One of the few non-caching methods in this object, gets the networks for the
-  // network type ID.  It is expected that this will be called once by a method
-  // that creates this object, but it'll be common code across many operations.
-  async getNetworksOfType (networkTypeId) {
-    return appLogger.logOnThrow(
-      () => this.modelAPI.networks.retrieveNetworks({ 'networkTypeId': networkTypeId }),
-      err => `${this.funcDesc}: Failed to load networks of type ${networkTypeId}: ${err}`
-    )
   }
   async cacheFirst (path, request, errMessage) {
     // Cache was causing errors.  Disabling.
@@ -181,47 +164,11 @@ module.exports = class NetworkProtocolDataAccess {
       return acc
     }, {})
   }
-  async getProtocolDataForKey (networkId, networkProtocolId, key) {
-    const rec = await this.modelAPI.protocolData.retrieveProtocolData(networkId, networkProtocolId, key)
-    return rec.dataValue
-  }
-  async putProtocolDataForKey (networkId, networkProtocolId, key, data) {
-    try {
-      // Try a create first.
-      await this.modelAPI.protocolData.createProtocolData(networkId, networkProtocolId, key, data)
-    }
-    catch (err) {
-      // Nope?  Get and update!  (Need to get to get the record id.)
-      const rec = await this.modelAPI.protocolData.retrieveProtocolData(networkId, networkProtocolId, key)
-      await this.modelAPI.protocolData.updateProtocolData({ id: rec.id, dataValue: data })
-    }
-  }
   deleteProtocolDataForKey (networkId, networkProtocolId, keyStartsWith) {
     return this.modelAPI.protocolData.clearProtocolData(networkId, networkProtocolId, keyStartsWith)
   }
   getProtocolDataWithData (networkId, keyLike, data) {
     return this.modelAPI.protocolData.reverseLookupProtocolData(networkId, keyLike, data)
-  }
-  access (network, data, k) {
-    let parts = data.split(delimiter)
-    let vec = Buffer.from(parts[ 0 ], 'base64')
-    let dec = cry.createDecipheriv(al, Buffer.from(k, 'base64'), vec)
-    let res = dec.update(parts[ 1 ], 'base64', 'utf8')
-    res += dec.final('utf8')
-    return JSON.parse(res)
-  }
-  hide (network, dataObject, k) {
-    let vec = cry.randomBytes(16)
-    let cfr = cry.createCipheriv(al, Buffer.from(k, 'base64'), vec)
-    let en = cfr.update(JSON.stringify(dataObject), 'utf8', 'base64')
-    en += cfr.final('base64')
-    return vec.toString('base64') + delimiter + en
-  }
-  genKey () {
-    return cry.randomBytes(32).toString('base64')
-  }
-  genPass () {
-    return cry.randomBytes(12).toString('base64')
   }
 }
 
