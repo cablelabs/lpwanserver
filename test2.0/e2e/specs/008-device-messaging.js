@@ -2,14 +2,32 @@ let chai = require('chai')
 let chaiHttp = require('chai-http')
 let app = require('../../../restApp.js')
 let setup = require('../setup.js')
-const { assertEqualProps } = require('../../lib/helpers')
 const Lora1 = require('../networks/lora-v1')
 const Lora2 = require('../networks/lora-v2')
+// const Ttn = require('../networks/ttn')
 const createRcServer = require('../../lib/rc-server')
+const { wait } = require('../../lib/helpers')
 
 var should = chai.should()
 chai.use(chaiHttp)
 let server = chai.request(app).keepOpen()
+
+// let ttnDownlinkVerified = false
+
+// async function listenForTtnDownlink () {
+//   const apps = await Ttn.client.listApplications(Ttn.network)
+//   const app = apps.find(x => x.name === Lora2.application.name)
+//   should.exist(app)
+//   const { dataClient } = await Ttn.client.getDataClient(Ttn.network, app.id)
+//   dataClient.on("event", "+", "downlink/scheduled", (devId, payload) => {
+//     ttnDownlinkVerified = true
+//     console.log(`TTN DOWNLINK downlink/scheduled EVENT: ${JSON.stringify(payload)}`)
+//   })
+//   dataClient.on("event", "+", "downlink/sent", (devId, payload) => {
+//     ttnDownlinkVerified = true
+//     console.log(`TTN DOWNLINK downlink/sent EVENT: ${JSON.stringify(payload)}`)
+//   })
+// }
 
 describe('E2E Test for Uplink/Downlink Device Messaging', () => {
   let adminToken = ''
@@ -30,6 +48,7 @@ describe('E2E Test for Uplink/Downlink Device Messaging', () => {
       port: process.env.APP_SERVER_PORT,
       maxRequestAge: 5000
     })
+    // await listenForTtnDownlink()
   })
 
   it('Admin Login to LPWan Server', async () => {
@@ -94,7 +113,7 @@ describe('E2E Test for Uplink/Downlink Device Messaging', () => {
           { data, fCnt: 0, fPort: 1 }
         )
         res.status.should.equal(200)
-        console.log(res.text)
+        await wait(10000)
       })
       it('Get device message from Lora Server v1 queue', async () => {
         const res = await Lora1.client.listDeviceMessages(Lora1.network, Lora2.device.devEUI)
