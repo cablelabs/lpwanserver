@@ -10,7 +10,7 @@ module.exports = class LoriotV4 extends Loriot {
 
   async register (networkProtocolModel) {
     appLogger.log('Loriotv4:register', 'warn')
-    return networkProtocolModel.upsertNetworkProtocol({
+    return networkProtocolModel.upsert({
       name: 'Loriot',
       networkTypeId: 1,
       protocolHandler: 'Loriot/v4',

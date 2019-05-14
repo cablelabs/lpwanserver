@@ -25,7 +25,7 @@ module.exports = class PasswordPolicy {
 
   async retrievePasswordPolicies (companyId) {
     // Verify that the company exists.
-    await this.companies.retrieveCompany(companyId)
+    await this.companies.load(companyId)
     const where = { OR: [
       { company: { id: companyId } },
       { company: null }
@@ -37,7 +37,7 @@ module.exports = class PasswordPolicy {
     if (!id) throw httpError(400, 'No existing PasswordPolicy ID')
     if (data.companyId) {
       // Verify that any new company exists if passed in.
-      await this.companies.retrieveCompany(data.companyId)
+      await this.companies.load(data.companyId)
       data.company = { connect: { id: data.companyId } }
       delete data.companyId
     }

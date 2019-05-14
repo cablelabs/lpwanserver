@@ -38,14 +38,14 @@ module.exports = class Loriot extends NetworkProtocol {
   }
 
   async pushApplications (network, modelAPI, dataAPI) {
-    let { records } = await modelAPI.applications.retrieveApplications()
+    let { records } = await modelAPI.applications.list()
     await Promise.all(records.map(x => this.pushApplication(network, x, dataAPI, false)))
   }
 
   async addRemoteApplication (network, remoteAppId, modelAPI, dataAPI) {
     const remoteApp = await this.client.loadApplication(network, remoteAppId)
     const [ integration ] = remoteApp.outputs.filter(x => x.output === 'httppush')
-    const { records: localApps } = await modelAPI.applications.retrieveApplications({ search: remoteApp.name })
+    const { records: localApps } = await modelAPI.applications.list({ search: remoteApp.name })
     let localApp = localApps[0]
     if (!localApp) {
       let localAppData = {
@@ -54,16 +54,16 @@ module.exports = class Loriot extends NetworkProtocol {
         reportingProtocolId: 1
       }
       if (integration) localAppData.baseUrl = integration.url
-      localApp = await modelAPI.applications.createApplication(localAppData)
+      localApp = await modelAPI.applications.create(localAppData)
       appLogger.log('Created ' + localApp.name)
     }
-    const { records: appNtls } = await modelAPI.applicationNetworkTypeLinks.retrieveApplicationNetworkTypeLinks({ applicationId: localApp.id })
+    const { records: appNtls } = await modelAPI.applicationNetworkTypeLinks.list({ applicationId: localApp.id })
     let appNtl = appNtls[0]
     if (appNtl) {
       appLogger.log(localApp.name + ' link already exists')
     }
     else {
-      appNtl = await modelAPI.applicationNetworkTypeLinks.createApplicationNetworkTypeLink(
+      appNtl = await modelAPI.applicationNetworkTypeLinks.create(
         {
           applicationId: localApp.id,
           networkTypeId: network.networkType.id,
@@ -179,18 +179,18 @@ module.exports = class Loriot extends NetworkProtocol {
     const remoteDevice = await this.client.loadDevice(network, remoteAppId, remoteDeviceId)
     appLogger.log('Adding ' + remoteDevice.title)
     appLogger.log(remoteDevice)
-    let { records } = await modelAPI.devices.retrieveDevices({ search: remoteDevice.title })
+    let { records } = await modelAPI.devices.list({ search: remoteDevice.title })
     let localDevice = records[0]
     if (localDevice) {
       appLogger.log(localDevice.name + ' already exists')
     }
     else {
       appLogger.log('creating ' + remoteDevice.title)
-      localDevice = await modelAPI.devices.createDevice(remoteDevice.title, remoteDevice.description, localAppId)
+      localDevice = await modelAPI.devices.create(remoteDevice.title, remoteDevice.description, localAppId)
       appLogger.log('Created ' + localDevice.name)
     }
 
-    let { totalCount } = await modelAPI.deviceNetworkTypeLinks.retrieveDeviceNetworkTypeLinks({ deviceId: localDevice.id })
+    let { totalCount } = await modelAPI.deviceNetworkTypeLinks.list({ deviceId: localDevice.id })
     if (totalCount > 0) {
       appLogger.log(localDevice.name + ' link already exists')
     }
@@ -200,7 +200,7 @@ module.exports = class Loriot extends NetworkProtocol {
       appLogger.log(dp, 'info')
       let networkSettings = this.buildDeviceNetworkSettings(remoteDevice, dp.localDeviceProfile)
       appLogger.log(networkSettings)
-      const deviceNtl = await modelAPI.deviceNetworkTypeLinks.createDeviceNetworkTypeLink(localDevice.id, network.networkType.id, dp.localDeviceProfile, networkSettings, 2, { remoteOrigin: true })
+      const deviceNtl = await modelAPI.deviceNetworkTypeLinks.create(localDevice.id, network.networkType.id, dp.localDeviceProfile, networkSettings, 2, { remoteOrigin: true })
       appLogger.log(deviceNtl)
     }
     await this.modelAPI.protocolData.upsert(network, makeDeviceDataKey(localDevice.id, 'devNwkId'), remoteDevice._id)
@@ -211,7 +211,7 @@ module.exports = class Loriot extends NetworkProtocol {
     let networkSettings = this.buildDeviceProfileNetworkSettings(remoteDevice)
     appLogger.log(networkSettings, 'error')
     try {
-      const localDeviceProfile = await modelAPI.deviceProfiles.createDeviceProfile(
+      const localDeviceProfile = await modelAPI.deviceProfiles.create(
         network.networkType.id,
         2,
         networkSettings.name,
@@ -231,7 +231,7 @@ module.exports = class Loriot extends NetworkProtocol {
   }
 
   async pushDevices (network, modelAPI, dataAPI) {
-    let { records } = await modelAPI.devices.retrieveDevices()
+    let { records } = await modelAPI.devices.list()
     await Promise.all(records.map(x => this.pushDevice(network, x, dataAPI, false)))
   }
 

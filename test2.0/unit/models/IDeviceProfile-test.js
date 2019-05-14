@@ -28,21 +28,21 @@ describe('Unit Tests for ' + testName, () => {
   it(testName + ' Empty Retrieval', async () => {
     let testModule = new TestModule(modelAPIMock)
     should.exist(testModule)
-    const actual = await testModule.retrieveDeviceProfiles()
+    const actual = await testModule.list()
     actual.should.have.property('totalCount')
     actual.should.have.property('records')
   })
   it(testName + ' Create', async () => {
     let testModule = new TestModule(modelAPIMock)
     should.exist(testModule)
-    const actual = await testModule.createDeviceProfile(1, 1, 'test', 'test description')
+    const actual = await testModule.create(1, 1, 'test', 'test description')
     assertDeviceProfileProps(actual)
     deviceProfileId = actual.id
   })
   it(testName + ' Retrieve', async () => {
     let testModule = new TestModule(modelAPIMock)
     should.exist(testModule)
-    const actual = await testModule.retrieveDeviceProfile(deviceProfileId)
+    const actual = await testModule.load(deviceProfileId)
     assertDeviceProfileProps(actual)
   })
   it(testName + ' Update', async () => {
@@ -55,7 +55,7 @@ describe('Unit Tests for ' + testName, () => {
       networkTypeId: 1,
       companyId: 1
     }
-    const actual = await testModule.updateDeviceProfile(updated)
+    const actual = await testModule.update(updated)
     assertDeviceProfileProps(actual)
     actual.description.should.equal(updated.description)
   })

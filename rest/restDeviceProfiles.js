@@ -107,7 +107,7 @@ exports.initialize = function (app, server) {
       options.networkTypeId = parseInt(req.query.networkTypeId, 10)
     }
 
-    modelAPI.deviceProfiles.retrieveDeviceProfiles(options).then(function (dps) {
+    modelAPI.deviceProfiles.list(options).then(function (dps) {
       const responseBody = { ...dps, records: dps.records.map(formatRelationshipsOut) }
       restServer.respondJson(res, null, responseBody)
     })
@@ -147,7 +147,7 @@ exports.initialize = function (app, server) {
     // Need the device record to see if it's OK to return for non-admin
     // user.  (Admin user can get all, so we need to do this anyway.)
     var id = parseInt(req.params.id)
-    modelAPI.deviceProfiles.retrieveDeviceProfile(id).then(function (dp) {
+    modelAPI.deviceProfiles.load(id).then(function (dp) {
       if ((req.company.type.id !== modelAPI.companies.COMPANY_ADMIN) &&
                  (dp.company.id !== req.user.company.id)) {
         restServer.respond(res, 403)
@@ -223,7 +223,7 @@ exports.initialize = function (app, server) {
     }
     else {
       // OK, add it.
-      modelAPI.deviceProfiles.createDeviceProfile(
+      modelAPI.deviceProfiles.create(
         rec.networkTypeId,
         rec.companyId,
         rec.name,
@@ -279,7 +279,7 @@ exports.initialize = function (app, server) {
     var data = {}
     data.id = parseInt(req.params.id)
     // Start by getting the original deviceProfile to check for changes.
-    modelAPI.deviceProfiles.retrieveDeviceProfile(data.id).then(function (dp) {
+    modelAPI.deviceProfiles.load(data.id).then(function (dp) {
       // Verify that the user can make the change.
       if ((modelAPI.companies.COMPANY_ADMIN !== req.company.type.id) &&
                  (req.user.company.id !== dp.company.id)) {
@@ -327,7 +327,7 @@ exports.initialize = function (app, server) {
       }
       else {
         // Do the update.
-        modelAPI.deviceProfiles.updateDeviceProfile(data).then(function (rec) {
+        modelAPI.deviceProfiles.update(data).then(function (rec) {
           restServer.respondJson(res, 204, { remoteAccessLogs: rec.remoteAccessLogs })
         })
           .catch(function (err) {
@@ -367,7 +367,7 @@ exports.initialize = function (app, server) {
       companyId = req.user.company.id
     }
 
-    modelAPI.deviceProfiles.deleteDeviceProfile(id, companyId).then(function (ret) {
+    modelAPI.deviceProfiles.remove(id, companyId).then(function (ret) {
       restServer.respondJson(res, 200, { remoteAccessLogs: ret.remoteAccessLogs })
     })
       .catch(function (err) {

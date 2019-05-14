@@ -11,7 +11,7 @@ module.exports = class LoraOpenSourceV1 extends LoraOpenSource {
 
   async register (networkProtocolModel) {
     appLogger.log('LoraOpenSource:register')
-    await networkProtocolModel.upsertNetworkProtocol({
+    await networkProtocolModel.upsert({
       name: 'LoRa Server',
       networkTypeId: 1,
       protocolHandler: 'LoraOpenSource/v1',

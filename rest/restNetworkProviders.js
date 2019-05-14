@@ -58,7 +58,7 @@ exports.initialize = function (app, server) {
     if (req.query.search) {
       options.search = req.query.search
     }
-    modelAPI.networkProviders.retrieveNetworkProviders(options).then(function (nps) {
+    modelAPI.networkProviders.list(options).then(function (nps) {
       restServer.respondJson(res, null, nps)
     })
       .catch(function (err) {
@@ -84,7 +84,7 @@ exports.initialize = function (app, server) {
   app.get('/api/networkProviders/:id', [restServer.isLoggedIn],
     function (req, res, next) {
       var id = req.params.id
-      modelAPI.networkProviders.retrieveNetworkProvider(parseInt(req.params.id)).then(function (rp) {
+      modelAPI.networkProviders.load(parseInt(req.params.id)).then(function (rp) {
         restServer.respondJson(res, null, rp)
       })
         .catch(function (err) {
@@ -126,7 +126,7 @@ exports.initialize = function (app, server) {
     }
 
     // Do the add.
-    modelAPI.networkProviders.createNetworkProvider(rec.name).then(function (rec) {
+    modelAPI.networkProviders.create(rec.name).then(function (rec) {
       var send = {}
       send.id = rec.id
       restServer.respondJson(res, 200, send)
@@ -162,7 +162,7 @@ exports.initialize = function (app, server) {
     // We'll start by getting the old record, as a read is much less
     // expensive than a write, and then we'll be able to tell if anything
     // really changed before we even try to write.
-    modelAPI.networkProviders.retrieveNetworkProvider(data.id).then(function (rp) {
+    modelAPI.networkProviders.load(data.id).then(function (rp) {
       // Fields that may exist in the request body that can change.  Make
       // sure they actually differ, though.
       var changed = 0
@@ -181,7 +181,7 @@ exports.initialize = function (app, server) {
       }
       else {
         // Do the update.
-        modelAPI.networkProviders.updateNetworkProvider(data).then(function (rec) {
+        modelAPI.networkProviders.update(data).then(function (rec) {
           restServer.respond(res, 204)
         })
           .catch(function (err) {
@@ -212,7 +212,7 @@ exports.initialize = function (app, server) {
     restServer.isAdminCompany],
   function (req, res, next) {
     var id = parseInt(req.params.id)
-    modelAPI.networkProviders.deleteNetworkProvider(id).then(function () {
+    modelAPI.networkProviders.remove(id).then(function () {
       restServer.respond(res, 204)
     })
       .catch(function (err) {

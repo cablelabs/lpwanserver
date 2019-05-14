@@ -30,9 +30,9 @@ describe('Unit Tests for ' + testName, () => {
     // create network protocol and NetworkProvider
     const ntwkProtocolModule = new NetworkProtocolModule(modelAPIMock)
     const ntwkProviderModule = new NetworkProviderModule(modelAPIMock)
-    let result = await ntwkProtocolModule.createNetworkProtocol('test', 1)
+    let result = await ntwkProtocolModule.create('test', 1)
     networkProtocolId = result.id
-    result = await ntwkProviderModule.createNetworkProvider('test')
+    result = await ntwkProviderModule.create('test')
     networkProviderId = result.id
   })
   after('Shutdown', async () => {
@@ -44,7 +44,7 @@ describe('Unit Tests for ' + testName, () => {
   it(testName + ' Empty Retrieval', async () => {
     let testModule = new TestModule(modelAPIMock)
     should.exist(testModule)
-    const actual = await testModule.retrieveNetworks()
+    const actual = await testModule.list()
     actual.should.have.property('totalCount')
     actual.should.have.property('records')
   })
@@ -59,14 +59,14 @@ describe('Unit Tests for ' + testName, () => {
       baseUrl: 'http://localhost:6000',
       securityData: {}
     }
-    const actual = await testModule.createNetwork(body)
+    const actual = await testModule.create(body)
     assertNetworkProps(actual)
     networkId = actual.id
   })
   it(testName + ' Retrieve', async () => {
     let testModule = new TestModule(modelAPIMock)
     should.exist(testModule)
-    const actual = await testModule.retrieveNetwork(networkId)
+    const actual = await testModule.load(networkId)
     assertNetworkProps(actual)
   })
   it(testName + ' Update', async () => {
@@ -80,7 +80,7 @@ describe('Unit Tests for ' + testName, () => {
       networkProtocolId,
       baseUrl: 'http://localhost:7000'
     }
-    const actual = await testModule.updateNetwork(updated)
+    const actual = await testModule.update(updated)
     assertNetworkProps(actual)
     actual.baseUrl.should.equal(updated.baseUrl)
   })

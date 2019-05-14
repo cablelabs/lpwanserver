@@ -3,7 +3,7 @@ const httpError = require('http-errors')
 const { onFail } = require('../lib/utils')
 
 module.exports = class ProtocolData {
-  createProtocolData (networkId, networkProtocolId, dataIdentifier, dataValue) {
+  create (networkId, networkProtocolId, dataIdentifier, dataValue) {
     const data = formatInputData({
       networkId,
       networkProtocolId,
@@ -15,15 +15,15 @@ module.exports = class ProtocolData {
 
   async upsert (network, dataId, dataValue) {
     try {
-      const rec = await this.retrieveProtocolData(network.id, network.networkProtocol.id, dataId)
-      return this.updateProtocolData({ id: rec.id, dataValue })
+      const rec = await this.load(network.id, network.networkProtocol.id, dataId)
+      return this.update({ id: rec.id, dataValue })
     }
     catch (err) {
-      return this.createProtocolData(network.id, network.networkProtocol.id, dataId, dataValue)
+      return this.create(network.id, network.networkProtocol.id, dataId, dataValue)
     }
   }
 
-  async retrieveProtocolData (networkId, networkProtocolId, dataIdentifier) {
+  async load (networkId, networkProtocolId, dataIdentifier) {
     const where = formatRelationshipsIn({ networkId, networkProtocolId, dataIdentifier })
     const [ record ] = await prisma.protocolDatas({ where })
     if (!record) throw httpError.NotFound()
@@ -31,17 +31,17 @@ module.exports = class ProtocolData {
   }
 
   async loadValue (network, dataId) {
-    const rec = await this.retrieveProtocolData(network.id, network.networkProtocol.id, dataId)
+    const rec = await this.load(network.id, network.networkProtocol.id, dataId)
     return rec.dataValue
   }
 
-  updateProtocolData ({ id, ...data }) {
+  update ({ id, ...data }) {
     if (!id) throw httpError(400, 'No existing ProtocolData ID')
     data = formatInputData(data)
     return prisma.updateProtocolData({ data, where: { id } }).$fragment(fragments.basic)
   }
 
-  deleteProtocolData (id) {
+  remove (id) {
     return onFail(400, () => prisma.deleteProtocolData({ id }))
   }
 

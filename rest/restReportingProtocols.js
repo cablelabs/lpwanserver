@@ -29,7 +29,7 @@ exports.initialize = function (app, server) {
      * @apiVersion 0.1.0
      */
   app.get('/api/reportingProtocols', [restServer.isLoggedIn], function (req, res, next) {
-    modelAPI.reportingProtocols.retrieveReportingProtocols().then(function (rps) {
+    modelAPI.reportingProtocols.list().then(function (rps) {
       restServer.respondJson(res, null, rps)
     })
       .catch(function (err) {
@@ -56,7 +56,7 @@ exports.initialize = function (app, server) {
      */
   app.get('/api/reportingProtocols/:id', [restServer.isLoggedIn], function (req, res, next) {
     var id = req.params.id
-    modelAPI.reportingProtocols.retrieveReportingProtocol(parseInt(req.params.id)).then(function (rp) {
+    modelAPI.reportingProtocols.load(parseInt(req.params.id)).then(function (rp) {
       restServer.respondJson(res, null, rp)
     })
       .catch(function (err) {
@@ -102,7 +102,7 @@ exports.initialize = function (app, server) {
     }
 
     // Do the add.
-    modelAPI.reportingProtocols.createReportingProtocol(
+    modelAPI.reportingProtocols.create(
       rec.name,
       rec.protocolHandler).then(function (rec) {
       var send = {}
@@ -143,7 +143,7 @@ exports.initialize = function (app, server) {
     // We'll start by getting the company, as a read is much less expensive than
     // a write, and then we'll be able to tell if anything really changed before
     // we even try to write.
-    modelAPI.reportingProtocols.retrieveReportingProtocol(data.id).then(function (rp) {
+    modelAPI.reportingProtocols.load(data.id).then(function (rp) {
       // Fields that may exist in the request body that can change.  Make
       // sure they actually differ, though.
       var changed = 0
@@ -168,7 +168,7 @@ exports.initialize = function (app, server) {
       }
       else {
         // Do the update.
-        modelAPI.reportingProtocols.updateReportingProtocol(data).then(function (rec) {
+        modelAPI.reportingProtocols.update(data).then(function (rec) {
           restServer.respond(res, 204)
         })
           .catch(function (err) {
@@ -199,7 +199,7 @@ exports.initialize = function (app, server) {
     restServer.isAdminCompany],
   function (req, res, next) {
     var id = parseInt(req.params.id)
-    modelAPI.reportingProtocols.deleteReportingProtocol(id).then(function () {
+    modelAPI.reportingProtocols.remove(id).then(function () {
       restServer.respond(res, 204)
     })
       .catch(function (err) {

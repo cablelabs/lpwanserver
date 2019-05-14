@@ -8,7 +8,7 @@ module.exports = class DeviceNetworkTypeLink {
     this.modelAPI = modelAPI
   }
 
-  async createDeviceNetworkTypeLink (deviceId, networkTypeId, deviceProfileId, networkSettings, validateCompanyId, { remoteOrigin = false } = {}) {
+  async create (deviceId, networkTypeId, deviceProfileId, networkSettings, validateCompanyId, { remoteOrigin = false } = {}) {
     try {
       await this.validateCompanyForDevice(validateCompanyId, deviceId)
       const data = formatInputData({
@@ -30,7 +30,7 @@ module.exports = class DeviceNetworkTypeLink {
     }
   }
 
-  async updateDeviceNetworkTypeLink ({ id, ...data }, validateCompanyId) {
+  async update ({ id, ...data }, validateCompanyId) {
     try {
       await this.validateCompanyForDeviceNetworkTypeLink(validateCompanyId, id)
       if (data.networkSettings) {
@@ -48,13 +48,13 @@ module.exports = class DeviceNetworkTypeLink {
     }
   }
 
-  async retrieveDeviceNetworkTypeLink (id) {
+  async load (id) {
     const rec = await onFail(400, () => prisma.deviceNetworkTypeLink({ id }).$fragment(fragments.basic))
     if (!rec) throw httpError(404, 'DeviceNetworkTypeLink not found')
     return rec
   }
 
-  async retrieveDeviceNetworkTypeLinks ({ limit, offset, ...where } = {}) {
+  async list ({ limit, offset, ...where } = {}) {
     where = formatRelationshipsIn(where)
     const query = { where }
     if (limit) query.first = limit
@@ -70,9 +70,9 @@ module.exports = class DeviceNetworkTypeLink {
     return { totalCount, records }
   }
 
-  async deleteDeviceNetworkTypeLink (id, validateCompanyId) {
+  async remove (id, validateCompanyId) {
     try {
-      const rec = await this.retrieveDeviceNetworkTypeLink(id)
+      const rec = await this.load(id)
       await this.validateCompanyForDeviceNetworkTypeLink(validateCompanyId, id)
       // Don't delete the local record until the remote operations complete.
       var logs = await this.modelAPI.networkTypeAPI.deleteDevice(rec.networkType.id, rec.device.id)
@@ -87,7 +87,7 @@ module.exports = class DeviceNetworkTypeLink {
 
   async pushDeviceNetworkTypeLink (deviceNetworkTypeLink) {
     try {
-      var rec = await this.retrieveDeviceNetworkTypeLink(deviceNetworkTypeLink)
+      var rec = await this.load(deviceNetworkTypeLink)
       var logs = await this.modelAPI.networkTypeAPI.pushDevice(rec.networkType.id, rec.device.id, rec.networkSettings)
       rec.remoteAccessLogs = logs
       return rec
@@ -100,13 +100,13 @@ module.exports = class DeviceNetworkTypeLink {
 
   async validateCompanyForDevice (companyId, deviceId) {
     if (!companyId) return
-    const d = await this.modelAPI.devices.retrieveDevice(deviceId)
+    const d = await this.modelAPI.devices.load(deviceId)
     await this.modelAPI.applicationNetworkTypeLinks.validateCompanyForApplication(companyId, d.application.id)
   }
 
   async validateCompanyForDeviceNetworkTypeLink (companyId, dnlId) {
     if (!companyId) return
-    const dnl = await this.retrieveDeviceNetworkTypeLink(dnlId)
+    const dnl = await this.load(dnlId)
     await this.validateCompanyForDevice(companyId, dnl.device.id)
   }
 }

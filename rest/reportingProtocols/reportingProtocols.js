@@ -28,7 +28,7 @@ ReportingProtocolAccess.prototype.getProtocol = async function getProtocol (appl
   if (!this.reportingProtocolMap[ id ]) {
     // We'll need the protocol for the network.
     try {
-      let rp = await this.rpDB.retrieveReportingProtocol(id)
+      let rp = await this.rpDB.load(id)
       this.reportingProtocolMap[ id ] = require('./' + rp.protocolHandler)
       return this.reportingProtocolMap[ id ]
     }

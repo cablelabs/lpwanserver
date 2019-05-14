@@ -91,7 +91,7 @@ exports.initialize = function (app, server) {
       if (req.query.applicationId) {
         options.applicationId = parseInt(req.query.applicationId, 10)
       }
-      modelAPI.devices.retrieveDevices(options).then(function (cos) {
+      modelAPI.devices.list(options).then(function (cos) {
         const responseBody = { ...cos, records: cos.records.map(formatRelationshipsOut) }
         restServer.respondJson(res, null, responseBody)
       })
@@ -186,7 +186,7 @@ exports.initialize = function (app, server) {
     }
     else {
       // OK, add it.
-      modelAPI.devices.createDevice(rec.name,
+      modelAPI.devices.create(rec.name,
         rec.description,
         rec.applicationId,
         rec.deviceModel).then(function (rec) {
@@ -269,14 +269,14 @@ exports.initialize = function (app, server) {
       // that the company doesn't change with the application.
       if (modelAPI.companies.COMPANY_ADMIN !== req.company.type.id) {
         // The new application must also be part of the same company.
-        modelAPI.applications.retrieveApplication(req.body.applicationId)
+        modelAPI.applications.load(req.body.applicationId)
           .then(function (newApp) {
             if (newApp.company.id !== req.application.id) {
               respond(res, 400, "Cannot change device's application to another company's application")
             }
             else {
               // Do the update.
-              modelAPI.devices.updateDevice(data).then(function (rec) {
+              modelAPI.devices.update(data).then(function (rec) {
                 restServer.respond(res, 204)
               })
                 .catch(function (err) {
@@ -318,7 +318,7 @@ exports.initialize = function (app, server) {
     }
     else {
       // Do the update.
-      modelAPI.devices.updateDevice(data).then(function (rec) {
+      modelAPI.devices.update(data).then(function (rec) {
         restServer.respond(res, 204)
       })
         .catch(function (err) {
@@ -348,7 +348,7 @@ exports.initialize = function (app, server) {
     // admin's company, we can delete.
     if ((req.company.type.id === modelAPI.companies.COMPANY_ADMIN) ||
              (req.application.company.id === req.user.company.id)) {
-      modelAPI.devices.deleteDevice(id).then(function () {
+      modelAPI.devices.remove(id).then(function () {
         restServer.respond(res, 204)
       })
         .catch(function (err) {

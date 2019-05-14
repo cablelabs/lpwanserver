@@ -87,7 +87,7 @@ exports.initialize = function (app, server) {
         options.offset = offsetInt
       }
     }
-    modelAPI.deviceNetworkTypeLinks.retrieveDeviceNetworkTypeLinks(options).then(function (networks) {
+    modelAPI.deviceNetworkTypeLinks.list(options).then(function (networks) {
       const responseBody = { ...networks, records: networks.records.map(formatRelationshipsOut) }
       restServer.respondJson(res, null, responseBody)
     })
@@ -120,7 +120,7 @@ exports.initialize = function (app, server) {
      */
   app.get('/api/deviceNetworkTypeLinks/:id', [restServer.isLoggedIn], function (req, res, next) {
     var id = parseInt(req.params.id, 10)
-    modelAPI.deviceNetworkTypeLinks.retrieveDeviceNetworkTypeLink(id).then(function (np) {
+    modelAPI.deviceNetworkTypeLinks.load(id).then(function (np) {
       restServer.respondJson(res, null, formatRelationshipsOut(np))
     })
       .catch(function (err) {
@@ -182,7 +182,7 @@ exports.initialize = function (app, server) {
     }
 
     // Do the add.
-    modelAPI.deviceNetworkTypeLinks.createDeviceNetworkTypeLink(
+    modelAPI.deviceNetworkTypeLinks.create(
       rec.deviceId,
       rec.networkTypeId,
       rec.deviceProfileId,
@@ -234,7 +234,7 @@ exports.initialize = function (app, server) {
     // We'll start by getting the network, as a read is much less expensive
     // than a write, and then we'll be able to tell if anything really
     // changed before we even try to write.
-    modelAPI.deviceNetworkTypeLinks.retrieveDeviceNetworkTypeLink(data.id).then(function (dnl) {
+    modelAPI.deviceNetworkTypeLinks.load(data.id).then(function (dnl) {
       // Fields that may exist in the request body that can change.  Make
       // sure they actually differ, though.
       var changed = 0
@@ -262,7 +262,7 @@ exports.initialize = function (app, server) {
         }
 
         // Do the update.
-        modelAPI.deviceNetworkTypeLinks.updateDeviceNetworkTypeLink(data, companyId).then(function (rec) {
+        modelAPI.deviceNetworkTypeLinks.update(data, companyId).then(function (rec) {
           restServer.respondJson(res, 204, { remoteAccessLogs: rec.remoteAccessLogs })
         })
           .catch(function (err) {
@@ -302,7 +302,7 @@ exports.initialize = function (app, server) {
       companyId = req.user.company.id
     }
 
-    modelAPI.deviceNetworkTypeLinks.deleteDeviceNetworkTypeLink(id, companyId).then(function (rec) {
+    modelAPI.deviceNetworkTypeLinks.remove(id, companyId).then(function (rec) {
       restServer.respond(res, 204, { remoteAccessLogs: rec.remoteAccessLogs })
     })
       .catch(function (err) {

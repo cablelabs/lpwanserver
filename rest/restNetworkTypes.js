@@ -42,7 +42,7 @@ exports.initialize = function (app, server) {
      * @apiVersion 0.1.0
      */
   app.get('/api/networkTypes', [restServer.isLoggedIn], function (req, res, next) {
-    modelAPI.networkTypes.retrieveNetworkTypes().then(function (nts) {
+    modelAPI.networkTypes.list().then(function (nts) {
       restServer.respondJson(res, null, nts)
     })
       .catch(function (err) {
@@ -68,7 +68,7 @@ exports.initialize = function (app, server) {
   app.get('/api/networkTypes/:id', [restServer.isLoggedIn],
     function (req, res, next) {
       var id = req.params.id
-      modelAPI.networkTypes.retrieveNetworkType(parseInt(req.params.id)).then(function (rp) {
+      modelAPI.networkTypes.load(parseInt(req.params.id)).then(function (rp) {
         restServer.respondJson(res, null, rp)
       })
         .catch(function (err) {
@@ -110,7 +110,7 @@ exports.initialize = function (app, server) {
     }
 
     // Do the add.
-    modelAPI.networkTypes.createNetworkType(rec.name).then(function (rec) {
+    modelAPI.networkTypes.create(rec.name).then(function (rec) {
       var send = {}
       send.id = rec.id
       restServer.respondJson(res, 200, send)
@@ -146,7 +146,7 @@ exports.initialize = function (app, server) {
     // We'll start by getting the old record, as a read is much less
     // expensive than a write, and then we'll be able to tell if anything
     // really changed before we even try to write.
-    modelAPI.networkTypes.retrieveNetworkType(req.params.id).then(function (rp) {
+    modelAPI.networkTypes.load(req.params.id).then(function (rp) {
       // Fields that may exist in the request body that can change.  Make
       // sure they actually differ, though.
       var changed = 0
@@ -165,7 +165,7 @@ exports.initialize = function (app, server) {
       }
       else {
         // Do the update.
-        modelAPI.networkTypes.updateNetworkType(data).then(function (rec) {
+        modelAPI.networkTypes.update(data).then(function (rec) {
           restServer.respond(res, 204)
         })
           .catch(function (err) {
@@ -196,7 +196,7 @@ exports.initialize = function (app, server) {
     restServer.isAdminCompany],
   function (req, res, next) {
     var id = parseInt(req.params.id)
-    modelAPI.networkTypes.deleteNetworkType(id).then(function () {
+    modelAPI.networkTypes.remove(id).then(function () {
       restServer.respond(res, 204)
     })
       .catch(function (err) {

@@ -82,7 +82,7 @@ exports.initialize = function (app, server) {
         options.offset = offsetInt
       }
     }
-    modelAPI.companyNetworkTypeLinks.retrieveCompanyNetworkTypeLinks(options).then(function (networkTypes) {
+    modelAPI.companyNetworkTypeLinks.list(options).then(function (networkTypes) {
       const responseBody = { ...networkTypes, records: networkTypes.records.map(formatRelationshipsOut) }
       restServer.respondJson(res, null, responseBody)
     })
@@ -116,7 +116,7 @@ exports.initialize = function (app, server) {
   app.get('/api/companyNetworkTypeLinks/:id', [restServer.isLoggedIn],
     function (req, res, next) {
       var id = parseInt(req.params.id)
-      modelAPI.companyNetworkTypeLinks.retrieveCompanyNetworkTypeLink(id).then(function (np) {
+      modelAPI.companyNetworkTypeLinks.load(id).then(function (np) {
         restServer.respondJson(res, null, formatRelationshipsOut(np))
       })
         .catch(function (err) {
@@ -189,7 +189,7 @@ exports.initialize = function (app, server) {
     }
 
     // Do the add.
-    modelAPI.companyNetworkTypeLinks.createCompanyNetworkTypeLink(
+    modelAPI.companyNetworkTypeLinks.create(
       rec.companyId,
       rec.networkTypeId,
       rec.networkSettings).then(function (rec) {
@@ -239,7 +239,7 @@ exports.initialize = function (app, server) {
     // We'll start by getting the network, as a read is much less expensive
     // than a write, and then we'll be able to tell if anything really
     // changed before we even try to write.
-    modelAPI.companyNetworkTypeLinks.retrieveCompanyNetworkTypeLink(data.id).then(function (cnl) {
+    modelAPI.companyNetworkTypeLinks.load(data.id).then(function (cnl) {
       // If not an admin company, the companyId better match the user's
       // companyId.
       if ((req.company.type.id !== modelAPI.companies.COMPANY_ADMIN) &&
@@ -267,7 +267,7 @@ exports.initialize = function (app, server) {
       }
       else {
         // Do the update.
-        modelAPI.companyNetworkTypeLinks.updateCompanyNetworkTypeLink(data).then(function (rec) {
+        modelAPI.companyNetworkTypeLinks.update(data).then(function (rec) {
           restServer.respondJson(res, 200, { remoteAccessLogs: rec.remoteAccessLogs })
         })
           .catch(function (err) {
@@ -302,7 +302,7 @@ exports.initialize = function (app, server) {
     var id = parseInt(req.params.id)
     // If the caller is a global admin, we can just delete.
     if (req.company.type.id === modelAPI.companies.COMPANY_ADMIN) {
-      modelAPI.companyNetworkTypeLinks.deleteCompanyNetworkTypeLink(id).then(function (ret) {
+      modelAPI.companyNetworkTypeLinks.remove(id).then(function (ret) {
         restServer.respondJson(res, 200, { remoteAccessLogs: ret })
       })
         .catch(function (err) {
@@ -313,13 +313,13 @@ exports.initialize = function (app, server) {
     else {
       // We'll need to read first to make sure the record is for the
       // company the company admin is part of.
-      modelAPI.companyNetworkTypeLinks.retrieveCompanyNetworkTypeLink(id).then(function (cnl) {
+      modelAPI.companyNetworkTypeLinks.load(id).then(function (cnl) {
         if (req.company.id !== cnl.company.id) {
           restServer.respond(res, 400, 'Unauthorized to delete record')
         }
         else {
           // OK to do the  delete.
-          modelAPI.companyNetworkTypeLinks.deleteCompanyNetworkTypeLink(id).then(function (ret) {
+          modelAPI.companyNetworkTypeLinks.remove(id).then(function (ret) {
             restServer.respondJson(res, 200, { remoteAccessLogs: ret })
           })
             .catch(function (err) {

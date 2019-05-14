@@ -89,7 +89,7 @@ exports.initialize = function (app, server) {
         options.offset = offsetInt
       }
     }
-    modelAPI.applicationNetworkTypeLinks.retrieveApplicationNetworkTypeLinks(options).then(function (networkTypes) {
+    modelAPI.applicationNetworkTypeLinks.list(options).then(function (networkTypes) {
       const responseBody = { ...networkTypes, records: networkTypes.records.map(formatRelationshipsOut) }
       restServer.respondJson(res, null, responseBody)
     })
@@ -124,7 +124,7 @@ exports.initialize = function (app, server) {
      */
   app.get('/api/applicationNetworkTypeLinks/:id', [restServer.isLoggedIn], function (req, res, next) {
     var id = parseInt(req.params.id, 10)
-    modelAPI.applicationNetworkTypeLinks.retrieveApplicationNetworkTypeLink(id).then(function (np) {
+    modelAPI.applicationNetworkTypeLinks.load(id).then(function (np) {
       restServer.respondJson(res, null, formatRelationshipsOut(np))
     })
       .catch(function (err) {
@@ -185,7 +185,7 @@ exports.initialize = function (app, server) {
     }
 
     // Do the add.
-    modelAPI.applicationNetworkTypeLinks.createApplicationNetworkTypeLink(rec, { companyId })
+    modelAPI.applicationNetworkTypeLinks.create(rec, { companyId })
       .then(function (rec) {
         var send = {}
         send.id = rec.id
@@ -235,7 +235,7 @@ exports.initialize = function (app, server) {
     // We'll start by getting the network, as a read is much less expensive
     // than a write, and then we'll be able to tell if anything really
     // changed before we even try to write.
-    modelAPI.applicationNetworkTypeLinks.retrieveApplicationNetworkTypeLink(data.id).then(function (anl) {
+    modelAPI.applicationNetworkTypeLinks.load(data.id).then(function (anl) {
       // Fields that may exist in the request body that can change.  Make
       // sure they actually differ, though.
       var changed = 0
@@ -257,7 +257,7 @@ exports.initialize = function (app, server) {
         // Do the update.
         // TODO: Get rid of companies.  For now it is always 2 HACK
         let companyId = 2
-        modelAPI.applicationNetworkTypeLinks.updateApplicationNetworkTypeLink(data, { companyId }).then(function (rec) {
+        modelAPI.applicationNetworkTypeLinks.update(data, { companyId }).then(function (rec) {
           restServer.respondJson(res, 200, { remoteAccessLogs: rec.remoteAccessLogs })
         })
           .catch(function (err) {
@@ -299,7 +299,7 @@ exports.initialize = function (app, server) {
       companyId = req.user.company.id
     }
 
-    modelAPI.applicationNetworkTypeLinks.deleteApplicationNetworkTypeLink(id, companyId).then(function (ret) {
+    modelAPI.applicationNetworkTypeLinks.remove(id, companyId).then(function (ret) {
       restServer.respondJson(res, 200, { remoteAccessLogs: ret.remoteAccessLogs })
     })
       .catch(function (err) {
