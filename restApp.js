@@ -11,8 +11,10 @@ var cors = require('cors')
 var cookieParser = require('cookie-parser')
 var bodyParser = require('body-parser')
 // server
-var server = require('./rest/restServer.js')
-var appLogger = require('./rest/lib/appLogger.js')
+var server = require('./rest/restServer')
+var appLogger = require('./rest/lib/appLogger')
+const serveSpa = require('./rest/lib/serve-spa')
+const { normalizeFilePath } = require('./rest/lib/utils')
 
 // Catch unhandled promise rejections.
 process.on('unhandledRejection', (reason, p) => {
@@ -23,6 +25,14 @@ process.on('unhandledRejection', (reason, p) => {
 
 // Create the REST application.
 var app = express()
+
+if (config.get('public_dir')) {
+  serveSpa({
+    app,
+    public: normalizeFilePath(config.get('public_dir')),
+    omit: req => /^\/api/.test(req.path)
+  })
+}
 
 app.on('error', onError)
 

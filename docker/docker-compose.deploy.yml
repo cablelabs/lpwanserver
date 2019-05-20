@@ -25,27 +25,6 @@ services:
         condition: on-failure
         max_attempts: 3
 
-  lpwanserver_ui:
-    image: lpwanserver/lpwanserver-web-client:latest
-    container_name: lpwanserver_ui
-    environment:
-      - LPWANSERVER_PROTOCOL=http
-      - LPWANSERVER_HOST=rest
-      - LPWANSERVER_PORT=3200
-    ports:
-      - 3000:8080
-    networks:
-      - lpwanserver
-    deploy:
-      replicas: 1
-      resources:
-        limits:
-          cpus: "0.3"
-          memory: 100M
-      restart_policy:
-        condition: on-failure
-        max_attempts: 3
-
   visualizer:
     image: dockersamples/visualizer:stable
     ports:
@@ -61,4 +40,3 @@ services:
 networks:
   lpwanserver:
     name: lpwanserver
-  

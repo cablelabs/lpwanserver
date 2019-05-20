@@ -9,7 +9,7 @@ services:
     ports:
       - 3200:3200
     environment:
-      - config_file=dev.json
+      - config_file=config/dev.json
       - APP_SERVER_PORT=3201
       - TTN_ENABLED=${TTN_ENABLED:-false}
       - TTN_USERNAME=${TTN_USERNAME}

@@ -63,3 +63,6 @@ secrets
 certs
 
 development/credentials
+
+public/*
+!public/README.md

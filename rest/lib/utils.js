@@ -1,5 +1,6 @@
 var createError = require('http-errors')
 const R = require('ramda')
+const path = require('path')
 
 function mutate (key, val, data) {
   data[key] = val
@@ -35,11 +36,20 @@ function joinUrl (...args) {
   return args.join('/').replace(/([^:]\/)\/+/g, '$1')
 }
 
+// for relative file paths, build a path from the root of the repo
+function normalizeFilePath (x) {
+  if (!x || typeof x !== 'string') {
+    throw new TypeError(`Invalid file path ${x}`)
+  }
+  return x.charAt(0) === '/' ? x : path.join(__dirname, '../..', x)
+}
+
 module.exports = {
   mutate,
   onFail,
   tryCatch,
   lift,
   renameKeys,
-  joinUrl
+  joinUrl,
+  normalizeFilePath
 }

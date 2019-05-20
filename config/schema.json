@@ -56,20 +56,20 @@
     },
     "ssl_key_file": {
       "type": "string",
-      "description": "Absolute path to SSL key file."
+      "description": "Path to SSL key file, absolute or relative to root of repository"
     },
     "ssl_cert_file": {
       "type": "string",
-      "description": "Absolute path to SSL certificate file."
+      "description": "Path to SSL certificate file, absolute or relative to root of repository"
     },
     "ssl_ca_file": {
       "type": "string",
-      "description": "Absolute path to certificate authority certificate file.  Required if client's use self-signed certs.",
+      "description": "Path to certificate authority certificate file, absolute or relative to root of repository",
       "default": ""
     },
     "ssl_crl_file": {
       "type": "string",
-      "description": "Absolute path to certificate revokation list file.",
+      "description": "Path to certificate revokation list file, absolute or relative to root of repository",
       "default": ""
     },
     "base_url": {
@@ -106,6 +106,11 @@
         "description": "Regular expression for testing request origin"
       },
       "default": [".*"]
+    },
+    "public_dir": {
+      "type": "string",
+      "description": "Path to folder holding web-client public assets, absolute or relative to root of repository",
+      "default": "public"
     }
   }
 }
