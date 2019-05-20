@@ -6,7 +6,6 @@
 
 // AppLogger is a conole logger that adds timestamp, filename, and line number
 // information.  Usage: appLogger.log( <string> );
-var appLogger = require('../lib/appLogger.js')
 const R = require('ramda')
 
 //* *****************************************************************************
@@ -24,17 +23,15 @@ module.exports = class NetworkProtocol {
   //* *****************************************************************************
 
   // Initiate the session with the remote network
-  connect () {
-    throw new Error('Connect method not implemented by network protocol handler.')
+  async connect () {
   }
 
-  // Disconnect with the remote system.
-  disconnect () {
-    // override this method if the protocol supports logout
+  // End session with the remote network
+  async disconnect () {
   }
 
+  // Make some API call to test network functionality
   test () {
-    throw new Error('Test method not implemented by network protocol handler.')
   }
 
   //* *****************************************************************************
@@ -362,12 +359,9 @@ module.exports = class NetworkProtocol {
   }
 
   // Push the device, meaning update if it exists, and create if it doesn't.
-  //
-  // network         - The networks record for the network that uses this
-  //                   protocol.
-  // deviceId        - The device to be deleted on the remote system.
-  //
-  // Returns a Promise that pushes the device record to the remote system.
+  // @param {object} network The networks record for the network that uses this protocol.
+  // @param {string|number} id The local ID of the device to push.
+  // @returns {Promise<void>}
   pushDevice () {
   }
 }
