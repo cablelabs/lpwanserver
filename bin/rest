@@ -4,5 +4,5 @@
  * Module dependencies.
  */
 
-var app = require( '../restApp' );
-var debug = require( 'debug' )( 'lpwan-rest:server' );
+require('../server')
+require('debug')('lpwan-rest:server')

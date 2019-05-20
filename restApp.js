@@ -6,13 +6,10 @@
 
 const config = require('./rest/config')
 var express = require('express')
-var https = require('https')
 var cors = require('cors')
 // var path = require('path');
 var cookieParser = require('cookie-parser')
 var bodyParser = require('body-parser')
-// var session = require('express-session');
-var fs = require('fs')
 // server
 var server = require('./rest/restServer.js')
 var appLogger = require('./rest/lib/appLogger.js')
@@ -26,31 +23,6 @@ process.on('unhandledRejection', (reason, p) => {
 
 // Create the REST application.
 var app = express()
-
-const sslFiles = {
-  key: fs.readFileSync(config.get('ssl_key_file'), { encoding: 'utf8' }),
-  cert: fs.readFileSync(config.get('ssl_cert_file'), { encoding: 'utf8' })
-}
-if (config.get('ssl_ca_file')) {
-  sslFiles.ca = fs.readFileSync(config.get('ssl_ca_file'), { encoding: 'utf8' })
-}
-if (config.get('ssl_crl_file')) {
-  sslFiles.ca = fs.readFileSync(config.get('ssl_crl_file'), { encoding: 'utf8' })
-}
-
-const httpServerOpts = {
-  ...sslFiles,
-  // request client certificates from IP devices
-  requestCert: true,
-  // don't reject API calls if client doesn't provide a certificate
-  rejectUnauthorized: false
-}
-
-https.createServer(httpServerOpts, app).listen({
-  port: config.get('port'),
-  exclusive: true
-})
-console.log('REST https server starting on port ' + config.get('port'))
 
 app.on('error', onError)
 
