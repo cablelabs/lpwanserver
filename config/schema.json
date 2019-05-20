@@ -4,6 +4,8 @@
   "title": "LPWAN Server Config",
   "type": "object",
   "required": [
+    "ssl_key_file",
+    "ssl_cert_file",
     "jwt_secret",
     "port",
     "base_url",
@@ -54,23 +56,26 @@
     },
     "ssl_key_file": {
       "type": "string",
-      "description": "Absolute path to SSL key file.",
-      "default": ""
+      "description": "Absolute path to SSL key file."
     },
     "ssl_cert_file": {
       "type": "string",
-      "description": "Absolute path to SSL certificate file.",
+      "description": "Absolute path to SSL certificate file."
+    },
+    "ssl_ca_file": {
+      "type": "string",
+      "description": "Absolute path to certificate authority certificate file.  Required if client's use self-signed certs.",
+      "default": ""
+    },
+    "ssl_crl_file": {
+      "type": "string",
+      "description": "Absolute path to certificate revokation list file.",
       "default": ""
     },
     "base_url": {
       "type": "string",
       "description": "The base URL to use for links back to this site. Used for emails and application integrations.",
       "default": ""
-    },
-    "impl_directory": {
-      "type": "string",
-      "description": "The directory to grab the DAO implementations from",
-      "default": "production"
     },
     "prisma_dir": {
       "type": "string",
