@@ -12,11 +12,8 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
     await this.client.getSession(network)
   }
 
-  async disconnect () {
-  }
-
   async test (network) {
-    await this.client.listApplications(network, { limit: 20, offset: 0 })
+    await this.client.listApplications(network, { limit: 1, offset: 0 })
     return true
   }
 
@@ -165,7 +162,7 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
     return nsList[0].id
   }
 
-  async getServiceProfileForOrg (network, orgId, companyId, dataAPI) {
+  async getServiceProfileForOrg (network, orgId, companyId) {
     const body = await this.client.listServiceProfiles(network, {
       organizationID: orgId,
       limit: 20,

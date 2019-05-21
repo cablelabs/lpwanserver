@@ -1,4 +1,7 @@
 {
+  "ssl_key_file": "certs/server-key.pem",
+  "ssl_cert_file": "certs/server-crt.pem",
+  "ssl_ca_file": "certs/ca-crt.pem",
   "jwt_secret": "replace-this-value-for-your-installation",
   "port": 3200,
   "base_url": "http://localhost:3200/",

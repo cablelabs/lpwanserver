@@ -12,16 +12,6 @@ services:
       - prisma_port=4466
     ports:
       - 3200:3200
-  lpwanserver_ui:
-    image: lpwanserver/lpwanserver-web-client:latest
-    networks:
-      - lpwanserver_dev
-    environment:
-      - LPWANSERVER_PROTOCOL=http
-      - LPWANSERVER_HOST=lpwanserver
-      - LPWANSERVER_PORT=3200
-    ports:
-      - 3000:8080
 networks:
   lpwanserver_dev:
     name: lpwanserver_dev

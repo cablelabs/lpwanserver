@@ -6,17 +6,15 @@
 
 const config = require('./rest/config')
 var express = require('express')
-var http = require('http')
-var https = require('https')
 var cors = require('cors')
 // var path = require('path');
 var cookieParser = require('cookie-parser')
 var bodyParser = require('body-parser')
-// var session = require('express-session');
-var fs = require('fs')
 // server
-var server = require('./rest/restServer.js')
-var appLogger = require('./rest/lib/appLogger.js')
+var server = require('./rest/restServer')
+var appLogger = require('./rest/lib/appLogger')
+const serveSpa = require('./rest/lib/serve-spa')
+const { normalizeFilePath } = require('./rest/lib/utils')
 
 // Catch unhandled promise rejections.
 process.on('unhandledRejection', (reason, p) => {
@@ -28,39 +26,15 @@ process.on('unhandledRejection', (reason, p) => {
 // Create the REST application.
 var app = express()
 
-// Load the port binding info.
-var ipPort = config.get('port')
-
-// Load the ssl config
-var sslkeyName = config.get('ssl_key_file')
-var sslcertName = config.get('ssl_cert_file')
-
-if (sslkeyName && sslcertName) {
-  // Load the files
-  var sslcert = fs.readFileSync(sslcertName)
-  var sslkey = fs.readFileSync(sslkeyName)
-  // Set up an SSL connection
-  var sslOpts = {
-    key: sslkey,
-    cert: sslcert
-  }
-  https.createServer(sslOpts, app).listen({
-    port: ipPort,
-    exclusive: true
+if (config.get('public_dir')) {
+  serveSpa({
+    app,
+    public: normalizeFilePath(config.get('public_dir')),
+    omit: req => /^\/api/.test(req.path)
   })
-  console.log('REST https server starting on port ' + ipPort)
-}
-else {
-  http.createServer(app).listen({
-    port: ipPort,
-    exclusive: true
-  })
-  console.log('REST http server starting on port ' + ipPort)
-  console.log('WARNING: INSECURE CONNECTION')
 }
 
 app.on('error', onError)
-app.on('listening', onListening)
 
 /**
  * Event listener for HTTP server "error" event.
@@ -71,38 +45,18 @@ function onError (error) {
     throw error
   }
 
-  var bind = typeof port === 'string'
-    ? 'Pipe ' + port
-    : 'Port ' + port
-
   // handle specific listen errors with friendly messages
   switch (error.code) {
     case 'EACCES':
-      console.error(bind + ' requires elevated privileges')
+      console.error(config.get('port') + ' requires elevated privileges')
       process.exit(1)
-      break
     case 'EADDRINUSE':
-      console.error(bind + ' is already in use')
+      console.error(config.get('port') + ' is already in use')
       process.exit(1)
-      break
     default:
       throw error
   }
 }
-
-/**
- * Event listener for HTTP server "listening" event.
- */
-
-function onListening () {
-  var addr = server.address()
-  var bind = typeof addr === 'string'
-    ? 'pipe ' + addr
-    : 'port ' + addr.port
-  debug('Listening on ' + bind)
-}
-
-// NOTE: if we didn't set up ssl endpoint above,
 
 // Add a logger if enabled.
 appLogger.initRESTCallLogger(app)
@@ -138,6 +92,8 @@ app.use(cors(corsOptions))
 
 // Initialize the application support interfaces.  We pass in the
 // application so we can add functions and API endpoints.
+/* eslint-disable no-unused-vars */
 var restServer = new server.RestServer(app)
+/* eslint-enable no-unused-vars */
 
 module.exports = app

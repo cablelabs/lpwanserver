@@ -11,8 +11,10 @@ before_install:
   - curl -L https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > docker-compose
   - chmod +x docker-compose
   - sudo mv docker-compose /usr/local/bin
+  - cd .. && git clone --depth 1 https://github.com/cablelabs/lpwanserver-web-client.git && cd lpwanserver
 install:
   - npm ci
+  - ./bin/build-ui
 cache:
   directories:
     - "$HOME/.npm"

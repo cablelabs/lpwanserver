@@ -4,14 +4,12 @@ const Observable = require('./lib/observable')
 const schema = require('../config/schema.json')
 const R = require('ramda')
 const { buildConfig } = require('./lib/json-schema-config')
+const { normalizeFilePath } = require('./lib/utils')
 
 // import the config file indicated by process.env.config_file
 function buildConfigFromFile (filePath) {
   if (!filePath) return {}
-  const isAbsolutePath = filePath.charAt(0) === '/'
-  return isAbsolutePath
-    ? require(filePath)
-    : require(path.join(__dirname, '../config', filePath))
+  return require(normalizeFilePath(filePath))
 }
 
 const data = buildConfigFromFile(process.env.config_file)

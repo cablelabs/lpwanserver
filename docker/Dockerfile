@@ -3,14 +3,17 @@ FROM node:10.15
 # set working directory
 WORKDIR /app
 
-# Copy project file
+# Copy project files
+COPY bin/rest bin/rest
+COPY config config
+COPY prisma/dev prisma/dev
+COPY restApp.js ./restApp.js
+COPY server.js ./server.js
+COPY public public
+COPY rest rest
 COPY package*.json ./
 
-# install ALL node_modules, including 'devDependencies'
-RUN npm install
-
-# copy all project
-COPY . .
+RUN npm install --production
 
 EXPOSE 3200
 

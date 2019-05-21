@@ -6,9 +6,10 @@ WORKDIR /usr/src/app
 
 COPY bin/rest bin/rest
 COPY config config
-COPY data data
 COPY prisma/dev prisma/dev
 COPY restApp.js ./restApp.js
+COPY server.js ./server.js
+COPY public public
 COPY package*.json ./
 
 RUN npm install --production

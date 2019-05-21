@@ -607,6 +607,7 @@ COPY public."networkProviders" (id, name) FROM stdin;
 
 COPY public."networkTypes" (id, name) FROM stdin;
 1	LoRa
+2	IP
 \.
 
 
@@ -744,7 +745,7 @@ SELECT pg_catalog.setval('public."networkProviders_id_seq"', 1, false);
 -- Name: networkTypes_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public."networkTypes_id_seq"', 2, false);
+SELECT pg_catalog.setval('public."networkTypes_id_seq"', 3, false);
 
 
 --
