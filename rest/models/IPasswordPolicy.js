@@ -1,4 +1,4 @@
-const { prisma } = require('../lib/prisma')
+const { prisma, loadRecord } = require('../lib/prisma')
 const httpError = require('http-errors')
 const { onFail } = require('../lib/utils')
 
@@ -7,7 +7,7 @@ module.exports = class PasswordPolicy {
     this.companies = companyModel
   }
 
-  async createPasswordPolicy (ruleText, ruleRegExp, companyId) {
+  async create (ruleText, ruleRegExp, companyId) {
     // verify regexp doesn't throw when created
     testRegExp(ruleRegExp)
     var data = { ruleText, ruleRegExp }
@@ -17,13 +17,11 @@ module.exports = class PasswordPolicy {
     return prisma.createPasswordPolicy(data)
   }
 
-  async retrievePasswordPolicy (id, fragementKey = 'basic') {
-    const rec = await onFail(400, () => prisma.passwordPolicy({ id }).$fragment(fragments[fragementKey]))
-    if (!rec) throw httpError(404, 'PasswordPolicy not found')
-    return rec
+  load (id) {
+    return loadPasswordPolicy({ id })
   }
 
-  async retrievePasswordPolicies (companyId) {
+  async list (companyId) {
     // Verify that the company exists.
     await this.companies.load(companyId)
     const where = { OR: [
@@ -33,7 +31,7 @@ module.exports = class PasswordPolicy {
     return prisma.passwordPolicies({ where })
   }
 
-  async updatePasswordPolicy ({ id, ...data }) {
+  async update ({ id, ...data }) {
     if (!id) throw httpError(400, 'No existing PasswordPolicy ID')
     if (data.companyId) {
       // Verify that any new company exists if passed in.
@@ -44,13 +42,13 @@ module.exports = class PasswordPolicy {
     return prisma.updatePasswordPolicy({ data, where: { id } }).$fragment(fragments.basic)
   }
 
-  deletePasswordPolicy (id) {
+  remove (id) {
     return onFail(400, () => prisma.deletePasswordPolicy({ id }))
   }
 
   async validatePassword (companyId, password) {
     // Get the rules from the passwordPolicies table
-    const pwPolicies = await this.retrievePasswordPolicies(companyId)
+    const pwPolicies = await this.list(companyId)
     const failed = pwPolicies.filter(x => !(new RegExp(x.ruleRegExp).test(password)))
     if (!failed.length) return true
     throw new Error('Password failed these policies:', failed.map(x => x.ruleText).join('; '))
@@ -77,3 +75,8 @@ const fragments = {
     }
   }`
 }
+
+// ******************************************************************************
+// Helpers
+// ******************************************************************************
+const loadPasswordPolicy = loadRecord('passwordPolicy', fragments, 'basic')

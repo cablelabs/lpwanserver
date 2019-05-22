@@ -47,7 +47,7 @@ exports.initialize = function (app, server) {
         return
       }
 
-      modelAPI.passwordPolicies.retrievePasswordPolicies(companyId).then(function (rules) {
+      modelAPI.passwordPolicies.list(companyId).then(function (rules) {
         for (var i = 0; i < rules.length; ++i) {
           if (rules[ i ].company) {
             delete rules[ i ].company
@@ -92,7 +92,7 @@ exports.initialize = function (app, server) {
   function (req, res, next) {
     var id = parseInt(req.params.id)
 
-    modelAPI.passwordPolicies.retrievePasswordPolicy(id).then(function (pp) {
+    modelAPI.passwordPolicies.load(id).then(function (pp) {
       // Must be an admin user or
       // it's global passwordPolicy rule or
       // the caller is part of the company that the passwordPolicy rule is
@@ -177,7 +177,7 @@ exports.initialize = function (app, server) {
     }
 
     // Do the add.
-    modelAPI.passwordPolicies.createPasswordPolicy(rec.ruleText, rec.ruleRegExp, rec.companyId).then(function (rec) {
+    modelAPI.passwordPolicies.create(rec.ruleText, rec.ruleRegExp, rec.companyId).then(function (rec) {
       var send = {}
       send.id = rec.id
       restServer.respondJson(res, 200, send)
@@ -220,7 +220,7 @@ exports.initialize = function (app, server) {
     // We'll start by getting the passwordPolicy, as a read is much less
     // expensive than a write, and then we'll be able to tell if anything
     // really changed before we even try to write.
-    modelAPI.passwordPolicies.retrievePasswordPolicy(data.id).then(function (pp) {
+    modelAPI.passwordPolicies.load(data.id).then(function (pp) {
       // If a company admin, cannot change companyId.
       if ((req.company.type.id !== modelAPI.companies.COMPANY_ADMIN) &&
                  (req.body.companyId) &&
@@ -268,7 +268,7 @@ exports.initialize = function (app, server) {
       }
       else {
         // Do the update.
-        modelAPI.passwordPolicies.updatePasswordPolicy(data).then(function (rec) {
+        modelAPI.passwordPolicies.update(data).then(function (rec) {
           restServer.respond(res, 204)
         })
           .catch(function (err) {
@@ -302,7 +302,7 @@ exports.initialize = function (app, server) {
     var id = parseInt(req.params.id)
     // If the caller is a global admin, we can just delete.
     if (req.company.type.id === modelAPI.companies.COMPANY_ADMIN) {
-      modelAPI.passwordPolicies.deletePasswordPolicy(id).then(function () {
+      modelAPI.passwordPolicies.remove(id).then(function () {
         restServer.respond(res, 204)
       })
         .catch(function (err) {
@@ -313,13 +313,13 @@ exports.initialize = function (app, server) {
     else {
       // We'll need to read first to make sure the record is for the
       // company the company admin is part of.
-      modelAPI.passwordPolicies.retrievePasswordPolicy(id).then(function (pp) {
+      modelAPI.passwordPolicies.load(id).then(function (pp) {
         if (req.company.id !== pp.company.id) {
           restServer.respond(res, 400, 'Unauthorized to delete record')
         }
         else {
           // OK to do the  delete.
-          modelAPI.passwordPolicies.deletePasswordPolicy(id).then(function () {
+          modelAPI.passwordPolicies.remove(id).then(function () {
             restServer.respond(res, 204)
           })
             .catch(function (err) {

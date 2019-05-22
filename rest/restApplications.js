@@ -487,4 +487,20 @@ exports.initialize = function (app, server) {
     }
   }
   app.post('/api/ingest/:applicationId/:networkId', uplinkHandler)
+
+  const getCertCn = R.compose(R.path(['subject', 'CN']), R.defaultTo({}))
+
+  async function ipDeviceUplinkHandler (req, res) {
+    const devEUI = getCertCn(req.socket.getPeerCertificate())
+    if (!devEUI) restServer.respond(res, 403)
+    try {
+      await modelAPI.devices.receiveIpDeviceUplink(devEUI, req.body)
+      restServer.respond(res, 204)
+    }
+    catch (err) {
+      appLogger.log(`Error receiving data from IP device ${devEUI}: ${err}`)
+      restServer.respond(res, err)
+    }
+  }
+  app.post('/api/ingest/ip-device', ipDeviceUplinkHandler)
 }

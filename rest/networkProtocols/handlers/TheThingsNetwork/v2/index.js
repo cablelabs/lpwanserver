@@ -21,26 +21,9 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
   constructor (opts) {
     super(opts)
     this.client = new ApiClient()
-    this.networkProtocolId = null
+    this.networkProtocolId = opts.networkProtocolId
     this.client.on('uplink', x => this.modelAPI.applications.passDataToApplication(x.appId, x.networkId, x.payload))
-  }
-
-  /**
-   * Upon startup this function "registers" the protocol with the system.
-   *
-   * @param networkProtocols - Module to access the network protocols in the database
-   * @returns {Promise<?>} - Empty promise means register worked
-   */
-  async register (networkProtocols) {
-    appLogger.log('TTN:register', 'info')
-    const rec = await networkProtocols.upsert({
-      name: 'The Things Network',
-      networkTypeId: 1,
-      protocolHandler: 'TheThingsNetwork/v2',
-      networkProtocolVersion: '2.0'
-    })
-    this.networkProtocolId = rec.id
-    await this.subscribeToDataForEnabledApps()
+    this.subscribeToDataForEnabledApps()
   }
 
   async subscribeToDataForEnabledApps () {

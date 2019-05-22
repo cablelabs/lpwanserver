@@ -1,6 +1,6 @@
 const appLogger = require('../lib/appLogger.js')
 const { onFail } = require('../lib/utils')
-const { prisma } = require('../lib/prisma')
+const { prisma, loadRecord } = require('../lib/prisma')
 var httpError = require('http-errors')
 
 module.exports = class Company {
@@ -95,10 +95,10 @@ module.exports = class Company {
     }
     try {
       // Delete passwordPolicies
-      let { records: pwdPolicies } = await this.modelAPI.passwordPolicies.retrievePasswordPolicies(id)
+      let { records: pwdPolicies } = await this.modelAPI.passwordPolicies.list(id)
       // We can get null companyIds for cross-company rules - don't delete those.
       pwdPolicies = pwdPolicies.filter(x => x.company.id === id)
-      await Promise.all(pwdPolicies.map(x => this.modelAPI.passwordPolicies.deletePasswordPolicy(x.id)))
+      await Promise.all(pwdPolicies.map(x => this.modelAPI.passwordPolicies.remove(x.id)))
     }
     catch (err) {
       appLogger.log("Error deleting company's PasswordPolicies: " + err)
@@ -115,12 +115,6 @@ module.exports = class Company {
   }
 }
 
-async function loadCompany (uniqueKeyObj, fragementKey = 'basic') {
-  const rec = await onFail(400, () => prisma.company(uniqueKeyObj).$fragment(fragments[fragementKey]))
-  if (!rec) throw httpError(404, 'Company not found')
-  return rec
-}
-
 //* *****************************************************************************
 // Fragments for how the data should be returned from Prisma.
 //* *****************************************************************************
@@ -133,3 +127,8 @@ const fragments = {
     }
   }`
 }
+
+// ******************************************************************************
+// Helpers
+// ******************************************************************************
+const loadCompany = loadRecord('company', fragments, 'basic')

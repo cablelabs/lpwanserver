@@ -23,9 +23,6 @@ var restNetworkProvidersAPI = require('./restNetworkProviders.js')
 // The abstract data model.
 var ModelAPI = require('./models/ModelAPI.js')
 
-// The session model.
-var sessions
-
 // The RestServer for use in methods called without proper scope.
 var restServer
 
@@ -89,6 +86,10 @@ function RestServer (app) {
 
   // The applicationNetworkTypeLink model.
   restDeviceNetworkTypeLinksAPI.initialize(app, this)
+}
+
+RestServer.prototype.initialize = async function initializeRestServer () {
+  await this.modelAPI.initialize()
 }
 
 // *******************************************************************
@@ -234,4 +235,4 @@ RestServer.prototype.fetchCompany = function (req, res, next) {
   }
 }
 
-exports.RestServer = RestServer
+module.exports = RestServer

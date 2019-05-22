@@ -48,17 +48,6 @@ module.exports = class NetworkProtocolDataAccess {
       `Failed to load application ${id}`
     )
   }
-  async getReportingAPIByApplicationId (appId) {
-    // reporting protocols cached by reportingProtocolAPIs
-    try {
-      let application = await this.getApplicationById(appId)
-      return this.modelAPI.reportingProtocolAPIs.getProtocol(application)
-    }
-    catch (err) {
-      this._log(`${this.funcDesc}: Failed to load application ${appId} or it's reporting protocol`)
-      throw err
-    }
-  }
   getDeviceById (id) {
     return this.cacheFirst(
       ['devices', `${id}`],

@@ -1,6 +1,6 @@
 var appLogger = require('../lib/appLogger.js')
 var httpError = require('http-errors')
-const { prisma, formatInputData, formatRelationshipsIn } = require('../lib/prisma')
+const { prisma, formatInputData, formatRelationshipsIn, loadRecord } = require('../lib/prisma')
 const { onFail } = require('../lib/utils')
 
 module.exports = class ApplicationNetworkTypeLink {
@@ -31,8 +31,7 @@ module.exports = class ApplicationNetworkTypeLink {
   }
 
   async load (id) {
-    const rec = await onFail(400, () => prisma.applicationNetworkTypeLink({ id }).$fragment(fragments.basic))
-    if (!rec) throw httpError(404, 'ApplicationNetworkTypeLink not found')
+    const rec = await loadApplicationNTL({ id })
     return { ...rec, networkSettings: JSON.parse(rec.networkSettings) }
   }
 
@@ -154,3 +153,8 @@ const fragments = {
     }
   }`
 }
+
+// ******************************************************************************
+// Helpers
+// ******************************************************************************
+const loadApplicationNTL = loadRecord('applicationNetworkTypeLink', fragments, 'basic')

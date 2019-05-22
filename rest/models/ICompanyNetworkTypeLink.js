@@ -1,5 +1,5 @@
 var appLogger = require('../lib/appLogger.js')
-const { prisma, formatInputData, formatRelationshipsIn } = require('../lib/prisma')
+const { prisma, formatInputData, formatRelationshipsIn, loadRecord } = require('../lib/prisma')
 const { onFail } = require('../lib/utils')
 var httpError = require('http-errors')
 
@@ -32,10 +32,8 @@ module.exports = class CompanyNetworkTypeLink {
     }
   }
 
-  async load (id) {
-    const rec = await onFail(400, () => prisma.companyNetworkTypeLink({ id }).$fragment(fragments.basic))
-    if (!rec) throw httpError(404, 'CompanyNetworkTypeLink not found')
-    return parseNetworkSettings(rec)
+  load (id) {
+    return loadCompanyNTL({ id })
   }
 
   async update ({ id, ...data }, { remoteOrigin = false } = {}) {
@@ -254,15 +252,6 @@ module.exports = class CompanyNetworkTypeLink {
   }
 }
 
-// ******************************************************************************
-// Helpers
-// ******************************************************************************
-function parseNetworkSettings (x) {
-  return typeof x.networkSettings === 'string'
-    ? { ...x, networkSettings: JSON.parse(x.networkSettings) }
-    : x
-}
-
 //* *****************************************************************************
 // Fragments for how the data should be returned from Prisma.
 //* *****************************************************************************
@@ -278,3 +267,13 @@ const fragments = {
     }
   }`
 }
+
+// ******************************************************************************
+// Helpers
+// ******************************************************************************
+function parseNetworkSettings (x) {
+  return typeof x.networkSettings === 'string'
+    ? { ...x, networkSettings: JSON.parse(x.networkSettings) }
+    : x
+}
+const loadCompanyNTL = loadRecord('companyNetworkTypeLink', fragments, 'basic')

@@ -14,31 +14,33 @@ var request = require('request')
 // appName    - The application name we are reporting to
 //
 // Returns a Promise that sends the report.
-exports.report = function (dataObject, url, appName) {
-  return new Promise(function (resolve, reject) {
-    // Set up the request options.
-    var options = {}
-    options.method = 'POST'
-    options.uri = url
-    options.headers = {}
-    options.headers[ 'Content-Type' ] = 'application/json'
-    options.headers.appid = appName
-    if (dataObject === null) dataObject = {}
-    options.json = dataObject
-    appLogger.log(options)
-    request(options, function (error, response, body) {
-      if (error) {
-        appLogger.log('Error reporting data (' +
-                               JSON.stringify(dataObject) +
-                               ') for ' + appName +
-                               ' to ' + url +
-                               ': ' + error)
-        reject(error)
-      }
-      else {
-        appLogger.log(body)
-        resolve(response)
-      }
+module.exports = class PostReportingProtocol {
+  report (dataObject, url, appName) {
+    return new Promise(function (resolve, reject) {
+      // Set up the request options.
+      var options = {}
+      options.method = 'POST'
+      options.uri = url
+      options.headers = {}
+      options.headers[ 'Content-Type' ] = 'application/json'
+      options.headers.appid = appName
+      if (dataObject === null) dataObject = {}
+      options.json = dataObject
+      appLogger.log(options)
+      request(options, function (error, response, body) {
+        if (error) {
+          appLogger.log('Error reporting data (' +
+                                 JSON.stringify(dataObject) +
+                                 ') for ' + appName +
+                                 ' to ' + url +
+                                 ': ' + error)
+          reject(error)
+        }
+        else {
+          appLogger.log(body)
+          resolve(response)
+        }
+      })
     })
-  })
+  }
 }

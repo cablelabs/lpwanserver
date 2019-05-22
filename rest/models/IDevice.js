@@ -1,5 +1,5 @@
 const appLogger = require('../lib/appLogger.js')
-const { prisma, formatInputData, formatRelationshipsIn } = require('../lib/prisma')
+const { prisma, formatInputData, formatRelationshipsIn, loadRecord } = require('../lib/prisma')
 var httpError = require('http-errors')
 const { onFail } = require('../lib/utils')
 const R = require('ramda')
@@ -79,7 +79,6 @@ module.exports = class Device {
     // Get all device networkType links
     const devNtlQuery = { device: { id } }
     let { records } = await this.modelAPI.deviceNetworkTypeLinks.list(devNtlQuery)
-    appLogger.log(`DEVICE_NETWORK_TYPE_LINKS: ${JSON.stringify(records)}`)
     const logs = await Promise.all(records.map(x => this.modelAPI.networkTypeAPI.passDataToDevice(x.networkType.id, app.id, id, data)))
     return R.flatten(logs)
   }
@@ -122,23 +121,28 @@ module.exports = class Device {
       res.end()
     }
   }
-}
 
-// ******************************************************************************
-// Helpers
-// ******************************************************************************
-async function loadDevice (uniqueKeyObj, fragementKey = 'basic') {
-  const rec = await onFail(400, () => prisma.device(uniqueKeyObj).$fragment(fragments[fragementKey]))
-  if (!rec) throw httpError(404, 'Device not found')
-  return rec
+  async receiveIpDeviceUplink (devEUI, data) {
+    // Get IP Network Type
+    let nwkType = await this.modelAPI.networkTypes.loadByName('IP')
+    // Ensure a deviceNTL exists
+    const devNTLQuery = { networkType: { id: nwkType.id }, networkSettings_contains: devEUI }
+    let { records: devNTLs } = await this.modelAPI.deviceNetworkTypeLinks.list(devNTLQuery)
+    const devNTL = devNTLs[0]
+    if (!devNTL) return
+    // Get device
+    const device = await this.modelAPI.devices.load(devNTL.device.id)
+    // Get application
+    const app = await this.modelAPI.applications.load(device.application.id)
+    // Ensure application is enabled
+    if (!app.enabled) return
+    // Update device's location in redis
+    // Pass data
+    let proto = await this.modelAPI.networkProtocolAPI.getProtocol(network)
+    let dataAPI = new NetworkProtocolDataAccess(this.modelAPI, 'ReportingProtocol')
+    await proto.passDataToApplication(network, id, data, dataAPI)
+  }
 }
-
-const unicastDownlinkSchema = Joi.object().keys({
-  fCnt: Joi.number().integer().min(0).required(),
-  fPort: Joi.number().integer().min(1).required(),
-  data: Joi.string().when('jsonData', { is: Joi.exist(), then: Joi.optional(), otherwise: Joi.required() }),
-  jsonData: Joi.object().optional()
-})
 
 //* *****************************************************************************
 // Fragments for how the data should be returned from Prisma.
@@ -154,3 +158,15 @@ const fragments = {
     }
   }`
 }
+
+// ******************************************************************************
+// Helpers
+// ******************************************************************************
+const loadDevice = loadRecord('device', fragments, 'basic')
+
+const unicastDownlinkSchema = Joi.object().keys({
+  fCnt: Joi.number().integer().min(0).required(),
+  fPort: Joi.number().integer().min(1).required(),
+  data: Joi.string().when('jsonData', { is: Joi.exist(), then: Joi.optional(), otherwise: Joi.required() }),
+  jsonData: Joi.object().optional()
+})

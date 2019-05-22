@@ -16,26 +16,6 @@ var appLogger = require('./rest/lib/appLogger')
 const serveSpa = require('./rest/lib/serve-spa')
 const { normalizeFilePath } = require('./rest/lib/utils')
 
-// Catch unhandled promise rejections.
-process.on('unhandledRejection', (reason, p) => {
-  console.log('Unhandled Promise Rejection at: Promise ', p, ' reason: ', reason)
-  console.log('Stack:', reason.stack)
-  // application specific logging, throwing an error, or other logic here
-})
-
-// Create the REST application.
-var app = express()
-
-if (config.get('public_dir')) {
-  serveSpa({
-    app,
-    public: normalizeFilePath(config.get('public_dir')),
-    omit: req => /^\/api/.test(req.path)
-  })
-}
-
-app.on('error', onError)
-
 /**
  * Event listener for HTTP server "error" event.
  */
@@ -58,16 +38,6 @@ function onError (error) {
   }
 }
 
-// Add a logger if enabled.
-appLogger.initRESTCallLogger(app)
-
-// Add the body parser.
-app.use(bodyParser.json())
-app.use(bodyParser.urlencoded({ extended: false }))
-
-// Add a cookie parser.
-app.use(cookieParser())
-
 // Add the cors manager
 var whitelistStr = config.get('cors_whitelist')
 var whitelistRegExp = []
@@ -88,12 +58,34 @@ var corsOptions = {
   }
 }
 
-app.use(cors(corsOptions))
+module.exports = async function createApp () {
+  // Create the REST application.
+  var app = express()
 
-// Initialize the application support interfaces.  We pass in the
-// application so we can add functions and API endpoints.
-/* eslint-disable no-unused-vars */
-var restServer = new server.RestServer(app)
-/* eslint-enable no-unused-vars */
+  if (config.get('public_dir')) {
+    serveSpa({
+      app,
+      public: normalizeFilePath(config.get('public_dir')),
+      omit: req => /^\/api/.test(req.path)
+    })
+  }
 
-module.exports = app
+  app.on('error', onError)
+
+  // Add a logger if enabled.
+  appLogger.initRESTCallLogger(app)
+
+  // Add the body parser.
+  app.use(bodyParser.json())
+  app.use(bodyParser.urlencoded({ extended: false }))
+
+  // Add a cookie parser.
+  app.use(cookieParser())
+
+  app.use(cors(corsOptions))
+
+  // Initialize the application support interfaces.  We pass in the
+  // application so we can add functions and API endpoints.
+  var restServer = new server.RestServer(app)
+  await restServer.initialize()
+}

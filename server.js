@@ -7,7 +7,7 @@
 const config = require('./rest/config')
 var https = require('https')
 var fs = require('fs')
-const app = require('./restApp')
+const createApp = require('./restApp')
 
 // Catch unhandled promise rejections.
 process.on('unhandledRejection', (reason, p) => {
@@ -16,27 +16,33 @@ process.on('unhandledRejection', (reason, p) => {
   // application specific logging, throwing an error, or other logic here
 })
 
-const sslFiles = {
-  key: fs.readFileSync(config.get('ssl_key_file'), { encoding: 'utf8' }),
-  cert: fs.readFileSync(config.get('ssl_cert_file'), { encoding: 'utf8' })
-}
-if (config.get('ssl_ca_file')) {
-  sslFiles.ca = fs.readFileSync(config.get('ssl_ca_file'), { encoding: 'utf8' })
-}
-if (config.get('ssl_crl_file')) {
-  sslFiles.ca = fs.readFileSync(config.get('ssl_crl_file'), { encoding: 'utf8' })
+async function createServer () {
+  const sslFiles = {
+    key: fs.readFileSync(config.get('ssl_key_file'), { encoding: 'utf8' }),
+    cert: fs.readFileSync(config.get('ssl_cert_file'), { encoding: 'utf8' })
+  }
+  if (config.get('ssl_ca_file')) {
+    sslFiles.ca = fs.readFileSync(config.get('ssl_ca_file'), { encoding: 'utf8' })
+  }
+  if (config.get('ssl_crl_file')) {
+    sslFiles.ca = fs.readFileSync(config.get('ssl_crl_file'), { encoding: 'utf8' })
+  }
+
+  const httpServerOpts = {
+    ...sslFiles,
+    // request client certificates from IP devices
+    requestCert: true,
+    // don't reject API calls if client doesn't provide a certificate
+    rejectUnauthorized: false
+  }
+
+  const app = await createApp()
+
+  https.createServer(httpServerOpts, app).listen({
+    port: config.get('port'),
+    exclusive: true
+  })
+  console.log('REST https server starting on port ' + config.get('port'))
 }
 
-const httpServerOpts = {
-  ...sslFiles,
-  // request client certificates from IP devices
-  requestCert: true,
-  // don't reject API calls if client doesn't provide a certificate
-  rejectUnauthorized: false
-}
-
-https.createServer(httpServerOpts, app).listen({
-  port: config.get('port'),
-  exclusive: true
-})
-console.log('REST https server starting on port ' + config.get('port'))
+createServer()

@@ -223,7 +223,7 @@ exports.initialize = function (app, server) {
     function (req, res, next) {
       let fileList = fs.readdirSync('./rest/reportingProtocols/')
       let handlerList = []
-      for (onefile in fileList) {
+      for (let onefile in fileList) {
         if (
           fileList[onefile] === 'reportingProtocols.js' ||
           fileList[onefile] === 'protocolhandlertemplate.js' ||

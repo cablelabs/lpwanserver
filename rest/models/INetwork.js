@@ -1,7 +1,7 @@
 const NetworkProtocolDataAccess = require('../networkProtocols/networkProtocolDataAccess')
 const appLogger = require('../lib/appLogger')
 const R = require('ramda')
-const { prisma, formatRelationshipsIn, formatInputData } = require('../lib/prisma')
+const { prisma, formatRelationshipsIn, formatInputData, loadRecord } = require('../lib/prisma')
 const httpError = require('http-errors')
 const { onFail } = require('../lib/utils')
 const { encrypt, decrypt, genKey } = require('../lib/crypto')
@@ -51,7 +51,7 @@ module.exports = class Network {
   }
 
   async load (id) {
-    const rec = await load({ id })
+    const rec = await loadNetwork({ id })
     if (rec.securityData) {
       let k = await this.modelAPI.protocolData.loadValue(rec, genNwkKey(id))
       rec.securityData = await decrypt(rec.securityData, k)
@@ -85,7 +85,7 @@ module.exports = class Network {
 
   async remove (id) {
     let dataAPI = new NetworkProtocolDataAccess(this.modelAPI, 'INetwork Delete')
-    let old = await load({ id })
+    let old = await loadNetwork({ id })
     await dataAPI.deleteProtocolDataForKey(id,
       old.networkProtocol.id,
       genNwkKey(id))
@@ -115,7 +115,7 @@ module.exports = class Network {
   async pushNetwork (id) {
     try {
       let network = await this.load(id)
-      let networkType = await this.modelAPI.networkTypes.list(network.networkType.id)
+      let networkType = await this.modelAPI.networkTypes.load(network.networkType.id)
       var npda = new NetworkProtocolDataAccess(this.modelAPI, 'Push Network')
       npda.initLog(networkType, network)
       appLogger.log(network)
@@ -170,11 +170,7 @@ const fragments = {
 // ******************************************************************************
 // Helpers
 // ******************************************************************************
-async function load (uniqueKeyObj, fragementKey = 'basic') {
-  const rec = await onFail(400, () => prisma.network(uniqueKeyObj).$fragment(fragments[fragementKey]))
-  if (!rec) throw httpError(404, 'Network not found')
-  return rec
-}
+const loadNetwork = loadRecord('network', fragments, 'basic')
 
 const genNwkKey = function (networkId) {
   return 'nk' + networkId

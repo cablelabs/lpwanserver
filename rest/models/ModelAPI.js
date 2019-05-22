@@ -1,8 +1,5 @@
 // Define the parts of the Model API
 
-// General libraries in use in this module.
-var appLogger = require('../lib/appLogger.js')
-
 // Data models - what can be done with each data type.
 var UserModel = require('./IUser.js')
 var CompanyModel = require('./ICompany.js')
@@ -26,17 +23,7 @@ var EmailModel = require('./IEmail.js')
 var NetworkTypeAPI = require('../networkProtocols/networkTypeApi.js')
 var NetworkProtocolAPI = require('../networkProtocols/networkProtocols.js')
 
-// Reporting Protocol use.
-var ReportingProtocols = require('../reportingProtocols/reportingProtocols.js')
-
-var modelAPI
-
-function ModelAPI (app) {
-  // Based on the initialization type, create the models that will
-  // use the underlying data.  Each module gets the type from config.
-  // Pass around the dependancies as well.
-  modelAPI = this
-
+function ModelAPI () {
   // Companies.
   this.companies = new CompanyModel(this)
   this.companies.init()
@@ -89,8 +76,6 @@ function ModelAPI (app) {
   // The companyNetworkTypeLink model.
   this.companyNetworkTypeLinks = new CompanyNetworkTypeLinkModel(this)
 
-  this.reportingProtocolAPIs = new ReportingProtocols(this.reportingProtocols)
-
   // The deviceProfile model.
   this.deviceProfiles = new DeviceProfileModel(this)
 
@@ -102,6 +87,13 @@ function ModelAPI (app) {
 
   // The helper interface for network protocols to use.
   this.protocolData = new ProtocolDataModel(this)
+}
+
+ModelAPI.prototype.initialize = async function initializeModelAPI () {
+  await Promise.all([
+    this.networkProtocols.initialize(this),
+    this.reportingProtocols.initialize()
+  ])
 }
 
 module.exports = ModelAPI

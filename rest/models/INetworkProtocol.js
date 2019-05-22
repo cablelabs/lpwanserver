@@ -1,11 +1,26 @@
 const path = require('path')
-const { prisma, formatInputData, formatRelationshipsIn } = require('../lib/prisma')
+const { prisma, formatInputData, formatRelationshipsIn, loadRecord } = require('../lib/prisma')
 const httpError = require('http-errors')
 const { onFail } = require('../lib/utils')
+const registerNetworkProtocols = require('../networkProtocols/register')
 
 const handlerDir = path.join(__dirname, '../networkProtocols/handlers')
 
 module.exports = class NetworkProtocol {
+  constructor () {
+    this.handlers = {}
+  }
+
+  async initialize (modelAPI) {
+    await registerNetworkProtocols(this)
+    const { records } = await this.list()
+    const handlersDir = path.join(__dirname, '../networkProtocols/handlers')
+    records.forEach(x => {
+      let Handler = require(path.join(handlersDir, x.protocolHandler))
+      this.handlers[x.id] = new Handler({ modelAPI, networkProtocolId: x.id })
+    })
+  }
+
   async create (name, networkTypeId, protocolHandler, version, masterProtocol) {
     const data = formatInputData({
       name,
@@ -35,10 +50,8 @@ module.exports = class NetworkProtocol {
     return prisma.updateNetworkProtocol({ data, where: { id } }).$fragment(fragments.basic)
   }
 
-  async load (id) {
-    const rec = await onFail(400, () => prisma.networkProtocol({ id }).$fragment(fragments.basic))
-    if (!rec) throw httpError(404, 'NetworkProtocol not found')
-    return addMetadata(rec)
+  load (id) {
+    return loadNetworkProtocol({ id })
   }
 
   async list ({ limit, offset, ...where } = {}) {
@@ -62,18 +75,12 @@ module.exports = class NetworkProtocol {
     return { totalCount, records: records.map(addMetadata) }
   }
 
-  deleteNetworkProtocol (id) {
+  remove (id) {
     return onFail(400, () => prisma.deleteNetworkProtocol({ id }))
   }
-}
 
-// ******************************************************************************
-// Helpers
-// ******************************************************************************
-function addMetadata (rec) {
-  return {
-    ...rec,
-    metaData: require(path.join(handlerDir, rec.protocolHandler, 'metadata'))
+  getHandler (id) {
+    return this.handlers[id]
   }
 }
 
@@ -92,3 +99,15 @@ const fragments = {
     }
   }`
 }
+
+// ******************************************************************************
+// Helpers
+// ******************************************************************************
+function addMetadata (rec) {
+  return {
+    ...rec,
+    metaData: require(path.join(handlerDir, rec.protocolHandler, 'metadata'))
+  }
+}
+
+const loadNetworkProtocol = loadRecord('networkProtocol', fragments, 'basic')

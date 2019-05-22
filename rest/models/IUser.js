@@ -1,6 +1,6 @@
 const appLogger = require('../lib/appLogger.js')
 const config = require('../config')
-const { prisma, formatInputData, formatRelationshipsIn } = require('../lib/prisma')
+const { prisma, formatInputData, formatRelationshipsIn, loadRecord } = require('../lib/prisma')
 const crypto = require('../lib/crypto.js')
 const uuidgen = require('uuid')
 const httpError = require('http-errors')
@@ -171,7 +171,7 @@ module.exports = class User {
 
   async authorizeUser (username, password) {
     try {
-      const user = await this.loadByUsername(username, 'internal')
+      const user = await loadUser({ username }, 'internal')
       const matches = await crypto.verifyPassword(password, user.passwordHash)
       if (!matches) throw new Error(`authorizeUser: passwords don't match username "${username}`)
       return dropInternalProps(user)
@@ -216,67 +216,6 @@ module.exports = class User {
     return users.map(x => x.email).filter(R.identity)
   }
 }
-
-// *********************************************************************
-// Helpers
-// *********************************************************************
-async function loadUser (uniqueKeyObj, fragementKey = 'internal') {
-  const rec = await onFail(400, () => prisma.user(uniqueKeyObj).$fragment(fragments[fragementKey]))
-  if (!rec) throw httpError(404, 'User not found')
-  return rec
-}
-
-async function retrieveEmailVerification (uuid) {
-  const ev = await onFail(400, () => prisma.emailVerification({ uuid }).$fragment(fragments.emailVerification))
-  if (!ev) throw httpError(404, 'Email verification token not found')
-  return ev
-}
-
-function deleteEmailVerification (uuid) {
-  return onFail(400, () => prisma.deleteEmailVerification({ uuid }))
-}
-
-
-// Starts the process of verifying email.  We assume the email address has
-// already been updated by the caller, with the old email saved and the new
-// email set in the database, and emailVerified is set to false (otherwise we
-// get into this whole big chicken-and-the-egg problem, trying to update the
-// same record).  Sends email to old and new email addresses.  New can accept or
-// reject the change, old can reject.  Emails include links to accept/reject.
-//
-// userId   - the id of the user to sent the email for
-// username - the user's username (for emails)
-// newemail - the new email address for this user
-// oldemail - the previous email address for this user, if any
-// urlRoot  - the root URL for verification/rejection links
-//
-// Returns a promise that handles the email verification.
-async function emailVerify (userId, username, newemail, oldemail, urlRoot) {
-  var data = formatInputData({
-    // Need a UUID for the verification record.
-    uuid: uuidgen.v4(),
-    userId,
-    email: newemail,
-    // timestamp
-    changeRequested: new Date().toISOString()
-  })
-  try {
-    const record = await prisma.createEmailVerification(data)
-    // Sending verification emails.
-    this.modelAPI.emails.verifyEmail(oldemail,
-      newemail,
-      username,
-      urlRoot,
-      data.uuid)
-    return record
-  }
-  catch (err) {
-    appLogger.log('Failed to write emailVerification record: ' + err)
-    throw err
-  }
-}
-
-const dropInternalProps = R.omit(['passwordHash', 'emailVerified', 'lastVerifiedEmail'])
 
 //* *****************************************************************************
 // Fragments for how the data should be returned from Prisma.
@@ -336,3 +275,60 @@ const fragments = {
     }
   }`
 }
+
+// *********************************************************************
+// Helpers
+// *********************************************************************
+const loadUser = loadRecord('user', fragments, 'basic')
+
+async function retrieveEmailVerification (uuid) {
+  const ev = await onFail(400, () => prisma.emailVerification({ uuid }).$fragment(fragments.emailVerification))
+  if (!ev) throw httpError(404, 'Email verification token not found')
+  return ev
+}
+
+function deleteEmailVerification (uuid) {
+  return onFail(400, () => prisma.deleteEmailVerification({ uuid }))
+}
+
+
+// Starts the process of verifying email.  We assume the email address has
+// already been updated by the caller, with the old email saved and the new
+// email set in the database, and emailVerified is set to false (otherwise we
+// get into this whole big chicken-and-the-egg problem, trying to update the
+// same record).  Sends email to old and new email addresses.  New can accept or
+// reject the change, old can reject.  Emails include links to accept/reject.
+//
+// userId   - the id of the user to sent the email for
+// username - the user's username (for emails)
+// newemail - the new email address for this user
+// oldemail - the previous email address for this user, if any
+// urlRoot  - the root URL for verification/rejection links
+//
+// Returns a promise that handles the email verification.
+async function emailVerify (userId, username, newemail, oldemail, urlRoot) {
+  var data = formatInputData({
+    // Need a UUID for the verification record.
+    uuid: uuidgen.v4(),
+    userId,
+    email: newemail,
+    // timestamp
+    changeRequested: new Date().toISOString()
+  })
+  try {
+    const record = await prisma.createEmailVerification(data)
+    // Sending verification emails.
+    this.modelAPI.emails.verifyEmail(oldemail,
+      newemail,
+      username,
+      urlRoot,
+      data.uuid)
+    return record
+  }
+  catch (err) {
+    appLogger.log('Failed to write emailVerification record: ' + err)
+    throw err
+  }
+}
+
+const dropInternalProps = R.omit(['passwordHash', 'emailVerified', 'lastVerifiedEmail'])

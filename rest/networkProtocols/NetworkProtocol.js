@@ -198,7 +198,8 @@ module.exports = class NetworkProtocol {
 
   // Pass data to application
   async passDataToApplication (network, appId, data, dataAPI) {
-    var reportingAPI = await dataAPI.getReportingAPIByApplicationId(appId)
+    const app = await this.modelAPI.applications.load(appId)
+    const reportingAPI = this.modelAPI.reportingProtocols.getHandler(app.reportingProtocol.id)
     var deviceId
     if (data.devEUI) {
       var recs = await dataAPI.getProtocolDataWithData(
@@ -216,8 +217,6 @@ module.exports = class NetworkProtocol {
         data.deviceInfo.model = device.deviceModel
       }
     }
-
-    let app = await dataAPI.getApplicationById(appId)
 
     data.applicationInfo = { name: app.name }
     data.networkInfo = { name: network.name }

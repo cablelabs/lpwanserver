@@ -12,6 +12,8 @@ services:
       - prisma_port=4466
     ports:
       - 3200:3200
+    volumes:
+      - ../certs:/usr/src/app/certs
 networks:
   lpwanserver_dev:
     name: lpwanserver_dev

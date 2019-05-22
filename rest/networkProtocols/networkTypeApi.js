@@ -11,7 +11,6 @@ var NetworkProtocolDataAccess = require('./networkProtocolDataAccess.js')
 //* *****************************************************************************
 function NetworkTypeApi (modelAPI) {
   this.modelAPI = modelAPI
-  this.modelAPI.networkProtocolAPI.register()
   this.protos = this.modelAPI.networkProtocolAPI
 }
 
