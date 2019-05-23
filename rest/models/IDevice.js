@@ -128,19 +128,18 @@ module.exports = class Device {
     // Ensure a deviceNTL exists
     const devNTLQuery = { networkType: { id: nwkType.id }, networkSettings_contains: devEUI }
     let { records: devNTLs } = await this.modelAPI.deviceNetworkTypeLinks.list(devNTLQuery)
-    const devNTL = devNTLs[0]
-    if (!devNTL) return
+    if (!devNTLs.length) return
     // Get device
-    const device = await this.modelAPI.devices.load(devNTL.device.id)
+    const device = await this.modelAPI.devices.load(devNTLs[0].device.id)
     // Get application
     const app = await this.modelAPI.applications.load(device.application.id)
     // Ensure application is enabled
     if (!app.enabled) return
     // Update device's location in redis
     // Pass data
-    let proto = await this.modelAPI.networkProtocolAPI.getProtocol(network)
-    let dataAPI = new NetworkProtocolDataAccess(this.modelAPI, 'ReportingProtocol')
-    await proto.passDataToApplication(network, id, data, dataAPI)
+    let { records: nwkProtos } = await this.modelAPI.networkProtocols.list({ networkType: { id: nwkType.id } })
+    const ipProtoHandler = await this.modelAPI.networkProtocols.getHandler(nwkProtos[0].id)
+    await ipProtoHandler.passDataToApplication(app, device, devEUI, data)
   }
 }
 
