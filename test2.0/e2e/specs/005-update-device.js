@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars */
 let chai = require('chai')
 let chaiHttp = require('chai-http')
-let app = require('../../../restApp.js')
+let createApp = require('../../../restApp')
 let should = chai.should()
 let setup = require('../setup.js')
 let appLogger = require('../../../rest/lib/appLogger.js')
@@ -9,7 +9,7 @@ const Lora1 = require('../networks/lora-v1')
 const Lora2 = require('../networks/lora-v2')
 
 chai.use(chaiHttp)
-let server = chai.request(app).keepOpen()
+let server
 
 describe('E2E Test for Updating a Device Use Case #193', () => {
   let adminToken
@@ -84,14 +84,10 @@ describe('E2E Test for Updating a Device Use Case #193', () => {
     }
   }
 
-  before((done) => {
-    setup.start()
-      .then(() => {
-        done()
-      })
-      .catch((err) => {
-        done(err)
-      })
+  before(async () => {
+    const app = await createApp()
+    server = chai.request(app).keepOpen()
+    await setup.start()
   })
   describe('Verify Login and Administration of Users Works', () => {
     it('Admin Login to LPWan Server', (done) => {

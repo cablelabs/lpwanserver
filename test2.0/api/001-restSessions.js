@@ -1,16 +1,17 @@
 var assert = require('assert')
 var chai = require('chai')
 var chaiHttp = require('chai-http')
-var app = require('../../restApp.js')
+var createApp = require('../../restApp')
 var should = chai.should()
 
 chai.use(chaiHttp)
-var server = chai.request(app).keepOpen()
+var server
 
 describe('Sessions', () => {
   var adminToken
-  before((done) => {
-    setTimeout(done, 2000)
+  before(async () => {
+    const app = await createApp()
+    server = chai.request(app).keepOpen()
   })
 
   describe('POST /api/sessions', () => {

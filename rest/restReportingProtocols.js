@@ -220,24 +220,11 @@ exports.initialize = function (app, server) {
    * @apiVersion 0.1.0
    */
   app.get('/api/reportingProtocolHandlers/', [restServer.isLoggedIn],
-    function (req, res, next) {
-      let fileList = fs.readdirSync('./rest/reportingProtocols/')
-      let handlerList = []
-      for (let onefile in fileList) {
-        if (
-          fileList[onefile] === 'reportingProtocols.js' ||
-          fileList[onefile] === 'protocolhandlertemplate.js' ||
-          fileList[onefile] === 'README.txt'
-        ) {
-        }
-        else {
-          let temp = {
-            id: fileList[onefile],
-            name: fileList[onefile].split('.')[0]
-          }
-          handlerList.push(temp)
-        }
-      }
+    async function (req, res, next) {
+      const { records } = await modelAPI.reportingProtocols.list()
+      const handlerList = records
+        .map(x => x.protocolHandler)
+        .map(x => ({ id: x, name: x }))
       restServer.respondJson(res, null, handlerList)
     })
 }

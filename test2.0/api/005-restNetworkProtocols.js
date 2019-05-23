@@ -2,25 +2,21 @@
 var assert = require('assert')
 var chai = require('chai')
 var chaiHttp = require('chai-http')
-var app = require('../../restApp.js')
+var createApp = require('../../restApp')
 var should = chai.should()
 
 chai.use(chaiHttp)
-var server = chai.request(app).keepOpen()
+var server
 
 var npId1
-var npId2
 const NUMBER_PROTOCOLS = 4
-
-function waitForNetworkProtocolRegistration (ms) {
-  return new Promise(resolve => setTimeout(resolve, ms))
-}
 
 describe('NetworkProtocols', function () {
   var adminToken
 
   before('User Sessions', async () => {
-    await waitForNetworkProtocolRegistration(7000)
+    const app = await createApp()
+    server = chai.request(app).keepOpen()
     const res = await server
       .post('/api/sessions')
       .send({ 'login_username': 'admin', 'login_password': 'password' })

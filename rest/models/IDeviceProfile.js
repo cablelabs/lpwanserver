@@ -48,8 +48,9 @@ module.exports = class DeviceProfile {
     }
   }
 
-  load (id) {
-    return loadDeviceProfile({ id })
+  async load (id) {
+    const rec = await loadDeviceProfile({ id })
+    return parseNetworkSettings(rec)
   }
 
   async list ({ limit, offset, ...where } = {}) {

@@ -1,11 +1,11 @@
 var assert = require('assert')
 var chai = require('chai')
 var chaiHttp = require('chai-http')
-var app = require('../../restApp.js')
+var createApp = require('../../restApp')
 var should = chai.should()
 
 chai.use(chaiHttp)
-var server = chai.request(app).keepOpen()
+var server
 
 var npId1
 var npId2
@@ -13,24 +13,13 @@ var npId2
 describe('ReportingProtocols', function () {
   var adminToken
 
-  before('User Sessions', function (done) {
-    var sessions = 0
-    var waitFunc = function () {
-      ++sessions
-      if (sessions >= 1) {
-        done()
-      }
-    }
-    server
+  before('User Sessions', async () => {
+    const app = await createApp()
+    server = chai.request(app).keepOpen()
+    let res = await server
       .post('/api/sessions')
       .send({ 'login_username': 'admin', 'login_password': 'password' })
-      .end(function (err, res) {
-        if (err) {
-          return done(err)
-        }
-        adminToken = res.text
-        waitFunc()
-      })
+    adminToken = res.text
   })
 
   describe('GET /api/reportingProtocolHandlers', function () {
@@ -88,22 +77,9 @@ describe('ReportingProtocols', function () {
         .end(function (err, res) {
           res.should.have.status(200)
           var result = JSON.parse(res.text)
-          result.should.be.instanceof(Array)
-          result.should.have.length(3)
-          done()
-        })
-    })
-
-    it('should return 200 with 3 protocols on admin', function (done) {
-      server
-        .get('/api/reportingProtocols')
-        .set('Authorization', 'Bearer ' + adminToken)
-        .set('Content-Type', 'application/json')
-        .end(function (err, res) {
-          res.should.have.status(200)
-          var result = JSON.parse(res.text)
-          result.should.be.instanceof(Array)
-          result.should.have.length(3)
+          result.should.have.property('totalCount')
+          result.should.have.property('records')
+          result.records.should.have.length(3)
           done()
         })
     })
@@ -116,7 +92,8 @@ describe('ReportingProtocols', function () {
         .end(function (err, res) {
           res.should.have.status(200)
           var result = JSON.parse(res.text)
-          result.records.should.be.instanceof(Array)
+          result.should.have.property('totalCount')
+          result.should.have.property('records')
           result.records.should.have.length(1)
           result.totalCount.should.equal(1)
           done()
@@ -130,8 +107,10 @@ describe('ReportingProtocols', function () {
         .end(function (err, res) {
           res.should.have.status(200)
           var result = JSON.parse(res.text)
-          result.should.be.instanceof(Array)
-          result.should.have.length(1)
+          result.should.have.property('totalCount')
+          result.should.have.property('records')
+          result.records.should.have.length(1)
+          result.totalCount.should.equal(1)
           done()
         })
     })

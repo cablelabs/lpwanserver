@@ -11,7 +11,7 @@ var cors = require('cors')
 var cookieParser = require('cookie-parser')
 var bodyParser = require('body-parser')
 // server
-var server = require('./rest/restServer')
+var RestServer = require('./rest/restServer')
 var appLogger = require('./rest/lib/appLogger')
 const serveSpa = require('./rest/lib/serve-spa')
 const { normalizeFilePath } = require('./rest/lib/utils')
@@ -86,6 +86,8 @@ module.exports = async function createApp () {
 
   // Initialize the application support interfaces.  We pass in the
   // application so we can add functions and API endpoints.
-  var restServer = new server.RestServer(app)
+  var restServer = new RestServer(app)
   await restServer.initialize()
+
+  return app
 }

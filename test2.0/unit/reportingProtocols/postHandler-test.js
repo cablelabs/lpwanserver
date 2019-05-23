@@ -31,25 +31,25 @@ describe('Unit Tests for ' + testName, () => {
   })
   it(testName + ' Report', async () => {
     let dataObject = { name: 'Hello App' }
-    const actual = await TestModule.report(dataObject, 'http://localhost:5000', 'test')
+    const actual = await (new TestModule()).report(dataObject, 'http://localhost:5000', 'test')
     actual.statusCode.should.equal(201)
     actual.body.message.should.equal('Hello Client')
   })
   it(testName + ' Report Empty', async () => {
-    const actual = await TestModule.report(null, 'http://localhost:5000', 'test')
+    const actual = await (new TestModule()).report(null, 'http://localhost:5000', 'test')
     actual.statusCode.should.equal(201)
     actual.body.message.should.equal('Hello Client')
   })
   it(testName + ' Report No App', async () => {
     let dataObject = { name: 'Hello App' }
-    const actual = await TestModule.report(dataObject, 'http://localhost:5000')
+    const actual = await (new TestModule()).report(dataObject, 'http://localhost:5000')
     actual.statusCode.should.equal(201)
     actual.body.message.should.equal('Hello Client')
   })
   it(testName + ' Report Incorrect URL', async () => {
     let dataObject = { name: 'Hello App' }
     try {
-      await TestModule.report(dataObject, 'http://localhost:6000', 'test')
+      await (new TestModule()).report(dataObject, 'http://localhost:6000', 'test')
       throw new Error('Should not connect to incorrect url')
     }
     catch (err) {

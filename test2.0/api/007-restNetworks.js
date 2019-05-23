@@ -1,11 +1,11 @@
 var assert = require('assert')
 var chai = require('chai')
 var chaiHttp = require('chai-http')
-var app = require('../../restApp.js')
+var createApp = require('../../restApp')
 var should = chai.should()
 
 chai.use(chaiHttp)
-var server = chai.request(app).keepOpen()
+var server
 
 describe('Networks', function () {
   var adminToken
@@ -13,6 +13,8 @@ describe('Networks', function () {
   var netProvId
 
   before('User Sessions', async () => {
+    const app = await createApp()
+    server = chai.request(app).keepOpen()
     let res = await server
       .post('/api/sessions')
       .send({ 'login_username': 'admin', 'login_password': 'password' })

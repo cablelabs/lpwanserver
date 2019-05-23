@@ -1,6 +1,6 @@
 let chai = require('chai')
 let chaiHttp = require('chai-http')
-let app = require('../../../restApp.js')
+let createApp = require('../../../restApp')
 let setup = require('../setup.js')
 let appLogger = require('../../../rest/lib/appLogger.js')
 let Data = require('../../data')
@@ -10,7 +10,7 @@ const Lora2 = require('../networks/lora-v2')
 
 const should = chai.should()
 chai.use(chaiHttp)
-let server = chai.request(app).keepOpen()
+let server
 
 let adminToken = ''
 let remoteApp1 = ''
@@ -31,7 +31,11 @@ const testData = {
 }
 
 describe('E2E Test for Deleting a Device Use Case #192', () => {
-  before(() => setup.start())
+  before(async () => {
+    const app = await createApp()
+    server = chai.request(app).keepOpen()
+    await setup.start()
+  })
 
   describe('Verify Login and Administration of Users Works', () => {
     it('Admin Login to LPWan Server', (done) => {

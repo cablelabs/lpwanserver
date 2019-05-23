@@ -1,33 +1,22 @@
 var assert = require('assert')
 var chai = require('chai')
 var chaiHttp = require('chai-http')
-var app = require('../../restApp.js')
+var createApp = require('../../restApp')
 var should = chai.should()
 
 chai.use(chaiHttp)
-var server = chai.request(app).keepOpen()
+var server
 
 describe('PasswordPolicies', function () {
   var adminToken
 
-  before('User Sessions', function (done) {
-    var sessions = 0
-    var waitFunc = function () {
-      ++sessions
-      if (sessions >= 1) {
-        done()
-      }
-    }
-    server
+  before('User Sessions', async () => {
+    const app = await createApp()
+    server = chai.request(app).keepOpen()
+    const res = await server
       .post('/api/sessions')
       .send({ 'login_username': 'admin', 'login_password': 'password' })
-      .end(function (err, res) {
-        if (err) {
-          return done(err)
-        }
-        adminToken = res.text
-        waitFunc()
-      })
+    adminToken = res.text
   })
 
   var ppId1

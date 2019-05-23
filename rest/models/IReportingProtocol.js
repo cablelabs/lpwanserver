@@ -1,4 +1,4 @@
-const { prisma, loadRecord } = require('../lib/prisma')
+const { prisma, loadRecord, formatRelationshipsIn } = require('../lib/prisma')
 const httpError = require('http-errors')
 const { onFail } = require('../lib/utils')
 const path = require('path')
@@ -31,8 +31,20 @@ module.exports = class ReportingProtocol {
     return loadReportingProtocol({ id })
   }
 
-  list () {
-    return prisma.reportingProtocols()
+  async list ({ limit, offset, ...where } = {}) {
+    where = formatRelationshipsIn(where)
+    if (where.search) {
+      where.name_contains = where.search
+      delete where.search
+    }
+    const query = { where }
+    if (limit) query.first = limit
+    if (offset) query.skip = offset
+    const [records, totalCount] = await Promise.all([
+      prisma.reportingProtocols(query).$fragment(fragments.basic),
+      prisma.reportingProtocolsConnection({ where }).aggregate().count()
+    ])
+    return { totalCount, records }
   }
 
   remove (id) {

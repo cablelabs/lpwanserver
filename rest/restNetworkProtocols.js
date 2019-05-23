@@ -348,9 +348,11 @@ exports.initialize = function (app, server) {
      * @apiVersion 0.1.0
      */
   app.get('/api/networkProtocolHandlers/', [restServer.isLoggedIn],
-    function (req, res, next) {
-      let { handlerList } = modelAPI.networkProtocolAPI
-      handlerList = handlerList.map(x => ({ id: x, name: x }))
+    async function (req, res, next) {
+      const { records } = await modelAPI.networkProtocols.list()
+      const handlerList = records
+        .map(x => x.protocolHandler)
+        .map(x => ({ id: x, name: x }))
       restServer.respondJson(res, null, handlerList)
     })
 }

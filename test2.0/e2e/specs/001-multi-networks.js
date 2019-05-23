@@ -2,7 +2,7 @@
 var assert = require('assert')
 var chai = require('chai')
 var chaiHttp = require('chai-http')
-var app = require('../../../restApp.js')
+var createApp = require('../../../restApp')
 var should = chai.should()
 var setup = require('../setup.js')
 const { wait } = require('../../lib/helpers')
@@ -13,7 +13,7 @@ const Loriot = require('../networks/loriot')
 const Ttn = require('../networks/ttn')
 
 chai.use(chaiHttp)
-var server = chai.request(app).keepOpen()
+var server
 
 const {
   TTN_ENABLED,
@@ -58,6 +58,8 @@ describe('E2E Test for Multiple Networks', () => {
   }
 
   before(async () => {
+    const app = await createApp()
+    server = chai.request(app).keepOpen()
     await setup.start()
     await wait(10000)
     await Promise.all([Lora1.setup(), Lora2.setup()])

@@ -1,6 +1,6 @@
 let chai = require('chai')
 let chaiHttp = require('chai-http')
-let app = require('../../../restApp.js')
+let createApp = require('../../../restApp')
 let setup = require('../setup.js')
 const Lora1 = require('../networks/lora-v1')
 const Lora2 = require('../networks/lora-v2')
@@ -10,7 +10,7 @@ const { wait } = require('../../lib/helpers')
 
 var should = chai.should()
 chai.use(chaiHttp)
-let server = chai.request(app).keepOpen()
+let server
 
 // let ttnDownlinkVerified = false
 
@@ -43,12 +43,13 @@ describe('E2E Test for Uplink/Downlink Device Messaging', () => {
     .send(data)
 
   before(async () => {
+    const app = await createApp()
+    server = chai.request(app).keepOpen()
     await setup.start()
     rcServer = await createRcServer({
       port: process.env.APP_SERVER_PORT,
       maxRequestAge: 5000
     })
-    // await listenForTtnDownlink()
   })
 
   it('Admin Login to LPWan Server', async () => {

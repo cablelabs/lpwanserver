@@ -1,6 +1,6 @@
 let chai = require('chai')
 let chaiHttp = require('chai-http')
-let app = require('../../../restApp.js')
+let createApp = require('../../../restApp')
 let setup = require('../setup.js')
 let appLogger = require('../../../rest/lib/appLogger.js')
 let Data = require('../../data')
@@ -11,7 +11,7 @@ const Loriot = require('../networks/loriot')
 
 var should = chai.should()
 chai.use(chaiHttp)
-let server = chai.request(app).keepOpen()
+let server
 
 const describeLoriot = process.env.LORIOT_ENABLED === 'true' ? describe : describe.skip.bind(describe)
 
@@ -35,7 +35,11 @@ const testData = {
 }
 
 describe('E2E Test for Deleting an Application Use Case #191', () => {
-  before(() => setup.start())
+  before(async () => {
+    const app = await createApp()
+    server = chai.request(app).keepOpen()
+    await setup.start()
+  })
 
   describe('Verify Login and Administration of Users Works', () => {
     it('Admin Login to LPWan Server', (done) => {

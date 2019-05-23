@@ -9,27 +9,6 @@ module.exports = class LoraOpenSourceV2 extends LoraOpenSource {
     this.client = new ApiClient()
   }
 
-  async register (networkProtocolModel) {
-    appLogger.log('LoraOpenSource:register', 'warn')
-    let me = {
-      name: 'LoRa Server',
-      networkTypeId: 1,
-      protocolHandler: 'LoraOpenSource/v2',
-      networkProtocolVersion: '2.0'
-    }
-    try {
-      const { records } = await networkProtocolModel.list({ search: me.name, networkProtocolVersion: '1.0' })
-      console.log('REGISTER LORA 2: RECORDS', JSON.stringify(records))
-      if (records.length) {
-        me.masterProtocol = records[0].id
-      }
-    }
-    catch (err) {
-      // ignore error
-    }
-    await networkProtocolModel.upsert(me)
-  }
-
   buildRemoteDevice (device, deviceNtl, deviceProfile, remoteAppId, remoteDeviceProfileId) {
     const result = super.buildRemoteDevice(device, deviceNtl, deviceProfile, remoteAppId, remoteDeviceProfileId)
     const NS = deviceNtl.networkSettings
