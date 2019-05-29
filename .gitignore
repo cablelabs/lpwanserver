@@ -61,6 +61,8 @@ credentials
 secrets
 
 certs
+!docker/dev/configuration/lora-app-server/certs
+!docker/dev/configuration/lora-app-server_1/certs
 
 development/credentials
 
