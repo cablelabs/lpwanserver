@@ -1,9 +1,5 @@
 #!/usr/bin/env bash
 
-export prisma_protocol=http
-export prisma_host=localhost
-export prisma_port=4466
-
 # Remove old containers
 docker container rm \
   lpwanserver_dev_e2e_test \
@@ -22,14 +18,8 @@ docker volume rm \
   lpwanserver_dev_redis --force
 
 # Start databases and prisma
-docker-compose -f ./docker/dev/databases/docker-compose.yml up -d
-
-sleep 5s
-
-# Deploy Prisma datamodel
-npm run prisma:dev deploy
-
-sleep 5s
+./bin/manage-db start
+./bin/manage-db deploy
 
 # npm run package-test
 node bin/test/package-e2e.js
@@ -44,7 +34,7 @@ docker-compose \
 TEST_EXIT_CODE=$?
 
 # Start databases and prisma
-docker-compose -f ./docker/dev/databases/docker-compose.yml down
+./bin/manage-db stop
 
 # Exit script with the code from the test
 exit $TEST_EXIT_CODE

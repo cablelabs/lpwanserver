@@ -19,6 +19,9 @@ cache:
   directories:
     - "$HOME/.npm"
 before_script:
+  - ./bin/manage-db start
+  - ./bin/manage-db deploy
+  - ./bin/manage-db stop
   - npm run package
 script:
   - npm run test:e2e

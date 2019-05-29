@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+
+if [ "$1" = "start" ]
+then
+  docker-compose -f docker/dev/databases/docker-compose.yml up -d
+  exit 0
+fi
+
+if [ "$1" = "deploy" ]
+then
+  sleep 5s
+  prisma_protocol=http prisma_host=localhost prisma_port=4466 npm run prisma -- deploy
+  sleep 2s
+  exit 0
+fi
+
+if [ "$1" = "reset" ]
+then
+  npm run prisma -- seed --reset
+  exit 0
+fi
+
+if [ "$1" = "stop" ]
+then
+  docker-compose -f docker/dev/databases/docker-compose.yml down
+  exit 0
+fi

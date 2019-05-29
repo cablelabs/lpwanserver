@@ -11,7 +11,7 @@
     "test:unit": "./bin/test/unit",
     "test:all": "./bin/test/unit && ./bin/test/api && ./bin/test/e2e",
     "clean": "./bin/clean",
-    "prisma:dev": "cd prisma/dev && prisma",
+    "prisma": "cd prisma && prisma",
     "silent": "npm start > output.txt 2 > error.txt",
     "lint": "eslint rest/",
     "doc": "jsdoc -r ./rest -d ./docs",
