@@ -61,7 +61,7 @@ exports.initialize = function (app, server) {
     restServer.fetchCompany],
   function (req, res, next) {
     var options = {}
-    if (req.company.type.id !== modelAPI.companies.COMPANY_ADMIN) {
+    if (req.company.type !== 'ADMIN') {
       // If they gave a companyId, make sure it's their own.
       if (req.query.companyId) {
         if (req.query.companyId !== req.user.company.id) {
@@ -139,8 +139,8 @@ exports.initialize = function (app, server) {
   app.get('/api/applications/:id', [restServer.isLoggedIn,
     restServer.fetchCompany],
   function (req, res, next) {
-    modelAPI.applications.load(parseInt(req.params.id, 10)).then(function (app) {
-      if ((req.company.type.id !== modelAPI.companies.COMPANY_ADMIN) &&
+    modelAPI.applications.load(req.params.id).then(function (app) {
+      if ((req.company.type !== 'ADMIN') &&
                  (app.company.id !== req.user.company.id)) {
         restServer.respond(res, 403)
       }
@@ -203,8 +203,7 @@ exports.initialize = function (app, server) {
     }
 
     // The user must be part of the admin group or the target company.
-    if ((modelAPI.companies.COMPANY_ADMIN !== req.company.type.id) &&
-            (req.user.company.id !== rec.companyId)) {
+    if ((req.company.type !== 'ADMIN') && (req.user.company.id !== rec.companyId)) {
       restServer.respond(res, 403)
       return
     }
@@ -258,7 +257,7 @@ exports.initialize = function (app, server) {
     restServer.isAdmin],
   function (req, res, next) {
     var data = {}
-    data.id = parseInt(req.params.id, 10)
+    data.id = req.params.id
     // We'll start by getting the application, as a read is much less
     // expensive than a write, and then we'll be able to tell if anything
     // really changed before we even try to write.
@@ -344,9 +343,9 @@ exports.initialize = function (app, server) {
     restServer.fetchCompany,
     restServer.isAdmin],
   function (req, res, next) {
-    var id = parseInt(req.params.id, 10)
+    var id = req.params.id
     // If the caller is a global admin, we can just delete.
-    if (req.company.type.id === modelAPI.companies.COMPANY_ADMIN) {
+    if (req.company.type === 'ADMIN') {
       modelAPI.applications.remove(id).then(function () {
         restServer.respond(res, 204)
       })
@@ -392,8 +391,8 @@ exports.initialize = function (app, server) {
      */
   // Yeah, yeah, this isn't a pure REST call.  So sue me.  Gets the job done.
   async function startApplication (req, res) {
-    var id = parseInt(req.params.id, 10)
-    if (req.company.type.id !== modelAPI.companies.COMPANY_ADMIN) {
+    var id = req.params.id
+    if (req.company.type !== 'ADMIN') {
       const app = await modelAPI.applications.load(id)
       if (req.user.company.id !== app.company.id) {
         restServer.respond(res, 403)
@@ -428,8 +427,8 @@ exports.initialize = function (app, server) {
      */
   // Yeah, yeah, this isn't a pure REST call.  So sue me.  Gets the job done.
   async function stopApplication (req, res) {
-    var id = parseInt(req.params.id, 10)
-    if (req.company.type.id !== modelAPI.companies.COMPANY_ADMIN) {
+    var id = req.params.id
+    if (req.company.type !== 'ADMIN') {
       const app = await modelAPI.applications.load(id)
       if (req.user.company.id !== app.company.id) {
         restServer.respond(res, 403)
@@ -456,7 +455,7 @@ exports.initialize = function (app, server) {
      * Yeah, yeah, this isn't a pure REST call.  So sue me.  Gets the job done.
      */
   app.post('/api/applications/:id/test', function (req, res, next) {
-    var id = parseInt(req.params.id, 10)
+    var id = req.params.id
     modelAPI.applications.testApplication(id, req.body).then(function (logs) {
       restServer.respond(res, 200)
     })
@@ -474,8 +473,8 @@ exports.initialize = function (app, server) {
      *   networkIds with a generic 404.
      */
   async function uplinkHandler (req, res) {
-    var appId = parseInt(req.params.applicationId, 10)
-    var nwkId = parseInt(req.params.networkId, 10)
+    var appId = req.params.applicationId
+    var nwkId = req.params.networkId
 
     try {
       await modelAPI.applications.passDataToApplication(appId, nwkId, req.body)
@@ -494,7 +493,9 @@ exports.initialize = function (app, server) {
     const devEUI = getCertCn(req.socket.getPeerCertificate())
     if (!devEUI) restServer.respond(res, 403)
     try {
-      await modelAPI.devices.receiveIpDeviceUplink(devEUI, req.body)
+      // get IP and port
+      const { remoteAddress, remotePort } = req.connection
+      await modelAPI.devices.receiveIpDeviceUplink(devEUI, req.body, { remoteAddress, remotePort })
       restServer.respond(res, 204)
     }
     catch (err) {

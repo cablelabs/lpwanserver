@@ -60,7 +60,8 @@ module.exports = class ApplicationNetworkTypeLink {
       data = formatInputData(data)
       const rec = await prisma.updateApplicationNetworkTypeLink({ data, where: { id } }).$fragment(fragments.basic)
       if (!remoteOrigin) {
-        var logs = await this.modelAPI.networkTypeAPI.pushApplication(rec.networkType.id, rec, rec.networkSettings)
+        const app = await this.modelAPI.applications.load(rec.application.id)
+        var logs = await this.modelAPI.networkTypeAPI.pushApplication(rec.networkType.id, app)
         rec.remoteAccessLogs = logs
       }
       return rec

@@ -66,15 +66,15 @@ exports.initialize = function (app, server) {
   app.get('/api/users', [restServer.isLoggedIn,
     restServer.fetchCompany,
     restServer.isAdmin],
-  function (req, res, next) {
+  function (req, res) {
     var options = {}
-    if (req.company.type.id === modelAPI.companies.COMPANY_ADMIN) {
+    if (req.company.type === 'ADMIN') {
       // Check for a company limit.
       if (req.query.companyId) {
         options.companyId = req.query.companyId
       }
     }
-    else if (req.user.role.id === modelAPI.users.ROLE_ADMIN) {
+    else if (req.user.role === 'ADMIN') {
       options.companyId = req.company.id
     }
     else {
@@ -97,10 +97,7 @@ exports.initialize = function (app, server) {
       options.search = req.query.search
     }
     modelAPI.users.list(options).then(function (result) {
-      let records = result.records.map(x => ({
-        ...formatRelationshipsOut(x),
-        role: modelAPI.users.reverseRoles[x.role.id]
-      }))
+      let records = result.records.map(x => formatRelationshipsOut(x))
       restServer.respondJson(res, null, { ...result, records })
     })
       .catch(function (err) {
@@ -130,11 +127,8 @@ exports.initialize = function (app, server) {
      *      that the User belongs to.
      * @apiVersion 0.1.0
      */
-  app.get('/api/users/me', [restServer.isLoggedIn], function (req, res, next) {
-    restServer.respondJson(res, null, {
-      ...formatRelationshipsOut(req.user),
-      role: modelAPI.users.reverseRoles[req.user.role.id]
-    })
+  app.get('/api/users/me', [restServer.isLoggedIn], function (req, res) {
+    restServer.respondJson(res, null, formatRelationshipsOut(req.user))
   })
 
   /**
@@ -158,19 +152,16 @@ exports.initialize = function (app, server) {
       *      that the User belongs to.
       * @apiVersion 0.1.0
       */
-  app.get('/api/users/:id', [restServer.isLoggedIn, restServer.fetchCompany], function (req, res, next) {
-    modelAPI.users.load(parseInt(req.params.id, 10)).then(function (user) {
-      if ((req.company.type.id !== modelAPI.companies.COMPANY_ADMIN) &&
-                 ((req.user.role.id !== modelAPI.users.ROLE_ADMIN) ||
+  app.get('/api/users/:id', [restServer.isLoggedIn, restServer.fetchCompany], function (req, res) {
+    modelAPI.users.load(req.params.id).then(function (user) {
+      if ((req.company.type !== 'ADMIN') &&
+                 ((req.user.role !== 'ADMIN') ||
                    (req.user.company.id !== user.company.id)) &&
                  (req.user.id !== user.id)) {
         restServer.respond(res, 403)
       }
       else {
-        restServer.respondJson(res, null, {
-          ...formatRelationshipsOut(user),
-          role: modelAPI.users.reverseRoles[user.role.id]
-        })
+        restServer.respondJson(res, null, formatRelationshipsOut(user))
       }
     })
       .catch(function (err) {
@@ -208,7 +199,7 @@ exports.initialize = function (app, server) {
   app.post('/api/users', [restServer.isLoggedIn,
     restServer.fetchCompany,
     restServer.isAdmin],
-  function (req, res, next) {
+  function (req, res) {
     var rec = req.body
     // You can't specify an id.
     if (rec.id) {
@@ -227,37 +218,15 @@ exports.initialize = function (app, server) {
 
     // Company must match the user who is an admin role, or the user must be
     // part of the admin group.
-    if (((modelAPI.users.ROLE_ADMIN !== req.user.role.id) ||
+    if (((req.user.role !== 'ADMIN') ||
                (rec.companyId !== req.user.company.id)) &&
-             (req.company.type.id !== modelAPI.companies.COMPANY_ADMIN)) {
+             (req.company.type !== 'ADMIN')) {
       restServer.respond(res, 403)
       return
     }
 
-    // Convert the role from string to number.
-    var newrole = modelAPI.users.roles[ req.body.role ]
-    if (newrole) {
-      rec.role = newrole
-    }
-    else {
-      // Bad role, bad request.
-      restServer.respond(res, 400, 'Invalid role')
-      return
-    }
-
-    // If the new role is admin, we MUST have an email address.
-    if ((rec.role === modelAPI.users.ROLE_ADMIN) &&
-             (!rec.email)) {
-      restServer.respond(res, 400, 'Admin user MUST have an email address')
-      return
-    }
-
     // Do the add.
-    modelAPI.users.create(rec.username,
-      rec.password,
-      rec.email,
-      rec.companyId,
-      rec.role).then(function (rec) {
+    modelAPI.users.create(rec).then(function (rec) {
       var send = {}
       send.id = rec.id
       restServer.respondJson(res, 200, send)
@@ -295,9 +264,9 @@ exports.initialize = function (app, server) {
      */
   app.put('/api/users/:id', [restServer.isLoggedIn,
     restServer.fetchCompany],
-  function (req, res, next) {
+  function (req, res) {
     var data = {}
-    data.id = parseInt(req.params.id, 10)
+    data.id = req.params.id
     // We'll start by getting the user, as a read is much less expensive
     // than a write, and then we'll be able to tell if anything really
     // changed before we even try to write.
@@ -326,7 +295,7 @@ exports.initialize = function (app, server) {
       // In order to update a user record, the logged in user must either be
       // a system admin, a company admin for the user's company, or the user
       // themselves.
-      if ((req.company.type.id !== modelAPI.companies.COMPANY_ADMIN) &&
+      if ((req.company.type !== 'ADMIN') &&
                  ((req.user.role.id !== modelAPI.users.ROLE_ADMIN) ||
                    (req.user.company.id !== user.company.id)) &&
                  (req.user.id !== user.id)) {
@@ -365,7 +334,7 @@ exports.initialize = function (app, server) {
         // System admin can change companyId
         if ((req.body.companyId) &&
                      (req.body.companyId !== user.company.id)) {
-          if (req.company.type.id === modelAPI.companies.COMPANY_ADMIN) {
+          if (req.company.type === 'ADMIN') {
             // We COULD verify the company id here, but referential
             // integrity should tell us if we have an issue, anyway.
             data.companyId = req.body.companyId
@@ -388,7 +357,7 @@ exports.initialize = function (app, server) {
       }
       else {
         // Do the update.
-        modelAPI.users.update(data).then(function (rec) {
+        modelAPI.users.update(data).then(function () {
           restServer.respond(res, 204)
         })
           .catch(function (err) {
@@ -417,9 +386,9 @@ exports.initialize = function (app, server) {
   app.delete('/api/users/:id', [restServer.isLoggedIn,
     restServer.fetchCompany,
     restServer.isAdmin],
-  function (req, res, next) {
+  function (req, res) {
     // Verify that the user is not trying to delete themselves.
-    var id = parseInt(req.params.id, 10)
+    var id = req.params.id
     if (req.user.id === id) {
       // Forbidden.
       restServer.respond(res, 403, 'Cannot delete your own account')
@@ -427,7 +396,7 @@ exports.initialize = function (app, server) {
     }
 
     // If the caller is a global admin, we can just delete.
-    if (req.company.type.id === modelAPI.companies.COMPANY_ADMIN) {
+    if (req.company.type === 'ADMIN') {
       modelAPI.users.remove(id).then(function () {
         restServer.respond(res, 204)
       })
@@ -477,7 +446,7 @@ exports.initialize = function (app, server) {
      * @apiParam (Query Parameters) {String} source Where the email verification
      *      originated.
      */
-  app.put('/api/users/verifyEmail/:uuid', function (req, res, next) {
+  app.put('/api/users/verifyEmail/:uuid', function (req, res) {
     var uuid = req.params.uuid
     var func = req.query.function
     var source = req.query.source

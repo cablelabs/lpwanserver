@@ -6,24 +6,6 @@ var httpError = require('http-errors')
 module.exports = class Company {
   constructor (modelAPI) {
     this.modelAPI = modelAPI
-    this.COMPANY_ADMIN = 1
-    this.COMPANY_VENDOR = 2
-    this.types = {}
-    this.reverseTypes = {}
-  }
-
-  async init () {
-    try {
-      const types = await prisma.companyTypes()
-      for (var i = 0; i < types.length; ++i) {
-        this.types[ types[ i ].name ] = types[ i ].id
-        this.reverseTypes[ types[ i ].id ] = types[ i ].name
-      }
-    }
-    catch (err) {
-      appLogger.log('Failed to load company types: ' + err)
-      throw err
-    }
   }
 
   create (name, type) {
@@ -33,7 +15,9 @@ module.exports = class Company {
 
   update ({ id, ...data }) {
     if (!id) throw httpError(400, 'No existing Company ID')
-    if (data.type) data.type = { connect: { id: data.type } }
+    if (data.type === 'ADMIN') {
+      throw httpError(403, 'Not able to change company type to ADMIN')
+    }
     return prisma.updateCompany({ data, where: { id } }).$fragment(fragments.basic)
   }
 
@@ -122,9 +106,7 @@ const fragments = {
   basic: `fragment BasicCompany on Company {
     id
     name
-    type {
-      id
-    }
+    type
   }`
 }
 

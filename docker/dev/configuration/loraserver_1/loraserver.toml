@@ -2,7 +2,7 @@
 # configuration example and documentation.
 
 [postgresql]
-dsn="postgres://loraserver_ns_1:loraserver_ns@postgresql/loraserver_ns_1?sslmode=disable"
+dsn="postgres://loraserver_ns_1:loraserver_ns@postgres/loraserver_ns_1?sslmode=disable"
 
 [redis]
 url="redis://redis:6379/1"
@@ -30,7 +30,7 @@ name="US_902_928"
 #
 # Use this when ony a sub-set of the by default enabled channels are being
 # used. For example when only using the first 8 channels of the US band.
-# 
+#
 # Example:
 # enabled_uplink_channels=[0, 1, 2, 3, 4, 5, 6, 7]
 enabled_uplink_channels=[]

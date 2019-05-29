@@ -1,0 +1,154 @@
+type DeviceNetworkTypeLink {
+  id: ID! @id
+  device: Device! @relation(name: "DeviceNetworkTypeLinks")
+  networkType: NetworkType! @relation(name: "NetworkTypeDeviceLinks")
+  deviceProfile: DeviceProfile!
+  networkSettings: String
+}
+
+type Application {
+  id: ID! @id
+  company: Company
+  name: String
+  description: String
+  baseUrl: String
+  enabled: Boolean @default(value: true)
+  reportingProtocol: ReportingProtocol
+  applicationNetworkTypeLinks: [ApplicationNetworkTypeLink!]! @relation(name: "ApplicationLinks" onDelete: CASCADE)
+  devices: [Device!]! @relation(name: "ApplicationDevices" onDelete: CASCADE)
+}
+
+type Company {
+  id: ID! @id
+  name: String! @unique
+  type: CompanyType!
+  applications: [Application!]!
+  companyNetworkTypeLinks: [CompanyNetworkTypeLink!]!
+  deviceProfiles: [DeviceProfile!]!
+  passwordPolicies: [PasswordPolicy!]!
+  users: [User!]!
+}
+
+enum CompanyType {
+  ADMIN
+  VENDOR
+}
+
+type User {
+  id: ID! @id
+  username: String! @unique
+  email: String
+  lastVerifiedEmail: String
+  emailVerified: Boolean @default(value: false)
+  company: Company!
+  passwordHash: String!
+  role: UserRole!
+  emailVerifications: [EmailVerification!]!
+}
+
+enum UserRole {
+  ADMIN
+  USER
+}
+
+type NetworkType {
+  id: ID! @id
+  name: String! @unique
+  applicationNetworkTypeLinks: [ApplicationNetworkTypeLink]
+  companyNetworkTypeLinks: [CompanyNetworkTypeLink]
+  deviceNetworkTypeLinks: [DeviceNetworkTypeLink!]! @relation(name: "NetworkTypeDeviceLinks" onDelete: CASCADE)
+  deviceProfiles: [DeviceProfile]
+  networkProtocols: [NetworkProtocol] @relation(name: "NetworkTypeNetworkProtocols")
+  networks: [Network!]!
+}
+
+type ApplicationNetworkTypeLink {
+  id: ID! @id
+  application: Application! @relation(name: "ApplicationLinks")
+  networkType: NetworkType!
+  networkSettings: String
+}
+
+type ReportingProtocol {
+  id: ID! @id
+  name: String
+  protocolHandler: String
+  applications: [Application]
+}
+
+type ProtocolData {
+  id: ID! @id
+  network: Network! @relation(name: "NetworkProtocolDatas")
+  networkProtocol: NetworkProtocol!
+  dataIdentifier: String
+  dataValue: String
+}
+
+type Network {
+  id: ID! @id
+  name: String
+  networkProvider: NetworkProvider
+  networkType: NetworkType!
+  networkProtocol: NetworkProtocol!
+  baseUrl: String
+  securityData: String
+  protocolData: [ProtocolData] @relation(name: "NetworkProtocolDatas" onDelete: CASCADE)
+}
+
+type PasswordPolicy {
+  id: ID! @id
+  ruleText: String
+  ruleRegExp: String
+  company: Company
+}
+
+type NetworkProtocol {
+  id: ID! @id
+  name: String
+  protocolHandler: String @unique
+  networkType: NetworkType! @relation(name: "NetworkTypeNetworkProtocols")
+  networkProtocolVersion: String
+  masterProtocol: NetworkProtocol
+  networks: [Network]
+  protocolData: [ProtocolData]
+}
+
+type NetworkProvider {
+  id: ID! @id
+  name: String
+  networks: [Network]
+}
+
+type Device {
+  id: ID! @id
+  application: Application! @relation(name: "ApplicationDevices")
+  name: String
+  description: String
+  deviceModel: String
+  deviceNetworkTypeLinks: [DeviceNetworkTypeLink!]! @relation(name: "DeviceNetworkTypeLinks" onDelete: CASCADE)
+}
+
+type DeviceProfile {
+  id: ID! @id
+  networkType: NetworkType!
+  company: Company!
+  name: String
+  description: String
+  networkSettings: String
+  deviceNetworkTypeLinks: [DeviceNetworkTypeLink]
+}
+
+type CompanyNetworkTypeLink {
+  id: ID! @id
+  company: Company!
+  networkType: NetworkType!
+  networkSettings: String
+}
+
+type EmailVerification {
+  id: ID! @id
+  user: User!
+  uuid: String @unique
+  email: String
+  changeRequested: String
+}

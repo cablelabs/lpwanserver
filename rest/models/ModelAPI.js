@@ -18,6 +18,7 @@ var NetworkTypeModel = require('./INetworkType.js')
 var NetworkProviderModel = require('./INetworkProvider.js')
 var ProtocolDataModel = require('./IProtocolData.js')
 var EmailModel = require('./IEmail.js')
+const appLogger = require('../lib/appLogger')
 
 // Network Protocol use.
 var NetworkTypeAPI = require('../networkProtocols/networkTypeApi.js')
@@ -26,7 +27,6 @@ var NetworkProtocolAPI = require('../networkProtocols/networkProtocols.js')
 function ModelAPI () {
   // Companies.
   this.companies = new CompanyModel(this)
-  this.companies.init()
 
   // Password policies.  Manages password rules for companies.
   this.passwordPolicies = new PasswordPolicyModel(this.companies)
@@ -34,10 +34,8 @@ function ModelAPI () {
   // Users.  And start the user email verification background task that
   // expires old email verification records.
   this.users = new UserModel(this)
-  this.users.init()
 
   this.emails = new EmailModel(this.users)
-  this.emails.init()
 
   // The session model, which uses users (for login).
   this.sessions = new SessionManagerModel(this.users)
@@ -90,10 +88,21 @@ function ModelAPI () {
 }
 
 ModelAPI.prototype.initialize = async function initializeModelAPI () {
-  await Promise.all([
-    this.networkProtocols.initialize(this),
-    this.reportingProtocols.initialize()
-  ])
+  // await Promise.all([
+  //   this.networkProtocols.initialize(this),
+  //   this.reportingProtocols.initialize(),
+  //   this.users.init(),
+  //   this.emails.init()
+  // ])
+
+  await this.networkProtocols.initialize(this)
+  appLogger.log('NETWORK PROTOCOLS INITIALIZED')
+  await this.reportingProtocols.initialize()
+  appLogger.log('REPORTING PROTOCOLS INITIALIZED')
+  await this.users.init()
+  appLogger.log('USERS INITIALIZED')
+  await this.emails.init()
+  appLogger.log('EMAILS INITIALIZED')
 }
 
 module.exports = ModelAPI

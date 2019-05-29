@@ -54,9 +54,8 @@ exports.initialize = function (app, server) {
      *      code that communicates with an Application vendor's server.
      * @apiVersion 0.1.0
      */
-  app.get('/api/reportingProtocols/:id', [restServer.isLoggedIn], function (req, res, next) {
-    var id = req.params.id
-    modelAPI.reportingProtocols.load(parseInt(req.params.id)).then(function (rp) {
+  app.get('/api/reportingProtocols/:id', [restServer.isLoggedIn], function (req, res) {
+    modelAPI.reportingProtocols.load(req.params.id).then(function (rp) {
       restServer.respondJson(res, null, rp)
     })
       .catch(function (err) {
@@ -137,9 +136,8 @@ exports.initialize = function (app, server) {
   app.put('/api/reportingProtocols/:id', [restServer.isLoggedIn,
     restServer.fetchCompany,
     restServer.isAdminCompany],
-  function (req, res, next) {
-    var data = {}
-    data.id = parseInt(req.params.id)
+  function (req, res) {
+    var data = { id: req.params.id }
     // We'll start by getting the company, as a read is much less expensive than
     // a write, and then we'll be able to tell if anything really changed before
     // we even try to write.
@@ -198,7 +196,7 @@ exports.initialize = function (app, server) {
     restServer.fetchCompany,
     restServer.isAdminCompany],
   function (req, res, next) {
-    var id = parseInt(req.params.id)
+    let { id } = req.params
     modelAPI.reportingProtocols.remove(id).then(function () {
       restServer.respond(res, 204)
     })

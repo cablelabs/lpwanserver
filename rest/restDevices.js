@@ -53,7 +53,7 @@ exports.initialize = function (app, server) {
   app.get('/api/devices', [restServer.isLoggedIn, restServer.fetchCompany],
     function (req, res, next) {
       var options = {}
-      if (req.company.type.id !== modelAPI.companies.COMPANY_ADMIN) {
+      if (req.company.type !== 'ADMIN') {
         // If they gave a applicationId, make sure it belongs to their
         // company.
         if (req.query.companyId) {
@@ -127,7 +127,7 @@ exports.initialize = function (app, server) {
   function (req, res, next) {
     // Should have device and application in req due to
     // fetchDeviceApplication
-    if ((req.company.type.id !== modelAPI.companies.COMPANY_ADMIN) &&
+    if ((req.company.type !== 'ADMIN') &&
              (req.application.company.id !== req.user.company.id)) {
       restServer.respond(res, 403)
     }
@@ -233,8 +233,7 @@ exports.initialize = function (app, server) {
     restServer.isAdmin,
     modelAPI.devices.fetchDeviceApplication.bind(modelAPI.devices)],
   function (req, res, next) {
-    var data = {}
-    data.id = parseInt(req.params.id)
+    var data = { id: req.params.id }
     // We'll start with the device retrieved by fetchDeviceApplication as
     // a basis for comparison.
     // Verify that the user can make the change.
@@ -342,11 +341,11 @@ exports.initialize = function (app, server) {
     restServer.fetchCompany,
     restServer.isAdmin,
     modelAPI.devices.fetchDeviceApplication.bind(modelAPI.devices)],
-  function (req, res, next) {
-    var id = parseInt(req.params.id)
+  function (req, res) {
+    let { id } = req.params
     // If the caller is a global admin, or the device is part of the company
     // admin's company, we can delete.
-    if ((req.company.type.id === modelAPI.companies.COMPANY_ADMIN) ||
+    if ((req.company.type === 'ADMIN') ||
              (req.application.company.id === req.user.company.id)) {
       modelAPI.devices.remove(id).then(function () {
         restServer.respond(res, 204)
@@ -367,7 +366,7 @@ exports.initialize = function (app, server) {
    * Accepts the data from the application server to pass to devices
    */
   async function unicastDownlinkHandler (req, res) {
-    const deviceId = parseInt(req.params.deviceId, 10)
+    const { deviceId } = req.params
 
     try {
       const logs = await modelAPI.devices.passDataToDevice(deviceId, req.body)

@@ -4,9 +4,11 @@ var chaiHttp = require('chai-http')
 var createApp = require('../../restApp')
 var expect = chai.expect
 var should = chai.should()
+const { prisma } = require('../../prisma/generated/prisma-client')
 
 chai.use(chaiHttp)
 var server
+let companyId
 
 describe('Users', function () {
   var adminToken
@@ -18,6 +20,8 @@ describe('Users', function () {
       .post('/api/sessions')
       .send({ 'login_username': 'admin', 'login_password': 'password' })
     adminToken = res.text
+    const cos = await prisma.companies({ first: 1 })
+    companyId = cos[0].id
   })
 
   var userId1
@@ -27,7 +31,7 @@ describe('Users', function () {
         .post('/api/users')
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
-        .send({ 'username': 'test1', 'password': 'test13', 'role': 'user', 'companyId': 1 })
+        .send({ 'username': 'test1', 'password': 'test13', 'role': 'USER', 'companyId': companyId })
         .end(function (err, res) {
           console.error(err)
           if (err) return done(err)
@@ -49,7 +53,7 @@ describe('Users', function () {
           res.should.have.status(200)
           var userObj = JSON.parse(res.text)
           userObj.username.should.equal('test1')
-          userObj.role.should.equal('user')
+          userObj.role.should.equal('USER')
           done()
         })
     })
@@ -126,18 +130,6 @@ describe('Users', function () {
   })
 
   describe('GET /api/users/{id}', function () {
-    it('should return 200 on admin', function (done) {
-      server
-        .get('/api/users/1')
-        .set('Authorization', 'Bearer ' + adminToken)
-        .set('Content-Type', 'application/json')
-        .end(function (err, res) {
-          if (err) return done(err)
-          res.should.have.status(200)
-          done()
-        })
-    })
-
     it('should return 200 on get', function (done) {
       server
         .get('/api/users/' + userId1)
@@ -149,7 +141,7 @@ describe('Users', function () {
           res.should.have.status(200)
           var userObj = JSON.parse(res.text)
           userObj.username.should.equal('test1')
-          userObj.role.should.equal('user')
+          userObj.role.should.equal('USER')
           done()
         })
     })
@@ -174,7 +166,7 @@ describe('Users', function () {
         .put('/api/users/' + userId1)
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
-        .send('{"companyId": 1 }')
+        .send(`{"companyId": "${companyId}" }`)
         .end(function (err, res) {
           if (err) return done(err)
           res.should.have.status(204)
@@ -193,7 +185,7 @@ describe('Users', function () {
           res.should.have.status(200)
           var userObj = JSON.parse(res.text)
           userObj.username.should.equal('test1still')
-          userObj.companyId.should.equal(1)
+          userObj.companyId.should.equal(companyId)
           done()
         })
     })
@@ -210,7 +202,7 @@ describe('Users', function () {
           res.should.have.status(200)
           var userObj = JSON.parse(res.text)
           userObj.username.should.equal('admin')
-          userObj.companyId.should.equal(2)
+          userObj.companyId.should.equal(companyId)
           expect(userObj.passwordHash).to.not.exist
           expect(userObj.lastVerifiedEmail).to.not.exist
           done()

@@ -126,7 +126,7 @@ exports.initialize = function (app, server) {
           if (!found) {
             nps.records.push({
               name: rec.name,
-              masterProtocol: rec.masterProtocol,
+              masterProtocolId: rec.masterProtocol.id,
               networkTypeId: rec.networkType.id,
               versions: [rec]
             })
@@ -161,7 +161,7 @@ exports.initialize = function (app, server) {
      */
   app.get('/api/networkProtocols/:id', [restServer.isLoggedIn],
     function (req, res, next) {
-      modelAPI.networkProtocols.load(parseInt(req.params.id, 10)).then(function (np) {
+      modelAPI.networkProtocols.load(req.params.id).then(function (np) {
         // restServer.respondJson(res, null, np)
         restServer.respond(res, 200, formatRelationshipsOut(np))
       })
@@ -257,7 +257,7 @@ exports.initialize = function (app, server) {
     restServer.isAdminCompany],
   function (req, res, next) {
     var data = {}
-    data.id = parseInt(req.params.id, 10)
+    data.id = req.params.id
     // We'll start by getting the company, as a read is much less expensive
     // than a write, and then we'll be able to tell if anything really
     // changed before we even try to write.
@@ -326,7 +326,7 @@ exports.initialize = function (app, server) {
       error: 'DELETE to /api/networkProtocols is not allowed.  Please see documentation for more details.'
     }
     restServer.respond(res, 405, methodNotAllowed)
-    // var id = parseInt(req.params.id, 10)
+    // var id = req.params.id
     // modelAPI.networkProtocols.remove(id).then(function () {
     //   restServer.respond(res, 204)
     // })

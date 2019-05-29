@@ -114,7 +114,6 @@ describe('E2E Test for Uplink/Downlink Device Messaging', () => {
           { data, fCnt: 0, fPort: 1 }
         )
         res.status.should.equal(200)
-        await wait(10000)
       })
       it('Get device message from Lora Server v1 queue', async () => {
         const res = await Lora1.client.listDeviceMessages(Lora1.network, Lora2.device.devEUI)

@@ -4,6 +4,7 @@ var httpError = require('http-errors')
 const { onFail } = require('../lib/utils')
 const R = require('ramda')
 const Joi = require('@hapi/joi')
+const { redisClient } = require('../lib/redis')
 
 module.exports = class Device {
   constructor (modelAPI) {
@@ -79,7 +80,7 @@ module.exports = class Device {
     // Get all device networkType links
     const devNtlQuery = { device: { id } }
     let { records } = await this.modelAPI.deviceNetworkTypeLinks.list(devNtlQuery)
-    const logs = await Promise.all(records.map(x => this.modelAPI.networkTypeAPI.passDataToDevice(x.networkType.id, app.id, id, data)))
+    const logs = await Promise.all(records.map(x => this.modelAPI.networkTypeAPI.passDataToDevice(x, app.id, id, data)))
     return R.flatten(logs)
   }
 
@@ -95,7 +96,7 @@ module.exports = class Device {
   // some cases but not others (e.g., when the user is part of an admin company).
   async fetchDeviceApplication (req, res, next) {
     try {
-      const dev = await this.load(parseInt(req.params.id, 10))
+      const dev = await this.load(req.params.id)
       req.device = dev
       const app = await this.modelAPI.applications.load(dev.application.id)
       req.application = app
@@ -112,7 +113,7 @@ module.exports = class Device {
   // want to create.
   async fetchApplicationForNewDevice (req, res, next) {
     try {
-      const app = await this.modelAPI.applications.load(parseInt(req.body.applicationId, 10))
+      const app = await this.modelAPI.applications.load(req.body.applicationId)
       req.application = app
       next()
     }
@@ -122,24 +123,53 @@ module.exports = class Device {
     }
   }
 
-  async receiveIpDeviceUplink (devEUI, data) {
+  async receiveIpDeviceUplink (devEUI, data, { remoteAddress, remotePort }) {
     // Get IP Network Type
     let nwkType = await this.modelAPI.networkTypes.loadByName('IP')
     // Ensure a deviceNTL exists
     const devNTLQuery = { networkType: { id: nwkType.id }, networkSettings_contains: devEUI }
     let { records: devNTLs } = await this.modelAPI.deviceNetworkTypeLinks.list(devNTLQuery)
     if (!devNTLs.length) return
+    const devNTL = devNTLs[0]
     // Get device
-    const device = await this.modelAPI.devices.load(devNTLs[0].device.id)
+    const device = await this.modelAPI.devices.load(devNTL.device.id)
     // Get application
     const app = await this.modelAPI.applications.load(device.application.id)
     // Ensure application is enabled
     if (!app.enabled) return
     // Update device's location in redis
+    const cache = { remoteAddress, remotePort, updatedAt: Date.now() }
+    await this.setIpDeviceCache(device.id, cache)
     // Pass data
     let { records: nwkProtos } = await this.modelAPI.networkProtocols.list({ networkType: { id: nwkType.id } })
     const ipProtoHandler = await this.modelAPI.networkProtocols.getHandler(nwkProtos[0].id)
     await ipProtoHandler.passDataToApplication(app, device, devEUI, data)
+    // Check for cached downlink messages
+    const msgs = await this.modelAPI.devices.getIpDeviceMessages(device.id)
+    if (!msgs.length) return
+    await Promise.all(msgs.map(x => ipProtoHandler.passDataToDevice(devNTL, devNTL.device.id, x, cache, false)))
+  }
+
+  setIpDeviceCache (id, data) {
+    return redisClient.setAsync(`ip_device_conn:${id}`, JSON.stringify(data))
+  }
+
+  async getIpDeviceCache (id) {
+    const cache = await redisClient.getAsync(`ip_device_conn:${id}`)
+    return cache && JSON.parse(cache)
+  }
+
+  pushIpDeviceMessage (id, data) {
+    return redisClient.rpushAsync(`ip_device_msgs:${id}`, JSON.stringify(data))
+  }
+
+  async getIpDeviceMessages (id) {
+    let key = `ip_device_msgs:${id}`
+    const len = await redisClient.llenAsync(key)
+    if (!len) return []
+    const msgs = await redisClient.lrangeAsync(key, 0, len)
+    await redisClient.ltrimAsync(key, 0, 0)
+    return msgs
   }
 }
 

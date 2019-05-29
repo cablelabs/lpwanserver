@@ -46,12 +46,14 @@ module.exports = class Loriot extends NetworkProtocol {
     const remoteApp = await this.client.loadApplication(network, remoteAppId)
     const [ integration ] = remoteApp.outputs.filter(x => x.output === 'httppush')
     const { records: localApps } = await modelAPI.applications.list({ search: remoteApp.name })
+    const { records: cos } = await modelAPI.companies.list()
+    const { records: reportingProtos } = await modelAPI.reportingProtocols.list()
     let localApp = localApps[0]
     if (!localApp) {
       let localAppData = {
         ...R.pick(['name', 'description'], remoteApp),
-        companyId: 2,
-        reportingProtocolId: 1
+        companyId: cos[0].id,
+        reportingProtocolId: reportingProtos[0].id
       }
       if (integration) localAppData.baseUrl = integration.url
       localApp = await modelAPI.applications.create(localAppData)
@@ -176,6 +178,8 @@ module.exports = class Loriot extends NetworkProtocol {
   }
 
   async addRemoteDevice (network, remoteDeviceId, remoteAppId, localAppId, modelAPI, dataAPI) {
+    const { records: cos } = await modelAPI.companies.list({ limit: 1 })
+    let company = cos[0]
     const remoteDevice = await this.client.loadDevice(network, remoteAppId, remoteDeviceId)
     appLogger.log('Adding ' + remoteDevice.title)
     appLogger.log(remoteDevice)
@@ -200,7 +204,7 @@ module.exports = class Loriot extends NetworkProtocol {
       appLogger.log(dp, 'info')
       let networkSettings = this.buildDeviceNetworkSettings(remoteDevice, dp.localDeviceProfile)
       appLogger.log(networkSettings)
-      const deviceNtl = await modelAPI.deviceNetworkTypeLinks.create(localDevice.id, network.networkType.id, dp.localDeviceProfile, networkSettings, 2, { remoteOrigin: true })
+      const deviceNtl = await modelAPI.deviceNetworkTypeLinks.create(localDevice.id, network.networkType.id, dp.localDeviceProfile, networkSettings, company.id, { remoteOrigin: true })
       appLogger.log(deviceNtl)
     }
     await this.modelAPI.protocolData.upsert(network, makeDeviceDataKey(localDevice.id, 'devNwkId'), remoteDevice._id)
@@ -209,11 +213,13 @@ module.exports = class Loriot extends NetworkProtocol {
 
   async addRemoteDeviceProfile (remoteDevice, network, modelAPI) {
     let networkSettings = this.buildDeviceProfileNetworkSettings(remoteDevice)
+    const { records: cos } = await this.modelAPI.companies.list({ limit: 1 })
+    let company = cos[0]
     appLogger.log(networkSettings, 'error')
     try {
       const localDeviceProfile = await modelAPI.deviceProfiles.create(
         network.networkType.id,
-        2,
+        company.id,
         networkSettings.name,
         'Device Profile managed by LPWAN Server, perform changes via LPWAN',
         networkSettings,

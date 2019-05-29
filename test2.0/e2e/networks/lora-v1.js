@@ -16,8 +16,8 @@ module.exports = {
     server: 'loraserver1:8000'
   },
   organization: {
-    name: 'cablelabs',
-    displayName: 'CableLabs',
+    name: 'SysAdmins',
+    displayName: 'SysAdmins',
     canHaveGateways: false
   },
   serviceProfile: {

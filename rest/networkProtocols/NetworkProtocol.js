@@ -210,7 +210,7 @@ module.exports = class NetworkProtocol {
       if (recs && (recs.length > 0)) {
         let splitOnSlash = recs[0].dataIdentifier.split('/')
         let splitOnColon = splitOnSlash[0].split(':')
-        deviceId = parseInt(splitOnColon[1], 10)
+        deviceId = splitOnColon[1]
 
         let device = await dataAPI.getDeviceById(deviceId)
         data.deviceInfo = R.pick(['name', 'description'], device)

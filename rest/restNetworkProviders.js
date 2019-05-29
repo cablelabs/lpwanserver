@@ -41,7 +41,7 @@ exports.initialize = function (app, server) {
      * @apiSuccess {String} object.records.name The name of the Network Provider
      * @apiVersion 0.1.0
      */
-  app.get('/api/networkProviders', [restServer.isLoggedIn], function (req, res, next) {
+  app.get('/api/networkProviders', [restServer.isLoggedIn], function (req, res) {
     var options = {}
     if (req.query.limit) {
       var limitInt = parseInt(req.query.limit)
@@ -82,9 +82,9 @@ exports.initialize = function (app, server) {
      * @apiVersion 0.1.0
      */
   app.get('/api/networkProviders/:id', [restServer.isLoggedIn],
-    function (req, res, next) {
-      var id = req.params.id
-      modelAPI.networkProviders.load(parseInt(req.params.id)).then(function (rp) {
+    function (req, res) {
+      let { id } = req.params
+      modelAPI.networkProviders.load(id).then(function (rp) {
         restServer.respondJson(res, null, rp)
       })
         .catch(function (err) {
@@ -111,7 +111,7 @@ exports.initialize = function (app, server) {
   app.post('/api/networkProviders', [restServer.isLoggedIn,
     restServer.fetchCompany,
     restServer.isAdminCompany],
-  function (req, res, next) {
+  function (req, res) {
     var rec = req.body
     // You can't specify an id.
     if (rec.id) {
@@ -156,9 +156,8 @@ exports.initialize = function (app, server) {
   app.put('/api/networkProviders/:id', [restServer.isLoggedIn,
     restServer.fetchCompany,
     restServer.isAdminCompany],
-  function (req, res, next) {
-    var data = {}
-    data.id = parseInt(req.params.id)
+  function (req, res) {
+    var data = { id: req.params.id }
     // We'll start by getting the old record, as a read is much less
     // expensive than a write, and then we'll be able to tell if anything
     // really changed before we even try to write.
@@ -181,7 +180,7 @@ exports.initialize = function (app, server) {
       }
       else {
         // Do the update.
-        modelAPI.networkProviders.update(data).then(function (rec) {
+        modelAPI.networkProviders.update(data).then(function () {
           restServer.respond(res, 204)
         })
           .catch(function (err) {
@@ -210,8 +209,8 @@ exports.initialize = function (app, server) {
   app.delete('/api/networkProviders/:id', [restServer.isLoggedIn,
     restServer.fetchCompany,
     restServer.isAdminCompany],
-  function (req, res, next) {
-    var id = parseInt(req.params.id)
+  function (req, res) {
+    let { id } = req.params
     modelAPI.networkProviders.remove(id).then(function () {
       restServer.respond(res, 204)
     })

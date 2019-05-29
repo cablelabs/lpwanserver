@@ -1,30 +1,35 @@
 #!/usr/bin/env bash
 
+export prisma_protocol=http
+export prisma_host=localhost
+export prisma_port=4466
+
 # Remove old containers
 docker container rm \
   lpwanserver_dev_e2e_test \
   lpwanserver_dev_prisma \
   lpwanserver_dev_postgres \
+  lpwanserver_dev_redis \
   lpwanserver_dev_loraserver2 \
   lpwanserver_dev_loraserver1 \
   lpwanserver_dev_loraappserver2 \
   lpwanserver_dev_loraappserver1 \
-  lpwanserver_dev_loraserver_postgres \
-  lpwanserver_dev_loraserver_redis \
   lpwanserver_dev_loraserver_mosquitto --force
 
 # Remove old volumes
 docker volume rm \
   lpwanserver_dev_postgres \
-  lpwanserver_dev_loraserver_postgres --force
+  lpwanserver_dev_redis --force
 
-# Start Prisma
-docker-compose -f ./prisma/dev/docker-compose.yml up -d
+# Start databases and prisma
+docker-compose -f ./docker/dev/databases/docker-compose.yml up -d
 
 sleep 5s
 
 # Deploy Prisma datamodel
 npm run prisma:dev deploy
+
+sleep 5s
 
 # npm run package-test
 node bin/test/package-e2e.js
@@ -38,8 +43,8 @@ docker-compose \
 
 TEST_EXIT_CODE=$?
 
-# Stop Prisma
-docker-compose -f ./prisma/dev/docker-compose.yml down
+# Start databases and prisma
+docker-compose -f ./docker/dev/databases/docker-compose.yml down
 
 # Exit script with the code from the test
 exit $TEST_EXIT_CODE

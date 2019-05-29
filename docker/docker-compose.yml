@@ -2,18 +2,19 @@ version: '3.5'
 
 services:
   lpwanserver:
-    image: lpwanserver/lpwanserver:latest
+    image: lpwanserver/lpwanserver
+    container_name: lpwanserver_demo
     networks:
       - lpwanserver_dev
+    ports:
+      - '3200:3200'
     environment:
       - port=3200
-      - prisma_protocol=http
-      - prisma_host=prisma
-      - prisma_port=4466
-    ports:
-      - 3200:3200
+      - config_file=config/dev.json
+      - public_dir=public
     volumes:
       - ../certs:/usr/src/app/certs
+
 networks:
   lpwanserver_dev:
     name: lpwanserver_dev

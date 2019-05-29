@@ -4,7 +4,7 @@ const assert = require('assert')
 const chai = require('chai')
 // eslint-disable-next-line no-unused-vars
 const should = chai.should()
-
+const { prisma } = require('../../../prisma/generated/prisma-client')
 const TestModule = require('../../../rest/models/IDeviceProfile')
 const testName = 'DeviceProfile'
 const modelAPIMock = require('../../mock/ModelAPI-mock')
@@ -33,9 +33,11 @@ describe('Unit Tests for ' + testName, () => {
     actual.should.have.property('records')
   })
   it(testName + ' Create', async () => {
+    const nwkTypes = await prisma.networkTypes()
+    const cos = await prisma.companies()
     let testModule = new TestModule(modelAPIMock)
     should.exist(testModule)
-    const actual = await testModule.create(1, 1, 'test', 'test description')
+    const actual = await testModule.create(nwkTypes[0].id, cos[0].id, 'test', 'test description')
     assertDeviceProfileProps(actual)
     deviceProfileId = actual.id
   })
@@ -51,9 +53,7 @@ describe('Unit Tests for ' + testName, () => {
     let updated = {
       id: deviceProfileId,
       name: 'test',
-      description: 'updated description',
-      networkTypeId: 1,
-      companyId: 1
+      description: 'updated description'
     }
     const actual = await testModule.update(updated)
     assertDeviceProfileProps(actual)

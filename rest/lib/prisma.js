@@ -1,27 +1,17 @@
 // Config access.
-var path = require('path')
 const R = require('ramda')
 const { mutate, onFail } = require('./utils')
 const { prune } = require('dead-leaves')
-const config = require('../config')
 const httpError = require('http-errors')
 
-const prismaClientPath = path.join(
-  __dirname,
-  '../../prisma',
-  config.get('prisma_dir'),
-  'generated/prisma-client/index-dynamic-endpoint'
-)
-
-const prismaClient = require(prismaClientPath)
+const prismaClient = require('../../prisma/generated/prisma-client')
 
 function formatRelationshipsIn (data) {
   const REF_PROP_RE = /^(.+)Id$/
   return R.keys(data).reduce((acc, x) => {
     if (!REF_PROP_RE.test(x)) return mutate(x, data[x], acc)
     if (data[x] == null) return acc
-    const id = parseInt(data[x], 10)
-    return mutate(x.replace(/Id$/, ''), { id }, acc)
+    return mutate(x.replace(/Id$/, ''), { id: data[x] }, acc)
   }, {})
 }
 

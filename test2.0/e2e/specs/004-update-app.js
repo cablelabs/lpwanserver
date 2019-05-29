@@ -7,11 +7,16 @@ let setup = require('../setup.js')
 let appLogger = require('../../../rest/lib/appLogger.js')
 const Lora1 = require('../networks/lora-v1')
 const Lora2 = require('../networks/lora-v2')
+const { prisma } = require('../../../prisma/generated/prisma-client')
 
 chai.use(chaiHttp)
 let server
 
 describe('E2E Test for Updating an Application Use Case #189', () => {
+  let companyId
+  let reportingProtocolId
+  let networkTypeId
+
   let adminToken
   let appId1
   let anlId1
@@ -26,22 +31,7 @@ describe('E2E Test for Updating an Application Use Case #189', () => {
   const appName = 'UPAP'
   const appDescription = 'UPAP Description'
   const appDescriptionUpdate = 'UPAP New Description'
-  const companyId = 2
-  const reportingProtocolId = 1
   const baseUrl = 'http://localhost:5086'
-
-  const deviceProfile = {
-    'networkTypeId': 1,
-    'companyId': companyId,
-    'name': 'LoRaSoilReaderA',
-    'description': 'Soil Sensor that works with LoRa',
-    'networkSettings': {
-      'name': 'LoRaSoilReaderA',
-      'macVersion': '1.0.0',
-      'regParamsRevision': 'A',
-      'supportsJoin': true
-    }
-  }
 
   const device = {
     'applicationId': '',
@@ -50,24 +40,65 @@ describe('E2E Test for Updating an Application Use Case #189', () => {
     'deviceModel': 'Mark1'
   }
 
-  const deviceNTL = {
-    'deviceId': '',
-    'networkTypeId': 1,
-    'deviceProfileId': '',
-    'networkSettings': {
-      'devEUI': '0080000000000401',
-      name: device.name,
-      deviceKeys: {
-        'appKey': '11223344556677889900112233444411'
-      }
-    }
-  }
+  let deviceProfile
+  let deviceNTL
+  let application
+  let applicationUpdate
 
   before(async () => {
     const app = await createApp()
     server = chai.request(app).keepOpen()
+    const cos = await prisma.companies({ first: 1 })
+    companyId = cos[0].id
+    const reportingProtocols = await prisma.reportingProtocols({ first: 1 })
+    reportingProtocolId = reportingProtocols[0].id
+    const nwkTypes = await prisma.networkTypes({ first: 1 })
+    networkTypeId = nwkTypes[0].id
     await setup.start()
+
+    deviceProfile = {
+      'networkTypeId': networkTypeId,
+      'companyId': companyId,
+      'name': 'LoRaSoilReaderA',
+      'description': 'Soil Sensor that works with LoRa',
+      'networkSettings': {
+        'name': 'LoRaSoilReaderA',
+        'macVersion': '1.0.0',
+        'regParamsRevision': 'A',
+        'supportsJoin': true
+      }
+    }
+
+    deviceNTL = {
+      'deviceId': '',
+      'networkTypeId': networkTypeId,
+      'deviceProfileId': '',
+      'networkSettings': {
+        'devEUI': '0080000000000401',
+        name: device.name,
+        deviceKeys: {
+          'appKey': '11223344556677889900112233444411'
+        }
+      }
+    }
+
+    application = {
+      'companyId': companyId,
+      'name': appName,
+      'description': appDescription,
+      'baseUrl': baseUrl,
+      'reportingProtocolId': reportingProtocolId
+    }
+
+    applicationUpdate = {
+      'companyId': companyId,
+      'name': appName,
+      'description': appDescriptionUpdate,
+      'baseUrl': baseUrl,
+      'reportingProtocolId': reportingProtocolId
+    }
   })
+
   describe('Verify Login and Administration of Users Works', () => {
     it('Admin Login to LPWan Server', (done) => {
       server
@@ -83,14 +114,6 @@ describe('E2E Test for Updating an Application Use Case #189', () => {
     })
   })
   describe('Create Application', () => {
-    let application =
-      {
-        'companyId': companyId,
-        'name': appName,
-        'description': appDescription,
-        'baseUrl': baseUrl,
-        'reportingProtocolId': reportingProtocolId
-      }
     let applicationNetworkSettings = {
       'description': appDescription,
       'name': appName
@@ -144,7 +167,7 @@ describe('E2E Test for Updating an Application Use Case #189', () => {
         .set('Content-Type', 'application/json')
         .send({
           'applicationId': appId1,
-          'networkTypeId': 1,
+          'networkTypeId': networkTypeId,
           'networkSettings': applicationNetworkSettings
         })
         .end(function (err, res) {
@@ -379,14 +402,6 @@ describe('E2E Test for Updating an Application Use Case #189', () => {
     })
   })
   describe('Update Application', () => {
-    let applicationUpdate =
-      {
-        'companyId': companyId,
-        'name': appName,
-        'description': appDescriptionUpdate,
-        'baseUrl': baseUrl,
-        'reportingProtocolId': reportingProtocolId
-      }
     let applicationNetworkSettingsUpdate = {
       'description': appDescriptionUpdate,
       'name': appName

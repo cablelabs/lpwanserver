@@ -15,10 +15,11 @@ module.exports = class Email {
         dns.lookupService(ip, 0, (err, hostname) => {
           if (err) {
             appLogger.log(err)
-            return resolve()
+            return reject(err)
           }
           this.hostUrl = hostname
           appLogger.log('Host domain name for emailed links: ' + hostname)
+          resolve()
         })
       })
     })

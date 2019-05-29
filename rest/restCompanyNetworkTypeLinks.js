@@ -50,24 +50,11 @@ exports.initialize = function (app, server) {
      */
   app.get('/api/companyNetworkTypeLinks', [ restServer.isLoggedIn,
     restServer.fetchCompany ],
-  function (req, res, next) {
-    var options = {}
+  function (req, res) {
+    var options = { ...req.query }
     // Limit by company, too, if not a system admin.
-    if (req.company.type.id !== modelAPI.companies.COMPANY_ADMIN) {
+    if (req.company.type !== 'ADMIN') {
       options.companyId = req.company.id
-    }
-    else if (req.query.companyId) {
-      // Global admin can request from any company.
-      var companyIdInt = parseInt(req.query.companyId)
-      if (!isNaN(companyIdInt)) {
-        options.companyId = companyIdInt
-      }
-    }
-    if (req.query.networkTypeId) {
-      var networkTypeIdInt = parseInt(req.query.networkTypeId)
-      if (!isNaN(networkTypeIdInt)) {
-        options.networkTypeId = networkTypeIdInt
-      }
     }
 
     if (req.query.limit) {
@@ -114,8 +101,8 @@ exports.initialize = function (app, server) {
      * @apiVersion 0.1.0
      */
   app.get('/api/companyNetworkTypeLinks/:id', [restServer.isLoggedIn],
-    function (req, res, next) {
-      var id = parseInt(req.params.id)
+    function (req, res) {
+      var id = req.params.id
       modelAPI.companyNetworkTypeLinks.load(id).then(function (np) {
         restServer.respondJson(res, null, formatRelationshipsOut(np))
       })
@@ -152,7 +139,7 @@ exports.initialize = function (app, server) {
   app.post('/api/companyNetworkTypeLinks', [restServer.isLoggedIn,
     restServer.fetchCompany,
     restServer.isAdmin],
-  function (req, res, next) {
+  function (req, res) {
     var rec = req.body
 
     // If the user is part of the admin group and does not have a companyId
@@ -226,7 +213,7 @@ exports.initialize = function (app, server) {
   app.put('/api/companyNetworkTypeLinks/:id', [restServer.isLoggedIn,
     restServer.fetchCompany,
     restServer.isAdmin],
-  function (req, res, next) {
+  function (req, res) {
     // We're not going to allow changing the company or the network.
     // Neither operation makes much sense.
     if (req.body.companyId || req.body.networkTypeId) {
@@ -234,15 +221,14 @@ exports.initialize = function (app, server) {
       return
     }
 
-    var data = {}
-    data.id = parseInt(req.params.id)
+    var data = { id: req.params.id }
     // We'll start by getting the network, as a read is much less expensive
     // than a write, and then we'll be able to tell if anything really
     // changed before we even try to write.
     modelAPI.companyNetworkTypeLinks.load(data.id).then(function (cnl) {
       // If not an admin company, the companyId better match the user's
       // companyId.
-      if ((req.company.type.id !== modelAPI.companies.COMPANY_ADMIN) &&
+      if ((req.company.type !== 'ADMIN') &&
                  (cnl.company.id !== req.user.company.id)) {
         restServer.respond(res, 403, "Cannot change another company's record.")
         return
@@ -298,10 +284,10 @@ exports.initialize = function (app, server) {
   app.delete('/api/companyNetworkTypeLinks/:id', [restServer.isLoggedIn,
     restServer.fetchCompany,
     restServer.isAdmin],
-  function (req, res, next) {
-    var id = parseInt(req.params.id)
+  function (req, res) {
+    var id = req.params.id
     // If the caller is a global admin, we can just delete.
-    if (req.company.type.id === modelAPI.companies.COMPANY_ADMIN) {
+    if (req.company.type === 'ADMIN') {
       modelAPI.companyNetworkTypeLinks.remove(id).then(function (ret) {
         restServer.respondJson(res, 200, { remoteAccessLogs: ret })
       })
@@ -342,8 +328,8 @@ exports.initialize = function (app, server) {
   app.post('/api/companyNetworkTypeLinks/:id/push', [restServer.isLoggedIn,
     restServer.fetchCompany,
     restServer.isAdmin],
-  function (req, res, next) {
-    var id = parseInt(req.params.id)
+  function (req, res) {
+    var id = req.params.id
     // If the caller is a global admin, or the device is part of the company
     // admin's company, we can push.
     modelAPI.companyNetworkTypeLinks.pushCompanyNetworkTypeLink(id, req.company.id).then(function (ret) {
@@ -363,7 +349,7 @@ exports.initialize = function (app, server) {
     restServer.fetchCompany,
     restServer.isAdmin],
   function (req, res, next) {
-    var networkId = parseInt(req.params.networkId)
+    var networkId = req.params.networkId
     // If the caller is a global admin, or the device is part of the company
     // admin's company, we can push.
     modelAPI.companyNetworkTypeLinks.pullCompanyNetworkTypeLink(networkId).then(function (ret) {

@@ -48,7 +48,7 @@ exports.initialize = function (app, server) {
     restServer.fetchCompany,
     restServer.isAdminCompany],
   function (req, res, next) {
-    var id = parseInt(req.params.id)
+    let { id } = req.params
     modelAPI.networkProvisioningFields.retrieveNetworkProvisioningField(id).then(function (npf) {
       restServer.respondJson(res, null, npf)
     })
@@ -134,9 +134,8 @@ exports.initialize = function (app, server) {
   app.put('/api/networkProvisioningFields/:id', [restServer.isLoggedIn,
     restServer.fetchCompany,
     restServer.isAdminCompany],
-  function (req, res, next) {
-    var data = {}
-    data.id = parseInt(req.params.id)
+  function (req, res) {
+    var data = { id: req.params.id }
     // We'll start by getting the networkProvisioningField, as a read is much
     // less expensive than a write, and then we'll be able to tell if
     // anything really changed before we even try to write.
@@ -208,7 +207,7 @@ exports.initialize = function (app, server) {
       restServer.fetchCompany,
       restServer.isAdminCompany],
     function (req, res, next) {
-      var id = parseInt(req.params.id)
+      let { id } = req.params
       modelAPI.networkProvisioningFields.deleteNetworkProvisioningField(id).then(function () {
         restServer.respond(res, 204)
       })

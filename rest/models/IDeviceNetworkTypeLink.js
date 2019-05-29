@@ -38,7 +38,8 @@ module.exports = class DeviceNetworkTypeLink {
       }
       data = formatInputData(data)
       const rec = await prisma.updateDeviceNetworkTypeLink({ data, where: { id } }).$fragment(fragments.basic)
-      var logs = await this.modelAPI.networkTypeAPI.pushDevice(rec.networkType.id, rec, rec.networkSettings)
+      const device = await this.modelAPI.devices.load(rec.device.id)
+      var logs = await this.modelAPI.networkTypeAPI.pushDevice(rec.networkType.id, device)
       rec.remoteAccessLogs = logs
       return rec
     }

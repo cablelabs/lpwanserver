@@ -1,5 +1,3 @@
-const { prisma } = require('./generated/prisma-client')
-
 const REL_PROPS = ['type', 'plural']
 
 const lowerFirst = x => `${x[0].toLowerCase()}${x.slice(1)}`
@@ -28,7 +26,7 @@ const connectBody = (seeds, propMap = {}) => ({ id, ...body }) => {
   }, body)
 }
 
-async function createRecordsOfType (type, seeds) {
+async function createRecordsOfType (type, seeds, prisma) {
   const seed = seeds.find(x => x.type === type)
   let bodyList = seed.bodyList.map(connectBody(seeds, seed.propMap))
   const create = prisma[`create${type}`].bind(prisma)
@@ -36,9 +34,9 @@ async function createRecordsOfType (type, seeds) {
   console.log(`Created ${seed.plural}:`, JSON.stringify(seed.records))
 }
 
-module.exports = async function createRecords (seeds) {
+module.exports = async function createRecords (seeds, prisma) {
   const types = seeds.map(x => x.type)
   for (let i = 0; i < types.length; i++) {
-    await createRecordsOfType(types[i], seeds)
+    await createRecordsOfType(types[i], seeds, prisma)
   }
 }

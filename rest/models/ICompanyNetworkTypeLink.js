@@ -153,10 +153,11 @@ module.exports = class CompanyNetworkTypeLink {
         else {
           appLogger.log('creating ' + JSON.stringify(application))
           let coIndex = nsCoId.indexOf(application.organizationID)
+          const { records: reportingProtos } = await this.modelAPI.reportingProtos.list()
           existingApplication = await this.modelAPI.applications.create({
             ...R.pick(['name', 'description'], application),
             companyId: localCoId[coIndex],
-            reportingProtocolId: 1,
+            reportingProtocolId: reportingProtos[0].id,
             baseUrl: 'http://set.me.to.your.real.url:8888'
           })
           localAppId.push(existingApplication.id)

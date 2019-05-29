@@ -12,7 +12,7 @@ module.exports = class NetworkProtocol {
   }
 
   async initialize (modelAPI) {
-    await registerNetworkProtocols(this)
+    await registerNetworkProtocols(modelAPI)
     const { records } = await this.list()
     const handlersDir = path.join(__dirname, '../networkProtocols/handlers')
     records.forEach(x => {
@@ -21,17 +21,17 @@ module.exports = class NetworkProtocol {
     })
   }
 
-  async create (name, networkTypeId, protocolHandler, version, masterProtocol) {
+  async create (name, networkTypeId, protocolHandler, version, masterProtocolId) {
     const data = formatInputData({
       name,
       protocolHandler,
       networkProtocolVersion: version,
       networkTypeId,
-      masterProtocol
+      masterProtocolId
     })
     let rec = await prisma.createNetworkProtocol(data).$fragment(fragments.basic)
-    if (!masterProtocol) {
-      rec = await this.update({ id: rec.id, masterProtocol: rec.id })
+    if (!masterProtocolId) {
+      rec = await this.update({ id: rec.id, masterProtocolId: rec.id })
     }
     return rec
   }
@@ -41,7 +41,7 @@ module.exports = class NetworkProtocol {
     if (records.length) {
       return this.update({ id: records[0].id, ...np })
     }
-    return this.create(np.name, np.networkTypeId, np.protocolHandler, networkProtocolVersion, np.masterProtocol)
+    return this.create(np.name, np.networkTypeId, np.protocolHandler, networkProtocolVersion, np.masterProtocolId)
   }
 
   update ({ id, ...data }) {
@@ -93,7 +93,9 @@ const fragments = {
     name
     protocolHandler
     networkProtocolVersion
-    masterProtocol
+    masterProtocol {
+      id
+    }
     networkType {
       id
     }

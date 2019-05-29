@@ -6,11 +6,16 @@ let setup = require('../setup.js')
 let appLogger = require('../../../rest/lib/appLogger.js')
 const Lora1 = require('../networks/lora-v1')
 const Lora2 = require('../networks/lora-v2')
+const { prisma } = require('../../../prisma/generated/prisma-client')
 
 chai.use(chaiHttp)
 let server
 
 describe('E2E Test for Adding a Device to an Existing Application Use Case #190', () => {
+  let companyId
+  let reportingProtocolId
+  let networkTypeId
+
   let adminToken
   let appId1
   let anlId1
@@ -26,22 +31,12 @@ describe('E2E Test for Adding a Device to an Existing Application Use Case #190'
 
   const appName = 'ADEA'
   const appDescription = 'ADEA Description'
-  const companyId = 2
-  const reportingProtocolId = 1
   const baseUrl = 'http://localhost:5086'
 
-  const deviceProfile = {
-    'networkTypeId': 1,
-    'companyId': companyId,
-    'name': 'LoRaWeatherNodeA',
-    'description': 'GPS Node that works with LoRa',
-    'networkSettings': {
-      'name': 'LoRaWeatherNodeA',
-      'macVersion': '1.0.0',
-      'regParamsRevision': 'A',
-      'supportsJoin': true
-    }
-  }
+  let application
+  let deviceProfile
+  let deviceNTL
+  let device2NTL
 
   const device = {
     'applicationId': '',
@@ -57,37 +52,66 @@ describe('E2E Test for Adding a Device to an Existing Application Use Case #190'
     'deviceModel': 'Mark2'
   }
 
-  const deviceNTL = {
-    'deviceId': '',
-    'networkTypeId': 1,
-    'deviceProfileId': '',
-    'networkSettings': {
-      'devEUI': '0080000000000201',
-      name: device.name,
-      deviceKeys: {
-        'appKey': '11223344556677889900112233442211'
-      }
-    }
-  }
-
-  const device2NTL = {
-    'deviceId': '',
-    'networkTypeId': 1,
-    'deviceProfileId': '',
-    'networkSettings': {
-      'devEUI': '0080000000000202',
-      name: device2.name,
-      deviceKeys: {
-        'appKey': '11223344556677889900112233442222'
-      }
-    }
-  }
-
   before(async () => {
     const app = await createApp()
     server = chai.request(app).keepOpen()
+    const cos = await prisma.companies()
+    companyId = cos[0].id
+    console.log(`SET COMPANYID TO: ${companyId}`)
+    const reportingProtocols = await prisma.reportingProtocols({ first: 1 })
+    reportingProtocolId = reportingProtocols[0].id
+    const nwkTypes = await prisma.networkTypes({ first: 1 })
+    networkTypeId = nwkTypes[0].id
     await setup.start()
+
+    application = {
+      'companyId': companyId,
+      'name': appName,
+      'description': appDescription,
+      'baseUrl': baseUrl,
+      'reportingProtocolId': reportingProtocolId
+    }
+
+    deviceProfile = {
+      'networkTypeId': networkTypeId,
+      'companyId': companyId,
+      'name': 'LoRaWeatherNodeA',
+      'description': 'GPS Node that works with LoRa',
+      'networkSettings': {
+        'name': 'LoRaWeatherNodeA',
+        'macVersion': '1.0.0',
+        'regParamsRevision': 'A',
+        'supportsJoin': true
+      }
+    }
+
+    deviceNTL = {
+      'deviceId': '',
+      'networkTypeId': networkTypeId,
+      'deviceProfileId': '',
+      'networkSettings': {
+        'devEUI': '0080000000000201',
+        name: device.name,
+        deviceKeys: {
+          'appKey': '11223344556677889900112233442211'
+        }
+      }
+    }
+
+    device2NTL = {
+      'deviceId': '',
+      'networkTypeId': networkTypeId,
+      'deviceProfileId': '',
+      'networkSettings': {
+        'devEUI': '0080000000000202',
+        name: device2.name,
+        deviceKeys: {
+          'appKey': '11223344556677889900112233442222'
+        }
+      }
+    }
   })
+
   describe('Verify Login and Administration of Users Works', () => {
     it('Admin Login to LPWan Server', (done) => {
       server
@@ -102,19 +126,12 @@ describe('E2E Test for Adding a Device to an Existing Application Use Case #190'
     })
   })
   describe('Create Application', () => {
-    let application =
-      {
-        'companyId': companyId,
-        'name': appName,
-        'description': appDescription,
-        'baseUrl': baseUrl,
-        'reportingProtocolId': reportingProtocolId
-      }
     let applicationNetworkSettings = {
       'description': appDescription,
       'name': appName
     }
     it('should return 200 on admin', function (done) {
+      console.log(application)
       server
         .post('/api/applications')
         .set('Authorization', 'Bearer ' + adminToken)
@@ -162,7 +179,7 @@ describe('E2E Test for Adding a Device to an Existing Application Use Case #190'
         .set('Content-Type', 'application/json')
         .send({
           'applicationId': appId1,
-          'networkTypeId': 1,
+          'networkTypeId': networkTypeId,
           'networkSettings': applicationNetworkSettings
         })
         .end(function (err, res) {

@@ -3,9 +3,12 @@ var chai = require('chai')
 var chaiHttp = require('chai-http')
 var createApp = require('../../restApp')
 var should = chai.should()
+const { prisma } = require('../../prisma/generated/prisma-client')
 
 chai.use(chaiHttp)
 var server
+let companyId
+let reportingProtocolId
 
 describe('Applications', function () {
   var adminToken
@@ -17,6 +20,10 @@ describe('Applications', function () {
       .post('/api/sessions')
       .send({ 'login_username': 'admin', 'login_password': 'password' })
     adminToken = res.text
+    const cos = await prisma.companies({ first: 1 })
+    companyId = cos[0].id
+    const reportingProtos = await prisma.reportingProtocols({ first: 1 })
+    reportingProtocolId = reportingProtos[0].id
   })
 
   var appId1
@@ -27,11 +34,11 @@ describe('Applications', function () {
         .post('/api/applications')
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
-        .send({ 'companyId': 1,
+        .send({ 'companyId': companyId,
           'name': 'MyGetRichQuickApp',
           'description': 'A really good idea that was boring',
           'baseUrl': 'http://localhost:5086',
-          'reportingProtocolId': 1 })
+          'reportingProtocolId': reportingProtocolId })
         .end(function (err, res) {
           if (err) return done(err)
           res.should.have.status(200)
@@ -47,11 +54,11 @@ describe('Applications', function () {
         .post('/api/applications')
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
-        .send({ 'companyId': 1,
+        .send({ 'companyId': companyId,
           'name': 'MyEnterpriseApp',
           'description': 'Ugh, enterprise apps',
           'baseUrl': 'http://localhost:5086',
-          'reportingProtocolId': 1 })
+          'reportingProtocolId': reportingProtocolId })
         .end(function (err, res) {
           if (err) return done(err)
           res.should.have.status(200)
@@ -73,7 +80,7 @@ describe('Applications', function () {
           var appObj = JSON.parse(res.text)
           appObj.name.should.equal('MyGetRichQuickApp')
           appObj.description.should.equal('A really good idea that was boring')
-          appObj.reportingProtocolId.should.equal(1)
+          appObj.reportingProtocolId.should.equal(reportingProtocolId)
           done()
         })
     })
@@ -191,7 +198,7 @@ describe('Applications', function () {
           res.should.have.status(200)
           var appObj = JSON.parse(res.text)
           appObj.name.should.equal('MyGetRichQuickApp')
-          appObj.reportingProtocolId.should.equal(1)
+          appObj.reportingProtocolId.should.equal(reportingProtocolId)
           done()
         })
     })

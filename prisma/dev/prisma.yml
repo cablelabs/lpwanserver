@@ -1,11 +1,9 @@
-endpoint: http://localhost:4466
-datamodel: datamodel.prisma
+endpoint: ${env:prisma_protocol}://${env:prisma_host}:${env:prisma_port}/lpwanserver/dev
+datamodel: ../versions/v1/datamodel.prisma
 
 generate:
   - generator: javascript-client
-    output: ./generated/prisma-client/
+    output: ../generated/prisma-client/
 
-hooks:
-  post-deploy:
-    - prisma generate
-    - node ./post-deploy/dynamic-endpoint-client.js
+seed:
+  run: node ../versions/v1/seed.js

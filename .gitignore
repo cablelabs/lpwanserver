@@ -66,3 +66,6 @@ development/credentials
 
 public/*
 !public/README.md
+
+# Prisma generated files
+prisma/generated

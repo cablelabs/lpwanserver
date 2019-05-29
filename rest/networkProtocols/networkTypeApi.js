@@ -1,5 +1,6 @@
 // General libraries in use in this module.
 var appLogger = require('../lib/appLogger.js')
+const { redisClient } = require('../lib/redis')
 
 // An object to access dataModel data and cache it for operations across
 // multiple networks, preventing a lot of redundant database hits.
@@ -402,10 +403,17 @@ NetworkTypeApi.prototype.deleteDevice = function (networkTypeId, deviceId) {
 // networkTypeId - The ID of the networkType to get the new company.
 // appId     - The ID of the application record
 // deviceID  - The ID of the device record
-NetworkTypeApi.prototype.passDataToDevice = function (networkTypeId, appId, deviceId, data) {
+NetworkTypeApi.prototype.passDataToDevice = async function (devNTL, appId, deviceId, data) {
+  const ipNwkType = await this.modelAPI.networkTypes.loadByName('IP')
+  if (ipNwkType && ipNwkType.id === devNTL.networkType.id) {
+    const cache = await this.modelAPI.devices.getIpDeviceCache(deviceId)
+    const { records: nwkProtos } = await this.modelAPI.networkProtcols.list({ name: 'IP' })
+    const handler = await this.modelAPI.networkProtcols.getHandler(nwkProtos[0].id)
+    return handler.passDataToDevice(devNTL, deviceId, data, cache)
+  }
   return this.forAllNetworksOfType(
     'Pass data to device',
-    networkTypeId,
+    devNTL.networkType.id,
     (npda, network) => this.protos.passDataToDevice(npda, network, appId, deviceId, data)
   )
 }

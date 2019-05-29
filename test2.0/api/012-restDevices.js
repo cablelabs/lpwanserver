@@ -3,9 +3,11 @@ var chai = require('chai')
 var chaiHttp = require('chai-http')
 var createApp = require('../../restApp')
 var should = chai.should()
+const { prisma } = require('../../prisma/generated/prisma-client')
 
 chai.use(chaiHttp)
 var server
+let companyId
 
 describe('Devices', function () {
   var adminToken
@@ -18,18 +20,22 @@ describe('Devices', function () {
       .post('/api/sessions')
       .send({ 'login_username': 'admin', 'login_password': 'password' })
     adminToken = res.text
+    const cos = await prisma.companies({ first: 1 })
+    companyId = cos[0].id
+    const reportingProtocols = await prisma.reportingProtocols({ first: 1 })
     res = await server
       .post('/api/applications')
       .set('Authorization', 'Bearer ' + adminToken)
       .set('Content-Type', 'application/json')
       .send({
-        'companyId': 1,
+        'companyId': companyId,
         'name': 'MyGetRichQuickApp2',
         'description': 'A really good idea that was boring',
         'baseUrl': 'http://localhost:5086',
-        'reportingProtocolId': 1
+        'reportingProtocolId': reportingProtocols[0].id
       })
     appId = JSON.parse(res.text).id
+
   })
 
   var devId1
@@ -91,22 +97,6 @@ describe('Devices', function () {
 
   describe('GET /api/devices (search/paging)', function () {
     it('should return 200 with 2 device on admin', function (done) {
-      server
-        .get('/api/devices')
-        .set('Authorization', 'Bearer ' + adminToken)
-        .set('Content-Type', 'application/json')
-        .end(function (err, res) {
-          if (err) return done(err)
-          res.should.have.status(200)
-          var result = JSON.parse(res.text)
-          result.records.should.be.instanceof(Array)
-          result.records.should.have.length(3)
-          result.totalCount.should.equal(3)
-          done()
-        })
-    })
-
-    it('should return 200 with 2 devices on admin', function (done) {
       server
         .get('/api/devices')
         .set('Authorization', 'Bearer ' + adminToken)

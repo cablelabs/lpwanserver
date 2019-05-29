@@ -9,7 +9,6 @@
     "jwt_secret",
     "port",
     "base_url",
-    "prisma_dir",
     "prisma_host"
   ],
   "properties": {
@@ -77,11 +76,6 @@
       "description": "The base URL to use for links back to this site. Used for emails and application integrations.",
       "default": ""
     },
-    "prisma_dir": {
-      "type": "string",
-      "description": "Prisma sub-folder that corresponds with this deployment.",
-      "default": ""
-    },
     "prisma_protocol": {
       "type": "string",
       "description": "Protocol (http or https) for Prisma instance.",
@@ -111,6 +105,11 @@
       "type": "string",
       "description": "Path to folder holding web-client public assets, absolute or relative to root of repository",
       "default": "public"
+    },
+    "redis_url": {
+      "type": "string",
+      "description": "URL of redis.",
+      "default": ""
     }
   }
 }

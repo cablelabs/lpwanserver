@@ -2,35 +2,42 @@
 
 if [ "$1" = "stop" ]
 then
-  docker-compose -f docker/docker-compose.demo.yml down
-  docker-compose -f prisma/dev/docker-compose.yml down
+  docker-compose -f docker/docker-compose.yml down
+  docker-compose -f docker/dev/loraserver/docker-compose.yml down
+  docker-compose -f docker/dev/databases/docker-compose.yml down
   exit 0
 fi
+
+export prisma_protocol=http
+export prisma_host=localhost
+export prisma_port=4466
 
 # Remove old containers
 docker container rm \
   lpwanserver_dev_prisma \
   lpwanserver_dev_postgres \
+  lpwanserver_dev_redis \
   lpwanserver_dev_loraserver2 \
   lpwanserver_dev_loraserver1 \
   lpwanserver_dev_loraappserver2 \
   lpwanserver_dev_loraappserver1 \
-  lpwanserver_dev_loraserver_postgres \
-  lpwanserver_dev_loraserver_redis \
   lpwanserver_dev_loraserver_mosquitto --force
 
 # Remove old volumes
 docker volume rm \
   lpwanserver_dev_postgres \
-  lpwanserver_dev_loraserver_postgres --force
+  lpwanserver_dev_redis --force
 
-# Start Prisma
-docker-compose -f ./prisma/dev/docker-compose.yml up -d
+# Start databases and prisma
+docker-compose -f ./docker/dev/databases/docker-compose.yml up -d
 
 sleep 5s
 
 # Deploy Prisma
 npm run prisma:dev deploy
 
-# Start Lora Server and run tests
-docker-compose -f docker/docker-compose.demo.yml up -d
+# Start Lora Server
+docker-compose -f ./docker/dev/loraserver/docker-compose.yml up -d
+
+# Start demo
+docker-compose -f ./docker/docker-compose.yml up -d

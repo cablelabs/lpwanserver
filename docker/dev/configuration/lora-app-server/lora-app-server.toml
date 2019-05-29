@@ -2,10 +2,10 @@
 # configuration example and documentation.
 
 [postgresql]
-dsn="postgres://loraserver_as:loraserver_as@postgresql/loraserver_as?sslmode=disable"
+dsn="postgres://loraserver_as:loraserver_as@postgres/loraserver_as?sslmode=disable"
 
 [redis]
-url="redis://redis:6379/2"
+url="redis://redis:6379/3"
 
 [application_server.integration.mqtt]
 server="tcp://mosquitto:1883"

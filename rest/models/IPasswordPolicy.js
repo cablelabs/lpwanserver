@@ -1,6 +1,7 @@
 const { prisma, loadRecord } = require('../lib/prisma')
 const httpError = require('http-errors')
 const { onFail } = require('../lib/utils')
+const appLogger = require('../lib/appLogger')
 
 module.exports = class PasswordPolicy {
   constructor (companyModel) {
@@ -23,6 +24,8 @@ module.exports = class PasswordPolicy {
 
   async list (companyId) {
     // Verify that the company exists.
+    const all = await prisma.passwordPolicies()
+    appLogger.log(`ALL: ${JSON.stringify(all)}`)
     await this.companies.load(companyId)
     const where = { OR: [
       { company: { id: companyId } },
@@ -51,7 +54,7 @@ module.exports = class PasswordPolicy {
     const pwPolicies = await this.list(companyId)
     const failed = pwPolicies.filter(x => !(new RegExp(x.ruleRegExp).test(password)))
     if (!failed.length) return true
-    throw new Error('Password failed these policies:', failed.map(x => x.ruleText).join('; '))
+    throw httpError(400, `Password failed these policies: ${failed.map(x => x.ruleText).join('; ')}`)
   }
 }
 

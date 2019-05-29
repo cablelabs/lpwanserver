@@ -33,7 +33,7 @@ services:
       POSTGRES_PASSWORD: prisma
     volumes:
       - ../../data:/baseline-data
-      - ./initdb:/docker-entrypoint-initdb.d
+      - ../versions/v1/initdb:/docker-entrypoint-initdb.d
       - postgres:/var/lib/postgresql/data
 volumes:
   postgres:

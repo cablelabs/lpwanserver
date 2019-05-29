@@ -23,7 +23,7 @@ describe('Launch Applications', function () {
     adminToken = res.text
   })
 
-  var appIds = []
+  var appIds
   describe('GET /api/applications to launch', function () {
     it('should return 200 with array of applications on admin', function (done) {
       server
@@ -31,12 +31,11 @@ describe('Launch Applications', function () {
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(200)
           var result = JSON.parse(res.text)
           result.records.should.be.instanceof(Array)
-          result.records.forEach(function (app) {
-            appIds.push(app.id)
-          })
+          appIds = result.records.filter(x => x.baseUrl).map(x => x.id)
           done()
         })
     })

@@ -1,24 +1,23 @@
-function registerLora1 (networkProtocolModel) {
+function registerLora1 (networkProtocolModel, loraNwkType) {
   return networkProtocolModel.upsert({
     name: 'LoRa Server',
-    networkTypeId: 1,
+    networkTypeId: loraNwkType.id,
     protocolHandler: 'LoraOpenSource/v1',
     networkProtocolVersion: '1.0'
   })
 }
 
-async function registerLora2 (networkProtocolModel) {
+async function registerLora2 (networkProtocolModel, loraNwkType) {
   let me = {
     name: 'LoRa Server',
-    networkTypeId: 1,
+    networkTypeId: loraNwkType.id,
     protocolHandler: 'LoraOpenSource/v2',
     networkProtocolVersion: '2.0'
   }
   try {
     const { records } = await networkProtocolModel.list({ search: me.name, networkProtocolVersion: '1.0' })
-    console.log('REGISTER LORA 2: RECORDS', JSON.stringify(records))
     if (records.length) {
-      me.masterProtocol = records[0].id
+      me.masterProtocolId = records[0].id
     }
   }
   catch (err) {
@@ -27,27 +26,31 @@ async function registerLora2 (networkProtocolModel) {
   await networkProtocolModel.upsert(me)
 }
 
-function registerLoriot (networkProtocolModel) {
+function registerLoriot (networkProtocolModel, loraNwkType) {
   return networkProtocolModel.upsert({
     name: 'Loriot',
-    networkTypeId: 1,
+    networkTypeId: loraNwkType.id,
     protocolHandler: 'Loriot/v4',
     networkProtocolVersion: '4.0'
   })
 }
 
-function registerTtnV2 (networkProtocolModel) {
+function registerTtnV2 (networkProtocolModel, loraNwkType) {
   return networkProtocolModel.upsert({
     name: 'The Things Network',
-    networkTypeId: 1,
+    networkTypeId: loraNwkType.id,
     protocolHandler: 'TheThingsNetwork/v2',
     networkProtocolVersion: '2.0'
   })
 }
 
-module.exports = async function registerNetworkProtocols (networkProtocolModel) {
-  await registerLora1(networkProtocolModel)
-  await registerLora2(networkProtocolModel)
-  await registerLoriot(networkProtocolModel)
-  await registerTtnV2(networkProtocolModel)
+module.exports = async function registerNetworkProtocols (modelAPI) {
+  const [ loraNwkType, ipNwkType ] = await Promise.all([
+    modelAPI.networkTypes.loadByName('LoRa'),
+    modelAPI.networkTypes.loadByName('IP')
+  ])
+  await registerLora1(modelAPI.networkProtocols, loraNwkType)
+  await registerLora2(modelAPI.networkProtocols, loraNwkType)
+  await registerLoriot(modelAPI.networkProtocols, loraNwkType)
+  await registerTtnV2(modelAPI.networkProtocols, loraNwkType)
 }

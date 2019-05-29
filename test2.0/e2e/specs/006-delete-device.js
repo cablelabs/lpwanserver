@@ -7,6 +7,7 @@ let Data = require('../../data')
 const { assertEqualProps } = require('../../lib/helpers')
 const Lora1 = require('../networks/lora-v1')
 const Lora2 = require('../networks/lora-v2')
+const { prisma } = require('../../../prisma/generated/prisma-client')
 
 const should = chai.should()
 chai.use(chaiHttp)
@@ -18,23 +19,38 @@ let remoteApp2 = ''
 let remoteDeviceProfileId = ''
 let remoteDeviceProfileId2 = ''
 
-const testData = {
-  ...Data.applicationTemplates.default({
-    name: 'DLDV',
-    companyId: 2
-  }),
-  ...Data.deviceTemplates.weatherNode({
-    name: 'DLDV001',
-    companyId: 2,
-    devEUI: '0080000000000601'
-  })
-}
-
 describe('E2E Test for Deleting a Device Use Case #192', () => {
+  let companyId
+  let reportingProtocolId
+  let networkTypeId
+
+  let testData
+
   before(async () => {
     const app = await createApp()
     server = chai.request(app).keepOpen()
+    const cos = await prisma.companies({ first: 1 })
+    companyId = cos[0].id
+    const reportingProtocols = await prisma.reportingProtocols({ first: 1 })
+    reportingProtocolId = reportingProtocols[0].id
+    const nwkTypes = await prisma.networkTypes({ first: 1 })
+    networkTypeId = nwkTypes[0].id
     await setup.start()
+
+    testData = {
+      ...Data.applicationTemplates.default({
+        name: 'DLDV',
+        companyId,
+        networkTypeId,
+        reportingProtocolId
+      }),
+      ...Data.deviceTemplates.weatherNode({
+        name: 'DLDV001',
+        companyId,
+        networkTypeId,
+        devEUI: '0080000000000601'
+      })
+    }
   })
 
   describe('Verify Login and Administration of Users Works', () => {

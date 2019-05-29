@@ -5,8 +5,8 @@
   "jwt_secret": "replace-this-value-for-your-installation",
   "port": 3200,
   "base_url": "http://localhost:3200/",
-  "prisma_dir": "dev",
   "prisma_protocol": "http",
   "prisma_host": "prisma",
-  "prisma_port": 4466
+  "prisma_port": 4466,
+  "redis_url": "redis://redis:6379/1"
 }
