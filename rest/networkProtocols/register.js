@@ -44,6 +44,14 @@ function registerTtnV2 (networkProtocolModel, loraNwkType) {
   })
 }
 
+function registerIP (networkProtocolModel, ipNwkType) {
+  return networkProtocolModel.upsert({
+    name: 'IP',
+    networkTypeId: ipNwkType.id,
+    protocolHandler: 'IP'
+  })
+}
+
 module.exports = async function registerNetworkProtocols (modelAPI) {
   const [ loraNwkType, ipNwkType ] = await Promise.all([
     modelAPI.networkTypes.loadByName('LoRa'),
@@ -53,4 +61,5 @@ module.exports = async function registerNetworkProtocols (modelAPI) {
   await registerLora2(modelAPI.networkProtocols, loraNwkType)
   await registerLoriot(modelAPI.networkProtocols, loraNwkType)
   await registerTtnV2(modelAPI.networkProtocols, loraNwkType)
+  await registerIP(modelAPI.networkProtocols, ipNwkType)
 }

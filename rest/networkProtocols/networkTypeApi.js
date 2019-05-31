@@ -407,8 +407,8 @@ NetworkTypeApi.prototype.passDataToDevice = async function (devNTL, appId, devic
   const ipNwkType = await this.modelAPI.networkTypes.loadByName('IP')
   if (ipNwkType && ipNwkType.id === devNTL.networkType.id) {
     const cache = await this.modelAPI.devices.getIpDeviceCache(deviceId)
-    const { records: nwkProtos } = await this.modelAPI.networkProtcols.list({ name: 'IP' })
-    const handler = await this.modelAPI.networkProtcols.getHandler(nwkProtos[0].id)
+    const { records: nwkProtos } = await this.modelAPI.networkProtocols.list({ name: 'IP' })
+    const handler = await this.modelAPI.networkProtocols.getHandler(nwkProtos[0].id)
     return handler.passDataToDevice(devNTL, deviceId, data, cache)
   }
   return this.forAllNetworksOfType(

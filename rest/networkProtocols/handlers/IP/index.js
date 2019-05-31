@@ -1,10 +1,11 @@
 const NetworkProtocol = require('../../NetworkProtocol')
 const IpDeviceRestClient = require('./IPRestClient')
 const R = require('ramda')
+const appLogger = require('../../../lib/appLogger')
 
 module.exports = class LoraOpenSource extends NetworkProtocol {
-  constructor () {
-    super()
+  constructor (opts) {
+    super(opts)
     this.client = new IpDeviceRestClient()
   }
 
@@ -21,6 +22,7 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
   }
 
   async passDataToDevice (devNTL, deviceId, body, cache, checkDuration = true) {
+    appLogger.log(`PASS DATA TO DEVICE: ${JSON.stringify({ devNTL, deviceId, body, cache, checkDuration })}`)
     // ensure cache exists
     if (!cache) {
       throw new Error(`No known address and port for IP device of deviceId=${deviceId}`)

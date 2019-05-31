@@ -12,7 +12,7 @@ openssl genrsa -out "$OUT/server-key.pem" 4096
 openssl req -new -config "$CONF/server.cnf" -key "$OUT/server-key.pem" -out "$OUT/server-csr.pem"
 
 openssl x509 -req -extfile "$CONF/server.cnf" -days 999 -passin "pass:password" -in "$OUT/server-csr.pem" \
-  -CA "$OUT/ca-crt.pem" -CAkey "$OUT/ca-key.pem" -CAcreateserial -out "$OUT/server-crt.pem" -extfile "$CONF/v3.ext"
+  -CA "$OUT/ca-crt.pem" -CAkey "$OUT/ca-key.pem" -CAcreateserial -out "$OUT/server-crt.pem" -extfile "$CONF/server.ext"
 
 # IP Device clients
 openssl genrsa -out "$OUT/client-catm1-key.pem" 4096
@@ -24,7 +24,9 @@ openssl req -new -config "$CONF/client-catm1.cnf" -key "$OUT/client-catm1-key.pe
 openssl req -new -config "$CONF/client-nbiot.cnf" -key "$OUT/client-nbiot-key.pem" -out "$OUT/client-nbiot-csr.pem"
 
 openssl x509 -req -extfile "$CONF/client-catm1.cnf" -days 999 -passin "pass:password" \
-  -in "$OUT/client-catm1-csr.pem" -CA "$OUT/ca-crt.pem" -CAkey "$OUT/ca-key.pem" -CAcreateserial -out "$OUT/client-catm1-crt.pem"
+  -in "$OUT/client-catm1-csr.pem" -CA "$OUT/ca-crt.pem" -CAkey "$OUT/ca-key.pem" \
+  -CAcreateserial -out "$OUT/client-catm1-crt.pem" -extfile "$CONF/client.ext"
 
 openssl x509 -req -extfile "$CONF/client-nbiot.cnf" -days 999 -passin "pass:password" \
-  -in "$OUT/client-nbiot-csr.pem" -CA "$OUT/ca-crt.pem" -CAkey "$OUT/ca-key.pem" -CAcreateserial -out "$OUT/client-nbiot-crt.pem"
+  -in "$OUT/client-nbiot-csr.pem" -CA "$OUT/ca-crt.pem" -CAkey "$OUT/ca-key.pem" \
+  -CAcreateserial -out "$OUT/client-nbiot-crt.pem" -extfile "$CONF/client.ext"

@@ -2,8 +2,11 @@ version: '3.5'
 
 services:
   lpwanserver:
+    build:
+      context: ../
+      dockerfile: docker/Dockerfile
     image: lpwanserver/lpwanserver
-    container_name: lpwanserver_demo
+    container_name: lpwanserver
     networks:
       - lpwanserver_dev
     ports:

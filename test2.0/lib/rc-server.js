@@ -17,13 +17,17 @@ const httpErrors = require('http-errors')
 //   body: Object,
 //   timestamp: String
 // }
-//
+const pickRequestSummaryProps = R.pick(
+  ['method', 'path', 'params', 'query', 'headers', 'body']
+)
+
 // QueryResponse
 // {
 //   id: String
-//   response: ExpressResponseObject
 //   query: RequestSummary
 //   timestamp: Number
+//   resolve: Function
+//   reject: Function
 // }
 
 module.exports = function createRcServer ({ port, maxRequestAge }) {
@@ -68,13 +72,18 @@ const listRequests = R.curry(function listRequests (state, respondToQueries, que
 // Push a RequestSummary onto the queue for each request
 // Respond with 204 to all requests
 const queueRequest = R.curry(function queueRequest (state, req, res) {
-  state.requestSummaries.push({ id: uuid.v4(), ...pickRequestProps(req) })
+  state.requestSummaries.push({ id: uuid.v4(), ...pickRequestSummaryProps(req) })
   res.status(204).end()
 })
 
 // *******************************************************
 // Helpers
 // *******************************************************
+
+// For each QueryResponse, attempt to find a match in the requestSummaries list
+// If found, call QueryResponse.resolve with the match
+// If not found and expired, call QueryResponse.reject with a NotFound error
+// Remove all found or expired QueryResponses from state
 function resolveFoundOrExpiredQueries (state, maxAge) {
   return queryResponses => {
     const isExpired = R.compose(R.gt(Date.now()), R.add(maxAge), R.prop('timestamp'))
@@ -102,8 +111,7 @@ const partialObjectEqual = R.curry(function partialObjectEqual (a, b) {
   )
 })
 
-const pickRequestProps = R.pick(['method', 'path', 'params', 'query', 'headers', 'body'])
-
+// Return the IDs of objects who have either 'found' or 'isExpired' props that are true
 const idsOfQueryResponsesToRemove = R.compose(
   R.map(R.prop('id')),
   R.filter(R.either(R.prop('found'), R.prop('isExpired')))

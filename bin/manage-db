@@ -16,7 +16,7 @@ fi
 
 if [ "$1" = "reset" ]
 then
-  npm run prisma -- seed --reset
+  prisma_protocol=http prisma_host=localhost prisma_port=4466 npm run prisma -- seed --reset
   exit 0
 fi
 

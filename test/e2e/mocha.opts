@@ -1,0 +1,8 @@
+# mocha.opts
+
+--recursive
+--reporter spec
+--bail
+--exit
+--timeout 100000
+--file ./test/e2e/setup.js

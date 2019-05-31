@@ -4,5 +4,7 @@
  * Module dependencies.
  */
 
-require('../server')
+const { createServer } = require('../server')
 require('debug')('lpwan-rest:server')
+
+createServer().catch(e => console.error(e))

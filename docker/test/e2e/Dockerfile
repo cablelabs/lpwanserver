@@ -1,7 +1,7 @@
 FROM node:10.15
 
 # set working directory
-WORKDIR /app
+WORKDIR /usr/src/app
 
 RUN npm install -g mocha
 

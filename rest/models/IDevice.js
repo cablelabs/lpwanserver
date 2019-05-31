@@ -124,6 +124,7 @@ module.exports = class Device {
   }
 
   async receiveIpDeviceUplink (devEUI, data, { remoteAddress, remotePort }) {
+    appLogger.log(`RECEIVE_IP_DEVICE_UPLINK: ${JSON.stringify({ devEUI, data, remoteAddress, remotePort })}`)
     // Get IP Network Type
     let nwkType = await this.modelAPI.networkTypes.loadByName('IP')
     // Ensure a deviceNTL exists
@@ -136,7 +137,7 @@ module.exports = class Device {
     // Get application
     const app = await this.modelAPI.applications.load(device.application.id)
     // Ensure application is enabled
-    if (!app.enabled) return
+    if (!app.running) return
     // Update device's location in redis
     const cache = { remoteAddress, remotePort, updatedAt: Date.now() }
     await this.setIpDeviceCache(device.id, cache)
@@ -147,15 +148,17 @@ module.exports = class Device {
     // Check for cached downlink messages
     const msgs = await this.modelAPI.devices.getIpDeviceMessages(device.id)
     if (!msgs.length) return
-    await Promise.all(msgs.map(x => ipProtoHandler.passDataToDevice(devNTL, devNTL.device.id, x, cache, false)))
+    await Promise.all(msgs.map(x => ipProtoHandler.passDataToDevice(devNTL, device.id, x, cache, false)))
   }
 
   setIpDeviceCache (id, data) {
+    appLogger.log(`SET IP DEVICE CACHE ${JSON.stringify({ id, data })}`)
     return redisClient.setAsync(`ip_device_conn:${id}`, JSON.stringify(data))
   }
 
   async getIpDeviceCache (id) {
     const cache = await redisClient.getAsync(`ip_device_conn:${id}`)
+    appLogger.log(`GEt IP DEVICE CACHE ${JSON.stringify({ id, cache })}`)
     return cache && JSON.parse(cache)
   }
 

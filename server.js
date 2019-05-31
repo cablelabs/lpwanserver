@@ -38,11 +38,24 @@ async function createServer () {
 
   const app = await createApp()
 
-  https.createServer(httpServerOpts, app).listen({
+  const server = https.createServer(httpServerOpts, app).listen({
     port: config.get('port'),
     exclusive: true
   })
   console.log('REST https server starting on port ' + config.get('port'))
+  return server
 }
 
-createServer()
+function closeServer (server) {
+  return new Promise((resolve, reject) => {
+    server.close(err => {
+      if (err) return reject(err)
+      resolve()
+    })
+  })
+}
+
+module.exports = {
+  createServer,
+  closeServer
+}

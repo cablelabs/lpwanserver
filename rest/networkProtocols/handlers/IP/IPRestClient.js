@@ -1,6 +1,5 @@
 const requestClient = require('request-promise')
 const R = require('ramda')
-const { URLSearchParams } = require('url')
 const appLogger = require('../../../lib/appLogger')
 const EventEmitter = require('events')
 
@@ -26,17 +25,9 @@ module.exports = class IpDeviceRestClient extends EventEmitter {
     return transformResponse(body)
   }
 
-  constructUrl ({ url, params }) {
-    if (params && !R.isEmpty(params)) {
-      const qs = new URLSearchParams(params).toString()
-      url = `${url}?${qs}`
-    }
-    // remove possible double slash
-    return url.replace(/([^:]\/)\/+/g, '$1')
-  }
-
   createDeviceMessage ({ remoteAddress, remotePort }, body) {
-    const opts = { url: this.constructUrl(`https://${remoteAddress}:${remotePort}`) }
+    remoteAddress = removeIpv4ToIpv6Mapping(remoteAddress)
+    const opts = { url: `https://${remoteAddress}:${remotePort}` }
     if (body.data) {
       opts.json = false
       opts.body = body.data
@@ -44,6 +35,12 @@ module.exports = class IpDeviceRestClient extends EventEmitter {
     else {
       opts.body = body.jsonData
     }
-    return this.request(opts)
+    appLogger.log(`CREATE_DEVICE_MESSAGE: ${JSON.stringify(opts)}`)
+    return this.request({ opts })
   }
+}
+
+function removeIpv4ToIpv6Mapping (address) {
+  const isMapped = /^::?(ffff)?:(?!0)(?!.*\.$)((1?\d?\d|25[0-5]|2[0-4]\d)(\.|$)){4}$/
+  return isMapped.test(address) ? address.replace(/^.*:/, '') : address
 }
