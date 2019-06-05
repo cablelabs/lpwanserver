@@ -2,7 +2,9 @@ version: '3.5'
 
 services:
   unit-test:
-    image: lpwanserver/unit-test:latest
+    build:
+      context: ../../..
+      dockerfile: docker/test/unit/Dockerfile
     container_name: lpwanerver_dev_unit_test
     networks:
       - lpwanserver_dev

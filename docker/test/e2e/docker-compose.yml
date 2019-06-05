@@ -2,7 +2,9 @@ version: '3.5'
 
 services:
   e2e-test:
-    image: lpwanserver/e2e-test
+    build:
+      context: ../../..
+      dockerfile: docker/test/e2e/Dockerfile
     container_name: lpwanserver_dev_e2e_test
     networks:
       - lpwanserver_dev

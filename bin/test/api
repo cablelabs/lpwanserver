@@ -20,14 +20,11 @@ docker volume rm \
 ./bin/manage-db start
 ./bin/manage-db deploy
 
-# npm run package-test
-node bin/test/package-api.js
-
 # Start Lora Servers
 docker-compose -f ./docker/dev/loraserver/docker-compose.yml up -d
 
 # Run tests
-docker-compose -f ./docker/test/api/docker-compose.yml up \
+docker-compose -f ./docker/test/api/docker-compose.yml up --build \
   --abort-on-container-exit \
   --exit-code-from api-test
 

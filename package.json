@@ -6,9 +6,9 @@
   "scripts": {
     "start": "node ./bin/rest",
     "package": "node ./bin/package.js",
-    "test": "mocha ./test/e2e/specs --opts ./test/e2e/mocha.opts",
     "test:api": "./bin/test/api",
     "test:e2e": "./bin/test/e2e",
+    "test:e2e-https": "./bin/test/e2e-https",
     "test:unit": "./bin/test/unit",
     "test:all": "./bin/test/unit && ./bin/test/api && ./bin/test/e2e",
     "clean": "./bin/clean",

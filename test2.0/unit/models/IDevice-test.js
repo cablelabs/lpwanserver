@@ -7,7 +7,7 @@ const should = chai.should()
 const { prisma } = require('../../../prisma/generated/prisma-client')
 const TestModule = require('../../../rest/models/IDevice')
 const modelAPIMock = require('../../mock/ModelAPI-mock')
-const { redisClient } = require('../../../rest/lib/redis')
+const { redisClient, redisPub, redisSub } = require('../../../rest/lib/redis')
 const testName = 'Device'
 
 function assertDeviceProps (actual) {
@@ -23,6 +23,8 @@ describe('Unit Tests for ' + testName, () => {
   before('Setup ENV', async () => {})
   after('Shutdown', async () => {
     await redisClient.quit()
+    await redisSub.quit()
+    await redisPub.quit()
   })
   it(testName + ' Construction', () => {
     let testModule = new TestModule(modelAPIMock)

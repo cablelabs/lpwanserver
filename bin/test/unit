@@ -14,12 +14,9 @@ docker volume rm \
 ./bin/manage-db start
 ./bin/manage-db deploy
 
-# npm run package-test
-node ./bin/test/package-unit.js
-
 # Run docker-compose with development configuration
 docker-compose \
-  -f ./docker/test/unit/docker-compose.yml up \
+  -f ./docker/test/unit/docker-compose.yml up --build \
   --abort-on-container-exit \
   --exit-code-from unit-test
 
