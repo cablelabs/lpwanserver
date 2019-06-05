@@ -49,7 +49,7 @@
     },
     "port": {
       "type": "integer",
-      "description": "The port to bind the listener to",
+      "description": "The port for the HTTP server",
       "default": 8080,
       "minimum": 0
     },

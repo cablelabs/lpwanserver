@@ -30,49 +30,31 @@ services:
     environment:
       - PORT=3201
 
-  # ip-device:
-  #   build:
-  #     context: ../../..
-  #     dockerfile: lib/rc-server/Dockerfile
-  #   container_name: lpwanserver_dev_e2e_ip_device
-  #   networks:
-  #     - lpwanserver_dev
-  #   ports:
-  #     - 3202
-  #   environment:
-  #     - PORT=3202
-  #     - CERT=certs/client-catm1-crt.pem
-  #     - KEY=certs/client-catm1-key.pem
-  #     - CA=certs/ca-crt.pem
-  #   volumes:
-  #     - ../../../certs:/usr/src/app/certs
-
-  # e2e-test:
-  #   build:
-  #     context: ../../..
-  #     dockerfile: docker/test/e2e-https/Dockerfile
-  #   container_name: lpwanserver_dev_e2e_test
-  #   networks:
-  #     - lpwanserver_dev
-  #   depends_on:
-  #     - lpwanserver
-  #     - app-server
-  #   environment:
-  #     - prisma_protocol=http
-  #     - prisma_host=prisma
-  #     - prisma_port=4466
-  #     - LPWANSERVER_URL=https://lpwanserver:3200
-  #     - APP_SERVER_URL=http://app-server:3201
-  #     - IP_DEVICE_PORT=3202
-  #     - TTN_ENABLED=${TTN_ENABLED:-false}
-  #     - TTN_USERNAME=${TTN_USERNAME}
-  #     - TTN_PASSWORD=${TTN_PASSWORD}
-  #     - TTN_CLIENT_ID=${TTN_CLIENT_ID}
-  #     - TTN_CLIENT_SECRET=${TTN_CLIENT_SECRET}
-  #     - LORIOT_ENABLED=${LORIOT_ENABLED:-false}
-  #     - LORIOT_API_KEY=${LORIOT_API_KEY}
-  #   volumes:
-  #     - ../../../certs:/usr/src/app/certs
+  e2e-test:
+    build:
+      context: ../../..
+      dockerfile: docker/test/e2e-https/Dockerfile
+    container_name: lpwanserver_dev_e2e_test
+    networks:
+      - lpwanserver_dev
+    depends_on:
+      - lpwanserver
+      - app-server
+    environment:
+      - prisma_protocol=http
+      - prisma_host=prisma
+      - prisma_port=4466
+      - LPWANSERVER_URL=https://lpwanserver:3200
+      - APP_SERVER_URL=http://app-server:3201
+      - TTN_ENABLED=${TTN_ENABLED:-false}
+      - TTN_USERNAME=${TTN_USERNAME}
+      - TTN_PASSWORD=${TTN_PASSWORD}
+      - TTN_CLIENT_ID=${TTN_CLIENT_ID}
+      - TTN_CLIENT_SECRET=${TTN_CLIENT_SECRET}
+      - LORIOT_ENABLED=${LORIOT_ENABLED:-false}
+      - LORIOT_API_KEY=${LORIOT_API_KEY}
+    volumes:
+      - ../../../certs:/usr/src/app/certs
 
 networks:
   lpwanserver_dev:

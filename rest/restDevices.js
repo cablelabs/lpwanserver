@@ -1,8 +1,9 @@
 var appLogger = require('./lib/appLogger.js')
 var restServer
 var modelAPI
-
+const { getCertificateCn, getHttpRequestPreferedWaitMs } = require('./lib/utils')
 const { formatRelationshipsOut } = require('./lib/prisma')
+const { redisSub } = require('./lib/redis')
 
 exports.initialize = function (app, server) {
   restServer = server
@@ -51,7 +52,7 @@ exports.initialize = function (app, server) {
      * @apiVersion 0.1.0
      */
   app.get('/api/devices', [restServer.isLoggedIn, restServer.fetchCompany],
-    function (req, res, next) {
+    function (req, res) {
       var options = {}
       if (req.company.type !== 'ADMIN') {
         // If they gave a applicationId, make sure it belongs to their
@@ -124,7 +125,7 @@ exports.initialize = function (app, server) {
   app.get('/api/devices/:id', [restServer.isLoggedIn,
     restServer.fetchCompany,
     modelAPI.devices.fetchDeviceApplication.bind(modelAPI.devices)],
-  function (req, res, next) {
+  function (req, res) {
     // Should have device and application in req due to
     // fetchDeviceApplication
     if ((req.company.type !== 'ADMIN') &&
@@ -165,7 +166,7 @@ exports.initialize = function (app, server) {
     restServer.fetchCompany,
     restServer.isAdmin,
     modelAPI.devices.fetchApplicationForNewDevice.bind(modelAPI.devices)],
-  function (req, res, next) {
+  function (req, res) {
     var rec = req.body
     // You can't specify an id.
     if (rec.id) {
@@ -232,14 +233,14 @@ exports.initialize = function (app, server) {
     restServer.fetchCompany,
     restServer.isAdmin,
     modelAPI.devices.fetchDeviceApplication.bind(modelAPI.devices)],
-  function (req, res, next) {
+  function (req, res) {
     var data = { id: req.params.id }
     // We'll start with the device retrieved by fetchDeviceApplication as
     // a basis for comparison.
     // Verify that the user can make the change.
     if ((modelAPI.companies.COMPANY_ADMIN !== req.company.type.id) &&
              (req.user.company.id !== req.application.company.id)) {
-      respond(res, 403)
+      restServer.respond(res, 403)
       return
     }
 
@@ -271,11 +272,11 @@ exports.initialize = function (app, server) {
         modelAPI.applications.load(req.body.applicationId)
           .then(function (newApp) {
             if (newApp.company.id !== req.application.id) {
-              respond(res, 400, "Cannot change device's application to another company's application")
+              restServer.respond(res, 400, "Cannot change device's application to another company's application")
             }
             else {
               // Do the update.
-              modelAPI.devices.update(data).then(function (rec) {
+              modelAPI.devices.update(data).then(function () {
                 restServer.respond(res, 204)
               })
                 .catch(function (err) {
@@ -317,7 +318,7 @@ exports.initialize = function (app, server) {
     }
     else {
       // Do the update.
-      modelAPI.devices.update(data).then(function (rec) {
+      modelAPI.devices.update(data).then(function () {
         restServer.respond(res, 204)
       })
         .catch(function (err) {
@@ -365,17 +366,91 @@ exports.initialize = function (app, server) {
   /**
    * Accepts the data from the application server to pass to devices
    */
-  async function unicastDownlinkHandler (req, res) {
-    const { deviceId } = req.params
-
+  async function unicastDownlinkPostHandler (req, res) {
+    const { id } = req.params
+    if ((req.company.type !== 'ADMIN') && (req.application.company.id !== req.user.company.id)) {
+      restServer.respond(res, 403, "Cannot send downlink to another company's device.")
+    }
     try {
-      const logs = await modelAPI.devices.passDataToDevice(deviceId, req.body)
+      const logs = await modelAPI.devices.passDataToDevice(id, req.body)
       restServer.respond(res, 200, logs)
     }
     catch (err) {
-      appLogger.log(`Error passing data to device ${deviceId}: ${err}`)
+      appLogger.log(`Error passing data to device ${id}: ${err}`)
       restServer.respond(res, err)
     }
   }
-  app.post('/api/devices/:deviceId/downlink', unicastDownlinkHandler)
+  app.post(
+    '/api/devices/:id/downlinks',
+    [
+      restServer.isLoggedIn,
+      restServer.fetchCompany,
+      modelAPI.devices.fetchDeviceApplication.bind(modelAPI.devices)
+    ],
+    unicastDownlinkPostHandler
+  )
+
+  /**
+   * IP devices request downlink messages.  Uses long polling.
+   */
+  async function listIpDeviceDownlinks (req, res) {
+    const devEUI = getCertificateCn(req.connection.getPeerCertificate())
+    if (!devEUI) {
+      restServer.respond(res, 403)
+      return
+    }
+    try {
+      const waitMs = getHttpRequestPreferedWaitMs(req.get('prefer'))
+      const downlinks = await modelAPI.devices.listIpDeviceDownlinks(devEUI)
+      appLogger.log(`DOWNLINKS: ${JSON.stringify(downlinks)}`)
+      if (downlinks.length || !waitMs) {
+        restServer.respond(res, 200, downlinks)
+        return
+      }
+      // set request timeout to waitMs
+      req.connection.setTimeout(waitMs)
+      req.connection.removeAllListeners('timeout')
+
+      redisSub.on('message', async channel => {
+        if (channel !== `downlink_received:${devEUI}`) return
+        redisSub.unsubscribe(`downlink_received:${devEUI}`)
+        let downlinks = await modelAPI.devices.listIpDeviceDownlinks(devEUI)
+        appLogger.log(`DOWNLINKS: ${JSON.stringify(downlinks)}`)
+        restServer.respond(res, 200, downlinks, true)
+        // put timeout back at default 2min
+        req.connection.setTimeout(120000)
+      })
+
+      redisSub.subscribe(`downlink_received:${devEUI}`)
+
+      req.connection.on('timeout', () => {
+        redisSub.unsubscribe(`downlink_received:${devEUI}`)
+        restServer.respond(res, 200, [], true)
+        req.connection.end()
+      })
+    }
+    catch (err) {
+      appLogger.log(`Error getting downlinks for ip device ${devEUI}: ${err}`)
+      restServer.respond(res, err)
+      req.connection.end()
+    }
+  }
+  app.get('/api/ip-device-downlinks', listIpDeviceDownlinks)
+
+  async function ipDeviceUplinkHandler (req, res) {
+    const devEUI = getCertificateCn(req.connection.getPeerCertificate())
+    if (!devEUI) {
+      restServer.respond(res, 403)
+      return
+    }
+    try {
+      await modelAPI.devices.receiveIpDeviceUplink(devEUI, req.body)
+      restServer.respond(res, 204)
+    }
+    catch (err) {
+      appLogger.log(`Error receiving data from IP device ${devEUI}: ${err}`)
+      restServer.respond(res, err)
+    }
+  }
+  app.post('/api/ip-device-uplinks', ipDeviceUplinkHandler)
 }

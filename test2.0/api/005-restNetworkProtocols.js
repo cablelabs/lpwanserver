@@ -9,7 +9,7 @@ chai.use(chaiHttp)
 var server
 
 var npId1
-const NUMBER_PROTOCOLS = 4
+const NUMBER_PROTOCOLS = 5
 
 describe('NetworkProtocols', function () {
   var adminToken

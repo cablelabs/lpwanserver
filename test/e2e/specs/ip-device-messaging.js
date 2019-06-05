@@ -3,15 +3,10 @@ const { prisma } = require('../../../prisma/generated/prisma-client')
 const path = require('path')
 const fs = require('fs')
 const request = require('request-promise')
-const uuid = require('uuid')
-const { fork } = require('child_process')
-
-const ipDevice = fork('./test/e2e/lib/ip-device.js')
 
 const {
   LPWANSERVER_URL,
-  APP_SERVER_URL,
-  IP_DEVICE_PORT
+  APP_SERVER_URL
 } = process.env
 
 const certFile = path.join(__dirname, '../../../certs/client-catm1-crt.pem')
@@ -36,11 +31,11 @@ describe.only('E2E Test for IP Device Uplink/Downlink Device Messaging', () => {
       company: { connect: { id: company.id } },
       networkType: { connect: { id: ipNwkType.id } },
       name: 'ip-msg-test-dev-prof',
-      networkSettings: '{}'
+      networkSettings: `{}`
     })
     let application = await prisma.createApplication({
       name: 'ip-msg-test-app',
-      baseUrl: `http://app-server:3201${uplinkPath}`,
+      baseUrl: `${APP_SERVER_URL}${uplinkPath}`,
       enabled: true,
       reportingProtocol: { connect: { id: postReportingProtocol.id } }
     })
@@ -56,29 +51,20 @@ describe.only('E2E Test for IP Device Uplink/Downlink Device Messaging', () => {
     })
   }
 
-  before(async () => {
-    // await setupData()
-    ipDevice.send({ cmd: 'createServer', data: { port: IP_DEVICE_PORT, ...ipDeviceCerts } })
-  })
+  before(setupData)
 
   describe('IP Device Uplink', () => {
-    it('Send an uplink message to LPWAN Server IP uplink endpoint', done => {
+    it('Send an uplink message to LPWAN Server IP uplink endpoint', async () => {
       const opts = {
-        url: `${LPWANSERVER_URL}/api/ingest/ip-device`,
-        method: 'post',
+        method: 'POST',
+        url: `${LPWANSERVER_URL}/api/ip-device-uplinks`,
         ...ipDeviceCerts,
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ msgId: 1 })
+        ...requestOpts,
+        body: { msgId: 1 }
       }
-      const handler = ({ event, data }) => {
-        console.log(event, data)
-        if (event !== 'response') return
-        assert.strictEqual(data.statusCode, 204)
-        ipDevice.off('message', handler)
-        done()
-      }
-      ipDevice.on('message', handler)
-      ipDevice.send({ cmd: 'sendRequest', data: opts })
+
+      const res = await request(opts)
+      assert.strictEqual(res.statusCode, 204)
     })
 
     it('Ensure app server received message', async () => {
@@ -87,17 +73,18 @@ describe.only('E2E Test for IP Device Uplink/Downlink Device Messaging', () => {
         query: {
           method: 'POST',
           path: uplinkPath,
-          body: JSON.stringify({ msgId: 1 })
+          body: JSON.stringify({ json: { msgId: 1 } })
         },
         json: true
       }
       const body = await request(opts)
-      assert(body.length > 0)
+      assert.strictEqual(body.length, 1)
     })
   })
 
   describe('IP Device Downlink', () => {
     let accessToken
+    let downlink1 = { jsonData: { msgId: 2 }, fCnt: 0, fPort: 1 }
 
     it('Get auth token for LPWAN Server', async () => {
       const opts = {
@@ -112,16 +99,47 @@ describe.only('E2E Test for IP Device Uplink/Downlink Device Messaging', () => {
     })
 
     it('Send a downlink request to LPWAN Server', async () => {
+      await sendDownlink(accessToken, device.id, downlink1)
+    })
+
+    it('Fetch downlink as IP device', async () => {
       const opts = {
-        method: 'POST',
-        url: `${LPWANSERVER_URL}/api/devices/${device.id}/downlink`,
-        headers: { authorization: `Bearer ${accessToken}` },
-        body: { jsonData: { msgId: 2 }, fCnt: 0, fPort: 1 },
-        ca,
-        ...requestOpts
+        url: `${LPWANSERVER_URL}/api/ip-device-downlinks`,
+        ...ipDeviceCerts,
+        json: true
       }
-      const res = await request(opts)
-      assert.strictEqual(res.statusCode, 200)
+      const body = await request(opts)
+      assert.deepStrictEqual(body[0], downlink1)
+    })
+
+    it('Long poll for downlinks', async function () {
+      this.timeout(140000)
+      let downlink2 = { jsonData: { msgId: 3 }, fCnt: 0, fPort: 1 }
+
+      setTimeout(() => sendDownlink(accessToken, device.id, downlink2), 3000)
+
+      const opts = {
+        url: `${LPWANSERVER_URL}/api/ip-device-downlinks`,
+        ...ipDeviceCerts,
+        headers: { prefer: 'wait=5' },
+        json: true
+      }
+      const body = await request(opts)
+      console.log(body)
+      assert.deepStrictEqual(body[0], downlink2)
     })
   })
 })
+
+async function sendDownlink (accessToken, deviceId, body) {
+  const opts = {
+    method: 'POST',
+    url: `${LPWANSERVER_URL}/api/devices/${deviceId}/downlinks`,
+    headers: { authorization: `Bearer ${accessToken}` },
+    body,
+    ca,
+    ...requestOpts
+  }
+  const res = await request(opts)
+  assert.strictEqual(res.statusCode, 200)
+}

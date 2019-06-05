@@ -44,6 +44,22 @@ function normalizeFilePath (x) {
   return x.charAt(0) === '/' ? x : path.join(__dirname, '../..', x)
 }
 
+const getCertificateCn = R.compose(R.path(['subject', 'CN']), R.defaultTo({}))
+
+const preferredWaitRegEx = /wait=(\d+)/g
+
+const getHttpRequestPreferedWaitMs = R.compose(
+  R.multiply(1000),
+  R.min(600),
+  x => parseInt(x, 10),
+  R.cond([
+    [x => preferredWaitRegEx.test(x), x => (new RegExp(preferredWaitRegEx)).exec(x)[1]],
+    [R.T, R.always(0)]
+  ]),
+  R.toLower,
+  R.defaultTo('')
+)
+
 module.exports = {
   mutate,
   onFail,
@@ -51,5 +67,7 @@ module.exports = {
   lift,
   renameKeys,
   joinUrl,
-  normalizeFilePath
+  normalizeFilePath,
+  getCertificateCn,
+  getHttpRequestPreferedWaitMs
 }

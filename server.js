@@ -6,56 +6,27 @@
 
 const config = require('./rest/config')
 var https = require('https')
-var fs = require('fs')
 const createApp = require('./restApp')
-
-// Catch unhandled promise rejections.
-process.on('unhandledRejection', (reason, p) => {
-  console.log('Unhandled Promise Rejection at: Promise ', p, ' reason: ', reason)
-  console.log('Stack:', reason.stack)
-  // application specific logging, throwing an error, or other logic here
-})
+const appLogger = require('./rest/lib/appLogger')
 
 async function createServer () {
-  const sslFiles = {
-    key: fs.readFileSync(config.get('ssl_key_file'), { encoding: 'utf8' }),
-    cert: fs.readFileSync(config.get('ssl_cert_file'), { encoding: 'utf8' })
-  }
-  if (config.get('ssl_ca_file')) {
-    sslFiles.ca = fs.readFileSync(config.get('ssl_ca_file'), { encoding: 'utf8' })
-  }
-  if (config.get('ssl_crl_file')) {
-    sslFiles.ca = fs.readFileSync(config.get('ssl_crl_file'), { encoding: 'utf8' })
-  }
-
-  const httpServerOpts = {
-    ...sslFiles,
-    // request client certificates from IP devices
+  const app = await createApp()
+  const opts = {
+    key: config.get('ssl_key'),
+    cert: config.get('ssl_cert'),
+    ca: config.get('ssl_ca'),
+    crl: config.get('ssl_crl'),
     requestCert: true,
-    // don't reject API calls if client doesn't provide a certificate
     rejectUnauthorized: false
   }
-
-  const app = await createApp()
-
-  const server = https.createServer(httpServerOpts, app).listen({
-    port: config.get('port'),
-    exclusive: true
+  const listenOpts = { port: config.get('port') }
+  const server = https.createServer(opts, app).listen(listenOpts, err => {
+    if (err) appLogger.log(`${err}`, 'error')
+    else appLogger.log('REST https server starting on port ' + config.get('port'))
   })
-  console.log('REST https server starting on port ' + config.get('port'))
   return server
 }
 
-function closeServer (server) {
-  return new Promise((resolve, reject) => {
-    server.close(err => {
-      if (err) return reject(err)
-      resolve()
-    })
-  })
-}
-
 module.exports = {
-  createServer,
-  closeServer
+  createServer
 }

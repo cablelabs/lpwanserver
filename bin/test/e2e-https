@@ -27,15 +27,15 @@ docker-compose -f ./docker/dev/loraserver/docker-compose.yml up -d
 # Run tests
 docker-compose -f ./docker/test/e2e-https/docker-compose.yml up --build \
   --abort-on-container-exit \
-  # --exit-code-from e2e-test
+  --exit-code-from e2e-test
 
-# TEST_EXIT_CODE=$?
+TEST_EXIT_CODE=$?
 
 # #Stop LoRa Servers
-# docker-compose -f ./docker/dev/loraserver/docker-compose.yml down
+docker-compose -f ./docker/dev/loraserver/docker-compose.yml down
 
 # # Start databases and prisma
-# ./bin/manage-db stop
+./bin/manage-db stop
 
 # # Exit script with the code from the test
-# exit $TEST_EXIT_CODE
+exit $TEST_EXIT_CODE

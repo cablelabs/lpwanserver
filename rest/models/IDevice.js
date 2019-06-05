@@ -4,7 +4,7 @@ var httpError = require('http-errors')
 const { onFail } = require('../lib/utils')
 const R = require('ramda')
 const Joi = require('@hapi/joi')
-const { redisClient } = require('../lib/redis')
+const { redisClient, redisPub } = require('../lib/redis')
 
 module.exports = class Device {
   constructor (modelAPI) {
@@ -123,8 +123,7 @@ module.exports = class Device {
     }
   }
 
-  async receiveIpDeviceUplink (devEUI, data, { remoteAddress, remotePort }) {
-    appLogger.log(`RECEIVE_IP_DEVICE_UPLINK: ${JSON.stringify({ devEUI, data, remoteAddress, remotePort })}`)
+  async receiveIpDeviceUplink (devEUI, data) {
     // Get IP Network Type
     let nwkType = await this.modelAPI.networkTypes.loadByName('IP')
     // Ensure a deviceNTL exists
@@ -138,41 +137,32 @@ module.exports = class Device {
     const app = await this.modelAPI.applications.load(device.application.id)
     // Ensure application is enabled
     if (!app.running) return
-    // Update device's location in redis
-    const cache = { remoteAddress, remotePort, updatedAt: Date.now() }
-    await this.setIpDeviceCache(device.id, cache)
     // Pass data
     let { records: nwkProtos } = await this.modelAPI.networkProtocols.list({ networkType: { id: nwkType.id } })
     const ipProtoHandler = await this.modelAPI.networkProtocols.getHandler(nwkProtos[0].id)
     await ipProtoHandler.passDataToApplication(app, device, devEUI, data)
     // Check for cached downlink messages
-    const msgs = await this.modelAPI.devices.getIpDeviceMessages(device.id)
-    if (!msgs.length) return
-    await Promise.all(msgs.map(x => ipProtoHandler.passDataToDevice(devNTL, device.id, x, cache, false)))
+    // const msgs = await this.modelAPI.devices.getIpDeviceMessages(device.id)
+    // if (!msgs.length) return
+    // await Promise.all(msgs.map(x => ipProtoHandler.passDataToDevice(devNTL, device.id, x, cache, false)))
   }
 
-  setIpDeviceCache (id, data) {
-    appLogger.log(`SET IP DEVICE CACHE ${JSON.stringify({ id, data })}`)
-    return redisClient.setAsync(`ip_device_conn:${id}`, JSON.stringify(data))
+  async pushIpDeviceDownlink (devEUI, data) {
+    data = JSON.stringify(data)
+    // TODO: dont push message if there are listeners to the channel
+    // In that case, just send data as the publish message
+    const result = await redisClient.rpushAsync(`ip_downlinks:${devEUI}`, data)
+    redisPub.publish(`downlink_received:${devEUI}`, '')
+    return result
   }
 
-  async getIpDeviceCache (id) {
-    const cache = await redisClient.getAsync(`ip_device_conn:${id}`)
-    appLogger.log(`GEt IP DEVICE CACHE ${JSON.stringify({ id, cache })}`)
-    return cache && JSON.parse(cache)
-  }
-
-  pushIpDeviceMessage (id, data) {
-    return redisClient.rpushAsync(`ip_device_msgs:${id}`, JSON.stringify(data))
-  }
-
-  async getIpDeviceMessages (id) {
-    let key = `ip_device_msgs:${id}`
+  async listIpDeviceDownlinks (devEUI) {
+    let key = `ip_downlinks:${devEUI}`
     const len = await redisClient.llenAsync(key)
     if (!len) return []
-    const msgs = await redisClient.lrangeAsync(key, 0, len)
-    await redisClient.ltrimAsync(key, 0, 0)
-    return msgs
+    let msgs = await redisClient.lrangeAsync(key, 0, len)
+    await redisClient.del(key)
+    return msgs.map(JSON.parse)
   }
 }
 

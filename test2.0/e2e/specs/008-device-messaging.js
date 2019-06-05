@@ -110,9 +110,10 @@ describe('E2E Test for Uplink/Downlink Device Messaging', () => {
       it('Pass data to device', async () => {
         const data = Buffer.from('01 17 01').toString('base64')
         const res = await send(
-          server.post(`/api/devices/${lora2DevId}/downlink`),
+          server.post(`/api/devices/${lora2DevId}/downlinks`),
           { data, fCnt: 0, fPort: 1 }
         )
+        console.log(res.text)
         res.status.should.equal(200)
       })
       it('Get device message from Lora Server v1 queue', async () => {
