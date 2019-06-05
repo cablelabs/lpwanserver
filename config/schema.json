@@ -9,7 +9,6 @@
     "jwt_secret",
     "port",
     "base_url",
-    "prisma_dir",
     "prisma_host"
   ],
   "properties": {
@@ -50,7 +49,7 @@
     },
     "port": {
       "type": "integer",
-      "description": "The port to bind the listener to",
+      "description": "The port for the HTTP server",
       "default": 8080,
       "minimum": 0
     },
@@ -75,11 +74,6 @@
     "base_url": {
       "type": "string",
       "description": "The base URL to use for links back to this site. Used for emails and application integrations.",
-      "default": ""
-    },
-    "prisma_dir": {
-      "type": "string",
-      "description": "Prisma sub-folder that corresponds with this deployment.",
       "default": ""
     },
     "prisma_protocol": {
@@ -111,6 +105,11 @@
       "type": "string",
       "description": "Path to folder holding web-client public assets, absolute or relative to root of repository",
       "default": "public"
+    },
+    "redis_url": {
+      "type": "string",
+      "description": "URL of redis.",
+      "default": ""
     }
   }
 }

@@ -1,17 +1,22 @@
 /* eslint-disable no-unused-vars */
 let chai = require('chai')
 let chaiHttp = require('chai-http')
-let app = require('../../../restApp.js')
+let createApp = require('../../../restApp')
 let should = chai.should()
 let setup = require('../setup.js')
 let appLogger = require('../../../rest/lib/appLogger.js')
 const Lora1 = require('../networks/lora-v1')
 const Lora2 = require('../networks/lora-v2')
+const { prisma } = require('../../../prisma/generated/prisma-client')
 
 chai.use(chaiHttp)
-let server = chai.request(app).keepOpen()
+let server
 
 describe('E2E Test for Updating a Device Use Case #193', () => {
+  let companyId
+  let reportingProtocolId
+  let networkTypeId
+
   let adminToken
   let appId1
   let anlId1
@@ -25,42 +30,13 @@ describe('E2E Test for Updating a Device Use Case #193', () => {
 
   const appName = 'UPDV'
   const appDescription = 'UPDV Description'
-  const companyId = 2
-  const reportingProtocolId = 1
   const baseUrl = 'http://localhost:5086'
-
-  const deviceProfile = {
-    'networkTypeId': 1,
-    'companyId': companyId,
-    'name': 'LoRaSoilReaderB',
-    'description': 'Soil Sensor that works with LoRa',
-    'networkSettings': {
-      'name': 'LoRaSoilReaderB',
-      'macVersion': '1.0.0',
-      'regParamsRevision': 'A',
-      'supportsJoin': true
-    }
-  }
 
   const device = {
     'applicationId': '',
     'name': 'UPDV001',
     'description': 'Soil Node Model 001',
     'deviceModel': 'Mark1'
-  }
-
-  const deviceNTL = {
-    'deviceId': '',
-    'networkTypeId': 1,
-    'deviceProfileId': '',
-    'networkSettings': {
-      'devEUI': '0080000000000501',
-      name: device.name,
-      description: device.description,
-      deviceKeys: {
-        'appKey': '112233445566889900112233445511'
-      }
-    }
   }
 
   const deviceUpdate = {
@@ -70,29 +46,72 @@ describe('E2E Test for Updating a Device Use Case #193', () => {
     'deviceModel': 'Mark1'
   }
 
-  const deviceNTLUpdate = {
-    'deviceId': '',
-    'networkTypeId': 1,
-    'deviceProfileId': '',
-    'networkSettings': {
-      'devEUI': '0080000000000501',
-      name: deviceUpdate.name,
-      description: deviceUpdate.description,
-      deviceKeys: {
-        'appKey': '112233445566889900112233445522'
+  let deviceProfile
+  let deviceNTL
+  let deviceNTLUpdate
+  let application
+
+  before(async () => {
+    const app = await createApp()
+    server = chai.request(app).keepOpen()
+    const cos = await prisma.companies({ first: 1 })
+    companyId = cos[0].id
+    const reportingProtocols = await prisma.reportingProtocols({ first: 1 })
+    reportingProtocolId = reportingProtocols[0].id
+    const nwkTypes = await prisma.networkTypes({ first: 1 })
+    networkTypeId = nwkTypes[0].id
+    await setup.start()
+
+    deviceProfile = {
+      networkTypeId,
+      'companyId': companyId,
+      'name': 'LoRaSoilReaderB',
+      'description': 'Soil Sensor that works with LoRa',
+      'networkSettings': {
+        'name': 'LoRaSoilReaderB',
+        'macVersion': '1.0.0',
+        'regParamsRevision': 'A',
+        'supportsJoin': true
       }
     }
-  }
 
-  before((done) => {
-    setup.start()
-      .then(() => {
-        done()
-      })
-      .catch((err) => {
-        done(err)
-      })
+    deviceNTL = {
+      'deviceId': '',
+      networkTypeId,
+      'deviceProfileId': '',
+      'networkSettings': {
+        'devEUI': '0080000000000501',
+        name: device.name,
+        description: device.description,
+        deviceKeys: {
+          'appKey': '112233445566889900112233445511'
+        }
+      }
+    }
+
+    deviceNTLUpdate = {
+      'deviceId': '',
+      networkTypeId,
+      'deviceProfileId': '',
+      'networkSettings': {
+        'devEUI': '0080000000000501',
+        name: deviceUpdate.name,
+        description: deviceUpdate.description,
+        deviceKeys: {
+          'appKey': '112233445566889900112233445522'
+        }
+      }
+    }
+
+    application = {
+      'companyId': companyId,
+      'name': appName,
+      'description': appDescription,
+      'baseUrl': baseUrl,
+      'reportingProtocolId': reportingProtocolId
+    }
   })
+
   describe('Verify Login and Administration of Users Works', () => {
     it('Admin Login to LPWan Server', (done) => {
       server
@@ -108,14 +127,6 @@ describe('E2E Test for Updating a Device Use Case #193', () => {
     })
   })
   describe('Create Application', () => {
-    let application =
-      {
-        'companyId': companyId,
-        'name': appName,
-        'description': appDescription,
-        'baseUrl': baseUrl,
-        'reportingProtocolId': reportingProtocolId
-      }
     let applicationNetworkSettings = {
       'description': appDescription,
       'name': appName
@@ -169,7 +180,7 @@ describe('E2E Test for Updating a Device Use Case #193', () => {
         .set('Content-Type', 'application/json')
         .send({
           'applicationId': appId1,
-          'networkTypeId': 1,
+          networkTypeId,
           'networkSettings': applicationNetworkSettings
         })
         .end(function (err, res) {

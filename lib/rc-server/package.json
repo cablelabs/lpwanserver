@@ -1,0 +1,17 @@
+{
+  "name": "rc-server",
+  "version": "1.0.0",
+  "description": "Remote Control Server - Command and Query with HTTP",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Nicholas Baroni",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.17.1",
+    "ramda": "^0.26.1",
+    "request": "^2.88.0",
+    "uuid": "^3.3.2"
+  }
+}

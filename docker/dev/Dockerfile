@@ -6,7 +6,7 @@ WORKDIR /usr/src/app
 
 COPY bin/rest bin/rest
 COPY config config
-COPY prisma/dev prisma/dev
+COPY prisma/generated prisma/generated
 COPY restApp.js ./restApp.js
 COPY server.js ./server.js
 COPY public public

@@ -1,22 +1,37 @@
 const path = require('path')
-const { prisma, formatInputData, formatRelationshipsIn } = require('../lib/prisma')
+const { prisma, formatInputData, formatRelationshipsIn, loadRecord } = require('../lib/prisma')
 const httpError = require('http-errors')
 const { onFail } = require('../lib/utils')
+const registerNetworkProtocols = require('../networkProtocols/register')
 
 const handlerDir = path.join(__dirname, '../networkProtocols/handlers')
 
 module.exports = class NetworkProtocol {
-  async create (name, networkTypeId, protocolHandler, version, masterProtocol) {
+  constructor () {
+    this.handlers = {}
+  }
+
+  async initialize (modelAPI) {
+    await registerNetworkProtocols(modelAPI)
+    const { records } = await this.list()
+    const handlersDir = path.join(__dirname, '../networkProtocols/handlers')
+    records.forEach(x => {
+      let Handler = require(path.join(handlersDir, x.protocolHandler))
+      this.handlers[x.id] = new Handler({ modelAPI, networkProtocolId: x.id })
+    })
+  }
+
+  async create (name, networkTypeId, protocolHandler, version, masterProtocolId) {
     const data = formatInputData({
       name,
       protocolHandler,
       networkProtocolVersion: version,
       networkTypeId,
-      masterProtocol
+      masterProtocolId
     })
     let rec = await prisma.createNetworkProtocol(data).$fragment(fragments.basic)
-    if (!masterProtocol) {
-      rec = await this.update({ id: rec.id, masterProtocol: rec.id })
+    if (!masterProtocolId) {
+      rec = await this.update({ id: rec.id, masterProtocolId: rec.id })
     }
     return rec
   }
@@ -26,7 +41,7 @@ module.exports = class NetworkProtocol {
     if (records.length) {
       return this.update({ id: records[0].id, ...np })
     }
-    return this.create(np.name, np.networkTypeId, np.protocolHandler, networkProtocolVersion, np.masterProtocol)
+    return this.create(np.name, np.networkTypeId, np.protocolHandler, networkProtocolVersion, np.masterProtocolId)
   }
 
   update ({ id, ...data }) {
@@ -35,10 +50,8 @@ module.exports = class NetworkProtocol {
     return prisma.updateNetworkProtocol({ data, where: { id } }).$fragment(fragments.basic)
   }
 
-  async load (id) {
-    const rec = await onFail(400, () => prisma.networkProtocol({ id }).$fragment(fragments.basic))
-    if (!rec) throw httpError(404, 'NetworkProtocol not found')
-    return addMetadata(rec)
+  load (id) {
+    return loadNetworkProtocol({ id })
   }
 
   async list ({ limit, offset, ...where } = {}) {
@@ -62,18 +75,12 @@ module.exports = class NetworkProtocol {
     return { totalCount, records: records.map(addMetadata) }
   }
 
-  deleteNetworkProtocol (id) {
+  remove (id) {
     return onFail(400, () => prisma.deleteNetworkProtocol({ id }))
   }
-}
 
-// ******************************************************************************
-// Helpers
-// ******************************************************************************
-function addMetadata (rec) {
-  return {
-    ...rec,
-    metaData: require(path.join(handlerDir, rec.protocolHandler, 'metadata'))
+  getHandler (id) {
+    return this.handlers[id]
   }
 }
 
@@ -86,9 +93,23 @@ const fragments = {
     name
     protocolHandler
     networkProtocolVersion
-    masterProtocol
+    masterProtocol {
+      id
+    }
     networkType {
       id
     }
   }`
 }
+
+// ******************************************************************************
+// Helpers
+// ******************************************************************************
+function addMetadata (rec) {
+  return {
+    ...rec,
+    metaData: require(path.join(handlerDir, rec.protocolHandler, 'metadata'))
+  }
+}
+
+const loadNetworkProtocol = loadRecord('networkProtocol', fragments, 'basic')

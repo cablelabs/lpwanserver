@@ -1,6 +1,6 @@
 var appLogger = require('../lib/appLogger.js')
 var httpError = require('http-errors')
-const { prisma, formatInputData, formatRelationshipsIn } = require('../lib/prisma')
+const { prisma, formatInputData, formatRelationshipsIn, loadRecord } = require('../lib/prisma')
 const { onFail } = require('../lib/utils')
 
 module.exports = class DeviceNetworkTypeLink {
@@ -38,7 +38,8 @@ module.exports = class DeviceNetworkTypeLink {
       }
       data = formatInputData(data)
       const rec = await prisma.updateDeviceNetworkTypeLink({ data, where: { id } }).$fragment(fragments.basic)
-      var logs = await this.modelAPI.networkTypeAPI.pushDevice(rec.networkType.id, rec, rec.networkSettings)
+      const device = await this.modelAPI.devices.load(rec.device.id)
+      var logs = await this.modelAPI.networkTypeAPI.pushDevice(rec.networkType.id, device)
       rec.remoteAccessLogs = logs
       return rec
     }
@@ -48,10 +49,8 @@ module.exports = class DeviceNetworkTypeLink {
     }
   }
 
-  async load (id) {
-    const rec = await onFail(400, () => prisma.deviceNetworkTypeLink({ id }).$fragment(fragments.basic))
-    if (!rec) throw httpError(404, 'DeviceNetworkTypeLink not found')
-    return rec
+  load (id) {
+    return loadDeviceNTL({ id })
   }
 
   async list ({ limit, offset, ...where } = {}) {
@@ -129,3 +128,8 @@ const fragments = {
     }
   }`
 }
+
+// ******************************************************************************
+// Helpers
+// ******************************************************************************
+const loadDeviceNTL = loadRecord('deviceNetworkTypeLink', fragments, 'basic')

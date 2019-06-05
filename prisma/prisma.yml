@@ -1,0 +1,9 @@
+endpoint: ${env:prisma_protocol}://${env:prisma_host}:${env:prisma_port}/lpwanserver/dev
+datamodel: ./versions/v1/datamodel.prisma
+
+generate:
+  - generator: javascript-client
+    output: ./generated/prisma-client/
+
+seed:
+  run: node ./versions/v1/seed.js

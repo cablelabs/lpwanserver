@@ -11,20 +11,21 @@ before_install:
   - curl -L https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > docker-compose
   - chmod +x docker-compose
   - sudo mv docker-compose /usr/local/bin
-  - cd .. && git clone --depth 1 https://github.com/cablelabs/lpwanserver-web-client.git && cd lpwanserver
 install:
   - npm ci
-  - ./bin/build-ui
+  - mkdir certs && ./bin/generate-development-certificates
 cache:
   directories:
     - "$HOME/.npm"
-before_script:
-  - npm run package
 script:
   - npm run test:e2e
+  - npm run test:e2e-https
 after_success: npm run coverage
 before_deploy:
+  - cd .. && git clone --depth 1 https://github.com/cablelabs/lpwanserver-web-client.git && cd lpwanserver
+  - ./bin/build-ui
   - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+  - npm run package
 deploy:
   provider: script
   script: docker push lpwanserver/lpwanserver

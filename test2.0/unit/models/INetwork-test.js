@@ -4,7 +4,7 @@ const assert = require('assert')
 const chai = require('chai')
 // eslint-disable-next-line no-unused-vars
 const should = chai.should()
-
+const { prisma } = require('../../../prisma/generated/prisma-client')
 const TestModule = require('../../../rest/models/INetwork')
 const NetworkProviderModule = require('../../../rest/models/INetworkProvider')
 const NetworkProtocolModule = require('../../../rest/models/INetworkProtocol')
@@ -30,7 +30,8 @@ describe('Unit Tests for ' + testName, () => {
     // create network protocol and NetworkProvider
     const ntwkProtocolModule = new NetworkProtocolModule(modelAPIMock)
     const ntwkProviderModule = new NetworkProviderModule(modelAPIMock)
-    let result = await ntwkProtocolModule.create('test', 1)
+    const nwkTypes = await prisma.networkTypes()
+    let result = await ntwkProtocolModule.create('test', nwkTypes[0].id)
     networkProtocolId = result.id
     result = await ntwkProviderModule.create('test')
     networkProviderId = result.id
@@ -49,12 +50,13 @@ describe('Unit Tests for ' + testName, () => {
     actual.should.have.property('records')
   })
   it(testName + ' Create', async () => {
+    const nwkTypes = await prisma.networkTypes()
     let testModule = new TestModule(modelAPIMock)
     should.exist(testModule)
     let body = {
       name: 'tests',
       networkProviderId,
-      networkTypeId: 1,
+      networkTypeId: nwkTypes[0].id,
       networkProtocolId,
       baseUrl: 'http://localhost:6000',
       securityData: {}
@@ -75,9 +77,6 @@ describe('Unit Tests for ' + testName, () => {
     let updated = {
       id: networkId,
       name: 'test',
-      networkTypeId: 1,
-      networkProviderId,
-      networkProtocolId,
       baseUrl: 'http://localhost:7000'
     }
     const actual = await testModule.update(updated)

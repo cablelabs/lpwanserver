@@ -67,6 +67,9 @@ module.exports = {
       else {
         throw new Error('Application Not Found')
       }
+    },
+    getHandler () {
+      return { report: () => ({}) }
     }
   },
   passwordPolicies: {

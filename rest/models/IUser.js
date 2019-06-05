@@ -1,27 +1,19 @@
 const appLogger = require('../lib/appLogger.js')
 const config = require('../config')
-const { prisma, formatInputData, formatRelationshipsIn } = require('../lib/prisma')
+const { prisma, formatInputData, formatRelationshipsIn, loadRecord } = require('../lib/prisma')
 const crypto = require('../lib/crypto.js')
 const uuidgen = require('uuid')
 const httpError = require('http-errors')
 const { onFail } = require('../lib/utils')
 const R = require('ramda')
+const Joi = require('@hapi/joi')
 
 module.exports = class User {
   constructor (modelAPI) {
     this.modelAPI = modelAPI
-    this.ROLE_ADMIN = 2
-    this.ROLE_USER = 1
-    this.roles = {}
-    this.reverseRoles = {}
   }
 
   async init () {
-    const roles = await prisma.userRoles()
-    for (var i = 0; i < roles.length; ++i) {
-      this.roles[ roles[ i ].name ] = roles[ i ].id
-      this.reverseRoles[ roles[ i ].id ] = roles[ i ].name
-    }
     // Expire records every 24 hours.
     // (24 hours * 60 minutes * 60 seconds * 1000 milliseconds)
     setInterval(this.expireEmailVerify.bind(this), 24 * 60 * 60 * 1000)
@@ -46,33 +38,17 @@ module.exports = class User {
     )
   }
 
-  async create (username, password, email, companyId, roleId) {
-    // Create the user record.
-    const data = formatInputData({
-      username,
-      companyId,
-      roleId,
-      email
-    })
-    // Only allow admin if they pass in the correct admin value.
-    // Otherwise, regular user.
-    if (this.ROLE_ADMIN !== roleId) {
-      data.role.connect.id = this.ROLE_USER
-    }
+  async create (data) {
+    // Check payload against Joi schema
+    let { error } = Joi.validate(data, userCreateSchema)
+    if (error) throw httpError(400, error.message)
+    // Verify password passes company password policy
+    await this.modelAPI.passwordPolicies.validatePassword(data.companyId, data.password)
     let user
     try {
-      if (!email && this.ROLE_ADMIN === roleId) {
-        throw new Error('Email MUST be provided for Admin account.')
-      }
-      // MUST have a password.  It MUST pass the rules for the company.
-      // Returned hash is the salt and hash combined.
-      if (!password) {
-        throw new Error('Password MUST be provided.')
-      }
-      await this.modelAPI.passwordPolicies.validatePassword(companyId, password)
-      data.passwordHash = await crypto.hashPassword(password)
+      data.passwordHash = await crypto.hashPassword(data.password)
       delete data.password
-      user = await prisma.createUser(data).$fragment(fragments.profile)
+      user = await prisma.createUser(formatInputData(data)).$fragment(fragments.profile)
     }
     catch (err) {
       throw httpError(400, err.message)
@@ -97,12 +73,12 @@ module.exports = class User {
     return loadUser({ username }, fragment)
   }
 
-  async update ({ id, role, ...data }) {
+  async update ({ id, ...data }) {
     // MUST have at least an ID field in the passed update record.
     if (!id) throw httpError(400, 'No existing user ID')
 
     let originalUser = await this.load(id)
-    data = formatInputData({ ...data, roleId: role })
+    data = formatInputData(data)
 
     if (data.password) {
       const company = data.company || originalUser.company
@@ -112,9 +88,7 @@ module.exports = class User {
       delete data.password
     }
 
-    if (role &&
-        role === this.ROLE_ADMIN &&
-        !(data.email || originalUser.email)) {
+    if (data.role === 'ADMIN' && !(data.email || originalUser.email)) {
       throw httpError(400, 'Invalid change to ADMIN without an email')
     }
 
@@ -171,7 +145,7 @@ module.exports = class User {
 
   async authorizeUser (username, password) {
     try {
-      const user = await this.loadByUsername(username, 'internal')
+      const user = await loadUser({ username }, 'internal')
       const matches = await crypto.verifyPassword(password, user.passwordHash)
       if (!matches) throw new Error(`authorizeUser: passwords don't match username "${username}`)
       return dropInternalProps(user)
@@ -217,14 +191,69 @@ module.exports = class User {
   }
 }
 
+//* *****************************************************************************
+// Fragments for how the data should be returned from Prisma.
+//* *****************************************************************************
+const fragments = {
+  internal: `fragment InternalUser on User {
+    id
+    username
+    email
+    emailVerified
+    lastVerifiedEmail
+    passwordHash
+    role
+    company {
+      id
+    }
+  }`,
+  basic: `fragment BasicUser on User {
+    id
+    username
+    email
+    role
+    company {
+      id
+    }
+  }`,
+  profile: `fragment UserProfile on User {
+    id
+    username
+    email
+    emailVerified
+    role
+    company {
+      id
+      name
+      type
+    }
+  }`,
+  userEmail: `fragment UserEmail on User {
+    email
+  }`,
+  emailVerification: `fragment BasicEmailVerification on EmailVerification {
+    id
+    uuid
+    email
+    changeRequested
+    user {
+      id
+    }
+  }`
+}
+
 // *********************************************************************
 // Helpers
 // *********************************************************************
-async function loadUser (uniqueKeyObj, fragementKey = 'internal') {
-  const rec = await onFail(400, () => prisma.user(uniqueKeyObj).$fragment(fragments[fragementKey]))
-  if (!rec) throw httpError(404, 'User not found')
-  return rec
-}
+const userCreateSchema = Joi.object().keys({
+  username: Joi.string().required(),
+  password: Joi.string().required(),
+  companyId: Joi.string().required(),
+  role: Joi.string(),
+  email: Joi.string().email({ minDomainSegments: 2 }).when('role', { is: 'ADMIN', then: Joi.required(), otherwise: Joi.optional() })
+})
+
+const loadUser = loadRecord('user', fragments, 'basic')
 
 async function retrieveEmailVerification (uuid) {
   const ev = await onFail(400, () => prisma.emailVerification({ uuid }).$fragment(fragments.emailVerification))
@@ -235,7 +264,6 @@ async function retrieveEmailVerification (uuid) {
 function deleteEmailVerification (uuid) {
   return onFail(400, () => prisma.deleteEmailVerification({ uuid }))
 }
-
 
 // Starts the process of verifying email.  We assume the email address has
 // already been updated by the caller, with the old email saved and the new
@@ -277,62 +305,3 @@ async function emailVerify (userId, username, newemail, oldemail, urlRoot) {
 }
 
 const dropInternalProps = R.omit(['passwordHash', 'emailVerified', 'lastVerifiedEmail'])
-
-//* *****************************************************************************
-// Fragments for how the data should be returned from Prisma.
-//* *****************************************************************************
-const fragments = {
-  internal: `fragment InternalUser on User {
-    id
-    username
-    email
-    emailVerified
-    lastVerifiedEmail
-    passwordHash
-    company {
-      id
-    }
-    role {
-      id
-    }
-  }`,
-  basic: `fragment BasicUser on User {
-    id
-    username
-    email
-    company {
-      id
-    }
-    role {
-      id
-    }
-  }`,
-  profile: `fragment UserProfile on User {
-    id
-    username
-    email
-    emailVerified
-    company {
-      id
-      name
-      type {
-        id
-      }
-    }
-    role {
-      id
-    }
-  }`,
-  userEmail: `fragment UserEmail on User {
-    email
-  }`,
-  emailVerification: `fragment BasicEmailVerification on EmailVerification {
-    id
-    uuid
-    email
-    changeRequested
-    user {
-      id
-    }
-  }`
-}

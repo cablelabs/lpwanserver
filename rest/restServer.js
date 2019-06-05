@@ -23,9 +23,6 @@ var restNetworkProvidersAPI = require('./restNetworkProviders.js')
 // The abstract data model.
 var ModelAPI = require('./models/ModelAPI.js')
 
-// The session model.
-var sessions
-
 // The RestServer for use in methods called without proper scope.
 var restServer
 
@@ -89,6 +86,10 @@ function RestServer (app) {
 
   // The applicationNetworkTypeLink model.
   restDeviceNetworkTypeLinksAPI.initialize(app, this)
+}
+
+RestServer.prototype.initialize = async function initializeRestServer () {
+  await this.modelAPI.initialize()
 }
 
 // *******************************************************************
@@ -197,8 +198,7 @@ RestServer.prototype.isAdminCompany = function (req, res, next) {
 // res  - The rest response object to be notified if not authorized.
 // next - The next step in processing to perform.
 RestServer.prototype.isAdmin = function (req, res, next) {
-  if ((req.company.type.id === restServer.modelAPI.companies.COMPANY_ADMIN) ||
-         (req.user.role.id === restServer.modelAPI.users.ROLE_ADMIN)) {
+  if (req.company.type === 'ADMIN' || req.user.role === 'ADMIN') {
     next()
   }
   else {
@@ -234,4 +234,4 @@ RestServer.prototype.fetchCompany = function (req, res, next) {
   }
 }
 
-exports.RestServer = RestServer
+module.exports = RestServer

@@ -6,31 +6,24 @@ docker container rm \
   lpwanserver_dev_prisma \
   lpwanserver_dev_postgres --force
 
-# Remove old volumes
 docker volume rm \
-  lpwanserver_dev_postgres --force
+  lpwanserver_dev_postgres \
+  lpwanserver_dev_redis --force
 
-# Start prisma daemon
-docker-compose -f ./prisma/dev/docker-compose.yml up -d
-
-sleep 5s
-
-# Deploy prisma
-npm run prisma:dev deploy
-
-# npm run package-test
-node ./bin/test/package-unit.js
+# Start databases and prisma
+./bin/manage-db start
+./bin/manage-db deploy
 
 # Run docker-compose with development configuration
 docker-compose \
-  -f ./docker/test/unit/docker-compose.yml up \
+  -f ./docker/test/unit/docker-compose.yml up --build \
   --abort-on-container-exit \
   --exit-code-from unit-test
 
 TEST_EXIT_CODE=$?
 
-# Stop prisma daemon
-docker-compose -f ./prisma/dev/docker-compose.yml down
+# Stop databases
+./bin/manage-db stop
 
 # Exit script with the code from the test
 exit $TEST_EXIT_CODE

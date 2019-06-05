@@ -1,6 +1,6 @@
 let chai = require('chai')
 let chaiHttp = require('chai-http')
-let app = require('../../../restApp.js')
+let createApp = require('../../../restApp')
 let setup = require('../setup.js')
 const Lora1 = require('../networks/lora-v1')
 const Lora2 = require('../networks/lora-v2')
@@ -10,7 +10,7 @@ const { wait } = require('../../lib/helpers')
 
 var should = chai.should()
 chai.use(chaiHttp)
-let server = chai.request(app).keepOpen()
+let server
 
 // let ttnDownlinkVerified = false
 
@@ -43,12 +43,13 @@ describe('E2E Test for Uplink/Downlink Device Messaging', () => {
     .send(data)
 
   before(async () => {
+    const app = await createApp()
+    server = chai.request(app).keepOpen()
     await setup.start()
     rcServer = await createRcServer({
       port: process.env.APP_SERVER_PORT,
       maxRequestAge: 5000
     })
-    // await listenForTtnDownlink()
   })
 
   it('Admin Login to LPWan Server', async () => {
@@ -109,11 +110,11 @@ describe('E2E Test for Uplink/Downlink Device Messaging', () => {
       it('Pass data to device', async () => {
         const data = Buffer.from('01 17 01').toString('base64')
         const res = await send(
-          server.post(`/api/devices/${lora2DevId}/downlink`),
+          server.post(`/api/devices/${lora2DevId}/downlinks`),
           { data, fCnt: 0, fPort: 1 }
         )
+        console.log(res.text)
         res.status.should.equal(200)
-        await wait(10000)
       })
       it('Get device message from Lora Server v1 queue', async () => {
         const res = await Lora1.client.listDeviceMessages(Lora1.network, Lora2.device.devEUI)

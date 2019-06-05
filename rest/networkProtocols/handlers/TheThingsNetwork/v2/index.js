@@ -21,30 +21,14 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
   constructor (opts) {
     super(opts)
     this.client = new ApiClient()
-    this.networkProtocolId = null
+    this.networkProtocolId = opts.networkProtocolId
     this.client.on('uplink', x => this.modelAPI.applications.passDataToApplication(x.appId, x.networkId, x.payload))
-  }
-
-  /**
-   * Upon startup this function "registers" the protocol with the system.
-   *
-   * @param networkProtocols - Module to access the network protocols in the database
-   * @returns {Promise<?>} - Empty promise means register worked
-   */
-  async register (networkProtocols) {
-    appLogger.log('TTN:register', 'info')
-    const rec = await networkProtocols.upsert({
-      name: 'The Things Network',
-      networkTypeId: 1,
-      protocolHandler: 'TheThingsNetwork/v2',
-      networkProtocolVersion: '2.0'
-    })
-    this.networkProtocolId = rec.id
-    await this.subscribeToDataForEnabledApps()
+    this.subscribeToDataForEnabledApps()
   }
 
   async subscribeToDataForEnabledApps () {
-    const antlQuery = { networkType: { id: 1 } }
+    const nwkType = await this.modelAPI.networkTypes.loadByName('LoRa')
+    const antlQuery = { networkType: { id: nwkType.id } }
     const { records: antls } = await this.modelAPI.applicationNetworkTypeLinks.list(antlQuery)
     let appIds = antls.map(R.path(['application', 'id']))
     const networkQuery = { networkProtocol: { id: this.networkProtocolId } }
@@ -130,7 +114,7 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
     }
   }
 
-  async addRemoteApplication (accountServerApp, network, modelAPI, dataAPI) {
+  async addRemoteApplication (accountServerApp, network, modelAPI) {
     try {
       let handlerApp = await this.client.loadHandlerApplication(network, accountServerApp.id)
       let integration
@@ -143,11 +127,13 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
       let normalizedApplication = this.normalizeApplicationData(handlerApp, accountServerApp, network)
       const { records: localApps } = await modelAPI.applications.list({ search: accountServerApp.name })
       let localApp = localApps[0]
+      const { records: cos } = await modelAPI.companies.list()
+      const { records: reportingProtos } = await modelAPI.reportingProtocols.list()
       if (!localApp) {
         const localAppData = {
           ...R.pick(['name', 'description'], normalizedApplication),
-          companyId: 2,
-          reportingProtocolId: 1
+          companyId: cos[0].id,
+          reportingProtocolId: reportingProtos[0].id
         }
         if (integration) localAppData.baseUrl = integration.settings.TTI_URL
         localApp = await modelAPI.applications.create(localAppData)
@@ -246,13 +232,15 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
     }
   }
 
-  async addRemoteDeviceProfile (remoteDevice, application, network, modelAPI) {
+  async addRemoteDeviceProfile (remoteDevice, application, network) {
     let networkSpecificDeviceProfileInformation = this.normalizeDeviceProfileData(remoteDevice, application)
     appLogger.log(networkSpecificDeviceProfileInformation, 'error')
+    const { records: cos } = await this.modelAPI.companies.list({ limit: 1 })
+    let company = cos[0]
     try {
-      const existingDeviceProfile = await modelAPI.deviceProfiles.create(
+      const existingDeviceProfile = await this.modelAPI.deviceProfiles.create(
         network.networkType.id,
-        2,
+        company.id,
         networkSpecificDeviceProfileInformation.name,
         'Device Profile managed by LPWAN Server, perform changes via LPWAN',
         networkSpecificDeviceProfileInformation,

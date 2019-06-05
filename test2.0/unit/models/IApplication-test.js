@@ -4,7 +4,7 @@ var assert = require('assert')
 var chai = require('chai')
 // eslint-disable-next-line no-unused-vars
 var should = chai.should()
-
+const { prisma } = require('../../../prisma/generated/prisma-client')
 var { Application: TestModule } = require('../../../rest/models/IApplication')
 const modelAPIMock = require('../../mock/ModelAPI-mock')
 
@@ -54,13 +54,15 @@ describe('Unit Tests for ' + testName, () => {
     actual.should.have.property('records')
   })
   it(testName + ' Create', async () => {
+    const cos = await prisma.companies()
+    const rProtos = await prisma.reportingProtocols()
     let testModule = new TestModule(modelAPIMock)
     should.exist(testModule)
     const actual = await testModule.create({
       name: 'test',
       description: 'test application',
-      companyId: 1,
-      reportingProtocolId: 1,
+      companyId: cos[0].id,
+      reportingProtocolId: rProtos[0].id,
       baseUrl: 'http://localhost:5000'
     })
     assertAppProps(actual)
@@ -79,8 +81,6 @@ describe('Unit Tests for ' + testName, () => {
       id: appId,
       name: 'test',
       description: 'updated description',
-      companyId: 1,
-      reportingProtocolId: 1,
       baseUrl: 'http://localhost:5000'
     }
     const actual = await testModule.update(updated)

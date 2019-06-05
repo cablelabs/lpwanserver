@@ -9,16 +9,6 @@ module.exports = class LoraOpenSourceV1 extends LoraOpenSource {
     this.client = new ApiClient()
   }
 
-  async register (networkProtocolModel) {
-    appLogger.log('LoraOpenSource:register')
-    await networkProtocolModel.upsert({
-      name: 'LoRa Server',
-      networkTypeId: 1,
-      protocolHandler: 'LoraOpenSource/v1',
-      networkProtocolVersion: '1.0'
-    })
-  }
-
   buildRemoteDevice (device, deviceNtl, deviceProfile, remoteAppId, remoteDeviceProfileId) {
     const result = super.buildRemoteDevice(device, deviceNtl, deviceProfile, remoteAppId, remoteDeviceProfileId)
     if (deviceNtl.networkSettings.deviceKeys) {

@@ -1,6 +1,6 @@
 let chai = require('chai')
 let chaiHttp = require('chai-http')
-let app = require('../../../restApp.js')
+let createApp = require('../../../restApp')
 let setup = require('../setup.js')
 let appLogger = require('../../../rest/lib/appLogger.js')
 let Data = require('../../data')
@@ -8,10 +8,11 @@ const { assertEqualProps } = require('../../lib/helpers')
 const Lora1 = require('../networks/lora-v1')
 const Lora2 = require('../networks/lora-v2')
 const Loriot = require('../networks/loriot')
+const { prisma } = require('../../../prisma/generated/prisma-client')
 
 var should = chai.should()
 chai.use(chaiHttp)
-let server = chai.request(app).keepOpen()
+let server
 
 const describeLoriot = process.env.LORIOT_ENABLED === 'true' ? describe : describe.skip.bind(describe)
 
@@ -22,20 +23,38 @@ let remoteAppLoriot = ''
 let remoteDeviceProfileId = ''
 let remoteDeviceProfileId2 = ''
 
-const testData = {
-  ...Data.applicationTemplates.default({
-    name: 'DLAP',
-    companyId: 2
-  }),
-  ...Data.deviceTemplates.weatherNode({
-    name: 'DLAP001',
-    companyId: 2,
-    devEUI: '0080000000000701'
-  })
-}
-
 describe('E2E Test for Deleting an Application Use Case #191', () => {
-  before(() => setup.start())
+  let companyId
+  let reportingProtocolId
+  let networkTypeId
+  let testData
+
+  before(async () => {
+    const app = await createApp()
+    server = chai.request(app).keepOpen()
+    const cos = await prisma.companies({ first: 1 })
+    companyId = cos[0].id
+    const reportingProtocols = await prisma.reportingProtocols({ first: 1 })
+    reportingProtocolId = reportingProtocols[0].id
+    const nwkTypes = await prisma.networkTypes({ first: 1 })
+    networkTypeId = nwkTypes[0].id
+    await setup.start()
+
+    testData = {
+      ...Data.applicationTemplates.default({
+        name: 'DLAP',
+        companyId,
+        networkTypeId,
+        reportingProtocolId
+      }),
+      ...Data.deviceTemplates.weatherNode({
+        name: 'DLAP001',
+        companyId,
+        networkTypeId,
+        devEUI: '0080000000000701'
+      })
+    }
+  })
 
   describe('Verify Login and Administration of Users Works', () => {
     it('Admin Login to LPWan Server', (done) => {

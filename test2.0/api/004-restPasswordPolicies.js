@@ -1,33 +1,26 @@
 var assert = require('assert')
 var chai = require('chai')
 var chaiHttp = require('chai-http')
-var app = require('../../restApp.js')
+var createApp = require('../../restApp')
 var should = chai.should()
+const { prisma } = require('../../prisma/generated/prisma-client')
 
 chai.use(chaiHttp)
-var server = chai.request(app).keepOpen()
+var server
+let companyId
 
 describe('PasswordPolicies', function () {
   var adminToken
 
-  before('User Sessions', function (done) {
-    var sessions = 0
-    var waitFunc = function () {
-      ++sessions
-      if (sessions >= 1) {
-        done()
-      }
-    }
-    server
+  before('User Sessions', async () => {
+    const app = await createApp()
+    server = chai.request(app).keepOpen()
+    const res = await server
       .post('/api/sessions')
       .send({ 'login_username': 'admin', 'login_password': 'password' })
-      .end(function (err, res) {
-        if (err) {
-          return done(err)
-        }
-        adminToken = res.text
-        waitFunc()
-      })
+    adminToken = res.text
+    const cos = await prisma.companies({ where: { name: 'SysAdmins' } })
+    companyId = cos[0].id
   })
 
   var ppId1
@@ -38,7 +31,7 @@ describe('PasswordPolicies', function () {
         .post('/api/passwordPolicies')
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
-        .send({ 'ruleText': 'Must be some number of Zs', 'ruleRegExp': 'Z+', 'companyId': 1 })
+        .send({ 'ruleText': 'Must be some number of Zs', 'ruleRegExp': 'Z+', 'companyId': companyId })
         .end(function (err, res) {
           if (err) return done(err)
           res.should.have.status(200)
@@ -53,7 +46,7 @@ describe('PasswordPolicies', function () {
         .post('/api/users')
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
-        .send({ 'username': 'test1', 'password': 'test11', 'role': 'user', 'companyId': 1 })
+        .send({ 'username': 'test1', 'password': 'test11', 'role': 'USER', 'companyId': companyId })
         .end(function (err, res) {
           if (err) return done(err)
           res.should.have.status(400)
@@ -66,7 +59,7 @@ describe('PasswordPolicies', function () {
         .post('/api/users')
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
-        .send({ 'username': 'test1', 'password': 'ZZZZZZ', 'role': 'user', 'companyId': 1 })
+        .send({ 'username': 'test1', 'password': 'ZZZZZZ', 'role': 'USER', 'companyId': companyId })
         .end(function (err, res) {
           if (err) return done(err)
           res.should.have.status(200)
@@ -90,7 +83,7 @@ describe('PasswordPolicies', function () {
         .post('/api/passwordPolicies')
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
-        .send({ 'ruleText': 'Must be at least 9 characters', 'ruleRegExp': '^\S{9,}$', 'companyId': 1 })
+        .send({ 'ruleText': 'Must be at least 9 characters', 'ruleRegExp': '^\\S{9,}$', 'companyId': companyId })
         .end(function (err, res) {
           if (err) return done(err)
           res.should.have.status(200)
@@ -119,7 +112,7 @@ describe('PasswordPolicies', function () {
   describe('GET /api/passwordPolicies', function () {
     it('should return 200 with 3 policies on admin', function (done) {
       server
-        .get('/api/passwordPolicies/company/1')
+        .get(`/api/passwordPolicies/company/${companyId}`)
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {
@@ -134,7 +127,7 @@ describe('PasswordPolicies', function () {
 
     it('should return 200 with 1 passwordPolicies on user', function (done) {
       server
-        .get('/api/passwordPolicies/company/1')
+        .get(`/api/passwordPolicies/company/${companyId}`)
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {
@@ -149,7 +142,7 @@ describe('PasswordPolicies', function () {
 
     it('should return 200 with 3 passwordPolicy on admin', function (done) {
       server
-        .get('/api/passwordPolicies/company/1')
+        .get(`/api/passwordPolicies/company/${companyId}`)
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {

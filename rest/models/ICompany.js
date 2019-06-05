@@ -1,29 +1,11 @@
 const appLogger = require('../lib/appLogger.js')
 const { onFail } = require('../lib/utils')
-const { prisma } = require('../lib/prisma')
+const { prisma, loadRecord } = require('../lib/prisma')
 var httpError = require('http-errors')
 
 module.exports = class Company {
   constructor (modelAPI) {
     this.modelAPI = modelAPI
-    this.COMPANY_ADMIN = 1
-    this.COMPANY_VENDOR = 2
-    this.types = {}
-    this.reverseTypes = {}
-  }
-
-  async init () {
-    try {
-      const types = await prisma.companyTypes()
-      for (var i = 0; i < types.length; ++i) {
-        this.types[ types[ i ].name ] = types[ i ].id
-        this.reverseTypes[ types[ i ].id ] = types[ i ].name
-      }
-    }
-    catch (err) {
-      appLogger.log('Failed to load company types: ' + err)
-      throw err
-    }
   }
 
   create (name, type) {
@@ -33,7 +15,9 @@ module.exports = class Company {
 
   update ({ id, ...data }) {
     if (!id) throw httpError(400, 'No existing Company ID')
-    if (data.type) data.type = { connect: { id: data.type } }
+    if (data.type === 'ADMIN') {
+      throw httpError(403, 'Not able to change company type to ADMIN')
+    }
     return prisma.updateCompany({ data, where: { id } }).$fragment(fragments.basic)
   }
 
@@ -95,10 +79,10 @@ module.exports = class Company {
     }
     try {
       // Delete passwordPolicies
-      let { records: pwdPolicies } = await this.modelAPI.passwordPolicies.retrievePasswordPolicies(id)
+      let { records: pwdPolicies } = await this.modelAPI.passwordPolicies.list(id)
       // We can get null companyIds for cross-company rules - don't delete those.
       pwdPolicies = pwdPolicies.filter(x => x.company.id === id)
-      await Promise.all(pwdPolicies.map(x => this.modelAPI.passwordPolicies.deletePasswordPolicy(x.id)))
+      await Promise.all(pwdPolicies.map(x => this.modelAPI.passwordPolicies.remove(x.id)))
     }
     catch (err) {
       appLogger.log("Error deleting company's PasswordPolicies: " + err)
@@ -115,12 +99,6 @@ module.exports = class Company {
   }
 }
 
-async function loadCompany (uniqueKeyObj, fragementKey = 'basic') {
-  const rec = await onFail(400, () => prisma.company(uniqueKeyObj).$fragment(fragments[fragementKey]))
-  if (!rec) throw httpError(404, 'Company not found')
-  return rec
-}
-
 //* *****************************************************************************
 // Fragments for how the data should be returned from Prisma.
 //* *****************************************************************************
@@ -128,8 +106,11 @@ const fragments = {
   basic: `fragment BasicCompany on Company {
     id
     name
-    type {
-      id
-    }
+    type
   }`
 }
+
+// ******************************************************************************
+// Helpers
+// ******************************************************************************
+const loadCompany = loadRecord('company', fragments, 'basic')

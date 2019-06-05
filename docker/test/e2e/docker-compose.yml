@@ -2,7 +2,9 @@ version: '3.5'
 
 services:
   e2e-test:
-    image: lpwanserver/e2e-test
+    build:
+      context: ../../..
+      dockerfile: docker/test/e2e/Dockerfile
     container_name: lpwanserver_dev_e2e_test
     networks:
       - lpwanserver_dev
@@ -18,11 +20,8 @@ services:
       - TTN_CLIENT_SECRET=${TTN_CLIENT_SECRET}
       - LORIOT_ENABLED=${LORIOT_ENABLED:-false}
       - LORIOT_API_KEY=${LORIOT_API_KEY}
-    depends_on:
-      - loraserver
-      - loraserver1
-      - lora_appserver
-      - lora_appserver1
+    volumes:
+      - ../../../certs:/usr/src/app/certs
 networks:
   lpwanserver_dev:
     name: lpwanserver_dev

@@ -1,0 +1,61 @@
+version: '3.5'
+
+services:
+  lpwanserver:
+    build:
+      context: ../../..
+      dockerfile: docker/Dockerfile
+    image: lpwanserver/lpwanserver
+    container_name: lpwanserver
+    networks:
+      - lpwanserver_dev
+    ports:
+      - '3200:3200'
+    environment:
+      - port=3200
+      - config_file=config/dev.json
+      - public_dir=public
+    volumes:
+      - ../../../certs:/usr/src/app/certs
+
+  app-server:
+    build:
+      context: ../../..
+      dockerfile: lib/rc-server/Dockerfile
+    container_name: lpwanserver_dev_e2e_app_server
+    networks:
+      - lpwanserver_dev
+    ports:
+      - '3201:3201'
+    environment:
+      - PORT=3201
+
+  e2e-test:
+    build:
+      context: ../../..
+      dockerfile: docker/test/e2e-https/Dockerfile
+    container_name: lpwanserver_dev_e2e_test
+    networks:
+      - lpwanserver_dev
+    depends_on:
+      - lpwanserver
+      - app-server
+    environment:
+      - prisma_protocol=http
+      - prisma_host=prisma
+      - prisma_port=4466
+      - LPWANSERVER_URL=https://lpwanserver:3200
+      - APP_SERVER_URL=http://app-server:3201
+      - TTN_ENABLED=${TTN_ENABLED:-false}
+      - TTN_USERNAME=${TTN_USERNAME}
+      - TTN_PASSWORD=${TTN_PASSWORD}
+      - TTN_CLIENT_ID=${TTN_CLIENT_ID}
+      - TTN_CLIENT_SECRET=${TTN_CLIENT_SECRET}
+      - LORIOT_ENABLED=${LORIOT_ENABLED:-false}
+      - LORIOT_API_KEY=${LORIOT_API_KEY}
+    volumes:
+      - ../../../certs:/usr/src/app/certs
+
+networks:
+  lpwanserver_dev:
+    name: lpwanserver_dev

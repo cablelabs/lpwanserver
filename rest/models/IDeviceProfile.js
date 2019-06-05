@@ -1,5 +1,5 @@
 var appLogger = require('../lib/appLogger.js')
-const { prisma, formatInputData, formatRelationshipsIn } = require('../lib/prisma')
+const { prisma, formatInputData, formatRelationshipsIn, loadRecord } = require('../lib/prisma')
 var httpError = require('http-errors')
 const { onFail } = require('../lib/utils')
 
@@ -49,8 +49,7 @@ module.exports = class DeviceProfile {
   }
 
   async load (id) {
-    const rec = await onFail(400, () => prisma.deviceProfile({ id }).$fragment(fragments.basic))
-    if (!rec) throw httpError(404, 'DeviceProfile not found')
+    const rec = await loadDeviceProfile({ id })
     return parseNetworkSettings(rec)
   }
 
@@ -111,15 +110,6 @@ module.exports = class DeviceProfile {
   }
 }
 
-// ******************************************************************************
-// Helpers
-// ******************************************************************************
-function parseNetworkSettings (x) {
-  return typeof x.networkSettings === 'string'
-    ? { ...x, networkSettings: JSON.parse(x.networkSettings) }
-    : x
-}
-
 //* *****************************************************************************
 // Fragments for how the data should be returned from Prisma.
 //* *****************************************************************************
@@ -137,3 +127,14 @@ const fragments = {
     }
   }`
 }
+
+// ******************************************************************************
+// Helpers
+// ******************************************************************************
+function parseNetworkSettings (x) {
+  return typeof x.networkSettings === 'string'
+    ? { ...x, networkSettings: JSON.parse(x.networkSettings) }
+    : x
+}
+
+const loadDeviceProfile = loadRecord('deviceProfile', fragments, 'basic')

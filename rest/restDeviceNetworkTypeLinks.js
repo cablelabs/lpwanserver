@@ -51,29 +51,11 @@ exports.initialize = function (app, server) {
      * @apiVersion 0.1.0
      */
   app.get('/api/deviceNetworkTypeLinks', [restServer.isLoggedIn,
-    restServer.fetchCompany], function (req, res, next) {
-    var options = {}
+    restServer.fetchCompany], function (req, res) {
+    var options = { ...req.query }
     // Limit by company, too, if not a system admin.
-    if (req.company.type.id !== modelAPI.companies.COMPANY_ADMIN) {
+    if (req.company.type !== 'ADMIN') {
       options.companyId = req.company.id
-    }
-    if (req.query.networkTypeId) {
-      var networkTypeIdInt = parseInt(req.query.networkTypeId, 10)
-      if (!isNaN(networkTypeIdInt)) {
-        options.networkTypeId = networkTypeIdInt
-      }
-    }
-    if (req.query.deviceId) {
-      var deviceIdInt = parseInt(req.query.deviceId)
-      if (!isNaN(deviceIdInt)) {
-        options.deviceId = deviceIdInt
-      }
-    }
-    if (req.query.applicationId) {
-      var applicationIdInt = parseInt(req.query.applicationId)
-      if (!isNaN(applicationIdInt)) {
-        options.applicationId = applicationIdInt
-      }
     }
     if (req.query.limit) {
       var limitInt = parseInt(req.query.limit, 10)
@@ -119,7 +101,7 @@ exports.initialize = function (app, server) {
      * @apiVersion 0.1.0
      */
   app.get('/api/deviceNetworkTypeLinks/:id', [restServer.isLoggedIn], function (req, res, next) {
-    var id = parseInt(req.params.id, 10)
+    var id = req.params.id
     modelAPI.deviceNetworkTypeLinks.load(id).then(function (np) {
       restServer.respondJson(res, null, formatRelationshipsOut(np))
     })
@@ -230,7 +212,7 @@ exports.initialize = function (app, server) {
     }
 
     var data = {}
-    data.id = parseInt(req.params.id, 10)
+    data.id = req.params.id
     // We'll start by getting the network, as a read is much less expensive
     // than a write, and then we'll be able to tell if anything really
     // changed before we even try to write.
@@ -257,7 +239,7 @@ exports.initialize = function (app, server) {
         // If not an admin company, the deviceId better be
         // associated  with the user's company
         var companyId
-        if (req.company.type.id !== modelAPI.companies.COMPANY_ADMIN) {
+        if (req.company.type !== 'ADMIN') {
           companyId = req.user.company.id
         }
 
@@ -294,11 +276,11 @@ exports.initialize = function (app, server) {
     restServer.fetchCompany,
     restServer.isAdmin],
   function (req, res, next) {
-    var id = parseInt(req.params.id, 10)
+    var id = req.params.id
     // If not an admin company, the deviceId better be associated
     // with the user's company
     var companyId
-    if (req.company.type.id !== modelAPI.companies.COMPANY_ADMIN) {
+    if (req.company.type !== 'ADMIN') {
       companyId = req.user.company.id
     }
 
@@ -328,10 +310,10 @@ exports.initialize = function (app, server) {
     restServer.isAdmin,
     modelAPI.devices.fetchDeviceApplication],
   function (req, res, next) {
-    var id = parseInt(req.params.id, 10)
+    var id = req.params.id
     // If the caller is a global admin, or the device is part of the company
     // admin's company, we can delete.req.application.company.id
-    if ((req.company.type.id === modelAPI.companies.COMPANY_ADMIN) ||
+    if ((req.company.type === 'ADMIN') ||
                 (req.application.company.id === req.user.company.id)) {
       modelAPI.deviceNetworkTypeLinks.pushDeviceNetworkTypeLink(id, req.application.company.id).then(function (ret) {
         restServer.respond(res, 204, ret)

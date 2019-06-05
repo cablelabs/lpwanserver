@@ -37,17 +37,17 @@ exports.initialize = function (app, server) {
   app.get('/api/passwordPolicies/company/:companyId',
     [restServer.isLoggedIn,
       restServer.fetchCompany],
-    function (req, res, next) {
-      var companyId = parseInt(req.params.companyId)
+    function (req, res) {
+      var companyId = req.params.companyId
 
       // Must be admin user or part of the company.
-      if ((req.company.type.id !== modelAPI.companies.COMPANY_ADMIN) &&
+      if ((req.company.type !== 'ADMIN') &&
               (req.company.id !== companyId)) {
         restServer.respond(res, 403)
         return
       }
 
-      modelAPI.passwordPolicies.retrievePasswordPolicies(companyId).then(function (rules) {
+      modelAPI.passwordPolicies.list(companyId).then(function (rules) {
         for (var i = 0; i < rules.length; ++i) {
           if (rules[ i ].company) {
             delete rules[ i ].company
@@ -89,15 +89,15 @@ exports.initialize = function (app, server) {
       */
   app.get('/api/passwordPolicies/:id', [restServer.isLoggedIn,
     restServer.fetchCompany],
-  function (req, res, next) {
-    var id = parseInt(req.params.id)
+  function (req, res) {
+    let { id } = req.params
 
-    modelAPI.passwordPolicies.retrievePasswordPolicy(id).then(function (pp) {
+    modelAPI.passwordPolicies.load(id).then(function (pp) {
       // Must be an admin user or
       // it's global passwordPolicy rule or
       // the caller is part of the company that the passwordPolicy rule is
       // assigned to
-      if ((req.company.type.id === modelAPI.companies.COMPANY_ADMIN) ||
+      if ((req.company.type === 'ADMIN') ||
                   (!pp.company.id) ||
                   (pp.company.id === req.company.id)) {
         restServer.respondJson(res, null, formatRelationshipsOut(pp))
@@ -146,7 +146,7 @@ exports.initialize = function (app, server) {
   app.post('/api/passwordPolicies', [restServer.isLoggedIn,
     restServer.fetchCompany,
     restServer.isAdmin],
-  function (req, res, next) {
+  function (req, res) {
     var rec = req.body
     // You can't specify an id.
     if (rec.id) {
@@ -177,7 +177,7 @@ exports.initialize = function (app, server) {
     }
 
     // Do the add.
-    modelAPI.passwordPolicies.createPasswordPolicy(rec.ruleText, rec.ruleRegExp, rec.companyId).then(function (rec) {
+    modelAPI.passwordPolicies.create(rec.ruleText, rec.ruleRegExp, rec.companyId).then(function (rec) {
       var send = {}
       send.id = rec.id
       restServer.respondJson(res, 200, send)
@@ -214,15 +214,16 @@ exports.initialize = function (app, server) {
   app.put('/api/passwordPolicies/:id', [restServer.isLoggedIn,
     restServer.fetchCompany,
     restServer.isAdmin],
-  function (req, res, next) {
-    var data = {}
-    data.id = parseInt(req.params.id)
+  function (req, res) {
+    var data = { id: req.params.id }
+
     // We'll start by getting the passwordPolicy, as a read is much less
     // expensive than a write, and then we'll be able to tell if anything
     // really changed before we even try to write.
-    modelAPI.passwordPolicies.retrievePasswordPolicy(data.id).then(function (pp) {
+    modelAPI.passwordPolicies.load(data.id).then(function (pp) {
+      let changed = 0
       // If a company admin, cannot change companyId.
-      if ((req.company.type.id !== modelAPI.companies.COMPANY_ADMIN) &&
+      if ((req.company.type !== 'ADMIN') &&
                  (req.body.companyId) &&
                  ((pp.company.id !== req.companyId) ||
                    (req.body.companyId !== pp.company.id))) {
@@ -237,7 +238,7 @@ exports.initialize = function (app, server) {
       }
 
       // If a company admin, must be a passwordPolicy for that company.
-      if ((req.company.type.id !== modelAPI.companies.COMPANY_ADMIN) &&
+      if ((req.company.type !== 'ADMIN') &&
                  (!pp.company.id || pp.company.id !== req.company.id)) {
         restServer.respond(res, 403, 'Cannot change the passwordPolicy of another company or global passwordPolicies')
         return
@@ -245,7 +246,6 @@ exports.initialize = function (app, server) {
 
       // Fields that may exist in the request body that anyone (with
       // permissions) can change.  Make sure they actually differ, though.
-      var changed = 0
       if ((req.body.ruleText) &&
                  (req.body.ruleText !== pp.ruleText)) {
         data.ruleText = req.body.ruleText
@@ -268,7 +268,7 @@ exports.initialize = function (app, server) {
       }
       else {
         // Do the update.
-        modelAPI.passwordPolicies.updatePasswordPolicy(data).then(function (rec) {
+        modelAPI.passwordPolicies.update(data).then(function () {
           restServer.respond(res, 204)
         })
           .catch(function (err) {
@@ -298,11 +298,11 @@ exports.initialize = function (app, server) {
   app.delete('/api/passwordPolicies/:id', [restServer.isLoggedIn,
     restServer.fetchCompany,
     restServer.isAdmin],
-  function (req, res, next) {
-    var id = parseInt(req.params.id)
+  function (req, res) {
+    let { id } = req.params
     // If the caller is a global admin, we can just delete.
-    if (req.company.type.id === modelAPI.companies.COMPANY_ADMIN) {
-      modelAPI.passwordPolicies.deletePasswordPolicy(id).then(function () {
+    if (req.company.type === 'ADMIN') {
+      modelAPI.passwordPolicies.remove(id).then(function () {
         restServer.respond(res, 204)
       })
         .catch(function (err) {
@@ -313,13 +313,13 @@ exports.initialize = function (app, server) {
     else {
       // We'll need to read first to make sure the record is for the
       // company the company admin is part of.
-      modelAPI.passwordPolicies.retrievePasswordPolicy(id).then(function (pp) {
+      modelAPI.passwordPolicies.load(id).then(function (pp) {
         if (req.company.id !== pp.company.id) {
           restServer.respond(res, 400, 'Unauthorized to delete record')
         }
         else {
           // OK to do the  delete.
-          modelAPI.passwordPolicies.deletePasswordPolicy(id).then(function () {
+          modelAPI.passwordPolicies.remove(id).then(function () {
             restServer.respond(res, 204)
           })
             .catch(function (err) {

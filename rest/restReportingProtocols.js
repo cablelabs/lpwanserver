@@ -1,5 +1,4 @@
 var appLogger = require('./lib/appLogger.js')
-const fs = require('fs')
 var restServer
 var modelAPI
 
@@ -28,7 +27,7 @@ exports.initialize = function (app, server) {
      *      Protocol code that communicates with an Application vendor's server.
      * @apiVersion 0.1.0
      */
-  app.get('/api/reportingProtocols', [restServer.isLoggedIn], function (req, res, next) {
+  app.get('/api/reportingProtocols', [restServer.isLoggedIn], function (req, res) {
     modelAPI.reportingProtocols.list().then(function (rps) {
       restServer.respondJson(res, null, rps)
     })
@@ -54,9 +53,8 @@ exports.initialize = function (app, server) {
      *      code that communicates with an Application vendor's server.
      * @apiVersion 0.1.0
      */
-  app.get('/api/reportingProtocols/:id', [restServer.isLoggedIn], function (req, res, next) {
-    var id = req.params.id
-    modelAPI.reportingProtocols.load(parseInt(req.params.id)).then(function (rp) {
+  app.get('/api/reportingProtocols/:id', [restServer.isLoggedIn], function (req, res) {
+    modelAPI.reportingProtocols.load(req.params.id).then(function (rp) {
       restServer.respondJson(res, null, rp)
     })
       .catch(function (err) {
@@ -87,7 +85,7 @@ exports.initialize = function (app, server) {
   app.post('/api/reportingProtocols', [restServer.isLoggedIn,
     restServer.fetchCompany,
     restServer.isAdminCompany],
-  function (req, res, next) {
+  function (req, res) {
     var rec = req.body
     // You can't specify an id.
     if (rec.id) {
@@ -137,9 +135,8 @@ exports.initialize = function (app, server) {
   app.put('/api/reportingProtocols/:id', [restServer.isLoggedIn,
     restServer.fetchCompany,
     restServer.isAdminCompany],
-  function (req, res, next) {
-    var data = {}
-    data.id = parseInt(req.params.id)
+  function (req, res) {
+    var data = { id: req.params.id }
     // We'll start by getting the company, as a read is much less expensive than
     // a write, and then we'll be able to tell if anything really changed before
     // we even try to write.
@@ -168,7 +165,7 @@ exports.initialize = function (app, server) {
       }
       else {
         // Do the update.
-        modelAPI.reportingProtocols.update(data).then(function (rec) {
+        modelAPI.reportingProtocols.update(data).then(function () {
           restServer.respond(res, 204)
         })
           .catch(function (err) {
@@ -197,8 +194,8 @@ exports.initialize = function (app, server) {
   app.delete('/api/reportingProtocols/:id', [restServer.isLoggedIn,
     restServer.fetchCompany,
     restServer.isAdminCompany],
-  function (req, res, next) {
-    var id = parseInt(req.params.id)
+  function (req, res) {
+    let { id } = req.params
     modelAPI.reportingProtocols.remove(id).then(function () {
       restServer.respond(res, 204)
     })
@@ -220,24 +217,11 @@ exports.initialize = function (app, server) {
    * @apiVersion 0.1.0
    */
   app.get('/api/reportingProtocolHandlers/', [restServer.isLoggedIn],
-    function (req, res, next) {
-      let fileList = fs.readdirSync('./rest/reportingProtocols/')
-      let handlerList = []
-      for (onefile in fileList) {
-        if (
-          fileList[onefile] === 'reportingProtocols.js' ||
-          fileList[onefile] === 'protocolhandlertemplate.js' ||
-          fileList[onefile] === 'README.txt'
-        ) {
-        }
-        else {
-          let temp = {
-            id: fileList[onefile],
-            name: fileList[onefile].split('.')[0]
-          }
-          handlerList.push(temp)
-        }
-      }
+    async function (req, res) {
+      const { records } = await modelAPI.reportingProtocols.list()
+      const handlerList = records
+        .map(x => x.protocolHandler)
+        .map(x => ({ id: x, name: x }))
       restServer.respondJson(res, null, handlerList)
     })
 }

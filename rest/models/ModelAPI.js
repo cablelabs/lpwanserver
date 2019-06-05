@@ -1,8 +1,5 @@
 // Define the parts of the Model API
 
-// General libraries in use in this module.
-var appLogger = require('../lib/appLogger.js')
-
 // Data models - what can be done with each data type.
 var UserModel = require('./IUser.js')
 var CompanyModel = require('./ICompany.js')
@@ -21,25 +18,15 @@ var NetworkTypeModel = require('./INetworkType.js')
 var NetworkProviderModel = require('./INetworkProvider.js')
 var ProtocolDataModel = require('./IProtocolData.js')
 var EmailModel = require('./IEmail.js')
+const appLogger = require('../lib/appLogger')
 
 // Network Protocol use.
 var NetworkTypeAPI = require('../networkProtocols/networkTypeApi.js')
 var NetworkProtocolAPI = require('../networkProtocols/networkProtocols.js')
 
-// Reporting Protocol use.
-var ReportingProtocols = require('../reportingProtocols/reportingProtocols.js')
-
-var modelAPI
-
-function ModelAPI (app) {
-  // Based on the initialization type, create the models that will
-  // use the underlying data.  Each module gets the type from config.
-  // Pass around the dependancies as well.
-  modelAPI = this
-
+function ModelAPI () {
   // Companies.
   this.companies = new CompanyModel(this)
-  this.companies.init()
 
   // Password policies.  Manages password rules for companies.
   this.passwordPolicies = new PasswordPolicyModel(this.companies)
@@ -47,10 +34,8 @@ function ModelAPI (app) {
   // Users.  And start the user email verification background task that
   // expires old email verification records.
   this.users = new UserModel(this)
-  this.users.init()
 
   this.emails = new EmailModel(this.users)
-  this.emails.init()
 
   // The session model, which uses users (for login).
   this.sessions = new SessionManagerModel(this.users)
@@ -89,8 +74,6 @@ function ModelAPI (app) {
   // The companyNetworkTypeLink model.
   this.companyNetworkTypeLinks = new CompanyNetworkTypeLinkModel(this)
 
-  this.reportingProtocolAPIs = new ReportingProtocols(this.reportingProtocols)
-
   // The deviceProfile model.
   this.deviceProfiles = new DeviceProfileModel(this)
 
@@ -102,6 +85,24 @@ function ModelAPI (app) {
 
   // The helper interface for network protocols to use.
   this.protocolData = new ProtocolDataModel(this)
+}
+
+ModelAPI.prototype.initialize = async function initializeModelAPI () {
+  // await Promise.all([
+  //   this.networkProtocols.initialize(this),
+  //   this.reportingProtocols.initialize(),
+  //   this.users.init(),
+  //   this.emails.init()
+  // ])
+
+  await this.networkProtocols.initialize(this)
+  appLogger.log('NETWORK PROTOCOLS INITIALIZED')
+  await this.reportingProtocols.initialize()
+  appLogger.log('REPORTING PROTOCOLS INITIALIZED')
+  await this.users.init()
+  appLogger.log('USERS INITIALIZED')
+  await this.emails.init()
+  appLogger.log('EMAILS INITIALIZED')
 }
 
 module.exports = ModelAPI

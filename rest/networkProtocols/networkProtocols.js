@@ -1,20 +1,9 @@
-// General libraries in use in this module.
-const appLogger = require('../lib/appLogger.js')
-const path = require('path')
-const handlersDir = path.join(__dirname, 'handlers')
 const httpError = require('http-errors')
 
 // ******************************************************************************
 // Defines the generic cross-network API, and manages the network protocols
 // for the upper layers.
 // ******************************************************************************
-
-const handlerList = [
-  'LoraOpenSource/v1',
-  'LoraOpenSource/v2',
-  'TheThingsNetwork/v2',
-  'Loriot/v4'
-]
 
 /**
  * Defines the generic cross-network API, and manages the network protocols
@@ -26,27 +15,6 @@ module.exports = class NetworkProtocolAccess {
   // Constructor - gets the database API for the networkProtocols
   constructor (modelAPI) {
     this.modelAPI = modelAPI
-    this.networkProtocolsById = {}
-    this.networkProtocolsByHandler = {}
-    this.handlerList = handlerList
-  }
-
-  async register () {
-    for (let i = 0; i < handlerList.length; i++) {
-      let Proto = require(path.join(handlersDir, handlerList[i]))
-      let proto = new Proto({ modelAPI: this.modelAPI })
-      this.networkProtocolsByHandler[handlerList[i]] = proto
-      await proto.register(this.modelAPI.networkProtocols)
-    }
-  }
-
-  clearProtocolMap () {
-    this.networkProtocolsById = {}
-    this.networkProtocolsByHandler = {}
-  }
-
-  clearProtocol ({ id }) {
-    delete this.networkProtocolsById[id]
   }
 
   /**
@@ -54,22 +22,7 @@ module.exports = class NetworkProtocolAccess {
    * @returns {Promise<Protocol>} - Protocol Handler for this network.
    */
   async getProtocol (network) {
-    const { id: npId } = network.networkProtocol
-    if (this.networkProtocolsById[npId]) return this.networkProtocolsById[npId]
-    // We'll need the protocol for the network.
-    const np = await appLogger.logOnThrow(
-      () => this.modelAPI.networkProtocols.load(npId),
-      err => `Failed to load network protocol code: ${err}`
-    )
-    const { protocolHandler: handler } = np
-    if (this.networkProtocolsByHandler[handler]) {
-      this.networkProtocolsById[npId] = this.networkProtocolsByHandler[handler]
-      return this.networkProtocolsById[npId]
-    }
-    const Proto = require(`${handlersDir}/${np.protocolHandler}`)
-    const proto = new Proto({ modelAPI: this.modelAPI })
-    this.networkProtocolsById[npId] = this.networkProtocolsByHandler[handler] = proto
-    return proto
+    return this.modelAPI.networkProtocols.getHandler(network.networkProtocol.id)
   }
 
   /**

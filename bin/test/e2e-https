@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+
+# Remove old containers
+docker container rm \
+  lpwanserver_dev_e2e_test \
+  lpwanserver_dev_prisma \
+  lpwanserver_dev_postgres \
+  lpwanserver_dev_redis \
+  lpwanserver_dev_loraserver2 \
+  lpwanserver_dev_loraserver1 \
+  lpwanserver_dev_loraappserver2 \
+  lpwanserver_dev_loraappserver1 \
+  lpwanserver_dev_loraserver_mosquitto --force
+
+# Remove old volumes
+docker volume rm \
+  lpwanserver_dev_postgres \
+  lpwanserver_dev_redis --force
+
+# Start databases and prisma
+./bin/manage-db start
+./bin/manage-db deploy
+
+# Start Lora Servers
+docker-compose -f ./docker/dev/loraserver/docker-compose.yml up -d
+
+# Run tests
+docker-compose -f ./docker/test/e2e-https/docker-compose.yml up --build \
+  --abort-on-container-exit \
+  --exit-code-from e2e-test
+
+TEST_EXIT_CODE=$?
+
+# #Stop LoRa Servers
+docker-compose -f ./docker/dev/loraserver/docker-compose.yml down
+
+# # Start databases and prisma
+./bin/manage-db stop
+
+# # Exit script with the code from the test
+exit $TEST_EXIT_CODE

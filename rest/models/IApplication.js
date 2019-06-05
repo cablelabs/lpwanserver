@@ -1,7 +1,6 @@
 const appLogger = require('../lib/appLogger.js')
 const NetworkProtocolDataAccess = require('../networkProtocols/networkProtocolDataAccess.js')
-const reportingProtocol = require('../reportingProtocols/postHandler')
-const { prisma, formatInputData, formatRelationshipsIn } = require('../lib/prisma')
+const { prisma, formatInputData, formatRelationshipsIn, loadRecord } = require('../lib/prisma')
 var httpError = require('http-errors')
 const { onFail, renameKeys } = require('../lib/utils')
 const R = require('ramda')
@@ -106,6 +105,7 @@ class Application {
   async testApplication (id, data) {
     try {
       const app = await loadApplication({ id })
+      const reportingProtocol = await this.modelAPI.reportingProtocols.getHandler(app.reportingProtocol.id)
       let response = await reportingProtocol.report(data, app.baseUrl, app.name)
       return response.statusCode
     }
@@ -134,17 +134,6 @@ class Application {
 }
 
 // ******************************************************************************
-// Helpers
-// ******************************************************************************
-async function loadApplication (uniqueKeyObj, fragement = 'basic') {
-  const rec = await onFail(400, () => prisma.application(uniqueKeyObj).$fragment(fragments[fragement]))
-  if (!rec) throw httpError(404, 'Application not found')
-  return rec
-}
-
-const renameEnabledToRunning = renameKeys({ enabled: 'running' })
-
-// ******************************************************************************
 // Fragments for how the data should be returned from Prisma.
 // ******************************************************************************
 const fragments = {
@@ -165,6 +154,13 @@ const fragments = {
     id
   }`
 }
+
+// ******************************************************************************
+// Helpers
+// ******************************************************************************
+const renameEnabledToRunning = renameKeys({ enabled: 'running' })
+
+const loadApplication = loadRecord('application', fragments, 'basic')
 
 //* *****************************************************************************
 // Exports

@@ -11,7 +11,6 @@ var NetworkProtocolDataAccess = require('./networkProtocolDataAccess.js')
 //* *****************************************************************************
 function NetworkTypeApi (modelAPI) {
   this.modelAPI = modelAPI
-  this.modelAPI.networkProtocolAPI.register()
   this.protos = this.modelAPI.networkProtocolAPI
 }
 
@@ -403,10 +402,16 @@ NetworkTypeApi.prototype.deleteDevice = function (networkTypeId, deviceId) {
 // networkTypeId - The ID of the networkType to get the new company.
 // appId     - The ID of the application record
 // deviceID  - The ID of the device record
-NetworkTypeApi.prototype.passDataToDevice = function (networkTypeId, appId, deviceId, data) {
+NetworkTypeApi.prototype.passDataToDevice = async function (devNTL, appId, deviceId, data) {
+  const ipNwkType = await this.modelAPI.networkTypes.loadByName('IP')
+  if (ipNwkType && ipNwkType.id === devNTL.networkType.id) {
+    const { records: nwkProtos } = await this.modelAPI.networkProtocols.list({ name: 'IP' })
+    const handler = await this.modelAPI.networkProtocols.getHandler(nwkProtos[0].id)
+    return handler.passDataToDevice(devNTL, data)
+  }
   return this.forAllNetworksOfType(
     'Pass data to device',
-    networkTypeId,
+    devNTL.networkType.id,
     (npda, network) => this.protos.passDataToDevice(npda, network, appId, deviceId, data)
   )
 }

@@ -2,11 +2,11 @@ var assert = require('assert')
 var fs = require('fs')
 var chai = require('chai')
 var chaiHttp = require('chai-http')
-var restserver = require('../../restApp.js')
+var createApp = require('../../restApp.js')
 var should = chai.should()
 
 chai.use(chaiHttp)
-var server = chai.request(restserver).keepOpen()
+var server
 
 /**
  * @test
@@ -14,27 +14,16 @@ var server = chai.request(restserver).keepOpen()
 describe('Launch Applications', function () {
   var adminToken
 
-  before('User Sessions', function (done) {
-    var sessions = 0
-    var waitFunc = function () {
-      ++sessions
-      if (sessions >= 1) {
-        done()
-      }
-    }
-    server
+  before('User Sessions', async () => {
+    const app = await createApp()
+    server = chai.request(app).keepOpen()
+    let res = await server
       .post('/api/sessions')
       .send({ 'login_username': 'admin', 'login_password': 'password' })
-      .end(function (err, res) {
-        if (err) {
-          return done(err)
-        }
-        adminToken = res.text
-        waitFunc()
-      })
+    adminToken = res.text
   })
 
-  var appIds = []
+  var appIds
   describe('GET /api/applications to launch', function () {
     it('should return 200 with array of applications on admin', function (done) {
       server
@@ -42,12 +31,11 @@ describe('Launch Applications', function () {
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {
+          if (err) return done(err)
           res.should.have.status(200)
           var result = JSON.parse(res.text)
           result.records.should.be.instanceof(Array)
-          result.records.forEach(function (app) {
-            appIds.push(app.id)
-          })
+          appIds = result.records.filter(x => x.baseUrl).map(x => x.id)
           done()
         })
     })

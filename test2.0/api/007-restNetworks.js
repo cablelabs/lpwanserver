@@ -1,11 +1,15 @@
 var assert = require('assert')
 var chai = require('chai')
 var chaiHttp = require('chai-http')
-var app = require('../../restApp.js')
+var createApp = require('../../restApp')
 var should = chai.should()
+const Lora1 = require('../e2e/networks/lora-v1')
+// const Lora2 = require('../e2e/networks/lora-v2')
+const { prisma } = require('../../prisma/generated/prisma-client')
 
 chai.use(chaiHttp)
-var server = chai.request(app).keepOpen()
+var server
+let nwkTypeId
 
 describe('Networks', function () {
   var adminToken
@@ -13,6 +17,8 @@ describe('Networks', function () {
   var netProvId
 
   before('User Sessions', async () => {
+    const app = await createApp()
+    server = chai.request(app).keepOpen()
     let res = await server
       .post('/api/sessions')
       .send({ 'login_username': 'admin', 'login_password': 'password' })
@@ -23,6 +29,9 @@ describe('Networks', function () {
       .set('Content-Type', 'application/json')
       .send({ 'name': 'Kyrio' })
     netProvId = JSON.parse(res.text).id
+    await Lora1.setup()
+    // await Lora2.setup()
+    nwkTypeId = (await prisma.networkType({ name: 'LoRa' })).id
   })
 
   var netId1
@@ -53,7 +62,7 @@ describe('Networks', function () {
         .send({
           'name': 'MachQLoRa',
           'networkProviderId': netProvId,
-          'networkTypeId': 1,
+          'networkTypeId': nwkTypeId,
           'baseUrl': 'https://localhost:9999/api',
           'networkProtocolId': npId1
         })
@@ -75,7 +84,7 @@ describe('Networks', function () {
         .send({
           'name': 'Funky network',
           'networkProviderId': netProvId,
-          'networkTypeId': 1,
+          'networkTypeId': nwkTypeId,
           'baseUrl': 'https://lora_appserver1:8080/api/',
           'networkProtocolId': npId1,
           'securityData': { 'username': 'admin', 'password': 'admin' }

@@ -1,12 +1,12 @@
 FROM node:10.15
 
 # set working directory
-WORKDIR /app
+WORKDIR /usr/src/app
 
 # Copy project files
 COPY bin/rest bin/rest
 COPY config config
-COPY prisma/dev prisma/dev
+COPY prisma/generated prisma/generated
 COPY restApp.js ./restApp.js
 COPY server.js ./server.js
 COPY public public

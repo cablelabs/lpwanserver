@@ -1,4 +1,4 @@
-const { prisma } = require('../lib/prisma')
+const { prisma, loadRecord } = require('../lib/prisma')
 const httpError = require('http-errors')
 const { onFail } = require('../lib/utils')
 
@@ -12,10 +12,8 @@ module.exports = class NetworkProvider {
     return prisma.updateNetworkProvider({ data, where: { id } })
   }
 
-  async load (id) {
-    const rec = await onFail(400, () => prisma.networkProvider({ id }))
-    if (!rec) throw httpError(404, 'NetworkProvider not found')
-    return rec
+  load (id) {
+    return loadNetworkProvider({ id })
   }
 
   async list ({ limit, offset, ...where } = {}) {
@@ -37,3 +35,18 @@ module.exports = class NetworkProvider {
     return onFail(400, () => prisma.deleteNetworkProvider({ id }))
   }
 }
+
+// ******************************************************************************
+// Fragments for how the data should be returned from Prisma.
+// ******************************************************************************
+const fragments = {
+  basic: `fragment BasicNetworkProvider on NetworkProvider {
+    id
+    name
+  }`
+}
+
+// ******************************************************************************
+// Helpers
+// ******************************************************************************
+const loadNetworkProvider = loadRecord('networkProvider', fragments, 'basic')

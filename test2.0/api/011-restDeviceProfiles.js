@@ -1,33 +1,29 @@
 var assert = require('assert')
 var chai = require('chai')
 var chaiHttp = require('chai-http')
-var app = require('../../restApp.js')
+var createApp = require('../../restApp')
 var should = chai.should()
+const { prisma } = require('../../prisma/generated/prisma-client')
 
 chai.use(chaiHttp)
-var server = chai.request(app).keepOpen()
+var server
+let companyId
+let nwkTypeId
 
 describe('DeviceProfiles', function () {
   var adminToken
 
-  before('User Sessions', function (done) {
-    var sessions = 0
-    var waitFunc = function () {
-      ++sessions
-      if (sessions >= 1) {
-        done()
-      }
-    }
-    server
+  before('User Sessions', async () => {
+    const app = await createApp()
+    server = chai.request(app).keepOpen()
+    let res = await server
       .post('/api/sessions')
       .send({ 'login_username': 'admin', 'login_password': 'password' })
-      .end(function (err, res) {
-        if (err) {
-          return done(err)
-        }
-        adminToken = res.text
-        waitFunc()
-      })
+    adminToken = res.text
+    const cos = await prisma.companies()
+    companyId = cos[0].id
+    const nwkTypes = await prisma.networkTypes()
+    nwkTypeId = nwkTypes[0].id
   })
 
   var dpId1
@@ -39,8 +35,8 @@ describe('DeviceProfiles', function () {
         .post('/api/deviceProfiles')
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
-        .send({ 'networkTypeId': 1,
-          'companyId': 1,
+        .send({ 'networkTypeId': nwkTypeId,
+          'companyId': companyId,
           'name': 'LoRaGPSNode',
           'description': 'GPS Node that works with LoRa',
           'networkSettings': { 'foo': 'bar' } })
@@ -59,8 +55,8 @@ describe('DeviceProfiles', function () {
         .post('/api/deviceProfiles')
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
-        .send({ 'networkTypeId': 1,
-          'companyId': 1,
+        .send({ 'networkTypeId': nwkTypeId,
+          'companyId': companyId,
           'name': 'LoRaWeatherNode',
           'description': 'GPS Node that works with LoRa',
           'networkSettings': { 'tempType': 'C' } })
@@ -85,30 +81,14 @@ describe('DeviceProfiles', function () {
           var dpObj = JSON.parse(res.text)
           dpObj.name.should.equal('LoRaGPSNode')
           dpObj.description.should.equal('GPS Node that works with LoRa')
-          dpObj.networkTypeId.should.equal(1)
-          dpObj.companyId.should.equal(1)
+          dpObj.networkTypeId.should.equal(nwkTypeId)
+          dpObj.companyId.should.equal(companyId)
           done()
         })
     })
   })
 
   describe('GET /api/deviceProfiles (search/paging)', function () {
-    it('should return 200 with 2 deviceProfiles on admin', function (done) {
-      server
-        .get('/api/deviceProfiles')
-        .set('Authorization', 'Bearer ' + adminToken)
-        .set('Content-Type', 'application/json')
-        .end(function (err, res) {
-          if (err) return done(err)
-          res.should.have.status(200)
-          var result = JSON.parse(res.text)
-          result.records.should.be.instanceof(Array)
-          result.records.should.have.length(3)
-          result.totalCount.should.equal(3)
-          done()
-        })
-    })
-
     it('should return 200 with 2 deviceProfiles on admin', function (done) {
       server
         .get('/api/deviceProfiles')

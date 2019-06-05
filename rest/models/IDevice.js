@@ -1,9 +1,10 @@
 const appLogger = require('../lib/appLogger.js')
-const { prisma, formatInputData, formatRelationshipsIn } = require('../lib/prisma')
+const { prisma, formatInputData, formatRelationshipsIn, loadRecord } = require('../lib/prisma')
 var httpError = require('http-errors')
 const { onFail } = require('../lib/utils')
 const R = require('ramda')
 const Joi = require('@hapi/joi')
+const { redisClient, redisPub } = require('../lib/redis')
 
 module.exports = class Device {
   constructor (modelAPI) {
@@ -79,8 +80,7 @@ module.exports = class Device {
     // Get all device networkType links
     const devNtlQuery = { device: { id } }
     let { records } = await this.modelAPI.deviceNetworkTypeLinks.list(devNtlQuery)
-    appLogger.log(`DEVICE_NETWORK_TYPE_LINKS: ${JSON.stringify(records)}`)
-    const logs = await Promise.all(records.map(x => this.modelAPI.networkTypeAPI.passDataToDevice(x.networkType.id, app.id, id, data)))
+    const logs = await Promise.all(records.map(x => this.modelAPI.networkTypeAPI.passDataToDevice(x, app.id, id, data)))
     return R.flatten(logs)
   }
 
@@ -96,7 +96,7 @@ module.exports = class Device {
   // some cases but not others (e.g., when the user is part of an admin company).
   async fetchDeviceApplication (req, res, next) {
     try {
-      const dev = await this.load(parseInt(req.params.id, 10))
+      const dev = await this.load(req.params.id)
       req.device = dev
       const app = await this.modelAPI.applications.load(dev.application.id)
       req.application = app
@@ -113,7 +113,7 @@ module.exports = class Device {
   // want to create.
   async fetchApplicationForNewDevice (req, res, next) {
     try {
-      const app = await this.modelAPI.applications.load(parseInt(req.body.applicationId, 10))
+      const app = await this.modelAPI.applications.load(req.body.applicationId)
       req.application = app
       next()
     }
@@ -122,23 +122,49 @@ module.exports = class Device {
       res.end()
     }
   }
-}
 
-// ******************************************************************************
-// Helpers
-// ******************************************************************************
-async function loadDevice (uniqueKeyObj, fragementKey = 'basic') {
-  const rec = await onFail(400, () => prisma.device(uniqueKeyObj).$fragment(fragments[fragementKey]))
-  if (!rec) throw httpError(404, 'Device not found')
-  return rec
-}
+  async receiveIpDeviceUplink (devEUI, data) {
+    // Get IP Network Type
+    let nwkType = await this.modelAPI.networkTypes.loadByName('IP')
+    // Ensure a deviceNTL exists
+    const devNTLQuery = { networkType: { id: nwkType.id }, networkSettings_contains: devEUI }
+    let { records: devNTLs } = await this.modelAPI.deviceNetworkTypeLinks.list(devNTLQuery)
+    if (!devNTLs.length) return
+    const devNTL = devNTLs[0]
+    // Get device
+    const device = await this.modelAPI.devices.load(devNTL.device.id)
+    // Get application
+    const app = await this.modelAPI.applications.load(device.application.id)
+    // Ensure application is enabled
+    if (!app.running) return
+    // Pass data
+    let { records: nwkProtos } = await this.modelAPI.networkProtocols.list({ networkType: { id: nwkType.id } })
+    const ipProtoHandler = await this.modelAPI.networkProtocols.getHandler(nwkProtos[0].id)
+    await ipProtoHandler.passDataToApplication(app, device, devEUI, data)
+    // Check for cached downlink messages
+    // const msgs = await this.modelAPI.devices.getIpDeviceMessages(device.id)
+    // if (!msgs.length) return
+    // await Promise.all(msgs.map(x => ipProtoHandler.passDataToDevice(devNTL, device.id, x, cache, false)))
+  }
 
-const unicastDownlinkSchema = Joi.object().keys({
-  fCnt: Joi.number().integer().min(0).required(),
-  fPort: Joi.number().integer().min(1).required(),
-  data: Joi.string().when('jsonData', { is: Joi.exist(), then: Joi.optional(), otherwise: Joi.required() }),
-  jsonData: Joi.object().optional()
-})
+  async pushIpDeviceDownlink (devEUI, data) {
+    data = JSON.stringify(data)
+    // TODO: dont push message if there are listeners to the channel
+    // In that case, just send data as the publish message
+    const result = await redisClient.rpushAsync(`ip_downlinks:${devEUI}`, data)
+    redisPub.publish(`downlink_received:${devEUI}`, '')
+    return result
+  }
+
+  async listIpDeviceDownlinks (devEUI) {
+    let key = `ip_downlinks:${devEUI}`
+    const len = await redisClient.llenAsync(key)
+    if (!len) return []
+    let msgs = await redisClient.lrangeAsync(key, 0, len)
+    await redisClient.del(key)
+    return msgs.map(JSON.parse)
+  }
+}
 
 //* *****************************************************************************
 // Fragments for how the data should be returned from Prisma.
@@ -154,3 +180,15 @@ const fragments = {
     }
   }`
 }
+
+// ******************************************************************************
+// Helpers
+// ******************************************************************************
+const loadDevice = loadRecord('device', fragments, 'basic')
+
+const unicastDownlinkSchema = Joi.object().keys({
+  fCnt: Joi.number().integer().min(0).required(),
+  fPort: Joi.number().integer().min(1).required(),
+  data: Joi.string().when('jsonData', { is: Joi.exist(), then: Joi.optional(), otherwise: Joi.required() }),
+  jsonData: Joi.object().optional()
+})

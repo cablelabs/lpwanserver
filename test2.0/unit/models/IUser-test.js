@@ -4,7 +4,7 @@ const assert = require('assert')
 const chai = require('chai')
 // eslint-disable-next-line no-unused-vars
 const should = chai.should()
-
+const { prisma } = require('../../../prisma/generated/prisma-client')
 const TestModule = require('../../../rest/models/IUser')
 const modelAPIMock = require('../../mock/ModelAPI-mock')
 
@@ -13,8 +13,8 @@ const testName = 'User'
 function assertUserProps (actual) {
   actual.should.have.property('username')
   actual.should.have.property('email')
+  actual.should.have.property('role')
   actual.company.should.have.property('id')
-  actual.role.should.have.property('id')
   actual.should.have.property('id')
 }
 
@@ -34,9 +34,17 @@ describe('Unit Tests for ' + testName, () => {
     actual.should.have.property('records')
   })
   it(testName + ' Create', async () => {
+    const cos = await prisma.companies()
     let testModule = new TestModule(modelAPIMock)
     should.exist(testModule)
-    const actual = await testModule.create('testuser', '123456', 'bob@aol.com', 1, 1)
+    const data = {
+      username: 'testuser',
+      password: '123456',
+      email: 'bob@aol.com',
+      companyId: cos[0].id,
+      role: 'ADMIN'
+    }
+    const actual = await testModule.create(data)
     assertUserProps(actual)
     userId = actual.id
   })
@@ -53,11 +61,10 @@ describe('Unit Tests for ' + testName, () => {
       id: userId,
       username: 'testuser',
       email: 'bob@aol.com',
-      companyId: 1,
-      role: 2
+      role: 'USER'
     }
     const actual = await testModule.update(updated)
     assertUserProps(actual)
-    actual.role.id.should.equal(updated.role)
+    actual.role.should.equal(updated.role)
   })
 })

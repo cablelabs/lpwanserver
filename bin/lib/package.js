@@ -13,10 +13,7 @@ if (!RC_TAG) {
 const imageTags = {
   releaseCandidate: `${registry}/${name}:${RC_TAG}`,
   latest: `${registry}/${name}:latest`,
-  version: `${registry}/${name}:${version}`,
-  unitTest: `${registry}/unit-test:latest`,
-  apiTest: `${registry}/api-test:latest`,
-  e2eTest: `${registry}/e2e-test:latest`
+  version: `${registry}/${name}:${version}`
 }
 
 const ROOT = path.join(__dirname, '../..')
@@ -26,14 +23,7 @@ function packageRestServer () {
   execSync(`docker build -f docker/Dockerfile -t ${imageTags.releaseCandidate} -t ${imageTags.latest} .`, opts)
 }
 
-const packageTest = type => () => {
-  execSync(`docker build -f docker/test/${type}/Dockerfile -t ${imageTags[`${type}Test`]} .`, opts)
-}
-
 module.exports = {
   imageTags,
-  packageRestServer,
-  packageUnitTest: packageTest('unit'),
-  packageApiTest: packageTest('api'),
-  packageE2ETest: packageTest('e2e')
+  packageRestServer
 }
