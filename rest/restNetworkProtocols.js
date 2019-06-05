@@ -48,7 +48,7 @@ exports.initialize = function (app, server) {
      */
 
   app.get('/api/networkProtocols', [restServer.isLoggedIn],
-    function (req, res, next) {
+    function (req, res) {
       var options = {}
       if (req.query.limit) {
         var limitInt = parseInt(req.query.limit, 10)
@@ -83,7 +83,7 @@ exports.initialize = function (app, server) {
     })
 
   app.get('/api/networkProtocols/group', [restServer.isLoggedIn],
-    function (req, res, next) {
+    function (req, res) {
       var options = {}
       if (req.query.limit) {
         var limitInt = parseInt(req.query.limit, 10)
@@ -160,7 +160,7 @@ exports.initialize = function (app, server) {
      * @apiVersion 0.1.0
      */
   app.get('/api/networkProtocols/:id', [restServer.isLoggedIn],
-    function (req, res, next) {
+    function (req, res) {
       modelAPI.networkProtocols.load(req.params.id).then(function (np) {
         // restServer.respondJson(res, null, np)
         restServer.respond(res, 200, formatRelationshipsOut(np))
@@ -196,7 +196,7 @@ exports.initialize = function (app, server) {
   app.post('/api/networkProtocols', [restServer.isLoggedIn,
     restServer.fetchCompany,
     restServer.isAdminCompany],
-  function (req, res, next) {
+  function (req, res) {
     let methodNotAllowed = {
       error: 'POST to /api/networkProtocols is not allowed.  Please see documentation for more details.'
     }
@@ -255,7 +255,7 @@ exports.initialize = function (app, server) {
   app.put('/api/networkProtocols/:id', [restServer.isLoggedIn,
     restServer.fetchCompany,
     restServer.isAdminCompany],
-  function (req, res, next) {
+  function (req, res) {
     var data = {}
     data.id = req.params.id
     // We'll start by getting the company, as a read is much less expensive
@@ -292,7 +292,7 @@ exports.initialize = function (app, server) {
       }
       else {
         // Do the update.
-        modelAPI.networkProtocols.update(data).then(function (rec) {
+        modelAPI.networkProtocols.update(data).then(function () {
           restServer.respond(res, 204)
         })
           .catch(function (err) {
@@ -321,7 +321,7 @@ exports.initialize = function (app, server) {
   app.delete('/api/networkProtocols/:id', [restServer.isLoggedIn,
     restServer.fetchCompany,
     restServer.isAdminCompany],
-  function (req, res, next) {
+  function (req, res) {
     let methodNotAllowed = {
       error: 'DELETE to /api/networkProtocols is not allowed.  Please see documentation for more details.'
     }
@@ -348,7 +348,7 @@ exports.initialize = function (app, server) {
      * @apiVersion 0.1.0
      */
   app.get('/api/networkProtocolHandlers/', [restServer.isLoggedIn],
-    async function (req, res, next) {
+    async function (req, res) {
       const { records } = await modelAPI.networkProtocols.list()
       const handlerList = records
         .map(x => x.protocolHandler)

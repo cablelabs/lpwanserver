@@ -83,7 +83,7 @@ describe('PasswordPolicies', function () {
         .post('/api/passwordPolicies')
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
-        .send({ 'ruleText': 'Must be at least 9 characters', 'ruleRegExp': '^\S{9,}$', 'companyId': companyId })
+        .send({ 'ruleText': 'Must be at least 9 characters', 'ruleRegExp': '^\\S{9,}$', 'companyId': companyId })
         .end(function (err, res) {
           if (err) return done(err)
           res.should.have.status(200)

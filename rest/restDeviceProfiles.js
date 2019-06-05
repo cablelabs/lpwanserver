@@ -57,35 +57,22 @@ exports.initialize = function (app, server) {
      */
   app.get('/api/deviceProfiles', [ restServer.isLoggedIn,
     restServer.fetchCompany ],
-  function (req, res, next) {
+  function (req, res) {
     var options = {}
-    // Make sure the caller is admin or part of the company.
-    if (req.company.type !== 'ADMIN') {
-      if (req.query.companyId) {
-        var coidInt = req.query.companyId
-        if (!isNaN(coidInt)) {
-          if (coidInt !== req.user.company.id) {
-            restServer.respond(res, 403, 'Cannot request deviceProfiles for another company')
-            return
-          }
-          else {
-            // Pass the restriction along
-            options.companyId = coidInt
-          }
-        }
-        else {
-          restServer.respond(res, 403, 'Bad companyId in query')
-          return
-        }
-      }
-      else {
-        // Force the search to be limited to the user's company anyway.
-        options.companyId = req.user.company.id
-      }
+
+    if (req.query.companyId) {
+      options.companyId = req.query.companyId
     }
 
-    if (options.companyId) {
-      options.companyId = options.companyId
+    // Make sure the caller is admin or part of the company.
+    if (req.company.type !== 'ADMIN') {
+      if (!options.companyId) {
+        options.companyId = req.user.company.id
+      }
+      else if (options.companyId !== req.user.company.id) {
+        restServer.respond(res, 403, 'Cannot request deviceProfiles for another company')
+        return
+      }
     }
 
     if (req.query.limit) {
@@ -143,7 +130,7 @@ exports.initialize = function (app, server) {
      */
   app.get('/api/deviceProfiles/:id', [ restServer.isLoggedIn,
     restServer.fetchCompany ],
-  function (req, res, next) {
+  function (req, res) {
     // Need the device record to see if it's OK to return for non-admin
     // user.  (Admin user can get all, so we need to do this anyway.)
     let { id } = req.params
@@ -197,7 +184,7 @@ exports.initialize = function (app, server) {
   app.post('/api/deviceProfiles', [ restServer.isLoggedIn,
     restServer.fetchCompany,
     restServer.isAdmin ],
-  function (req, res, next) {
+  function (req, res) {
     var rec = req.body
     // You can't specify an id.
     if (rec.id) {
@@ -275,14 +262,14 @@ exports.initialize = function (app, server) {
   app.put('/api/deviceProfiles/:id', [restServer.isLoggedIn,
     restServer.fetchCompany,
     restServer.isAdmin],
-  function (req, res, next) {
+  function (req, res) {
     var data = { id: req.params.id }
     // Start by getting the original deviceProfile to check for changes.
     modelAPI.deviceProfiles.load(data.id).then(function (dp) {
       // Verify that the user can make the change.
       if ((modelAPI.companies.COMPANY_ADMIN !== req.company.type.id) &&
                  (req.user.company.id !== dp.company.id)) {
-        respond(res, 403)
+        restServer.respond(res, 403)
         return
       }
 
@@ -357,7 +344,7 @@ exports.initialize = function (app, server) {
   app.delete('/api/deviceProfiles/:id', [ restServer.isLoggedIn,
     restServer.fetchCompany,
     restServer.isAdmin ],
-  function (req, res, next) {
+  function (req, res) {
     let { id } = req.params
     // with the user's company.  We check that in the delete method.
     var companyId = null
@@ -388,7 +375,7 @@ exports.initialize = function (app, server) {
   app.post('/api/deviceProfiles/:id/push', [restServer.isLoggedIn,
     restServer.fetchCompany,
     restServer.isAdmin],
-  function (req, res, next) {
+  function (req, res) {
     let { id } = req.params
     // with the user's company.  We check that in the push method.
     var companyId = null

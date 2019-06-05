@@ -37,7 +37,7 @@ exports.initialize = function (app, server) {
   app.get('/api/passwordPolicies/company/:companyId',
     [restServer.isLoggedIn,
       restServer.fetchCompany],
-    function (req, res, next) {
+    function (req, res) {
       var companyId = req.params.companyId
 
       // Must be admin user or part of the company.
@@ -89,7 +89,7 @@ exports.initialize = function (app, server) {
       */
   app.get('/api/passwordPolicies/:id', [restServer.isLoggedIn,
     restServer.fetchCompany],
-  function (req, res, next) {
+  function (req, res) {
     let { id } = req.params
 
     modelAPI.passwordPolicies.load(id).then(function (pp) {
@@ -146,7 +146,7 @@ exports.initialize = function (app, server) {
   app.post('/api/passwordPolicies', [restServer.isLoggedIn,
     restServer.fetchCompany,
     restServer.isAdmin],
-  function (req, res, next) {
+  function (req, res) {
     var rec = req.body
     // You can't specify an id.
     if (rec.id) {
@@ -216,10 +216,12 @@ exports.initialize = function (app, server) {
     restServer.isAdmin],
   function (req, res) {
     var data = { id: req.params.id }
+
     // We'll start by getting the passwordPolicy, as a read is much less
     // expensive than a write, and then we'll be able to tell if anything
     // really changed before we even try to write.
     modelAPI.passwordPolicies.load(data.id).then(function (pp) {
+      let changed = 0
       // If a company admin, cannot change companyId.
       if ((req.company.type !== 'ADMIN') &&
                  (req.body.companyId) &&
@@ -244,7 +246,6 @@ exports.initialize = function (app, server) {
 
       // Fields that may exist in the request body that anyone (with
       // permissions) can change.  Make sure they actually differ, though.
-      var changed = 0
       if ((req.body.ruleText) &&
                  (req.body.ruleText !== pp.ruleText)) {
         data.ruleText = req.body.ruleText
@@ -267,7 +268,7 @@ exports.initialize = function (app, server) {
       }
       else {
         // Do the update.
-        modelAPI.passwordPolicies.update(data).then(function (rec) {
+        modelAPI.passwordPolicies.update(data).then(function () {
           restServer.respond(res, 204)
         })
           .catch(function (err) {
@@ -297,7 +298,7 @@ exports.initialize = function (app, server) {
   app.delete('/api/passwordPolicies/:id', [restServer.isLoggedIn,
     restServer.fetchCompany,
     restServer.isAdmin],
-  function (req, res, next) {
+  function (req, res) {
     let { id } = req.params
     // If the caller is a global admin, we can just delete.
     if (req.company.type === 'ADMIN') {

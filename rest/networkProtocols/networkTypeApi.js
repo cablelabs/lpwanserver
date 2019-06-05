@@ -1,6 +1,5 @@
 // General libraries in use in this module.
 var appLogger = require('../lib/appLogger.js')
-const { redisClient } = require('../lib/redis')
 
 // An object to access dataModel data and cache it for operations across
 // multiple networks, preventing a lot of redundant database hits.

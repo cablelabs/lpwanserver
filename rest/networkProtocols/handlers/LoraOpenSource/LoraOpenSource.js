@@ -407,7 +407,7 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
     return Promise.all(result.map(x => this.addRemoteDeviceProfile(network, x.id, modelAPI, dataAPI)))
   }
 
-  async addRemoteDeviceProfile (network, remoteDevProfileId, modelAPI) {
+  async addRemoteDeviceProfile (network, remoteDevProfileId) {
     const { records: cos } = await this.modelAPI.companies.list({ limit: 1 })
     let company = cos[0]
     const remoteDeviceProfile = await this.client.loadDeviceProfile(network, remoteDevProfileId)

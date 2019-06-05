@@ -1,6 +1,6 @@
 const NetworkProtocol = require('../../NetworkProtocol')
 const R = require('ramda')
-const appLogger = require('../../../lib/appLogger')
+// const appLogger = require('../../../lib/appLogger')
 const httpError = require('http-errors')
 
 module.exports = class LoraOpenSource extends NetworkProtocol {
