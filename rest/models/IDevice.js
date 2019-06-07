@@ -1,7 +1,7 @@
 const appLogger = require('../lib/appLogger.js')
 const { prisma, formatInputData, formatRelationshipsIn, loadRecord } = require('../lib/prisma')
 var httpError = require('http-errors')
-const { onFail } = require('../lib/utils')
+const { onFail, normalizeDevEUI } = require('../lib/utils')
 const R = require('ramda')
 const Joi = require('@hapi/joi')
 const { redisClient, redisPub } = require('../lib/redis')
@@ -124,6 +124,7 @@ module.exports = class Device {
   }
 
   async receiveIpDeviceUplink (devEUI, data) {
+    devEUI = normalizeDevEUI(devEUI)
     // Get IP Network Type
     let nwkType = await this.modelAPI.networkTypes.loadByName('IP')
     // Ensure a deviceNTL exists
@@ -148,6 +149,7 @@ module.exports = class Device {
   }
 
   async pushIpDeviceDownlink (devEUI, data) {
+    devEUI = normalizeDevEUI(devEUI)
     data = JSON.stringify(data)
     // TODO: dont push message if there are listeners to the channel
     // In that case, just send data as the publish message
@@ -157,6 +159,7 @@ module.exports = class Device {
   }
 
   async listIpDeviceDownlinks (devEUI) {
+    devEUI = normalizeDevEUI(devEUI)
     let key = `ip_downlinks:${devEUI}`
     const len = await redisClient.llenAsync(key)
     if (!len) return []

@@ -104,7 +104,7 @@ describe('PasswordPolicies', function () {
           res.should.have.status(200)
           var ppObj = JSON.parse(res.text)
           ppObj.ruleText.should.equal('Must be at least 9 characters')
-          ppObj.ruleRegExp.should.equal('^\S{9,}$')
+          ppObj.ruleRegExp.should.equal('^\\S{9,}$')
           done()
         })
     })

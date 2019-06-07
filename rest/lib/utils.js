@@ -60,6 +60,8 @@ const getHttpRequestPreferedWaitMs = R.compose(
   R.defaultTo('')
 )
 
+const normalizeDevEUI = R.replace(/[^0-9A-Fa-f]/g, '')
+
 module.exports = {
   mutate,
   onFail,
@@ -69,5 +71,6 @@ module.exports = {
   joinUrl,
   normalizeFilePath,
   getCertificateCn,
-  getHttpRequestPreferedWaitMs
+  getHttpRequestPreferedWaitMs,
+  normalizeDevEUI
 }

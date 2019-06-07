@@ -126,7 +126,7 @@ exports.initialize = function (app, server) {
 
   app.get('/api/networks/group', [restServer.isLoggedIn,
     restServer.fetchCompany],
-  function (req, res, next) {
+  function (req, res) {
     var options = {}
     if (req.query.limit) {
       var limitInt = parseInt(req.query.limit, 10)

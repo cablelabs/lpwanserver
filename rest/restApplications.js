@@ -188,7 +188,9 @@ exports.initialize = function (app, server) {
   app.post('/api/applications', [restServer.isLoggedIn,
     restServer.fetchCompany,
     restServer.isAdmin],
-  function (req, res, next) {
+  function (req, res) {
+    appLogger.log(JSON.stringify(req.body))
+
     var rec = req.body
     // You can't specify an id.
     if (rec.id) {
@@ -214,7 +216,7 @@ exports.initialize = function (app, server) {
     ).then(function (rec) {
       var send = {}
       send.id = rec.id
-      restServer.respondJson(res, 200, send)
+      restServer.respondJson(res, 200, send, true)
     })
       .catch(function (err) {
         restServer.respond(res, err)

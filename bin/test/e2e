@@ -1,21 +1,24 @@
 #!/usr/bin/env bash
 
-# Remove old containers
-docker container rm \
-  lpwanserver_dev_e2e_test \
-  lpwanserver_dev_prisma \
-  lpwanserver_dev_postgres \
-  lpwanserver_dev_redis \
-  lpwanserver_dev_loraserver2 \
-  lpwanserver_dev_loraserver1 \
-  lpwanserver_dev_loraappserver2 \
-  lpwanserver_dev_loraappserver1 \
-  lpwanserver_dev_loraserver_mosquitto --force
+# Remove old containers, volumes, and images
+./bin/clean.js
 
-# Remove old volumes
-docker volume rm \
-  lpwanserver_dev_postgres \
-  lpwanserver_dev_redis --force
+# # Remove old containers
+# docker container rm \
+#   lpwanserver_dev_e2e_test \
+#   lpwanserver_dev_prisma \
+#   lpwanserver_dev_postgres \
+#   lpwanserver_dev_redis \
+#   lpwanserver_dev_loraserver2 \
+#   lpwanserver_dev_loraserver1 \
+#   lpwanserver_dev_loraappserver2 \
+#   lpwanserver_dev_loraappserver1 \
+#   lpwanserver_dev_loraserver_mosquitto --force
+
+# # Remove old volumes
+# docker volume rm \
+#   lpwanserver_dev_postgres \
+#   lpwanserver_dev_redis --force
 
 # Start databases and prisma
 ./bin/manage-db start

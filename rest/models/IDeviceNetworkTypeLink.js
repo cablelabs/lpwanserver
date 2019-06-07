@@ -1,7 +1,7 @@
 var appLogger = require('../lib/appLogger.js')
 var httpError = require('http-errors')
 const { prisma, formatInputData, formatRelationshipsIn, loadRecord } = require('../lib/prisma')
-const { onFail } = require('../lib/utils')
+const { onFail, normalizeDevEUI } = require('../lib/utils')
 
 module.exports = class DeviceNetworkTypeLink {
   constructor (modelAPI) {
@@ -11,6 +11,9 @@ module.exports = class DeviceNetworkTypeLink {
   async create (deviceId, networkTypeId, deviceProfileId, networkSettings, validateCompanyId, { remoteOrigin = false } = {}) {
     try {
       await this.validateCompanyForDevice(validateCompanyId, deviceId)
+      if (networkSettings && networkSettings.devEUI) {
+        networkSettings.devEUI = normalizeDevEUI(networkSettings.devEUI)
+      }
       const data = formatInputData({
         deviceId,
         networkTypeId,
@@ -34,6 +37,9 @@ module.exports = class DeviceNetworkTypeLink {
     try {
       await this.validateCompanyForDeviceNetworkTypeLink(validateCompanyId, id)
       if (data.networkSettings) {
+        if (data.networkSettings.devEUI) {
+          data.networkSettings.devEUI = normalizeDevEUI(data.networkSettings.devEUI)
+        }
         data.networkSettings = JSON.stringify(data.networkSettings)
       }
       data = formatInputData(data)

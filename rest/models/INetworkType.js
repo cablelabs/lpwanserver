@@ -16,7 +16,7 @@ module.exports = class NetworkType {
     return onFail(400, () => prisma.deleteNetworkType({ id }))
   }
 
-  async list ({ limit, offset, ...where }) {
+  async list ({ limit, offset, ...where } = {}) {
     if (where.search) {
       where.name_contains = where.search
       delete where.search

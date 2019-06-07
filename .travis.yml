@@ -14,6 +14,7 @@ before_install:
 install:
   - npm ci
   - mkdir certs && ./bin/generate-development-certificates
+  - mkdir public
 cache:
   directories:
     - "$HOME/.npm"
@@ -22,7 +23,7 @@ script:
   - npm run test:e2e-https
 after_success: npm run coverage
 before_deploy:
-  - cd .. && git clone --depth 1 https://github.com/cablelabs/lpwanserver-web-client.git && cd lpwanserver
+  - cd .. && git clone --depth 1 https://github.com/cablelabs/lpwanserver-web-client.git && cd lpwanserver-web-client && npm ci && cd ../lpwanserver
   - ./bin/build-ui
   - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
   - npm run package

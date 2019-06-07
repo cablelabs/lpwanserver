@@ -2,7 +2,7 @@
 # configuration example and documentation.
 
 [postgresql]
-dsn="postgres://loraserver_ns:loraserver_ns@postgres/loraserver_ns?sslmode=disable"
+dsn="postgres://loraserver_ns:loraserver_ns@lora_postgres/loraserver_ns?sslmode=disable"
 
 [redis]
 url="redis://redis:6379/2"
