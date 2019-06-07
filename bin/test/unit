@@ -1,14 +1,7 @@
 #!/usr/bin/env bash
 
-# Remove old containers
-docker container rm \
-  lpwanserver_dev_unit_test \
-  lpwanserver_dev_prisma \
-  lpwanserver_dev_postgres --force
-
-docker volume rm \
-  lpwanserver_dev_postgres \
-  lpwanserver_dev_redis --force
+# Remove old containers, volumes, and images
+./bin/clean.js
 
 # Start databases and prisma
 ./bin/manage-db start

@@ -858,7 +858,7 @@ SELECT pg_catalog.setval('public.network_server_id_seq', 1, true);
 
 COPY public.organization (id, created_at, updated_at, name, display_name, can_have_gateways) FROM stdin;
 1	2018-08-31 16:02:54.551826+00	2018-08-31 16:02:54.551826+00	loraserver	LoRa Server	t
-10	2018-09-05 13:37:28.49025+00	2018-09-05 13:37:28.49025+00	cablelabs	cablelabs	f
+10	2018-09-05 13:37:28.49025+00	2018-09-05 13:37:28.49025+00	sysadmins	SysAdmins	f
 \.
 
 
@@ -902,7 +902,7 @@ de9d9f33-26ab-43b3-9088-d65801240e0e	10	1	2018-09-05 13:37:28.809637+00	2018-09-
 
 COPY public."user" (id, created_at, updated_at, username, password_hash, session_ttl, is_active, is_admin, email, note) FROM stdin;
 1	2018-08-31 16:02:54.459274+00	2018-08-31 16:02:54.459274+00	admin	PBKDF2$sha512$100000$4u3hL8krvlMIS0KnCYXeMw==$G7c7tuUYq2zSJaUeruvNL/KF30d3TVDORVD56wzvJYmc3muWjoaozH8bHJ7r8zY8dW6Pts2bWyhFfkb/ubQZsA==	0	t	t		
-5	2018-09-05 13:37:28.772222+00	2018-09-05 13:37:28.772223+00	cablelabsadmin	PBKDF2$sha512$100000$8Y1HWO0Nh8Q+VHzbu2YPgA==$tp+7mAXrj3NHZYWVubvmuurb9OQNfHNBNiw9qTy/DhYPHe2KOvZnBIz3Y43u7aa7ZgEoQVzH8Qoz6ZM+6+Oe/Q==	0	t	f	fake@emailaddress.com	Created by and for LPWAN Server
+5	2018-09-05 13:37:28.772222+00	2018-09-05 13:37:28.772223+00	sysadminsadmin	PBKDF2$sha512$100000$8Y1HWO0Nh8Q+VHzbu2YPgA==$tp+7mAXrj3NHZYWVubvmuurb9OQNfHNBNiw9qTy/DhYPHe2KOvZnBIz3Y43u7aa7ZgEoQVzH8Qoz6ZM+6+Oe/Q==	0	t	f	fake@emailaddress.com	Created by and for LPWAN Server
 \.
 
 
@@ -2348,7 +2348,7 @@ SELECT pg_catalog.setval('public.network_server_id_seq', 5, true);
 
 COPY public.organization (id, created_at, updated_at, name, display_name, can_have_gateways) FROM stdin;
 1	2018-08-31 16:02:52.48396+00	2018-08-31 16:02:52.48396+00	loraserver	LoRa Server	t
-56	2018-09-07 19:29:00.350183+00	2018-09-07 19:29:00.350183+00	cablelabs	cablelabs	f
+56	2018-09-07 19:29:00.350183+00	2018-09-07 19:29:00.350183+00	sysadmins	SysAdmins	f
 \.
 
 
@@ -2392,7 +2392,7 @@ COPY public.service_profile (service_profile_id, organization_id, network_server
 
 COPY public."user" (id, created_at, updated_at, username, password_hash, session_ttl, is_active, is_admin, email, note) FROM stdin;
 1	2018-08-31 16:02:52.423529+00	2018-08-31 16:02:52.423529+00	admin	PBKDF2$sha512$100000$4u3hL8krvlMIS0KnCYXeMw==$G7c7tuUYq2zSJaUeruvNL/KF30d3TVDORVD56wzvJYmc3muWjoaozH8bHJ7r8zY8dW6Pts2bWyhFfkb/ubQZsA==	0	t	t		
-3	2018-09-07 19:29:00.664536+00	2018-09-07 19:29:00.664536+00	cablelabsadmin	PBKDF2$sha512$100000$pPYOD5IJmeJFaj/yBSXlJQ==$5Tcb5IubVMqoWm4v2QnBb8rsyMBIAa+NY8KR5HYkMkAIEjKwknirvvVHBnOG8Os3Oq+7ywG7zpB5B8GvagUXUg==	0	t	f	fake@emailaddress.com	Created by and for LPWAN Server
+3	2018-09-07 19:29:00.664536+00	2018-09-07 19:29:00.664536+00	sysadminsadmin	PBKDF2$sha512$100000$pPYOD5IJmeJFaj/yBSXlJQ==$5Tcb5IubVMqoWm4v2QnBb8rsyMBIAa+NY8KR5HYkMkAIEjKwknirvvVHBnOG8Os3Oq+7ywG7zpB5B8GvagUXUg==	0	t	f	fake@emailaddress.com	Created by and for LPWAN Server
 \.
 
 

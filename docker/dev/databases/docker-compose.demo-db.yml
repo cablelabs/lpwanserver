@@ -22,16 +22,26 @@ services:
             password: prisma
 
   postgres:
-    image: postgres:10.8-alpine
+    image: postgres:10.3-alpine
     container_name: lpwanserver_dev_postgres
+    networks:
+      - lpwanserver_dev
+    environment:
+      POSTGRES_USER: prisma
+      POSTGRES_PASSWORD: prisma
+    volumes:
+      - postgres:/var/lib/postgresql/data
+
+  lora_postgres:
+    image: postgres:10.3-alpine
+    container_name: lpwanserver_dev_lora_postgres
     networks:
       - lpwanserver_dev
     ports:
       - 5432
     volumes:
-      - ../../../data:/baseline-data
-      - ../configuration/postgresql/initdb-demo:/docker-entrypoint-initdb.d
-      - postgres:/var/lib/postgresql/data
+      - ../configuration/postgresql/init_lora_demo:/docker-entrypoint-initdb.d
+      - lora_postgres:/var/lib/postgresql/data
 
   redis:
     image: redis:4-alpine
@@ -49,5 +59,7 @@ networks:
 volumes:
   postgres:
     name: lpwanserver_dev_postgres
+  lora_postgres:
+    name: lpwanserver_dev_lora_postgres
   redis:
     name: lpwanserver_dev_redis

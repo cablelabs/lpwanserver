@@ -1,7 +1,7 @@
 var appLogger = require('./lib/appLogger.js')
 var restServer
 var modelAPI
-const { getCertificateCn, getHttpRequestPreferedWaitMs } = require('./lib/utils')
+const { getCertificateCn, getHttpRequestPreferedWaitMs, normalizeDevEUI } = require('./lib/utils')
 const { formatRelationshipsOut } = require('./lib/prisma')
 const { redisSub } = require('./lib/redis')
 
@@ -52,20 +52,19 @@ exports.initialize = function (app, server) {
      * @apiVersion 0.1.0
      */
   app.get('/api/devices', [restServer.isLoggedIn, restServer.fetchCompany],
-    function (req, res) {
+    async function (req, res) {
       var options = {}
       if (req.company.type !== 'ADMIN') {
         // If they gave a applicationId, make sure it belongs to their
         // company.
-        if (req.query.companyId) {
-          if (req.query.companyId !== req.user.company.id) {
-            restServer.respond(res, 403, 'Cannot request devices for another company')
-            return
-          }
+        if (!req.query.applicationId) {
+          restServer.respond(res, 403, 'Non admin users must specify an application.')
+          return
         }
-        else {
-          // Force the search to be limited to the user's company
-          options.companyId = req.user.company.id
+        const app = await modelAPI.applications.load(req.query.applicationId)
+        if (app.companyId !== req.user.company.id) {
+          restServer.respond(res, 403, 'Cannot request devices for another company\'s application')
+          return
         }
       }
 
@@ -86,11 +85,8 @@ exports.initialize = function (app, server) {
       }
       // This may be redundant, but we've already verified that if the
       // user is not part of the admin company, then this is their companyId.
-      if (req.query.companyId) {
-        options.companyId = parseInt(req.query.companyId, 10)
-      }
       if (req.query.applicationId) {
-        options.applicationId = parseInt(req.query.applicationId, 10)
+        options.applicationId = req.query.applicationId
       }
       modelAPI.devices.list(options).then(function (cos) {
         const responseBody = { ...cos, records: cos.records.map(formatRelationshipsOut) }
@@ -399,6 +395,7 @@ exports.initialize = function (app, server) {
       restServer.respond(res, 403)
       return
     }
+    const normDevEui = normalizeDevEUI(devEUI)
     try {
       const waitMs = getHttpRequestPreferedWaitMs(req.get('prefer'))
       const downlinks = await modelAPI.devices.listIpDeviceDownlinks(devEUI)
@@ -412,19 +409,18 @@ exports.initialize = function (app, server) {
       req.connection.removeAllListeners('timeout')
 
       redisSub.on('message', async channel => {
-        if (channel !== `downlink_received:${devEUI}`) return
-        redisSub.unsubscribe(`downlink_received:${devEUI}`)
+        if (channel !== `downlink_received:${normDevEui}`) return
+        redisSub.unsubscribe(`downlink_received:${normDevEui}`)
         let downlinks = await modelAPI.devices.listIpDeviceDownlinks(devEUI)
-        appLogger.log(`DOWNLINKS: ${JSON.stringify(downlinks)}`)
         restServer.respond(res, 200, downlinks, true)
         // put timeout back at default 2min
         req.connection.setTimeout(120000)
       })
 
-      redisSub.subscribe(`downlink_received:${devEUI}`)
+      redisSub.subscribe(`downlink_received:${normDevEui}`)
 
       req.connection.on('timeout', () => {
-        redisSub.unsubscribe(`downlink_received:${devEUI}`)
+        redisSub.unsubscribe(`downlink_received:${normDevEui}`)
         restServer.respond(res, 200, [], true)
         req.connection.end()
       })
