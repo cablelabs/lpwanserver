@@ -33,7 +33,7 @@ async function removeContainersAndVolumes () {
     'lpwanserver_dev_redis'
   ]
 
-  const logErr = e => {
+  const logErr = () => {
     // console.log(e.message)
   }
 
