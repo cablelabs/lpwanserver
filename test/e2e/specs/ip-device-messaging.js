@@ -47,7 +47,7 @@ describe.only('E2E Test for IP Device Uplink/Downlink Device Messaging', () => {
       networkType: { connect: { id: ipNwkType.id } },
       device: { connect: { id: device.id } },
       deviceProfile: { connect: { id: deviceProfile.id } },
-      networkSettings: '{"devEUI":"00:11:22:33:44:55:66:77"}'
+      networkSettings: '{"devEUI":"0011223344556677"}'
     })
   }
 
