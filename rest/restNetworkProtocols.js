@@ -71,9 +71,9 @@ exports.initialize = function (app, server) {
       if (req.query.networkProtocolVersion) {
         options.networkProtocolVersion = req.query.networkProtocolVersion
       }
-      modelAPI.networkProtocols.list(options).then(function (nps) {
+      modelAPI.networkProtocols.list(options, { includeTotal: true }).then(([ records, totalCount ]) => {
         // restServer.respondJson(res, null, nps)
-        const responseBody = { ...nps, records: nps.records.map(formatRelationshipsOut) }
+        const responseBody = { totalCount, records: records.map(formatRelationshipsOut) }
         restServer.respond(res, 200, responseBody)
       })
         .catch(function (err) {
@@ -103,14 +103,11 @@ exports.initialize = function (app, server) {
       if (req.query.networkTypeId) {
         options.networkTypeId = req.query.networkTypeId
       }
-      modelAPI.networkProtocols.list(options).then(function (recs) {
-        let nps = {
-          totalCount: recs.totalCount,
-          records: []
-        }
-        let len = recs.records.length
+      modelAPI.networkProtocols.list(options, { includeTotal: true }).then(([ recs, totalCount ]) => {
+        let nps = { totalCount, records: [] }
+        let len = recs.length
         for (let i = 0; i < len; i++) {
-          let rec = recs.records[i]
+          let rec = recs[i]
           let found = false
           let counter = 0
           while (!found && counter < nps.records.length) {
@@ -349,7 +346,7 @@ exports.initialize = function (app, server) {
      */
   app.get('/api/networkProtocolHandlers/', [restServer.isLoggedIn],
     async function (req, res) {
-      const { records } = await modelAPI.networkProtocols.list()
+      const [ records ] = await modelAPI.networkProtocols.list()
       const handlerList = records
         .map(x => x.protocolHandler)
         .map(x => ({ id: x, name: x }))

@@ -1,14 +1,123 @@
 const NetworkProtocolDataAccess = require('../networkProtocols/networkProtocolDataAccess')
 const appLogger = require('../lib/appLogger')
 const R = require('ramda')
-const { prisma, formatRelationshipsIn, formatInputData, loadRecord } = require('../lib/prisma')
+const { prisma } = require('../lib/prisma')
 const httpError = require('http-errors')
-const { onFail } = require('../lib/utils')
+const { renameKeys } = require('../lib/utils')
 const { encrypt, decrypt, genKey } = require('../lib/crypto')
+const { redisClient } = require('../lib/redis')
+const CacheFirstStrategy = require('../../lib/prisma-cache/src/cache-first-strategy')
 
+//* *****************************************************************************
+// Fragments for how the data should be returned from Prisma.
+//* *****************************************************************************
+const fragments = {
+  basic: `fragment BasicNetwork on Network {
+    id
+    name
+    baseUrl
+    securityData
+    networkProvider {
+      id
+    }
+    networkType {
+      id
+    }
+    networkProtocol {
+      id
+    }
+  }`
+}
+
+// ******************************************************************************
+// Database Client
+// ******************************************************************************
+const DB = new CacheFirstStrategy({
+  name: 'network',
+  pluralName: 'networks',
+  fragments,
+  defaultFragmentKey: 'basic',
+  prisma,
+  redis: redisClient,
+  log: appLogger.log.bind(appLogger)
+})
+
+// ******************************************************************************
+// Helpers
+// ******************************************************************************
+const genNwkKey = function (networkId) {
+  return 'nk' + networkId
+}
+
+async function authorizeAndTest (network, modelAPI) {
+  if (network.securityData.authorized) {
+    return network
+  }
+  try {
+    await modelAPI.networkProtocolAPI.connect(network)
+    network.securityData.authorized = true
+    try {
+      await modelAPI.networkProtocolAPI.test(network)
+      appLogger.log('Test Success ' + network.name, 'info')
+      network.securityData.message = 'ok'
+    }
+    catch (err) {
+      appLogger.log('Test of ' + network.name + ': ' + err)
+      network.securityData.authorized = false
+      network.securityData.message = err.toString()
+    }
+    return network
+  }
+  catch (err) {
+    if (err.code === 42) return network
+    appLogger.log('Connection of ' + network.name + ' Failed: ' + err)
+    let errorMessage = {}
+    if (err === 301 || err === 405 || err === 404) {
+      errorMessage = new Error('Invalid URI to the ' + network.name + ' Network: "' + network.baseUrl + '"')
+    }
+    else if (err === 401) {
+      errorMessage = new Error('Authentication not recognized for the ' + network.name + ' Network')
+    }
+    else {
+      errorMessage = new Error('Server Error on ' + network.name + ' Network:')
+    }
+    network.securityData.authorized = false
+    network.securityData.message = errorMessage.toString()
+    return network
+  }
+}
+
+// ******************************************************************************
+// Model
+// ******************************************************************************
 module.exports = class Network {
   constructor (modelAPI) {
     this.modelAPI = modelAPI
+  }
+
+  async load (id) {
+    const rec = await DB.load({ id })
+    if (rec.securityData) {
+      let k = await this.modelAPI.protocolData.loadValue(rec, genNwkKey(id))
+      rec.securityData = await decrypt(rec.securityData, k)
+      let networkProtocol = await this.modelAPI.networkProtocols.load(rec.networkProtocol.id)
+      rec.masterProtocol = networkProtocol.masterProtocol
+    }
+    return rec
+  }
+
+  async list (query = {}, opts) {
+    if (query.search) {
+      query = renameKeys({ search: 'name_contains' }, query)
+    }
+    let [ records, totalCount ] = await DB.list(query, opts)
+    records = await Promise.all(records.map(async rec => {
+      if (!rec.securityData) return rec
+      let k = await this.modelAPI.protocolData.loadValue(rec, genNwkKey(rec.id))
+      const securityData = await decrypt(rec.securityData, k)
+      return { ...rec, securityData }
+    }))
+    return [records, totalCount]
   }
 
   async create (data) {
@@ -23,14 +132,13 @@ module.exports = class Network {
       data.securityData = R.merge(securityDataDefaults, data.securityData)
       data.securityData = encrypt(data.securityData, k)
     }
-    data = formatInputData(data)
-    let record = await prisma.createNetwork(data).$fragment(fragments.basic)
+    let record = await DB.create(data)
     if (record.securityData) {
       await this.modelAPI.protocolData.upsert(record, genNwkKey(record.id), k)
       record.securityData = decrypt(record.securityData, k)
       let { securityData } = await authorizeAndTest(record, this.modelAPI, k, this, dataAPI)
       securityData = encrypt(securityData, k)
-      await prisma.updateNetwork({ data: { securityData }, where: { id: record.id } }).$fragment(fragments.basic)
+      await DB.update({ id: record.id }, { securityData })
     }
     return this.load(record.id)
   }
@@ -45,51 +153,17 @@ module.exports = class Network {
     if (data.securityData) {
       data.securityData = encrypt(securityData, k)
     }
-    data = formatInputData(data)
-    await prisma.updateNetwork({ data, where: { id } }).$fragment(fragments.basic)
+    await DB.update({ id }, data)
     return this.load(id)
-  }
-
-  async load (id) {
-    const rec = await loadNetwork({ id })
-    if (rec.securityData) {
-      let k = await this.modelAPI.protocolData.loadValue(rec, genNwkKey(id))
-      rec.securityData = await decrypt(rec.securityData, k)
-      let networkProtocol = await this.modelAPI.networkProtocols.load(rec.networkProtocol.id)
-      rec.masterProtocol = networkProtocol.masterProtocol
-    }
-    return rec
-  }
-
-  async list ({ limit, offset, ...where } = {}) {
-    where = formatRelationshipsIn(where)
-    if (where.search) {
-      where.name_contains = where.search
-      delete where.search
-    }
-    const query = { where }
-    if (limit) query.first = limit
-    if (offset) query.skip = offset
-    let [records, totalCount] = await Promise.all([
-      prisma.networks(query).$fragment(fragments.basic),
-      prisma.networksConnection({ where }).aggregate().count()
-    ])
-    records = await Promise.all(records.map(async rec => {
-      if (!rec.securityData) return rec
-      let k = await this.modelAPI.protocolData.loadValue(rec, genNwkKey(rec.id))
-      const securityData = await decrypt(rec.securityData, k)
-      return { ...rec, securityData }
-    }))
-    return { totalCount, records }
   }
 
   async remove (id) {
     let dataAPI = new NetworkProtocolDataAccess(this.modelAPI, 'INetwork Delete')
-    let old = await loadNetwork({ id })
+    let old = await DB.load({ id })
     await dataAPI.deleteProtocolDataForKey(id,
       old.networkProtocol.id,
       genNwkKey(id))
-    return onFail(400, () => prisma.deleteNetwork({ id }))
+    await DB.remove({ id })
   }
 
   async pullNetwork (id) {
@@ -131,7 +205,7 @@ module.exports = class Network {
 
   async pushNetworks (networkTypeId) {
     try {
-      let { records } = await this.list({ networkTypeId })
+      let [ records ] = await this.list({ networkTypeId })
       let networkType = await this.modelAPI.networkTypes.load(networkTypeId)
       var npda = new NetworkProtocolDataAccess(this.modelAPI, 'Push Network')
       npda.initLog(networkType, records)
@@ -143,73 +217,5 @@ module.exports = class Network {
       appLogger.log('Error pushing to Networks : ' + ' ' + err)
       throw err
     }
-  }
-}
-
-//* *****************************************************************************
-// Fragments for how the data should be returned from Prisma.
-//* *****************************************************************************
-const fragments = {
-  basic: `fragment BasicNetwork on Network {
-    id
-    name
-    baseUrl
-    securityData
-    networkProvider {
-      id
-    }
-    networkType {
-      id
-    }
-    networkProtocol {
-      id
-    }
-  }`
-}
-
-// ******************************************************************************
-// Helpers
-// ******************************************************************************
-const loadNetwork = loadRecord('network', fragments, 'basic')
-
-const genNwkKey = function (networkId) {
-  return 'nk' + networkId
-}
-
-async function authorizeAndTest (network, modelAPI) {
-  if (network.securityData.authorized) {
-    return network
-  }
-  try {
-    await modelAPI.networkProtocolAPI.connect(network)
-    network.securityData.authorized = true
-    try {
-      await modelAPI.networkProtocolAPI.test(network)
-      appLogger.log('Test Success ' + network.name, 'info')
-      network.securityData.message = 'ok'
-    }
-    catch (err) {
-      appLogger.log('Test of ' + network.name + ': ' + err)
-      network.securityData.authorized = false
-      network.securityData.message = err.toString()
-    }
-    return network
-  }
-  catch (err) {
-    if (err.code === 42) return network
-    appLogger.log('Connection of ' + network.name + ' Failed: ' + err)
-    let errorMessage = {}
-    if (err === 301 || err === 405 || err === 404) {
-      errorMessage = new Error('Invalid URI to the ' + network.name + ' Network: "' + network.baseUrl + '"')
-    }
-    else if (err === 401) {
-      errorMessage = new Error('Authentication not recognized for the ' + network.name + ' Network')
-    }
-    else {
-      errorMessage = new Error('Server Error on ' + network.name + ' Network:')
-    }
-    network.securityData.authorized = false
-    network.securityData.message = errorMessage.toString()
-    return network
   }
 }

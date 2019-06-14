@@ -14,4 +14,4 @@ RUN npm install
 # copy all project
 COPY . .
 
-CMD ["nyc", "--reporter=lcovonly", "mocha", "test2.0/unit", "--recursive"]
+CMD ["nyc", "--reporter=lcovonly", "mocha", "test2.0/unit", "--recursive", "--file", "test2.0/unit/setup.js"]

@@ -69,8 +69,8 @@ exports.initialize = function (app, server) {
       if (req.query.search) {
         options.search = req.query.search
       }
-      const result = await modelAPI.companies.list(options)
-      restServer.respond(res, 200, result, true)
+      const [ records, totalCount ] = await modelAPI.companies.list(options, { includeTotal: true })
+      restServer.respond(res, 200, { records, totalCount }, true)
     }
     catch (err) {
       appLogger.log('Error getting companies: ' + err)

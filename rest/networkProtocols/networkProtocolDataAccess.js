@@ -84,7 +84,7 @@ module.exports = class NetworkProtocolDataAccess {
   }
   async getCompanyNetworkType (companyId, networkTypeId) {
     const request = async () => {
-      const { records } = await this.modelAPI.companyNetworkTypeLinks.list({ companyId, networkTypeId })
+      const [ records ] = await this.modelAPI.companyNetworkTypeLinks.list({ companyId, networkTypeId })
       return records[0]
     }
     return this.cacheFirst(
@@ -95,8 +95,8 @@ module.exports = class NetworkProtocolDataAccess {
   }
   async getApplicationNetworkType (applicationId, networkTypeId) {
     const request = async () => {
-      const { records } = await this.modelAPI.applicationNetworkTypeLinks.list({ applicationId, networkTypeId })
-      return records[0]
+      const [ apps ] = await this.modelAPI.applicationNetworkTypeLinks.list({ applicationId, networkTypeId })
+      return apps[0]
     }
     return this.cacheFirst(
       ['applicationNetworkTypeLinks', `${applicationId}:${networkTypeId}`],
@@ -106,8 +106,8 @@ module.exports = class NetworkProtocolDataAccess {
   }
   async getDeviceNetworkType (deviceId, networkTypeId) {
     const request = async () => {
-      const { records } = await this.modelAPI.deviceNetworkTypeLinks.list({ deviceId, networkTypeId })
-      return records[0]
+      const [ devNtls ] = await this.modelAPI.deviceNetworkTypeLinks.list({ deviceId, networkTypeId, limit: 1 })
+      return devNtls[0]
     }
     return this.cacheFirst(
       ['applicationNetworkTypeLinks', `${deviceId}:${networkTypeId}`],
@@ -117,7 +117,7 @@ module.exports = class NetworkProtocolDataAccess {
   }
   async getDevicesForDeviceProfile (deviceProfileId) {
     const request = async () => {
-      let devs = await this.modelAPI.devices.list({ 'deviceProfileId': deviceProfileId })
+      let [devs] = await this.modelAPI.devices.list({ 'deviceProfileId': deviceProfileId })
       // Put devices in cache (cache is disabled)
       // devs.forEach(x => R.assocPath(['devices', `${x.id}`], x, this.cache))
       return devs.map(x => x.id)

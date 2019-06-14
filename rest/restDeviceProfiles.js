@@ -94,8 +94,8 @@ exports.initialize = function (app, server) {
       options.networkTypeId = req.query.networkTypeId
     }
 
-    modelAPI.deviceProfiles.list(options).then(function (dps) {
-      const responseBody = { ...dps, records: dps.records.map(formatRelationshipsOut) }
+    modelAPI.deviceProfiles.list(options, { includeTotal: true }).then(([ records, totalCount ]) => {
+      const responseBody = { totalCount, records: records.map(formatRelationshipsOut) }
       restServer.respondJson(res, null, responseBody)
     })
       .catch(function (err) {

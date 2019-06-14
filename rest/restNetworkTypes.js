@@ -41,9 +41,9 @@ exports.initialize = function (app, server) {
      * @apiSuccess {String} object.records.name The name of the Network Type
      * @apiVersion 0.1.0
      */
-  app.get('/api/networkTypes', [restServer.isLoggedIn], function (req, res, next) {
-    modelAPI.networkTypes.list().then(function (nts) {
-      restServer.respondJson(res, null, nts)
+  app.get('/api/networkTypes', [restServer.isLoggedIn], function (req, res) {
+    modelAPI.networkTypes.list({}, { includeTotal: true }).then(([ records, totalCount ]) => {
+      restServer.respondJson(res, null, { records, totalCount })
     })
       .catch(function (err) {
         appLogger.log('Error getting networkTypes: ' + err)

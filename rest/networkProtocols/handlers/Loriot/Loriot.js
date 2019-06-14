@@ -38,15 +38,15 @@ module.exports = class Loriot extends NetworkProtocol {
   }
 
   async pushApplications (network, modelAPI, dataAPI) {
-    let { records } = await modelAPI.applications.list()
-    await Promise.all(records.map(x => this.pushApplication(network, x, dataAPI, false)))
+    let [apps] = await modelAPI.applications.list()
+    await Promise.all(apps.map(x => this.pushApplication(network, x, dataAPI, false)))
   }
 
   async addRemoteApplication (network, remoteAppId, modelAPI, dataAPI) {
     const remoteApp = await this.client.loadApplication(network, remoteAppId)
     const [ integration ] = remoteApp.outputs.filter(x => x.output === 'httppush')
-    const { records: localApps } = await modelAPI.applications.list({ search: remoteApp.name })
-    const { records: cos } = await modelAPI.companies.list()
+    const [localApps] = await modelAPI.applications.list({ search: remoteApp.name })
+    const [ cos ] = await this.modelAPI.companies.list({ limit: 1 })
     const { records: reportingProtos } = await modelAPI.reportingProtocols.list()
     let localApp = localApps[0]
     if (!localApp) {
@@ -59,7 +59,7 @@ module.exports = class Loriot extends NetworkProtocol {
       localApp = await modelAPI.applications.create(localAppData)
       appLogger.log('Created ' + localApp.name)
     }
-    const { records: appNtls } = await modelAPI.applicationNetworkTypeLinks.list({ applicationId: localApp.id })
+    const [ appNtls ] = await modelAPI.applicationNetworkTypeLinks.list({ applicationId: localApp.id })
     let appNtl = appNtls[0]
     if (appNtl) {
       appLogger.log(localApp.name + ' link already exists')
@@ -177,14 +177,14 @@ module.exports = class Loriot extends NetworkProtocol {
     return Promise.all(devices.map(device => this.addRemoteDevice(network, device._id, remoteAppId, localAppId, modelAPI, dataAPI)))
   }
 
-  async addRemoteDevice (network, remoteDeviceId, remoteAppId, localAppId, modelAPI, dataAPI) {
-    const { records: cos } = await modelAPI.companies.list({ limit: 1 })
+  async addRemoteDevice (network, remoteDeviceId, remoteAppId, localAppId, modelAPI) {
+    const [ cos ] = await this.modelAPI.companies.list({ limit: 1 })
     let company = cos[0]
     const remoteDevice = await this.client.loadDevice(network, remoteAppId, remoteDeviceId)
     appLogger.log('Adding ' + remoteDevice.title)
     appLogger.log(remoteDevice)
-    let { records } = await modelAPI.devices.list({ search: remoteDevice.title })
-    let localDevice = records[0]
+    let [ devices ] = await modelAPI.devices.list({ search: remoteDevice.title })
+    let localDevice = devices[0]
     if (localDevice) {
       appLogger.log(localDevice.name + ' already exists')
     }
@@ -194,8 +194,8 @@ module.exports = class Loriot extends NetworkProtocol {
       appLogger.log('Created ' + localDevice.name)
     }
 
-    let { totalCount } = await modelAPI.deviceNetworkTypeLinks.list({ deviceId: localDevice.id })
-    if (totalCount > 0) {
+    let [ devNtls ] = await modelAPI.deviceNetworkTypeLinks.list({ deviceId: localDevice.id, limit: 1 })
+    if (devNtls.length) {
       appLogger.log(localDevice.name + ' link already exists')
     }
     else {
@@ -213,7 +213,7 @@ module.exports = class Loriot extends NetworkProtocol {
 
   async addRemoteDeviceProfile (remoteDevice, network, modelAPI) {
     let networkSettings = this.buildDeviceProfileNetworkSettings(remoteDevice)
-    const { records: cos } = await this.modelAPI.companies.list({ limit: 1 })
+    const [ cos ] = await this.modelAPI.companies.list({ limit: 1 })
     let company = cos[0]
     appLogger.log(networkSettings, 'error')
     try {
@@ -237,8 +237,8 @@ module.exports = class Loriot extends NetworkProtocol {
   }
 
   async pushDevices (network, modelAPI, dataAPI) {
-    let { records } = await modelAPI.devices.list()
-    await Promise.all(records.map(x => this.pushDevice(network, x, dataAPI, false)))
+    let [ devices ] = await modelAPI.devices.list()
+    await Promise.all(devices.map(x => this.pushDevice(network, x, dataAPI, false)))
   }
 
   async pushDevice (network, device, dataAPI, update = true) {

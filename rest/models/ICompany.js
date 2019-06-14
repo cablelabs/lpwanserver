@@ -1,30 +1,46 @@
 const appLogger = require('../lib/appLogger.js')
-const { onFail } = require('../lib/utils')
-const { prisma, loadRecord } = require('../lib/prisma')
+const { prisma } = require('../lib/prisma')
 var httpError = require('http-errors')
+const CacheFirstStrategy = require('../../lib/prisma-cache/src/cache-first-strategy')
+const { redisClient } = require('../lib/redis')
+const { renameKeys } = require('../lib/utils')
 
+//* *****************************************************************************
+// Fragments for how the data should be returned from Prisma.
+//* *****************************************************************************
+const fragments = {
+  basic: `fragment BasicCompany on Company {
+    id
+    name
+    type
+  }`
+}
+
+// ******************************************************************************
+// Database Client
+// ******************************************************************************
+const DB = new CacheFirstStrategy({
+  name: 'company',
+  pluralName: 'companies',
+  fragments,
+  defaultFragmentKey: 'basic',
+  prisma,
+  redis: redisClient,
+  log: appLogger.log.bind(appLogger)
+})
+
+// ******************************************************************************
+// Model
+// ******************************************************************************
 module.exports = class Company {
   constructor (modelAPI) {
     this.modelAPI = modelAPI
   }
 
-  create (name, type) {
-    const data = { name, type }
-    return prisma.createCompany(data)
-  }
-
-  update ({ id, ...data }) {
-    if (!id) throw httpError(400, 'No existing Company ID')
-    if (data.type === 'ADMIN') {
-      throw httpError(403, 'Not able to change company type to ADMIN')
-    }
-    return prisma.updateCompany({ data, where: { id } }).$fragment(fragments.basic)
-  }
-
   async load (id) {
-    const company = await loadCompany({ id })
+    const company = await DB.load({ id })
     try {
-      const { records } = await this.modelAPI.companyNetworkTypeLinks.list({ companyId: id })
+      const [ records ] = await this.modelAPI.companyNetworkTypeLinks.list({ companyId: id })
       if (records.length) {
         company.networks = records.map(x => x.id)
       }
@@ -35,27 +51,30 @@ module.exports = class Company {
     return company
   }
 
-  async list ({ limit, offset, ...where } = {}) {
-    if (where.search) {
-      where.name_contains = where.search
-      delete where.search
+  async list (query = {}, opts) {
+    if (query.search) {
+      query = renameKeys({ search: 'name_contains' }, query)
     }
-    const query = { where }
-    if (limit) query.first = limit
-    if (offset) query.skip = offset
-    appLogger.log(`modelAPI.companies.list: ${JSON.stringify(query)}`)
-    const [records, totalCount] = await Promise.all([
-      prisma.companies(query).$fragment(fragments.basic),
-      prisma.companiesConnection({ where }).aggregate().count()
-    ])
-    return { totalCount, records }
+    return DB.list(query, opts)
+  }
+
+  create (name, type) {
+    return DB.create({ name, type })
+  }
+
+  update ({ id, ...data }, opts) {
+    if (!id) throw httpError(400, 'No existing Company ID')
+    if (data.type === 'ADMIN') {
+      throw httpError(403, 'Not able to change company type to ADMIN')
+    }
+    return DB.update({ id }, data, opts)
   }
 
   async remove (id) {
     // Delete my applications, users, and companyNetworkTypeLinks first.
     try {
       // Delete applications
-      let { records: apps } = await this.modelAPI.applications.list({ companyId: id })
+      let [apps] = await this.modelAPI.applications.list({ companyId: id })
       await Promise.all(apps.map(x => this.modelAPI.applications.remove(x.id)))
     }
     catch (err) {
@@ -71,7 +90,7 @@ module.exports = class Company {
     }
     try {
       // Delete deviceProfiles
-      let { records: deviceProfiles } = await this.modelAPI.deviceProfiles.list({ companyId: id })
+      let [ deviceProfiles ] = await this.modelAPI.deviceProfiles.list({ companyId: id })
       await Promise.all(deviceProfiles.map(x => this.modelAPI.deviceProfiles.remove(x.id)))
     }
     catch (err) {
@@ -89,28 +108,12 @@ module.exports = class Company {
     }
     try {
       // Delete companyNetworkTypeLinks
-      let { records: companyNtls } = await this.modelAPI.companyNetworkTypeLinks.list({ companyId: id })
+      let [ companyNtls ] = await this.modelAPI.companyNetworkTypeLinks.list({ companyId: id })
       await Promise.all(companyNtls.map(x => this.modelAPI.companyNetworkTypeLinks.remove(x.id)))
     }
     catch (err) {
       appLogger.log("Error deleting company's networkTypeLinks: " + err)
     }
-    await onFail(400, () => prisma.deleteCompany({ id }))
+    await DB.remove({ id })
   }
 }
-
-//* *****************************************************************************
-// Fragments for how the data should be returned from Prisma.
-//* *****************************************************************************
-const fragments = {
-  basic: `fragment BasicCompany on Company {
-    id
-    name
-    type
-  }`
-}
-
-// ******************************************************************************
-// Helpers
-// ******************************************************************************
-const loadCompany = loadRecord('company', fragments, 'basic')
