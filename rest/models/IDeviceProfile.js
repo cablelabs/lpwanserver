@@ -1,7 +1,7 @@
 var appLogger = require('../lib/appLogger.js')
 const { prisma } = require('../lib/prisma')
 var httpError = require('http-errors')
-const { renameKeys } = require('../lib/utils')
+const { renameKeys, stringifyProp, parseProp } = require('../lib/utils')
 const { redisClient } = require('../lib/redis')
 const CacheFirstStrategy = require('../../lib/prisma-cache/src/cache-first-strategy')
 
@@ -39,11 +39,9 @@ const DB = new CacheFirstStrategy({
 // ******************************************************************************
 // Helpers
 // ******************************************************************************
-function parseNetworkSettings (x) {
-  return typeof x.networkSettings === 'string'
-    ? { ...x, networkSettings: JSON.parse(x.networkSettings) }
-    : x
-}
+const parseNetworkSettings = parseProp('networkSettings')
+const stringifyNetworkSettings = stringifyProp('networkSettings')
+const renameQueryKeys = renameKeys({ search: 'name_contains' })
 
 // ******************************************************************************
 // Model
@@ -58,27 +56,14 @@ module.exports = class DeviceProfile {
   }
 
   async list (query = {}, opts) {
-    if (query.search) {
-      query = renameKeys({ search: 'name_contains' }, query)
-    }
-    let [ records, totalCount ] = await DB.list(query, opts)
-    records = records.map(x => ({
-      ...x,
-      networkSettings: JSON.parse(x.networkSettings)
-    }))
-    return [ records, totalCount ]
+    let [ records, totalCount ] = await DB.list(renameQueryKeys(query), opts)
+    return [ records.map(parseNetworkSettings), totalCount ]
   }
 
   async create (networkTypeId, companyId, name, description, networkSettings, { remoteOrigin = false } = {}) {
     try {
-      const data = {
-        networkTypeId,
-        companyId,
-        name,
-        description,
-        networkSettings: JSON.stringify(networkSettings)
-      }
-      const rec = await DB.create(data)
+      const data = { networkTypeId, companyId, name, description, networkSettings }
+      const rec = await DB.create(stringifyNetworkSettings(data))
       if (!remoteOrigin) {
         var logs = await this.modelAPI.networkTypeAPI.addDeviceProfile(networkTypeId, rec.id)
         rec.remoteAccessLogs = logs
@@ -94,10 +79,7 @@ module.exports = class DeviceProfile {
   async update ({ id, ...data }) {
     try {
       if (!id) throw httpError(400, 'No existing DeviceProfile ID')
-      if (data.networkSettings) {
-        data.networkSettings = JSON.stringify(data.networkSettings)
-      }
-      const rec = await DB.update({ id }, data)
+      const rec = await DB.update({ id }, stringifyNetworkSettings(data))
       var logs = await this.modelAPI.networkTypeAPI.pushDeviceProfile(rec.networkType.id, id)
       rec.remoteAccessLogs = logs
       return rec

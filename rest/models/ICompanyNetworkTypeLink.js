@@ -3,6 +3,7 @@ const { prisma } = require('../lib/prisma')
 const R = require('ramda')
 const CacheFirstStrategy = require('../../lib/prisma-cache/src/cache-first-strategy')
 const { redisClient } = require('../lib/redis')
+const { stringifyProp, parseProp } = require('../lib/utils')
 
 //* *****************************************************************************
 // Fragments for how the data should be returned from Prisma.
@@ -36,11 +37,8 @@ const DB = new CacheFirstStrategy({
 // ******************************************************************************
 // Helpers
 // ******************************************************************************
-function parseNetworkSettings (x) {
-  return typeof x.networkSettings === 'string'
-    ? { ...x, networkSettings: JSON.parse(x.networkSettings) }
-    : x
-}
+const parseNetworkSettings = parseProp('networkSettings')
+const stringifyNetworkSettings = stringifyProp('networkSettings')
 
 // ******************************************************************************
 // Model
@@ -50,8 +48,8 @@ module.exports = class CompanyNetworkTypeLink {
     this.modelAPI = modelAPI
   }
 
-  load (id) {
-    return DB.load({ id })
+  async load (id) {
+    return parseNetworkSettings(await DB.load({ id }))
   }
 
   async list (query, opts) {
@@ -61,12 +59,8 @@ module.exports = class CompanyNetworkTypeLink {
 
   async create (companyId, networkTypeId, networkSettings, { remoteOrigin = false } = {}) {
     try {
-      const data = {
-        companyId,
-        networkTypeId,
-        networkSettings: networkSettings && JSON.stringify(networkSettings)
-      }
-      const rec = await DB.create(data)
+      const data = { companyId, networkTypeId, networkSettings }
+      const rec = await DB.create(stringifyNetworkSettings(data))
       if (!remoteOrigin) {
         var logs = await this.modelAPI.networkTypeAPI.addCompany(networkTypeId, companyId, networkSettings)
         rec.remoteAccessLogs = logs
@@ -83,10 +77,7 @@ module.exports = class CompanyNetworkTypeLink {
 
   async update ({ id, ...data }, { remoteOrigin = false } = {}) {
     try {
-      if (data.networkSettings) {
-        data.networkSettings = JSON.stringify(data.networkSettings)
-      }
-      const rec = await DB.update({ id }, data)
+      const rec = await DB.update({ id }, stringifyNetworkSettings(data))
       if (!remoteOrigin) {
         var logs = await this.modelAPI.networkTypeAPI.pushCompany(rec.networkType.id, rec.company.id, rec.networkSettings)
         rec.remoteAccessLogs = logs

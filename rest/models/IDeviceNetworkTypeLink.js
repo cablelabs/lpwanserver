@@ -1,6 +1,6 @@
 var appLogger = require('../lib/appLogger.js')
 const { prisma } = require('../lib/prisma')
-const { normalizeDevEUI } = require('../lib/utils')
+const { normalizeDevEUI, parseProp, stringifyProp } = require('../lib/utils')
 const { redisClient } = require('../lib/redis')
 const CacheFirstStrategy = require('../../lib/prisma-cache/src/cache-first-strategy')
 
@@ -37,6 +37,12 @@ const DB = new CacheFirstStrategy({
 })
 
 // ******************************************************************************
+// Helpers
+// ******************************************************************************
+const parseNetworkSettings = parseProp('networkSettings')
+const stringifyNetworkSettings = stringifyProp('networkSettings')
+
+// ******************************************************************************
 // Model
 // ******************************************************************************
 module.exports = class DeviceNetworkTypeLink {
@@ -44,17 +50,13 @@ module.exports = class DeviceNetworkTypeLink {
     this.modelAPI = modelAPI
   }
 
-  load (id) {
-    return DB.load({ id })
+  async load (id) {
+    return parseNetworkSettings(await DB.load({ id }))
   }
 
   async list (query, opts) {
     let [ records, totalCount ] = await DB.list(query, opts)
-    records = records.map(x => ({
-      ...x,
-      networkSettings: JSON.parse(x.networkSettings)
-    }))
-    return [ records, totalCount ]
+    return [ records.map(parseNetworkSettings), totalCount ]
   }
 
   async create (deviceId, networkTypeId, deviceProfileId, networkSettings, validateCompanyId, { remoteOrigin = false } = {}) {
@@ -63,13 +65,8 @@ module.exports = class DeviceNetworkTypeLink {
       if (networkSettings && networkSettings.devEUI) {
         networkSettings.devEUI = normalizeDevEUI(networkSettings.devEUI)
       }
-      const data = {
-        deviceId,
-        networkTypeId,
-        deviceProfileId,
-        networkSettings: JSON.stringify(networkSettings)
-      }
-      const rec = await DB.create(data)
+      const data = { deviceId, networkTypeId, deviceProfileId, networkSettings }
+      const rec = await DB.create(stringifyNetworkSettings(data))
       if (!remoteOrigin) {
         var logs = await this.modelAPI.networkTypeAPI.addDevice(networkTypeId, deviceId, networkSettings)
         rec.remoteAccessLogs = logs
@@ -85,13 +82,10 @@ module.exports = class DeviceNetworkTypeLink {
   async update ({ id, ...data }, validateCompanyId) {
     try {
       await this.validateCompanyForDeviceNetworkTypeLink(validateCompanyId, id)
-      if (data.networkSettings) {
-        if (data.networkSettings.devEUI) {
-          data.networkSettings.devEUI = normalizeDevEUI(data.networkSettings.devEUI)
-        }
-        data.networkSettings = JSON.stringify(data.networkSettings)
+      if (data.networkSettings && data.networkSettings.devEUI) {
+        data.networkSettings.devEUI = normalizeDevEUI(data.networkSettings.devEUI)
       }
-      const rec = await DB.update({ id }, data)
+      const rec = await DB.update({ id }, stringifyNetworkSettings(data))
       const device = await this.modelAPI.devices.load(rec.device.id)
       var logs = await this.modelAPI.networkTypeAPI.pushDevice(rec.networkType.id, device)
       rec.remoteAccessLogs = logs

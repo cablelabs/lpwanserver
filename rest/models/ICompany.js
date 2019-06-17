@@ -30,6 +30,11 @@ const DB = new CacheFirstStrategy({
 })
 
 // ******************************************************************************
+// Helpers
+// ******************************************************************************
+const renameQueryKeys = renameKeys({ search: 'name_contains' })
+
+// ******************************************************************************
 // Model
 // ******************************************************************************
 module.exports = class Company {
@@ -52,10 +57,7 @@ module.exports = class Company {
   }
 
   async list (query = {}, opts) {
-    if (query.search) {
-      query = renameKeys({ search: 'name_contains' }, query)
-    }
-    return DB.list(query, opts)
+    return DB.list(renameQueryKeys(query), opts)
   }
 
   create (name, type) {
@@ -82,7 +84,7 @@ module.exports = class Company {
     }
     try {
       // Delete users
-      let { records: users } = await this.modelAPI.users.list({ companyId: id })
+      let [ users ] = await this.modelAPI.users.list({ companyId: id })
       await Promise.all(users.map(x => this.modelAPI.users.remove(x.id)))
     }
     catch (err) {
@@ -98,7 +100,7 @@ module.exports = class Company {
     }
     try {
       // Delete passwordPolicies
-      let { records: pwdPolicies } = await this.modelAPI.passwordPolicies.list(id)
+      let [ pwdPolicies ] = await this.modelAPI.passwordPolicies.list(id)
       // We can get null companyIds for cross-company rules - don't delete those.
       pwdPolicies = pwdPolicies.filter(x => x.company.id === id)
       await Promise.all(pwdPolicies.map(x => this.modelAPI.passwordPolicies.remove(x.id)))

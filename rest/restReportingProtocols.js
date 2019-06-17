@@ -28,8 +28,8 @@ exports.initialize = function (app, server) {
      * @apiVersion 0.1.0
      */
   app.get('/api/reportingProtocols', [restServer.isLoggedIn], function (req, res) {
-    modelAPI.reportingProtocols.list().then(function (rps) {
-      restServer.respondJson(res, null, rps)
+    modelAPI.reportingProtocols.list({}, { includeTotal: true }).then(function ([ records, totalCount ]) {
+      restServer.respondJson(res, null, { records, totalCount })
     })
       .catch(function (err) {
         appLogger.log('Error getting reportingProtocols: ' + err)
@@ -218,7 +218,7 @@ exports.initialize = function (app, server) {
    */
   app.get('/api/reportingProtocolHandlers/', [restServer.isLoggedIn],
     async function (req, res) {
-      const { records } = await modelAPI.reportingProtocols.list()
+      const [ records ] = await modelAPI.reportingProtocols.list()
       const handlerList = records
         .map(x => x.protocolHandler)
         .map(x => ({ id: x, name: x }))

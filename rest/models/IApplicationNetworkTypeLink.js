@@ -3,6 +3,7 @@ var httpError = require('http-errors')
 const { prisma } = require('../lib/prisma')
 const CacheFirstStrategy = require('../../lib/prisma-cache/src/cache-first-strategy')
 const { redisClient } = require('../lib/redis')
+const { parseProp, stringifyProp } = require('../lib/utils')
 
 //* *****************************************************************************
 // Fragments for how the data should be returned from Prisma.
@@ -34,17 +35,26 @@ const DB = new CacheFirstStrategy({
 })
 
 // ******************************************************************************
+// Helpers
+// ******************************************************************************
+const parseNetworkSettings = parseProp('networkSettings')
+const stringifyNetworkSettings = stringifyProp('networkSettings')
+
+// ******************************************************************************
 // Model
 // ******************************************************************************
 module.exports = class ApplicationNetworkTypeLink {
   constructor (modelAPI) {
     this.modelAPI = modelAPI
-    this.list = DB.list.bind(DB)
   }
 
   async load (id, opts) {
-    const rec = await DB.load({ id }, opts)
-    return { ...rec, networkSettings: JSON.parse(rec.networkSettings) }
+    return parseNetworkSettings(await DB.load({ id }, opts))
+  }
+
+  async list (...args) {
+    let [ records, totalCount ] = await DB.list(...args)
+    return [ records.map(parseNetworkSettings), totalCount ]
   }
 
   async create (data, { companyId, remoteOrigin = false } = {}) {
@@ -52,8 +62,7 @@ module.exports = class ApplicationNetworkTypeLink {
       if (companyId) {
         await this.validateCompanyForApplication(companyId, data.applicationId)
       }
-      const recData = { ...data, networkSettings: JSON.stringify(data.networkSettings) }
-      const rec = await DB.create(recData)
+      const rec = await DB.create(stringifyNetworkSettings(data))
       if (!remoteOrigin) {
         const logs = await this.modelAPI.networkTypeAPI.addApplication(rec.networkType.id, rec.application.id, data.networkSettings)
         rec.remoteAccessLogs = logs
@@ -69,10 +78,7 @@ module.exports = class ApplicationNetworkTypeLink {
   async update ({ id, ...data }, { companyId, remoteOrigin = false } = {}) {
     try {
       await this.validateCompanyForApplicationNetworkTypeLink(companyId, id)
-      if (typeof data.networkSettings !== 'string') {
-        data.networkSettings = JSON.stringify(data.networkSettings)
-      }
-      const rec = await DB.update({ id }, data)
+      const rec = await DB.update({ id }, stringifyNetworkSettings(data))
       if (!remoteOrigin) {
         const app = await this.modelAPI.applications.load(rec.application.id)
         var logs = await this.modelAPI.networkTypeAPI.pushApplication(rec.networkType.id, app)

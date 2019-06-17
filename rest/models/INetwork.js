@@ -49,6 +49,8 @@ const genNwkKey = function (networkId) {
   return 'nk' + networkId
 }
 
+const renameQueryKeys = renameKeys({ search: 'name_contains' })
+
 async function authorizeAndTest (network, modelAPI) {
   if (network.securityData.authorized) {
     return network
@@ -107,10 +109,7 @@ module.exports = class Network {
   }
 
   async list (query = {}, opts) {
-    if (query.search) {
-      query = renameKeys({ search: 'name_contains' }, query)
-    }
-    let [ records, totalCount ] = await DB.list(query, opts)
+    let [ records, totalCount ] = await DB.list(renameQueryKeys(query), opts)
     records = await Promise.all(records.map(async rec => {
       if (!rec.securityData) return rec
       let k = await this.modelAPI.protocolData.loadValue(rec, genNwkKey(rec.id))

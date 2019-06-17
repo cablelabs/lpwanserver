@@ -1,76 +1,16 @@
-const { prisma, loadRecord } = require('../lib/prisma')
+const { prisma } = require('../lib/prisma')
 const httpError = require('http-errors')
 const { onFail } = require('../lib/utils')
 const appLogger = require('../lib/appLogger')
-
-module.exports = class PasswordPolicy {
-  constructor (companyModel) {
-    this.companies = companyModel
-  }
-
-  async create (ruleText, ruleRegExp, companyId) {
-    // verify regexp doesn't throw when created
-    testRegExp(ruleRegExp)
-    var data = { ruleText, ruleRegExp }
-    if (companyId) {
-      data.company = { connect: { id: companyId } }
-    }
-    return prisma.createPasswordPolicy(data)
-  }
-
-  load (id) {
-    return loadPasswordPolicy({ id })
-  }
-
-  async list (companyId) {
-    // Verify that the company exists.
-    const all = await prisma.passwordPolicies()
-    appLogger.log(`ALL: ${JSON.stringify(all)}`)
-    await this.companies.load(companyId)
-    const where = { OR: [
-      { company: { id: companyId } },
-      { company: null }
-    ] }
-    return prisma.passwordPolicies({ where })
-  }
-
-  async update ({ id, ...data }) {
-    if (!id) throw httpError(400, 'No existing PasswordPolicy ID')
-    if (data.companyId) {
-      // Verify that any new company exists if passed in.
-      await this.companies.load(data.companyId)
-      data.company = { connect: { id: data.companyId } }
-      delete data.companyId
-    }
-    return prisma.updatePasswordPolicy({ data, where: { id } }).$fragment(fragments.basic)
-  }
-
-  remove (id) {
-    return onFail(400, () => prisma.deletePasswordPolicy({ id }))
-  }
-
-  async validatePassword (companyId, password) {
-    // Get the rules from the passwordPolicies table
-    const pwPolicies = await this.list(companyId)
-    const failed = pwPolicies.filter(x => !(new RegExp(x.ruleRegExp).test(password)))
-    if (!failed.length) return true
-    throw httpError(400, `Password failed these policies: ${failed.map(x => x.ruleText).join('; ')}`)
-  }
-}
-
-// ******************************************************************************
-// Test RegExp
-// ******************************************************************************
-// Should throw an error if x is invalid regular expression
-function testRegExp (x) {
-  return new RegExp(x)
-}
+const CacheFirstStrategy = require('../../lib/prisma-cache/src/cache-first-strategy')
+const { redisClient } = require('../lib/redis')
 
 // ******************************************************************************
 // Fragments for how the data should be returned from Prisma.
 // ******************************************************************************
 const fragments = {
   basic: `fragment BasicPasswordPolicy on PasswordPolicy {
+    id
     ruleText
     ruleRegExp
     company {
@@ -80,6 +20,71 @@ const fragments = {
 }
 
 // ******************************************************************************
+// Database Client
+// ******************************************************************************
+const DB = new CacheFirstStrategy({
+  name: 'passwordPolicy',
+  pluralName: 'passwordPolicies',
+  fragments,
+  defaultFragmentKey: 'basic',
+  prisma,
+  redis: redisClient,
+  log: appLogger.log.bind(appLogger)
+})
+
+// ******************************************************************************
 // Helpers
 // ******************************************************************************
-const loadPasswordPolicy = loadRecord('passwordPolicy', fragments, 'basic')
+function testRegExp (x) {
+  return new RegExp(x)
+}
+
+// ******************************************************************************
+// Model
+// ******************************************************************************
+module.exports = class PasswordPolicy {
+  constructor (companyModel) {
+    this.companies = companyModel
+  }
+
+  load (id) {
+    return DB.load({ id })
+  }
+
+  async list (companyId, opts) {
+    // Verify that the company exists.
+    await this.companies.load(companyId)
+    const where = { OR: [
+      { company: { id: companyId } },
+      { company: null }
+    ] }
+    return DB.list(where, opts)
+  }
+
+  async create (ruleText, ruleRegExp, companyId) {
+    // verify regexp doesn't throw when created
+    testRegExp(ruleRegExp)
+    return DB.create({ ruleText, ruleRegExp, companyId })
+  }
+
+  async update ({ id, ...data }) {
+    if (!id) throw httpError(400, 'No existing PasswordPolicy ID')
+    if (data.companyId) {
+      // Verify that any new company exists if passed in.
+      await this.companies.load(data.companyId)
+    }
+    return DB.update({ id }, data)
+  }
+
+  remove (id) {
+    return DB.remove({ id })
+  }
+
+  async validatePassword (companyId, password) {
+    // Get the rules from the passwordPolicies table
+    const [ pwPolicies ] = await this.list(companyId)
+    const failed = pwPolicies.filter(x => !(new RegExp(x.ruleRegExp).test(password)))
+    if (!failed.length) return true
+    throw httpError(400, `Password failed these policies: ${failed.map(x => x.ruleText).join('; ')}`)
+  }
+}

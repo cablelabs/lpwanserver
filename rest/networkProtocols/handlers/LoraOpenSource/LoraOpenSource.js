@@ -462,7 +462,7 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
     const [localApps] = await this.modelAPI.applications.list({ search: remoteApp.name })
     let localApp = localApps[0]
     const [ cos ] = await this.modelAPI.companies.list({ limit: 1 })
-    const { records: reportingProtos } = await this.modelAPI.reportingProtocols.list()
+    const [ reportingProtos ] = await this.modelAPI.reportingProtocols.list()
     if (!localApp) {
       let localAppData = {
         ...R.pick(['name', 'description'], remoteApp),

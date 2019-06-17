@@ -47,16 +47,10 @@ exports.initialize = function (app, server) {
         return
       }
 
-      modelAPI.passwordPolicies.list(companyId).then(function (rules) {
+      modelAPI.passwordPolicies.list(companyId).then(function ([ rules ]) {
         for (var i = 0; i < rules.length; ++i) {
-          if (rules[ i ].company) {
-            delete rules[ i ].company
-          }
-          else {
-            // Usually is in the record as "null".
-            delete rules[ i ].company
-            rules[ i ].global = true
-          }
+          if (!rules[i].company) rules[i].global = true
+          delete rules[ i ].company
         }
         restServer.respondJson(res, null, rules)
       })

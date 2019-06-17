@@ -47,7 +47,7 @@ module.exports = class Loriot extends NetworkProtocol {
     const [ integration ] = remoteApp.outputs.filter(x => x.output === 'httppush')
     const [localApps] = await modelAPI.applications.list({ search: remoteApp.name })
     const [ cos ] = await this.modelAPI.companies.list({ limit: 1 })
-    const { records: reportingProtos } = await modelAPI.reportingProtocols.list()
+    const [ reportingProtos ] = await modelAPI.reportingProtocols.list()
     let localApp = localApps[0]
     if (!localApp) {
       let localAppData = {

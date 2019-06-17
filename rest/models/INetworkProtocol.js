@@ -49,6 +49,10 @@ function addMetadata (rec) {
     metaData: require(path.join(handlerDir, rec.protocolHandler, 'metadata'))
   }
 }
+const renameQueryKeys = renameKeys({
+  search: 'name_contains',
+  networkProtocolVersiona: 'networkProtocolVersion_contains'
+})
 
 // ******************************************************************************
 // Model
@@ -73,14 +77,7 @@ module.exports = class NetworkProtocol {
   }
 
   async list (query = {}, opts) {
-    let keyMap = {}
-    if (query.search) {
-      keyMap.search = 'name_contains'
-    }
-    if (query.networkProtocolVersion) {
-      keyMap.networkProtocolVersion = 'networkProtocolVersion_contains'
-    }
-    let [ records, totalCount ] = await DB.list(renameKeys(keyMap, query), opts)
+    let [ records, totalCount ] = await DB.list(renameQueryKeys(query), opts)
     return [records.map(addMetadata), totalCount]
   }
 

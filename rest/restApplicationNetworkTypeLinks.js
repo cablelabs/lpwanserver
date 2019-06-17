@@ -238,7 +238,7 @@ exports.initialize = function (app, server) {
       else {
         // Do the update.
         // TODO: Get rid of companies.  For now it is always cablelabs HACK
-        const [ cos ] = await this.modelAPI.companies.list({ limit: 1 })
+        const [ cos ] = await modelAPI.companies.list({ limit: 1 })
         let company = cos[0]
         modelAPI.applicationNetworkTypeLinks.update(data, { companyId: company.id }).then(function (rec) {
           restServer.respondJson(res, 200, { remoteAccessLogs: rec.remoteAccessLogs })

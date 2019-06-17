@@ -45,6 +45,8 @@ const unicastDownlinkSchema = Joi.object().keys({
   jsonData: Joi.object().optional()
 })
 
+const renameQueryKeys = renameKeys({ search: 'name_contains' })
+
 // ******************************************************************************
 // Model
 // ******************************************************************************
@@ -69,10 +71,7 @@ module.exports = class Device {
 
 
   async list (query = {}, opts) {
-    if (query.search) {
-      query = renameKeys({ search: 'name_contains' }, query)
-    }
-    return DB.list(query, opts)
+    return DB.list(renameQueryKeys(query), opts)
   }
 
   create (name, description, applicationId, deviceModel) {
@@ -151,15 +150,23 @@ module.exports = class Device {
 
   async receiveIpDeviceUplink (devEUI, data) {
     devEUI = normalizeDevEUI(devEUI)
-    // Get IP Network Type
     let nwkType = await this.modelAPI.networkTypes.loadByName('IP')
-    // Ensure a deviceNTL exists
-    const devNTLQuery = { networkType: { id: nwkType.id }, networkSettings_contains: devEUI }
-    let [ devNtls ] = await this.modelAPI.deviceNetworkTypeLinks.list(devNTLQuery)
-    if (!devNtls.length) return
-    const devNTL = devNtls[0]
+    let devNtl
+    // Check cache for devNtl ID
+    let devNtlId = await redisClient.getAsync(`ip-devNtl-${devEUI}`)
+    if (devNtlId) {
+      devNtl = await this.modelAPI.deviceNetworkTypeLinks.load(devNtlId)
+      if (!devNtl) await redisClient.delAsync(`ip-devNtl-${devEUI}`)
+    }
+    else {
+      const devNTLQuery = { networkType: { id: nwkType.id }, networkSettings_contains: devEUI }
+      let [ devNtls ] = await this.modelAPI.deviceNetworkTypeLinks.list(devNTLQuery)
+      devNtl = devNtls[0]
+      if (devNtl) await redisClient.setAsync(`ip-devNtl-${devEUI}`, devNtl.id)
+    }
+    if (!devNtl) return
     // Get device
-    const device = await this.load(devNTL.device.id)
+    const device = await this.load(devNtl.device.id)
     // Get application
     const app = await this.modelAPI.applications.load(device.application.id)
     // Ensure application is enabled
@@ -168,10 +175,6 @@ module.exports = class Device {
     let [ nwkProtos ] = await this.modelAPI.networkProtocols.list({ networkType: { id: nwkType.id }, limit: 1 })
     const ipProtoHandler = await this.modelAPI.networkProtocols.getHandler(nwkProtos[0].id)
     await ipProtoHandler.passDataToApplication(app, device, devEUI, data)
-    // Check for cached downlink messages
-    // const msgs = await this.modelAPI.devices.getIpDeviceMessages(device.id)
-    // if (!msgs.length) return
-    // await Promise.all(msgs.map(x => ipProtoHandler.passDataToDevice(devNTL, device.id, x, cache, false)))
   }
 
   async pushIpDeviceDownlink (devEUI, data) {

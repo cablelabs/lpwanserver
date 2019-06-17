@@ -70,6 +70,16 @@ function upperFirst (x) {
   return `${x.charAt(0).toUpperCase()}${x.slice(1)}`
 }
 
+const parseProp = R.curry(function parseProp (prop, data) {
+  if (!data[prop] || typeof data[prop] !== 'string') return data
+  return { ...data, [prop]: JSON.parse(data[prop]) }
+})
+
+const stringifyProp = R.curry(function stringifyProp (prop, data) {
+  if (!data[prop] || typeof data[prop] === 'string') return data
+  return { ...data, [prop]: JSON.stringify(data[prop]) }
+})
+
 module.exports = {
   mutate,
   onFail,
@@ -82,5 +92,7 @@ module.exports = {
   getHttpRequestPreferedWaitMs,
   normalizeDevEUI,
   lowerFirst,
-  upperFirst
+  upperFirst,
+  parseProp,
+  stringifyProp
 }

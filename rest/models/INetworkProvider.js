@@ -29,6 +29,11 @@ const DB = new CacheFirstStrategy({
 })
 
 // ******************************************************************************
+// Helpers
+// ******************************************************************************
+const renameQueryKeys = renameKeys({ search: 'name_contains' })
+
+// ******************************************************************************
 // Model
 // ******************************************************************************
 module.exports = class NetworkProvider {
@@ -37,7 +42,7 @@ module.exports = class NetworkProvider {
   }
 
   async list (query = {}, opts) {
-    return DB.list(renameKeys({ search: 'name_contains' }, query), opts)
+    return DB.list(renameQueryKeys(query), opts)
   }
 
   create (name) {

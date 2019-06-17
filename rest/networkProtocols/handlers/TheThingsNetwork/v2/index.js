@@ -128,7 +128,7 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
       const [localApps] = await modelAPI.applications.list({ search: accountServerApp.name })
       let localApp = localApps[0]
       const [ cos ] = await this.modelAPI.companies.list({ limit: 1 })
-      const { records: reportingProtos } = await modelAPI.reportingProtocols.list()
+      const [ reportingProtos ] = await modelAPI.reportingProtocols.list()
       if (!localApp) {
         const localAppData = {
           ...R.pick(['name', 'description'], normalizedApplication),

@@ -47,6 +47,7 @@ const DB = new CacheFirstStrategy({
 // ******************************************************************************
 const renameEnabledToRunning = renameKeys({ enabled: 'running' })
 const renameRunningToEnabled = renameKeys({ running: 'enabled' })
+const renameQueryKeys = renameKeys({ search: 'name_contains' })
 
 // ******************************************************************************
 // Model
@@ -71,10 +72,7 @@ class Application {
   }
 
   async list (query = {}, opts) {
-    if (query.search) {
-      query = renameKeys({ search: 'name_contains' }, query)
-    }
-    let [ records, totalCount ] = await DB.list(query, opts)
+    let [ records, totalCount ] = await DB.list(renameQueryKeys(query), opts)
     return [ records.map(renameEnabledToRunning), totalCount ]
   }
 
