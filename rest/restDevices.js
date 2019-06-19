@@ -88,8 +88,8 @@ exports.initialize = function (app, server) {
       if (req.query.applicationId) {
         options.applicationId = req.query.applicationId
       }
-      modelAPI.devices.list(options).then(function (cos) {
-        const responseBody = { ...cos, records: cos.records.map(formatRelationshipsOut) }
+      modelAPI.devices.list(options, { includeTotal: true }).then(([ records, totalCount ]) => {
+        const responseBody = { totalCount, records: records.map(formatRelationshipsOut) }
         restServer.respondJson(res, null, responseBody)
       })
         .catch(function (err) {

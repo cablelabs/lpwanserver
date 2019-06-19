@@ -58,8 +58,8 @@ exports.initialize = function (app, server) {
     if (req.query.search) {
       options.search = req.query.search
     }
-    modelAPI.networkProviders.list(options).then(function (nps) {
-      restServer.respondJson(res, null, nps)
+    modelAPI.networkProviders.list(options, { includeTotal: true }).then(([ records, totalCount ]) => {
+      restServer.respondJson(res, null, { records, totalCount })
     })
       .catch(function (err) {
         appLogger.log('Error getting networkProviders: ' + err)

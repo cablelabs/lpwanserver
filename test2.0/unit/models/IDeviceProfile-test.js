@@ -29,8 +29,7 @@ describe('Unit Tests for ' + testName, () => {
     let testModule = new TestModule(modelAPIMock)
     should.exist(testModule)
     const actual = await testModule.list()
-    actual.should.have.property('totalCount')
-    actual.should.have.property('records')
+    actual.should.have.length(2)
   })
   it(testName + ' Create', async () => {
     const nwkTypes = await prisma.networkTypes()

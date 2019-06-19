@@ -69,8 +69,8 @@ exports.initialize = function (app, server) {
         options.offset = offsetInt
       }
     }
-    modelAPI.companyNetworkTypeLinks.list(options).then(function (networkTypes) {
-      const responseBody = { ...networkTypes, records: networkTypes.records.map(formatRelationshipsOut) }
+    modelAPI.companyNetworkTypeLinks.list(options).then(function ([ records, totalCount ]) {
+      const responseBody = { totalCount, records: records.map(formatRelationshipsOut) }
       restServer.respondJson(res, null, responseBody)
     })
       .catch(function (err) {

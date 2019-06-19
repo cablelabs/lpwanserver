@@ -56,11 +56,11 @@ NetworkTypeApi.prototype.forAllNetworksOfType = function forAllNetworksOfType (o
     let networkType = await this.modelAPI.networkTypes.load(networkTypeId)
     npda.initLog(networkType, null)
 
-    var networks
+    var networks = []
     try {
       // Get the networks we'll be operating on that support the
       // networkType.
-      networks = await this.modelAPI.networks.list({ 'networkTypeId': networkTypeId })
+      [networks] = await this.modelAPI.networks.list({ 'networkTypeId': networkTypeId })
     }
     catch (err) {
       appLogger.log('Error retrieving networks for type ID ' + networkTypeId)
@@ -69,14 +69,14 @@ NetworkTypeApi.prototype.forAllNetworksOfType = function forAllNetworksOfType (o
       return
     }
 
-    if (networks.records.length === 0) {
+    if (networks.length === 0) {
       // Just resolve.
       resolve(npda.getLogs())
     }
 
-    const done = tracker(networks.records.length, npda, resolve)
+    const done = tracker(networks.length, npda, resolve)
 
-    networks.records.forEach(network => {
+    networks.forEach(network => {
       // Initialize the logging for this network.
       npda.initLog(networkType, network)
       operationFunction(npda, network).then(
@@ -405,7 +405,7 @@ NetworkTypeApi.prototype.deleteDevice = function (networkTypeId, deviceId) {
 NetworkTypeApi.prototype.passDataToDevice = async function (devNTL, appId, deviceId, data) {
   const ipNwkType = await this.modelAPI.networkTypes.loadByName('IP')
   if (ipNwkType && ipNwkType.id === devNTL.networkType.id) {
-    const { records: nwkProtos } = await this.modelAPI.networkProtocols.list({ name: 'IP' })
+    const [ nwkProtos ] = await this.modelAPI.networkProtocols.list({ name: 'IP' })
     const handler = await this.modelAPI.networkProtocols.getHandler(nwkProtos[0].id)
     return handler.passDataToDevice(devNTL, data)
   }

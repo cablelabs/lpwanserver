@@ -89,32 +89,32 @@ exports.initialize = function (app, server) {
     }
     const isAdmin = req.company.type !== 'ADMIN'
     const mapSecurityData = isAdmin ? R.identity : R.pick(['authorized', 'message', 'enabled'])
-    modelAPI.networks.list(options).then(function (networks) {
-      for (let i = 0; i < networks.records.length; ++i) {
-        if (networks.records[i].securityData) {
+    modelAPI.networks.list(options, { includeTotal: true }).then(([ networks, totalCount ]) => {
+      for (let i = 0; i < networks.length; ++i) {
+        if (networks[i].securityData) {
           let temp = {
-            authorized: networks.records[i].securityData.authorized,
-            message: networks.records[i].securityData.message,
-            enabled: networks.records[i].securityData.enabled
+            authorized: networks[i].securityData.authorized,
+            message: networks[i].securityData.message,
+            enabled: networks[i].securityData.enabled
           }
-          appLogger.log(networks.records[i])
-          if (networks.records[i].securityData.clientId) {
-            temp.clientId = networks.records[i].securityData.clientId
-            temp.clientSecret = networks.records[i].securityData.clientSecret
+          appLogger.log(networks[i])
+          if (networks[i].securityData.clientId) {
+            temp.clientId = networks[i].securityData.clientId
+            temp.clientSecret = networks[i].securityData.clientSecret
           }
-          else if (networks.records[i].securityData.apikey) {
-            temp.apikey = networks.records[i].securityData.apikey
+          else if (networks[i].securityData.apikey) {
+            temp.apikey = networks[i].securityData.apikey
           }
-          else if (networks.records[i].securityData.username) {
-            temp.username = networks.records[i].securityData.username
-            temp.password = networks.records[i].securityData.password
+          else if (networks[i].securityData.username) {
+            temp.username = networks[i].securityData.username
+            temp.password = networks[i].securityData.password
           }
-          networks.records[i].securityData = mapSecurityData(temp)
+          networks[i].securityData = mapSecurityData(temp)
         }
       }
       const responseBody = {
-        ...networks,
-        records: networks.records.map(formatRelationshipsOut)
+        totalCount,
+        records: networks.map(formatRelationshipsOut)
       }
       restServer.respond(res, 200, responseBody)
     })
@@ -154,15 +154,12 @@ exports.initialize = function (app, server) {
     }
     const isAdmin = req.company.type !== 'ADMIN'
     const mapSecurityData = isAdmin ? R.identity : R.pick(['authorized', 'message', 'enabled'])
-    modelAPI.networks.list(options).then(function (networks) {
-      modelAPI.networkProtocols.list(options).then(function (recs) {
-        let nps = {
-          totalCount: recs.totalCount,
-          records: []
-        }
-        let len = recs.records.length
+    modelAPI.networks.list(options, { includeTotal: true }).then(([ networks ]) => {
+      modelAPI.networkProtocols.list(options, { includeTotal: true }).then(([ recs, totalCount ]) => {
+        let nps = { totalCount, records: [] }
+        let len = recs.length
         for (let i = 0; i < len; i++) {
-          let rec = recs.records[i]
+          let rec = recs[i]
           let found = false
           let counter = 0
           while (!found && counter < nps.records.length) {
@@ -186,31 +183,31 @@ exports.initialize = function (app, server) {
           }
         }
 
-        for (let i = 0; i < networks.records.length; ++i) {
-          if (networks.records[i].securityData) {
+        for (let i = 0; i < networks.length; ++i) {
+          if (networks[i].securityData) {
             let temp = {
-              authorized: networks.records[i].securityData.authorized,
-              message: networks.records[i].securityData.message,
-              enabled: networks.records[i].securityData.enabled
+              authorized: networks[i].securityData.authorized,
+              message: networks[i].securityData.message,
+              enabled: networks[i].securityData.enabled
             }
-            appLogger.log(networks.records[i])
-            if (networks.records[i].securityData.clientId) {
-              temp.clientId = networks.records[i].securityData.clientId
-              temp.clientSecret = networks.records[i].securityData.clientSecret
+            appLogger.log(networks[i])
+            if (networks[i].securityData.clientId) {
+              temp.clientId = networks[i].securityData.clientId
+              temp.clientSecret = networks[i].securityData.clientSecret
             }
-            else if (networks.records[i].securityData.apikey) {
-              temp.apikey = networks.records[i].securityData.apikey
+            else if (networks[i].securityData.apikey) {
+              temp.apikey = networks[i].securityData.apikey
             }
-            else if (networks.records[i].securityData.username) {
-              temp.username = networks.records[i].securityData.username
-              temp.password = networks.records[i].securityData.password
+            else if (networks[i].securityData.username) {
+              temp.username = networks[i].securityData.username
+              temp.password = networks[i].securityData.password
             }
-            networks.records[i].securityData = mapSecurityData(temp)
+            networks[i].securityData = mapSecurityData(temp)
           }
           // Add network to correct protocol
           for (let npIndex = 0; npIndex < nps.records.length; npIndex++) {
-            if (nps.records[npIndex].versions.includes(networks.records[i].networkProtocol.id)) {
-              nps.records[npIndex].networks.push(formatRelationshipsOut(networks.records[i]))
+            if (nps.records[npIndex].versions.includes(networks[i].networkProtocol.id)) {
+              nps.records[npIndex].networks.push(formatRelationshipsOut(networks[i]))
             }
           }
         }

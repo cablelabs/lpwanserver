@@ -1,25 +1,66 @@
 var appLogger = require('../lib/appLogger.js')
-const { prisma, formatInputData, formatRelationshipsIn, loadRecord } = require('../lib/prisma')
-const { onFail } = require('../lib/utils')
-var httpError = require('http-errors')
-
-// var protocolDataAccess = require('../networkProtocols/networkProtocolDataAccess')
-
+const { prisma } = require('../lib/prisma')
 const R = require('ramda')
+const CacheFirstStrategy = require('../../lib/prisma-cache/src/cache-first-strategy')
+const { redisClient } = require('../lib/redis')
+const { stringifyProp, parseProp } = require('../lib/utils')
 
+//* *****************************************************************************
+// Fragments for how the data should be returned from Prisma.
+//* *****************************************************************************
+const fragments = {
+  basic: `fragment BasicCompanyNetworkTypeLink on CompanyNetworkTypeLink {
+    id
+    networkSettings
+    company {
+      id
+    }
+    networkType {
+      id
+    }
+  }`
+}
+
+// ******************************************************************************
+// Database Client
+// ******************************************************************************
+const DB = new CacheFirstStrategy({
+  name: 'companyNetworkTypeLink',
+  pluralName: 'companyNetworkTypeLinks',
+  fragments,
+  defaultFragmentKey: 'basic',
+  prisma,
+  redis: redisClient,
+  log: appLogger.log.bind(appLogger)
+})
+
+// ******************************************************************************
+// Helpers
+// ******************************************************************************
+const parseNetworkSettings = parseProp('networkSettings')
+const stringifyNetworkSettings = stringifyProp('networkSettings')
+
+// ******************************************************************************
+// Model
+// ******************************************************************************
 module.exports = class CompanyNetworkTypeLink {
   constructor (modelAPI) {
     this.modelAPI = modelAPI
   }
 
+  async load (id) {
+    return parseNetworkSettings(await DB.load({ id }))
+  }
+
+  async list (query, opts) {
+    let [ records, totalCount ] = await DB.list(query, opts)
+    return [ records.map(parseNetworkSettings), totalCount ]
+  }
+
   async create (companyId, networkTypeId, networkSettings, { remoteOrigin = false } = {}) {
     try {
-      const data = formatInputData({
-        companyId,
-        networkTypeId,
-        networkSettings: networkSettings && JSON.stringify(networkSettings)
-      })
-      const rec = await prisma.createCompanyNetworkTypeLink(data).$fragment(fragments.basic)
+      const data = { companyId, networkTypeId, networkSettings }
+      const rec = await DB.create(stringifyNetworkSettings(data))
       if (!remoteOrigin) {
         var logs = await this.modelAPI.networkTypeAPI.addCompany(networkTypeId, companyId, networkSettings)
         rec.remoteAccessLogs = logs
@@ -32,17 +73,11 @@ module.exports = class CompanyNetworkTypeLink {
     }
   }
 
-  load (id) {
-    return loadCompanyNTL({ id })
-  }
+
 
   async update ({ id, ...data }, { remoteOrigin = false } = {}) {
     try {
-      if (data.networkSettings) {
-        data.networkSettings = JSON.stringify(data.networkSettings)
-      }
-      data = formatInputData(data)
-      const rec = await prisma.updateCompanyNetworkTypeLink({ data, where: { id } }).$fragment(fragments.basic)
+      const rec = await DB.update({ id }, stringifyNetworkSettings(data))
       if (!remoteOrigin) {
         var logs = await this.modelAPI.networkTypeAPI.pushCompany(rec.networkType.id, rec.company.id, rec.networkSettings)
         rec.remoteAccessLogs = logs
@@ -59,11 +94,11 @@ module.exports = class CompanyNetworkTypeLink {
     try {
       var rec = await this.load(id)
       // Delete applicationNetworkTypeLinks
-      let { records } = await this.modelAPI.applicationNetworkTypeLinks.list({ companyId: rec.company.id })
+      let [ records ] = await this.modelAPI.applicationNetworkTypeLinks.list({ companyId: rec.company.id })
       await Promise.all(records.map(x => this.modelAPI.applicationNetworkTypeLinks.remove(x.id)))
       // Don't delete the local record until the remote operations complete.
       var logs = await this.modelAPI.networkTypeAPI.deleteCompany(rec.networkType.id, rec.company.id)
-      await onFail(400, () => prisma.deleteCompanyNetworkTypeLink({ id }))
+      await DB.remove({ id })
       return logs
     }
     catch (err) {
@@ -76,7 +111,7 @@ module.exports = class CompanyNetworkTypeLink {
     try {
       var rec = await this.load(id)
       // push applicationNetworkTypeLinks
-      let { records } = await this.modelAPI.applicationNetworkTypeLinks.list({ companyId: rec.company.id })
+      let [ records ] = await this.modelAPI.applicationNetworkTypeLinks.list({ companyId: rec.company.id })
       await Promise.all(records.map(x => this.modelAPI.applicationNetworkTypeLinks.pushApplicationNetworkTypeLink(x.id)))
       var logs = await this.modelAPI.networkTypeAPI.pushCompany(rec.networkType.id, rec.company.id, rec.networkSettings)
       rec.remoteAccessLogs = logs
@@ -88,19 +123,8 @@ module.exports = class CompanyNetworkTypeLink {
     }
   }
 
-  async list ({ limit, offset, ...where } = {}) {
-    where = formatRelationshipsIn(where)
-    const query = { where }
-    if (limit) query.first = limit
-    if (offset) query.skip = offset
-    const [records, totalCount] = await Promise.all([
-      prisma.companyNetworkTypeLinks(query).$fragment(fragments.basic),
-      prisma.companyNetworkTypeLinksConnection({ where }).aggregate().count()
-    ])
-    return { totalCount, records: records.map(parseNetworkSettings) }
-  }
-
   async pullCompanyNetworkTypeLink (networkTypeId) {
+    let existingCompany
     try {
       var logs = await this.modelAPI.networkTypeAPI.pullCompany(networkTypeId)
       let companies = JSON.parse(logs[Object.keys(logs)[0]].logs)
@@ -113,10 +137,10 @@ module.exports = class CompanyNetworkTypeLink {
         nsCoId.push(company.id)
 
         // see if it exists first
-        let existingCompany = await this.modelAPI.companies.list({ search: company.name })
-        if (existingCompany.totalCount > 0) {
-          existingCompany = existingCompany.records[0]
+        let [existingCompanies] = await this.modelAPI.companies.list({ search: company.name })
+        if (!existingCompanies.length) {
           appLogger.log(company.name + ' already exists')
+          existingCompany = existingCompanies[0]
           localCoId.push(existingCompany.id)
         }
         else {
@@ -125,8 +149,8 @@ module.exports = class CompanyNetworkTypeLink {
           localCoId.push(existingCompany.id)
         }
         // see if it exists first
-        let existingCompanyNTL = await this.modelAPI.companyNetworkTypeLinks.list({ companyId: existingCompany.id })
-        if (existingCompanyNTL.totalCount > 0) {
+        let [ctls] = await this.list({ companyId: existingCompany.id }, { limit: 1 })
+        if (ctls.length) {
           appLogger.log(company.name + ' link already exists')
         }
         else {
@@ -144,9 +168,10 @@ module.exports = class CompanyNetworkTypeLink {
         nsAppId.push(application.id)
 
         // see if it exists first
-        let existingApplication = await this.modelAPI.applications.list({ search: application.name })
-        if (existingApplication.totalCount > 0) {
-          existingApplication = existingApplication.records[0]
+        let existingApplication
+        let [appList] = await this.modelAPI.applications.list({ search: application.name })
+        if (appList.length) {
+          existingApplication = appList[0]
           localAppId.push(existingApplication.id)
           appLogger.log(application.name + ' already exists')
         }
@@ -163,8 +188,8 @@ module.exports = class CompanyNetworkTypeLink {
           localAppId.push(existingApplication.id)
         }
         // see if it exists first
-        let existingApplicationNTL = await this.modelAPI.applicationNetworkTypeLinks.list({ applicationId: existingApplication.id })
-        if (existingApplicationNTL.totalCount > 0) {
+        let [ existingApps ] = await this.modelAPI.applicationNetworkTypeLinks.list({ applicationId: existingApplication.id })
+        if (existingApps.length) {
           appLogger.log(application.name + ' link already exists')
         }
         else {
@@ -180,6 +205,7 @@ module.exports = class CompanyNetworkTypeLink {
       let nsDpId = []
       let localDpId = []
       for (var index in deviceProfiles.result) {
+        let existingDeviceProfile
         let deviceProfile = deviceProfiles.result[index]
         nsDpId.push(deviceProfile.deviceProfileID)
         let networkSettings = await this.modelAPI.networkTypeAPI.pullDeviceProfile(networkTypeId, deviceProfile.deviceProfileID)
@@ -187,9 +213,9 @@ module.exports = class CompanyNetworkTypeLink {
         networkSettings = networkSettings.deviceProfile
 
         // see if it exists first
-        let existingDeviceProfile = await this.modelAPI.deviceProfiles.list({ search: deviceProfile.name })
-        if (existingDeviceProfile.totalCount > 0) {
-          existingDeviceProfile = existingDeviceProfile.records[0]
+        let [ existingDeviceProfiles ] = await this.modelAPI.deviceProfiles.list({ search: deviceProfile.name, limit: 1 })
+        if (existingDeviceProfiles.length) {
+          existingDeviceProfile = existingDeviceProfiles[0]
           localDpId.push(existingDeviceProfile.id)
           appLogger.log(deviceProfile.name + ' ' + existingDeviceProfile.id + ' already exists')
           appLogger.log(JSON.stringify(existingDeviceProfile))
@@ -207,6 +233,7 @@ module.exports = class CompanyNetworkTypeLink {
       }
 
       for (var appIndex in nsAppId) {
+        let existingDevice
         logs = await this.modelAPI.networkTypeAPI.pullDevices(networkTypeId, nsAppId[appIndex])
         let devices = JSON.parse(logs[Object.keys(logs)[0]].logs)
         appLogger.log(JSON.stringify(devices))
@@ -214,9 +241,9 @@ module.exports = class CompanyNetworkTypeLink {
           let device = devices.result[index]
 
           // see if it exists first
-          let existingDevice = await this.modelAPI.devices.list({ search: device.name })
-          if (existingDevice.totalCount > 0) {
-            existingDevice = existingDevice.records[0]
+          let [ existingDevices ] = await this.modelAPI.devices.list({ search: device.name })
+          if (existingDevices.length) {
+            existingDevice = existingDevices[0]
             appLogger.log(device.name + ' already exists')
             await existingDevice.updateDevice(existingDevice)
           }
@@ -227,8 +254,8 @@ module.exports = class CompanyNetworkTypeLink {
             existingDevice = await this.modelAPI.devices.create(device.name, device.description, localAppId[appIndex])
           }
 
-          let existingDeviceNTL = await this.modelAPI.deviceNetworkTypeLinks.list({ deviceId: existingDevice.id })
-          if (existingDeviceNTL.totalCount > 0) {
+          let [ devNtls ] = await this.modelAPI.deviceNetworkTypeLinks.list({ deviceId: existingDevice.id })
+          if (devNtls.length) {
             appLogger.log(device.name + ' link already exists')
           }
           else {
@@ -252,29 +279,3 @@ module.exports = class CompanyNetworkTypeLink {
     }
   }
 }
-
-//* *****************************************************************************
-// Fragments for how the data should be returned from Prisma.
-//* *****************************************************************************
-const fragments = {
-  basic: `fragment BasicCompanyNetworkTypeLink on CompanyNetworkTypeLink {
-    id
-    networkSettings
-    company {
-      id
-    }
-    networkType {
-      id
-    }
-  }`
-}
-
-// ******************************************************************************
-// Helpers
-// ******************************************************************************
-function parseNetworkSettings (x) {
-  return typeof x.networkSettings === 'string'
-    ? { ...x, networkSettings: JSON.parse(x.networkSettings) }
-    : x
-}
-const loadCompanyNTL = loadRecord('companyNetworkTypeLink', fragments, 'basic')

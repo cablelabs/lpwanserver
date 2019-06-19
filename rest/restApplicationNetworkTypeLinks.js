@@ -71,8 +71,8 @@ exports.initialize = function (app, server) {
         options.offset = offsetInt
       }
     }
-    modelAPI.applicationNetworkTypeLinks.list(options).then(function (networkTypes) {
-      const responseBody = { ...networkTypes, records: networkTypes.records.map(formatRelationshipsOut) }
+    modelAPI.applicationNetworkTypeLinks.list(options, { includeTotal: true }).then(([ records, totalCount ]) => {
+      const responseBody = { totalCount, records: records.map(formatRelationshipsOut) }
       restServer.respondJson(res, null, responseBody)
     })
       .catch(function (err) {
@@ -238,7 +238,7 @@ exports.initialize = function (app, server) {
       else {
         // Do the update.
         // TODO: Get rid of companies.  For now it is always cablelabs HACK
-        const { records: cos } = await modelAPI.companies.list({ limit: 1 })
+        const [ cos ] = await modelAPI.companies.list({ limit: 1 })
         let company = cos[0]
         modelAPI.applicationNetworkTypeLinks.update(data, { companyId: company.id }).then(function (rec) {
           restServer.respondJson(res, 200, { remoteAccessLogs: rec.remoteAccessLogs })

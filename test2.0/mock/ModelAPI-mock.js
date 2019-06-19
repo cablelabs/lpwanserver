@@ -79,7 +79,7 @@ module.exports = {
   },
   applicationNetworkTypeLinks: {
     async list () {
-      return { records: [] }
+      return [[]]
     }
   }
 }

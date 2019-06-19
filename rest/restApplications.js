@@ -101,8 +101,8 @@ exports.initialize = function (app, server) {
     if (req.query.networkProtocolId) {
       options.networkProtocolId = req.query.networkProtocolId
     }
-    modelAPI.applications.list(options).then(function (cos) {
-      const responseBody = { ...cos, records: cos.records.map(formatRelationshipsOut) }
+    modelAPI.applications.list(options, { includeTotal: true }).then(function ([recs, totalCount]) {
+      const responseBody = { totalCount, records: recs.map(formatRelationshipsOut) }
       restServer.respondJson(res, null, responseBody)
     })
       .catch(function (err) {

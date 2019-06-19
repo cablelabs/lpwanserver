@@ -1,16 +1,58 @@
 const { prisma, formatInputData, formatRelationshipsIn } = require('../lib/prisma')
 const httpError = require('http-errors')
 const { onFail } = require('../lib/utils')
+const appLogger = require('../lib/appLogger')
+const CacheFirstStrategy = require('../../lib/prisma-cache/src/cache-first-strategy')
+const { redisClient } = require('../lib/redis')
 
+// ******************************************************************************
+// Fragments for how the data should be returned from Prisma.
+// ******************************************************************************
+const fragments = {
+  basic: `fragment BasicProtocolData on ProtocolData {
+    id
+    dataIdentifier
+    dataValue
+    network {
+      id
+    }
+    networkProtocol {
+      id
+    }
+  }`
+}
+
+// ******************************************************************************
+// Database Client
+// ******************************************************************************
+const DB = new CacheFirstStrategy({
+  name: 'protocolData',
+  pluralName: 'protocolDatas',
+  fragments,
+  defaultFragmentKey: 'basic',
+  prisma,
+  redis: redisClient,
+  log: appLogger.log.bind(appLogger)
+})
+
+// ******************************************************************************
+// Model
+// ******************************************************************************
 module.exports = class ProtocolData {
+  async load (networkId, networkProtocolId, dataIdentifier) {
+    const [ records ] = await DB.list({ networkId, networkProtocolId, dataIdentifier })
+    if (!records.length) throw httpError.NotFound()
+    return records[0]
+  }
+
+  async loadValue (network, dataId) {
+    const rec = await this.load(network.id, network.networkProtocol.id, dataId)
+    return rec.dataValue
+  }
+
   create (networkId, networkProtocolId, dataIdentifier, dataValue) {
-    const data = formatInputData({
-      networkId,
-      networkProtocolId,
-      dataIdentifier,
-      dataValue
-    })
-    return prisma.createProtocolData(data).$fragment(fragments.basic)
+    const data = { networkId, networkProtocolId, dataIdentifier, dataValue }
+    return DB.create(data)
   }
 
   async upsert (network, dataId, dataValue) {
@@ -23,26 +65,13 @@ module.exports = class ProtocolData {
     }
   }
 
-  async load (networkId, networkProtocolId, dataIdentifier) {
-    const where = formatRelationshipsIn({ networkId, networkProtocolId, dataIdentifier })
-    const [ record ] = await prisma.protocolDatas({ where })
-    if (!record) throw httpError.NotFound()
-    return record
-  }
-
-  async loadValue (network, dataId) {
-    const rec = await this.load(network.id, network.networkProtocol.id, dataId)
-    return rec.dataValue
-  }
-
   update ({ id, ...data }) {
     if (!id) throw httpError(400, 'No existing ProtocolData ID')
-    data = formatInputData(data)
-    return prisma.updateProtocolData({ data, where: { id } }).$fragment(fragments.basic)
+    return DB.update({ id }, data)
   }
 
   remove (id) {
-    return onFail(400, () => prisma.deleteProtocolData({ id }))
+    return DB.remove({ id })
   }
 
   clearProtocolData (networkId, networkProtocolId, keyStartsWith) {
@@ -62,21 +91,4 @@ module.exports = class ProtocolData {
     })
     return prisma.protocolDatas({ where })
   }
-}
-
-// ******************************************************************************
-// Fragments for how the data should be returned from Prisma.
-// ******************************************************************************
-const fragments = {
-  basic: `fragment BasicProtocolData on ProtocolData {
-    id
-    dataIdentifier
-    dataValue
-    network {
-      id
-    }
-    networkProtocol {
-      id
-    }
-  }`
 }

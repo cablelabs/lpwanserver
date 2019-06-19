@@ -49,9 +49,8 @@ describe('Unit Tests for ' + testName, () => {
   it(testName + ' Empty Retrieval', async () => {
     let testModule = new TestModule(modelAPIMock)
     should.exist(testModule)
-    const actual = await testModule.list()
-    actual.should.have.property('totalCount')
-    actual.should.have.property('records')
+    const actual = await testModule.list({}, { includeTotal: true })
+    actual.should.have.length(2)
   })
   it(testName + ' Create', async () => {
     const cos = await prisma.companies()

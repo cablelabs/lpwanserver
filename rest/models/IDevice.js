@@ -1,33 +1,66 @@
 const appLogger = require('../lib/appLogger.js')
-const { prisma, formatInputData, formatRelationshipsIn, loadRecord } = require('../lib/prisma')
+const { prisma } = require('../lib/prisma')
 var httpError = require('http-errors')
-const { onFail, normalizeDevEUI } = require('../lib/utils')
+const { normalizeDevEUI, renameKeys } = require('../lib/utils')
 const R = require('ramda')
 const Joi = require('@hapi/joi')
 const { redisClient, redisPub } = require('../lib/redis')
+const CacheFirstStrategy = require('../../lib/prisma-cache/src/cache-first-strategy')
 
+//* *****************************************************************************
+// Fragments for how the data should be returned from Prisma.
+//* *****************************************************************************
+const fragments = {
+  basic: `fragment BasicDevice on Device {
+    id
+    name
+    description
+    deviceModel
+    application {
+      id
+    }
+  }`
+}
+
+// ******************************************************************************
+// Database Client
+// ******************************************************************************
+const DB = new CacheFirstStrategy({
+  name: 'device',
+  pluralName: 'devices',
+  fragments,
+  defaultFragmentKey: 'basic',
+  prisma,
+  redis: redisClient,
+  log: appLogger.log.bind(appLogger)
+})
+
+// ******************************************************************************
+// Helpers
+// ******************************************************************************
+const unicastDownlinkSchema = Joi.object().keys({
+  fCnt: Joi.number().integer().min(0).required(),
+  fPort: Joi.number().integer().min(1).required(),
+  data: Joi.string().when('jsonData', { is: Joi.exist(), then: Joi.optional(), otherwise: Joi.required() }),
+  jsonData: Joi.object().optional()
+})
+
+const renameQueryKeys = renameKeys({ search: 'name_contains' })
+
+// ******************************************************************************
+// Model
+// ******************************************************************************
 module.exports = class Device {
   constructor (modelAPI) {
     this.modelAPI = modelAPI
   }
 
-  create (name, description, applicationId, deviceModel) {
-    appLogger.log(`IDevice ${name}, ${description}, ${applicationId}, ${deviceModel}`)
-    const data = formatInputData({
-      name,
-      description,
-      applicationId,
-      deviceModel
-    })
-    return prisma.createDevice(data).$fragment(fragments.basic)
-  }
-
   async load (id) {
-    const dvc = await loadDevice({ id })
+    const dvc = await DB.load({ id })
     try {
-      const { records } = await this.modelAPI.deviceNetworkTypeLinks.list({ deviceId: id })
-      if (records.length) {
-        dvc.networks = records.map(x => x.networkType.id)
+      const [ devNtls ] = await this.modelAPI.deviceNetworkTypeLinks.list({ deviceId: id })
+      if (devNtls.length) {
+        dvc.networks = devNtls.map(x => x.networkType.id)
       }
     }
     catch (err) {
@@ -36,51 +69,43 @@ module.exports = class Device {
     return dvc
   }
 
-  async list ({ limit, offset, ...where } = {}) {
-    where = formatRelationshipsIn(where)
-    if (where.search) {
-      where.name_contains = where.search
-      delete where.search
-    }
-    const query = { where }
-    if (limit) query.first = limit
-    if (offset) query.skip = offset
-    const [records, totalCount] = await Promise.all([
-      prisma.devices(query).$fragment(fragments.basic),
-      prisma.devicesConnection({ where }).aggregate().count()
-    ])
-    return { totalCount, records }
+
+  async list (query = {}, opts) {
+    return DB.list(renameQueryKeys(query), opts)
+  }
+
+  create (name, description, applicationId, deviceModel) {
+    return DB.create({ name, description, applicationId, deviceModel })
   }
 
   update ({ id, ...data }) {
     if (!id) throw httpError(400, 'No existing Device ID')
-    data = formatInputData(data)
-    return prisma.updateDevice({ data, where: { id } }).$fragment(fragments.basic)
+    return DB.update({ id }, data)
   }
 
   async remove (id) {
     // Delete my deviceNetworkTypeLinks first.
     try {
-      let { records } = await this.modelAPI.deviceNetworkTypeLinks.list({ deviceId: id })
-      await Promise.all(records.map(x => this.modelAPI.deviceNetworkTypeLinks.remove(x.id)))
+      let [ devNtls ] = await this.modelAPI.deviceNetworkTypeLinks.list({ deviceId: id })
+      await Promise.all(devNtls.map(x => this.modelAPI.deviceNetworkTypeLinks.remove(x.id)))
     }
     catch (err) {
       appLogger.log(`Error deleting device-dependant networkTypeLinks: ${err}`)
     }
-    return onFail(400, () => prisma.deleteDevice({ id }))
+    return DB.remove({ id })
   }
 
   async passDataToDevice (id, data) {
     // check for required fields
     let { error } = Joi.validate(data, unicastDownlinkSchema)
     if (error) throw httpError(400, error.message)
-    const device = await loadDevice({ id })
+    const device = await DB.load({ id })
     const app = await this.modelAPI.applications.load(device.application.id)
     if (!app.running) return
     // Get all device networkType links
     const devNtlQuery = { device: { id } }
-    let { records } = await this.modelAPI.deviceNetworkTypeLinks.list(devNtlQuery)
-    const logs = await Promise.all(records.map(x => this.modelAPI.networkTypeAPI.passDataToDevice(x, app.id, id, data)))
+    let [ devNtls ] = await this.modelAPI.deviceNetworkTypeLinks.list(devNtlQuery)
+    const logs = await Promise.all(devNtls.map(x => this.modelAPI.networkTypeAPI.passDataToDevice(x, app.id, id, data)))
     return R.flatten(logs)
   }
 
@@ -125,34 +150,36 @@ module.exports = class Device {
 
   async receiveIpDeviceUplink (devEUI, data) {
     devEUI = normalizeDevEUI(devEUI)
-    // Get IP Network Type
     let nwkType = await this.modelAPI.networkTypes.loadByName('IP')
-    // Ensure a deviceNTL exists
-    const devNTLQuery = { networkType: { id: nwkType.id }, networkSettings_contains: devEUI }
-    let { records: devNTLs } = await this.modelAPI.deviceNetworkTypeLinks.list(devNTLQuery)
-    if (!devNTLs.length) return
-    const devNTL = devNTLs[0]
+    let devNtl
+    // Check cache for devNtl ID
+    let devNtlId = await redisClient.getAsync(`ip-devNtl-${devEUI}`)
+    if (devNtlId) {
+      devNtl = await this.modelAPI.deviceNetworkTypeLinks.load(devNtlId)
+      if (!devNtl) await redisClient.delAsync(`ip-devNtl-${devEUI}`)
+    }
+    else {
+      const devNTLQuery = { networkType: { id: nwkType.id }, networkSettings_contains: devEUI }
+      let [ devNtls ] = await this.modelAPI.deviceNetworkTypeLinks.list(devNTLQuery)
+      devNtl = devNtls[0]
+      if (devNtl) await redisClient.setAsync(`ip-devNtl-${devEUI}`, devNtl.id)
+    }
+    if (!devNtl) return
     // Get device
-    const device = await this.modelAPI.devices.load(devNTL.device.id)
+    const device = await this.load(devNtl.device.id)
     // Get application
     const app = await this.modelAPI.applications.load(device.application.id)
     // Ensure application is enabled
     if (!app.running) return
     // Pass data
-    let { records: nwkProtos } = await this.modelAPI.networkProtocols.list({ networkType: { id: nwkType.id } })
+    let [ nwkProtos ] = await this.modelAPI.networkProtocols.list({ networkType: { id: nwkType.id }, limit: 1 })
     const ipProtoHandler = await this.modelAPI.networkProtocols.getHandler(nwkProtos[0].id)
     await ipProtoHandler.passDataToApplication(app, device, devEUI, data)
-    // Check for cached downlink messages
-    // const msgs = await this.modelAPI.devices.getIpDeviceMessages(device.id)
-    // if (!msgs.length) return
-    // await Promise.all(msgs.map(x => ipProtoHandler.passDataToDevice(devNTL, device.id, x, cache, false)))
   }
 
   async pushIpDeviceDownlink (devEUI, data) {
     devEUI = normalizeDevEUI(devEUI)
     data = JSON.stringify(data)
-    // TODO: dont push message if there are listeners to the channel
-    // In that case, just send data as the publish message
     const result = await redisClient.rpushAsync(`ip_downlinks:${devEUI}`, data)
     redisPub.publish(`downlink_received:${devEUI}`, '')
     return result
@@ -168,30 +195,3 @@ module.exports = class Device {
     return msgs.map(JSON.parse)
   }
 }
-
-//* *****************************************************************************
-// Fragments for how the data should be returned from Prisma.
-//* *****************************************************************************
-const fragments = {
-  basic: `fragment BasicDevice on Device {
-    id
-    name
-    description
-    deviceModel
-    application {
-      id
-    }
-  }`
-}
-
-// ******************************************************************************
-// Helpers
-// ******************************************************************************
-const loadDevice = loadRecord('device', fragments, 'basic')
-
-const unicastDownlinkSchema = Joi.object().keys({
-  fCnt: Joi.number().integer().min(0).required(),
-  fPort: Joi.number().integer().min(1).required(),
-  data: Joi.string().when('jsonData', { is: Joi.exist(), then: Joi.optional(), otherwise: Joi.required() }),
-  jsonData: Joi.object().optional()
-})

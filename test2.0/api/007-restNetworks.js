@@ -177,6 +177,7 @@ describe('Networks', function () {
           if (err) return done(err)
           res.should.have.status(200)
           var result = JSON.parse(res.text)
+          console.log(result.records)
           result.records.should.be.instanceof(Array)
           result.records.should.have.length(1)
           result.totalCount.should.equal(1)

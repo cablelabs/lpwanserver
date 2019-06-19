@@ -62,6 +62,24 @@ const getHttpRequestPreferedWaitMs = R.compose(
 
 const normalizeDevEUI = R.replace(/[^0-9A-Fa-f]/g, '')
 
+function lowerFirst (x) {
+  return `${x.charAt(0).toLowerCase()}${x.slice(1)}`
+}
+
+function upperFirst (x) {
+  return `${x.charAt(0).toUpperCase()}${x.slice(1)}`
+}
+
+const parseProp = R.curry(function parseProp (prop, data) {
+  if (!data[prop] || typeof data[prop] !== 'string') return data
+  return { ...data, [prop]: JSON.parse(data[prop]) }
+})
+
+const stringifyProp = R.curry(function stringifyProp (prop, data) {
+  if (!data[prop] || typeof data[prop] === 'string') return data
+  return { ...data, [prop]: JSON.stringify(data[prop]) }
+})
+
 module.exports = {
   mutate,
   onFail,
@@ -72,5 +90,9 @@ module.exports = {
   normalizeFilePath,
   getCertificateCn,
   getHttpRequestPreferedWaitMs,
-  normalizeDevEUI
+  normalizeDevEUI,
+  lowerFirst,
+  upperFirst,
+  parseProp,
+  stringifyProp
 }

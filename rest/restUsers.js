@@ -96,9 +96,9 @@ exports.initialize = function (app, server) {
     if (req.query.search) {
       options.search = req.query.search
     }
-    modelAPI.users.list(options).then(function (result) {
-      let records = result.records.map(x => formatRelationshipsOut(x))
-      restServer.respondJson(res, null, { ...result, records })
+    modelAPI.users.list(options, { includeTotal: true }).then(function ([ records, totalCount ]) {
+      records = records.map(x => formatRelationshipsOut(x))
+      restServer.respondJson(res, null, { records, totalCount })
     })
       .catch(function (err) {
         appLogger.log('Error getting users for company ' + req.company.name + ': ' + err)
