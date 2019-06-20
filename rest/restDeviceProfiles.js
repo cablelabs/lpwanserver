@@ -33,22 +33,22 @@ exports.initialize = function (app, server) {
      *      based on name matches to the passed string.  In the string, use "%"
      *      to match 0 or more characters and "_" to match exactly one.  For
      *      example, to match names starting with "D", use the string "D%".
-     * @apiParam (Query Parameters) {Number} [companyId] Limit the Device
+     * @apiParam (Query Parameters) {String} [companyId] Limit the Device
      *      Profiles to those belonging to the Company.
-     * @apiParam (Query Parameters) {Number} [networkTypeId] Limit the
+     * @apiParam (Query Parameters) {String} [networkTypeId] Limit the
      *      Device Profiles to those that are for the Network Type.
      * @apiSuccess {Object} object
      * @apiSuccess {Number} object.totalCount The total number of records that
      *      would have been returned if offset and limit were not specified.
      *      This allows for calculation of number of "pages" of data.
      * @apiSuccess {Object[]} object.records An array of Device Profile records.
-     * @apiSuccess {Number} object.records.id The Device Profile's Id
+     * @apiSuccess {String} object.records.id The Device Profile's Id
      * @apiSuccess {String} object.records.name The Device Profile's name
      * @apiSuccess {String} object.records.description The Device Profile's
      *      description
-     * @apiSuccess {Number} object.records.companyId The Id of the Company that
+     * @apiSuccess {String} object.records.companyId The Id of the Company that
      *      the Device Profile belongs to.
-     * @apiSuccess {Number} object.records.networkTypeId The Network Type that
+     * @apiSuccess {String} object.records.networkTypeId The Network Type that
      *      this Device Profile works with.
      * @apiSuccess {Object} object.records.networkSettings The JSON data
      *      structure that has the settings for the Network Type.  This is
@@ -113,20 +113,20 @@ exports.initialize = function (app, server) {
      *      that is not owned by their Company.
      * @apiHeader {String} Authorization The Create Session's returned token
      *      prepended with "Bearer "
-     * @apiParam (URL Parameters) {Number} id The Device Profile's id
+     * @apiParam (URL Parameters) {String} id The Device Profile's id
      * @apiSuccess {Object} object
-     * @apiSuccess {Number} object.id The Device Profile's Id
+     * @apiSuccess {String} object.id The Device Profile's Id
      * @apiSuccess {String} object.name The Device Profile's name
      * @apiSuccess {String} object.description The Device Profile's description
-     * @apiSuccess {Number} object.companyId The Id of the Company that
+     * @apiSuccess {String} object.companyId The Id of the Company that
      *      the Device Profile belongs to.
-     * @apiSuccess {Number} object.networkTypeId The Network Type that
+     * @apiSuccess {String} object.networkTypeId The Network Type that
      *      this Device Profile works with.
      * @apiSuccess {Object} object.networkSettings The JSON data
      *      structure that has the settings for the Network Type.  This is
      *      expected to match the Network Protocol's expected data used to
      *      set up the device on the remote Network(s).
-     * @apiVersion 0.1.0
+     * @apiVersion 1.2.0
      */
   app.get('/api/deviceProfiles/:id', [ restServer.isLoggedIn,
     restServer.fetchCompany ],
@@ -162,9 +162,9 @@ exports.initialize = function (app, server) {
      * @apiParam (Request Body) {String} object.name The Device Profile's name
      * @apiParam (Request Body) {String} object.description The Device
      *      Profile's description
-     * @apiParam (Request Body) {Number} object.companyId The Id of the Company
+     * @apiParam (Request Body) {String} object.companyId The Id of the Company
      *      that the Device Profile belongs to.
-     * @apiParam (Request Body) {Number} object.networkTypeId The Network Type
+     * @apiParam (Request Body) {String} object.networkTypeId The Network Type
      *      that this Device Profile works with.
      * @apiParam (Request Body) {Object} object.networkSettings The JSON data
      *      structure that has the settings for the Network Type.  This is
@@ -178,8 +178,8 @@ exports.initialize = function (app, server) {
      *          "networkTypeId": 1,
      *          "networkSettings": {...}
      *      }
-     * @apiSuccess {Number} id The new Device Profile's id.
-     * @apiVersion 0.1.0
+     * @apiSuccess {String} id The new Device Profile's id.
+     * @apiVersion 1.2.0
      */
   app.post('/api/deviceProfiles', [ restServer.isLoggedIn,
     restServer.fetchCompany,
@@ -241,9 +241,9 @@ exports.initialize = function (app, server) {
      * @apiParam (Request Body) {String} [name] The Device Profile's name
      * @apiParam (Request Body) {String} [description] The Device Profile's
      *      description
-     * @apiParam (Request Body) {Number} [companyId] The Id of the Company
+     * @apiParam (Request Body) {String} [companyId] The Id of the Company
      *      that the Device Profile belongs to.
-     * @apiParam (Request Body) {Number} [networkTypeId] The Network Type
+     * @apiParam (Request Body) {String} [networkTypeId] The Network Type
      *      that this Device Profile works with.
      * @apiParam (Request Body) {Object} [networkSettings] The JSON data
      *      structure that has the settings for the Network Type.  This is
@@ -257,7 +257,7 @@ exports.initialize = function (app, server) {
      *          "networkTypeId": 1,
      *          "networkSettings": {...}
      *      }
-     * @apiVersion 0.1.0
+     * @apiVersion 1.2.0
      */
   app.put('/api/deviceProfiles/:id', [restServer.isLoggedIn,
     restServer.fetchCompany,
@@ -338,8 +338,8 @@ exports.initialize = function (app, server) {
      * @apiPermission System Admin, or Company Admin for this company.
      * @apiHeader {String} Authorization The Create Session's returned token
      *      prepended with "Bearer "
-     * @apiParam (URL Parameters) {Number} id The Device Profile's id
-     * @apiVersion 0.1.0
+     * @apiParam (URL Parameters) {String} id The Device Profile's id
+     * @apiVersion 1.2.0
      */
   app.delete('/api/deviceProfiles/:id', [ restServer.isLoggedIn,
     restServer.fetchCompany,
@@ -369,8 +369,8 @@ exports.initialize = function (app, server) {
      * @apiPermission System Admin, or Company Admin for this company.
      * @apiHeader {String} Authorization The Create Session's returned token
      *      prepended with "Bearer "
-     * @apiParam (URL Parameters) {Number} id The Device Profile's id
-     * @apiVersion 0.1.0
+     * @apiParam (URL Parameters) {String} id The Device Profile's id
+     * @apiVersion 1.2.0
      */
   app.post('/api/deviceProfiles/:id/push', [restServer.isLoggedIn,
     restServer.fetchCompany,

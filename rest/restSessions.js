@@ -27,7 +27,7 @@ exports.initialize = function (app, server) {
      *          "login_password": "secretshhh"
      *      }
      * @apiSuccess (200) {string} token The JWT token for the user.
-     * @apiVersion 0.1.0
+     * @apiVersion 1.2.0
      */
   app.post('/api/sessions', function (req, res, next) {
     modelAPI.sessions.authorize(req, res, next).then(
@@ -47,7 +47,7 @@ exports.initialize = function (app, server) {
      * @api {delete} /api/sessions Delete Session
      * @apiGroup Sessions
      * @apiDescription Deletes the session.
-     * @apiVersion 0.1.0
+     * @apiVersion 1.2.0
      */
   app.delete('/api/sessions', [ restServer.isLoggedIn ], function (req, res, next) {
     modelAPI.sessions.delete(req, res, next).then(function () {

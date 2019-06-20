@@ -21,10 +21,10 @@ exports.initialize = function (app, server) {
       * @apiPermission Any logged-in user.
       * @apiHeader {String} Authorization The Create Session's returned token
       *      prepended with "Bearer "
-      * @apiParam (URL Parameters) {Number} companyId The Company's id for
+      * @apiParam (URL Parameters) {String} companyId The Company's id for
       *     which to retrieve the Password Policies.
       * @apiSuccess {Object[]} object An array of Password Policy records.
-      * @apiSuccess {Number} object.id The Password Policy's Id
+      * @apiSuccess {String} object.id The Password Policy's Id
       * @apiSuccess {String} object.ruleText The Password Policy's description,
       *     intended for display to the end user.
       * @apiSuccess {String} object.ruleRegExp The Password Policy's
@@ -32,7 +32,7 @@ exports.initialize = function (app, server) {
       *     password for it to be considered valid.
       * @apiSuccess {Boolean} [object.global] True indicates a system-wide rule,
       *     which can only be changed by a System Admin.
-      * @apiVersion 0.1.0
+      * @apiVersion 1.2.0
       */
   app.get('/api/passwordPolicies/company/:companyId',
     [restServer.isLoggedIn,
@@ -70,16 +70,16 @@ exports.initialize = function (app, server) {
       *     Password Policy.
       * @apiHeader {String} Authorization The Create Session's returned token
       *      prepended with "Bearer "
-      * @apiParam (URL Parameters) {Number} id The Password Policy's id.
-      * @apiSuccess {Number} id The Password Policy's Id
+      * @apiParam (URL Parameters) {String} id The Password Policy's id.
+      * @apiSuccess {String} id The Password Policy's Id
       * @apiSuccess {String} ruleText The Password Policy's description,
       *     intended for display to the end user.
       * @apiSuccess {String} ruleRegExp The Password Policy's
       *     Javascript regular expression, which must "match" the entered
       *     password for it to be considered valid.
-      * @apiSuccess {Number} companyId The company who owns this Password Policy
+      * @apiSuccess {String} companyId The company who owns this Password Policy
       *     or null if a global policy.
-      * @apiVersion 0.1.0
+      * @apiVersion 1.2.0
       */
   app.get('/api/passwordPolicies/:id', [restServer.isLoggedIn,
     restServer.fetchCompany],
@@ -122,7 +122,7 @@ exports.initialize = function (app, server) {
      * @apiParam (Request Body) {String} ruleRegExp The Password Policy's
      *     Javascript regular expression, which must "match" the entered
      *     password for it to be considered valid.
-     * @apiParam (Request Body) {Number} [companyId] The id of the company that
+     * @apiParam (Request Body) {String} [companyId] The id of the company that
      *      this Password Policy belongs to.  If not supplied, for
      *      a System Admin, defaults to null (global rule for all
      *      users/companies).  For Company Admin, defaults to the user's
@@ -134,8 +134,8 @@ exports.initialize = function (app, server) {
      *          "ruleRegexp": "[0-9]",
      *          "companyId": 3
      *      }
-     * @apiSuccess {Number} id The new Password Policy's id.
-     * @apiVersion 0.1.0
+     * @apiSuccess {String} id The new Password Policy's id.
+     * @apiVersion 1.2.0
      */
   app.post('/api/passwordPolicies', [restServer.isLoggedIn,
     restServer.fetchCompany,
@@ -189,13 +189,13 @@ exports.initialize = function (app, server) {
      * @apiPermission System Admin, or Company Admin for the Password Policy's *       Company.
      * @apiHeader {String} Authorization The Create Session's returned token
      *      prepended with "Bearer "
-     * @apiParam (URL Parameters) {Number} id The Password Policy's id
+     * @apiParam (URL Parameters) {String} id The Password Policy's id
      * @apiParam (Request Body) {String} [ruleText] The Password Policy's
      *     description, intended for display to the end user.
      * @apiParam (Request Body) {String} [ruleRegExp] The Password Policy's
      *     Javascript regular expression, which must "match" the entered
      *     password for it to be considered valid.
-     * @apiParam (Request Body) {Number} [companyId] The id of the company that
+     * @apiParam (Request Body) {String} [companyId] The id of the company that
      *      this Password Policy belongs to.  Can only be specified by a
      *      System Admin.
      * @apiExample {json} Example body:
@@ -203,7 +203,7 @@ exports.initialize = function (app, server) {
      *          "ruleText": "Must contain a digit",
      *          "ruleRegexp": "[0-9]"
      *      }
-     * @apiVersion 0.1.0
+     * @apiVersion 1.2.0
      */
   app.put('/api/passwordPolicies/:id', [restServer.isLoggedIn,
     restServer.fetchCompany,
@@ -286,8 +286,8 @@ exports.initialize = function (app, server) {
       *     company.
       * @apiHeader {String} Authorization The Create Session's returned token
       *      prepended with "Bearer "
-      * @apiParam (URL Parameters) {Number} id The Password Policy's id
-      * @apiVersion 0.1.0
+      * @apiParam (URL Parameters) {String} id The Password Policy's id
+      * @apiVersion 1.2.0
       */
   app.delete('/api/passwordPolicies/:id', [restServer.isLoggedIn,
     restServer.fetchCompany,

@@ -33,29 +33,29 @@ exports.initialize = function (app, server) {
      *      based on name matches to the passed string.  In the string, use "%"
      *      to match 0 or more characters and "_" to match exactly one.  For
      *      example, to match names starting with "D", use the string "D%".
-     * @apiParam (Query Parameters) {Number} [companyId] Limit the Applications
+     * @apiParam (Query Parameters) {String} [companyId] Limit the Applications
      *      to those belonging to the Company.
-     * @apiParam (Query Parameters) {Number} [reportingProtocolId] Limit the
+     * @apiParam (Query Parameters) {String} [reportingProtocolId] Limit the
      *      Applications to those that use the Reporting Protocol.
      * @apiSuccess {Object} object
      * @apiSuccess {Number} object.totalCount The total number of records that
      *      would have been returned if offset and limit were not specified.
      *      This allows for calculation of number of "pages" of data.
      * @apiSuccess {Object[]} object.records An array of Application records.
-     * @apiSuccess {Number} object.records.id The Application's Id
+     * @apiSuccess {String} object.records.id The Application's Id
      * @apiSuccess {String} object.records.name The Application's name
      * @apiSuccess {String} object.records.description The Application's
      *      description
-     * @apiSuccess {Number} object.records.companyId The Id of the Company
+     * @apiSuccess {String} object.records.companyId The Id of the Company
      *      that the Application belongs to.
      * @apiSuccess {String} object.records.baseUrl The base URL used by the
      *      Reporting Protocol
-     * @apiSuccess {Number} object.records.reportingProtocolId The
+     * @apiSuccess {String} object.records.reportingProtocolId The
      *      Id of the Reporting Protocol used by the Application.
      * @apiSuccess {Boolean} object.records.running If the Application is
      *      currently sending data received from the Networks to the baseUrl via
      *      the Reporting Protocol.
-     * @apiVersion 0.1.0
+     * @apiVersion 1.2.0
      */
   app.get('/api/applications', [restServer.isLoggedIn,
     restServer.fetchCompany],
@@ -120,21 +120,21 @@ exports.initialize = function (app, server) {
      *      that is not owned by their Company.
      * @apiHeader {String} Authorization The Create Session's returned token
      *      prepended with "Bearer "
-     * @apiParam (URL Parameters) {Number} id The Application's id
+     * @apiParam (URL Parameters) {String} id The Application's id
      * @apiSuccess {Object} object
-     * @apiSuccess {Number} object.id The Application's Id
+     * @apiSuccess {String} object.id The Application's Id
      * @apiSuccess {String} object.name The Application's name
      * @apiSuccess {String} object.description The Application's description
-     * @apiSuccess {Number} object.companyId The Id of the Company
+     * @apiSuccess {String} object.companyId The Id of the Company
      *      that the Application belongs to.
      * @apiSuccess {String} object.baseUrl The base URL used by the
      *      Reporting Protocol
-     * @apiSuccess {Number} object.reportingProtocolId The
+     * @apiSuccess {String} object.reportingProtocolId The
      *      Id of the Reporting Protocol used by the Application.
      * @apiSuccess {Boolean} object.running If the Application is
      *      currently sending data received from the Networks to the baseUrl via
      *      the Reporting Protocol.
-     * @apiVersion 0.1.0
+     * @apiVersion 1.2.0
      */
   app.get('/api/applications/:id', [restServer.isLoggedIn,
     restServer.fetchCompany],
@@ -165,13 +165,13 @@ exports.initialize = function (app, server) {
      * @apiParam (Request Body) {String} name The Application's name
      * @apiParam (Request Body) {String} description The Application's
      *      description
-     * @apiParam (Request Body) {Number} companyId The Id of the Company that
+     * @apiParam (Request Body) {String} companyId The Id of the Company that
      *      the Application blongs to.  For a Company Admin user, this can
      *      only be the Id of their own Company.
      * @apiParam (Request Body) {String} baseURL The URL that the Reporting
      *      Protocol sends the data to.  This may have additional paths added,
      *      depending on the Reporting Protocol.
-     * @apiParam (Request Body) {Number} reportingProtocolId The Id of the
+     * @apiParam (Request Body) {String} reportingProtocolId The Id of the
      *      Reporting Protocol the Application will use to pass Device data
      *      back to the Application Vendor.
      * @apiExample {json} Example body:
@@ -182,8 +182,8 @@ exports.initialize = function (app, server) {
      *          "baseUrl": "https://IoTStuff.com/incomingData/GPSPetTracker"
      *          "reportingProtocolId": 1
      *      }
-     * @apiSuccess {Number} id The new Application's id.
-     * @apiVersion 0.1.0
+     * @apiSuccess {String} id The new Application's id.
+     * @apiVersion 1.2.0
      */
   app.post('/api/applications', [restServer.isLoggedIn,
     restServer.fetchCompany,
@@ -231,17 +231,17 @@ exports.initialize = function (app, server) {
      * @apiPermission System Admin, or Company Admin for this Company.
      * @apiHeader {String} Authorization The Create Session's returned token
      *      prepended with "Bearer "
-     * @apiParam (URL Parameters) {Number} id The Application's id
+     * @apiParam (URL Parameters) {String} id The Application's id
      * @apiParam (Request Body) {String} [name] The Application's name
      * @apiParam (Request Body) {String} [description] The Application's
      *      description
-     * @apiParam (Request Body) {Number} [companyId] The Id of the Company that
+     * @apiParam (Request Body) {String} [companyId] The Id of the Company that
      *      the Application blongs to.  For a Company Admin user, this can
      *      only be the Id of their own Company.
      * @apiParam (Request Body) {String} [baseURL] The URL that the Reporting
      *      Protocol sends the data to.  This may have additional paths added,
      *      depending on the Reporting Protocol.
-     * @apiParam (Request Body) {Number} [reportingProtocolId] The Id of the
+     * @apiParam (Request Body) {String} [reportingProtocolId] The Id of the
      *      Reporting Protocol the Application will use to pass Device data
      *      back to the Application Vendor.
      * @apiExample {json} Example body:
@@ -252,7 +252,7 @@ exports.initialize = function (app, server) {
      *          "baseUrl": "https://IoTStuff.com/incomingData/GPSPetTracker"
      *          "reportingProtocolId": 1
      *      }
-     * @apiVersion 0.1.0
+     * @apiVersion 1.2.0
      */
   app.put('/api/applications/:id', [restServer.isLoggedIn,
     restServer.fetchCompany,
@@ -338,8 +338,8 @@ exports.initialize = function (app, server) {
      * @apiPermission System Admin, or Company Admin for this company.
      * @apiHeader {String} Authorization The Create Session's returned token
      *      prepended with "Bearer "
-     * @apiParam (URL Parameters) {Number} id The Application's id
-     * @apiVersion 0.1.0
+     * @apiParam (URL Parameters) {String} id The Application's id
+     * @apiVersion 1.2.0
      */
   app.delete('/api/applications/:id', [restServer.isLoggedIn,
     restServer.fetchCompany,
@@ -388,8 +388,8 @@ exports.initialize = function (app, server) {
      * @apiPermission System Admin, or Company Admin for this company.
      * @apiHeader {String} Authorization The Create Session's returned token
      *      prepended with "Bearer "
-     * @apiParam (URL Parameters) {Number} id The Application's id
-     * @apiVersion 0.1.0
+     * @apiParam (URL Parameters) {String} id The Application's id
+     * @apiVersion 1.2.0
      */
   // Yeah, yeah, this isn't a pure REST call.  So sue me.  Gets the job done.
   async function startApplication (req, res) {
@@ -424,8 +424,8 @@ exports.initialize = function (app, server) {
      * @apiPermission System Admin, or Company Admin for this company.
      * @apiHeader {String} Authorization The Create Session's returned token
      *      prepended with "Bearer "
-     * @apiParam (URL Parameters) {Number} id The Application's id
-     * @apiVersion 0.1.0
+     * @apiParam (URL Parameters) {String} id The Application's id
+     * @apiVersion 1.2.0
      */
   // Yeah, yeah, this isn't a pure REST call.  So sue me.  Gets the job done.
   async function stopApplication (req, res) {
@@ -474,6 +474,21 @@ exports.initialize = function (app, server) {
      *   logged in.  We will reject messages for unknown applicationIds and/or
      *   networkIds with a generic 404.
      */
+
+  /**
+   * @apiDescription Handle an uplink from a device on a network
+   *
+   * @api {post} /api/ingest/:applicationId/:networkId Uplink Message
+   * @apiGroup Applications
+   * @apiPermission Not protected
+   * @apiParam (URL Parameters) {String} applicationId The Application's ID
+   * @apiParam (URL Parameters) {String} networkId The Application's ID
+   * @apiExample {json} Example body:
+   *      {
+   *          any: any
+   *      }
+   * @apiVersion 1.2.0
+   */
   async function uplinkHandler (req, res) {
     var appId = req.params.applicationId
     var nwkId = req.params.networkId
