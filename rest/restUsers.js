@@ -34,34 +34,34 @@ exports.initialize = function (app, server) {
      *       only their own Company's Users.
      * @apiHeader {String} Authorization The Create Session's returned token
      *      prepended with "Bearer "
-     * @apiParam (Query Parameters) {Number} [limit] The maximum number of
+     * @apiParam (Query Parameters) {String} [limit] The maximum number of
      *      records to return.  Use with offset to manage paging.  0 is the
      *      same as unspecified, returning all users that match other query
      *      parameters.
-     * @apiParam (Query Parameters) {Number} [offset] The offset into the
+     * @apiParam (Query Parameters) {String} [offset] The offset into the
      *      returned database query set.  Use with limit to manage paging.  0 is
      *      the same as unspecified, returning the list from the beginning.
      * @apiParam (Query Parameters) {String} [search] Search the Users
      *      based on username matches to the passed string.  In the string, use
      *      "%" to match 0 or more characters and "_" to match exactly one.  For
      *      example, to match names starting with "D", use the string "D%".
-     * @apiParam (Query Parameters) {Number} [companyId] Limit the Users to
+     * @apiParam (Query Parameters) {String} [companyId] Limit the Users to
      *      those belonging to the Company.
      * @apiSuccess {Object} object
      * @apiSuccess {Number} object.totalCount The total number of records that
      *      would have been returned if offset and limit were not specified.
      *      This allows for calculation of number of "pages" of data.
      * @apiSuccess {Object[]} object.records An array of User records.
-     * @apiSuccess {Number} object.records.id The User's Id
+     * @apiSuccess {String} object.records.id The User's Id
      * @apiSuccess {String} object.records.username The User's username
      * @apiSuccess {String} object.records.email The User's email
      * @apiSuccess {Boolean} object.records.emailVerified Is the user's email
      *      verified?
      * @apiSuccess {String=admin,user} object.records.role The User's role in
      *      the system.
-     * @apiSuccess {Number} object.records.companyId The Id of the Company
+     * @apiSuccess {String} object.records.companyId The Id of the Company
      *      that the User belongs to.
-     * @apiVersion 0.1.0
+     * @apiVersion 1.2.0
      */
   app.get('/api/users', [restServer.isLoggedIn,
     restServer.fetchCompany,
@@ -116,16 +116,16 @@ exports.initialize = function (app, server) {
      * @apiHeader {String} Authorization The Create Session's returned token
      *      prepended with "Bearer "
      * @apiSuccess {Object} object The User record
-     * @apiSuccess {Number} object.id The User's Id
+     * @apiSuccess {String} object.id The User's Id
      * @apiSuccess {String} object.username The User's username
      * @apiSuccess {String} object.email The User's email
      * @apiSuccess {Boolean} object.emailVerified Is the user's email
      *      verified?
      * @apiSuccess {String=admin,user} object.role The User's role in
      *      the system.
-     * @apiSuccess {Number} object.companyId The Id of the Company
+     * @apiSuccess {String} object.companyId The Id of the Company
      *      that the User belongs to.
-     * @apiVersion 0.1.0
+     * @apiVersion 1.2.0
      */
   app.get('/api/users/me', [restServer.isLoggedIn], function (req, res) {
     restServer.respondJson(res, null, formatRelationshipsOut(req.user))
@@ -139,18 +139,18 @@ exports.initialize = function (app, server) {
       * @apiPermission Any logged-in user.  System Admin's
       * @apiHeader {String} Authorization The Create Session's returned token
       *      prepended with "Bearer "
-      * @apiParam (URL Parameters) {Number} id The User's id
+      * @apiParam (URL Parameters) {String} id The User's id
       * @apiSuccess {Object} object The User record
-      * @apiSuccess {Number} object.id The User's Id
+      * @apiSuccess {String} object.id The User's Id
       * @apiSuccess {String} object.username The User's username
       * @apiSuccess {String} object.email The User's email
       * @apiSuccess {Boolean} object.emailVerified Is the user's email
       *      verified?
       * @apiSuccess {String=admin,user} object.role The User's role in
       *      the system.
-      * @apiSuccess {Number} object.companyId The Id of the Company
+      * @apiSuccess {String} object.companyId The Id of the Company
       *      that the User belongs to.
-      * @apiVersion 0.1.0
+      * @apiVersion 1.2.0
       */
   app.get('/api/users/:id', [restServer.isLoggedIn, restServer.fetchCompany], function (req, res) {
     modelAPI.users.load(req.params.id).then(function (user) {
@@ -184,7 +184,7 @@ exports.initialize = function (app, server) {
      *      Admin users)
      * @apiParam (Request Body) {String=admin,user} role The User's role
      *      in the system.
-     * @apiParam (Request Body) {Number} companyId The Id of the Company
+     * @apiParam (Request Body) {String} companyId The Id of the Company
      *      that the User belongs to.
      * @apiExample {json} Example body:
      *      {
@@ -193,8 +193,8 @@ exports.initialize = function (app, server) {
      *          "role": "user",
      *          "companyId": 3
      *      }
-     * @apiSuccess {Number} id The new User's id.
-     * @apiVersion 0.1.0
+     * @apiSuccess {String} id The new User's id.
+     * @apiVersion 1.2.0
      */
   app.post('/api/users', [restServer.isLoggedIn,
     restServer.fetchCompany,
@@ -246,12 +246,12 @@ exports.initialize = function (app, server) {
      *      change companyId or role).
      * @apiHeader {String} Authorization The Create Session's returned token
      *      prepended with "Bearer "
-     * @apiParam (URL Parameters) {Number} id The User's id
+     * @apiParam (URL Parameters) {String} id The User's id
      * @apiParam (Request Body) {String} [username] The User's username
      * @apiParam (Request Body) {String} [email] The User's email
      * @apiParam (Request Body) {String=admin,user} [role] The User's role
      *      in the system. (System or Company Admin only)
-     * @apiParam (Request Body) {Number} [companyId] The Id of the Company
+     * @apiParam (Request Body) {String} [companyId] The Id of the Company
      *      that the User belongs to. (System Admin only)
      * @apiExample {json} Example body:
      *      {
@@ -260,7 +260,7 @@ exports.initialize = function (app, server) {
      *          "role": "user",
      *          "companyId": 4
      *      }
-     * @apiVersion 0.1.0
+     * @apiVersion 1.2.0
      */
   app.put('/api/users/:id', [restServer.isLoggedIn,
     restServer.fetchCompany],
@@ -380,8 +380,8 @@ exports.initialize = function (app, server) {
      *      the caller cannot delete their own record.
      * @apiHeader {String} Authorization The Create Session's returned token
      *      prepended with "Bearer "
-     * @apiParam (URL Parameters) {Number} id The User's id
-     * @apiVersion 0.1.0
+     * @apiParam (URL Parameters) {String} id The User's id
+     * @apiVersion 1.2.0
      */
   app.delete('/api/users/:id', [restServer.isLoggedIn,
     restServer.fetchCompany,

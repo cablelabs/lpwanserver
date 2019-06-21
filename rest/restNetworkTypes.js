@@ -37,9 +37,9 @@ exports.initialize = function (app, server) {
      *      This allows for calculation of number of "pages" of data.
      * @apiSuccess {Object[]} object.records An array of Network Types
      *      records.
-     * @apiSuccess {Number} object.records.id The Network Type's Id
+     * @apiSuccess {String} object.records.id The Network Type's Id
      * @apiSuccess {String} object.records.name The name of the Network Type
-     * @apiVersion 0.1.0
+     * @apiVersion 1.2.0
      */
   app.get('/api/networkTypes', [restServer.isLoggedIn], function (req, res) {
     modelAPI.networkTypes.list({}, { includeTotal: true }).then(([ records, totalCount ]) => {
@@ -59,11 +59,11 @@ exports.initialize = function (app, server) {
     * @apiPermission Any logged-in user.
     * @apiHeader {String} Authorization The Create Session's returned token
     *      prepended with "Bearer "
-    * @apiParam (URL Parameters) {Number} id The Network Type's id
+    * @apiParam (URL Parameters) {String} id The Network Type's id
     * @apiSuccess {Object} object
-    * @apiSuccess {Number} object.id The Network Type's Id
+    * @apiSuccess {String} object.id The Network Type's Id
     * @apiSuccess {String} object.name The name of the Network Type
-    * @apiVersion 0.1.0
+    * @apiVersion 1.2.0
      */
   app.get('/api/networkTypes/:id', [restServer.isLoggedIn],
     function (req, res) {
@@ -90,7 +90,7 @@ exports.initialize = function (app, server) {
     *      {
     *          "name": "NB-IoT"
     *      }
-    * @apiSuccess {Number} id The new Network Type's id.
+    * @apiSuccess {String} id The new Network Type's id.
      */
   app.post('/api/networkTypes', [restServer.isLoggedIn,
     restServer.fetchCompany,
@@ -129,13 +129,13 @@ exports.initialize = function (app, server) {
     * @apiPermission System Admin
     * @apiHeader {String} Authorization The Create Session's returned token
     *      prepended with "Bearer "
-    * @apiParam (URL Parameters) {Number} id The Network Type's id
+    * @apiParam (URL Parameters) {String} id The Network Type's id
     * @apiParam (Request Body) {String} name The Network Type's name
     * @apiExample {json} Example body:
     *      {
     *          "name": "NB-IoT"
     *      }
-    * @apiVersion 0.1.0
+    * @apiVersion 1.2.0
      */
   app.put('/api/networkTypes/:id', [restServer.isLoggedIn,
     restServer.fetchCompany,
@@ -187,8 +187,8 @@ exports.initialize = function (app, server) {
     * @apiPermission System Admin
     * @apiHeader {String} Authorization The Create Session's returned token
     *      prepended with "Bearer "
-    * @apiParam (URL Parameters) {Number} id The Network Type's id
-    * @apiVersion 0.1.0
+    * @apiParam (URL Parameters) {String} id The Network Type's id
+    * @apiVersion 1.2.0
      */
   app.delete('/api/networkTypes/:id', [restServer.isLoggedIn,
     restServer.fetchCompany,

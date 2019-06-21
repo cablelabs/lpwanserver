@@ -29,11 +29,11 @@ exports.initialize = function (app, server) {
      * @apiParam (Query Parameters) {Number} [offset] The offset into the
      *      returned database query set.  Use with limit to manage paging.  0 is
      *      the same as unspecified, returning the list from the beginning.
-     * @apiParam (Query Parameters) {Number} [companyId] Limit the records
+     * @apiParam (Query Parameters) {String} [companyId] Limit the records
      *      to those whose application are part of the Company.
-     * @apiParam (Query Parameters) {Number} [applicationId] Limit the records
+     * @apiParam (Query Parameters) {String} [applicationId] Limit the records
      *      to those that have the applicationId specified.
-     * @apiParam (Query Parameters) {Number} [networkTypeId] Limit the records
+     * @apiParam (Query Parameters) {String} [networkTypeId] Limit the records
      *      to those that have the networkTypeId specified.
      * @apiSuccess {Object} object
      * @apiSuccess {Number} object.totalCount The total number of records that
@@ -41,15 +41,15 @@ exports.initialize = function (app, server) {
      *      This allows for calculation of number of "pages" of data.
      * @apiSuccess {Object[]} object.records An array of Application Network
      *      Type Links records.
-     * @apiSuccess {Number} object.records.id The Application Network Type
+     * @apiSuccess {String} object.records.id The Application Network Type
      *      Link's Id
-     * @apiSuccess {Number} object.records.applicationId The Application the
+     * @apiSuccess {String} object.records.applicationId The Application the
      *      record is linking to the Network Type.
-     * @apiSuccess {Number} object.records.networkTypeId The Network Type
+     * @apiSuccess {String} object.records.networkTypeId The Network Type
      *      that the Application is being linked to.
      * @apiSuccess {String} object.records.networkSettings The settings in a
      *      JSON string that correspond to the Network Type.
-     * @apiVersion 0.1.0
+     * @apiVersion 1.2.0
      */
   app.get('/api/applicationNetworkTypeLinks', [restServer.isLoggedIn,
     restServer.fetchCompany],
@@ -92,17 +92,17 @@ exports.initialize = function (app, server) {
      *      Network Type Link other than one belonging to their own Company.
      * @apiHeader {String} Authorization The Create Session's returned token
      *      prepended with "Bearer "
-     * @apiParam (URL Parameters) {Number} id The Application Network Type
+     * @apiParam (URL Parameters) {String} id The Application Network Type
      *      Link's id
      * @apiSuccess {Object} object
-     * @apiSuccess {Number} object.id The Application Network Type Link's Id
-     * @apiSuccess {Number} object.applicationId The Application the record is
+     * @apiSuccess {String} object.id The Application Network Type Link's Id
+     * @apiSuccess {String} object.applicationId The Application the record is
      *      linking to the Network Type.
-     * @apiSuccess {Number} object.networkTypeId The Network Type
+     * @apiSuccess {String} object.networkTypeId The Network Type
      *      that the Application is being linked to.
      * @apiSuccess {String} object.networkSettings The settings in a
      *      JSON string that correspond to the Network Type.
-     * @apiVersion 0.1.0
+     * @apiVersion 1.2.0
      */
   app.get('/api/applicationNetworkTypeLinks/:id', [restServer.isLoggedIn], function (req, res, next) {
     var id = req.params.id
@@ -126,20 +126,20 @@ exports.initialize = function (app, server) {
      *      belongs to.
      * @apiHeader {String} Authorization The Create Session's returned token
      *      prepended with "Bearer "
-     * @apiParam (Request Body) {Number} applicationId The Application the
+     * @apiParam (Request Body) {String} applicationId The Application the
      *      record is linking to the Network Type.
-     * @apiParam (Request Body) {Number} networkTypeId The Network Type
+     * @apiParam (Request Body) {String} networkTypeId The Network Type
      *      that the Application is being linked to.
-     * @apiParam (Request Body) {String} networkSettings The settings in a
+     * @apiParam (Request Body) {Object} networkSettings The settings in a
      *      JSON string that correspond to the Network Type.
      * @apiExample {json} Example body:
      *      {
      *          "applicationId": 1,
      *          "networkTypeId": 4,
-     *          "networkSettings": "{ ... }",
+     *          "networkSettings": { ... },
      *      }
-     * @apiSuccess {Number} id The new Application Network Type Link's id.
-     * @apiVersion 0.1.0
+     * @apiSuccess {String} id The new Application Network Type Link's id.
+     * @apiVersion 1.2.0
      */
   app.post('/api/applicationNetworkTypeLinks', [restServer.isLoggedIn,
     restServer.fetchCompany,
@@ -191,15 +191,15 @@ exports.initialize = function (app, server) {
      *      Application belongs to.
      * @apiHeader {String} Authorization The Create Session's returned token
      *      prepended with "Bearer "
-     * @apiParam (URL Parameters) {Number} id The Application Network Type
+     * @apiParam (URL Parameters) {String} id The Application Network Type
      *      Link's id
-     * @apiParam (Request Body) {String} [networkSettings] The settings in a
+     * @apiParam (Request Body) {Object} [networkSettings] The settings in a
      *      JSON string that correspond to the Network Type.
      * @apiExample {json} Example body:
      *      {
-     *          "networkSettings": "{ ... }",
+     *          "networkSettings": { ... },
      *      }
-     * @apiVersion 0.1.0
+     * @apiVersion 1.2.0
      */
   app.put('/api/applicationNetworkTypeLinks/:id', [restServer.isLoggedIn,
     restServer.fetchCompany,
@@ -266,9 +266,9 @@ exports.initialize = function (app, server) {
      *      Application belongs to.
      * @apiHeader {String} Authorization The Create Session's returned token
      *      prepended with "Bearer "
-     * @apiParam (URL Parameters) {Number} id The Application Network Type
+     * @apiParam (URL Parameters) {String} id The Application Network Type
      *      Link's id
-     * @apiVersion 0.1.0
+     * @apiVersion 1.2.0
      */
   app.delete('/api/applicationNetworkTypeLinks/:id', [restServer.isLoggedIn,
     restServer.fetchCompany,

@@ -29,11 +29,11 @@ exports.initialize = function (app, server) {
      * @apiParam (Query Parameters) {Number} [offset] The offset into the
      *      returned database query set.  Use with limit to manage paging.  0 is
      *      the same as unspecified, returning the list from the beginning.
-     * @apiParam (Query Parameters) {Number} [deviceId] Limit the records
+     * @apiParam (Query Parameters) {String} [deviceId] Limit the records
      *      to those that have the deviceId specified.
-     * @apiParam (Query Parameters) {Number} [applicationId] Limit the records
+     * @apiParam (Query Parameters) {String} [applicationId] Limit the records
      *      to those that have the applicationId specified.
-     * @apiParam (Query Parameters) {Number} [networkTypeId] Limit the records
+     * @apiParam (Query Parameters) {String} [networkTypeId] Limit the records
      *      to those that have the networkTypeId specified.
      * @apiSuccess {Object} object
      * @apiSuccess {Number} object.totalCount The total number of records that
@@ -41,14 +41,14 @@ exports.initialize = function (app, server) {
      *      This allows for calculation of number of "pages" of data.
      * @apiSuccess {Object[]} object.records An array of Device Network Type
      *      Links records.
-     * @apiSuccess {Number} object.records.id The Device Network Type Link's Id
-     * @apiSuccess {Number} object.records.deviceId The Device the record is
+     * @apiSuccess {String} object.records.id The Device Network Type Link's Id
+     * @apiSuccess {String} object.records.deviceId The Device the record is
      *      linking to the Network Type.
-     * @apiSuccess {Number} object.records.networkTypeId The Network Type
+     * @apiSuccess {String} object.records.networkTypeId The Network Type
      *      that the Device is being linked to.
      * @apiSuccess {String} object.records.networkSettings The settings in a
      *      JSON string that correspond to the Network Type.
-     * @apiVersion 0.1.0
+     * @apiVersion 1.2.0
      */
   app.get('/api/deviceNetworkTypeLinks', [restServer.isLoggedIn,
     restServer.fetchCompany], function (req, res) {
@@ -89,16 +89,16 @@ exports.initialize = function (app, server) {
      *      Type Link other than one belonging to their own company.
      * @apiHeader {String} Authorization The Create Session's returned token
      *      prepended with "Bearer "
-     * @apiParam (URL Parameters) {Number} id The Device Network Type Link's id
+     * @apiParam (URL Parameters) {String} id The Device Network Type Link's id
      * @apiSuccess {Object} object
-     * @apiSuccess {Number} object.id The Device Network Type Link's Id
-     * @apiSuccess {Number} object.deviceId The Device the record is
+     * @apiSuccess {String} object.id The Device Network Type Link's Id
+     * @apiSuccess {String} object.deviceId The Device the record is
      *      linking to the Network Type.
-     * @apiSuccess {Number} object.networkTypeId The Network Type
+     * @apiSuccess {String} object.networkTypeId The Network Type
      *      that the Device is being linked to.
      * @apiSuccess {String} object.networkSettings The settings in a
      *      JSON string that correspond to the Network Type.
-     * @apiVersion 0.1.0
+     * @apiVersion 1.2.0
      */
   app.get('/api/deviceNetworkTypeLinks/:id', [restServer.isLoggedIn], function (req, res, next) {
     var id = req.params.id
@@ -120,9 +120,9 @@ exports.initialize = function (app, server) {
      * @apiPermission System Admin
      * @apiHeader {String} Authorization The Create Session's returned token
      *      prepended with "Bearer "
-     * @apiParam (Request Body) {Number} deviceId The Device the record is
+     * @apiParam (Request Body) {String} deviceId The Device the record is
      *      linking to the Network Type.
-     * @apiParam (Request Body) {Number} networkTypeId The Network Type
+     * @apiParam (Request Body) {String} networkTypeId The Network Type
      *      that the Device is being linked to.
      * @apiParam (Request Body) {String} networkSettings The settings in a
      *      JSON string that correspond to the Network Type.
@@ -132,8 +132,8 @@ exports.initialize = function (app, server) {
      *          "networkTypeId": 4,
      *          "networkSettings": "{ ... }",
      *      }
-     * @apiSuccess {Number} id The new Device Network Type Link's id.
-     * @apiVersion 0.1.0
+     * @apiSuccess {String} id The new Device Network Type Link's id.
+     * @apiVersion 1.2.0
      */
   app.post('/api/deviceNetworkTypeLinks', [restServer.isLoggedIn,
     restServer.fetchCompany,
@@ -191,14 +191,14 @@ exports.initialize = function (app, server) {
      * @apiPermission System Admin
      * @apiHeader {String} Authorization The Create Session's returned token
      *      prepended with "Bearer "
-     * @apiParam (URL Parameters) {Number} id The Device Network Type Link's id
+     * @apiParam (URL Parameters) {String} id The Device Network Type Link's id
      * @apiParam (Request Body) {String} [networkSettings] The settings in a
      *      JSON string that correspond to the Network Type.
      * @apiExample {json} Example body:
      *      {
      *          "networkSettings": "{ ... }",
      *      }
-     * @apiVersion 0.1.0
+     * @apiVersion 1.2.0
      */
   app.put('/api/deviceNetworkTypeLinks/:id', [restServer.isLoggedIn,
     restServer.fetchCompany,
@@ -269,8 +269,8 @@ exports.initialize = function (app, server) {
      * @apiPermission System Admin
      * @apiHeader {String} Authorization The Create Session's returned token
      *      prepended with "Bearer "
-     * @apiParam (URL Parameters) {Number} id The Device Network Type Link's id
-     * @apiVersion 0.1.0
+     * @apiParam (URL Parameters) {String} id The Device Network Type Link's id
+     * @apiVersion 1.2.0
      */
   app.delete('/api/deviceNetworkTypeLinks/:id', [restServer.isLoggedIn,
     restServer.fetchCompany,
@@ -302,8 +302,8 @@ exports.initialize = function (app, server) {
      * @apiPermission System Admin or Company Admin for the Device's Company.
      * @apiHeader {String} Authorization The Create Session's returned token
      *      prepended with "Bearer "
-     * @apiParam (URL Parameters) {Number} id The Device Network Type Link's id
-     * @apiVersion 0.1.0
+     * @apiParam (URL Parameters) {String} id The Device Network Type Link's id
+     * @apiVersion 1.2.0
      */
   app.post('/api/deviceNetworkTypeLinks/:id/push', [restServer.isLoggedIn,
     restServer.fetchCompany,

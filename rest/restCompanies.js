@@ -38,10 +38,10 @@ exports.initialize = function (app, server) {
      *      would have been returned if offset and limit were not specified.
      *      This allows for calculation of number of "pages" of data.
      * @apiSuccess {Object[]} object.records An array of Company records.
-     * @apiSuccess {Number} object.records.id The Company's Id
+     * @apiSuccess {String} object.records.id The Company's Id
      * @apiSuccess {String} object.records.name The Company's name
      * @apiSuccess {String} object.records.type "admin" or "vendor"
-     * @apiVersion 0.1.0
+     * @apiVersion 1.2.0
      */
   app.get('/api/companies', [restServer.isLoggedIn,
     restServer.fetchCompany,
@@ -87,12 +87,12 @@ exports.initialize = function (app, server) {
      *      than their own.
      * @apiHeader {String} Authorization The Create Session's returned token
      *      prepended with "Bearer "
-     * @apiParam (URL Parameters) {Number} id The Company's id
+     * @apiParam (URL Parameters) {String} id The Company's id
      * @apiSuccess {Object} object
-     * @apiSuccess {Number} object.id The Company's Id
+     * @apiSuccess {String} object.id The Company's Id
      * @apiSuccess {String} object.name The Company's name
      * @apiSuccess {String} object.type "admin" or "vendor"
-     * @apiVersion 0.1.0
+     * @apiVersion 1.2.0
      */
   app.get('/api/companies/:id', [restServer.isLoggedIn,
     restServer.fetchCompany],
@@ -127,8 +127,8 @@ exports.initialize = function (app, server) {
      *          "name": "IoT Stuff, Inc.",
      *          "type": "vendor"
      *      }
-     * @apiSuccess {Number} id The new Company's id.
-     * @apiVersion 0.1.0
+     * @apiSuccess {String} id The new Company's id.
+     * @apiVersion 1.2.0
      */
   app.post('/api/companies', [restServer.isLoggedIn,
     restServer.fetchCompany,
@@ -166,7 +166,7 @@ exports.initialize = function (app, server) {
      * @apiPermission System Admin, or Company Admin for this company.
      * @apiHeader {String} Authorization The Create Session's returned token
      *      prepended with "Bearer "
-     * @apiParam (URL Parameters) {Number} id The Company's id
+     * @apiParam (URL Parameters) {String} id The Company's id
      * @apiParam (Request Body) {String} [name] The Company's name
      * @apiParam (Request Body) {String="Admin","Vendor"} [type] The Company's type
      * @apiExample {json} Example body:
@@ -174,7 +174,7 @@ exports.initialize = function (app, server) {
      *          "name": "IoT Stuff, Inc.",
      *          "type": "vendor"
      *      }
-     * @apiVersion 0.1.0
+     * @apiVersion 1.2.0
      */
   app.put('/api/companies/:id', [restServer.isLoggedIn,
     restServer.fetchCompany,
@@ -236,8 +236,8 @@ exports.initialize = function (app, server) {
      * @apiPermission System Admin
      * @apiHeader {String} Authorization The Create Session's returned token
      *      prepended with "Bearer "
-     * @apiParam (URL Parameters) {Number} id The Company's id
-     * @apiVersion 0.1.0
+     * @apiParam (URL Parameters) {String} id The Company's id
+     * @apiVersion 1.2.0
      */
   app.delete('/api/companies/:id', [restServer.isLoggedIn,
     restServer.fetchCompany,

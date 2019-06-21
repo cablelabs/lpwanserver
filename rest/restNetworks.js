@@ -33,31 +33,31 @@ exports.initialize = function (app, server) {
    *      based on name matches to the passed string.  In the string, use "%"
    *      to match 0 or more characters and "_" to match exactly one.  For
    *      example, to match names starting with "D", use the string "D%".
-   * @apiParam (Query Parameters) {Number} [networkProviderId] Limit the
+   * @apiParam (Query Parameters) {String} [networkProviderId] Limit the
    *      Networks to those being provided by the Network Provider.
-   * @apiParam (Query Parameters) {Number} [networkTypeId] Limit the
+   * @apiParam (Query Parameters) {String} [networkTypeId] Limit the
    *      Networks to those that support the Network Type.
-   * @apiParam (Query Parameters) {Number} [networkProtocolId] Limit the
+   * @apiParam (Query Parameters) {String} [networkProtocolId] Limit the
    *      Networks to those that use the Network Protocol.
    * @apiSuccess {Object} object
    * @apiSuccess {Number} object.totalCount The total number of records that
    *      would have been returned if offset and limit were not specified.
    *      This allows for calculation of number of "pages" of data.
    * @apiSuccess {Object[]} object.records An array of Network records.
-   * @apiSuccess {Number} object.records.id The Network's Id
+   * @apiSuccess {String} object.records.id The Network's Id
    * @apiSuccess {String} object.records.name The Network's name
-   * @apiSuccess {Number} object.records.networkProviderId The Id of the
+   * @apiSuccess {String} object.records.networkProviderId The Id of the
    *      Network Provider that provides the Network.
-   * @apiSuccess {Number} object.records.networkTypeId The Id of the
+   * @apiSuccess {String} object.records.networkTypeId The Id of the
    *      Network Type that the Network uses.
-   * @apiSuccess {Number} object.records.networkProtocolId The Id of the
+   * @apiSuccess {String} object.records.networkProtocolId The Id of the
    *      Network Protocol that the Network uses.
    * @apiSuccess {String} object.records.baseUrl The base URL used by the
    *      Network Protocol to reach the Network's API server.
-   * @apiSuccess {Number} object.records.securityData The data used to grant
+   * @apiSuccess {Object} object.records.securityData The data used to grant
    *      secure access to the Network's server API.  (Only returned to
    *      System Admins.)
-   * @apiVersion 0.1.0
+   * @apiVersion 1.2.0
    */
   app.get('/api/networks', [restServer.isLoggedIn,
     restServer.fetchCompany],
@@ -229,22 +229,22 @@ exports.initialize = function (app, server) {
  *      networkSecurity field.
  * @apiHeader {String} Authorization The Create Session's returned token
  *      prepended with "Bearer "
- * @apiParam (URL Parameters) {Number} id The Network's id
+ * @apiParam (URL Parameters) {String} id The Network's id
  * @apiSuccess {Object} object
- * @apiSuccess {Number} object.id The Network's Id
+ * @apiSuccess {String} object.id The Network's Id
  * @apiSuccess {String} object.name The Network's name
- * @apiSuccess {Number} object.networkProviderId The Id of the
+ * @apiSuccess {String} object.networkProviderId The Id of the
  *      Network Provider that provides the Network.
- * @apiSuccess {Number} object.networkTypeId The Id of the
+ * @apiSuccess {String} object.networkTypeId The Id of the
  *      Network Type that the Network uses.
- * @apiSuccess {Number} object.networkProtocolId The Id of the
+ * @apiSuccess {String} object.networkProtocolId The Id of the
  *      Network Protocol that the Network uses.
  * @apiSuccess {String} object.baseUrl The base URL used by the
  *      Network Protocol to reach the Network's API server.
- * @apiSuccess {Number} object.securityData The data used to grant
+ * @apiSuccess {Object} object.securityData The data used to grant
  *      secure access to the Network's server API. (Only returned to System
  *      Admins.)
- * @apiVersion 0.1.0
+ * @apiVersion 1.2.0
  */
   app.get('/api/networks/:id', [restServer.isLoggedIn,
     restServer.fetchCompany],
@@ -289,15 +289,15 @@ exports.initialize = function (app, server) {
  * @apiHeader {String} Authorization The Create Session's returned token
  *      prepended with "Bearer "
  * @apiParam (Request Body)  {String} name The Network's name
- * @apiParam (Request Body)  {Number} networkProviderId The Id of the
+ * @apiParam (Request Body)  {String} networkProviderId The Id of the
  *      Network Provider that provides the Network.
- * @apiParam (Request Body)  {Number} networkTypeId The Id of the
+ * @apiParam (Request Body)  {String} networkTypeId The Id of the
  *      Network Type that the Network uses.
- * @apiParam (Request Body)  {Number} networkProtocolId The Id of the
+ * @apiParam (Request Body)  {String} networkProtocolId The Id of the
  *      Network Protocol that the Network uses.
  * @apiParam (Request Body) {String} baseUrl The base URL used by the
  *      Network Protocol to reach the Network's API server.
- * @apiParam (Request Body)  {Number} securityData The data used to grant
+ * @apiParam (Request Body)  {Object} securityData The data used to grant
  *      secure access to the Network's server API.  This data is defined by
  *      the Network Type.
  * @apiExample {json} Example body:
@@ -312,8 +312,8 @@ exports.initialize = function (app, server) {
  *                              "password": "somesecretpassword"
  *                          }
  *      }
- * @apiSuccess {Number} id The new Network's id.
- * @apiVersion 0.1.0
+ * @apiSuccess {String} id The new Network's id.
+ * @apiVersion 1.2.0
  */
   app.post('/api/networks',
     [restServer.isLoggedIn, restServer.fetchCompany, restServer.isAdminCompany],
@@ -402,17 +402,17 @@ exports.initialize = function (app, server) {
  * @apiPermission System Admin
  * @apiHeader {String} Authorization The Create Session's returned token
  *      prepended with "Bearer "
- * @apiParam (URL Parameters) {Number} id The Network's id
+ * @apiParam (URL Parameters) {String} id The Network's id
  * @apiParam (Request Body)  {String} [name] The Network's name
- * @apiParam (Request Body)  {Number} [networkProviderId] The Id of the
+ * @apiParam (Request Body)  {String} [networkProviderId] The Id of the
  *      Network Provider that provides the Network.
- * @apiParam (Request Body)  {Number} [networkTypeId] The Id of the
+ * @apiParam (Request Body)  {String} [networkTypeId] The Id of the
  *      Network Type that the Network uses.
- * @apiParam (Request Body)  {Number} [networkProtocolId] The Id of the
+ * @apiParam (Request Body)  {String} [networkProtocolId] The Id of the
  *      Network Protocol that the Network uses.
  * @apiParam (Request Body) {String} [baseUrl] The base URL used by the
  *      Network Protocol to reach the Network's API server.
- * @apiParam (Request Body)  {Number} [securityData] The data used to grant
+ * @apiParam (Request Body)  {Object} [securityData] The data used to grant
  *      secure access to the Network's server API.  This data is defined by
  *      the Network Type.
  * @apiExample {json} Example body:
@@ -509,8 +509,8 @@ exports.initialize = function (app, server) {
  * @apiPermission System Admin
  * @apiHeader {String} Authorization The Create Session's returned token
  *      prepended with "Bearer "
- * @apiParam (URL Parameters) {Number} id The Network's id
- * @apiVersion 0.1.0
+ * @apiParam (URL Parameters) {String} id The Network's id
+ * @apiVersion 1.2.0
  */
   app.delete('/api/networks/:id', [restServer.isLoggedIn,
     restServer.fetchCompany,

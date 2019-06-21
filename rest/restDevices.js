@@ -33,23 +33,23 @@ exports.initialize = function (app, server) {
      *      on name matches to the passed string.  In the string, use "%" to
      *      match 0 or more characters and "_" to match exactly one.  For
      *      example, to match names starting with "D", use the string "D%".
-     * @apiParam (Query Parameters) {Number} [companyId] Limit the Devices
+     * @apiParam (Query Parameters) {String} [companyId] Limit the Devices
      *      to those belonging to the Company.
-     * @apiParam (Query Parameters) {Number} [applicationId] Limit the Devices
+     * @apiParam (Query Parameters) {String} [applicationId] Limit the Devices
      *      to those belonging to the Application.
      * @apiSuccess {Object} object
      * @apiSuccess {Number} object.totalCount The total number of records that
      *      would have been returned if offset and limit were not specified.
      *      This allows for calculation of number of "pages" of data.
      * @apiSuccess {Object[]} object.records An array of Device records.
-     * @apiSuccess {Number} object.records.id The Device's Id
+     * @apiSuccess {String} object.records.id The Device's Id
      * @apiSuccess {String} object.records.name The Device's name
      * @apiSuccess {String} object.records.description The Device's description
      * @apiSuccess {String} object.records.deviceModel The Device's Model
      *      information
-     * @apiSuccess {Number} object.records.applicationId The Id of the
+     * @apiSuccess {String} object.records.applicationId The Id of the
      *      Application that this Device belongs to.
-     * @apiVersion 0.1.0
+     * @apiVersion 1.2.0
      */
   app.get('/api/devices', [restServer.isLoggedIn, restServer.fetchCompany],
     async function (req, res) {
@@ -107,16 +107,16 @@ exports.initialize = function (app, server) {
      *      company other than their own.
      * @apiHeader {String} Authorization The Create Session's returned token
      *      prepended with "Bearer "
-     * @apiParam (URL Parameters) {Number} id The Device's id
+     * @apiParam (URL Parameters) {String} id The Device's id
      * @apiSuccess {Object} object
-     * @apiSuccess {Number} object.records.id The Device's Id
+     * @apiSuccess {String} object.records.id The Device's Id
      * @apiSuccess {String} object.records.name The Device's name
      * @apiSuccess {String} object.records.description The Device's description
      * @apiSuccess {String} object.records.deviceModel The Device's Model
      *      information
-     * @apiSuccess {Number} object.records.applicationId The Id of the
+     * @apiSuccess {String} object.records.applicationId The Id of the
      *      Application that this Device belongs to.
-     * @apiVersion 0.1.0
+     * @apiVersion 1.2.0
      */
   app.get('/api/devices/:id', [restServer.isLoggedIn,
     restServer.fetchCompany,
@@ -146,7 +146,7 @@ exports.initialize = function (app, server) {
      * @apiParam (Request Body) {String} description The Device's description
      * @apiParam (Request Body) {String} deviceModel The Device's Model
      *      information
-     * @apiParam (Request Body) {Number} applicationId The Id of the
+     * @apiParam (Request Body) {String} applicationId The Id of the
      *      Application that this Device belongs to.
      * @apiExample {json} Example body:
      *      {
@@ -155,8 +155,8 @@ exports.initialize = function (app, server) {
      *          "deviceModel": "Bark 1",
      *          "applicationId": 1
      *      }
-     * @apiSuccess {Number} id The new Device's id.
-     * @apiVersion 0.1.0
+     * @apiSuccess {String} id The new Device's id.
+     * @apiVersion 1.2.0
      */
   app.post('/api/devices', [restServer.isLoggedIn,
     restServer.fetchCompany,
@@ -206,15 +206,15 @@ exports.initialize = function (app, server) {
      * @apiPermission System Admin, or Company Admin for this Device's Company.
      * @apiHeader {String} Authorization The Create Session's returned token
      *      prepended with "Bearer "
-     * @apiParam (URL Parameters) {Number} id The Device's id
+     * @apiParam (URL Parameters) {String} id The Device's id
      * @apiParam (Request Body) {String} [name] The Device's name
      * @apiParam (Request Body) {String} [description] The Device's description
-     * @apiParam (Request Body) {Number} [applicationId] The Id of the
+     * @apiParam (Request Body) {String} [applicationId] The Id of the
      *      Application that the Device blongs to.  For a Company Admin user,
      *      this Appplication must belong to their own Company.
      * @apiParam (Request Body) {String} [deviceModel] The Device's Model
      *      information
-     * @apiParam (Request Body) {Number} [applicationId] The Id of the
+     * @apiParam (Request Body) {String} [applicationId] The Id of the
      *      Application that this Device belongs to.
      * @apiExample {json} Example body:
      *      {
@@ -223,7 +223,7 @@ exports.initialize = function (app, server) {
      *          "deviceModel": "Bark 1",
      *          "applicationId": 1
      *      }
-     * @apiVersion 0.1.0
+     * @apiVersion 1.2.0
      */
   app.put('/api/devices/:id', [restServer.isLoggedIn,
     restServer.fetchCompany,
@@ -331,8 +331,8 @@ exports.initialize = function (app, server) {
      * @apiPermission System Admin or Company Admin for the Device's Company
      * @apiHeader {String} Authorization The Create Session's returned token
      *      prepended with "Bearer "
-     * @apiParam (URL Parameters) {Number} id The Device's id
-     * @apiVersion 0.1.0
+     * @apiParam (URL Parameters) {String} id The Device's id
+     * @apiVersion 1.2.0
      */
   app.delete('/api/devices/:id', [restServer.isLoggedIn,
     restServer.fetchCompany,
@@ -360,7 +360,21 @@ exports.initialize = function (app, server) {
   })
 
   /**
-   * Accepts the data from the application server to pass to devices
+   * @apiDescription Send a downlink to a device
+   *
+   * @api {post} /api/devices/:id/downlinks Send Downlink
+   * @apiGroup Devices
+   * @apiPermission System Admin or Company Admin for the Device's Company
+   * @apiHeader {String} Authorization The Create Session's returned token
+   *      prepended with "Bearer "
+   * @apiParam (URL Parameters) {String} id The Device's id
+   * @apiExample {json} Example body:
+   *      {
+   *          fCnt: 2,
+   *          fPort: 1,
+   *          jsonData: { ... }
+   *      }
+   * @apiVersion 1.2.0
    */
   async function unicastDownlinkPostHandler (req, res) {
     const { id } = req.params
@@ -387,7 +401,14 @@ exports.initialize = function (app, server) {
   )
 
   /**
-   * IP devices request downlink messages.  Uses long polling.
+   * @apiDescription Get downlinks for an IP device
+   *
+   * @api {get} /api/ip-device-downlinks Get IP Device Downlinks
+   * @apiGroup Devices
+   * @apiPermission TLS Client Certificate, with devEUI in Subject.CN
+   * @apiHeader {String} prefer Request a time in seconds for server to
+   *     hold request open, waiting for downlinks. e.g. prefer: wait=30
+   * @apiVersion 1.2.0
    */
   async function listIpDeviceDownlinks (req, res) {
     const devEUI = getCertificateCn(req.connection.getPeerCertificate())
@@ -433,6 +454,18 @@ exports.initialize = function (app, server) {
   }
   app.get('/api/ip-device-downlinks', listIpDeviceDownlinks)
 
+  /**
+   * @apiDescription Create an uplink to be sent to the application server.
+   *
+   * @api {post} /api/ip-device-uplinks Create IP Device Uplink
+   * @apiGroup Devices
+   * @apiPermission TLS Client Certificate, with devEUI in Subject.CN
+   * @apiExample {json} Example body:
+   *  {
+   *      any: 'any'
+   *  }
+   * @apiVersion 1.2.0
+   */
   async function ipDeviceUplinkHandler (req, res) {
     const devEUI = getCertificateCn(req.connection.getPeerCertificate())
     if (!devEUI) {

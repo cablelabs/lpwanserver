@@ -37,9 +37,9 @@ exports.initialize = function (app, server) {
      *      This allows for calculation of number of "pages" of data.
      * @apiSuccess {Object[]} object.records An array of Network Providers
      *      records.
-     * @apiSuccess {Number} object.records.id The Network Provider's Id
+     * @apiSuccess {String} object.records.id The Network Provider's Id
      * @apiSuccess {String} object.records.name The name of the Network Provider
-     * @apiVersion 0.1.0
+     * @apiVersion 1.2.0
      */
   app.get('/api/networkProviders', [restServer.isLoggedIn], function (req, res) {
     var options = {}
@@ -75,11 +75,11 @@ exports.initialize = function (app, server) {
      * @apiPermission Any logged-in user.
      * @apiHeader {String} Authorization The Create Session's returned token
      *      prepended with "Bearer "
-     * @apiParam (URL Parameters) {Number} id The Network Provider's id
+     * @apiParam (URL Parameters) {String} id The Network Provider's id
      * @apiSuccess {Object} object
-     * @apiSuccess {Number} object.id The Network Provider's Id
+     * @apiSuccess {String} object.id The Network Provider's Id
      * @apiSuccess {String} object.name The name of the Network Provider
-     * @apiVersion 0.1.0
+     * @apiVersion 1.2.0
      */
   app.get('/api/networkProviders/:id', [restServer.isLoggedIn],
     function (req, res) {
@@ -106,7 +106,7 @@ exports.initialize = function (app, server) {
      *      {
      *          "name": "Kyrio"
      *      }
-     * @apiSuccess {Number} id The new Network Provider's id.
+     * @apiSuccess {String} id The new Network Provider's id.
      */
   app.post('/api/networkProviders', [restServer.isLoggedIn,
     restServer.fetchCompany,
@@ -145,13 +145,13 @@ exports.initialize = function (app, server) {
      * @apiPermission System Admin
      * @apiHeader {String} Authorization The Create Session's returned token
      *      prepended with "Bearer "
-     * @apiParam (URL Parameters) {Number} id The Network Provider's id
+     * @apiParam (URL Parameters) {String} id The Network Provider's id
      * @apiParam (Request Body) {String} name The Network Provider's name
      * @apiExample {json} Example body:
      *      {
      *          "name": "CableLabs"
      *      }
-     * @apiVersion 0.1.0
+     * @apiVersion 1.2.0
      */
   app.put('/api/networkProviders/:id', [restServer.isLoggedIn,
     restServer.fetchCompany,
@@ -203,8 +203,8 @@ exports.initialize = function (app, server) {
      * @apiPermission System Admin
      * @apiHeader {String} Authorization The Create Session's returned token
      *      prepended with "Bearer "
-     * @apiParam (URL Parameters) {Number} id The Network Provider's id
-     * @apiVersion 0.1.0
+     * @apiParam (URL Parameters) {String} id The Network Provider's id
+     * @apiVersion 1.2.0
      */
   app.delete('/api/networkProviders/:id', [restServer.isLoggedIn,
     restServer.fetchCompany,

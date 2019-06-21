@@ -38,13 +38,13 @@ exports.initialize = function (app, server) {
      *      This allows for calculation of number of "pages" of data.
      * @apiSuccess {Object[]} object.records An array of Network Protocols
      *      records.
-     * @apiSuccess {Number} object.records.id The Network Protocol's Id
+     * @apiSuccess {String} object.records.id The Network Protocol's Id
      * @apiSuccess {String} object.records.name The name of the Network Protocol
      * @apiSuccess {String} object.records.protocolHandler The Network Protocol
      *      node code that communicates with a remote Network.
-     * @apiSuccess {Number} object.records.networkTypeId The id of the Network
+     * @apiSuccess {String} object.records.networkTypeId The id of the Network
      *      Type that the Network Protocol uses for data input.
-     * @apiVersion 0.1.0
+     * @apiVersion 1.2.0
      */
 
   app.get('/api/networkProtocols', [restServer.isLoggedIn],
@@ -146,15 +146,15 @@ exports.initialize = function (app, server) {
      * @apiPermission Any logged-in user.
      * @apiHeader {String} Authorization The Create Session's returned token
      *      prepended with "Bearer "
-     * @apiParam (URL Parameters) {Number} id The Network Protocol's id
+     * @apiParam (URL Parameters) {String} id The Network Protocol's id
      * @apiSuccess {Object} object
-     * @apiSuccess {Number} object.id The Network Protocol's Id
+     * @apiSuccess {String} object.id The Network Protocol's Id
      * @apiSuccess {String} object.name The name of the Network Protocol
      * @apiSuccess {String} object.protocolHandler The Network Protocol
      *      node code that communicates with a remote Network.
-     * @apiSuccess {Number} object.networkTypeId The id of the Network
+     * @apiSuccess {String} object.networkTypeId The id of the Network
      *      Type that the Network Protocol uses for data input.
-     * @apiVersion 0.1.0
+     * @apiVersion 1.2.0
      */
   app.get('/api/networkProtocols/:id', [restServer.isLoggedIn],
     function (req, res) {
@@ -179,7 +179,7 @@ exports.initialize = function (app, server) {
      * @apiParam (Request Body) {String} name The Network Protocol's name
      * @apiParam (Request Body) {String} protocolHandler The Network Protocol
      *      node code that communicates with a remote Network.
-     * @apiParam (Request Body) {Number} networkTypeId The Id of the Network
+     * @apiParam (Request Body) {String} networkTypeId The Id of the Network
      *      Type that the Network Protocol accepts as input.
      * @apiExample {json} Example body:
      *      {
@@ -187,8 +187,8 @@ exports.initialize = function (app, server) {
      *          "protocolHandler": "LoRaOpenSource.js"
      *          "networkTypeId": 1
      *      }
-     * @apiSuccess {Number} id The new Network Protocol's id.
-     * @apiVersion 0.1.0
+     * @apiSuccess {String} id The new Network Protocol's id.
+     * @apiVersion 1.2.0
      */
   app.post('/api/networkProtocols', [restServer.isLoggedIn,
     restServer.fetchCompany,
@@ -235,11 +235,11 @@ exports.initialize = function (app, server) {
      * @apiPermission System Admin
      * @apiHeader {String} Authorization The Create Session's returned token
      *      prepended with "Bearer "
-     * @apiParam (URL Parameters) {Number} networkProtocolHandlersid The Network Protocol's id
+     * @apiParam (URL Parameters) {String} networkProtocolHandlersid The Network Protocol's id
      * @apiParam (Request Body) {String} [name] The Network Protocol's name
      * @apiParam (Request Body) {String} [protocolHandler] The Network Protocol
      *      node code that communicates with a remote Network.
-     * @apiParam (Request Body) {Number} [networkTypeId] The Id of the Network
+     * @apiParam (Request Body) {String} [networkTypeId] The Id of the Network
      *      Type that the Network Protocol accepts as input.
      * @apiExample {json} Example body:
      *      {
@@ -247,7 +247,7 @@ exports.initialize = function (app, server) {
      *          "protocolHandler": "LoRaOpenSource.js",
      *          "networkTypeId": 1
      *      }
-     * @apiVersion 0.1.0
+     * @apiVersion 1.2.0
      */
   app.put('/api/networkProtocols/:id', [restServer.isLoggedIn,
     restServer.fetchCompany,
@@ -312,8 +312,8 @@ exports.initialize = function (app, server) {
      * @apiPermission System AdminnetworkProtocolHandlers
      * @apiHeader {String} Authorization The Create Session's returned token
      *      prepended with "Bearer "
-     * @apiParam (URL Parameters) {Number} id The Network Protocol's id
-     * @apiVersion 0.1.0
+     * @apiParam (URL Parameters) {String} id The Network Protocol's id
+     * @apiVersion 1.2.0
      */
   app.delete('/api/networkProtocols/:id', [restServer.isLoggedIn,
     restServer.fetchCompany,
@@ -342,7 +342,7 @@ exports.initialize = function (app, server) {
      * @apiHeader {String} Authorization The Create Session's returned token
      *      prepended with "Bearer "
      * @apiSuccess {Array} array of protocol handlers available.
-     * @apiVersion 0.1.0
+     * @apiVersion 1.2.0
      */
   app.get('/api/networkProtocolHandlers/', [restServer.isLoggedIn],
     async function (req, res) {
