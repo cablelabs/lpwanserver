@@ -204,7 +204,7 @@ module.exports = class Device {
         return { status: 'OK', deviceId: device.id, devEUI }
       }
       catch (err) {
-        return { status: 'ERROR', error: { ...err }, devEUI }
+        return { status: 'ERROR', error: err.message, devEUI }
       }
     }))
   }
