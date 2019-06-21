@@ -190,7 +190,8 @@ module.exports = class Loriot extends NetworkProtocol {
     }
     else {
       appLogger.log('creating ' + remoteDevice.title)
-      localDevice = await modelAPI.devices.create(remoteDevice.title, remoteDevice.description, localAppId)
+      const devData = { name: remoteDevice.title, description: remoteDevice.description, applicationId: localAppId }
+      localDevice = await modelAPI.devices.create(devData)
       appLogger.log('Created ' + localDevice.name)
     }
 
@@ -204,7 +205,13 @@ module.exports = class Loriot extends NetworkProtocol {
       appLogger.log(dp, 'info')
       let networkSettings = this.buildDeviceNetworkSettings(remoteDevice, dp.localDeviceProfile)
       appLogger.log(networkSettings)
-      const deviceNtl = await modelAPI.deviceNetworkTypeLinks.create(localDevice.id, network.networkType.id, dp.localDeviceProfile, networkSettings, company.id, { remoteOrigin: true })
+      let devNtlData = {
+        deviceId: localDevice.id,
+        networkTypeId: network.networkType.id,
+        deviceProfileId: dp.localDeviceProfile,
+        networkSettings
+      }
+      const deviceNtl = await modelAPI.deviceNetworkTypeLinks.create(devNtlData, { validateCompanyId: company.id, remoteOrigin: true })
       appLogger.log(deviceNtl)
     }
     await this.modelAPI.protocolData.upsert(network, makeDeviceDataKey(localDevice.id, 'devNwkId'), remoteDevice._id)

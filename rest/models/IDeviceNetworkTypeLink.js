@@ -3,6 +3,7 @@ const { prisma } = require('../lib/prisma')
 const { normalizeDevEUI, parseProp, stringifyProp } = require('../lib/utils')
 const { redisClient } = require('../lib/redis')
 const CacheFirstStrategy = require('../../lib/prisma-cache/src/cache-first-strategy')
+const R = require('ramda')
 
 //* *****************************************************************************
 // Fragments for how the data should be returned from Prisma.
@@ -59,16 +60,15 @@ module.exports = class DeviceNetworkTypeLink {
     return [ records.map(parseNetworkSettings), totalCount ]
   }
 
-  async create (deviceId, networkTypeId, deviceProfileId, networkSettings, validateCompanyId, { remoteOrigin = false } = {}) {
+  async create (data, { validateCompanyId, remoteOrigin = false } = {}) {
     try {
-      await this.validateCompanyForDevice(validateCompanyId, deviceId)
-      if (networkSettings && networkSettings.devEUI) {
-        networkSettings.devEUI = normalizeDevEUI(networkSettings.devEUI)
+      if (validateCompanyId) await this.validateCompanyForDevice(validateCompanyId, data.deviceId)
+      if (data.networkSettings && data.networkSettings.devEUI) {
+        data = R.assocPath(['networkSettings', 'devEUI'], normalizeDevEUI(data.networkSettings.devEUI), data)
       }
-      const data = { deviceId, networkTypeId, deviceProfileId, networkSettings }
       const rec = await DB.create(stringifyNetworkSettings(data))
       if (!remoteOrigin) {
-        var logs = await this.modelAPI.networkTypeAPI.addDevice(networkTypeId, deviceId, networkSettings)
+        var logs = await this.modelAPI.networkTypeAPI.addDevice(data.networkTypeId, data.deviceId, data.networkSettings)
         rec.remoteAccessLogs = logs
       }
       return rec
@@ -135,5 +135,22 @@ module.exports = class DeviceNetworkTypeLink {
     if (!companyId) return
     const dnl = await this.load(dnlId)
     await this.validateCompanyForDevice(companyId, dnl.device.id)
+  }
+
+  async findByDevEUI (devEUI, networkTypeId) {
+    let devNtl
+    // Check cache for devNtl ID
+    let devNtlId = await redisClient.getAsync(`ip-devNtl-${devEUI}`)
+    if (devNtlId) {
+      devNtl = await this.load(devNtlId)
+      if (!devNtl) await redisClient.delAsync(`ip-devNtl-${devEUI}`)
+    }
+    else {
+      const devNTLQuery = { networkType: { id: networkTypeId }, networkSettings_contains: devEUI }
+      let [ devNtls ] = await this.list(devNTLQuery)
+      devNtl = devNtls[0]
+      if (devNtl) await redisClient.setAsync(`ip-devNtl-${devEUI}`, devNtl.id)
+    }
+    return devNtl
   }
 }

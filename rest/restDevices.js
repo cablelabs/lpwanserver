@@ -4,6 +4,7 @@ var modelAPI
 const { getCertificateCn, getHttpRequestPreferedWaitMs, normalizeDevEUI } = require('./lib/utils')
 const { formatRelationshipsOut } = require('./lib/prisma')
 const { redisSub } = require('./lib/redis')
+const R = require('ramda')
 
 exports.initialize = function (app, server) {
   restServer = server
@@ -183,13 +184,8 @@ exports.initialize = function (app, server) {
     }
     else {
       // OK, add it.
-      modelAPI.devices.create(rec.name,
-        rec.description,
-        rec.applicationId,
-        rec.deviceModel).then(function (rec) {
-        var send = {}
-        send.id = rec.id
-        restServer.respondJson(res, 200, send) // TODO: Shouldn't this id be in the header per POST convention?
+      modelAPI.devices.create(rec).then(function (rec) {
+        restServer.respondJson(res, 200, R.pick(['id'], rec)) // TODO: Shouldn't this id be in the header per POST convention?
       })
         .catch(function (err) {
           appLogger.log('Failed to create device ' + JSON.stringify(rec) + ': ' + err)

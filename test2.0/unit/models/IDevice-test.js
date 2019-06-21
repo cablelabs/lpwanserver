@@ -34,7 +34,13 @@ describe('Unit Tests for ' + testName, () => {
     const apps = await prisma.applications()
     let testModule = new TestModule(modelAPIMock)
     should.exist(testModule)
-    const actual = await testModule.create('test', 'test application', apps[0].id, 'AR1')
+    const devData = {
+      name: 'test',
+      description: 'test application',
+      applicationId: apps[0].id,
+      deviceModel: 'AR1'
+    }
+    const actual = await testModule.create(devData)
     assertDeviceProps(actual)
     deviceId = actual.id
   })

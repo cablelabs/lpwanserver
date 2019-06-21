@@ -503,4 +503,43 @@ exports.initialize = function (app, server) {
     }
   }
   app.post('/api/ingest/:applicationId/:networkId', uplinkHandler)
+
+  /**
+   * @apiDescription Upload a CSV file with devEUIs
+   *
+   * @api {post} /api/applications/:id/bulk-device-import
+   * @apiGroup Applications
+   * @apiPermission System Admin, or Company Admin for this company.
+   * @apiHeader {String} Authorization The Create Session's returned token
+   *      prepended with "Bearer "
+   * @apiHeader {String} Content-type multipart/form-data
+   * @apiParam (Request Body) {String} [deviceProfileId] The ID of the
+   *      device profile for the devices being imported.
+   * @apiParam (Request Body) {File} [file] The CSV file with a list of devEUIs.
+   * @apiSuccess (200)
+   * @apiSuccessExample {json} Success-Response:
+   *     HTTP/1.1 200 OK
+   *     [
+   *       { status: 'OK', deviceId: 'deviceId', devEUI },
+   *       { status: 'ERROR', error: { ... }, devEUI }
+   *     ]
+   */
+  async function bulkDeviceImport (req, res) {
+    try {
+      let result = await modelAPI.devices.importDevices({
+        ...req.body,
+        applicationId: req.params.id
+      })
+      restServer.respond(res, 200, result, true)
+    }
+    catch (err) {
+      appLogger.log(`Device bulk import failed for application ${req.params.id}: ${err}`)
+      restServer.respond(res, err)
+    }
+  }
+  app.post(
+    '/api/applications/:id/import-devices',
+    [restServer.isLoggedIn, restServer.fetchCompany, restServer.isAdmin],
+    bulkDeviceImport
+  )
 }
