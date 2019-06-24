@@ -178,9 +178,9 @@ exports.initialize = function (app, server) {
      *      {
      *          "name": "GPS Pet Tracker",
      *          "description": "Pet finder with occasional reporting",
-     *          "companyId": 1,
+     *          "companyId": J59j3Ddteoi8,
      *          "baseUrl": "https://IoTStuff.com/incomingData/GPSPetTracker"
-     *          "reportingProtocolId": 1
+     *          "reportingProtocolId": 6s3oi3j90ed9j
      *      }
      * @apiSuccess {String} id The new Application's id.
      * @apiVersion 1.2.0
@@ -248,9 +248,9 @@ exports.initialize = function (app, server) {
      *      {
      *          "name": "GPS Pet Tracker",
      *          "description": "Pet finder with occasional reporting"
-     *          "companyId": 1,
+     *          "companyId": J59j3Ddteoi8,
      *          "baseUrl": "https://IoTStuff.com/incomingData/GPSPetTracker"
-     *          "reportingProtocolId": 1
+     *          "reportingProtocolId": 6s3oi3j90ed9j
      *      }
      * @apiVersion 1.2.0
      */
@@ -515,7 +515,18 @@ exports.initialize = function (app, server) {
    * @apiHeader {String} Content-type multipart/form-data
    * @apiParam (Request Body) {String} [deviceProfileId] The ID of the
    *      device profile for the devices being imported.
-   * @apiParam (Request Body) {File} [file] The CSV file with a list of devEUIs.
+   * @apiParam (Request Body) {Object[]} [devices] List of device import data. devEUI required.
+   * @apiExample {json} Example body:
+   *      {
+   *          "deviceProfileId": "gh4s56l0fewo0"
+   *          "devices": [
+   *            {
+   *              "name": "GPS Pet Tracker",
+   *              "description": "Pet finder with occasional reporting",
+   *              "devEUI": 33:DD:99:FF:22:11:CC:BB
+   *            }
+   *          ]
+   *      }
    * @apiSuccess (200)
    * @apiSuccessExample {json} Success-Response:
    *     HTTP/1.1 200 OK

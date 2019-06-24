@@ -174,7 +174,7 @@ exports.initialize = function (app, server) {
      *      {
      *          "name": "GPS Tracker",
      *          "description": "GPS device for remote reporting",
-     *          "companyId": 1,
+     *          "companyId": J59j3Ddteoi8,
      *          "networkTypeId": 1,
      *          "networkSettings": {...}
      *      }
@@ -253,7 +253,7 @@ exports.initialize = function (app, server) {
      *      {
      *          "name": "GPS Tracker",
      *          "description": "GPS tracker with remote reporting",
-     *          "companyId": 1,
+     *          "companyId": J59j3Ddteoi8,
      *          "networkTypeId": 1,
      *          "networkSettings": {...}
      *      }

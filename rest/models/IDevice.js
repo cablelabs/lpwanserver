@@ -188,6 +188,10 @@ module.exports = class Device {
     await this.modelAPI.applications.load(applicationId)
     // Load device profile
     const deviceProfile = await this.modelAPI.deviceProfiles.load(deviceProfileId)
+    const nwkType = await this.modelAPI.networkTypes.load(deviceProfile.networkType.id)
+    if (!nwkType.name === 'IP') {
+      throw httpError(400, 'Device import currently only supports IP devices.')
+    }
     // Catch all errors and return array
     return Promise.all(devices.map(async ({ name, description, deviceModel, devEUI }) => {
       try {
