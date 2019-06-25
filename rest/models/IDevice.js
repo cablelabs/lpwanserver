@@ -193,7 +193,7 @@ module.exports = class Device {
       throw httpError(400, 'Device import currently only supports IP devices.')
     }
     // Catch all errors and return array
-    return Promise.all(devices.map(async ({ name, description, deviceModel, devEUI }) => {
+    return Promise.all(devices.map(async ({ name, description, deviceModel, devEUI }, row) => {
       try {
         if (!devEUI) {
           throw new Error('devEUI required for each imported device.')
@@ -205,10 +205,10 @@ module.exports = class Device {
           deviceProfileId,
           networkSettings: { devEUI }
         })
-        return { status: 'OK', deviceId: device.id, devEUI }
+        return { status: 'OK', deviceId: device.id, devEUI, row }
       }
       catch (err) {
-        return { status: 'ERROR', error: err.message, devEUI }
+        return { status: 'ERROR', error: err.message, devEUI, row }
       }
     }))
   }
