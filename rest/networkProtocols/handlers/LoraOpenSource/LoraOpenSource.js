@@ -528,7 +528,8 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
     }
     else {
       appLogger.log('creating ' + remoteDevice.name)
-      localDevice = await this.modelAPI.devices.create(remoteDevice.name, remoteDevice.description, localAppId)
+      const devData = { ...R.pick(['name', 'description'], remoteDevice), applicationId: localAppId }
+      localDevice = await this.modelAPI.devices.create(devData)
       appLogger.log('Created ' + localDevice.name)
     }
     let [ devNtls ] = await this.modelAPI.deviceNetworkTypeLinks.list({ deviceId: localDevice.id, limit: 1 })
@@ -540,7 +541,13 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
       let company = cos[0]
       appLogger.log('creating Network Link for ' + localDevice.name)
       let networkSettings = this.buildDeviceNetworkSettings(remoteDevice)
-      await this.modelAPI.deviceNetworkTypeLinks.create(localDevice.id, network.networkType.id, deviceProfile.id, networkSettings, company.id, { remoteOrigin: true })
+      let devNtlData = {
+        deviceId: localDevice.id,
+        networkTypeId: network.networkType.id,
+        deviceProfileId: deviceProfile.id,
+        networkSettings
+      }
+      await this.modelAPI.deviceNetworkTypeLinks.create(devNtlData, { validateCompanyId: company.id, remoteOrigin: true })
     }
     await this.modelAPI.protocolData.upsert(network, makeDeviceDataKey(localDevice.id, 'devNwkId'), remoteDevice.devEUI)
     return localDevice.id

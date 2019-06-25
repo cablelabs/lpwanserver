@@ -95,7 +95,6 @@ describe.only('E2E Test for IP Device Uplink/Downlink Device Messaging', () => {
         json: true
       }
       accessToken = await request(opts)
-      console.log(accessToken)
     })
 
     it('Send a downlink request to LPWAN Server', async () => {
@@ -113,7 +112,7 @@ describe.only('E2E Test for IP Device Uplink/Downlink Device Messaging', () => {
     })
 
     it('Long poll for downlinks', async function () {
-      this.timeout(140000)
+      this.timeout(10000)
       let downlink2 = { jsonData: { msgId: 3 }, fCnt: 0, fPort: 1 }
 
       setTimeout(() => sendDownlink(accessToken, device.id, downlink2), 3000)

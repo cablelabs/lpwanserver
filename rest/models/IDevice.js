@@ -74,8 +74,8 @@ module.exports = class Device {
     return DB.list(renameQueryKeys(query), opts)
   }
 
-  create (name, description, applicationId, deviceModel) {
-    return DB.create({ name, description, applicationId, deviceModel })
+  create (data) {
+    return DB.create(data)
   }
 
   update ({ id, ...data }) {
@@ -151,19 +151,7 @@ module.exports = class Device {
   async receiveIpDeviceUplink (devEUI, data) {
     devEUI = normalizeDevEUI(devEUI)
     let nwkType = await this.modelAPI.networkTypes.loadByName('IP')
-    let devNtl
-    // Check cache for devNtl ID
-    let devNtlId = await redisClient.getAsync(`ip-devNtl-${devEUI}`)
-    if (devNtlId) {
-      devNtl = await this.modelAPI.deviceNetworkTypeLinks.load(devNtlId)
-      if (!devNtl) await redisClient.delAsync(`ip-devNtl-${devEUI}`)
-    }
-    else {
-      const devNTLQuery = { networkType: { id: nwkType.id }, networkSettings_contains: devEUI }
-      let [ devNtls ] = await this.modelAPI.deviceNetworkTypeLinks.list(devNTLQuery)
-      devNtl = devNtls[0]
-      if (devNtl) await redisClient.setAsync(`ip-devNtl-${devEUI}`, devNtl.id)
-    }
+    const devNtl = await this.modelAPI.deviceNetworkTypeLinks.findByDevEUI(devEUI, nwkType.id)
     if (!devNtl) return
     // Get device
     const device = await this.load(devNtl.device.id)
@@ -193,5 +181,35 @@ module.exports = class Device {
     let msgs = await redisClient.lrangeAsync(key, 0, len)
     await redisClient.del(key)
     return msgs.map(JSON.parse)
+  }
+
+  async importDevices ({ applicationId, deviceProfileId, devices }) {
+    // ensure app exists
+    await this.modelAPI.applications.load(applicationId)
+    // Load device profile
+    const deviceProfile = await this.modelAPI.deviceProfiles.load(deviceProfileId)
+    const nwkType = await this.modelAPI.networkTypes.load(deviceProfile.networkType.id)
+    if (!nwkType.name === 'IP') {
+      throw httpError(400, 'Device import currently only supports IP devices.')
+    }
+    // Catch all errors and return array
+    return Promise.all(devices.map(async ({ name, description, deviceModel, devEUI }, row) => {
+      try {
+        if (!devEUI) {
+          throw new Error('devEUI required for each imported device.')
+        }
+        const device = await this.create({ name: name || devEUI, applicationId, description, deviceModel })
+        await this.modelAPI.deviceNetworkTypeLinks.create({
+          deviceId: device.id,
+          networkTypeId: deviceProfile.networkType.id,
+          deviceProfileId,
+          networkSettings: { devEUI }
+        })
+        return { status: 'OK', deviceId: device.id, devEUI, row }
+      }
+      catch (err) {
+        return { status: 'ERROR', error: err.message, devEUI, row }
+      }
+    }))
   }
 }

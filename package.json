@@ -23,7 +23,6 @@
     "ajv": "^6.10.0",
     "async": "~2.6.1",
     "bluebird": "^3.5.5",
-    "body-parser": "^1.18.3",
     "chai": "^4.2.0",
     "chai-http": "^4.2.0",
     "connect-ensure-login": "~0.1.1",

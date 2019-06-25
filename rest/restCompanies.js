@@ -41,7 +41,7 @@ exports.initialize = function (app, server) {
      * @apiSuccess {String} object.records.id The Company's Id
      * @apiSuccess {String} object.records.name The Company's name
      * @apiSuccess {String} object.records.type "admin" or "vendor"
-     * @apiVersion 1.2.0
+     * @apiVersion 1.2.1
      */
   app.get('/api/companies', [restServer.isLoggedIn,
     restServer.fetchCompany,
@@ -92,7 +92,7 @@ exports.initialize = function (app, server) {
      * @apiSuccess {String} object.id The Company's Id
      * @apiSuccess {String} object.name The Company's name
      * @apiSuccess {String} object.type "admin" or "vendor"
-     * @apiVersion 1.2.0
+     * @apiVersion 1.2.1
      */
   app.get('/api/companies/:id', [restServer.isLoggedIn,
     restServer.fetchCompany],
@@ -128,7 +128,7 @@ exports.initialize = function (app, server) {
      *          "type": "vendor"
      *      }
      * @apiSuccess {String} id The new Company's id.
-     * @apiVersion 1.2.0
+     * @apiVersion 1.2.1
      */
   app.post('/api/companies', [restServer.isLoggedIn,
     restServer.fetchCompany,
@@ -174,7 +174,7 @@ exports.initialize = function (app, server) {
      *          "name": "IoT Stuff, Inc.",
      *          "type": "vendor"
      *      }
-     * @apiVersion 1.2.0
+     * @apiVersion 1.2.1
      */
   app.put('/api/companies/:id', [restServer.isLoggedIn,
     restServer.fetchCompany,
@@ -237,7 +237,7 @@ exports.initialize = function (app, server) {
      * @apiHeader {String} Authorization The Create Session's returned token
      *      prepended with "Bearer "
      * @apiParam (URL Parameters) {String} id The Company's id
-     * @apiVersion 1.2.0
+     * @apiVersion 1.2.1
      */
   app.delete('/api/companies/:id', [restServer.isLoggedIn,
     restServer.fetchCompany,

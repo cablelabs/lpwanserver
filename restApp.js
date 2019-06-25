@@ -9,7 +9,6 @@ var express = require('express')
 var cors = require('cors')
 // var path = require('path');
 var cookieParser = require('cookie-parser')
-var bodyParser = require('body-parser')
 // server
 var RestServer = require('./rest/restServer')
 var appLogger = require('./rest/lib/appLogger')
@@ -76,8 +75,7 @@ module.exports = async function createApp () {
   appLogger.initRESTCallLogger(app)
 
   // Add the body parser.
-  app.use(bodyParser.json())
-  app.use(bodyParser.urlencoded({ extended: false }))
+  app.use(express.json())
 
   // Add a cookie parser.
   app.use(cookieParser())

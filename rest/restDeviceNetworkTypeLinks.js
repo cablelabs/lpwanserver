@@ -1,6 +1,7 @@
 var appLogger = require('./lib/appLogger.js')
 var restServer
 var modelAPI
+const R = require('ramda')
 
 const { formatRelationshipsOut } = require('./lib/prisma')
 
@@ -48,7 +49,7 @@ exports.initialize = function (app, server) {
      *      that the Device is being linked to.
      * @apiSuccess {String} object.records.networkSettings The settings in a
      *      JSON string that correspond to the Network Type.
-     * @apiVersion 1.2.0
+     * @apiVersion 1.2.1
      */
   app.get('/api/deviceNetworkTypeLinks', [restServer.isLoggedIn,
     restServer.fetchCompany], function (req, res) {
@@ -98,9 +99,9 @@ exports.initialize = function (app, server) {
      *      that the Device is being linked to.
      * @apiSuccess {String} object.networkSettings The settings in a
      *      JSON string that correspond to the Network Type.
-     * @apiVersion 1.2.0
+     * @apiVersion 1.2.1
      */
-  app.get('/api/deviceNetworkTypeLinks/:id', [restServer.isLoggedIn], function (req, res, next) {
+  app.get('/api/deviceNetworkTypeLinks/:id', [restServer.isLoggedIn], function (req, res) {
     var id = req.params.id
     modelAPI.deviceNetworkTypeLinks.load(id).then(function (np) {
       restServer.respondJson(res, null, formatRelationshipsOut(np))
@@ -133,12 +134,12 @@ exports.initialize = function (app, server) {
      *          "networkSettings": "{ ... }",
      *      }
      * @apiSuccess {String} id The new Device Network Type Link's id.
-     * @apiVersion 1.2.0
+     * @apiVersion 1.2.1
      */
   app.post('/api/deviceNetworkTypeLinks', [restServer.isLoggedIn,
     restServer.fetchCompany,
     restServer.isAdmin],
-  function (req, res, next) {
+  function (req, res) {
     var rec = req.body
     // You can't specify an id.
     if (rec.id) {
@@ -164,16 +165,8 @@ exports.initialize = function (app, server) {
     }
 
     // Do the add.
-    modelAPI.deviceNetworkTypeLinks.create(
-      rec.deviceId,
-      rec.networkTypeId,
-      rec.deviceProfileId,
-      rec.networkSettings,
-      companyId).then(function (rec) {
-      var send = {}
-      send.id = rec.id
-      send.remoteAccessLogs = rec.remoteAccessLogs
-      restServer.respondJson(res, 200, send)
+    modelAPI.deviceNetworkTypeLinks.create(rec, { validateCompanyId: companyId }).then(function (rec) {
+      restServer.respondJson(res, 200, R.pick(['id', 'remoteAccessLogs'], rec))
     })
       .catch(function (err) {
         restServer.respond(res, err)
@@ -198,12 +191,12 @@ exports.initialize = function (app, server) {
      *      {
      *          "networkSettings": "{ ... }",
      *      }
-     * @apiVersion 1.2.0
+     * @apiVersion 1.2.1
      */
   app.put('/api/deviceNetworkTypeLinks/:id', [restServer.isLoggedIn,
     restServer.fetchCompany,
     restServer.isAdmin],
-  function (req, res, next) {
+  function (req, res) {
     // We're not going to allow changing the device or the network.
     // Neither operation makes much sense.
     if (req.body.deviceId || req.body.networkTypeId) {
@@ -270,12 +263,12 @@ exports.initialize = function (app, server) {
      * @apiHeader {String} Authorization The Create Session's returned token
      *      prepended with "Bearer "
      * @apiParam (URL Parameters) {String} id The Device Network Type Link's id
-     * @apiVersion 1.2.0
+     * @apiVersion 1.2.1
      */
   app.delete('/api/deviceNetworkTypeLinks/:id', [restServer.isLoggedIn,
     restServer.fetchCompany,
     restServer.isAdmin],
-  function (req, res, next) {
+  function (req, res) {
     var id = req.params.id
     // If not an admin company, the deviceId better be associated
     // with the user's company
@@ -303,13 +296,13 @@ exports.initialize = function (app, server) {
      * @apiHeader {String} Authorization The Create Session's returned token
      *      prepended with "Bearer "
      * @apiParam (URL Parameters) {String} id The Device Network Type Link's id
-     * @apiVersion 1.2.0
+     * @apiVersion 1.2.1
      */
   app.post('/api/deviceNetworkTypeLinks/:id/push', [restServer.isLoggedIn,
     restServer.fetchCompany,
     restServer.isAdmin,
     modelAPI.devices.fetchDeviceApplication],
-  function (req, res, next) {
+  function (req, res) {
     var id = req.params.id
     // If the caller is a global admin, or the device is part of the company
     // admin's company, we can delete.req.application.company.id

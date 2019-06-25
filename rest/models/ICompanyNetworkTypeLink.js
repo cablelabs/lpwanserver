@@ -251,7 +251,8 @@ module.exports = class CompanyNetworkTypeLink {
             appLogger.log('creating ' + JSON.stringify(device))
             let appIndex = nsAppId.indexOf(device.applicationID)
             appLogger.log('localAppId[' + appIndex + '] = ' + localAppId[appIndex])
-            existingDevice = await this.modelAPI.devices.create(device.name, device.description, localAppId[appIndex])
+            const devData = { ...R.pick(['name', 'description'], device), applicationId: localAppId[appIndex] }
+            existingDevice = await this.modelAPI.devices.create(devData)
           }
 
           let [ devNtls ] = await this.modelAPI.deviceNetworkTypeLinks.list({ deviceId: existingDevice.id })
@@ -265,8 +266,13 @@ module.exports = class CompanyNetworkTypeLink {
 
             let tempApp = await this.modelAPI.applications.load(localAppId[appIndex])
             let coId = tempApp.company.id
-
-            this.modelAPI.deviceNetworkTypeLinks.create(existingDevice.id, networkTypeId, localDpId[dpIndex], device, coId)
+            let devNtlData = {
+              deviceId: existingDevice.id,
+              networkTypeId,
+              deviceProfileId: localDpId[dpIndex],
+              networkSettings: device
+            }
+            this.modelAPI.deviceNetworkTypeLinks.create(devNtlData, { validateCompanyId: coId })
           }
         }
       }

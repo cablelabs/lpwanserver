@@ -32,7 +32,7 @@ exports.initialize = function (app, server) {
       *     password for it to be considered valid.
       * @apiSuccess {Boolean} [object.global] True indicates a system-wide rule,
       *     which can only be changed by a System Admin.
-      * @apiVersion 1.2.0
+      * @apiVersion 1.2.1
       */
   app.get('/api/passwordPolicies/company/:companyId',
     [restServer.isLoggedIn,
@@ -79,7 +79,7 @@ exports.initialize = function (app, server) {
       *     password for it to be considered valid.
       * @apiSuccess {String} companyId The company who owns this Password Policy
       *     or null if a global policy.
-      * @apiVersion 1.2.0
+      * @apiVersion 1.2.1
       */
   app.get('/api/passwordPolicies/:id', [restServer.isLoggedIn,
     restServer.fetchCompany],
@@ -135,7 +135,7 @@ exports.initialize = function (app, server) {
      *          "companyId": 3
      *      }
      * @apiSuccess {String} id The new Password Policy's id.
-     * @apiVersion 1.2.0
+     * @apiVersion 1.2.1
      */
   app.post('/api/passwordPolicies', [restServer.isLoggedIn,
     restServer.fetchCompany,
@@ -203,7 +203,7 @@ exports.initialize = function (app, server) {
      *          "ruleText": "Must contain a digit",
      *          "ruleRegexp": "[0-9]"
      *      }
-     * @apiVersion 1.2.0
+     * @apiVersion 1.2.1
      */
   app.put('/api/passwordPolicies/:id', [restServer.isLoggedIn,
     restServer.fetchCompany,
@@ -287,7 +287,7 @@ exports.initialize = function (app, server) {
       * @apiHeader {String} Authorization The Create Session's returned token
       *      prepended with "Bearer "
       * @apiParam (URL Parameters) {String} id The Password Policy's id
-      * @apiVersion 1.2.0
+      * @apiVersion 1.2.1
       */
   app.delete('/api/passwordPolicies/:id', [restServer.isLoggedIn,
     restServer.fetchCompany,

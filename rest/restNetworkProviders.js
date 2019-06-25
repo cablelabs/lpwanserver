@@ -39,7 +39,7 @@ exports.initialize = function (app, server) {
      *      records.
      * @apiSuccess {String} object.records.id The Network Provider's Id
      * @apiSuccess {String} object.records.name The name of the Network Provider
-     * @apiVersion 1.2.0
+     * @apiVersion 1.2.1
      */
   app.get('/api/networkProviders', [restServer.isLoggedIn], function (req, res) {
     var options = {}
@@ -79,7 +79,7 @@ exports.initialize = function (app, server) {
      * @apiSuccess {Object} object
      * @apiSuccess {String} object.id The Network Provider's Id
      * @apiSuccess {String} object.name The name of the Network Provider
-     * @apiVersion 1.2.0
+     * @apiVersion 1.2.1
      */
   app.get('/api/networkProviders/:id', [restServer.isLoggedIn],
     function (req, res) {
@@ -151,7 +151,7 @@ exports.initialize = function (app, server) {
      *      {
      *          "name": "CableLabs"
      *      }
-     * @apiVersion 1.2.0
+     * @apiVersion 1.2.1
      */
   app.put('/api/networkProviders/:id', [restServer.isLoggedIn,
     restServer.fetchCompany,
@@ -204,7 +204,7 @@ exports.initialize = function (app, server) {
      * @apiHeader {String} Authorization The Create Session's returned token
      *      prepended with "Bearer "
      * @apiParam (URL Parameters) {String} id The Network Provider's id
-     * @apiVersion 1.2.0
+     * @apiVersion 1.2.1
      */
   app.delete('/api/networkProviders/:id', [restServer.isLoggedIn,
     restServer.fetchCompany,

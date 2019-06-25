@@ -49,7 +49,7 @@ exports.initialize = function (app, server) {
      *      that the Application is being linked to.
      * @apiSuccess {String} object.records.networkSettings The settings in a
      *      JSON string that correspond to the Network Type.
-     * @apiVersion 1.2.0
+     * @apiVersion 1.2.1
      */
   app.get('/api/applicationNetworkTypeLinks', [restServer.isLoggedIn,
     restServer.fetchCompany],
@@ -102,7 +102,7 @@ exports.initialize = function (app, server) {
      *      that the Application is being linked to.
      * @apiSuccess {String} object.networkSettings The settings in a
      *      JSON string that correspond to the Network Type.
-     * @apiVersion 1.2.0
+     * @apiVersion 1.2.1
      */
   app.get('/api/applicationNetworkTypeLinks/:id', [restServer.isLoggedIn], function (req, res, next) {
     var id = req.params.id
@@ -139,7 +139,7 @@ exports.initialize = function (app, server) {
      *          "networkSettings": { ... },
      *      }
      * @apiSuccess {String} id The new Application Network Type Link's id.
-     * @apiVersion 1.2.0
+     * @apiVersion 1.2.1
      */
   app.post('/api/applicationNetworkTypeLinks', [restServer.isLoggedIn,
     restServer.fetchCompany,
@@ -199,7 +199,7 @@ exports.initialize = function (app, server) {
      *      {
      *          "networkSettings": { ... },
      *      }
-     * @apiVersion 1.2.0
+     * @apiVersion 1.2.1
      */
   app.put('/api/applicationNetworkTypeLinks/:id', [restServer.isLoggedIn,
     restServer.fetchCompany,
@@ -268,7 +268,7 @@ exports.initialize = function (app, server) {
      *      prepended with "Bearer "
      * @apiParam (URL Parameters) {String} id The Application Network Type
      *      Link's id
-     * @apiVersion 1.2.0
+     * @apiVersion 1.2.1
      */
   app.delete('/api/applicationNetworkTypeLinks/:id', [restServer.isLoggedIn,
     restServer.fetchCompany,

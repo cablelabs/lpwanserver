@@ -203,7 +203,12 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
     }
     else {
       appLogger.log('creating ' + remoteDevice.lorawan_device.dev_eui)
-      existingDevice = await modelAPI.devices.create(remoteDevice.lorawan_device.dev_eui, remoteDevice.description, localAppId)
+      const devData = {
+        name: remoteDevice.lorawan_device.dev_eui,
+        description: remoteDevice.description,
+        applicationId: localAppId
+      }
+      existingDevice = await modelAPI.devices.create(devData)
       appLogger.log('Created ' + existingDevice.name)
     }
 
@@ -220,7 +225,15 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
       appLogger.log(dp, 'info')
       let normalizedDevice = this.normalizeDeviceData(remoteDevice, dp.localDeviceProfile)
       appLogger.log(normalizedDevice)
-      const existingDeviceNTL = await modelAPI.deviceNetworkTypeLinks.create(existingDevice.id, network.networkType.id, dp.localDeviceProfile, normalizedDevice, 2, { remoteOrigin: true })
+      const [ cos ] = await this.modelAPI.companies.list({ limit: 1 })
+      let company = cos[0]
+      let devNtlData = {
+        deviceId: existingDevice.id,
+        networkTypeId: network.networkType.id,
+        deviceProfileId: dp.localDeviceProfile,
+        networkSettings: normalizedDevice
+      }
+      const existingDeviceNTL = await modelAPI.deviceNetworkTypeLinks.create(devNtlData, { validateCompanyId: company.id, remoteOrigin: true })
       appLogger.log(existingDeviceNTL)
       await this.modelAPI.protocolData.upsert(network, makeDeviceDataKey(existingDevice.id, 'devNwkId'), remoteDevice.dev_id)
       appLogger.log({ localDevice: existingDevice.id, remoteDevice: remoteDevice.dev_id })
