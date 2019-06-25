@@ -55,7 +55,7 @@ exports.initialize = function (app, server) {
      * @apiSuccess {Boolean} object.records.running If the Application is
      *      currently sending data received from the Networks to the baseUrl via
      *      the Reporting Protocol.
-     * @apiVersion 1.2.0
+     * @apiVersion 1.2.1
      */
   app.get('/api/applications', [restServer.isLoggedIn,
     restServer.fetchCompany],
@@ -134,7 +134,7 @@ exports.initialize = function (app, server) {
      * @apiSuccess {Boolean} object.running If the Application is
      *      currently sending data received from the Networks to the baseUrl via
      *      the Reporting Protocol.
-     * @apiVersion 1.2.0
+     * @apiVersion 1.2.1
      */
   app.get('/api/applications/:id', [restServer.isLoggedIn,
     restServer.fetchCompany],
@@ -183,7 +183,7 @@ exports.initialize = function (app, server) {
      *          "reportingProtocolId": 6s3oi3j90ed9j
      *      }
      * @apiSuccess {String} id The new Application's id.
-     * @apiVersion 1.2.0
+     * @apiVersion 1.2.1
      */
   app.post('/api/applications', [restServer.isLoggedIn,
     restServer.fetchCompany,
@@ -252,7 +252,7 @@ exports.initialize = function (app, server) {
      *          "baseUrl": "https://IoTStuff.com/incomingData/GPSPetTracker"
      *          "reportingProtocolId": 6s3oi3j90ed9j
      *      }
-     * @apiVersion 1.2.0
+     * @apiVersion 1.2.1
      */
   app.put('/api/applications/:id', [restServer.isLoggedIn,
     restServer.fetchCompany,
@@ -339,7 +339,7 @@ exports.initialize = function (app, server) {
      * @apiHeader {String} Authorization The Create Session's returned token
      *      prepended with "Bearer "
      * @apiParam (URL Parameters) {String} id The Application's id
-     * @apiVersion 1.2.0
+     * @apiVersion 1.2.1
      */
   app.delete('/api/applications/:id', [restServer.isLoggedIn,
     restServer.fetchCompany,
@@ -389,7 +389,7 @@ exports.initialize = function (app, server) {
      * @apiHeader {String} Authorization The Create Session's returned token
      *      prepended with "Bearer "
      * @apiParam (URL Parameters) {String} id The Application's id
-     * @apiVersion 1.2.0
+     * @apiVersion 1.2.1
      */
   // Yeah, yeah, this isn't a pure REST call.  So sue me.  Gets the job done.
   async function startApplication (req, res) {
@@ -425,7 +425,7 @@ exports.initialize = function (app, server) {
      * @apiHeader {String} Authorization The Create Session's returned token
      *      prepended with "Bearer "
      * @apiParam (URL Parameters) {String} id The Application's id
-     * @apiVersion 1.2.0
+     * @apiVersion 1.2.1
      */
   // Yeah, yeah, this isn't a pure REST call.  So sue me.  Gets the job done.
   async function stopApplication (req, res) {
@@ -487,7 +487,7 @@ exports.initialize = function (app, server) {
    *      {
    *          any: any
    *      }
-   * @apiVersion 1.2.0
+   * @apiVersion 1.2.1
    */
   async function uplinkHandler (req, res) {
     var appId = req.params.applicationId
@@ -507,12 +507,11 @@ exports.initialize = function (app, server) {
   /**
    * @apiDescription Upload a CSV file with devEUIs
    *
-   * @api {post} /api/applications/:id/bulk-device-import
+   * @api {post} /api/applications/:id/bulk-device-import Import Devices
    * @apiGroup Applications
    * @apiPermission System Admin, or Company Admin for this company.
    * @apiHeader {String} Authorization The Create Session's returned token
    *      prepended with "Bearer "
-   * @apiHeader {String} Content-type multipart/form-data
    * @apiParam (Request Body) {String} [deviceProfileId] The ID of the
    *      device profile for the devices being imported.
    * @apiParam (Request Body) {Object[]} [devices] List of device import data. devEUI required.
@@ -527,13 +526,13 @@ exports.initialize = function (app, server) {
    *            }
    *          ]
    *      }
-   * @apiSuccess (200)
    * @apiSuccessExample {json} Success-Response:
    *     HTTP/1.1 200 OK
    *     [
-   *       { status: 'OK', deviceId: 'deviceId', devEUI },
-   *       { status: 'ERROR', error: { ... }, devEUI }
+   *       { status: 'OK', deviceId: 'deviceId', devEUI, row: 0 },
+   *       { status: 'ERROR', error: 'reason', devEUI, row: 1 }
    *     ]
+   * @apiVersion 1.2.1
    */
   async function bulkDeviceImport (req, res) {
     try {

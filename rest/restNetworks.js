@@ -57,7 +57,7 @@ exports.initialize = function (app, server) {
    * @apiSuccess {Object} object.records.securityData The data used to grant
    *      secure access to the Network's server API.  (Only returned to
    *      System Admins.)
-   * @apiVersion 1.2.0
+   * @apiVersion 1.2.1
    */
   app.get('/api/networks', [restServer.isLoggedIn,
     restServer.fetchCompany],
@@ -244,7 +244,7 @@ exports.initialize = function (app, server) {
  * @apiSuccess {Object} object.securityData The data used to grant
  *      secure access to the Network's server API. (Only returned to System
  *      Admins.)
- * @apiVersion 1.2.0
+ * @apiVersion 1.2.1
  */
   app.get('/api/networks/:id', [restServer.isLoggedIn,
     restServer.fetchCompany],
@@ -313,7 +313,7 @@ exports.initialize = function (app, server) {
  *                          }
  *      }
  * @apiSuccess {String} id The new Network's id.
- * @apiVersion 1.2.0
+ * @apiVersion 1.2.1
  */
   app.post('/api/networks',
     [restServer.isLoggedIn, restServer.fetchCompany, restServer.isAdminCompany],
@@ -510,7 +510,7 @@ exports.initialize = function (app, server) {
  * @apiHeader {String} Authorization The Create Session's returned token
  *      prepended with "Bearer "
  * @apiParam (URL Parameters) {String} id The Network's id
- * @apiVersion 1.2.0
+ * @apiVersion 1.2.1
  */
   app.delete('/api/networks/:id', [restServer.isLoggedIn,
     restServer.fetchCompany,

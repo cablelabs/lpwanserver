@@ -50,7 +50,7 @@ exports.initialize = function (app, server) {
      *      information
      * @apiSuccess {String} object.records.applicationId The Id of the
      *      Application that this Device belongs to.
-     * @apiVersion 1.2.0
+     * @apiVersion 1.2.1
      */
   app.get('/api/devices', [restServer.isLoggedIn, restServer.fetchCompany],
     async function (req, res) {
@@ -117,7 +117,7 @@ exports.initialize = function (app, server) {
      *      information
      * @apiSuccess {String} object.records.applicationId The Id of the
      *      Application that this Device belongs to.
-     * @apiVersion 1.2.0
+     * @apiVersion 1.2.1
      */
   app.get('/api/devices/:id', [restServer.isLoggedIn,
     restServer.fetchCompany,
@@ -157,7 +157,7 @@ exports.initialize = function (app, server) {
      *          "applicationId": 1
      *      }
      * @apiSuccess {String} id The new Device's id.
-     * @apiVersion 1.2.0
+     * @apiVersion 1.2.1
      */
   app.post('/api/devices', [restServer.isLoggedIn,
     restServer.fetchCompany,
@@ -219,7 +219,7 @@ exports.initialize = function (app, server) {
      *          "deviceModel": "Bark 1",
      *          "applicationId": 1
      *      }
-     * @apiVersion 1.2.0
+     * @apiVersion 1.2.1
      */
   app.put('/api/devices/:id', [restServer.isLoggedIn,
     restServer.fetchCompany,
@@ -328,7 +328,7 @@ exports.initialize = function (app, server) {
      * @apiHeader {String} Authorization The Create Session's returned token
      *      prepended with "Bearer "
      * @apiParam (URL Parameters) {String} id The Device's id
-     * @apiVersion 1.2.0
+     * @apiVersion 1.2.1
      */
   app.delete('/api/devices/:id', [restServer.isLoggedIn,
     restServer.fetchCompany,
@@ -370,7 +370,7 @@ exports.initialize = function (app, server) {
    *          fPort: 1,
    *          jsonData: { ... }
    *      }
-   * @apiVersion 1.2.0
+   * @apiVersion 1.2.1
    */
   async function unicastDownlinkPostHandler (req, res) {
     const { id } = req.params
@@ -404,7 +404,7 @@ exports.initialize = function (app, server) {
    * @apiPermission TLS Client Certificate, with devEUI in Subject.CN
    * @apiHeader {String} prefer Request a time in seconds for server to
    *     hold request open, waiting for downlinks. e.g. prefer: wait=30
-   * @apiVersion 1.2.0
+   * @apiVersion 1.2.1
    */
   async function listIpDeviceDownlinks (req, res) {
     const devEUI = getCertificateCn(req.connection.getPeerCertificate())
@@ -460,7 +460,7 @@ exports.initialize = function (app, server) {
    *  {
    *      any: 'any'
    *  }
-   * @apiVersion 1.2.0
+   * @apiVersion 1.2.1
    */
   async function ipDeviceUplinkHandler (req, res) {
     const devEUI = getCertificateCn(req.connection.getPeerCertificate())

@@ -44,7 +44,7 @@ exports.initialize = function (app, server) {
      *      node code that communicates with a remote Network.
      * @apiSuccess {String} object.records.networkTypeId The id of the Network
      *      Type that the Network Protocol uses for data input.
-     * @apiVersion 1.2.0
+     * @apiVersion 1.2.1
      */
 
   app.get('/api/networkProtocols', [restServer.isLoggedIn],
@@ -154,7 +154,7 @@ exports.initialize = function (app, server) {
      *      node code that communicates with a remote Network.
      * @apiSuccess {String} object.networkTypeId The id of the Network
      *      Type that the Network Protocol uses for data input.
-     * @apiVersion 1.2.0
+     * @apiVersion 1.2.1
      */
   app.get('/api/networkProtocols/:id', [restServer.isLoggedIn],
     function (req, res) {
@@ -188,7 +188,7 @@ exports.initialize = function (app, server) {
      *          "networkTypeId": 1
      *      }
      * @apiSuccess {String} id The new Network Protocol's id.
-     * @apiVersion 1.2.0
+     * @apiVersion 1.2.1
      */
   app.post('/api/networkProtocols', [restServer.isLoggedIn,
     restServer.fetchCompany,
@@ -247,7 +247,7 @@ exports.initialize = function (app, server) {
      *          "protocolHandler": "LoRaOpenSource.js",
      *          "networkTypeId": 1
      *      }
-     * @apiVersion 1.2.0
+     * @apiVersion 1.2.1
      */
   app.put('/api/networkProtocols/:id', [restServer.isLoggedIn,
     restServer.fetchCompany,
@@ -313,7 +313,7 @@ exports.initialize = function (app, server) {
      * @apiHeader {String} Authorization The Create Session's returned token
      *      prepended with "Bearer "
      * @apiParam (URL Parameters) {String} id The Network Protocol's id
-     * @apiVersion 1.2.0
+     * @apiVersion 1.2.1
      */
   app.delete('/api/networkProtocols/:id', [restServer.isLoggedIn,
     restServer.fetchCompany,
@@ -342,7 +342,7 @@ exports.initialize = function (app, server) {
      * @apiHeader {String} Authorization The Create Session's returned token
      *      prepended with "Bearer "
      * @apiSuccess {Array} array of protocol handlers available.
-     * @apiVersion 1.2.0
+     * @apiVersion 1.2.1
      */
   app.get('/api/networkProtocolHandlers/', [restServer.isLoggedIn],
     async function (req, res) {

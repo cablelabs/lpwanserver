@@ -39,7 +39,7 @@ exports.initialize = function (app, server) {
      *      records.
      * @apiSuccess {String} object.records.id The Network Type's Id
      * @apiSuccess {String} object.records.name The name of the Network Type
-     * @apiVersion 1.2.0
+     * @apiVersion 1.2.1
      */
   app.get('/api/networkTypes', [restServer.isLoggedIn], function (req, res) {
     modelAPI.networkTypes.list({}, { includeTotal: true }).then(([ records, totalCount ]) => {
@@ -63,7 +63,7 @@ exports.initialize = function (app, server) {
     * @apiSuccess {Object} object
     * @apiSuccess {String} object.id The Network Type's Id
     * @apiSuccess {String} object.name The name of the Network Type
-    * @apiVersion 1.2.0
+    * @apiVersion 1.2.1
      */
   app.get('/api/networkTypes/:id', [restServer.isLoggedIn],
     function (req, res) {
@@ -135,7 +135,7 @@ exports.initialize = function (app, server) {
     *      {
     *          "name": "NB-IoT"
     *      }
-    * @apiVersion 1.2.0
+    * @apiVersion 1.2.1
      */
   app.put('/api/networkTypes/:id', [restServer.isLoggedIn,
     restServer.fetchCompany,
@@ -188,7 +188,7 @@ exports.initialize = function (app, server) {
     * @apiHeader {String} Authorization The Create Session's returned token
     *      prepended with "Bearer "
     * @apiParam (URL Parameters) {String} id The Network Type's id
-    * @apiVersion 1.2.0
+    * @apiVersion 1.2.1
      */
   app.delete('/api/networkTypes/:id', [restServer.isLoggedIn,
     restServer.fetchCompany,

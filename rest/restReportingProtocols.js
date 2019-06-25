@@ -25,7 +25,7 @@ exports.initialize = function (app, server) {
      * @apiSuccess {String} object.name The name of the Reporting Protocol
      * @apiSuccess {String} object.protocolHandler The Reporting
      *      Protocol code that communicates with an Application vendor's server.
-     * @apiVersion 1.2.0
+     * @apiVersion 1.2.1
      */
   app.get('/api/reportingProtocols', [restServer.isLoggedIn], function (req, res) {
     modelAPI.reportingProtocols.list({}, { includeTotal: true }).then(function ([ records, totalCount ]) {
@@ -51,7 +51,7 @@ exports.initialize = function (app, server) {
      * @apiSuccess {String} object.name The name of the Reporting Protocol
      * @apiSuccess {String} object.protocolHandler The Reporting Protocol
      *      code that communicates with an Application vendor's server.
-     * @apiVersion 1.2.0
+     * @apiVersion 1.2.1
      */
   app.get('/api/reportingProtocols/:id', [restServer.isLoggedIn], function (req, res) {
     modelAPI.reportingProtocols.load(req.params.id).then(function (rp) {
@@ -80,7 +80,7 @@ exports.initialize = function (app, server) {
      *          "protocolHandler": "Post.js"
      *      }
      * @apiSuccess {String} id The new Network Protocol's id.
-     * @apiVersion 1.2.0
+     * @apiVersion 1.2.1
      */
   app.post('/api/reportingProtocols', [restServer.isLoggedIn,
     restServer.fetchCompany,
@@ -130,7 +130,7 @@ exports.initialize = function (app, server) {
      *          "name": "POST",
      *          "protocolHandler": "Post.js"
      *      }
-     * @apiVersion 1.2.0
+     * @apiVersion 1.2.1
      */
   app.put('/api/reportingProtocols/:id', [restServer.isLoggedIn,
     restServer.fetchCompany,
@@ -189,7 +189,7 @@ exports.initialize = function (app, server) {
      * @apiHeader {String} Authorization The Create Session's returned token
      *      prepended with "Bearer "
      * @apiParam (URL Parameters) {String} id The Reporting Protocol's id
-     * @apiVersion 1.2.0
+     * @apiVersion 1.2.1
      */
   app.delete('/api/reportingProtocols/:id', [restServer.isLoggedIn,
     restServer.fetchCompany,
@@ -214,7 +214,7 @@ exports.initialize = function (app, server) {
    * @apiHeader {String} Authorization The Create Session's returned token
    *      prepended with "Bearer "
    * @apiSuccess {Array} array of protocol handlers available.
-   * @apiVersion 1.2.0
+   * @apiVersion 1.2.1
    */
   app.get('/api/reportingProtocolHandlers/', [restServer.isLoggedIn],
     async function (req, res) {

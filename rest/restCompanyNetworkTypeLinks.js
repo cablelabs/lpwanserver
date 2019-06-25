@@ -46,7 +46,7 @@ exports.initialize = function (app, server) {
      *      that the Company is being linked to.
      * @apiSuccess {String} object.records.networkSettings The settings in a
      *      JSON string that correspond to the Network Type.
-     * @apiVersion 1.2.0
+     * @apiVersion 1.2.1
      */
   app.get('/api/companyNetworkTypeLinks', [ restServer.isLoggedIn,
     restServer.fetchCompany ],
@@ -98,7 +98,7 @@ exports.initialize = function (app, server) {
      *      that the Company is being linked to.
      * @apiSuccess {String} object.networkSettings The settings in a
      *      JSON string that correspond to the Network Type.
-     * @apiVersion 1.2.0
+     * @apiVersion 1.2.1
      */
   app.get('/api/companyNetworkTypeLinks/:id', [restServer.isLoggedIn],
     function (req, res) {
@@ -134,7 +134,7 @@ exports.initialize = function (app, server) {
      *          "networkSettings": "{ ... }",
      *      }
      * @apiSuccess {String} id The new Company Network Type Link's id.
-     * @apiVersion 1.2.0
+     * @apiVersion 1.2.1
      */
   app.post('/api/companyNetworkTypeLinks', [restServer.isLoggedIn,
     restServer.fetchCompany,
@@ -208,7 +208,7 @@ exports.initialize = function (app, server) {
      *      {
      *          "networkSettings": "{ ... }",
      *      }
-     * @apiVersion 1.2.0
+     * @apiVersion 1.2.1
      */
   app.put('/api/companyNetworkTypeLinks/:id', [restServer.isLoggedIn,
     restServer.fetchCompany,
@@ -279,7 +279,7 @@ exports.initialize = function (app, server) {
      * @apiHeader {String} Authorization The Create Session's returned token
      *      prepended with "Bearer "
      * @apiParam (URL Parameters) {String} id The Company Network Type Link's id
-     * @apiVersion 1.2.0
+     * @apiVersion 1.2.1
      */
   app.delete('/api/companyNetworkTypeLinks/:id', [restServer.isLoggedIn,
     restServer.fetchCompany,

@@ -61,7 +61,7 @@ exports.initialize = function (app, server) {
      *      the system.
      * @apiSuccess {String} object.records.companyId The Id of the Company
      *      that the User belongs to.
-     * @apiVersion 1.2.0
+     * @apiVersion 1.2.1
      */
   app.get('/api/users', [restServer.isLoggedIn,
     restServer.fetchCompany,
@@ -125,7 +125,7 @@ exports.initialize = function (app, server) {
      *      the system.
      * @apiSuccess {String} object.companyId The Id of the Company
      *      that the User belongs to.
-     * @apiVersion 1.2.0
+     * @apiVersion 1.2.1
      */
   app.get('/api/users/me', [restServer.isLoggedIn], function (req, res) {
     restServer.respondJson(res, null, formatRelationshipsOut(req.user))
@@ -150,7 +150,7 @@ exports.initialize = function (app, server) {
       *      the system.
       * @apiSuccess {String} object.companyId The Id of the Company
       *      that the User belongs to.
-      * @apiVersion 1.2.0
+      * @apiVersion 1.2.1
       */
   app.get('/api/users/:id', [restServer.isLoggedIn, restServer.fetchCompany], function (req, res) {
     modelAPI.users.load(req.params.id).then(function (user) {
@@ -194,7 +194,7 @@ exports.initialize = function (app, server) {
      *          "companyId": 3
      *      }
      * @apiSuccess {String} id The new User's id.
-     * @apiVersion 1.2.0
+     * @apiVersion 1.2.1
      */
   app.post('/api/users', [restServer.isLoggedIn,
     restServer.fetchCompany,
@@ -260,7 +260,7 @@ exports.initialize = function (app, server) {
      *          "role": "user",
      *          "companyId": 4
      *      }
-     * @apiVersion 1.2.0
+     * @apiVersion 1.2.1
      */
   app.put('/api/users/:id', [restServer.isLoggedIn,
     restServer.fetchCompany],
@@ -381,7 +381,7 @@ exports.initialize = function (app, server) {
      * @apiHeader {String} Authorization The Create Session's returned token
      *      prepended with "Bearer "
      * @apiParam (URL Parameters) {String} id The User's id
-     * @apiVersion 1.2.0
+     * @apiVersion 1.2.1
      */
   app.delete('/api/users/:id', [restServer.isLoggedIn,
     restServer.fetchCompany,

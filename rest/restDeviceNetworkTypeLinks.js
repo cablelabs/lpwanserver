@@ -49,7 +49,7 @@ exports.initialize = function (app, server) {
      *      that the Device is being linked to.
      * @apiSuccess {String} object.records.networkSettings The settings in a
      *      JSON string that correspond to the Network Type.
-     * @apiVersion 1.2.0
+     * @apiVersion 1.2.1
      */
   app.get('/api/deviceNetworkTypeLinks', [restServer.isLoggedIn,
     restServer.fetchCompany], function (req, res) {
@@ -99,7 +99,7 @@ exports.initialize = function (app, server) {
      *      that the Device is being linked to.
      * @apiSuccess {String} object.networkSettings The settings in a
      *      JSON string that correspond to the Network Type.
-     * @apiVersion 1.2.0
+     * @apiVersion 1.2.1
      */
   app.get('/api/deviceNetworkTypeLinks/:id', [restServer.isLoggedIn], function (req, res) {
     var id = req.params.id
@@ -134,7 +134,7 @@ exports.initialize = function (app, server) {
      *          "networkSettings": "{ ... }",
      *      }
      * @apiSuccess {String} id The new Device Network Type Link's id.
-     * @apiVersion 1.2.0
+     * @apiVersion 1.2.1
      */
   app.post('/api/deviceNetworkTypeLinks', [restServer.isLoggedIn,
     restServer.fetchCompany,
@@ -191,7 +191,7 @@ exports.initialize = function (app, server) {
      *      {
      *          "networkSettings": "{ ... }",
      *      }
-     * @apiVersion 1.2.0
+     * @apiVersion 1.2.1
      */
   app.put('/api/deviceNetworkTypeLinks/:id', [restServer.isLoggedIn,
     restServer.fetchCompany,
@@ -263,7 +263,7 @@ exports.initialize = function (app, server) {
      * @apiHeader {String} Authorization The Create Session's returned token
      *      prepended with "Bearer "
      * @apiParam (URL Parameters) {String} id The Device Network Type Link's id
-     * @apiVersion 1.2.0
+     * @apiVersion 1.2.1
      */
   app.delete('/api/deviceNetworkTypeLinks/:id', [restServer.isLoggedIn,
     restServer.fetchCompany,
@@ -296,7 +296,7 @@ exports.initialize = function (app, server) {
      * @apiHeader {String} Authorization The Create Session's returned token
      *      prepended with "Bearer "
      * @apiParam (URL Parameters) {String} id The Device Network Type Link's id
-     * @apiVersion 1.2.0
+     * @apiVersion 1.2.1
      */
   app.post('/api/deviceNetworkTypeLinks/:id/push', [restServer.isLoggedIn,
     restServer.fetchCompany,
