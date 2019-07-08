@@ -59,6 +59,7 @@
   },
   "devDependencies": {
     "codacy-coverage": "^3.4.0",
+    "crypto-random-string": "^3.0.1",
     "eslint": "^5.10.0",
     "eslint-config-standard": "^12.0.0",
     "eslint-plugin-import": "^2.14.0",

@@ -1,8 +1,9 @@
 const assert = require('assert')
-const { prisma } = require('../../../prisma/generated/prisma-client')
+const { setupData } = require('./setup')
 const request = require('request-promise')
 const fs = require('fs')
 const path = require('path')
+const cryptoRandomString = require('crypto-random-string')
 
 const {
   LPWANSERVER_URL
@@ -13,27 +14,11 @@ const ca = fs.readFileSync(caFile, { encoding: 'utf8' })
 const requestOpts = { resolveWithFullResponse: true, json: true }
 
 describe.only('Bulk device import', () => {
-  let deviceProfile
-  let application
+  let Data
 
-  async function setupData () {
-    let ipNwkType = await prisma.networkType({ name: 'IP' })
-    let postReportingProtocol = (await prisma.reportingProtocols())[0]
-    let company = (await prisma.companies())[0]
-    deviceProfile = await prisma.createDeviceProfile({
-      company: { connect: { id: company.id } },
-      networkType: { connect: { id: ipNwkType.id } },
-      name: 'device-import-test-dev-prof',
-      networkSettings: `{}`
-    })
-    application = await prisma.createApplication({
-      name: 'device-import-test-app',
-      enabled: false,
-      reportingProtocol: { connect: { id: postReportingProtocol.id } }
-    })
-  }
-
-  before(setupData)
+  before(async () => {
+    Data = await setupData()
+  })
 
   describe('Bulk upload IP devices', () => {
     let accessToken
@@ -53,15 +38,15 @@ describe.only('Bulk device import', () => {
       const opts = {
         method: 'POST',
         headers: { Authorization: `Bearer ${accessToken}` },
-        url: `${LPWANSERVER_URL}/api/applications/${application.id}/import-devices`,
+        url: `${LPWANSERVER_URL}/api/applications/${Data.application.id}/import-devices`,
         ...requestOpts,
         ca,
         body: {
-          deviceProfileId: deviceProfile.id,
+          deviceProfileId: Data.deviceProfile.id,
           devices: [
-            { devEUI: '19:7A:56:16:B8:28:17:CD' },
-            { devEUI: '19:7A:56:16:B8:28:43:21' },
-            { devEUI: '19:7A:56:16:B8:28:EF:12' }
+            { devEUI: cryptoRandomString({ length: 16 }) },
+            { devEUI: cryptoRandomString({ length: 16 }) },
+            { devEUI: cryptoRandomString({ length: 16 }) }
           ]
         }
       }
@@ -75,13 +60,13 @@ describe.only('Bulk device import', () => {
       const opts = {
         method: 'POST',
         headers: { Authorization: `Bearer ${accessToken}` },
-        url: `${LPWANSERVER_URL}/api/applications/${application.id}/import-devices`,
+        url: `${LPWANSERVER_URL}/api/applications/${Data.application.id}/import-devices`,
         ...requestOpts,
         ca,
         body: {
-          deviceProfileId: deviceProfile.id,
+          deviceProfileId: Data.deviceProfile.id,
           devices: [
-            { devEUI: '19:7A:56:16:B8:28:17:FE' },
+            { devEUI: cryptoRandomString({ length: 16 }) },
             { name: 'invalid' }
           ]
         }

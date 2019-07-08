@@ -1,5 +1,5 @@
 const assert = require('assert')
-const { prisma } = require('../../../prisma/generated/prisma-client')
+const { setupData } = require('./setup')
 const path = require('path')
 const fs = require('fs')
 const request = require('request-promise')
@@ -21,37 +21,11 @@ const ipDeviceCerts = { cert, key, ca }
 const uplinkPath = '/uplinks'
 
 describe.only('E2E Test for IP Device Uplink/Downlink Device Messaging', () => {
-  let device
+  let Data
 
-  async function setupData () {
-    let ipNwkType = await prisma.networkType({ name: 'IP' })
-    let postReportingProtocol = (await prisma.reportingProtocols())[0]
-    let company = (await prisma.companies())[0]
-    let deviceProfile = await prisma.createDeviceProfile({
-      company: { connect: { id: company.id } },
-      networkType: { connect: { id: ipNwkType.id } },
-      name: 'ip-msg-test-dev-prof',
-      networkSettings: `{}`
-    })
-    let application = await prisma.createApplication({
-      name: 'ip-msg-test-app',
-      baseUrl: `${APP_SERVER_URL}${uplinkPath}`,
-      enabled: true,
-      reportingProtocol: { connect: { id: postReportingProtocol.id } }
-    })
-    device = await prisma.createDevice({
-      name: 'ip-msg-test-dvc',
-      application: { connect: { id: application.id } }
-    })
-    await prisma.createDeviceNetworkTypeLink({
-      networkType: { connect: { id: ipNwkType.id } },
-      device: { connect: { id: device.id } },
-      deviceProfile: { connect: { id: deviceProfile.id } },
-      networkSettings: '{"devEUI":"0011223344556677"}'
-    })
-  }
-
-  before(setupData)
+  before(async () => {
+    Data = await setupData({ appBaseUrl: `${APP_SERVER_URL}${uplinkPath}` })
+  })
 
   describe('IP Device Uplink', () => {
     it('Send an uplink message to LPWAN Server IP uplink endpoint', async () => {
@@ -98,7 +72,7 @@ describe.only('E2E Test for IP Device Uplink/Downlink Device Messaging', () => {
     })
 
     it('Send a downlink request to LPWAN Server', async () => {
-      await sendDownlink(accessToken, device.id, downlink1)
+      await sendDownlink(accessToken, Data.device.id, downlink1)
     })
 
     it('Fetch downlink as IP device', async () => {
@@ -115,7 +89,7 @@ describe.only('E2E Test for IP Device Uplink/Downlink Device Messaging', () => {
       this.timeout(10000)
       let downlink2 = { jsonData: { msgId: 3 }, fCnt: 0, fPort: 1 }
 
-      setTimeout(() => sendDownlink(accessToken, device.id, downlink2), 3000)
+      setTimeout(() => sendDownlink(accessToken, Data.device.id, downlink2), 3000)
 
       const opts = {
         url: `${LPWANSERVER_URL}/api/ip-device-downlinks`,
