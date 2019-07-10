@@ -5,16 +5,18 @@ WORKDIR /usr/src/app
 
 RUN npm install -g mocha
 
-# Copy project file
+# Copy project filesb
 COPY test test
 COPY prisma/generated prisma/generated
-# COPY rest rest
-# COPY restApp.js restApp.js
-# COPY server.js server.js
+COPY lib/axios-rest-client lib/axios-rest-client
+COPY lib/seeder lib/seeder
+COPY rest-client rest-client
+COPY rest rest
+COPY config config
 COPY package*.json ./
 
 # install all dependencies
 RUN npm install
 
 # Override the command, to run the test instead of the application
-CMD ["mocha", "./test/e2e/specs", "--opts", "./test/e2e/mocha.opts"]
+CMD ["mocha", "--opts", "./test/e2e/mocha.opts"]
