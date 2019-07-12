@@ -41,6 +41,7 @@ services:
       - lpwanserver
       - app-server
     environment:
+      - config_file=config/dev.json
       - prisma_protocol=http
       - prisma_host=prisma
       - prisma_port=4466

@@ -540,7 +540,7 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
       const [ cos ] = await this.modelAPI.companies.list({ limit: 1 })
       let company = cos[0]
       appLogger.log('creating Network Link for ' + localDevice.name)
-      let networkSettings = this.buildDeviceNetworkSettings(remoteDevice)
+      let networkSettings = this.buildDeviceNetworkSettings(remoteDevice, deviceProfile)
       let devNtlData = {
         deviceId: localDevice.id,
         networkTypeId: network.networkType.id,

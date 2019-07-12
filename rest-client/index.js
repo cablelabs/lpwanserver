@@ -20,6 +20,10 @@ class LpwanServerRestApi extends AxiosRestApi {
 }
 
 class LpwanServerRestApiCache extends AxiosRestApiCache {
+  constructor (...args) {
+    super(...args)
+    this.itemsProp = 'records'
+  }
 }
 
 module.exports = {

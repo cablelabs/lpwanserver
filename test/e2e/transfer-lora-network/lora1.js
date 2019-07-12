@@ -11,38 +11,44 @@ const devEUIs = {
 }
 
 const omitDevEUI = R.omit(['devEUI'])
+const omitAppId = R.omit(['applicationID'])
+
+const mergeResponse = async (promise, data) => {
+  const res = await promise
+  return { ...data, ...res }
+}
 
 const seeds = [
   {
     id: 'NetworkServer',
-    create: x => client.createNetworkServer(x),
+    create: x => mergeResponse(client.createNetworkServer(x), x),
     items: [
       {
         id: 1,
-        name: 'test_transfer_lora_network',
+        name: 'transfer_lora_network',
         server: process.env.LORA_SERVER1_HOST_PORT
       }
     ]
   },
   {
     id: 'Organization',
-    create: x => client.createOrganization(x),
+    create: x => mergeResponse(client.createOrganization(x), x),
     items: [
       {
         id: 1,
-        name: 'test_transfer_lora_network',
-        displayName: 'Test Transfer Lora Network',
+        name: 'SysAdmins',
+        displayName: 'SysAdmins',
         canHaveGateways: false
       }
     ]
   },
   {
     id: 'ServiceProfile',
-    create: x => client.createServiceProfile(x),
+    create: x => mergeResponse(client.createServiceProfile(x), x),
     items: [
       {
         id: 1,
-        name: 'test_transfer_lora_network',
+        name: 'transfer_lora_network',
         networkServerID: { $type: 'NetworkServer', $id: 1 },
         organizationID: { $type: 'Organization', $id: 1 }
       }
@@ -50,12 +56,21 @@ const seeds = [
   },
   {
     id: 'DeviceProfile',
-    create: x => client.createDeviceProfile(x),
+    create: x => mergeResponse(client.createDeviceProfile(x), x),
     items: [
       {
         id: 1,
-        name: 'test_transfer_lora_network',
+        name: 'transfer_lora_network_abp',
         macVersion: '1.0.0',
+        supportsJoin: false,
+        networkServerID: { $type: 'NetworkServer', $id: 1 },
+        organizationID: { $type: 'Organization', $id: 1 }
+      },
+      {
+        id: 2,
+        name: 'transfer_lora_network_otaa',
+        macVersion: '1.0.0',
+        supportsJoin: true,
         networkServerID: { $type: 'NetworkServer', $id: 1 },
         organizationID: { $type: 'Organization', $id: 1 }
       }
@@ -63,40 +78,59 @@ const seeds = [
   },
   {
     id: 'Application',
-    create: x => client.createApplication(x),
+    create: x => mergeResponse(client.createApplication(x), x),
     items: [
       {
         id: 1,
-        name: 'test_transfer_lora_network',
+        name: 'transfer_lora_network',
         description: 'Test Transfer Lora Network',
+        payloadCodec: 'PAYLOAD_CODEC',
+        payloadDecoderScript: 'PAYLOAD_DECODER_SCRIPT',
+        payloadEncoderScript: 'PAYLOAD_ENCODER_SCRIPT',
         organizationID: { $type: 'Organization', $id: 1 },
         serviceProfileID: { $type: 'ServiceProfile', $id: 1 }
       }
     ]
   },
   {
-    id: 'Device',
-    create: x => client.createDevice(x),
+    id: 'Integration',
+    create: x => mergeResponse(
+      client.createApplicationIntegration(x.applicationID, 'http', omitAppId(x)),
+      x
+    ),
     items: [
       {
-        name: 'test_transfer_lora_network_dev_abp',
+        id: 1,
+        uplinkDataURL: 'https://example.com/uplinks',
+        applicationID: { $type: 'Application', $id: 1 }
+      }
+    ]
+  },
+  {
+    id: 'Device',
+    create: x => mergeResponse(client.createDevice(x), x),
+    items: [
+      {
+        name: 'transfer_lora_network_abp',
         description: 'ABP device in Test Transfer Lora Network Test',
         devEUI: devEUIs.deviceAbp,
+        skipFCntCheck: true,
         deviceProfileID: { $type: 'DeviceProfile', $id: 1 },
         applicationID: { $type: 'Application', $id: 1 }
       },
       {
-        name: 'test_transfer_lora_network_dev_otaa',
+        name: 'transfer_lora_network_otaa',
         description: 'OTAA device in Test Transfer Lora Network Test',
         devEUI: devEUIs.deviceOtaa,
-        deviceProfileID: { $type: 'DeviceProfile', $id: 1 },
-        applicationID: { $type: 'DeviceProfile', $id: 1 }
+        skipFCntCheck: false,
+        deviceProfileID: { $type: 'DeviceProfile', $id: 2 },
+        applicationID: { $type: 'Application', $id: 1 }
       }
     ]
   },
   {
     id: 'DeviceActivation',
-    create: x => client.activateDevice(x.devEUI, x),
+    create: x => mergeResponse(client.activateDevice(x.devEUI, x), x),
     items: [
       {
         'appSKey': cryptoRandomString({ length: 32 }),
@@ -111,7 +145,7 @@ const seeds = [
   },
   {
     id: 'DeviceKey',
-    create: x => client.createDeviceKeys(x.devEUI, omitDevEUI(x)),
+    create: x => mergeResponse(client.createDeviceKeys(x.devEUI, omitDevEUI(x)), x),
     items: [
       {
         appKey: cryptoRandomString({ length: 32 }),

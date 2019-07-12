@@ -11,8 +11,11 @@ COPY prisma/generated prisma/generated
 COPY lib/axios-rest-client lib/axios-rest-client
 COPY lib/seeder lib/seeder
 COPY rest-client rest-client
+
+# Because LoRa clients are imported from rest folder
 COPY rest rest
 COPY config config
+
 COPY package*.json ./
 
 # install all dependencies
