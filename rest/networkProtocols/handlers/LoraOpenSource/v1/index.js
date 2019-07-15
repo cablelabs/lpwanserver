@@ -13,9 +13,13 @@ module.exports = class LoraOpenSourceV1 extends LoraOpenSource {
 
   buildDeviceNetworkSettings (remoteDevice) {
     const result = super.buildDeviceNetworkSettings(remoteDevice)
-    return result.deviceKeys
-      ? { ...result, deviceKeys: renameAppKey(result.deviceKeys) }
-      : result
+    if (result.deviceKeys) {
+      result.deviceKeys = renameAppKey(result.deviceKeys)
+    }
+    if (result.deviceActivation) {
+      result.deviceActivation = renameKeys({ fCntDown: 'aFCntDown', nwkSKey: 'fNwkSIntKey' }, result.deviceActivation)
+    }
+    return result
   }
 
   buildRemoteDevice (device, deviceNtl, deviceProfile, remoteAppId, remoteDeviceProfileId) {
@@ -30,7 +34,7 @@ module.exports = class LoraOpenSourceV1 extends LoraOpenSource {
       result.deviceActivation = {
         devEUI: deviceNtl.networkSettings.devEUI,
         ...R.pick(['appSKey', 'devAddr', 'fCntUp'], deviceNtl.networkSettings.deviceActivation),
-        fCntDwn: deviceNtl.networkSettings.deviceActivation.nFCntDown,
+        fCntDwn: deviceNtl.networkSettings.deviceActivation.aFCntDown,
         nwkSKey: deviceNtl.networkSettings.deviceActivation.fNwkSIntKey
       }
 

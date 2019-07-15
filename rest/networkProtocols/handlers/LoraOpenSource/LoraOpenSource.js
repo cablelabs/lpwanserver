@@ -878,7 +878,7 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
 
   buildRemoteDeviceProfile (deviceProfile, networkServerId, organizationId) {
     return {
-      ...R.pick(['name', 'description'], deviceProfile),
+      ...R.pick(['name'], deviceProfile),
       ...deviceProfile.networkSettings,
       networkServerID: networkServerId,
       organizationID: organizationId

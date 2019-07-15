@@ -22,18 +22,10 @@ module.exports = class LoraOpenSourceV2 extends LoraOpenSource {
     }
     else if (deviceActivation) {
       const mac = deviceProfile.networkSettings.macVersion.slice(0, 3)
-      result.deviceActivation = { devEUI: NS.devEUI }
-      if (mac === '1.1') {
-        Object.assign(result.deviceActivation, deviceActivation)
-      }
-      else if (mac === '1.0') {
-        Object.assign(result.deviceActivation, {
-          ...R.pick(['appSKey', 'devAddr', 'fCntUp'], deviceActivation),
-          nFCntDown: deviceActivation.fCntDwn,
-          fNwkSIntKey: deviceActivation.nwkSKey,
-          nwkSEncKey: deviceActivation.nwkSKey,
-          sNwkSIntKey: deviceActivation.nwkSKey
-        })
+      result.deviceActivation = R.merge(deviceActivation, { devEUI: NS.devEUI })
+      if (mac === '1.0') {
+        result.deviceActivation.nwkSEncKey = deviceActivation.fNwkSIntKey
+        result.deviceActivation.sNwkSIntKey = deviceActivation.fNwkSIntKey
       }
     }
     return result

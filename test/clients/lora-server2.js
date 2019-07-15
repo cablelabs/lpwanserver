@@ -2,7 +2,7 @@ const Client = require('../../rest/networkProtocols/handlers/LoraOpenSource/v2/c
 
 const network = {
   id: 'mylora1servernetwork',
-  baseUrl: `${process.env.LORA_APPSERVER1_URL}/api`,
+  baseUrl: `${process.env.LORA_APPSERVER2_URL}/api`,
   securityData: {
     username: 'admin',
     password: 'admin'

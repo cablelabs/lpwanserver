@@ -48,8 +48,9 @@ services:
       - LPWANSERVER_URL=https://lpwanserver:3200
       - APP_SERVER_URL=http://app-server:3201
       - LORA_APPSERVER1_URL=https://lora_appserver1:8080
-      - LORA_APPSERVER2_URL=https://lora_appserver2:8080
+      - LORA_APPSERVER2_URL=https://lora_appserver:8080
       - LORA_SERVER1_HOST_PORT=loraserver1:8000
+      - LORA_SERVER2_HOST_PORT=loraserver:8000
       - TTN_ENABLED=${TTN_ENABLED:-false}
       - TTN_USERNAME=${TTN_USERNAME}
       - TTN_PASSWORD=${TTN_PASSWORD}

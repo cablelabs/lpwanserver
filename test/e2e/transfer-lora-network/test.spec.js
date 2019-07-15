@@ -1,32 +1,25 @@
 const assert = require('assert')
 const { createLpwanClient } = require('../../clients/lpwan')
 const Lora1 = require('./lora1')
+const Lora2 = require('./lora2')
 const { network: Lora1Network } = require('../../clients/lora-server1')
 const { network: Lora2Network } = require('../../clients/lora-server2')
-const { createLoraServer2Client } = require('../../clients/lora-server2')
 const { prisma } = require('../../../prisma/generated/prisma-client')
 const R = require('ramda')
 
 const Lpwan = createLpwanClient()
-const Lora2 = createLoraServer2Client()
-
-function verifyAbpDeviceNtl (devNtl, removeDevActivation) {
-  const da = devNtl.networkSettings.deviceActivation
-  const props = ['devAddr', 'appSKey', 'fCntUp', 'fCntDown', 'nwkSKey', 'skipFCntCheck']
-  props.forEach(prop => {
-    const msg = `Invalid ${prop} value for ABP deviceNtl. Expected ${removeDevActivation[prop]} received ${da[prop]}`
-    assert.strictEqual(da[prop], removeDevActivation[prop], msg)
-  })
-}
 
 describe.only('Transfer Lora Server v1 network to Lora Server v2', () => {
   let networkTypeId
 
   before(async () => {
-    await Lora1.seedData()
-    await Lpwan.client.login({
-      data: { login_username: 'admin', login_password: 'password' }
-    })
+    await Promise.all([
+      Lora1.seedData(),
+      Lora2.seedData(),
+      Lpwan.client.login({
+        data: { login_username: 'admin', login_password: 'password' }
+      })
+    ])
     const nwkType = await prisma.networkType({ name: 'LoRa' })
     networkTypeId = nwkType.id
   })
@@ -88,8 +81,8 @@ describe.only('Transfer Lora Server v1 network to Lora Server v2', () => {
     it('Verify Devices', async () => {
       const names = Lora1.cache.Device.map(R.prop('name'))
       const descriptions = Lora1.cache.Device.map(R.prop('description'))
-      const localApp = Lpwan.cache.applications[0]
-      const params = { applicationId: localApp.id, limit: 100 }
+      const app = Lpwan.cache.applications[0]
+      const params = { applicationId: app.id, limit: 100 }
       const res = await Lpwan.client.list('devices', {}, { params })
       assert.strictEqual(res.status, 200)
       assert.strictEqual(res.data.totalCount, 2)
@@ -99,9 +92,9 @@ describe.only('Transfer Lora Server v1 network to Lora Server v2', () => {
       })
     })
     it('Verify ApplicationNetworkTypeLink', async () => {
-      const localApp = Lpwan.cache.applications[0]
+      const app = Lpwan.cache.applications[0]
       const lora1App = Lora1.cache.Application[0]
-      const params = { applicationId: localApp.id }
+      const params = { applicationId: app.id }
       const res = await Lpwan.client.list('applicationNetworkTypeLinks', {}, { params })
       assert.strictEqual(res.status, 200)
       let [appNtl] = res.data.records
@@ -117,15 +110,23 @@ describe.only('Transfer Lora Server v1 network to Lora Server v2', () => {
         const res = await Lpwan.client.list('deviceNetworkTypeLinks', {}, { params })
         assert.strictEqual(res.status, 200)
         const [devNtl] = res.data.records
-        assert.strictEqual(devNtl.networkSettings.devEUI, lora1Dev.devEUI)
-        assert.strictEqual(devNtl.networkSettings.skipFCntCheck, lora1Dev.skipFCntCheck)
+        const ns = devNtl.networkSettings
+        assert.strictEqual(ns.devEUI, lora1Dev.devEUI)
+        assert.strictEqual(ns.skipFCntCheck, lora1Dev.skipFCntCheck)
         if (dev.name.includes('abp')) {
-          const remoteDevAct = Lora1.cache.DeviceActivation.find(x => x.devEUI === devNtl.networkSettings.devEUI)
-          verifyAbpDeviceNtl(devNtl, remoteDevAct)
+          const remoteDevAct = Lora1.cache.DeviceActivation.find(x => x.devEUI === ns.devEUI)
+          console.log(devNtl)
+          console.log(remoteDevAct)
+          assert.strictEqual(ns.deviceActivation.devAddr, remoteDevAct.devAddr)
+          assert.strictEqual(ns.deviceActivation.appSKey, remoteDevAct.appSKey)
+          assert.strictEqual(ns.deviceActivation.fCntUp, remoteDevAct.fCntUp)
+          assert.strictEqual(ns.deviceActivation.aFCntDown, remoteDevAct.fCntDown)
+          assert.strictEqual(ns.deviceActivation.fNwkSIntKey, remoteDevAct.nwkSKey)
+          assert.strictEqual(ns.deviceActivation.skipFCntCheck, remoteDevAct.skipFCntCheck)
         }
         else {
           const remoteDevKeys = Lora1.cache.DeviceKey.find(x => x.devEUI === lora1Dev.devEUI)
-          assert.strictEqual(remoteDevKeys.appKey, devNtl.networkSettings.deviceKeys.nwkKey)
+          assert.strictEqual(remoteDevKeys.appKey, ns.deviceKeys.nwkKey)
         }
       })
       return Promise.all(promises)
@@ -164,14 +165,65 @@ describe.only('Transfer Lora Server v1 network to Lora Server v2', () => {
 
   describe('Verify data pushed to Lora Server v2', () => {
     it('Verify Device Profiles', async () => {
-      let res = await Lora2.client.listDeviceProfiles()
-      const lora2Dps = res.data.result
-      assert.strictEqual(res.status, 200)
+      let res = await Lora2.client.listDeviceProfiles({
+        organizationID: Lora2.cache.Organization[0].id,
+        limit: 20
+      })
+      Lora2.cache.DeviceProfile = res.result
       const promises = Lora1.cache.DeviceProfile.map(async lora1Dp => {
-        const dp = lora2Dps.find(x => x.name === lora1Dp.name)
+        let dp = res.result.find(x => x.name === lora1Dp.name)
         assert.ok(dp, 'No DeviceProfile found.')
+        dp = await Lora2.client.loadDeviceProfile(dp.id)
+        Lora2.cache.DeviceProfile = [
+          ...Lora2.cache.DeviceProfile.filter(x => x.id !== dp.id),
+          dp
+        ]
         assert.strictEqual(dp.macVersion, lora1Dp.macVersion)
         assert.strictEqual(dp.supportsJoin, lora1Dp.supportsJoin)
+      })
+      return Promise.all(promises)
+    })
+    it('Verify Application', async () => {
+      let res = await Lora2.client.listApplications({
+        organizationID: Lora2.cache.Organization[0].id,
+        limit: 20
+      })
+      const lora1App = Lora1.cache.Application[0]
+      let lora2App = res.result.find(x => x.name === lora1App.name)
+      assert.ok(lora2App)
+      lora2App = await Lora2.client.loadApplication(lora2App.id)
+      Lora2.cache.Application = [lora2App]
+      assert.strictEqual(lora2App.description, lora1App.description)
+      assert.strictEqual(lora2App.payloadCodec, lora1App.payloadCodec)
+      assert.strictEqual(lora2App.payloadDecoderScript, lora1App.payloadDecoderScript)
+      assert.strictEqual(lora2App.payloadEncoderScript, lora1App.payloadEncoderScript)
+    })
+    it('Verify Devices', async () => {
+      const [lora2App] = Lora2.cache.Application
+      let res = await Lora2.client.listDevices(lora2App.id, { limit: 20 })
+      const promises = Lora1.cache.Device.map(async lora1Dev => {
+        let lora2Dev = res.result.find(x => x.devEUI === lora1Dev.devEUI)
+        assert.ok(lora2Dev)
+        lora2Dev = await Lora2.client.loadDevice(lora2Dev.devEUI)
+        assert.strictEqual(lora2Dev.name, lora1Dev.name)
+        assert.strictEqual(lora2Dev.description, lora1Dev.description)
+        assert.strictEqual(lora2Dev.skipFCntCheck, lora1Dev.skipFCntCheck)
+        const dp = Lora2.cache.DeviceProfile.find(x => x.id === lora2Dev.deviceProfileID)
+        assert.strictEqual(dp.supportsJoin, lora2Dev.name.includes('otaa'))
+        if (lora2Dev.name.includes('abp')) {
+          const lora2DevAct = await Lora2.client.loadDeviceActivation(lora2Dev.devEUI)
+          const lora1DevAct = Lora1.cache.DeviceActivation[0]
+          assert.strictEqual(lora2DevAct.devAddr, lora1DevAct.devAddr)
+          assert.strictEqual(lora2DevAct.appSKey, lora1DevAct.appSKey)
+          assert.strictEqual(lora2DevAct.fNwkSIntKey, lora1DevAct.nwkSKey)
+          assert.strictEqual(lora2DevAct.aFCntDown, lora1DevAct.fCntDown)
+          assert.strictEqual(lora2DevAct.fCntUp, lora1DevAct.fCntUp)
+        }
+        else {
+          const lora2DevKeys = await Lora2.client.loadDeviceKeys(lora2Dev.devEUI)
+          const lora1DevKeys = Lora1.cache.DeviceKey[0]
+          assert.strictEqual(lora2DevKeys.nwkKey, lora1DevKeys.appKey)
+        }
       })
       return Promise.all(promises)
     })
