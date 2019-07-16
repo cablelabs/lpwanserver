@@ -20,9 +20,9 @@ class LpwanServerRestApi extends AxiosRestApi {
 }
 
 class LpwanServerRestApiCache extends AxiosRestApiCache {
-  constructor (...args) {
-    super(...args)
-    this.itemsProp = 'records'
+  list (name, result) {
+    const list = name === 'ip-device-downlinks' ? result.data : result.data.records
+    return this._cacheUpsert(name, list)
   }
 }
 

@@ -1,6 +1,7 @@
 const { prisma } = require('../../../prisma/generated/prisma-client')
 
 async function setupData ({ appBaseUrl }) {
+  const cos = await prisma.companies()
   let ipNwkType = await prisma.networkType({ name: 'IP' })
   let postReportingProtocol = (await prisma.reportingProtocols())[0]
   let company = (await prisma.companies())[0]
@@ -14,7 +15,8 @@ async function setupData ({ appBaseUrl }) {
     name: 'ip-msg-test-app',
     baseUrl: appBaseUrl,
     enabled: true,
-    reportingProtocol: { connect: { id: postReportingProtocol.id } }
+    reportingProtocol: { connect: { id: postReportingProtocol.id } },
+    company: { connect: { id: cos[0].id } }
   })
   const device = await prisma.createDevice({
     name: 'ip-msg-test-dvc',

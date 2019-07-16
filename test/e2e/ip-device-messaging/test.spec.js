@@ -39,7 +39,7 @@ describe('E2E Test for IP Device Uplink/Downlink Device Messaging', () => {
         useSession: false,
         httpsAgent: ipDeviceAgent
       }
-      const res = await Lpwan.create('ipDeviceUplinks', {}, opts)
+      const res = await Lpwan.create('ip-device-uplinks', {}, opts)
       assert.strictEqual(res.status, 204)
     })
 
@@ -66,7 +66,7 @@ describe('E2E Test for IP Device Uplink/Downlink Device Messaging', () => {
 
     it('Fetch downlink as IP device', async () => {
       const opts = { httpsAgent: ipDeviceAgent }
-      const res = await Lpwan.list('ipDeviceDownlinks', {}, opts)
+      const res = await Lpwan.list('ip-device-downlinks', {}, opts)
       assert.deepStrictEqual(res.data[0], downlink1)
     })
 
@@ -80,7 +80,7 @@ describe('E2E Test for IP Device Uplink/Downlink Device Messaging', () => {
         httpsAgent: ipDeviceAgent,
         headers: { prefer: 'wait=5' }
       }
-      const res = await Lpwan.list('ipDeviceDownlinks', {}, opts)
+      const res = await Lpwan.list('ip-device-downlinks', {}, opts)
       assert.deepStrictEqual(res.data[0], downlink2)
     })
   })

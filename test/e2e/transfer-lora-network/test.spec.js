@@ -9,7 +9,7 @@ const R = require('ramda')
 
 const Lpwan = createLpwanClient()
 
-describe.only('Transfer Lora Server v1 network to Lora Server v2', () => {
+describe('Transfer Lora Server v1 network to Lora Server v2', () => {
   let networkTypeId
 
   before(async () => {

@@ -5,7 +5,7 @@ WORKDIR /usr/src/app
 
 RUN npm install -g mocha
 
-# Copy project filesb
+# Copy project files
 COPY test test
 COPY prisma/generated prisma/generated
 COPY lib/axios-rest-client lib/axios-rest-client
