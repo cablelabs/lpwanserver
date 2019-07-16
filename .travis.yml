@@ -20,7 +20,6 @@ cache:
     - "$HOME/.npm"
 script:
   - npm run test:e2e
-  - npm run test:e2e-https
 after_success: npm run coverage
 before_deploy:
   - cd .. && git clone --depth 1 https://github.com/cablelabs/lpwanserver-web-client.git && cd lpwanserver-web-client && npm ci && cd ../lpwanserver
