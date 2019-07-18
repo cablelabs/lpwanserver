@@ -160,7 +160,7 @@ exports.initialize = function (app, server) {
     // ID of the user into the query to verify that the device belongs
     // to that company.
     var companyId
-    if (modelAPI.companies.COMPANY_ADMIN !== req.company.type.id) {
+    if ('ADMIN' !== req.company.type) {
       companyId = req.company.id
     }
 

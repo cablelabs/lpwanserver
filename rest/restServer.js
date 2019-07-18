@@ -182,7 +182,7 @@ RestServer.prototype.isLoggedIn = function (req, res, next) {
 // res  - The rest response object to be notified if not authorized.
 // next - The next step in processing to perform.
 RestServer.prototype.isAdminCompany = function (req, res, next) {
-  if (req.company.type.id === restServer.modelAPI.companies.COMPANY_ADMIN) {
+  if (req.company.type === 'ADMIN') {
     next()
   }
   else {

@@ -346,7 +346,6 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
 
   async pullNetwork (network, dataAPI, modelAPI) {
     const companyNtl = await this.setupOrganization(network, modelAPI, dataAPI)
-    appLogger.log(`COMPANY_NTL: ${JSON.stringify(companyNtl)}`)
     const [pulledDevProfiles, pulledApps] = await Promise.all([
       this.pullDeviceProfiles(network, modelAPI, companyNtl, dataAPI),
       this.pullApplications(network, modelAPI, dataAPI, companyNtl)
@@ -473,6 +472,8 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
       localApp = await this.modelAPI.applications.create(localAppData)
       appLogger.log('Created ' + localApp.name)
     }
+    await this.modelAPI.protocolData.upsert(network, makeApplicationDataKey(localApp.id, 'appNwkId'), remoteApp.id)
+
     const [ appNtls ] = await this.modelAPI.applicationNetworkTypeLinks.list({ applicationId: localApp.id })
     let appNtl = appNtls[0]
     if (appNtl) {
@@ -490,7 +491,6 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
           remoteOrigin: true
         }
       )
-      await this.modelAPI.protocolData.upsert(network, makeApplicationDataKey(localApp.id, 'appNwkId'), remoteApp.id)
     }
     if (localApp.baseUrl) await this.startApplication(network, localApp.id, dataAPI)
     return { localApplication: localApp.id, remoteApplication: remoteApp.id }
@@ -568,6 +568,8 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
       ))
       // Save the application ID from the remote network.
       await this.modelAPI.protocolData.upsert(network, makeApplicationDataKey(localApp.id, 'appNwkId'), body.id)
+      // Start application if baseUrl
+      if (localApp.baseUrl && localApp.running) await this.startApplication(network, appId)
     }
     catch (err) {
       appLogger.log('Failed to get required data for addApplication: ' + err)
@@ -814,7 +816,6 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
       appNwkId,
       dpNwkId
     )
-    appLogger.log(`DEVICE_DATA: ${JSON.stringify(deviceData)}`)
     await this.client.updateDevice(network, devNetworkId, deviceData.device)
     if (deviceProfile.networkSettings.supportsJoin && deviceData.deviceKeys) {
       await this.client.updateDeviceKeys(network, deviceData.device.devEUI, deviceData.deviceKeys)

@@ -9,15 +9,16 @@ const network = {
   }
 }
 
-function createLoraServer1Client () {
-  const client = new Client()
-  const handler = {
-    get (obj, method) {
-      return (...args) => obj[method](network, ...args)
-    }
-  }
+const client = new Client()
 
-  return { client: new Proxy(client, handler), cache: {} }
+const handler = {
+  get (obj, method) {
+    return (...args) => obj[method](network, ...args)
+  }
 }
 
-module.exports = { createLoraServer1Client, network }
+module.exports = {
+  client: new Proxy(client, handler),
+  cache: {},
+  network
+}

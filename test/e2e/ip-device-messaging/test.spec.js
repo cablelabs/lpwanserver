@@ -1,10 +1,7 @@
 const assert = require('assert')
 const { setupData } = require('./setup')
-const path = require('path')
-const fs = require('fs')
-const https = require('https')
 const axios = require('axios')
-const { createLpwanClient } = require('../../clients/lpwan')
+const { createLpwanClient, catM1DeviceAgent } = require('../../clients/lpwan')
 
 const {
   APP_SERVER_URL
@@ -12,15 +9,7 @@ const {
 
 const { client: Lpwan } = createLpwanClient()
 
-const certFile = path.join(__dirname, '../../../certs/client-catm1-crt.pem')
-const cert = fs.readFileSync(certFile, { encoding: 'utf8' })
-const keyFile = path.join(__dirname, '../../../certs/client-catm1-key.pem')
-const key = fs.readFileSync(keyFile, { encoding: 'utf8' })
-const caFile = path.join(__dirname, '../../../certs/ca-crt.pem')
-const ca = fs.readFileSync(caFile, { encoding: 'utf8' })
-const ipDeviceAgent = new https.Agent({ ca, key, cert })
-
-const uplinkPath = '/uplinks'
+const uplinkPath = '/ip-device-messaging-uplinks'
 
 describe('E2E Test for IP Device Uplink/Downlink Device Messaging', () => {
   let Data
@@ -37,7 +26,7 @@ describe('E2E Test for IP Device Uplink/Downlink Device Messaging', () => {
       const opts = {
         data: { msgId: 1 },
         useSession: false,
-        httpsAgent: ipDeviceAgent
+        httpsAgent: catM1DeviceAgent
       }
       const res = await Lpwan.create('ip-device-uplinks', {}, opts)
       assert.strictEqual(res.status, 204)
@@ -65,7 +54,7 @@ describe('E2E Test for IP Device Uplink/Downlink Device Messaging', () => {
     })
 
     it('Fetch downlink as IP device', async () => {
-      const opts = { httpsAgent: ipDeviceAgent }
+      const opts = { httpsAgent: catM1DeviceAgent }
       const res = await Lpwan.list('ip-device-downlinks', {}, opts)
       assert.deepStrictEqual(res.data[0], downlink1)
     })
@@ -77,7 +66,7 @@ describe('E2E Test for IP Device Uplink/Downlink Device Messaging', () => {
       setTimeout(() => sendDownlink(Data.device.id, downlink2), 3000)
 
       const opts = {
-        httpsAgent: ipDeviceAgent,
+        httpsAgent: catM1DeviceAgent,
         headers: { prefer: 'wait=5' }
       }
       const res = await Lpwan.list('ip-device-downlinks', {}, opts)
@@ -88,7 +77,7 @@ describe('E2E Test for IP Device Uplink/Downlink Device Messaging', () => {
 
 async function sendDownlink (deviceId, data) {
   const opts = {
-    httpsAgent: ipDeviceAgent,
+    httpsAgent: catM1DeviceAgent,
     data
   }
   const res = await Lpwan.create('deviceDownlinks', { id: deviceId }, opts)
