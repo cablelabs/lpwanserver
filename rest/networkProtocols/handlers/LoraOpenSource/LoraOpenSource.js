@@ -540,7 +540,7 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
       const [ cos ] = await this.modelAPI.companies.list({ limit: 1 })
       let company = cos[0]
       appLogger.log('creating Network Link for ' + localDevice.name)
-      let networkSettings = this.buildDeviceNetworkSettings(remoteDevice)
+      let networkSettings = this.buildDeviceNetworkSettings(remoteDevice, deviceProfile)
       let devNtlData = {
         deviceId: localDevice.id,
         networkTypeId: network.networkType.id,
@@ -561,7 +561,7 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
       const coNetworkId = await this.modelAPI.protocolData.loadValue(network, makeCompanyDataKey(localApp.company.id, 'coNwkId'))
       const coSPId = await this.modelAPI.protocolData.loadValue(network, makeCompanyDataKey(localApp.company.id, 'coSPId'))
       const body = await this.client.createApplication(network, this.buildRemoteApplication(
-        appNtl.networkSettings,
+        appNtl && appNtl.networkSettings,
         coSPId,
         coNetworkId,
         localApp
@@ -763,6 +763,7 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
     const device = await dataAPI.getDeviceById(deviceId)
     appLogger.log(JSON.stringify(device))
     const dntl = await dataAPI.getDeviceNetworkType(deviceId, network.networkType.id)
+    if (!dntl) return
     appLogger.log(JSON.stringify(dntl))
     const deviceProfile = await dataAPI.getDeviceProfileById(dntl.deviceProfile.id)
     appLogger.log(JSON.stringify(deviceProfile))
@@ -864,12 +865,15 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
   }
 
   buildRemoteApplication (networkSettings, serviceProfileId, organizationId, app) {
-    return {
-      ...R.pick(['payloadCodec', 'payloadDecoderScript', 'payloadEncoderScript'], networkSettings),
+    const result = {
       ...R.pick(['name', 'description'], app),
       'organizationID': organizationId,
       'serviceProfileID': serviceProfileId
     }
+    if (networkSettings) {
+      Object.assign(result, R.pick(['payloadCodec', 'payloadDecoderScript', 'payloadEncoderScript'], networkSettings))
+    }
+    return result
   }
 
   buildDeviceProfileNetworkSettings (remoteDeviceProfile) {
@@ -878,7 +882,7 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
 
   buildRemoteDeviceProfile (deviceProfile, networkServerId, organizationId) {
     return {
-      ...R.pick(['name', 'description'], deviceProfile),
+      ...R.pick(['name'], deviceProfile),
       ...deviceProfile.networkSettings,
       networkServerID: networkServerId,
       organizationID: organizationId
