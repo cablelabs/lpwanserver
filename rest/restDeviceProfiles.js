@@ -204,7 +204,7 @@ exports.initialize = function (app, server) {
 
     // The user must be part of the admin group or the deviceProfile's
     // company.
-    if (('ADMIN' !== req.company.type) &&
+    if ((req.company.type !== 'ADMIN') &&
              (rec.companyId !== req.user.company.id)) {
       restServer.respond(res, 403, "Can't create a deviceProfile for another company's application")
     }
@@ -267,7 +267,7 @@ exports.initialize = function (app, server) {
     // Start by getting the original deviceProfile to check for changes.
     modelAPI.deviceProfiles.load(data.id).then(function (dp) {
       // Verify that the user can make the change.
-      if (('ADMIN' !== req.company.type) &&
+      if ((req.company.type !== 'ADMIN') &&
                  (req.user.company.id !== dp.company.id)) {
         restServer.respond(res, 403)
         return

@@ -47,7 +47,7 @@ describe('E2E Test for IP Device Uplink/Downlink Device Messaging', () => {
   })
 
   describe('IP Device Downlink', () => {
-    let downlink1 = { jsonData: { msgId: 2 }, fCnt: 0, fPort: 1 }
+    let downlink1 = { jsonObject: { msgId: 2 }, fCnt: 0, fPort: 1 }
 
     it('Send a downlink request to LPWAN Server', async () => {
       await sendDownlink(Data.device.id, downlink1)
@@ -61,7 +61,7 @@ describe('E2E Test for IP Device Uplink/Downlink Device Messaging', () => {
 
     it('Long poll for downlinks', async function () {
       this.timeout(10000)
-      let downlink2 = { jsonData: { msgId: 3 }, fCnt: 0, fPort: 1 }
+      let downlink2 = { jsonObject: { msgId: 3 }, fCnt: 0, fPort: 1 }
 
       setTimeout(() => sendDownlink(Data.device.id, downlink2), 3000)
 
@@ -76,10 +76,6 @@ describe('E2E Test for IP Device Uplink/Downlink Device Messaging', () => {
 })
 
 async function sendDownlink (deviceId, data) {
-  const opts = {
-    httpsAgent: catM1DeviceAgent,
-    data
-  }
-  const res = await Lpwan.create('deviceDownlinks', { id: deviceId }, opts)
+  const res = await Lpwan.create('deviceDownlinks', { id: deviceId }, { data })
   assert.strictEqual(res.status, 200)
 }

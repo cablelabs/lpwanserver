@@ -783,6 +783,7 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
       appNwkId,
       dpNwkId
     )
+    appLogger.log(`REMOTE_DEVICE: ${JSON.stringify(deviceData)}`)
     await this.client.createDevice(network, deviceData.device)
     await this.modelAPI.protocolData.upsert(network, makeDeviceDataKey(device.id, 'devNwkId'), deviceData.device.devEUI)
     if (deviceProfile.networkSettings.supportsJoin && deviceData.deviceKeys) {

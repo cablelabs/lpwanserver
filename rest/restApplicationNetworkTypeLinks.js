@@ -162,7 +162,7 @@ exports.initialize = function (app, server) {
     // ID of the user into the query to verify that the application belongs
     // to that company.
     var companyId
-    if ('ADMIN' !== req.company.type) {
+    if (req.company.type !== 'ADMIN') {
       companyId = req.company.id
     }
 

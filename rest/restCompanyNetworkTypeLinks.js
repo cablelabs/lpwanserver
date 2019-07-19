@@ -152,7 +152,7 @@ exports.initialize = function (app, server) {
 
     // If the user is a not company admin, and is specifying another
     // company.
-    if (('ADMIN' !== req.company.type) &&
+    if ((req.company.type !== 'ADMIN') &&
              rec.companyId &&
              (rec.companyId !== req.user.company.id)) {
       restServer.respond(res, 403, "Cannot specify another company's networks")

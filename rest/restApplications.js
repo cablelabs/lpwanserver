@@ -265,7 +265,7 @@ exports.initialize = function (app, server) {
     // really changed before we even try to write.
     modelAPI.applications.load(data.id).then(function (app) {
       // Verify that the user can make the change.
-      if (('ADMIN' !== req.company.type) &&
+      if ((req.company.type !== 'ADMIN') &&
                  (req.user.company.id !== app.company.id)) {
         restServer.respond(res, 403)
         return
@@ -287,7 +287,7 @@ exports.initialize = function (app, server) {
       // Can only change the companyId if an admin user.
       if ((req.body.companyId) &&
                  (req.body.companyId !== app.company.id) &&
-                 ('ADMIN' !== req.company.type)) {
+                 (req.company.type !== 'ADMIN')) {
         restServer.respond(res, 400, "Cannot change application's company")
         return
       }

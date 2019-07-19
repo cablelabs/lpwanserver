@@ -36,9 +36,10 @@ describe('Manage a device model that supports multiple network types', () => {
 
   let loraNwkType
   let ipNwkType
-  let appId
   let deviceId
   let loraAppId
+  let app
+  let network
 
   before(async () => {
     await Lpwan.client.login({
@@ -63,13 +64,16 @@ describe('Manage a device model that supports multiple network types', () => {
       assert.strictEqual(res.data.totalCount, 1)
       protocolId = res.data.records[0].id
     })
-    it('Create the Local LoraOS 2.0 Network', () => createResource('networks', {
-      name: networkName,
-      networkTypeId: loraNwkType.id,
-      baseUrl: Lora2.network.baseUrl,
-      networkProtocolId: protocolId,
-      securityData: { authorized: false, ...Lora2.network.securityData }
-    }, 201))
+    it('Create the Local LoraOS 2.0 Network', async () => {
+      await createResource('networks', {
+        name: networkName,
+        networkTypeId: loraNwkType.id,
+        baseUrl: Lora2.network.baseUrl,
+        networkProtocolId: protocolId,
+        securityData: { authorized: false, ...Lora2.network.securityData }
+      }, 201)
+      network = Lpwan.cache.networks[0]
+    })
   })
 
   describe('Add Device Profiles', () => {
@@ -85,47 +89,48 @@ describe('Manage a device model that supports multiple network types', () => {
       companyId: Lpwan.cache.companies[0].id,
       name: loraDeviceProfileName,
       description: `${loraDeviceProfileName} description`,
-      networkSettings: {}
+      networkSettings: {
+        macVersion: '1.1.0'
+      }
     }))
   })
 
   describe('Create Application and ApplicationNetworkTypeLinks', () => {
     it('Create Application', async () => {
-      const res = await createResource('applications', {
+      await createResource('applications', {
         companyId: Lpwan.cache.companies[0].id,
         name: appName,
         description: `${appName} description`,
         baseUrl: appBaseUrl,
         reportingProtocolId: Lpwan.cache.reportingProtocols[0].id
       })
-      appId = res.data.id
+      app = Lpwan.cache.applications[0]
     })
     it('Create IP ApplicationNetworkTypeLink', () => createResource('applicationNetworkTypeLinks', {
-      applicationId: appId,
+      applicationId: app.id,
       networkTypeId: ipNwkType.id,
       networkSettings: {}
     }))
     it('Create LoRa ApplicationNetworkTypeLink', () => createResource('applicationNetworkTypeLinks', {
-      applicationId: appId,
+      applicationId: app.id,
       networkTypeId: loraNwkType.id,
       networkSettings: {}
     }))
     it('Confirm application is on LoRa Server', async () => {
-      const localApp = Lpwan.cache.applications.find(x => x.name === appName)
       const res = await Lora2.client.listApplications({ search: appName, limit: 1 })
       assert.strictEqual(res.totalCount, '1')
-      let [app] = res.result
+      let [remoteApp] = res.result
       assert.ok(app)
-      assert.strictEqual(app.name, localApp.name)
-      assert.strictEqual(app.description, localApp.description)
-      loraAppId = app.id
+      assert.strictEqual(remoteApp.name, app.name)
+      assert.strictEqual(remoteApp.description, app.description)
+      loraAppId = remoteApp.id
     })
   })
 
   describe('Create a Device', () => {
     it('Create Device', async () => {
       const res = await createResource('devices', {
-        applicationId: appId,
+        applicationId: app.id,
         name: deviceName,
         description: `${deviceName} description`,
         deviceModel: 'A'
@@ -138,12 +143,28 @@ describe('Manage a device model that supports multiple network types', () => {
       deviceProfileId: Lpwan.cache.deviceProfiles.find(x => x.name === ipDeviceProfileName).id,
       networkSettings: { devEUI: '1122334455667788' }
     }))
-    it('Create LoRa DeviceNetworkTypeLink', () => createResource('deviceNetworkTypeLinks', {
-      deviceId,
-      networkTypeId: loraNwkType.id,
-      deviceProfileId: Lpwan.cache.deviceProfiles.find(x => x.name === loraDeviceProfileName).id,
-      networkSettings: { devEUI: cryptoRandomString({ length: 16 }) }
-    }))
+    it('Create LoRa DeviceNetworkTypeLink', async () => {
+      const devEUI = cryptoRandomString({ length: 16 })
+      await createResource('deviceNetworkTypeLinks', {
+        deviceId,
+        networkTypeId: loraNwkType.id,
+        deviceProfileId: Lpwan.cache.deviceProfiles.find(x => x.name === loraDeviceProfileName).id,
+        networkSettings: {
+          devEUI,
+          deviceActivation: {
+            appSKey: cryptoRandomString({ length: 32 }),
+            devAddr: cryptoRandomString({ length: 8 }),
+            devEUI,
+            fCntDown: 0,
+            fCntUp: 0,
+            fNwkSIntKey: cryptoRandomString({ length: 32 }),
+            nwkSEncKey: cryptoRandomString({ length: 32 }),
+            sNwkSIntKey: cryptoRandomString({ length: 32 }),
+            skipFCntCheck: true
+          }
+        }
+      })
+    })
     it('Confirm Device is on LoRa Server', async () => {
       const localDevice = Lpwan.cache.devices.find(x => x.name === deviceName)
       const res = await Lora2.client.listDevices(loraAppId, { limit: 1 })
@@ -165,25 +186,19 @@ describe('Manage a device model that supports multiple network types', () => {
   })
 
   describe('Send Device Uplinks', () => {
-    let app
-    let network
-    before(() => {
-      app = Lpwan.cache.applications.find(x => x.name === appName)
-      network = Lpwan.cache.networks.find(x => x.name === networkName)
-    })
     it('Confirm Lora Server Application Integration', async () => {
       const uplinkDataURL = `${process.env.LPWANSERVER_URL}/api/ingest/${app.id}/${network.id}`
       const res = await Lora2.client.loadApplicationIntegration(loraAppId, 'http')
       assert.strictEqual(res.uplinkDataURL, uplinkDataURL)
     })
     it('Send an uplink as the Lora Server', async () => {
-      const data = { msgId: 'multi_type_devices_msg_1_lora' }
+      const data = { msgId: 'multi_type_devices_uplink_lora' }
       const res = await Lpwan.client.create('uplinks', { applicationId: app.id, networkId: network.id }, { data })
       assert.strictEqual(res.status, 204)
     })
     it('Send an uplink as an IP device', async () => {
       const opts = {
-        data: { msgId: 'multi_type_devices_msg_1_ip' },
+        data: { msgId: 'multi_type_devices_uplink_ip' },
         useSession: false,
         httpsAgent: nbIotDeviceAgent
       }
@@ -196,8 +211,44 @@ describe('Manage a device model that supports multiple network types', () => {
         params: { method: 'POST', path: uplinkPath }
       }
       const res = await axios(opts)
-      console.log(res.data)
       assert.strictEqual(res.data.length, 2)
+    })
+  })
+
+  describe('Send downlink to devices', () => {
+    const downlink = { data: cryptoRandomString({ length: 8 }), fCnt: 0, fPort: 1 }
+    it('Create downlink', async () => {
+      const res = await Lpwan.client.create('deviceDownlinks', { id: deviceId }, { data: downlink })
+      assert.strictEqual(res.status, 200)
+    })
+    it('Confirm downlink was received by Lora Server', async () => {
+      const devNtl = Lpwan.cache.deviceNetworkTypeLinks.find(x => x.deviceId === deviceId && x.networkTypeId === loraNwkType.id)
+      const res = await Lora2.client.listDeviceMessages(devNtl.networkSettings.devEUI)
+      assert.strictEqual(res.result.length, 1)
+      const [msg] = res.result
+      assert.deepStrictEqual(msg.data, downlink.data)
+      assert.strictEqual(msg.fCnt, downlink.fCnt)
+    })
+    it('Confirm downlink is available to IP devices', async () => {
+      const opts = { httpsAgent: nbIotDeviceAgent }
+      const res = await Lpwan.client.list('ip-device-downlinks', {}, opts)
+      assert.deepStrictEqual(res.data[0], downlink)
+    })
+  })
+
+  describe('Remove LoRa ApplicationNetworkTypeLink', () => {
+    it('Remove ApplicationNetworkTypeLink', async () => {
+      const appNtl = Lpwan.cache.applicationNetworkTypeLinks.find(x => x.networkTypeId === loraNwkType.id)
+      let res = await Lpwan.client.remove('applicationNetworkTypeLinks', { id: appNtl.id })
+      assert.strictEqual(res.status, 200)
+    })
+    it('Confirm Application is not on Lora Server', async () => {
+      const res = await Lora2.client.listApplications({ search: appName, limit: 1 })
+      assert.strictEqual(res.totalCount, '0')
+    })
+    it('Confirm Device is not on LoRa Server', async () => {
+      const res = await Lora2.client.listDevices(loraAppId, { limit: 1 })
+      assert.strictEqual(res.totalCount, '0')
     })
   })
 })

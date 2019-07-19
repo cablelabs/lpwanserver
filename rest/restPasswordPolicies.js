@@ -155,7 +155,7 @@ exports.initialize = function (app, server) {
     }
 
     // If the user is not part of the admin group...
-    if ('ADMIN' !== req.company.type) {
+    if (req.company.type !== 'ADMIN') {
       // Did they specify the companyId?
       if (rec.companyId) {
         // It better match the company they are part of.
