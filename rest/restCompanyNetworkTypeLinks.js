@@ -144,7 +144,7 @@ exports.initialize = function (app, server) {
 
     // If the user is part of the admin group and does not have a companyId
     // specified.
-    if (('ADMIN' === req.company.type) &&
+    if ((req.company.type === 'ADMIN') &&
              (!rec.companyId)) {
       restServer.respond(res, 400, 'Must have companyId when part of admin company')
       return
