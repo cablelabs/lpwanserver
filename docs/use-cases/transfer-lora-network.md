@@ -47,9 +47,9 @@ correct when inspected.
 
 - No one-way transfer. All apps and devices on the destination network will be pushed to the source network.
 - No ability to choose apps to be transferred.
-- Transfer happens through adding 2 networks. Explicit transfer interface would be more appropriate, once
-  one-way transfer is supported.
-- 1 Actor action can map to several (several!) System actions, any of which could fail
+- Transfer happens implicitly when 2 networks are added.
+  Explicit transfer interface would be more appropriate, once one-way transfer is supported.
+- 1 Actor's action can map to several (several!) System actions, any of which could fail
   and leave the transfer in a partially fulfilled state, with no course prescribed for
   how to fix. A "Deployment" resource would make actions more atomic, and provide insight
   into network sync issues.
