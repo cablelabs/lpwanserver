@@ -305,6 +305,6 @@ module.exports = class TtnRestClient extends RestClient {
       body = R.merge(body, { data: Buffer.from(body.data, 'base64').toString('hex') })
     }
     const { dataClient } = await this.getDataClient(network, appId)
-    dataClient.send(devId, body.data || body.jsonObject, body.fPort, !!body.confirmed)
+    dataClient.send(devId, body.data || body.jsonData, body.fPort, !!body.confirmed)
   }
 }

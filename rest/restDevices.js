@@ -368,7 +368,7 @@ exports.initialize = function (app, server) {
    *      {
    *          fCnt: 2,
    *          fPort: 1,
-   *          jsonObject: { ... }
+   *          jsonData: { ... }
    *      }
    * @apiVersion 1.2.1
    */

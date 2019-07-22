@@ -1,7 +1,7 @@
 const NetworkProtocol = require('../../NetworkProtocol')
 const R = require('ramda')
 const appLogger = require('../../../lib/appLogger.js')
-const { joinUrl } = require('../../../lib/utils')
+const { joinUrl, renameKeys } = require('../../../lib/utils')
 const httpError = require('http-errors')
 const config = require('../../../config')
 // const { mutate } = require('../../../lib/utils')
@@ -858,6 +858,7 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
     // Ensure network is enabled
     if (!network.securityData.enabled) return
     const devNwkId = await this.modelAPI.protocolData.loadValue(network, makeDeviceDataKey(deviceId, 'devNwkId'))
+    body = renameKeys({ jsonData: 'jsonObject' }, body)
     return this.client.createDeviceMessage(network, devNwkId, { ...body, devEUI: devNwkId })
   }
 
