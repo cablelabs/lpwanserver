@@ -144,7 +144,7 @@ exports.initialize = function (app, server) {
 
     // If the user is part of the admin group and does not have a companyId
     // specified.
-    if ((modelAPI.companies.COMPANY_ADMIN === req.company.type.id) &&
+    if ((req.company.type === 'ADMIN') &&
              (!rec.companyId)) {
       restServer.respond(res, 400, 'Must have companyId when part of admin company')
       return
@@ -152,7 +152,7 @@ exports.initialize = function (app, server) {
 
     // If the user is a not company admin, and is specifying another
     // company.
-    if ((modelAPI.companies.COMPANY_ADMIN !== req.company.type.id) &&
+    if ((req.company.type !== 'ADMIN') &&
              rec.companyId &&
              (rec.companyId !== req.user.company.id)) {
       restServer.respond(res, 403, "Cannot specify another company's networks")

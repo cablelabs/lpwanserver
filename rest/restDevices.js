@@ -178,7 +178,7 @@ exports.initialize = function (app, server) {
 
     // The user must be part of the admin group or the device's
     // application's company.
-    if ((modelAPI.companies.COMPANY_ADMIN !== req.company.type.id) &&
+    if ((req.company.type !== 'ADMIN') &&
              (req.application.company.id !== req.user.company.id)) {
       restServer.respond(res, 403, "Can't create a device for another company's application")
     }
@@ -230,7 +230,7 @@ exports.initialize = function (app, server) {
     // We'll start with the device retrieved by fetchDeviceApplication as
     // a basis for comparison.
     // Verify that the user can make the change.
-    if ((modelAPI.companies.COMPANY_ADMIN !== req.company.type.id) &&
+    if ((req.company.type !== 'ADMIN') &&
              (req.user.company.id !== req.application.company.id)) {
       restServer.respond(res, 403)
       return
@@ -259,7 +259,7 @@ exports.initialize = function (app, server) {
 
       // If this is not a user with an admin company, we have to make sure
       // that the company doesn't change with the application.
-      if (modelAPI.companies.COMPANY_ADMIN !== req.company.type.id) {
+      if (req.company.type !== 'ADMIN') {
         // The new application must also be part of the same company.
         modelAPI.applications.load(req.body.applicationId)
           .then(function (newApp) {

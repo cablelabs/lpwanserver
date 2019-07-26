@@ -1,9 +1,8 @@
 const assert = require('assert')
 const { createLpwanClient } = require('../../clients/lpwan')
-const Lora1 = require('./lora1')
-const Lora2 = require('./lora2')
-const { network: Lora1Network } = require('../../clients/lora-server1')
-const { network: Lora2Network } = require('../../clients/lora-server2')
+const Lora1 = require('../../clients/lora-server1')
+const Lora2 = require('../../clients/lora-server2')
+const { seedData } = require('./setup')
 const { prisma } = require('../../../prisma/generated/prisma-client')
 const R = require('ramda')
 
@@ -14,8 +13,7 @@ describe('Transfer Lora Server v1 network to Lora Server v2', () => {
 
   before(async () => {
     await Promise.all([
-      Lora1.seedData(),
-      Lora2.seedData(),
+      seedData(),
       Lpwan.client.login({
         data: { login_username: 'admin', login_password: 'password' }
       })
@@ -39,9 +37,9 @@ describe('Transfer Lora Server v1 network to Lora Server v2', () => {
       network = {
         'name': 'transfer_lora_network_v1',
         'networkTypeId': networkTypeId,
-        'baseUrl': Lora1Network.baseUrl,
+        'baseUrl': Lora1.network.baseUrl,
         'networkProtocolId': protocolId,
-        'securityData': { authorized: false, ...Lora1Network.securityData }
+        'securityData': { authorized: false, ...Lora1.network.securityData }
       }
       const res = await Lpwan.client.create('networks', {}, { data: network })
       assert.strictEqual(res.status, 201)
@@ -115,8 +113,6 @@ describe('Transfer Lora Server v1 network to Lora Server v2', () => {
         assert.strictEqual(ns.skipFCntCheck, lora1Dev.skipFCntCheck)
         if (dev.name.includes('abp')) {
           const remoteDevAct = Lora1.cache.DeviceActivation.find(x => x.devEUI === ns.devEUI)
-          console.log(devNtl)
-          console.log(remoteDevAct)
           assert.strictEqual(ns.deviceActivation.devAddr, remoteDevAct.devAddr)
           assert.strictEqual(ns.deviceActivation.appSKey, remoteDevAct.appSKey)
           assert.strictEqual(ns.deviceActivation.fCntUp, remoteDevAct.fCntUp)
@@ -148,9 +144,9 @@ describe('Transfer Lora Server v1 network to Lora Server v2', () => {
       network = {
         'name': 'transfer_lora_network_v2',
         'networkTypeId': networkTypeId,
-        'baseUrl': Lora2Network.baseUrl,
+        'baseUrl': Lora2.network.baseUrl,
         'networkProtocolId': protocolId,
-        'securityData': { authorized: false, ...Lora2Network.securityData }
+        'securityData': { authorized: false, ...Lora2.network.securityData }
       }
       const res = await Lpwan.client.create('networks', {}, { data: network })
       assert.strictEqual(res.status, 201)

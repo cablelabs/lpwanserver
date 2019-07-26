@@ -244,6 +244,10 @@ module.exports = class LoraOpenSourceRestClient extends RestClient {
   }
 
   createDeviceMessage (network, id, body) {
+    const lens = R.lensPath(['deviceQueueItem', 'jsonData'])
+    if (typeof R.view(lens, body) === 'object') {
+      body = R.set(lens, JSON.stringify(R.view(lens, body)), body)
+    }
     const opts = { method: 'POST', url: `/devices/${id}/queue`, body }
     return this.request(network, opts)
   }

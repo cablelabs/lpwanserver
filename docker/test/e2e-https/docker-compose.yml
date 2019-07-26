@@ -15,6 +15,7 @@ services:
       - port=3200
       - config_file=config/dev.json
       - public_dir=public
+      - base_url=https://lpwanserver:3200
     volumes:
       - ../../../certs:/usr/src/app/certs
 

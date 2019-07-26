@@ -155,7 +155,7 @@ exports.initialize = function (app, server) {
     }
 
     // If the user is not part of the admin group...
-    if (modelAPI.companies.COMPANY_ADMIN !== req.company.type.id) {
+    if (req.company.type !== 'ADMIN') {
       // Did they specify the companyId?
       if (rec.companyId) {
         // It better match the company they are part of.
