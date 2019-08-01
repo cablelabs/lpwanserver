@@ -1,0 +1,32 @@
+{
+  "about": {
+    "About": [
+      "overview/overview",
+      "overview/features",
+      "overview/architecture"
+    ]
+  },
+  "docs": {
+    "Guides": [
+      "guides/getting-started"
+    ],
+    "Install": [
+      "install/requirements",
+      "install/download",
+      "install/run",
+      "install/configuration",
+      "install/build",
+      "install/deployment"
+    ],
+    "Using the Web Client": [
+      "ui/users",
+      "ui/networks",
+      "ui/devices"
+    ],
+    "Extensions": [
+      "extensions/overview",
+      "extensions/network-type",
+      "extensions/existing"
+    ]
+  }
+}
