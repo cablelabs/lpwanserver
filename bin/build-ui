@@ -1,6 +1,0 @@
-cd ../lpwanserver-web-client
-npm run build
-cd ../lpwanserver
-rm -rf public
-mkdir public
-mv ../lpwanserver-web-client/build/* public
