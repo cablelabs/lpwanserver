@@ -1,0 +1,120 @@
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>Device Management · LPWAN Server</title><meta name="viewport" content="width=device-width"/><meta name="generator" content="Docusaurus"/><meta name="description" content="## Application Management"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="Device Management · LPWAN Server"/><meta property="og:type" content="website"/><meta property="og:url" content="https://cablelabs.github.io/lpwanserver/"/><meta property="og:description" content="## Application Management"/><meta property="og:image" content="https://cablelabs.github.io/lpwanserver/img/undraw_online.svg"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://cablelabs.github.io/lpwanserver/img/undraw_tweetstorm.svg"/><link rel="shortcut icon" href="/lpwanserver/img/favicon.png"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script src="/lpwanserver/js/scrollSpy.js"></script><link rel="stylesheet" href="/lpwanserver/css/main.css"/><script src="/lpwanserver/js/codetabs.js"></script></head><body class="sideNavVisible separateOnPageNav"><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/lpwanserver/"><h2 class="headerTitle">LPWAN Server</h2></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/lpwanserver/docs/overview/overview" target="_self">About</a></li><li class="siteNavGroupActive"><a href="/lpwanserver/docs/guides/getting-started" target="_self">Docs</a></li><li class=""><a href="/lpwanserver/rest-api" target="_self">API</a></li><li class=""><a href="https://forum.lpwanserver.com" target="_self">Forum</a></li></ul></nav></div></header></div></div><div class="navPusher"><div class="docMainWrapper wrapper"><div class="docsNavContainer" id="docsNav"><nav class="toc"><div class="toggleNav"><section class="navWrapper wrapper"><div class="navBreadcrumb wrapper"><div class="navToggle" id="navToggler"><div class="hamburger-menu"><div class="line1"></div><div class="line2"></div><div class="line3"></div></div></div><h2><i>›</i><span>Using the Web Client</span></h2><div class="tocToggler" id="tocToggler"><i class="icon-toc"></i></div></div><div class="navGroups"><div class="navGroup"><h3 class="navGroupCategoryTitle">Guides</h3><ul class=""><li class="navListItem"><a class="navItem" href="/lpwanserver/docs/guides/getting-started">Getting Started</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Install</h3><ul class=""><li class="navListItem"><a class="navItem" href="/lpwanserver/docs/install/requirements">Requirements</a></li><li class="navListItem"><a class="navItem" href="/lpwanserver/docs/install/download">Download and Setup</a></li><li class="navListItem"><a class="navItem" href="/lpwanserver/docs/install/run">Run</a></li><li class="navListItem"><a class="navItem" href="/lpwanserver/docs/install/configuration">Configuration</a></li><li class="navListItem"><a class="navItem" href="/lpwanserver/docs/install/build">Build</a></li><li class="navListItem"><a class="navItem" href="/lpwanserver/docs/install/deployment">Deployment</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Using the Web Client</h3><ul class=""><li class="navListItem"><a class="navItem" href="/lpwanserver/docs/ui/users">Users and Authentication</a></li><li class="navListItem"><a class="navItem" href="/lpwanserver/docs/ui/networks">Networks</a></li><li class="navListItem navListItemActive"><a class="navItem" href="/lpwanserver/docs/ui/devices">Device Management</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Extensions</h3><ul class=""><li class="navListItem"><a class="navItem" href="/lpwanserver/docs/extensions/overview">Overview</a></li><li class="navListItem"><a class="navItem" href="/lpwanserver/docs/extensions/network-type">Network Type Extensions</a></li><li class="navListItem"><a class="navItem" href="/lpwanserver/docs/extensions/existing">Existing Extensions</a></li></ul></div></div></section></div><script>
+            var coll = document.getElementsByClassName('collapsible');
+            var checkActiveCategory = true;
+            for (var i = 0; i < coll.length; i++) {
+              var links = coll[i].nextElementSibling.getElementsByTagName('*');
+              if (checkActiveCategory){
+                for (var j = 0; j < links.length; j++) {
+                  if (links[j].classList.contains('navListItemActive')){
+                    coll[i].nextElementSibling.classList.toggle('hide');
+                    coll[i].childNodes[1].classList.toggle('rotate');
+                    checkActiveCategory = false;
+                    break;
+                  }
+                }
+              }
+
+              coll[i].addEventListener('click', function() {
+                var arrow = this.childNodes[1];
+                arrow.classList.toggle('rotate');
+                var content = this.nextElementSibling;
+                content.classList.toggle('hide');
+              });
+            }
+
+            document.addEventListener('DOMContentLoaded', function() {
+              createToggler('#navToggler', '#docsNav', 'docsSliderActive');
+              createToggler('#tocToggler', 'body', 'tocActive');
+
+              var headings = document.querySelector('.toc-headings');
+              headings && headings.addEventListener('click', function(event) {
+                var el = event.target;
+                while(el !== headings){
+                  if (el.tagName === 'A') {
+                    document.body.classList.remove('tocActive');
+                    break;
+                  } else{
+                    el = el.parentNode;
+                  }
+                }
+              }, false);
+
+              function createToggler(togglerSelector, targetSelector, className) {
+                var toggler = document.querySelector(togglerSelector);
+                var target = document.querySelector(targetSelector);
+
+                if (!toggler) {
+                  return;
+                }
+
+                toggler.onclick = function(event) {
+                  event.preventDefault();
+
+                  target.classList.toggle(className);
+                };
+              }
+            });
+        </script></nav></div><div class="container mainContainer"><div class="wrapper"><div class="post"><header class="postHeader"><h1 class="postHeaderTitle">Device Management</h1></header><article><div><span><h2><a class="anchor" aria-hidden="true" id="application-management"></a><a href="#application-management" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Application Management</h2>
+<p>Applications are used to group devices together that serve essentially the
+same purpose.  Data is collected from devices connecting to the various
+Networks, and then sent to the Application Vendor using the Reporting
+Protocol defined.</p>
+<p>When you first log in to the <strong>LPWAN Server UI</strong>, the Home screen is displayed.
+This is a &quot;tabbed&quot; screen with the default being the &quot;Applications&quot; tab.  This
+tab will show Applications defined for the company.  If you have navigated away
+from this screen, click the &quot;Home&quot; breadcrumb to return.</p>
+<p>Users who are part of an &quot;Admin&quot; company will see Applications from all
+companies.  Applications can be limited by selecting a company name from the
+selection list above the list.</p>
+<p>Note that the Application list includes whether the Application is running (data
+collected from devices will be sent to the application's server), as well as a
+button to Start or Stop the application.</p>
+<p>To get details on an Application, click on its name.  This will show a tabbed
+view, with the first tab showing a list of the Devices linked to the
+Application.  The second tab, labeled &quot;Application details&quot; will show the
+Application's settings: the name, the URL to send data to, the Reporting
+Protocol to be used, and the available Network Types that the Application
+supports, with any Network Type-specific data for the selected Network Types.
+Clicking &quot;CREATE APPLICATION&quot; on the Home screen with allow entry of the
+same information for a new Application.</p>
+<hr>
+<p><img src="/img/ui_application.png" alt="Application Form" width="100%" /></p>
+<h2><a class="anchor" aria-hidden="true" id="device-profile-management"></a><a href="#device-profile-management" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Device Profile Management</h2>
+<p>A Device Profile is used to define the settings for a given set of devices on a
+given Network Type.  The idea is that most Applications will support some number
+of Devices that all require the same settings for a given Network Type.  By
+using a common Device Profile, configuring new Devices is relatively easy.</p>
+<p>Further, Device Profiles are defined for a Company, so Devices may be used for
+multiple Applications, but use the same Device Profile (e.g., Company WheresMy
+has a GPS tracker that they use for their &quot;Where's Fido?&quot; Application and
+&quot;Where'd I Park My Car?&quot; Application, both using the NB-IoT Device Profile named
+&quot;NB-IoT GPS Device&quot;).</p>
+<p>The Home screen has a tab for managing Device Profiles for the company.  This
+tab lists the Device Profiles for the logged-in user's company, or all Device
+Profiles from all companies for system administrators (can be limited by the
+company selection list).</p>
+<p>To get details on an User, click on the username.  To create new user, click the
+&quot;CREATE USER&quot; button.</p>
+<p>The fields of a Device Profile are almost entirely defined by the Network Type
+that the Device Profile is created for.  The only exception as of this writing
+is the name.</p>
+<p>Note that a Device Profile is only valid for a single NetworkType.  Therefore,
+the selection of the NetworkType is managed through radio buttons rather than
+checkboxes.</p>
+<hr>
+<p><img src="/img/ui_device_profile.png" alt="Device Profile Form" width="100%" /></p>
+<h2><a class="anchor" aria-hidden="true" id="device-management"></a><a href="#device-management" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Device Management</h2>
+<p>Devices are the IoT Devices provided by the Application Vendor that provide the
+data used by the Application.</p>
+<p>Devices are listed under the Application to which they &quot;belong&quot;.  Navigate to
+the Applications list, and click on the Application's name to see the Devices
+associated with it.</p>
+<p>To update a Device, click on its name in the list.  To create a new device,
+click the &quot;CREATE DEVICE&quot; button on the listing page.</p>
+<p>Devices have a name to identify them in the list, and a Model number (for
+reference).  When a Network Type for the device is enabled by check its checkbox,
+the user specifies the Network type-specific data along with the Device Profile
+for the Network Type.</p>
+<hr>
+<p><img src="/img/ui_device.png" alt="Device Form" width="100%" /></p>
+</span></div></article></div><div class="docs-prevnext"><a class="docs-prev button" href="/lpwanserver/docs/ui/networks"><span class="arrow-prev">← </span><span>Networks</span></a><a class="docs-next button" href="/lpwanserver/docs/extensions/overview"><span>Overview</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#application-management">Application Management</a></li><li><a href="#device-profile-management">Device Profile Management</a></li><li><a href="#device-management">Device Management</a></li></ul></nav></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/lpwanserver/" class="nav-home"><img src="/lpwanserver/img/favicon.png" alt="LPWAN Server" width="66" height="58"/></a><div><h5>Docs</h5><a href="/lpwanserver/docs/en/guides/getting-started">Getting Started</a><a href="/lpwanserver/rest-api">API Reference</a></div><div><h5>Community</h5><a href="https://forum.lpwanserver.com" target="_blank" rel="noreferrer noopener">Forum</a></div><div><h5>More</h5><a href="https://github.com/cablelabs/lpwanserver">GitHub</a><a class="github-button" href="https://github.com/cablelabs/lpwanserver" data-icon="octicon-star" data-count-href="/cablelabs/lpwanserver/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star this project on GitHub">Star</a></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/lpwanserver/img/cablelabs_logo_white.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright">Copyright © 2019 CableLabs</section></footer></div></body></html>

@@ -1,0 +1,108 @@
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>Configuration · LPWAN Server</title><meta name="viewport" content="width=device-width"/><meta name="generator" content="Docusaurus"/><meta name="description" content="## LPWAN Server"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="Configuration · LPWAN Server"/><meta property="og:type" content="website"/><meta property="og:url" content="https://cablelabs.github.io/lpwanserver/"/><meta property="og:description" content="## LPWAN Server"/><meta property="og:image" content="https://cablelabs.github.io/lpwanserver/img/undraw_online.svg"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://cablelabs.github.io/lpwanserver/img/undraw_tweetstorm.svg"/><link rel="shortcut icon" href="/lpwanserver/img/favicon.png"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script src="/lpwanserver/js/scrollSpy.js"></script><link rel="stylesheet" href="/lpwanserver/css/main.css"/><script src="/lpwanserver/js/codetabs.js"></script></head><body class="sideNavVisible separateOnPageNav"><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/lpwanserver/"><h2 class="headerTitle">LPWAN Server</h2></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/lpwanserver/docs/overview/overview" target="_self">About</a></li><li class="siteNavGroupActive"><a href="/lpwanserver/docs/guides/getting-started" target="_self">Docs</a></li><li class=""><a href="/lpwanserver/rest-api" target="_self">API</a></li><li class=""><a href="https://forum.lpwanserver.com" target="_self">Forum</a></li></ul></nav></div></header></div></div><div class="navPusher"><div class="docMainWrapper wrapper"><div class="docsNavContainer" id="docsNav"><nav class="toc"><div class="toggleNav"><section class="navWrapper wrapper"><div class="navBreadcrumb wrapper"><div class="navToggle" id="navToggler"><div class="hamburger-menu"><div class="line1"></div><div class="line2"></div><div class="line3"></div></div></div><h2><i>›</i><span>Install</span></h2><div class="tocToggler" id="tocToggler"><i class="icon-toc"></i></div></div><div class="navGroups"><div class="navGroup"><h3 class="navGroupCategoryTitle">Guides</h3><ul class=""><li class="navListItem"><a class="navItem" href="/lpwanserver/docs/guides/getting-started">Getting Started</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Install</h3><ul class=""><li class="navListItem"><a class="navItem" href="/lpwanserver/docs/install/requirements">Requirements</a></li><li class="navListItem"><a class="navItem" href="/lpwanserver/docs/install/download">Download and Setup</a></li><li class="navListItem"><a class="navItem" href="/lpwanserver/docs/install/run">Run</a></li><li class="navListItem navListItemActive"><a class="navItem" href="/lpwanserver/docs/install/configuration">Configuration</a></li><li class="navListItem"><a class="navItem" href="/lpwanserver/docs/install/build">Build</a></li><li class="navListItem"><a class="navItem" href="/lpwanserver/docs/install/deployment">Deployment</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Using the Web Client</h3><ul class=""><li class="navListItem"><a class="navItem" href="/lpwanserver/docs/ui/users">Users and Authentication</a></li><li class="navListItem"><a class="navItem" href="/lpwanserver/docs/ui/networks">Networks</a></li><li class="navListItem"><a class="navItem" href="/lpwanserver/docs/ui/devices">Device Management</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Extensions</h3><ul class=""><li class="navListItem"><a class="navItem" href="/lpwanserver/docs/extensions/overview">Overview</a></li><li class="navListItem"><a class="navItem" href="/lpwanserver/docs/extensions/network-type">Network Type Extensions</a></li><li class="navListItem"><a class="navItem" href="/lpwanserver/docs/extensions/existing">Existing Extensions</a></li></ul></div></div></section></div><script>
+            var coll = document.getElementsByClassName('collapsible');
+            var checkActiveCategory = true;
+            for (var i = 0; i < coll.length; i++) {
+              var links = coll[i].nextElementSibling.getElementsByTagName('*');
+              if (checkActiveCategory){
+                for (var j = 0; j < links.length; j++) {
+                  if (links[j].classList.contains('navListItemActive')){
+                    coll[i].nextElementSibling.classList.toggle('hide');
+                    coll[i].childNodes[1].classList.toggle('rotate');
+                    checkActiveCategory = false;
+                    break;
+                  }
+                }
+              }
+
+              coll[i].addEventListener('click', function() {
+                var arrow = this.childNodes[1];
+                arrow.classList.toggle('rotate');
+                var content = this.nextElementSibling;
+                content.classList.toggle('hide');
+              });
+            }
+
+            document.addEventListener('DOMContentLoaded', function() {
+              createToggler('#navToggler', '#docsNav', 'docsSliderActive');
+              createToggler('#tocToggler', 'body', 'tocActive');
+
+              var headings = document.querySelector('.toc-headings');
+              headings && headings.addEventListener('click', function(event) {
+                var el = event.target;
+                while(el !== headings){
+                  if (el.tagName === 'A') {
+                    document.body.classList.remove('tocActive');
+                    break;
+                  } else{
+                    el = el.parentNode;
+                  }
+                }
+              }, false);
+
+              function createToggler(togglerSelector, targetSelector, className) {
+                var toggler = document.querySelector(togglerSelector);
+                var target = document.querySelector(targetSelector);
+
+                if (!toggler) {
+                  return;
+                }
+
+                toggler.onclick = function(event) {
+                  event.preventDefault();
+
+                  target.classList.toggle(className);
+                };
+              }
+            });
+        </script></nav></div><div class="container mainContainer"><div class="wrapper"><div class="post"><header class="postHeader"><h1 class="postHeaderTitle">Configuration</h1></header><article><div><span><h2><a class="anchor" aria-hidden="true" id="lpwan-server"></a><a href="#lpwan-server" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>LPWAN Server</h2>
+<h3><a class="anchor" aria-hidden="true" id="configuration-options"></a><a href="#configuration-options" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Configuration Options</h3>
+<p>The configuration options for the REST server are specified in the <code>config</code>
+folder.  The configuration parameters are documented as a JSON Schema in the
+file <code>config/schema.json</code>.  Note that as new versions of this software are made available,
+the administrator is expected to keep the configuration up-to-date.</p>
+<p>You can make a file to hold a group of configuration settings.  See <code>config/dev.json</code>.
+Use the <code>config_file</code> environment variable to point to that file.   The environment variable
+to point to the example above would be <code>config_file=config/dev.json</code>.</p>
+<h3><a class="anchor" aria-hidden="true" id="environment-variables"></a><a href="#environment-variables" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Environment Variables</h3>
+<p>All top-level config settings can be overridden by an environment variable with the same name.</p>
+<h3><a class="anchor" aria-hidden="true" id="file-paths"></a><a href="#file-paths" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>File paths</h3>
+<p>All file paths in the configuration can be either absolute or relative to the root
+of the repository.  If the first character is <code>/</code>, the path will be regarded
+as absolute.</p>
+<h3><a class="anchor" aria-hidden="true" id="cors"></a><a href="#cors" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>CORS</h3>
+<p>Part of the configuration setup includes
+setting the CORS (Cross-Origin Resource Sharing) whitelist.  The whitelist
+must allow access from the URL from which the UI is being served, as well as any
+other applications using the REST Server.</p>
+<h3><a class="anchor" aria-hidden="true" id="security-tls"></a><a href="#security-tls" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Security / TLS</h3>
+<p>LPWAN Server identifies IP devices via x.509 client certificates, so the Node.js server
+must be configured with a TLS key/certificate pair.  Future versions may support terminating
+the TLS connection at a reverse proxy if a convention can be established for passing
+the client certificate from the proxy to the server.</p>
+<p>To configure the LPWAN Server with your TLS key/certificate pair, choose a strategy for
+making your TLS files available from within the docker container.  You could use a volume,
+a bind mount, docker secrets, or some other method.  Then, point to those files via the
+provided configuration settings.</p>
+<h4><a class="anchor" aria-hidden="true" id="self-signed-certificate"></a><a href="#self-signed-certificate" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Self-signed certificate</h4>
+<p>The <a href="download">Download and Setup page</a>
+has commands for generating self-signed certificates for development.</p>
+<h4><a class="anchor" aria-hidden="true" id="lets-encrypt"></a><a href="#lets-encrypt" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Let's Encrypt</h4>
+<p><a href="https://letsencrypt.org/">Let's Encrypt</a> is an option for getting free signed
+certificates for your server.</p>
+<p>For generating a certificate with <a href="https://letsencrypt.org/">Let's Encrypt</a>,
+first follow the <a href="https://letsencrypt.org/getting-started/">getting started</a>
+instructions. When the <code>letsencrypt</code> cli tool has been installed, execute:</p>
+<pre><code class="hljs css language-bash">letsencrypt certonly --standalone -d DOMAINNAME.HERE
+</code></pre>
+<h3><a class="anchor" aria-hidden="true" id="database"></a><a href="#database" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Database</h3>
+<p>LPWAN Server uses <a href="https://prisma.io">Prisma</a> for peristence.  Prisma sits in front
+of the actual database, and uses connectors.  Using Prisma's documentation
+as a guide, you can use any database supported by Prisma.  We use Postgresql.</p>
+<p>The Prisma CLI has commands for seeding data from JSON or importing Normalized Data Format.</p>
+<p><a href="https://www.prisma.io/docs/prisma-cli-and-configuration/data-import-and-export-jsw9/">Prisma docs on importing</a></p>
+<h2><a class="anchor" aria-hidden="true" id="web-client"></a><a href="#web-client" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Web Client</h2>
+<p>The LPWAN Server serves the default web client.  To disable this, set the <code>public_dir</code>
+configuration variable to an empty string.</p>
+<p>For build-time configuration of web-client assets, configuration options are in the <code>.env</code> file at the
+root of <code>lpwanserver-web-client</code>.  These can be overridden by build-time environment variables.</p>
+</span></div></article></div><div class="docs-prevnext"><a class="docs-prev button" href="/lpwanserver/docs/install/run"><span class="arrow-prev">← </span><span>Run</span></a><a class="docs-next button" href="/lpwanserver/docs/install/build"><span>Build</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#lpwan-server">LPWAN Server</a><ul class="toc-headings"><li><a href="#configuration-options">Configuration Options</a></li><li><a href="#environment-variables">Environment Variables</a></li><li><a href="#file-paths">File paths</a></li><li><a href="#cors">CORS</a></li><li><a href="#security-tls">Security / TLS</a></li><li><a href="#database">Database</a></li></ul></li><li><a href="#web-client">Web Client</a></li></ul></nav></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/lpwanserver/" class="nav-home"><img src="/lpwanserver/img/favicon.png" alt="LPWAN Server" width="66" height="58"/></a><div><h5>Docs</h5><a href="/lpwanserver/docs/en/guides/getting-started">Getting Started</a><a href="/lpwanserver/rest-api">API Reference</a></div><div><h5>Community</h5><a href="https://forum.lpwanserver.com" target="_blank" rel="noreferrer noopener">Forum</a></div><div><h5>More</h5><a href="https://github.com/cablelabs/lpwanserver">GitHub</a><a class="github-button" href="https://github.com/cablelabs/lpwanserver" data-icon="octicon-star" data-count-href="/cablelabs/lpwanserver/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star this project on GitHub">Star</a></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/lpwanserver/img/cablelabs_logo_white.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright">Copyright © 2019 CableLabs</section></footer></div></body></html>

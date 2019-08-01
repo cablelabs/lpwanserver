@@ -1,0 +1,122 @@
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>Network Type Extensions · LPWAN Server</title><meta name="viewport" content="width=device-width"/><meta name="generator" content="Docusaurus"/><meta name="description" content="Network Types seem very easy to add.  Go into the UI as a System Administrator,"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="Network Type Extensions · LPWAN Server"/><meta property="og:type" content="website"/><meta property="og:url" content="https://cablelabs.github.io/lpwanserver/"/><meta property="og:description" content="Network Types seem very easy to add.  Go into the UI as a System Administrator,"/><meta property="og:image" content="https://cablelabs.github.io/lpwanserver/img/undraw_online.svg"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://cablelabs.github.io/lpwanserver/img/undraw_tweetstorm.svg"/><link rel="shortcut icon" href="/lpwanserver/img/favicon.png"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script src="/lpwanserver/js/scrollSpy.js"></script><link rel="stylesheet" href="/lpwanserver/css/main.css"/><script src="/lpwanserver/js/codetabs.js"></script></head><body class="sideNavVisible separateOnPageNav"><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/lpwanserver/"><h2 class="headerTitle">LPWAN Server</h2></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/lpwanserver/docs/overview/overview" target="_self">About</a></li><li class="siteNavGroupActive"><a href="/lpwanserver/docs/guides/getting-started" target="_self">Docs</a></li><li class=""><a href="/lpwanserver/rest-api" target="_self">API</a></li><li class=""><a href="https://forum.lpwanserver.com" target="_self">Forum</a></li></ul></nav></div></header></div></div><div class="navPusher"><div class="docMainWrapper wrapper"><div class="docsNavContainer" id="docsNav"><nav class="toc"><div class="toggleNav"><section class="navWrapper wrapper"><div class="navBreadcrumb wrapper"><div class="navToggle" id="navToggler"><div class="hamburger-menu"><div class="line1"></div><div class="line2"></div><div class="line3"></div></div></div><h2><i>›</i><span>Extensions</span></h2><div class="tocToggler" id="tocToggler"><i class="icon-toc"></i></div></div><div class="navGroups"><div class="navGroup"><h3 class="navGroupCategoryTitle">Guides</h3><ul class=""><li class="navListItem"><a class="navItem" href="/lpwanserver/docs/guides/getting-started">Getting Started</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Install</h3><ul class=""><li class="navListItem"><a class="navItem" href="/lpwanserver/docs/install/requirements">Requirements</a></li><li class="navListItem"><a class="navItem" href="/lpwanserver/docs/install/download">Download and Setup</a></li><li class="navListItem"><a class="navItem" href="/lpwanserver/docs/install/run">Run</a></li><li class="navListItem"><a class="navItem" href="/lpwanserver/docs/install/configuration">Configuration</a></li><li class="navListItem"><a class="navItem" href="/lpwanserver/docs/install/build">Build</a></li><li class="navListItem"><a class="navItem" href="/lpwanserver/docs/install/deployment">Deployment</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Using the Web Client</h3><ul class=""><li class="navListItem"><a class="navItem" href="/lpwanserver/docs/ui/users">Users and Authentication</a></li><li class="navListItem"><a class="navItem" href="/lpwanserver/docs/ui/networks">Networks</a></li><li class="navListItem"><a class="navItem" href="/lpwanserver/docs/ui/devices">Device Management</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Extensions</h3><ul class=""><li class="navListItem"><a class="navItem" href="/lpwanserver/docs/extensions/overview">Overview</a></li><li class="navListItem navListItemActive"><a class="navItem" href="/lpwanserver/docs/extensions/network-type">Network Type Extensions</a></li><li class="navListItem"><a class="navItem" href="/lpwanserver/docs/extensions/existing">Existing Extensions</a></li></ul></div></div></section></div><script>
+            var coll = document.getElementsByClassName('collapsible');
+            var checkActiveCategory = true;
+            for (var i = 0; i < coll.length; i++) {
+              var links = coll[i].nextElementSibling.getElementsByTagName('*');
+              if (checkActiveCategory){
+                for (var j = 0; j < links.length; j++) {
+                  if (links[j].classList.contains('navListItemActive')){
+                    coll[i].nextElementSibling.classList.toggle('hide');
+                    coll[i].childNodes[1].classList.toggle('rotate');
+                    checkActiveCategory = false;
+                    break;
+                  }
+                }
+              }
+
+              coll[i].addEventListener('click', function() {
+                var arrow = this.childNodes[1];
+                arrow.classList.toggle('rotate');
+                var content = this.nextElementSibling;
+                content.classList.toggle('hide');
+              });
+            }
+
+            document.addEventListener('DOMContentLoaded', function() {
+              createToggler('#navToggler', '#docsNav', 'docsSliderActive');
+              createToggler('#tocToggler', 'body', 'tocActive');
+
+              var headings = document.querySelector('.toc-headings');
+              headings && headings.addEventListener('click', function(event) {
+                var el = event.target;
+                while(el !== headings){
+                  if (el.tagName === 'A') {
+                    document.body.classList.remove('tocActive');
+                    break;
+                  } else{
+                    el = el.parentNode;
+                  }
+                }
+              }, false);
+
+              function createToggler(togglerSelector, targetSelector, className) {
+                var toggler = document.querySelector(togglerSelector);
+                var target = document.querySelector(targetSelector);
+
+                if (!toggler) {
+                  return;
+                }
+
+                toggler.onclick = function(event) {
+                  event.preventDefault();
+
+                  target.classList.toggle(className);
+                };
+              }
+            });
+        </script></nav></div><div class="container mainContainer"><div class="wrapper"><div class="post"><header class="postHeader"><h1 class="postHeaderTitle">Network Type Extensions</h1></header><article><div><span><p>Network Types seem very easy to add.  Go into the UI as a System Administrator,
+select the <em>Network/Network Types</em> menu item from the top menu, click the <em>Create Network Type</em> button, and give it a name.  That's it, right?</p>
+<p>No, not at all.</p>
+<p>A Network Type's name does little good on its own.  The strength of the Network
+Type is in its mapping of a set of data to the Network Protocols that would use
+that set of data.</p>
+<p>On this page, we will discuss the UI aspect of adding a new Network Type.  See
+<a href="/extensions/networkprotocols">Network Protocols</a> on the details of how to add
+a new Network Protocol.  We separate that topic out because while you could add
+a Network Protocol without a new Network Type (e.g., a new protocol for an
+existing Network Type to a new server API, or even a new sever API version),
+creating a new Network Type without a Network Protocol to use it is of no use
+to the system.</p>
+<h2><a class="anchor" aria-hidden="true" id="network-type-ui-customization"></a><a href="#network-type-ui-customization" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Network Type UI Customization</h2>
+<p>Data for a Network Type gets stored in the following LPWAN Server database
+records:</p>
+<ul>
+<li><p><strong>networks</strong> - Intended to keep any data used to access the remote network.
+This could range from username/password credentials to stored JWT tokens or
+more. (This data is encrypted by the server.)  The data is saved in the
+securityData field of the record in a JSON structure.  This record implies
+the existence of a remote network API server at the baseURL in the main data
+of the record.</p></li>
+<li><p><strong>companyNetworkTypeLinks</strong> - Intended to keep any data required for the
+company on remote networks of the type.  The Network Type-specific data is
+kept in the networkSettings field of the database record in a JSON structure.
+Existence of this record implies the existence of the company on the remote
+networks of the type.</p></li>
+<li><p><strong>applicationNetworkTypeLinks</strong> - Intended to keep the data required for an
+application on the remote networks of the type.  The Network Type-specific
+data is kept in the networkSettings field of the database record in a JSON
+structure.  Existence of this record implies the existence of the application
+on the remote networks of the type.</p></li>
+<li><p><strong>deviceNetworkTypeLinks</strong> - Intended to keep the data required for a device
+on the remote networks of the type.  The Network Type-specific data is kept
+in the networkSettings field of the database record in a JSON structure.
+Existence of this record implies the existence of the device on the remote
+networks of the type.  Note that these device records reference Device
+Profiles.</p></li>
+<li><p><strong>deviceProfiles</strong> - Intended to consolidate device configuration settings for
+a Network Type so they do not need to be reentered for each device of the same
+manufacture.  A deviceNetworkTypeLink will point to a deviceProfile.  Some
+remote network APIs may or may not support the concept, but that is left to
+the implementor of the Network Protocol.  The Network Type-specific data is
+kept in the networkSettings field of the database record in a JSON
+structure.</p></li>
+</ul>
+<p>The UI for these records appears on the screens for the more general data
+entry.  For example, at the bottom of the Application data entry screens, there
+is a list of available Network Types for the application.  Clicking the
+checkbox controls the creation of the applicationNetworkTypeLinks record for
+that Network Type, and exposes (or hides) the custom UI for that type.  That UI
+code is responsible for populating the networkSettings field with the data
+required for an Application of that Network Type.</p>
+<p>In order to add the UI Customization for a Network Type, React UI code is
+written and added to the codebase.  Within the LPWAN Server UI source code,
+there is a directory <code>ui/src/views/NetworkCustomizations</code>.  Within that
+directory, there is a <code>README.txt</code> file that explains the extension process in
+detail.  However, the general idea is that for each Network Type, there is a
+subdirectory of the same name as the Network Type which contains the React UI
+code for each data type mentioned above: network.js, company.js, application.js,
+device.js, and deviceProfile.js.</p>
+<p>Note that later changes to the Customized UI code that alter, add, or remove
+data will likely require changes to the Network Protocols code in the REST
+Server.</p>
+</span></div></article></div><div class="docs-prevnext"><a class="docs-prev button" href="/lpwanserver/docs/extensions/overview"><span class="arrow-prev">← </span><span>Overview</span></a><a class="docs-next button" href="/lpwanserver/docs/extensions/existing"><span>Existing Extensions</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#network-type-ui-customization">Network Type UI Customization</a></li></ul></nav></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/lpwanserver/" class="nav-home"><img src="/lpwanserver/img/favicon.png" alt="LPWAN Server" width="66" height="58"/></a><div><h5>Docs</h5><a href="/lpwanserver/docs/en/guides/getting-started">Getting Started</a><a href="/lpwanserver/rest-api">API Reference</a></div><div><h5>Community</h5><a href="https://forum.lpwanserver.com" target="_blank" rel="noreferrer noopener">Forum</a></div><div><h5>More</h5><a href="https://github.com/cablelabs/lpwanserver">GitHub</a><a class="github-button" href="https://github.com/cablelabs/lpwanserver" data-icon="octicon-star" data-count-href="/cablelabs/lpwanserver/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star this project on GitHub">Star</a></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/lpwanserver/img/cablelabs_logo_white.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright">Copyright © 2019 CableLabs</section></footer></div></body></html>
