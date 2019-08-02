@@ -44,7 +44,7 @@ LPWAN Server uses [Docusaurus](https://docusaurus.io) for documentation.
 The `docs` folder contains the content of the documentation.  The branch
 `website` also contains the docs folder, along with the documentation website
 code. The website is built and committed to the `gh-pages` branch to be published
-at https://cablelabs.github.io/lpwanserver.  The instructions for updating and
+at <https://cablelabs.github.io/lpwanserver>.  The instructions for updating and
 publishing the website are in the `README` of the `website` branch.
 
 ## Contributing
