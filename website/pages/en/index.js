@@ -139,7 +139,7 @@ class Index extends React.Component {
         {[
           {
             content:
-              'There are many solutions available to enable an LPWAN, including LoRaWAN, 3GPP and Weightless. ' +
+              'There are many solutions available to enable an LPWAN, including LoRaWAN, 3GPP and Sigfox. ' +
               'Each solution has it\'s strengths, and we believe no one LPWAN technology will fully own this IoT space. ' +
               'Within each solution there can be many different APIs based on the implementation; however, most LPWAN ' +
               'solutions provide a very similar set of functionality. LPWAN Server exists to simplify your IoT application ' +
