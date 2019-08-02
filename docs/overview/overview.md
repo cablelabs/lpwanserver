@@ -40,7 +40,7 @@ technologies to enable this routing of traffic across multiple LPWAN
 technologies.
 
 <img
-  src="/img/architecture_high_level.png"
+  src="https://cablelabs.github.io/lpwanserver/img/architecture_high_level.png"
   alt="Overview" width="100%"
   style="margin:32px 0"
 />
