@@ -9,8 +9,8 @@ info:
   title: LPWAN Server
   termsOfService: ''
   contact:
-    email: d.malas@cablelabs.com
-    name: Darly Malas
+    email: n.baroni@cablelabs.com
+    name: Nick Baroni
   license:
     name: Apache 2.0
     url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
@@ -20,14 +20,93 @@ securitySchemes:
     scheme: bearer
     bearerFormat: JWT
 tags:
-  - name: Session
-    description: Operations about session
-  - name: User
-    description: Operations about user
+  - name: Application
+    description: An Application is a grouping of devices that share data reporting configuration.
+  - name: ApplicationNetworkTypeLink
+    description: An ApplicationNetworkTypeLink enables an Application for a NetworkType.  These records also store Application configuration for the NetworkType.
   - name: Company
-    description: Operations about company
+    description: A Company is a grouping of Users.  Companies also have an ownership relationship with other entities, such as Applications.
+  - name: CompanyNetworkTypeLink
+    description: A CompanyNetworkTypeLink enables links a company's entities and a NetworkType.
+  - name: Device
+    description: A Device represents a physical device.
+  - name: DeviceNetworkTypeLink
+    description: A DeviceNetworkTypeLink enables a Device for a NetworkType.  These records also store Device configuration for a the NetworkType.
+  - name: DeviceProfile
+    description: A DeviceProfile profiles a type of device for a specific NetworkType.  These records store configuration for Devices in regards to the NetworkType.
+  - name: Network
+    description: A Network represents a remote IoT network, such as an instance of LoRa Server.
+  - name: NetworkProtocol
+    description: A NetworkProtocol wraps the API used by LPWAN Server to communicate with Networks.  A NeworkProtocol references the code that communicates with the remote network.
+  - name: NetworkProvider
+    description: A NetworkProvider identifies who hosts/provides a Network.
+  - name: NetworkType
+    description: A NetworkType represents an LPWAN type, such as LoRa or IP (3GPP).
   - name: PasswordPolicy
+    description: PasswordPolicies are used by companies to enforce password requirements on their users.
+  - name: ReportingProtocol
+    description: ReportingProtocols are used by the Application to forward data from the devices to the IoT application server.
+  - name: Session
+    description: Session endpoints allow for the management of User authentication.
+  - name: User
+    description: A user of the system
 paths:
+  /api/applications:
+    $ref: 'endpoints/application.yml#/paths/~1api~1applications'
+  /api/applications/{id}:
+    $ref: 'endpoints/application.yml#/paths/~1api~1applications~1{id}'
+  /api/applicationNetworkTypeLinks:
+    $ref: 'endpoints/application-network-type-link.yml#/paths/~1api~1applicationNetworkTypeLinks'
+  /api/applicationNetworkTypeLinks/{id}:
+    $ref: 'endpoints/application-network-type-link.yml#/paths/~1api~1applicationNetworkTypeLinks~1{id}'
+  /api/companies:
+    $ref: 'endpoints/company.yml#/paths/~1api~1companies'
+  /api/companies/{id}:
+    $ref: 'endpoints/company.yml#/paths/~1api~1companies~1{id}'
+  /api/companyNetworkTypeLinks:
+    $ref: 'endpoints/company-network-type-link.yml#/paths/~1api~1companyNetworkTypeLinks'
+  /api/companyNetworkTypeLinks/{id}:
+    $ref: 'endpoints/company-network-type-link.yml#/paths/~1api~1companyNetworkTypeLinks~1{id}'
+  /api/devices:
+    $ref: 'endpoints/device.yml#/paths/~1api~1devices'
+  /api/devices/{id}:
+    $ref: 'endpoints/device.yml#/paths/~1api~1devices~1{id}'
+  /api/deviceNetworkTypeLinks:
+    $ref: 'endpoints/device-network-type-link.yml#/paths/~1api~1deviceNetworkTypeLinks'
+  /api/deviceNetworkTypeLinks/{id}:
+    $ref: 'endpoints/device-network-type-link.yml#/paths/~1api~1deviceNetworkTypeLinks~1{id}'
+  /api/deviceProfiles:
+    $ref: 'endpoints/device-profile.yml#/paths/~1api~1deviceProfiles'
+  /api/deviceProfiles/{id}:
+    $ref: 'endpoints/device-profile.yml#/paths/~1api~1deviceProfiles~1{id}'
+  /api/networks:
+    $ref: 'endpoints/network.yml#/paths/~1api~1networks'
+  /api/networks/{id}:
+    $ref: 'endpoints/network.yml#/paths/~1api~1networks~1{id}'
+  /api/networkProtocols:
+    $ref: 'endpoints/network-protocol.yml#/paths/~1api~1networkProtocols'
+  /api/networkProtocols/{id}:
+    $ref: 'endpoints/network-protocol.yml#/paths/~1api~1networkProtocols~1{id}'
+  /api/networkProtocolHandlers:
+    $ref: 'endpoints/network-protocol.yml#/paths/~1api~1networkProtocolHandlers'
+  /api/networkProviders:
+    $ref: 'endpoints/network-provider.yml#/paths/~1api~1networkProviders'
+  /api/networkProviders/{id}:
+    $ref: 'endpoints/network-provider.yml#/paths/~1api~1networkProviders~1{id}'
+  /api/networkTypes:
+    $ref: 'endpoints/network-type.yml#/paths/~1api~1networkTypes'
+  /api/networkTypes/{id}:
+    $ref: 'endpoints/network-type.yml#/paths/~1api~1networkTypes~1{id}'
+  /api/passwordPolicies:
+    $ref: 'endpoints/password-policy.yml#/paths/~1api~1passwordPolicies'
+  /api/passwordPolicies/{id}:
+    $ref: 'endpoints/password-policy.yml#/paths/~1api~1passwordPolicies~1{id}'
+  /api/reportingProtocols:
+    $ref: 'endpoints/reporting-protocol.yml#/paths/~1api~1reportingProtocols'
+  /api/reportingProtocols/{id}:
+    $ref: 'endpoints/reporting-protocol.yml#/paths/~1api~1reportingProtocols~1{id}'
+  /api/reportingProtocolHandlers:
+    $ref: 'endpoints/reporting-protocol.yml#/paths/~1api~1reportingProtocolHandlers'
   /api/sessions:
     $ref: 'endpoints/session.yml#/paths/~1api~1sessions'
   /api/users:
@@ -38,10 +117,6 @@ paths:
     $ref: 'endpoints/user.yml#/paths/~1api~1users~1me'
   /api/users/verifyEmail/{uuid}:
     $ref: 'endpoints/user.yml#/paths/~1api~1users~1verifyEmail~1{uuid}'
-  /api/companies:
-    $ref: 'endpoints/company.yml#/paths/~1api~1companies'
-  /api/companies/{id}:
-    $ref: 'endpoints/company.yml#/paths/~1api~1companies~1{id}'
 components:
   parameters:
     idParam:
@@ -69,6 +144,13 @@ components:
       schema:
         type: integer
         format: int32
+    nameSearch:
+      name: search
+      in: query
+      description: Search for a string within name
+      required: false
+      schema:
+        type: string
   schemas:
     ResourceCreatedResponse:
       type: object
@@ -87,5 +169,5 @@ components:
           type: integer
           format: int32
         records:
-          type: Array
+          type: array
           default: []

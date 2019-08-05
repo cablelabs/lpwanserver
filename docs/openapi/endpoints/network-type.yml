@@ -1,25 +1,25 @@
 openapi: 3.0.0
 info:
   version: 1.2.1
-  title: An include file to define Company endpoints
+  title: An include file to define NetworkType endpoints
   license:
     name: Apache 2.0
 paths:
-  /api/companies:
+  /api/networkTypes:
     post:
-      operationId: createCompany
-      summary: Create a Company
-      description: Create a Company, available only to system administrators
+      operationId: createNetworkType
+      summary: Create a NetworkType
+      description: Create a NetworkType, available only to system administrators
       parameters: []
       security:
         - bearer_token: []
       tags:
-        - Company
+        - NetworkType
       requestBody:
-        $ref: '#/components/requestBodies/CreateCompanyInput'
+        $ref: '#/components/requestBodies/CreateNetworkTypeInput'
       responses:
         '200':
-          description: Company created
+          description: NetworkType created
           content:
             application/json:
               schema:
@@ -29,9 +29,9 @@ paths:
         '400':
           description: Bad request
     get:
-      operationId: listCompanies
-      summary: List Companies
-      description: List Companies, restricted according to authenticated user
+      operationId: listNetworkTypes
+      summary: List NetworkTypes
+      description: List NetworkTypes, available only to system administrators
       parameters:
         - $ref: '../api.yml#/components/parameters/offsetParam'
         - $ref: '../api.yml#/components/parameters/limitParam'
@@ -39,97 +39,94 @@ paths:
       security:
         - bearer_token: []
       tags:
-        - Company
+        - NetworkType
       responses:
         '200':
           description: Query response with totalCount and list of records
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ListCompanyResponse'
+                $ref: '#/components/schemas/ListNetworkTypeResponse'
         '403':
           description: Authenticated user not allowed to perform this operation
         '400':
           description: Bad request
-  /api/companies/{id}:
+  /api/networkTypes/{id}:
     parameters:
       - $ref: '../api.yml#/components/parameters/idParam'
     get:
-      operationId: loadCompany
-      summary: Get Company
-      description: Get Company
+      operationId: loadNetworkType
+      summary: Get NetworkType
+      description: Get NetworkType
       parameters: []
       security:
         - bearer_token: []
       tags:
-        - Company
+        - NetworkType
       responses:
         '200':
-          description: Company record
+          description: NetworkType record
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CompanyResponse'
+                $ref: '#/components/schemas/NetworkTypeResponse'
         '403':
           description: Authenticated user not allowed to perform this operation
         '404':
-          description: Company not found
+          description: NetworkType not found
     put:
-      operationId: updateCompany
-      summary: Update Company
-      description: Update Company, available only to system administrators
+      operationId: updateNetworkType
+      summary: Update NetworkType
+      description: Update NetworkType, available only to system administrators
       parameters: []
       security:
         - bearer_token: []
       tags:
-        - Company
+        - NetworkType
       requestBody:
-        $ref: '#/components/requestBodies/UpdateCompanyInput'
+        $ref: '#/components/requestBodies/UpdateNetworkTypeInput'
       responses:
         '204':
-          description: Company update succeeded
+          description: NetworkType update succeeded
         '400':
           description: Bad request
         '403':
           description: Authenticated user not allowed to perform this operation
         '404':
-          description: Company not found
+          description: NetworkType not found
     delete:
-      operationId: deleteCompany
-      summary: Delete Company
-      description: Delete Company, available only to system administrators
+      operationId: deleteNetworkType
+      summary: Delete NetworkType
+      description: Delete NetworkType, available only to system administrators
       parameters: []
       security:
         - bearer_token: []
       tags:
-        - Company
+        - NetworkType
       responses:
         '204':
-          description: Company record was deleted
+          description: NetworkType record was deleted
         '403':
           description: Authenticated user not allowed to perform this operation
         '404':
-          description: Company not found
+          description: NetworkType not found
 components:
   schemas:
-    Company:
+    NetworkType:
       type: object
+      required:
+        - name
       properties:
         name:
           type: string
-        type:
-          type: string
-          enum:
-            - ADMIN
-            - VENDOR
-    CompanyResponse:
+    NetworkTypeResponse:
        allOf:
-        - $ref: '#/components/schemas/Company'
+        - $ref: '#/components/schemas/NetworkType'
         - type: object
           properties:
             id:
               type: string
-    ListCompanyResponse:
+    ListNetworkTypeResponse:
       allOf:
         - $ref: '../api.yml#/components/schemas/ListResponse'
         - type: object
@@ -137,25 +134,20 @@ components:
             records:
               type: array
               items:
-                $ref: '#/components/schemas/CompanyResponse'
+                $ref: '#/components/schemas/NetworkTypeResponse'
               default: []
   requestBodies:
-    CreateCompanyInput:
+    CreateNetworkTypeInput:
       content:
         application/json:
           schema:
-            allOf:
-              - $ref: '#/components/schemas/Company'
-              - type: object
-                required:
-                  - name
-                  - type
-      description: Company to be created
+            $ref: '#/components/schemas/NetworkType'
+      description: NetworkType to be created
       required: true
-    UpdateCompanyInput:
+    UpdateNetworkTypeInput:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Company'
-      description: Company properties to be updated
+            $ref: '#/components/schemas/NetworkType'
+      description: NetworkType properties to be updated
       required: true

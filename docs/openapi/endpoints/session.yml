@@ -1,14 +1,14 @@
 openapi: 3.0.0
 info:
   version: 1.2.1
-  title: An include file to define session endpoints
+  title: An include file to define Session endpoints
   license:
     name: Apache 2.0
 paths:
   /api/sessions:
     post:
       operationId: createSession
-      summary: Create a session
+      summary: Create a Session
       description: Submit a user's credentials and receive a JWT token
       parameters: []
       security: []
@@ -29,7 +29,7 @@ paths:
           description: Bad Request
     delete:
       operationId: deleteSession
-      summary: Delete a session
+      summary: Delete a Session
       description: Invalidate the user's current jwt token
       parameters: []
       security:

@@ -8,8 +8,8 @@ info:
   title: LPWAN Server
   termsOfService: ""
   contact:
-    email: d.malas@cablelabs.com
-    name: Darly Malas
+    email: n.baroni@cablelabs.com
+    name: Nick Baroni
   license:
     name: Apache 2.0
     url: http://www.apache.org/licenses/LICENSE-2.0.html
@@ -19,23 +19,2159 @@ securitySchemes:
     scheme: bearer
     bearerFormat: JWT
 tags:
-  - name: Session
-    description: Operations about session
-  - name: User
-    description: Operations about user
+  - name: Application
+    description: An Application is a grouping of devices that share data reporting
+      configuration.
+  - name: ApplicationNetworkTypeLink
+    description: An ApplicationNetworkTypeLink enables an Application for a
+      NetworkType.  These records also store Application configuration for the
+      NetworkType.
   - name: Company
-    description: Operations about company
+    description: A Company is a grouping of Users.  Companies also have an ownership
+      relationship with other entities, such as Applications.
+  - name: CompanyNetworkTypeLink
+    description: A CompanyNetworkTypeLink enables links a company's entities and a
+      NetworkType.
+  - name: Device
+    description: A Device represents a physical device.
+  - name: DeviceNetworkTypeLink
+    description: A DeviceNetworkTypeLink enables a Device for a NetworkType.  These records
+      also store Device configuration for a the NetworkType.
+  - name: DeviceProfile
+    description: A DeviceProfile profiles a type of device for a specific
+      NetworkType.  These records store configuration for Devices in regards to
+      the NetworkType.
+  - name: Network
+    description: A Network represents a remote IoT network, such as an instance of LoRa
+      Server.
+  - name: NetworkProtocol
+    description: A NetworkProtocol wraps the API used by LPWAN Server to communicate with
+      Networks.  A NeworkProtocol references the code that communicates with the
+      remote network.
+  - name: NetworkProvider
+    description: A NetworkProvider identifies who hosts/provides a Network.
+  - name: NetworkType
+    description: A NetworkType represents an LPWAN type, such as LoRa or IP (3GPP).
   - name: PasswordPolicy
+    description: PasswordPolicies are used by companies to enforce password requirements on
+      their users.
+  - name: ReportingProtocol
+    description: ReportingProtocols are used by the Application to forward data from the
+      devices to the IoT application server.
+  - name: Session
+    description: Session endpoints allow for the management of User authentication.
+  - name: User
+    description: A user of the system
 paths:
+  /api/applications:
+    post:
+      operationId: createApplication
+      summary: Create an Application
+      description: Create an Application
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - Application
+      requestBody:
+        content:
+          application/json:
+            schema:
+              allOf:
+                - type: object
+                  properties:
+                    name:
+                      type: string
+                      description: The Application's name
+                    description:
+                      type: string
+                      description: The Application's description
+                    companyId:
+                      type: string
+                      description: The ID of the Company to which the Application belongs.
+                        For a Company Admin user, this can only be the Id of
+                        their own Company.
+                    baseUrl:
+                      type: string
+                      description: The URL that the Reporting Protocol sends the data to.
+                        This may have additional paths added, depending on the
+                        Reporting Protocol.
+                    reportingProtocolId:
+                      type: string
+                      description: The ID of the Reporting Protocol the Application will
+                        use to pass Device data back to the Application Vendor
+                - type: object
+                  required:
+                    - name
+                    - companyId
+        description: Application to be created
+        required: true
+      responses:
+        "200":
+          description: Application created
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - id
+                properties:
+                  id:
+                    type: string
+        "400":
+          description: Bad request
+        "403":
+          description: Authenticated user not allowed to perform this operation
+    get:
+      operationId: listApplications
+      summary: List Applications
+      description: List Applications
+      parameters:
+        - name: offset
+          in: query
+          description: Number of records to skip
+          required: false
+          schema:
+            type: integer
+            format: int32
+            minimum: 0
+            default: 0
+        - name: limit
+          in: query
+          description: Max records to return
+          required: false
+          schema:
+            type: integer
+            format: int32
+        - name: search
+          in: query
+          description: Search for a string within name
+          required: false
+          schema:
+            type: string
+        - name: companyId
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: reportingProtocolId
+          in: query
+          required: false
+          schema:
+            type: string
+      security:
+        - bearer_token: []
+      tags:
+        - Application
+      responses:
+        "200":
+          description: Query response with totalCount and list of records
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - type: object
+                    required:
+                      - totalCount
+                      - records
+                    properties:
+                      totalCount:
+                        type: integer
+                        format: int32
+                      records:
+                        type: array
+                        default: []
+                  - type: object
+                    properties:
+                      records:
+                        type: array
+                        items:
+                          allOf:
+                            - $ref: "#/paths/~1api~1applications/post/requestBody/c\
+                                ontent/application~1json/schema/allOf/0"
+                            - type: object
+                              properties:
+                                id:
+                                  type: string
+                                running:
+                                  type: boolean
+                                  description: If the Application is currently sending data
+                                    received from the Networks to the baseUrl
+                                    via the Reporting Protocol
+                        default: []
+        "400":
+          description: Bad request
+        "403":
+          description: Authenticated user not allowed to perform this operation
+  "/api/applications/{id}":
+    parameters:
+      - name: id
+        in: path
+        description: ID of resource
+        required: true
+        schema:
+          type: string
+    get:
+      operationId: loadApplication
+      summary: Get Application
+      description: Get Application
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - Application
+      responses:
+        "200":
+          description: Application record
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - type: object
+                    properties:
+                      name:
+                        type: string
+                        description: The Application's name
+                      description:
+                        type: string
+                        description: The Application's description
+                      companyId:
+                        type: string
+                        description: The ID of the Company to which the Application
+                          belongs. For a Company Admin user, this can only be
+                          the Id of their own Company.
+                      baseUrl:
+                        type: string
+                        description: The URL that the Reporting Protocol sends the data to.
+                          This may have additional paths added, depending on the
+                          Reporting Protocol.
+                      reportingProtocolId:
+                        type: string
+                        description: The ID of the Reporting Protocol the Application will
+                          use to pass Device data back to the Application Vendor
+                  - type: object
+                    properties:
+                      id:
+                        type: string
+                      running:
+                        type: boolean
+                        description: If the Application is currently sending data received
+                          from the Networks to the baseUrl via the Reporting
+                          Protocol
+        "403":
+          description: Authenticated user not allowed to perform this operation
+        "404":
+          description: Application not found
+    put:
+      operationId: updateApplication
+      summary: Update Application
+      description: Update Application
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - Application
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/paths/~1api~1applications~1%7Bid%7D/get/responses/200/conten\
+                t/application~1json/schema/allOf/0"
+        description: Application properties to be updated
+        required: true
+      responses:
+        "204":
+          description: Application update succeeded
+        "400":
+          description: Bad request
+        "403":
+          description: Authenticated user not allowed to perform this operation
+        "404":
+          description: Application not found
+    delete:
+      operationId: deleteApplication
+      summary: Delete Application
+      description: Delete Application
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - Application
+      responses:
+        "204":
+          description: Application record was deleted
+        "403":
+          description: Authenticated user not allowed to perform this operation
+        "404":
+          description: Application not found
+  /api/applicationNetworkTypeLinks:
+    post:
+      operationId: createApplicationNetworkTypeLink
+      summary: Create a ApplicationNetworkTypeLink
+      description: Create a ApplicationNetworkTypeLink
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - ApplicationNetworkTypeLink
+      requestBody:
+        content:
+          application/json:
+            schema:
+              allOf:
+                - type: object
+                  properties:
+                    applicationId:
+                      type: string
+                      description: The Application the record is linking to the NetworkType
+                    networkTypeId:
+                      type: string
+                      description: The NetworkType to which the Application is linked
+                    networkSettings:
+                      type: string
+                      description: The settings in a JSON string that correspond to the
+                        NetworkType
+                - type: object
+                  required:
+                    - applicationId
+                    - networkTypeId
+                    - networkSettings
+        description: ApplicationNetworkTypeLink to be created
+        required: true
+      responses:
+        "200":
+          description: ApplicationNetworkTypeLink created
+          content:
+            application/json:
+              schema:
+                $ref: "#/paths/~1api~1applications/post/responses/200/content/appli\
+                  cation~1json/schema"
+        "400":
+          description: Bad request
+        "403":
+          description: Authenticated user not allowed to perform this operation
+    get:
+      operationId: listApplicationNetworkTypeLinks
+      summary: List ApplicationNetworkTypeLinks
+      description: List ApplicationNetworkTypeLinks
+      parameters:
+        - $ref: "#/paths/~1api~1applications/get/parameters/0"
+        - $ref: "#/paths/~1api~1applications/get/parameters/1"
+        - name: applicationId
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: networkTypeId
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: companyId
+          in: query
+          required: false
+          schema:
+            type: string
+      security:
+        - bearer_token: []
+      tags:
+        - ApplicationNetworkTypeLink
+      responses:
+        "200":
+          description: Query response with totalCount and list of records
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/paths/~1api~1applications/get/responses/200/content/ap\
+                      plication~1json/schema/allOf/0"
+                  - type: object
+                    properties:
+                      records:
+                        type: array
+                        items:
+                          allOf:
+                            - $ref: "#/paths/~1api~1applicationNetworkTypeLinks/pos\
+                                t/requestBody/content/application~1json/schema/\
+                                allOf/0"
+                            - type: object
+                              properties:
+                                id:
+                                  type: string
+                        default: []
+        "400":
+          description: Bad request
+        "403":
+          description: Authenticated user not allowed to perform this operation
+  "/api/applicationNetworkTypeLinks/{id}":
+    parameters:
+      - $ref: "#/paths/~1api~1applications~1%7Bid%7D/parameters/0"
+    get:
+      operationId: loadApplicationNetworkTypeLink
+      summary: Get ApplicationNetworkTypeLink
+      description: Get ApplicationNetworkTypeLink
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - ApplicationNetworkTypeLink
+      responses:
+        "200":
+          description: ApplicationNetworkTypeLink record
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - type: object
+                    properties:
+                      applicationId:
+                        type: string
+                        description: The Application the record is linking to the
+                          NetworkType
+                      networkTypeId:
+                        type: string
+                        description: The NetworkType to which the Application is linked
+                      networkSettings:
+                        type: string
+                        description: The settings in a JSON string that correspond to the
+                          NetworkType
+                  - type: object
+                    properties:
+                      id:
+                        type: string
+        "403":
+          description: Authenticated user not allowed to perform this operation
+        "404":
+          description: ApplicationNetworkTypeLink not found
+    put:
+      operationId: updateApplicationNetworkTypeLink
+      summary: Update ApplicationNetworkTypeLink
+      description: Update ApplicationNetworkTypeLink
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - ApplicationNetworkTypeLink
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/paths/~1api~1applicationNetworkTypeLinks~1%7Bid%7D/get/respo\
+                nses/200/content/application~1json/schema/allOf/0"
+        description: ApplicationNetworkTypeLink properties to be updated
+        required: true
+      responses:
+        "204":
+          description: ApplicationNetworkTypeLink update succeeded
+        "400":
+          description: Bad request
+        "403":
+          description: Authenticated user not allowed to perform this operation
+        "404":
+          description: ApplicationNetworkTypeLink not found
+    delete:
+      operationId: deleteApplicationNetworkTypeLink
+      summary: Delete ApplicationNetworkTypeLink
+      description: Delete ApplicationNetworkTypeLink
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - ApplicationNetworkTypeLink
+      responses:
+        "204":
+          description: ApplicationNetworkTypeLink record was deleted
+        "403":
+          description: Authenticated user not allowed to perform this operation
+        "404":
+          description: ApplicationNetworkTypeLink not found
+  /api/companies:
+    post:
+      operationId: createCompany
+      summary: Create a Company
+      description: Create a Company, available only to system administrators
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - Company
+      requestBody:
+        content:
+          application/json:
+            schema:
+              allOf:
+                - type: object
+                  properties:
+                    name:
+                      type: string
+                    type:
+                      type: string
+                      enum:
+                        - ADMIN
+                        - VENDOR
+                - type: object
+                  required:
+                    - name
+                    - type
+        description: Company to be created
+        required: true
+      responses:
+        "200":
+          description: Company created
+          content:
+            application/json:
+              schema:
+                $ref: "#/paths/~1api~1applications/post/responses/200/content/appli\
+                  cation~1json/schema"
+        "400":
+          description: Bad request
+        "403":
+          description: Authenticated user not allowed to perform this operation
+    get:
+      operationId: listCompanies
+      summary: List Companies
+      description: List Companies, restricted according to authenticated user
+      parameters:
+        - $ref: "#/paths/~1api~1applications/get/parameters/0"
+        - $ref: "#/paths/~1api~1applications/get/parameters/1"
+        - $ref: "#/paths/~1api~1applications/get/parameters/2"
+      security:
+        - bearer_token: []
+      tags:
+        - Company
+      responses:
+        "200":
+          description: Query response with totalCount and list of records
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/paths/~1api~1applications/get/responses/200/content/ap\
+                      plication~1json/schema/allOf/0"
+                  - type: object
+                    properties:
+                      records:
+                        type: array
+                        items:
+                          allOf:
+                            - $ref: "#/paths/~1api~1companies/post/requestBody/cont\
+                                ent/application~1json/schema/allOf/0"
+                            - type: object
+                              properties:
+                                id:
+                                  type: string
+                        default: []
+        "400":
+          description: Bad request
+        "403":
+          description: Authenticated user not allowed to perform this operation
+  "/api/companies/{id}":
+    parameters:
+      - $ref: "#/paths/~1api~1applications~1%7Bid%7D/parameters/0"
+    get:
+      operationId: loadCompany
+      summary: Get Company
+      description: Get Company
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - Company
+      responses:
+        "200":
+          description: Company record
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - type: object
+                    properties:
+                      name:
+                        type: string
+                      type:
+                        type: string
+                        enum:
+                          - ADMIN
+                          - VENDOR
+                  - type: object
+                    properties:
+                      id:
+                        type: string
+        "403":
+          description: Authenticated user not allowed to perform this operation
+        "404":
+          description: Company not found
+    put:
+      operationId: updateCompany
+      summary: Update Company
+      description: Update Company, available only to system administrators
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - Company
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/paths/~1api~1companies~1%7Bid%7D/get/responses/200/content/a\
+                pplication~1json/schema/allOf/0"
+        description: Company properties to be updated
+        required: true
+      responses:
+        "204":
+          description: Company update succeeded
+        "400":
+          description: Bad request
+        "403":
+          description: Authenticated user not allowed to perform this operation
+        "404":
+          description: Company not found
+    delete:
+      operationId: deleteCompany
+      summary: Delete Company
+      description: Delete Company, available only to system administrators
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - Company
+      responses:
+        "204":
+          description: Company record was deleted
+        "403":
+          description: Authenticated user not allowed to perform this operation
+        "404":
+          description: Company not found
+  /api/companyNetworkTypeLinks:
+    post:
+      operationId: createCompanyNetworkTypeLink
+      summary: Create a CompanyNetworkTypeLink
+      description: Create a CompanyNetworkTypeLink, available only to company administrators
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - CompanyNetworkTypeLink
+      requestBody:
+        content:
+          application/json:
+            schema:
+              allOf:
+                - type: object
+                  properties:
+                    companyId:
+                      type: string
+                      description: The Company the record is linking to the NetworkType
+                    networkTypeId:
+                      type: string
+                      description: The NetworkType to which the Company is linked
+                    networkSettings:
+                      type: string
+                      description: The settings in a JSON string that correspond to the
+                        NetworkType
+                - type: object
+                  required:
+                    - companyId
+                    - networkTypeId
+                    - networkSettings
+        description: CompanyNetworkTypeLink to be created
+        required: true
+      responses:
+        "200":
+          description: CompanyNetworkTypeLink created
+          content:
+            application/json:
+              schema:
+                $ref: "#/paths/~1api~1applications/post/responses/200/content/appli\
+                  cation~1json/schema"
+        "400":
+          description: Bad request
+        "403":
+          description: Authenticated user not allowed to perform this operation
+    get:
+      operationId: listCompanyNetworkTypeLinks
+      summary: List CompanyNetworkTypeLinks
+      description: List CompanyNetworkTypeLinks, restricted according to company admins
+      parameters:
+        - $ref: "#/paths/~1api~1applications/get/parameters/0"
+        - $ref: "#/paths/~1api~1applications/get/parameters/1"
+        - name: companyId
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: networkTypeId
+          in: query
+          required: false
+          schema:
+            type: string
+      security:
+        - bearer_token: []
+      tags:
+        - CompanyNetworkTypeLink
+      responses:
+        "200":
+          description: Query response with totalCount and list of records
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/paths/~1api~1applications/get/responses/200/content/ap\
+                      plication~1json/schema/allOf/0"
+                  - type: object
+                    properties:
+                      records:
+                        type: array
+                        items:
+                          allOf:
+                            - $ref: "#/paths/~1api~1companyNetworkTypeLinks/post/re\
+                                questBody/content/application~1json/schema/allO\
+                                f/0"
+                            - type: object
+                              properties:
+                                id:
+                                  type: string
+                        default: []
+        "400":
+          description: Bad request
+        "403":
+          description: Authenticated user not allowed to perform this operation
+  "/api/companyNetworkTypeLinks/{id}":
+    parameters:
+      - $ref: "#/paths/~1api~1applications~1%7Bid%7D/parameters/0"
+    get:
+      operationId: loadCompanyNetworkTypeLink
+      summary: Get CompanyNetworkTypeLink
+      description: Get CompanyNetworkTypeLink
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - CompanyNetworkTypeLink
+      responses:
+        "200":
+          description: CompanyNetworkTypeLink record
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - type: object
+                    properties:
+                      companyId:
+                        type: string
+                        description: The Company the record is linking to the NetworkType
+                      networkTypeId:
+                        type: string
+                        description: The NetworkType to which the Company is linked
+                      networkSettings:
+                        type: string
+                        description: The settings in a JSON string that correspond to the
+                          NetworkType
+                  - type: object
+                    properties:
+                      id:
+                        type: string
+        "403":
+          description: Authenticated user not allowed to perform this operation
+        "404":
+          description: CompanyNetworkTypeLink not found
+    put:
+      operationId: updateCompanyNetworkTypeLink
+      summary: Update CompanyNetworkTypeLink
+      description: Update CompanyNetworkTypeLink, available only to company administrators
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - CompanyNetworkTypeLink
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/paths/~1api~1companyNetworkTypeLinks~1%7Bid%7D/get/responses\
+                /200/content/application~1json/schema/allOf/0"
+        description: CompanyNetworkTypeLink properties to be updated
+        required: true
+      responses:
+        "204":
+          description: CompanyNetworkTypeLink update succeeded
+        "400":
+          description: Bad request
+        "403":
+          description: Authenticated user not allowed to perform this operation
+        "404":
+          description: CompanyNetworkTypeLink not found
+    delete:
+      operationId: deleteCompanyNetworkTypeLink
+      summary: Delete CompanyNetworkTypeLink
+      description: Delete CompanyNetworkTypeLink, available only to company administrators
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - CompanyNetworkTypeLink
+      responses:
+        "204":
+          description: CompanyNetworkTypeLink record was deleted
+        "403":
+          description: Authenticated user not allowed to perform this operation
+        "404":
+          description: CompanyNetworkTypeLink not found
+  /api/devices:
+    post:
+      operationId: createDevice
+      summary: Create a Device
+      description: Create a Device
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - Device
+      requestBody:
+        content:
+          application/json:
+            schema:
+              allOf:
+                - type: object
+                  properties:
+                    name:
+                      type: string
+                      description: The Device's name
+                    description:
+                      type: string
+                      description: The Device's description
+                    deviceModel:
+                      type: string
+                      description: The Device's Model information
+                    applicationId:
+                      type: string
+                      description: The ID of the Application to which the device belongs
+                - type: object
+                  required:
+                    - name
+                    - description
+                    - applicationId
+                    - deviceModel
+        description: Device to be created
+        required: true
+      responses:
+        "200":
+          description: Device created
+          content:
+            application/json:
+              schema:
+                $ref: "#/paths/~1api~1applications/post/responses/200/content/appli\
+                  cation~1json/schema"
+        "400":
+          description: Bad request
+        "403":
+          description: Authenticated user not allowed to perform this operation
+    get:
+      operationId: listDevices
+      summary: List Devices
+      description: List Devices
+      parameters:
+        - $ref: "#/paths/~1api~1applications/get/parameters/0"
+        - $ref: "#/paths/~1api~1applications/get/parameters/1"
+        - $ref: "#/paths/~1api~1applications/get/parameters/2"
+        - name: companyId
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: applicationId
+          in: query
+          required: false
+          schema:
+            type: string
+      security:
+        - bearer_token: []
+      tags:
+        - Device
+      responses:
+        "200":
+          description: Query response with totalCount and list of records
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/paths/~1api~1applications/get/responses/200/content/ap\
+                      plication~1json/schema/allOf/0"
+                  - type: object
+                    properties:
+                      records:
+                        type: array
+                        items:
+                          allOf:
+                            - $ref: "#/paths/~1api~1devices/post/requestBody/conten\
+                                t/application~1json/schema/allOf/0"
+                            - type: object
+                              properties:
+                                id:
+                                  type: string
+                        default: []
+        "400":
+          description: Bad request
+        "403":
+          description: Authenticated user not allowed to perform this operation
+  "/api/devices/{id}":
+    parameters:
+      - $ref: "#/paths/~1api~1applications~1%7Bid%7D/parameters/0"
+    get:
+      operationId: loadDevice
+      summary: Get Device
+      description: Get Device
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - Device
+      responses:
+        "200":
+          description: Device record
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - type: object
+                    properties:
+                      name:
+                        type: string
+                        description: The Device's name
+                      description:
+                        type: string
+                        description: The Device's description
+                      deviceModel:
+                        type: string
+                        description: The Device's Model information
+                      applicationId:
+                        type: string
+                        description: The ID of the Application to which the device belongs
+                  - type: object
+                    properties:
+                      id:
+                        type: string
+        "403":
+          description: Authenticated user not allowed to perform this operation
+        "404":
+          description: Device not found
+    put:
+      operationId: updateDevice
+      summary: Update Device
+      description: Update Device
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - Device
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/paths/~1api~1devices~1%7Bid%7D/get/responses/200/content/app\
+                lication~1json/schema/allOf/0"
+        description: Device properties to be updated
+        required: true
+      responses:
+        "204":
+          description: Device update succeeded
+        "400":
+          description: Bad request
+        "403":
+          description: Authenticated user not allowed to perform this operation
+        "404":
+          description: Device not found
+    delete:
+      operationId: deleteDevice
+      summary: Delete Device
+      description: Delete Device
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - Device
+      responses:
+        "204":
+          description: Device record was deleted
+        "403":
+          description: Authenticated user not allowed to perform this operation
+        "404":
+          description: Device not found
+  /api/deviceNetworkTypeLinks:
+    post:
+      operationId: createDeviceNetworkTypeLink
+      summary: Create a DeviceNetworkTypeLink
+      description: Create a DeviceNetworkTypeLink
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - DeviceNetworkTypeLink
+      requestBody:
+        content:
+          application/json:
+            schema:
+              allOf:
+                - type: object
+                  properties:
+                    deviceId:
+                      type: string
+                      description: The Application the record is linking to the NetworkType
+                    networkTypeId:
+                      type: string
+                      description: The NetworkType to which the Application is linked
+                    networkSettings:
+                      type: string
+                      description: The settings in a JSON string that correspond to the
+                        NetworkType
+                - type: object
+                  required:
+                    - deviceId
+                    - networkTypeId
+                    - networkSettings
+        description: DeviceNetworkTypeLink to be created
+        required: true
+      responses:
+        "200":
+          description: DeviceNetworkTypeLink created
+          content:
+            application/json:
+              schema:
+                $ref: "#/paths/~1api~1applications/post/responses/200/content/appli\
+                  cation~1json/schema"
+        "400":
+          description: Bad request
+        "403":
+          description: Authenticated user not allowed to perform this operation
+    get:
+      operationId: listDeviceNetworkTypeLinks
+      summary: List DeviceNetworkTypeLinks
+      description: List DeviceNetworkTypeLinks
+      parameters:
+        - $ref: "#/paths/~1api~1applications/get/parameters/0"
+        - $ref: "#/paths/~1api~1applications/get/parameters/1"
+        - name: deviceId
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: networkTypeId
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: applicationId
+          in: query
+          required: false
+          schema:
+            type: string
+      security:
+        - bearer_token: []
+      tags:
+        - DeviceNetworkTypeLink
+      responses:
+        "200":
+          description: Query response with totalCount and list of records
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/paths/~1api~1applications/get/responses/200/content/ap\
+                      plication~1json/schema/allOf/0"
+                  - type: object
+                    properties:
+                      records:
+                        type: array
+                        items:
+                          allOf:
+                            - $ref: "#/paths/~1api~1deviceNetworkTypeLinks/post/req\
+                                uestBody/content/application~1json/schema/allOf\
+                                /0"
+                            - type: object
+                              properties:
+                                id:
+                                  type: string
+                        default: []
+        "400":
+          description: Bad request
+        "403":
+          description: Authenticated user not allowed to perform this operation
+  "/api/deviceNetworkTypeLinks/{id}":
+    parameters:
+      - $ref: "#/paths/~1api~1applications~1%7Bid%7D/parameters/0"
+    get:
+      operationId: loadDeviceNetworkTypeLink
+      summary: Get DeviceNetworkTypeLink
+      description: Get DeviceNetworkTypeLink
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - DeviceNetworkTypeLink
+      responses:
+        "200":
+          description: DeviceNetworkTypeLink record
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - type: object
+                    properties:
+                      deviceId:
+                        type: string
+                        description: The Application the record is linking to the
+                          NetworkType
+                      networkTypeId:
+                        type: string
+                        description: The NetworkType to which the Application is linked
+                      networkSettings:
+                        type: string
+                        description: The settings in a JSON string that correspond to the
+                          NetworkType
+                  - type: object
+                    properties:
+                      id:
+                        type: string
+        "403":
+          description: Authenticated user not allowed to perform this operation
+        "404":
+          description: DeviceNetworkTypeLink not found
+    put:
+      operationId: updateDeviceNetworkTypeLink
+      summary: Update DeviceNetworkTypeLink
+      description: Update DeviceNetworkTypeLink
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - DeviceNetworkTypeLink
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/paths/~1api~1deviceNetworkTypeLinks~1%7Bid%7D/get/responses/\
+                200/content/application~1json/schema/allOf/0"
+        description: DeviceNetworkTypeLink properties to be updated
+        required: true
+      responses:
+        "204":
+          description: DeviceNetworkTypeLink update succeeded
+        "400":
+          description: Bad request
+        "403":
+          description: Authenticated user not allowed to perform this operation
+        "404":
+          description: DeviceNetworkTypeLink not found
+    delete:
+      operationId: deleteDeviceNetworkTypeLink
+      summary: Delete DeviceNetworkTypeLink
+      description: Delete DeviceNetworkTypeLink
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - DeviceNetworkTypeLink
+      responses:
+        "204":
+          description: DeviceNetworkTypeLink record was deleted
+        "403":
+          description: Authenticated user not allowed to perform this operation
+        "404":
+          description: DeviceNetworkTypeLink not found
+  /api/deviceProfiles: {}
+  "/api/deviceProfiles/{id}": {}
+  /api/networks:
+    post:
+      operationId: createNetwork
+      summary: Create a Network
+      description: Create a Network, available only to system administrators
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - Network
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: The Network's name
+                networkProviderId:
+                  type: string
+                  description: The ID of the Network Provider that provides the Network
+                networkTypeId:
+                  type: string
+                  description: The ID of the NetworkType that the Network uses
+                networkProtocolId:
+                  type: string
+                  description: The ID of the Network Protocol that the Network uses
+                baseUrl:
+                  type: string
+                  description: The base URL used by the Network Protocol to reach the
+                    Network's API server
+                securityData:
+                  type: object
+                  description: The data used to grant secure access to the Network's server
+                    API. This data is defined by the NetworkType
+        description: Network to be created
+        required: true
+      responses:
+        "200":
+          description: Network created
+          content:
+            application/json:
+              schema:
+                $ref: "#/paths/~1api~1applications/post/responses/200/content/appli\
+                  cation~1json/schema"
+        "400":
+          description: Bad request
+        "403":
+          description: Authenticated user not allowed to perform this operation
+    get:
+      operationId: listNetworks
+      summary: List Networks
+      description: List Networks, available only to system administrators
+      parameters:
+        - $ref: "#/paths/~1api~1applications/get/parameters/0"
+        - $ref: "#/paths/~1api~1applications/get/parameters/1"
+        - $ref: "#/paths/~1api~1applications/get/parameters/2"
+        - name: networkProviderId
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: networkTypeId
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: networkProtocolId
+          in: query
+          required: false
+          schema:
+            type: string
+      security:
+        - bearer_token: []
+      tags:
+        - Network
+      responses:
+        "200":
+          description: Query response with totalCount and list of records
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/paths/~1api~1applications/get/responses/200/content/ap\
+                      plication~1json/schema/allOf/0"
+                  - type: object
+                    properties:
+                      records:
+                        type: array
+                        items:
+                          allOf:
+                            - $ref: "#/paths/~1api~1networks/post/requestBody/conte\
+                                nt/application~1json/schema"
+                            - type: object
+                              properties:
+                                id:
+                                  type: string
+                        default: []
+        "400":
+          description: Bad request
+        "403":
+          description: Authenticated user not allowed to perform this operation
+  "/api/networks/{id}":
+    parameters:
+      - $ref: "#/paths/~1api~1applications~1%7Bid%7D/parameters/0"
+    get:
+      operationId: loadNetwork
+      summary: Get Network
+      description: Get Network
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - Network
+      responses:
+        "200":
+          description: Network record
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - type: object
+                    properties:
+                      name:
+                        type: string
+                        description: The Network's name
+                      networkProviderId:
+                        type: string
+                        description: The ID of the Network Provider that provides the
+                          Network
+                      networkTypeId:
+                        type: string
+                        description: The ID of the NetworkType that the Network uses
+                      networkProtocolId:
+                        type: string
+                        description: The ID of the Network Protocol that the Network uses
+                      baseUrl:
+                        type: string
+                        description: The base URL used by the Network Protocol to reach the
+                          Network's API server
+                      securityData:
+                        type: object
+                        description: The data used to grant secure access to the Network's
+                          server API. This data is defined by the NetworkType
+                  - type: object
+                    properties:
+                      id:
+                        type: string
+        "403":
+          description: Authenticated user not allowed to perform this operation
+        "404":
+          description: Network not found
+    put:
+      operationId: updateNetwork
+      summary: Update Network
+      description: Update Network, available only to system administrators
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - Network
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/paths/~1api~1networks~1%7Bid%7D/get/responses/200/content/ap\
+                plication~1json/schema/allOf/0"
+        description: Network properties to be updated
+        required: true
+      responses:
+        "204":
+          description: Network update succeeded
+        "400":
+          description: Bad request
+        "403":
+          description: Authenticated user not allowed to perform this operation
+        "404":
+          description: Network not found
+    delete:
+      operationId: deleteNetwork
+      summary: Delete Network
+      description: Delete Network, available only to system administrators
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - Network
+      responses:
+        "204":
+          description: Network record was deleted
+        "403":
+          description: Authenticated user not allowed to perform this operation
+        "404":
+          description: Network not found
+  /api/networkProtocols:
+    post:
+      operationId: createNetworkProtocol
+      summary: Create a NetworkProtocol
+      description: Create a NetworkProtocol, available only to system administrators
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - NetworkProtocol
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                protocolHandler:
+                  type: string
+                  description: Path to file that contains the handler code, relative to the
+                    handlers dir
+                networkTypeId:
+                  type: string
+        description: NetworkProtocol to be created
+        required: true
+      responses:
+        "200":
+          description: NetworkProtocol created
+          content:
+            application/json:
+              schema:
+                $ref: "#/paths/~1api~1applications/post/responses/200/content/appli\
+                  cation~1json/schema"
+        "400":
+          description: Bad request
+        "403":
+          description: Authenticated user not allowed to perform this operation
+    get:
+      operationId: listNetworkProtocols
+      summary: List NetworkProtocols
+      description: List NetworkProtocols, available only to system administrators
+      parameters:
+        - $ref: "#/paths/~1api~1applications/get/parameters/0"
+        - $ref: "#/paths/~1api~1applications/get/parameters/1"
+        - $ref: "#/paths/~1api~1applications/get/parameters/2"
+      security:
+        - bearer_token: []
+      tags:
+        - NetworkProtocol
+      responses:
+        "200":
+          description: Query response with totalCount and list of records
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/paths/~1api~1applications/get/responses/200/content/ap\
+                      plication~1json/schema/allOf/0"
+                  - type: object
+                    properties:
+                      records:
+                        type: array
+                        items:
+                          allOf:
+                            - $ref: "#/paths/~1api~1networkProtocols/post/requestBo\
+                                dy/content/application~1json/schema"
+                            - type: object
+                              properties:
+                                id:
+                                  type: string
+                        default: []
+        "400":
+          description: Bad request
+        "403":
+          description: Authenticated user not allowed to perform this operation
+  "/api/networkProtocols/{id}":
+    parameters:
+      - $ref: "#/paths/~1api~1applications~1%7Bid%7D/parameters/0"
+    get:
+      operationId: loadNetworkProtocol
+      summary: Get NetworkProtocol
+      description: Get NetworkProtocol
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - NetworkProtocol
+      responses:
+        "200":
+          description: NetworkProtocol record
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - type: object
+                    properties:
+                      name:
+                        type: string
+                      protocolHandler:
+                        type: string
+                        description: Path to file that contains the handler code, relative
+                          to the handlers dir
+                      networkTypeId:
+                        type: string
+                  - type: object
+                    properties:
+                      id:
+                        type: string
+        "403":
+          description: Authenticated user not allowed to perform this operation
+        "404":
+          description: NetworkProtocol not found
+    put:
+      operationId: updateNetworkProtocol
+      summary: Update NetworkProtocol
+      description: Update NetworkProtocol, available only to system administrators
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - NetworkProtocol
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/paths/~1api~1networkProtocols~1%7Bid%7D/get/responses/200/co\
+                ntent/application~1json/schema/allOf/0"
+        description: NetworkProtocol properties to be updated
+        required: true
+      responses:
+        "204":
+          description: NetworkProtocol update succeeded
+        "400":
+          description: Bad request
+        "403":
+          description: Authenticated user not allowed to perform this operation
+        "404":
+          description: NetworkProtocol not found
+    delete:
+      operationId: deleteNetworkProtocol
+      summary: Delete NetworkProtocol
+      description: Delete NetworkProtocol, available only to system administrators
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - NetworkProtocol
+      responses:
+        "204":
+          description: NetworkProtocol record was deleted
+        "403":
+          description: Authenticated user not allowed to perform this operation
+        "404":
+          description: NetworkProtocol not found
+  /api/networkProtocolHandlers:
+    get:
+      operationId: getNetworkProtocolHandlers
+      summary: Get NetworkProtocol handlers
+      description: Get list of NetworkProtocol handler file paths
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - NetworkProtocol
+      responses:
+        "200":
+          description: Array of NetworkProtocol handler file paths
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+                default: []
+        "403":
+          description: Authenticated user not allowed to perform this operation
+  /api/networkProviders:
+    post:
+      operationId: createNetworkProvider
+      summary: Create a NetworkProvider
+      description: Create a NetworkProvider, available only to system administrators
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - NetworkProvider
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+        description: NetworkProvider to be created
+        required: true
+      responses:
+        "200":
+          description: NetworkProvider created
+          content:
+            application/json:
+              schema:
+                $ref: "#/paths/~1api~1applications/post/responses/200/content/appli\
+                  cation~1json/schema"
+        "400":
+          description: Bad request
+        "403":
+          description: Authenticated user not allowed to perform this operation
+    get:
+      operationId: listNetworkProviders
+      summary: List NetworkProviders
+      description: List NetworkProviders, available only to system administrators
+      parameters:
+        - $ref: "#/paths/~1api~1applications/get/parameters/0"
+        - $ref: "#/paths/~1api~1applications/get/parameters/1"
+        - $ref: "#/paths/~1api~1applications/get/parameters/2"
+      security:
+        - bearer_token: []
+      tags:
+        - NetworkProvider
+      responses:
+        "200":
+          description: Query response with totalCount and list of records
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/paths/~1api~1applications/get/responses/200/content/ap\
+                      plication~1json/schema/allOf/0"
+                  - type: object
+                    properties:
+                      records:
+                        type: array
+                        items:
+                          allOf:
+                            - $ref: "#/paths/~1api~1networkProviders/post/requestBo\
+                                dy/content/application~1json/schema"
+                            - type: object
+                              properties:
+                                id:
+                                  type: string
+                        default: []
+        "400":
+          description: Bad request
+        "403":
+          description: Authenticated user not allowed to perform this operation
+  "/api/networkProviders/{id}":
+    parameters:
+      - $ref: "#/paths/~1api~1applications~1%7Bid%7D/parameters/0"
+    get:
+      operationId: loadNetworkProvider
+      summary: Get NetworkProvider
+      description: Get NetworkProvider
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - NetworkProvider
+      responses:
+        "200":
+          description: NetworkProvider record
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - type: object
+                    required:
+                      - name
+                    properties:
+                      name:
+                        type: string
+                  - type: object
+                    properties:
+                      id:
+                        type: string
+        "403":
+          description: Authenticated user not allowed to perform this operation
+        "404":
+          description: NetworkProvider not found
+    put:
+      operationId: updateNetworkProvider
+      summary: Update NetworkProvider
+      description: Update NetworkProvider, available only to system administrators
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - NetworkProvider
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/paths/~1api~1networkProviders~1%7Bid%7D/get/responses/200/co\
+                ntent/application~1json/schema/allOf/0"
+        description: NetworkProvider properties to be updated
+        required: true
+      responses:
+        "204":
+          description: NetworkProvider update succeeded
+        "400":
+          description: Bad request
+        "403":
+          description: Authenticated user not allowed to perform this operation
+        "404":
+          description: NetworkProvider not found
+    delete:
+      operationId: deleteNetworkProvider
+      summary: Delete NetworkProvider
+      description: Delete NetworkProvider, available only to system administrators
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - NetworkProvider
+      responses:
+        "204":
+          description: NetworkProvider record was deleted
+        "403":
+          description: Authenticated user not allowed to perform this operation
+        "404":
+          description: NetworkProvider not found
+  /api/networkTypes:
+    post:
+      operationId: createNetworkType
+      summary: Create a NetworkType
+      description: Create a NetworkType, available only to system administrators
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - NetworkType
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+        description: NetworkType to be created
+        required: true
+      responses:
+        "200":
+          description: NetworkType created
+          content:
+            application/json:
+              schema:
+                $ref: "#/paths/~1api~1applications/post/responses/200/content/appli\
+                  cation~1json/schema"
+        "400":
+          description: Bad request
+        "403":
+          description: Authenticated user not allowed to perform this operation
+    get:
+      operationId: listNetworkTypes
+      summary: List NetworkTypes
+      description: List NetworkTypes, available only to system administrators
+      parameters:
+        - $ref: "#/paths/~1api~1applications/get/parameters/0"
+        - $ref: "#/paths/~1api~1applications/get/parameters/1"
+        - $ref: "#/paths/~1api~1applications/get/parameters/2"
+      security:
+        - bearer_token: []
+      tags:
+        - NetworkType
+      responses:
+        "200":
+          description: Query response with totalCount and list of records
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/paths/~1api~1applications/get/responses/200/content/ap\
+                      plication~1json/schema/allOf/0"
+                  - type: object
+                    properties:
+                      records:
+                        type: array
+                        items:
+                          allOf:
+                            - $ref: "#/paths/~1api~1networkTypes/post/requestBody/c\
+                                ontent/application~1json/schema"
+                            - type: object
+                              properties:
+                                id:
+                                  type: string
+                        default: []
+        "400":
+          description: Bad request
+        "403":
+          description: Authenticated user not allowed to perform this operation
+  "/api/networkTypes/{id}":
+    parameters:
+      - $ref: "#/paths/~1api~1applications~1%7Bid%7D/parameters/0"
+    get:
+      operationId: loadNetworkType
+      summary: Get NetworkType
+      description: Get NetworkType
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - NetworkType
+      responses:
+        "200":
+          description: NetworkType record
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - type: object
+                    required:
+                      - name
+                    properties:
+                      name:
+                        type: string
+                  - type: object
+                    properties:
+                      id:
+                        type: string
+        "403":
+          description: Authenticated user not allowed to perform this operation
+        "404":
+          description: NetworkType not found
+    put:
+      operationId: updateNetworkType
+      summary: Update NetworkType
+      description: Update NetworkType, available only to system administrators
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - NetworkType
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/paths/~1api~1networkTypes~1%7Bid%7D/get/responses/200/conten\
+                t/application~1json/schema/allOf/0"
+        description: NetworkType properties to be updated
+        required: true
+      responses:
+        "204":
+          description: NetworkType update succeeded
+        "400":
+          description: Bad request
+        "403":
+          description: Authenticated user not allowed to perform this operation
+        "404":
+          description: NetworkType not found
+    delete:
+      operationId: deleteNetworkType
+      summary: Delete NetworkType
+      description: Delete NetworkType, available only to system administrators
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - NetworkType
+      responses:
+        "204":
+          description: NetworkType record was deleted
+        "403":
+          description: Authenticated user not allowed to perform this operation
+        "404":
+          description: NetworkType not found
+  /api/passwordPolicies:
+    post:
+      operationId: createPasswordPolicy
+      summary: Create a PasswordPolicy
+      description: Create a PasswordPolicy, available only to company administrators
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - PasswordPolicy
+      requestBody:
+        content:
+          application/json:
+            schema:
+              allOf:
+                - type: object
+                  properties:
+                    ruleText:
+                      type: string
+                      description: The Password Policy's description, intended for display
+                        to the end user.
+                    ruleRegExp:
+                      type: string
+                      description: The Password Policy's regular expression, which must
+                        "match" the entered password for it to be considered
+                        valid.
+                    companyId:
+                      type: string
+                      description: The id of the company that this Password Policy belongs
+                        to. If not supplied, for a System Admin, defaults to
+                        null (global rule for all users/companies). For Company
+                        Admin, defaults to the user's companyId. If specified by
+                        a Company Admin, it MUST match their own company.
+                - type: object
+                  required:
+                    - ruleText
+                    - ruleRegExp
+        description: PasswordPolicy to be created
+        required: true
+      responses:
+        "200":
+          description: PasswordPolicy created
+          content:
+            application/json:
+              schema:
+                $ref: "#/paths/~1api~1applications/post/responses/200/content/appli\
+                  cation~1json/schema"
+        "400":
+          description: Bad request
+        "403":
+          description: Authenticated user not allowed to perform this operation
+  "/api/passwordPolicies/{id}":
+    parameters:
+      - $ref: "#/paths/~1api~1applications~1%7Bid%7D/parameters/0"
+    get:
+      operationId: loadPasswordPolicy
+      summary: Get PasswordPolicy
+      description: Get PasswordPolicy
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - PasswordPolicy
+      responses:
+        "200":
+          description: PasswordPolicy record
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - type: object
+                    properties:
+                      ruleText:
+                        type: string
+                        description: The Password Policy's description, intended for
+                          display to the end user.
+                      ruleRegExp:
+                        type: string
+                        description: The Password Policy's regular expression, which must
+                          "match" the entered password for it to be considered
+                          valid.
+                      companyId:
+                        type: string
+                        description: The id of the company that this Password Policy
+                          belongs to. If not supplied, for a System Admin,
+                          defaults to null (global rule for all
+                          users/companies). For Company Admin, defaults to the
+                          user's companyId. If specified by a Company Admin, it
+                          MUST match their own company.
+                  - type: object
+                    properties:
+                      id:
+                        type: string
+        "403":
+          description: Authenticated user not allowed to perform this operation
+        "404":
+          description: PasswordPolicy not found
+    put:
+      operationId: updatePasswordPolicy
+      summary: Update PasswordPolicy
+      description: Update PasswordPolicy, available only to company administrators
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - PasswordPolicy
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/paths/~1api~1passwordPolicies~1%7Bid%7D/get/responses/200/co\
+                ntent/application~1json/schema/allOf/0"
+        description: PasswordPolicy properties to be updated
+        required: true
+      responses:
+        "204":
+          description: PasswordPolicy update succeeded
+        "400":
+          description: Bad request
+        "403":
+          description: Authenticated user not allowed to perform this operation
+        "404":
+          description: PasswordPolicy not found
+    delete:
+      operationId: deletePasswordPolicy
+      summary: Delete PasswordPolicy
+      description: Delete PasswordPolicy, available only to company administrators
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - PasswordPolicy
+      responses:
+        "204":
+          description: PasswordPolicy record was deleted
+        "403":
+          description: Authenticated user not allowed to perform this operation
+        "404":
+          description: PasswordPolicy not found
+  /api/reportingProtocols:
+    post:
+      operationId: createReportingProtocol
+      summary: Create a ReportingProtocol
+      description: Create a ReportingProtocol, available only to system administrators
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - ReportingProtocol
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                protocolHandler:
+                  type: string
+                  description: Path to file that contains the handler code, relative to the
+                    handlers dir
+                networkTypeId:
+                  type: string
+        description: ReportingProtocol to be created
+        required: true
+      responses:
+        "200":
+          description: ReportingProtocol created
+          content:
+            application/json:
+              schema:
+                $ref: "#/paths/~1api~1applications/post/responses/200/content/appli\
+                  cation~1json/schema"
+        "400":
+          description: Bad request
+        "403":
+          description: Authenticated user not allowed to perform this operation
+    get:
+      operationId: listReportingProtocols
+      summary: List ReportingProtocols
+      description: List ReportingProtocols, available only to system administrators
+      parameters:
+        - $ref: "#/paths/~1api~1applications/get/parameters/0"
+        - $ref: "#/paths/~1api~1applications/get/parameters/1"
+        - $ref: "#/paths/~1api~1applications/get/parameters/2"
+      security:
+        - bearer_token: []
+      tags:
+        - ReportingProtocol
+      responses:
+        "200":
+          description: Query response with totalCount and list of records
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/paths/~1api~1applications/get/responses/200/content/ap\
+                      plication~1json/schema/allOf/0"
+                  - type: object
+                    properties:
+                      records:
+                        type: array
+                        items:
+                          allOf:
+                            - $ref: "#/paths/~1api~1reportingProtocols/post/request\
+                                Body/content/application~1json/schema"
+                            - type: object
+                              properties:
+                                id:
+                                  type: string
+                        default: []
+        "400":
+          description: Bad request
+        "403":
+          description: Authenticated user not allowed to perform this operation
+  "/api/reportingProtocols/{id}":
+    parameters:
+      - $ref: "#/paths/~1api~1applications~1%7Bid%7D/parameters/0"
+    get:
+      operationId: loadReportingProtocol
+      summary: Get ReportingProtocol
+      description: Get ReportingProtocol
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - ReportingProtocol
+      responses:
+        "200":
+          description: ReportingProtocol record
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - type: object
+                    properties:
+                      name:
+                        type: string
+                      protocolHandler:
+                        type: string
+                        description: Path to file that contains the handler code, relative
+                          to the handlers dir
+                      networkTypeId:
+                        type: string
+                  - type: object
+                    properties:
+                      id:
+                        type: string
+        "403":
+          description: Authenticated user not allowed to perform this operation
+        "404":
+          description: ReportingProtocol not found
+    put:
+      operationId: updateReportingProtocol
+      summary: Update ReportingProtocol
+      description: Update ReportingProtocol, available only to system administrators
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - ReportingProtocol
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/paths/~1api~1reportingProtocols~1%7Bid%7D/get/responses/200/\
+                content/application~1json/schema/allOf/0"
+        description: ReportingProtocol properties to be updated
+        required: true
+      responses:
+        "204":
+          description: ReportingProtocol update succeeded
+        "400":
+          description: Bad request
+        "403":
+          description: Authenticated user not allowed to perform this operation
+        "404":
+          description: ReportingProtocol not found
+    delete:
+      operationId: deleteReportingProtocol
+      summary: Delete ReportingProtocol
+      description: Delete ReportingProtocol, available only to system administrators
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - ReportingProtocol
+      responses:
+        "204":
+          description: ReportingProtocol record was deleted
+        "403":
+          description: Authenticated user not allowed to perform this operation
+        "404":
+          description: ReportingProtocol not found
+  /api/reportingProtocolHandlers:
+    get:
+      operationId: getReportingProtocolHandlers
+      summary: Get ReportingProtocol handlers
+      description: Get list of ReportingProtocol handler file paths
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - ReportingProtocol
+      responses:
+        "200":
+          description: Array of ReportingProtocol handler file paths
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+                default: []
+        "403":
+          description: Authenticated user not allowed to perform this operation
   /api/sessions:
     post:
       operationId: createSession
-      summary: Create a session
+      summary: Create a Session
       description: Submit a user's credentials and receive a JWT token
       parameters: []
       security: []
       tags:
-        - session
+        - Session
       requestBody:
         content:
           application/json:
@@ -64,26 +2200,26 @@ paths:
           description: Unauthorized
     delete:
       operationId: deleteSession
-      summary: Delete a session
+      summary: Delete a Session
       description: Invalidate the user's current jwt token
       parameters: []
       security:
         - bearer_token: []
       tags:
-        - session
+        - Session
       responses:
         "204":
           description: No content
   /api/users:
     post:
       operationId: createUser
-      summary: Create a user
-      description: Create a user, available only to system administrators
+      summary: Create a User
+      description: Create a User, available only to system administrators
       parameters: []
       security:
         - bearer_token: []
       tags:
-        - user
+        - User
       requestBody:
         content:
           application/json:
@@ -120,38 +2256,22 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  id:
-                    type: string
+                $ref: "#/paths/~1api~1applications/post/responses/200/content/appli\
+                  cation~1json/schema"
         "400":
           description: Bad request
         "403":
           description: Authenticated user not allowed to perform this operation
     get:
       operationId: listUsers
-      summary: List users
-      description: List users, available only to system administrators
+      summary: List Users
+      description: List Users, available only to system administrators
       parameters:
-        - name: offset
-          in: query
-          description: Number of records to skip
-          required: false
-          schema:
-            type: integer
-            format: int32
-            minimum: 0
-            default: 0
-        - name: limit
-          in: query
-          description: Max records to return
-          required: false
-          schema:
-            type: integer
-            format: int32
+        - $ref: "#/paths/~1api~1applications/get/parameters/0"
+        - $ref: "#/paths/~1api~1applications/get/parameters/1"
         - name: companyId
           in: query
-          description: The ID of the users' company
+          description: The ID of the Users' company
           required: false
           schema:
             type: string
@@ -164,82 +2284,83 @@ paths:
       security:
         - bearer_token: []
       tags:
-        - user
+        - User
       responses:
         "200":
           description: Query response with totalCount and list of records
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  totalCount:
-                    type: integer
-                    format: int32
-                  records:
-                    type: Array
-                    items:
-                      allOf:
-                        - $ref: "#/paths/~1api~1users/post/requestBody/content/appl\
-                            ication~1json/schema/allOf/0"
-                        - type: object
-                          properties:
-                            id:
-                              type: string
+                allOf:
+                  - $ref: "#/paths/~1api~1applications/get/responses/200/content/ap\
+                      plication~1json/schema/allOf/0"
+                  - type: object
+                    properties:
+                      records:
+                        type: array
+                        items:
+                          allOf:
+                            - $ref: "#/paths/~1api~1users/post/requestBody/content/\
+                                application~1json/schema/allOf/0"
+                            - type: object
+                              properties:
+                                id:
+                                  type: string
+                        default: []
         "400":
           description: Bad request
         "403":
           description: Authenticated user not allowed to perform this operation
   "/api/users/{id}":
     parameters:
-      - name: id
-        in: path
-        description: ID of resource
-        required: true
-        schema:
-          type: string
+      - $ref: "#/paths/~1api~1applications~1%7Bid%7D/parameters/0"
     get:
       operationId: loadUser
-      summary: Get user
-      description: Get user
+      summary: Get User
+      description: Get User
       parameters: []
       security:
         - bearer_token: []
       tags:
-        - user
+        - User
       responses:
         "200":
           description: User record
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  username:
-                    type: string
-                  role:
-                    type: string
-                    enum:
-                      - ADMIN
-                      - USER
-                  email:
-                    type: string
-                    format: email
-                  companyId:
-                    type: string
+                allOf:
+                  - type: object
+                    properties:
+                      username:
+                        type: string
+                      role:
+                        type: string
+                        enum:
+                          - ADMIN
+                          - USER
+                      email:
+                        type: string
+                        format: email
+                      companyId:
+                        type: string
+                  - type: object
+                    properties:
+                      id:
+                        type: string
         "403":
           description: Authenticated user not allowed to perform this operation
         "404":
           description: User not found
     put:
       operationId: updateUser
-      summary: Update user
-      description: Update user, available only to system administrators
+      summary: Update User
+      description: Update User, available only to system administrators
       parameters: []
       security:
         - bearer_token: []
       tags:
-        - user
+        - User
       requestBody: {}
       responses:
         "204":
@@ -252,13 +2373,13 @@ paths:
           description: User not found
     delete:
       operationId: deleteUser
-      summary: Delete user
-      description: Delete user, available only to system administrators
+      summary: Delete User
+      description: Delete User, available only to system administrators
       parameters: []
       security:
         - bearer_token: []
       tags:
-        - user
+        - User
       responses:
         "204":
           description: User record was deleted
@@ -275,7 +2396,7 @@ paths:
       security:
         - bearer_token: []
       tags:
-        - user
+        - User
       responses:
         "200":
           description: User record
@@ -328,7 +2449,7 @@ paths:
       security:
         - bearer_token: []
       tags:
-        - user
+        - User
       responses:
         "204":
           description: Email address was successfully verified or rejected
@@ -338,113 +2459,6 @@ paths:
           description: Authenticated user not allowed to perform this operation
         "404":
           description: Invalid uuid
-  /api/companies:
-    post:
-      operationId: createCompany
-      summary: Create a company
-      description: Create a company, available only to system administrators
-      parameters: []
-      security:
-        - bearer_token: []
-      tags:
-        - company
-      requestBody: {}
-      responses:
-        "200":
-          description: Company created
-          content:
-            application/json:
-              schema:
-                $ref: "#/paths/~1api~1users/post/responses/200/content/application~\
-                  1json/schema"
-        "400":
-          description: Bad request
-        "403":
-          description: Authenticated user not allowed to perform this operation
-    get:
-      operationId: listCompanies
-      summary: List companies
-      description: List companies, restricted according to authenticated user
-      parameters:
-        - $ref: "#/paths/~1api~1users/get/parameters/0"
-        - $ref: "#/paths/~1api~1users/get/parameters/1"
-        - name: search
-          in: query
-          description: Search for a string within the company's name
-          required: false
-          schema:
-            type: string
-      security:
-        - bearer_token: []
-      tags:
-        - user
-      responses:
-        "200":
-          description: Query response with totalCount and list of records
-          content:
-            application/json:
-              schema: {}
-        "400":
-          description: Bad request
-        "403":
-          description: Authenticated user not allowed to perform this operation
-  "/api/companies/{id}":
-    parameters:
-      - $ref: "#/paths/~1api~1users~1%7Bid%7D/parameters/0"
-    get:
-      operationId: loadCompany
-      summary: Get company
-      description: Get company
-      parameters: []
-      security:
-        - bearer_token: []
-      tags:
-        - company
-      responses:
-        "200":
-          description: Company record
-          content:
-            application/json:
-              schema: {}
-        "403":
-          description: Authenticated user not allowed to perform this operation
-        "404":
-          description: Company not found
-    put:
-      operationId: updateCompany
-      summary: Update company
-      description: Update company, available only to system administrators
-      parameters: []
-      security:
-        - bearer_token: []
-      tags:
-        - company
-      requestBody: {}
-      responses:
-        "204":
-          description: Company update succeeded
-        "400":
-          description: Bad request
-        "403":
-          description: Authenticated user not allowed to perform this operation
-        "404":
-          description: Company not found
-    delete:
-      operationId: deleteCompany
-      summary: Delete company
-      description: Delete company, available only to system administrators
-      parameters: []
-      security:
-        - bearer_token: []
-      tags:
-        - company
-      responses:
-        "204":
-          description: Company record was deleted
-        "403":
-          description: Authenticated user not allowed to perform this operation
-        "404":
-          description: Company not found
 components:
   parameters:
     idParam:
@@ -472,9 +2486,30 @@ components:
       schema:
         type: integer
         format: int32
+    nameSearch:
+      name: search
+      in: query
+      description: Search for a string within name
+      required: false
+      schema:
+        type: string
   schemas:
     ResourceCreatedResponse:
       type: object
+      required:
+        - id
       properties:
         id:
           type: string
+    ListResponse:
+      type: object
+      required:
+        - totalCount
+        - records
+      properties:
+        totalCount:
+          type: integer
+          format: int32
+        records:
+          type: array
+          default: []

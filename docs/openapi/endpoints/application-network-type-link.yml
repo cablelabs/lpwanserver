@@ -1,0 +1,178 @@
+openapi: 3.0.0
+info:
+  version: 1.2.1
+  title: An include file to define ApplicationNetworkTypeLink endpoints
+  license:
+    name: Apache 2.0
+paths:
+  /api/applicationNetworkTypeLinks:
+    post:
+      operationId: createApplicationNetworkTypeLink
+      summary: Create a ApplicationNetworkTypeLink
+      description: Create a ApplicationNetworkTypeLink
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - ApplicationNetworkTypeLink
+      requestBody:
+        $ref: '#/components/requestBodies/CreateApplicationNetworkTypeLinkInput'
+      responses:
+        '200':
+          description: ApplicationNetworkTypeLink created
+          content:
+            application/json:
+              schema:
+                $ref: '../api.yml#/components/schemas/ResourceCreatedResponse'
+        '403':
+          description: Authenticated user not allowed to perform this operation
+        '400':
+          description: Bad request
+    get:
+      operationId: listApplicationNetworkTypeLinks
+      summary: List ApplicationNetworkTypeLinks
+      description: List ApplicationNetworkTypeLinks
+      parameters:
+        - $ref: '../api.yml#/components/parameters/offsetParam'
+        - $ref: '../api.yml#/components/parameters/limitParam'
+        - name: applicationId
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: networkTypeId
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: companyId
+          in: query
+          required: false
+          schema:
+            type: string
+      security:
+        - bearer_token: []
+      tags:
+        - ApplicationNetworkTypeLink
+      responses:
+        '200':
+          description: Query response with totalCount and list of records
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListApplicationNetworkTypeLinkResponse'
+        '403':
+          description: Authenticated user not allowed to perform this operation
+        '400':
+          description: Bad request
+  /api/applicationNetworkTypeLinks/{id}:
+    parameters:
+      - $ref: '../api.yml#/components/parameters/idParam'
+    get:
+      operationId: loadApplicationNetworkTypeLink
+      summary: Get ApplicationNetworkTypeLink
+      description: Get ApplicationNetworkTypeLink
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - ApplicationNetworkTypeLink
+      responses:
+        '200':
+          description: ApplicationNetworkTypeLink record
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicationNetworkTypeLinkResponse'
+        '403':
+          description: Authenticated user not allowed to perform this operation
+        '404':
+          description: ApplicationNetworkTypeLink not found
+    put:
+      operationId: updateApplicationNetworkTypeLink
+      summary: Update ApplicationNetworkTypeLink
+      description: Update ApplicationNetworkTypeLink
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - ApplicationNetworkTypeLink
+      requestBody:
+        $ref: '#/components/requestBodies/UpdateApplicationNetworkTypeLinkInput'
+      responses:
+        '204':
+          description: ApplicationNetworkTypeLink update succeeded
+        '400':
+          description: Bad request
+        '403':
+          description: Authenticated user not allowed to perform this operation
+        '404':
+          description: ApplicationNetworkTypeLink not found
+    delete:
+      operationId: deleteApplicationNetworkTypeLink
+      summary: Delete ApplicationNetworkTypeLink
+      description: Delete ApplicationNetworkTypeLink
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - ApplicationNetworkTypeLink
+      responses:
+        '204':
+          description: ApplicationNetworkTypeLink record was deleted
+        '403':
+          description: Authenticated user not allowed to perform this operation
+        '404':
+          description: ApplicationNetworkTypeLink not found
+components:
+  schemas:
+    ApplicationNetworkTypeLink:
+      type: object
+      properties:
+        applicationId:
+          type: string
+          description: The Application the record is linking to the NetworkType
+        networkTypeId:
+          type: string
+          description: The NetworkType to which the Application is linked
+        networkSettings:
+          type: string
+          description: The settings in a JSON string that correspond to the NetworkType
+    ApplicationNetworkTypeLinkResponse:
+       allOf:
+        - $ref: '#/components/schemas/ApplicationNetworkTypeLink'
+        - type: object
+          properties:
+            id:
+              type: string
+    ListApplicationNetworkTypeLinkResponse:
+      allOf:
+        - $ref: '../api.yml#/components/schemas/ListResponse'
+        - type: object
+          properties:
+            records:
+              type: array
+              items:
+                $ref: '#/components/schemas/ApplicationNetworkTypeLinkResponse'
+              default: []
+  requestBodies:
+    CreateApplicationNetworkTypeLinkInput:
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/ApplicationNetworkTypeLink'
+              - type: object
+                required:
+                  - applicationId
+                  - networkTypeId
+                  - networkSettings
+      description: ApplicationNetworkTypeLink to be created
+      required: true
+    UpdateApplicationNetworkTypeLinkInput:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApplicationNetworkTypeLink'
+      description: ApplicationNetworkTypeLink properties to be updated
+      required: true

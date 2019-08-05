@@ -1,0 +1,178 @@
+openapi: 3.0.0
+info:
+  version: 1.2.1
+  title: An include file to define DeviceNetworkTypeLink endpoints
+  license:
+    name: Apache 2.0
+paths:
+  /api/deviceNetworkTypeLinks:
+    post:
+      operationId: createDeviceNetworkTypeLink
+      summary: Create a DeviceNetworkTypeLink
+      description: Create a DeviceNetworkTypeLink
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - DeviceNetworkTypeLink
+      requestBody:
+        $ref: '#/components/requestBodies/CreateDeviceNetworkTypeLinkInput'
+      responses:
+        '200':
+          description: DeviceNetworkTypeLink created
+          content:
+            application/json:
+              schema:
+                $ref: '../api.yml#/components/schemas/ResourceCreatedResponse'
+        '403':
+          description: Authenticated user not allowed to perform this operation
+        '400':
+          description: Bad request
+    get:
+      operationId: listDeviceNetworkTypeLinks
+      summary: List DeviceNetworkTypeLinks
+      description: List DeviceNetworkTypeLinks
+      parameters:
+        - $ref: '../api.yml#/components/parameters/offsetParam'
+        - $ref: '../api.yml#/components/parameters/limitParam'
+        - name: deviceId
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: networkTypeId
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: applicationId
+          in: query
+          required: false
+          schema:
+            type: string
+      security:
+        - bearer_token: []
+      tags:
+        - DeviceNetworkTypeLink
+      responses:
+        '200':
+          description: Query response with totalCount and list of records
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListDeviceNetworkTypeLinkResponse'
+        '403':
+          description: Authenticated user not allowed to perform this operation
+        '400':
+          description: Bad request
+  /api/deviceNetworkTypeLinks/{id}:
+    parameters:
+      - $ref: '../api.yml#/components/parameters/idParam'
+    get:
+      operationId: loadDeviceNetworkTypeLink
+      summary: Get DeviceNetworkTypeLink
+      description: Get DeviceNetworkTypeLink
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - DeviceNetworkTypeLink
+      responses:
+        '200':
+          description: DeviceNetworkTypeLink record
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceNetworkTypeLinkResponse'
+        '403':
+          description: Authenticated user not allowed to perform this operation
+        '404':
+          description: DeviceNetworkTypeLink not found
+    put:
+      operationId: updateDeviceNetworkTypeLink
+      summary: Update DeviceNetworkTypeLink
+      description: Update DeviceNetworkTypeLink
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - DeviceNetworkTypeLink
+      requestBody:
+        $ref: '#/components/requestBodies/UpdateDeviceNetworkTypeLinkInput'
+      responses:
+        '204':
+          description: DeviceNetworkTypeLink update succeeded
+        '400':
+          description: Bad request
+        '403':
+          description: Authenticated user not allowed to perform this operation
+        '404':
+          description: DeviceNetworkTypeLink not found
+    delete:
+      operationId: deleteDeviceNetworkTypeLink
+      summary: Delete DeviceNetworkTypeLink
+      description: Delete DeviceNetworkTypeLink
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - DeviceNetworkTypeLink
+      responses:
+        '204':
+          description: DeviceNetworkTypeLink record was deleted
+        '403':
+          description: Authenticated user not allowed to perform this operation
+        '404':
+          description: DeviceNetworkTypeLink not found
+components:
+  schemas:
+    DeviceNetworkTypeLink:
+      type: object
+      properties:
+        deviceId:
+          type: string
+          description: The Application the record is linking to the NetworkType
+        networkTypeId:
+          type: string
+          description: The NetworkType to which the Application is linked
+        networkSettings:
+          type: string
+          description: The settings in a JSON string that correspond to the NetworkType
+    DeviceNetworkTypeLinkResponse:
+       allOf:
+        - $ref: '#/components/schemas/DeviceNetworkTypeLink'
+        - type: object
+          properties:
+            id:
+              type: string
+    ListDeviceNetworkTypeLinkResponse:
+      allOf:
+        - $ref: '../api.yml#/components/schemas/ListResponse'
+        - type: object
+          properties:
+            records:
+              type: array
+              items:
+                $ref: '#/components/schemas/DeviceNetworkTypeLinkResponse'
+              default: []
+  requestBodies:
+    CreateDeviceNetworkTypeLinkInput:
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/DeviceNetworkTypeLink'
+              - type: object
+                required:
+                  - deviceId
+                  - networkTypeId
+                  - networkSettings
+      description: DeviceNetworkTypeLink to be created
+      required: true
+    UpdateDeviceNetworkTypeLinkInput:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/DeviceNetworkTypeLink'
+      description: DeviceNetworkTypeLink properties to be updated
+      required: true

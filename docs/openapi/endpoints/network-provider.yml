@@ -1,25 +1,25 @@
 openapi: 3.0.0
 info:
   version: 1.2.1
-  title: An include file to define Company endpoints
+  title: An include file to define NetworkProvider endpoints
   license:
     name: Apache 2.0
 paths:
-  /api/companies:
+  /api/networkProviders:
     post:
-      operationId: createCompany
-      summary: Create a Company
-      description: Create a Company, available only to system administrators
+      operationId: createNetworkProvider
+      summary: Create a NetworkProvider
+      description: Create a NetworkProvider, available only to system administrators
       parameters: []
       security:
         - bearer_token: []
       tags:
-        - Company
+        - NetworkProvider
       requestBody:
-        $ref: '#/components/requestBodies/CreateCompanyInput'
+        $ref: '#/components/requestBodies/CreateNetworkProviderInput'
       responses:
         '200':
-          description: Company created
+          description: NetworkProvider created
           content:
             application/json:
               schema:
@@ -29,9 +29,9 @@ paths:
         '400':
           description: Bad request
     get:
-      operationId: listCompanies
-      summary: List Companies
-      description: List Companies, restricted according to authenticated user
+      operationId: listNetworkProviders
+      summary: List NetworkProviders
+      description: List NetworkProviders, available only to system administrators
       parameters:
         - $ref: '../api.yml#/components/parameters/offsetParam'
         - $ref: '../api.yml#/components/parameters/limitParam'
@@ -39,97 +39,94 @@ paths:
       security:
         - bearer_token: []
       tags:
-        - Company
+        - NetworkProvider
       responses:
         '200':
           description: Query response with totalCount and list of records
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ListCompanyResponse'
+                $ref: '#/components/schemas/ListNetworkProviderResponse'
         '403':
           description: Authenticated user not allowed to perform this operation
         '400':
           description: Bad request
-  /api/companies/{id}:
+  /api/networkProviders/{id}:
     parameters:
       - $ref: '../api.yml#/components/parameters/idParam'
     get:
-      operationId: loadCompany
-      summary: Get Company
-      description: Get Company
+      operationId: loadNetworkProvider
+      summary: Get NetworkProvider
+      description: Get NetworkProvider
       parameters: []
       security:
         - bearer_token: []
       tags:
-        - Company
+        - NetworkProvider
       responses:
         '200':
-          description: Company record
+          description: NetworkProvider record
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CompanyResponse'
+                $ref: '#/components/schemas/NetworkProviderResponse'
         '403':
           description: Authenticated user not allowed to perform this operation
         '404':
-          description: Company not found
+          description: NetworkProvider not found
     put:
-      operationId: updateCompany
-      summary: Update Company
-      description: Update Company, available only to system administrators
+      operationId: updateNetworkProvider
+      summary: Update NetworkProvider
+      description: Update NetworkProvider, available only to system administrators
       parameters: []
       security:
         - bearer_token: []
       tags:
-        - Company
+        - NetworkProvider
       requestBody:
-        $ref: '#/components/requestBodies/UpdateCompanyInput'
+        $ref: '#/components/requestBodies/UpdateNetworkProviderInput'
       responses:
         '204':
-          description: Company update succeeded
+          description: NetworkProvider update succeeded
         '400':
           description: Bad request
         '403':
           description: Authenticated user not allowed to perform this operation
         '404':
-          description: Company not found
+          description: NetworkProvider not found
     delete:
-      operationId: deleteCompany
-      summary: Delete Company
-      description: Delete Company, available only to system administrators
+      operationId: deleteNetworkProvider
+      summary: Delete NetworkProvider
+      description: Delete NetworkProvider, available only to system administrators
       parameters: []
       security:
         - bearer_token: []
       tags:
-        - Company
+        - NetworkProvider
       responses:
         '204':
-          description: Company record was deleted
+          description: NetworkProvider record was deleted
         '403':
           description: Authenticated user not allowed to perform this operation
         '404':
-          description: Company not found
+          description: NetworkProvider not found
 components:
   schemas:
-    Company:
+    NetworkProvider:
       type: object
+      required:
+        - name
       properties:
         name:
           type: string
-        type:
-          type: string
-          enum:
-            - ADMIN
-            - VENDOR
-    CompanyResponse:
+    NetworkProviderResponse:
        allOf:
-        - $ref: '#/components/schemas/Company'
+        - $ref: '#/components/schemas/NetworkProvider'
         - type: object
           properties:
             id:
               type: string
-    ListCompanyResponse:
+    ListNetworkProviderResponse:
       allOf:
         - $ref: '../api.yml#/components/schemas/ListResponse'
         - type: object
@@ -137,25 +134,20 @@ components:
             records:
               type: array
               items:
-                $ref: '#/components/schemas/CompanyResponse'
+                $ref: '#/components/schemas/NetworkProviderResponse'
               default: []
   requestBodies:
-    CreateCompanyInput:
+    CreateNetworkProviderInput:
       content:
         application/json:
           schema:
-            allOf:
-              - $ref: '#/components/schemas/Company'
-              - type: object
-                required:
-                  - name
-                  - type
-      description: Company to be created
+            $ref: '#/components/schemas/NetworkProvider'
+      description: NetworkProvider to be created
       required: true
-    UpdateCompanyInput:
+    UpdateNetworkProviderInput:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Company'
-      description: Company properties to be updated
+            $ref: '#/components/schemas/NetworkProvider'
+      description: NetworkProvider properties to be updated
       required: true
