@@ -1,0 +1,58 @@
+openapi: 3.0.0
+info:
+  version: 1.2.1
+  title: An include file to define session endpoints
+  license:
+    name: Apache 2.0
+paths:
+  /api/sessions:
+    post:
+      operationId: createSession
+      summary: Create a session
+      description: Submit a user's credentials and receive a JWT token
+      parameters: []
+      security: []
+      tags:
+        - Session
+      requestBody:
+        $ref: '#/components/requestBodies/LoginCredentials'
+      responses:
+        '200':
+          description: JWT as response body
+          content:
+            text/plain:
+              schema:
+                type: string
+        '401':
+          description: Unauthorized
+        '400':
+          description: Bad Request
+    delete:
+      operationId: deleteSession
+      summary: Delete a session
+      description: Invalidate the user's current jwt token
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - Session
+      responses:
+        '204':
+          description: No content
+components:
+  requestBodies:
+    LoginCredentials:
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - login_username
+              - login_password
+            properties:
+              login_username:
+                type: string
+              login_password:
+                type: string
+      description: User's login credentials
+      required: true

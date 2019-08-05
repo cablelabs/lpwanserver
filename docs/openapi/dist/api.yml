@@ -1,0 +1,480 @@
+openapi: 3.0.0
+servers: []
+info:
+  description: This service goes between an IoT application server and the various networks
+    to which the devices connect.  LPWAN Server uses extensions to support
+    additional networks.
+  version: 1.2.1
+  title: LPWAN Server
+  termsOfService: ""
+  contact:
+    email: d.malas@cablelabs.com
+    name: Darly Malas
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+securitySchemes:
+  bearer_token:
+    type: http
+    scheme: bearer
+    bearerFormat: JWT
+tags:
+  - name: Session
+    description: Operations about session
+  - name: User
+    description: Operations about user
+  - name: Company
+    description: Operations about company
+  - name: PasswordPolicy
+paths:
+  /api/sessions:
+    post:
+      operationId: createSession
+      summary: Create a session
+      description: Submit a user's credentials and receive a JWT token
+      parameters: []
+      security: []
+      tags:
+        - session
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - login_username
+                - login_password
+              properties:
+                login_username:
+                  type: string
+                login_password:
+                  type: string
+        description: User's login credentials
+        required: true
+      responses:
+        "200":
+          description: JWT as response body
+          content:
+            text/plain:
+              schema:
+                type: string
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+    delete:
+      operationId: deleteSession
+      summary: Delete a session
+      description: Invalidate the user's current jwt token
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - session
+      responses:
+        "204":
+          description: No content
+  /api/users:
+    post:
+      operationId: createUser
+      summary: Create a user
+      description: Create a user, available only to system administrators
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - user
+      requestBody:
+        content:
+          application/json:
+            schema:
+              allOf:
+                - type: object
+                  properties:
+                    username:
+                      type: string
+                    role:
+                      type: string
+                      enum:
+                        - ADMIN
+                        - USER
+                    email:
+                      type: string
+                      format: email
+                    companyId:
+                      type: string
+                - type: object
+                  required:
+                    - username
+                    - password
+                    - role
+                    - companyId
+                  properties:
+                    password:
+                      type: string
+        description: User to be created
+        required: true
+      responses:
+        "200":
+          description: User created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+        "400":
+          description: Bad request
+        "403":
+          description: Authenticated user not allowed to perform this operation
+    get:
+      operationId: listUsers
+      summary: List users
+      description: List users, available only to system administrators
+      parameters:
+        - name: offset
+          in: query
+          description: Number of records to skip
+          required: false
+          schema:
+            type: integer
+            format: int32
+            minimum: 0
+            default: 0
+        - name: limit
+          in: query
+          description: Max records to return
+          required: false
+          schema:
+            type: integer
+            format: int32
+        - name: companyId
+          in: query
+          description: The ID of the users' company
+          required: false
+          schema:
+            type: string
+        - name: search
+          in: query
+          description: Search for a string within username
+          required: false
+          schema:
+            type: string
+      security:
+        - bearer_token: []
+      tags:
+        - user
+      responses:
+        "200":
+          description: Query response with totalCount and list of records
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  totalCount:
+                    type: integer
+                    format: int32
+                  records:
+                    type: Array
+                    items:
+                      allOf:
+                        - $ref: "#/paths/~1api~1users/post/requestBody/content/appl\
+                            ication~1json/schema/allOf/0"
+                        - type: object
+                          properties:
+                            id:
+                              type: string
+        "400":
+          description: Bad request
+        "403":
+          description: Authenticated user not allowed to perform this operation
+  "/api/users/{id}":
+    parameters:
+      - name: id
+        in: path
+        description: ID of resource
+        required: true
+        schema:
+          type: string
+    get:
+      operationId: loadUser
+      summary: Get user
+      description: Get user
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - user
+      responses:
+        "200":
+          description: User record
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  username:
+                    type: string
+                  role:
+                    type: string
+                    enum:
+                      - ADMIN
+                      - USER
+                  email:
+                    type: string
+                    format: email
+                  companyId:
+                    type: string
+        "403":
+          description: Authenticated user not allowed to perform this operation
+        "404":
+          description: User not found
+    put:
+      operationId: updateUser
+      summary: Update user
+      description: Update user, available only to system administrators
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - user
+      requestBody: {}
+      responses:
+        "204":
+          description: User update succeeded
+        "400":
+          description: Bad request
+        "403":
+          description: Authenticated user not allowed to perform this operation
+        "404":
+          description: User not found
+    delete:
+      operationId: deleteUser
+      summary: Delete user
+      description: Delete user, available only to system administrators
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - user
+      responses:
+        "204":
+          description: User record was deleted
+        "403":
+          description: Authenticated user not allowed to perform this operation
+        "404":
+          description: User not found
+  /api/users/me:
+    get:
+      operationId: loadMyUser
+      summary: Load my user
+      description: Load the record of the session user
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - user
+      responses:
+        "200":
+          description: User record
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - type: object
+                    properties:
+                      username:
+                        type: string
+                      role:
+                        type: string
+                        enum:
+                          - ADMIN
+                          - USER
+                      email:
+                        type: string
+                        format: email
+                      companyId:
+                        type: string
+                  - type: object
+                    properties:
+                      id:
+                        type: string
+        "404":
+          description: User not found
+  "/api/users/verifyEmail/{uuid}":
+    parameters:
+      - name: uuid
+        in: path
+        description: Email verification link ID
+        required: true
+        schema:
+          type: string
+    put:
+      operationId: verifyUserEmail
+      summary: Verify user email
+      description: Endpoint for email verification links
+      parameteters:
+        - name: function
+          in: query
+          description: Accept or reject new email
+          required: true
+          schema:
+            type: string
+            enum:
+              - accept
+              - reject
+      security:
+        - bearer_token: []
+      tags:
+        - user
+      responses:
+        "204":
+          description: Email address was successfully verified or rejected
+        "400":
+          description: Bad request
+        "403":
+          description: Authenticated user not allowed to perform this operation
+        "404":
+          description: Invalid uuid
+  /api/companies:
+    post:
+      operationId: createCompany
+      summary: Create a company
+      description: Create a company, available only to system administrators
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - company
+      requestBody: {}
+      responses:
+        "200":
+          description: Company created
+          content:
+            application/json:
+              schema:
+                $ref: "#/paths/~1api~1users/post/responses/200/content/application~\
+                  1json/schema"
+        "400":
+          description: Bad request
+        "403":
+          description: Authenticated user not allowed to perform this operation
+    get:
+      operationId: listCompanies
+      summary: List companies
+      description: List companies, restricted according to authenticated user
+      parameters:
+        - $ref: "#/paths/~1api~1users/get/parameters/0"
+        - $ref: "#/paths/~1api~1users/get/parameters/1"
+        - name: search
+          in: query
+          description: Search for a string within the company's name
+          required: false
+          schema:
+            type: string
+      security:
+        - bearer_token: []
+      tags:
+        - user
+      responses:
+        "200":
+          description: Query response with totalCount and list of records
+          content:
+            application/json:
+              schema: {}
+        "400":
+          description: Bad request
+        "403":
+          description: Authenticated user not allowed to perform this operation
+  "/api/companies/{id}":
+    parameters:
+      - $ref: "#/paths/~1api~1users~1%7Bid%7D/parameters/0"
+    get:
+      operationId: loadCompany
+      summary: Get company
+      description: Get company
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - company
+      responses:
+        "200":
+          description: Company record
+          content:
+            application/json:
+              schema: {}
+        "403":
+          description: Authenticated user not allowed to perform this operation
+        "404":
+          description: Company not found
+    put:
+      operationId: updateCompany
+      summary: Update company
+      description: Update company, available only to system administrators
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - company
+      requestBody: {}
+      responses:
+        "204":
+          description: Company update succeeded
+        "400":
+          description: Bad request
+        "403":
+          description: Authenticated user not allowed to perform this operation
+        "404":
+          description: Company not found
+    delete:
+      operationId: deleteCompany
+      summary: Delete company
+      description: Delete company, available only to system administrators
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - company
+      responses:
+        "204":
+          description: Company record was deleted
+        "403":
+          description: Authenticated user not allowed to perform this operation
+        "404":
+          description: Company not found
+components:
+  parameters:
+    idParam:
+      name: id
+      in: path
+      description: ID of resource
+      required: true
+      schema:
+        type: string
+    offsetParam:
+      name: offset
+      in: query
+      description: Number of records to skip
+      required: false
+      schema:
+        type: integer
+        format: int32
+        minimum: 0
+        default: 0
+    limitParam:
+      name: limit
+      in: query
+      description: Max records to return
+      required: false
+      schema:
+        type: integer
+        format: int32
+  schemas:
+    ResourceCreatedResponse:
+      type: object
+      properties:
+        id:
+          type: string
