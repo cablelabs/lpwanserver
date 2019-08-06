@@ -1,0 +1,153 @@
+openapi: 3.0.0
+info:
+  version: 1.2.1
+  title: An include file to define NetworkType endpoints
+  license:
+    name: Apache 2.0
+paths:
+  /api/networkTypes:
+    post:
+      operationId: createNetworkType
+      summary: Create a NetworkType
+      description: Create a NetworkType, available only to system administrators
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - NetworkType
+      requestBody:
+        $ref: '#/components/requestBodies/CreateNetworkTypeInput'
+      responses:
+        '200':
+          description: NetworkType created
+          content:
+            application/json:
+              schema:
+                $ref: '../api.yml#/components/schemas/ResourceCreatedResponse'
+        '403':
+          description: Authenticated user not allowed to perform this operation
+        '400':
+          description: Bad request
+    get:
+      operationId: listNetworkTypes
+      summary: List NetworkTypes
+      description: List NetworkTypes, available only to system administrators
+      parameters:
+        - $ref: '../api.yml#/components/parameters/offsetParam'
+        - $ref: '../api.yml#/components/parameters/limitParam'
+        - $ref: '../api.yml#/components/parameters/nameSearch'
+      security:
+        - bearer_token: []
+      tags:
+        - NetworkType
+      responses:
+        '200':
+          description: Query response with totalCount and list of records
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListNetworkTypeResponse'
+        '403':
+          description: Authenticated user not allowed to perform this operation
+        '400':
+          description: Bad request
+  /api/networkTypes/{id}:
+    parameters:
+      - $ref: '../api.yml#/components/parameters/idParam'
+    get:
+      operationId: loadNetworkType
+      summary: Get NetworkType
+      description: Get NetworkType
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - NetworkType
+      responses:
+        '200':
+          description: NetworkType record
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NetworkTypeResponse'
+        '403':
+          description: Authenticated user not allowed to perform this operation
+        '404':
+          description: NetworkType not found
+    put:
+      operationId: updateNetworkType
+      summary: Update NetworkType
+      description: Update NetworkType, available only to system administrators
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - NetworkType
+      requestBody:
+        $ref: '#/components/requestBodies/UpdateNetworkTypeInput'
+      responses:
+        '204':
+          description: NetworkType update succeeded
+        '400':
+          description: Bad request
+        '403':
+          description: Authenticated user not allowed to perform this operation
+        '404':
+          description: NetworkType not found
+    delete:
+      operationId: deleteNetworkType
+      summary: Delete NetworkType
+      description: Delete NetworkType, available only to system administrators
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - NetworkType
+      responses:
+        '204':
+          description: NetworkType record was deleted
+        '403':
+          description: Authenticated user not allowed to perform this operation
+        '404':
+          description: NetworkType not found
+components:
+  schemas:
+    NetworkType:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+    NetworkTypeResponse:
+       allOf:
+        - $ref: '#/components/schemas/NetworkType'
+        - type: object
+          properties:
+            id:
+              type: string
+    ListNetworkTypeResponse:
+      allOf:
+        - $ref: '../api.yml#/components/schemas/ListResponse'
+        - type: object
+          properties:
+            records:
+              type: array
+              items:
+                $ref: '#/components/schemas/NetworkTypeResponse'
+              default: []
+  requestBodies:
+    CreateNetworkTypeInput:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/NetworkType'
+      description: NetworkType to be created
+      required: true
+    UpdateNetworkTypeInput:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/NetworkType'
+      description: NetworkType properties to be updated
+      required: true

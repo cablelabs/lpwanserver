@@ -1,0 +1,275 @@
+openapi: 3.0.0
+info:
+  version: 1.2.1
+  title: An include file to define Device endpoints
+  license:
+    name: Apache 2.0
+paths:
+  /api/devices:
+    post:
+      operationId: createDevice
+      summary: Create a Device
+      description: Create a Device
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - Device
+      requestBody:
+        $ref: '#/components/requestBodies/CreateDeviceInput'
+      responses:
+        '200':
+          description: Device created
+          content:
+            application/json:
+              schema:
+                $ref: '../api.yml#/components/schemas/ResourceCreatedResponse'
+        '403':
+          description: Authenticated user not allowed to perform this operation
+        '400':
+          description: Bad request
+    get:
+      operationId: listDevices
+      summary: List Devices
+      description: List Devices
+      parameters:
+        - $ref: '../api.yml#/components/parameters/offsetParam'
+        - $ref: '../api.yml#/components/parameters/limitParam'
+        - $ref: '../api.yml#/components/parameters/nameSearch'
+        - name: companyId
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: applicationId
+          in: query
+          required: false
+          schema:
+            type: string
+      security:
+        - bearer_token: []
+      tags:
+        - Device
+      responses:
+        '200':
+          description: Query response with totalCount and list of records
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListDeviceResponse'
+        '403':
+          description: Authenticated user not allowed to perform this operation
+        '400':
+          description: Bad request
+  /api/devices/{id}:
+    parameters:
+      - $ref: '../api.yml#/components/parameters/idParam'
+    get:
+      operationId: loadDevice
+      summary: Get Device
+      description: Get Device
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - Device
+      responses:
+        '200':
+          description: Device record
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceResponse'
+        '403':
+          description: Authenticated user not allowed to perform this operation
+        '404':
+          description: Device not found
+    put:
+      operationId: updateDevice
+      summary: Update Device
+      description: Update Device
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - Device
+      requestBody:
+        $ref: '#/components/requestBodies/UpdateDeviceInput'
+      responses:
+        '204':
+          description: Device update succeeded
+        '400':
+          description: Bad request
+        '403':
+          description: Authenticated user not allowed to perform this operation
+        '404':
+          description: Device not found
+    delete:
+      operationId: deleteDevice
+      summary: Delete Device
+      description: Delete Device
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - Device
+      responses:
+        '204':
+          description: Device record was deleted
+        '403':
+          description: Authenticated user not allowed to perform this operation
+        '404':
+          description: Device not found
+  /api/devices/{id}/downlinks:
+    parameters:
+      - $ref: '../api.yml#/components/parameters/idParam'
+    post:
+      operationId: receiveDownlink
+      summary: Send downlink
+      description: Send a unicast downlink to one device
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - Device
+      requestBody:
+        $ref: '#/components/requestBodies/UnicastDownlinkInput'
+      responses:
+        '200':
+          description: Downlink was sent. Response contains logs from remote networks.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+        '403':
+          description: Authenticated user not allowed to perform this operation
+        '404':
+          description: Device not found
+  /api/ip-device-uplinks:
+    post:
+      operationId: receiveIpDeviceUplink
+      summary: IP-based device uplink
+      description: Submit an uplink from an IP-based device.  TLS authentication required. Client certificate must contain devEUI as the subject CN.
+      parameters: []
+      security: []
+      tags:
+        - Device
+      requestBody:
+        $ref: '#/components/requestBodies/IpUplinkInput'
+      responses:
+        '204':
+          description: Uplink received
+        '403':
+          description: Unable to authenticate device by it's client certificate
+  /api/ip-device-downlinks:
+    get:
+      operationId: listIpDeviceDownlinks
+      summary: Get IP device downlinks
+      description: Get a list of all downlinks for an IP-based device. TLS authentication required. Client certificate must contain devEUI as the subject CN.  Long-polling supported.
+      parameters:
+        - name: prefer
+          in: header
+          description: Use 'wait=n' as the header value, where n is seconds.  If no downlinks available at time of request, request will wait for n seconds before returning.
+          required: false
+          schema:
+            type: string
+      security: []
+      tags:
+        - Device
+      responses:
+        '200':
+          description: List of downlinks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+        '403':
+          description: Unable to authenticate device by it's client certificate
+components:
+  schemas:
+    Device:
+      type: object
+      properties:
+        name:
+          type: string
+          description: The Device's name
+        description:
+          type: string
+          description: The Device's description
+        deviceModel:
+          type: string
+          description: The Device's Model information
+        applicationId:
+          type: string
+          description: The ID of the Application to which the device belongs
+    DeviceResponse:
+       allOf:
+        - $ref: '#/components/schemas/Device'
+        - type: object
+          properties:
+            id:
+              type: string
+    ListDeviceResponse:
+      allOf:
+        - $ref: '../api.yml#/components/schemas/ListResponse'
+        - type: object
+          properties:
+            records:
+              type: array
+              items:
+                $ref: '#/components/schemas/DeviceResponse'
+              default: []
+  requestBodies:
+    CreateDeviceInput:
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/Device'
+              - type: object
+                required:
+                  - name
+                  - description
+                  - applicationId
+                  - deviceModel
+      description: Device to be created
+      required: true
+    UpdateDeviceInput:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Device'
+      description: Device properties to be updated
+      required: true
+    UnicastDownlinkInput:
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - fCnt
+              - fPort
+            properties:
+              fCnt:
+                type: integer
+                format: int32
+                description: Application's downlink frame counter
+              fPort:
+                type: integer
+                format: int32
+                description: The intended port for LoRa devices
+              data:
+                type: string
+                description: Any string to send as data to the device
+              jsonData:
+                type: object
+                description: A JSON object to send to the device
+    IpUplinkInput:
+      content:
+        application/json:
+          schema:
+            type: object

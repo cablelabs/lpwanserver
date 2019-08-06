@@ -1,0 +1,153 @@
+openapi: 3.0.0
+info:
+  version: 1.2.1
+  title: An include file to define NetworkProvider endpoints
+  license:
+    name: Apache 2.0
+paths:
+  /api/networkProviders:
+    post:
+      operationId: createNetworkProvider
+      summary: Create a NetworkProvider
+      description: Create a NetworkProvider, available only to system administrators
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - NetworkProvider
+      requestBody:
+        $ref: '#/components/requestBodies/CreateNetworkProviderInput'
+      responses:
+        '200':
+          description: NetworkProvider created
+          content:
+            application/json:
+              schema:
+                $ref: '../api.yml#/components/schemas/ResourceCreatedResponse'
+        '403':
+          description: Authenticated user not allowed to perform this operation
+        '400':
+          description: Bad request
+    get:
+      operationId: listNetworkProviders
+      summary: List NetworkProviders
+      description: List NetworkProviders, available only to system administrators
+      parameters:
+        - $ref: '../api.yml#/components/parameters/offsetParam'
+        - $ref: '../api.yml#/components/parameters/limitParam'
+        - $ref: '../api.yml#/components/parameters/nameSearch'
+      security:
+        - bearer_token: []
+      tags:
+        - NetworkProvider
+      responses:
+        '200':
+          description: Query response with totalCount and list of records
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListNetworkProviderResponse'
+        '403':
+          description: Authenticated user not allowed to perform this operation
+        '400':
+          description: Bad request
+  /api/networkProviders/{id}:
+    parameters:
+      - $ref: '../api.yml#/components/parameters/idParam'
+    get:
+      operationId: loadNetworkProvider
+      summary: Get NetworkProvider
+      description: Get NetworkProvider
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - NetworkProvider
+      responses:
+        '200':
+          description: NetworkProvider record
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NetworkProviderResponse'
+        '403':
+          description: Authenticated user not allowed to perform this operation
+        '404':
+          description: NetworkProvider not found
+    put:
+      operationId: updateNetworkProvider
+      summary: Update NetworkProvider
+      description: Update NetworkProvider, available only to system administrators
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - NetworkProvider
+      requestBody:
+        $ref: '#/components/requestBodies/UpdateNetworkProviderInput'
+      responses:
+        '204':
+          description: NetworkProvider update succeeded
+        '400':
+          description: Bad request
+        '403':
+          description: Authenticated user not allowed to perform this operation
+        '404':
+          description: NetworkProvider not found
+    delete:
+      operationId: deleteNetworkProvider
+      summary: Delete NetworkProvider
+      description: Delete NetworkProvider, available only to system administrators
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - NetworkProvider
+      responses:
+        '204':
+          description: NetworkProvider record was deleted
+        '403':
+          description: Authenticated user not allowed to perform this operation
+        '404':
+          description: NetworkProvider not found
+components:
+  schemas:
+    NetworkProvider:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+    NetworkProviderResponse:
+       allOf:
+        - $ref: '#/components/schemas/NetworkProvider'
+        - type: object
+          properties:
+            id:
+              type: string
+    ListNetworkProviderResponse:
+      allOf:
+        - $ref: '../api.yml#/components/schemas/ListResponse'
+        - type: object
+          properties:
+            records:
+              type: array
+              items:
+                $ref: '#/components/schemas/NetworkProviderResponse'
+              default: []
+  requestBodies:
+    CreateNetworkProviderInput:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/NetworkProvider'
+      description: NetworkProvider to be created
+      required: true
+    UpdateNetworkProviderInput:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/NetworkProvider'
+      description: NetworkProvider properties to be updated
+      required: true
