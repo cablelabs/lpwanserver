@@ -1,0 +1,161 @@
+openapi: 3.0.0
+info:
+  version: 1.2.1
+  title: An include file to define Company endpoints
+  license:
+    name: Apache 2.0
+paths:
+  /api/companies:
+    post:
+      operationId: createCompany
+      summary: Create a Company
+      description: Create a Company, available only to system administrators
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - Company
+      requestBody:
+        $ref: '#/components/requestBodies/CreateCompanyInput'
+      responses:
+        '200':
+          description: Company created
+          content:
+            application/json:
+              schema:
+                $ref: '../api.yml#/components/schemas/ResourceCreatedResponse'
+        '403':
+          description: Authenticated user not allowed to perform this operation
+        '400':
+          description: Bad request
+    get:
+      operationId: listCompanies
+      summary: List Companies
+      description: List Companies, restricted according to authenticated user
+      parameters:
+        - $ref: '../api.yml#/components/parameters/offsetParam'
+        - $ref: '../api.yml#/components/parameters/limitParam'
+        - $ref: '../api.yml#/components/parameters/nameSearch'
+      security:
+        - bearer_token: []
+      tags:
+        - Company
+      responses:
+        '200':
+          description: Query response with totalCount and list of records
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListCompanyResponse'
+        '403':
+          description: Authenticated user not allowed to perform this operation
+        '400':
+          description: Bad request
+  /api/companies/{id}:
+    parameters:
+      - $ref: '../api.yml#/components/parameters/idParam'
+    get:
+      operationId: loadCompany
+      summary: Get Company
+      description: Get Company
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - Company
+      responses:
+        '200':
+          description: Company record
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompanyResponse'
+        '403':
+          description: Authenticated user not allowed to perform this operation
+        '404':
+          description: Company not found
+    put:
+      operationId: updateCompany
+      summary: Update Company
+      description: Update Company, available only to system administrators
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - Company
+      requestBody:
+        $ref: '#/components/requestBodies/UpdateCompanyInput'
+      responses:
+        '204':
+          description: Company update succeeded
+        '400':
+          description: Bad request
+        '403':
+          description: Authenticated user not allowed to perform this operation
+        '404':
+          description: Company not found
+    delete:
+      operationId: deleteCompany
+      summary: Delete Company
+      description: Delete Company, available only to system administrators
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - Company
+      responses:
+        '204':
+          description: Company record was deleted
+        '403':
+          description: Authenticated user not allowed to perform this operation
+        '404':
+          description: Company not found
+components:
+  schemas:
+    Company:
+      type: object
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+          enum:
+            - ADMIN
+            - VENDOR
+    CompanyResponse:
+       allOf:
+        - $ref: '#/components/schemas/Company'
+        - type: object
+          properties:
+            id:
+              type: string
+    ListCompanyResponse:
+      allOf:
+        - $ref: '../api.yml#/components/schemas/ListResponse'
+        - type: object
+          properties:
+            records:
+              type: array
+              items:
+                $ref: '#/components/schemas/CompanyResponse'
+              default: []
+  requestBodies:
+    CreateCompanyInput:
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/Company'
+              - type: object
+                required:
+                  - name
+                  - type
+      description: Company to be created
+      required: true
+    UpdateCompanyInput:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Company'
+      description: Company properties to be updated
+      required: true

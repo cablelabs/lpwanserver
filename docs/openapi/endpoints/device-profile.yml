@@ -1,0 +1,205 @@
+openapi: 3.0.0
+info:
+  version: 1.2.1
+  title: An include file to define DeviceProfile endpoints
+  license:
+    name: Apache 2.0
+paths:
+  /api/networkTypes:
+    post:
+      operationId: createDeviceProfile
+      summary: Create a DeviceProfile
+      description: Create a DeviceProfile
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - DeviceProfile
+      requestBody:
+        $ref: '#/components/requestBodies/CreateDeviceProfileInput'
+      responses:
+        '200':
+          description: DeviceProfile created
+          content:
+            application/json:
+              schema:
+                $ref: '../api.yml#/components/schemas/ResourceCreatedResponse'
+        '403':
+          description: Authenticated user not allowed to perform this operation
+        '400':
+          description: Bad request
+    get:
+      operationId: listDeviceProfiles
+      summary: List DeviceProfiles
+      description: List DeviceProfiles
+      parameters:
+        - $ref: '../api.yml#/components/parameters/offsetParam'
+        - $ref: '../api.yml#/components/parameters/limitParam'
+        - $ref: '../api.yml#/components/parameters/nameSearch'
+        - name: companyId
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: networkTypeId
+          in: query
+          required: false
+          schema:
+            type: string
+      security:
+        - bearer_token: []
+      tags:
+        - DeviceProfile
+      responses:
+        '200':
+          description: Query response with totalCount and list of records
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListDeviceProfileResponse'
+        '403':
+          description: Authenticated user not allowed to perform this operation
+        '400':
+          description: Bad request
+  /api/networkTypes/{id}:
+    parameters:
+      - $ref: '../api.yml#/components/parameters/idParam'
+    get:
+      operationId: loadDeviceProfile
+      summary: Get DeviceProfile
+      description: Get DeviceProfile
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - DeviceProfile
+      responses:
+        '200':
+          description: DeviceProfile record
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceProfileResponse'
+        '403':
+          description: Authenticated user not allowed to perform this operation
+        '404':
+          description: DeviceProfile not found
+    put:
+      operationId: updateDeviceProfile
+      summary: Update DeviceProfile
+      description: Update DeviceProfile
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - DeviceProfile
+      requestBody:
+        $ref: '#/components/requestBodies/UpdateDeviceProfileInput'
+      responses:
+        '204':
+          description: DeviceProfile update succeeded
+        '400':
+          description: Bad request
+        '403':
+          description: Authenticated user not allowed to perform this operation
+        '404':
+          description: DeviceProfile not found
+    delete:
+      operationId: deleteDeviceProfile
+      summary: Delete DeviceProfile
+      description: Delete DeviceProfile
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - DeviceProfile
+      responses:
+        '204':
+          description: DeviceProfile record was deleted
+        '403':
+          description: Authenticated user not allowed to perform this operation
+        '404':
+          description: DeviceProfile not found
+  /api/deviceProfiles/:id/push:
+    parameters:
+      - $ref: '../api.yml#/components/parameters/idParam'
+    post:
+      operationId: pushDeviceProfile
+      summary: Push DeviceProfile
+      description: Push DeviceProfile to all networks of the DeviceProfile's NetworkType
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - DeviceProfile
+      responses:
+        '200':
+          description: List of logs from pushing DeviceProfile to networks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+        '403':
+          description: Authenticated user not allowed to perform this operation
+        '404':
+          description: DeviceProfile not found
+components:
+  schemas:
+    DeviceProfile:
+      type: object
+      properties:
+        name:
+          type: string
+          description: The Device Profile's name
+        description:
+          type: string
+          description: The Device Profile's description
+        companyId:
+          type: string
+          description: The ID of the Company to which the DeviceProfile belongs
+        networkTypeId:
+          type: string
+          description: The NetworkType for this DeviceProfile
+        networkSettings:
+          type: object
+          description: The JSON data structure that has the settings for the NetworkType. This is expected to match the Network Protocol's expected data used to set up the device on the remote Network(s).
+    DeviceProfileResponse:
+       allOf:
+        - $ref: '#/components/schemas/DeviceProfile'
+        - type: object
+          properties:
+            id:
+              type: string
+    ListDeviceProfileResponse:
+      allOf:
+        - $ref: '../api.yml#/components/schemas/ListResponse'
+        - type: object
+          properties:
+            records:
+              type: array
+              items:
+                $ref: '#/components/schemas/DeviceProfileResponse'
+              default: []
+  requestBodies:
+    CreateDeviceProfileInput:
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/DeviceProfile'
+              - type: object
+                required:
+                  - name
+                  - companyId
+                  - networkTypeId
+      description: DeviceProfile to be created
+      required: true
+    UpdateDeviceProfileInput:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/DeviceProfile'
+      description: DeviceProfile properties to be updated
+      required: true

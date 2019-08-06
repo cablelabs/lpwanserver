@@ -1,0 +1,241 @@
+openapi: 3.0.0
+info:
+  version: 1.2.1
+  title: An include file to define user endpoints
+  license:
+    name: Apache 2.0
+paths:
+  /api/users:
+    post:
+      operationId: createUser
+      summary: Create a User
+      description: Create a User, available only to system administrators
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - User
+      requestBody:
+        $ref: '#/components/requestBodies/CreateUserInput'
+      responses:
+        '200':
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: '../api.yml#/components/schemas/ResourceCreatedResponse'
+        '403':
+          description: Authenticated user not allowed to perform this operation
+        '400':
+          description: Bad request
+    get:
+      operationId: listUsers
+      summary: List Users
+      description: List Users, available only to system administrators
+      parameters:
+        - $ref: '../api.yml#/components/parameters/offsetParam'
+        - $ref: '../api.yml#/components/parameters/limitParam'
+        - name: companyId
+          in: query
+          description: The ID of the Users' company
+          required: false
+          schema:
+            type: string
+        - name: search
+          in: query
+          description: Search for a string within username
+          required: false
+          schema:
+            type: string
+      security:
+        - bearer_token: []
+      tags:
+        - User
+      responses:
+        '200':
+          description: Query response with totalCount and list of records
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListUserResponse'
+        '403':
+          description: Authenticated user not allowed to perform this operation
+        '400':
+          description: Bad request
+  /api/users/{id}:
+    parameters:
+      - $ref: '../api.yml#/components/parameters/idParam'
+    get:
+      operationId: loadUser
+      summary: Get User
+      description: Get User
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - User
+      responses:
+        '200':
+          description: User record
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '403':
+          description: Authenticated user not allowed to perform this operation
+        '404':
+          description: User not found
+    put:
+      operationId: updateUser
+      summary: Update User
+      description: Update User, available only to system administrators
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - User
+      requestBody:
+        $ref: '#/components/requestBodies/UpdateUserInput'
+      responses:
+        '204':
+          description: User update succeeded
+        '400':
+          description: Bad request
+        '403':
+          description: Authenticated user not allowed to perform this operation
+        '404':
+          description: User not found
+    delete:
+      operationId: deleteUser
+      summary: Delete User
+      description: Delete User, available only to system administrators
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - User
+      responses:
+        '204':
+          description: User record was deleted
+        '403':
+          description: Authenticated user not allowed to perform this operation
+        '404':
+          description: User not found
+  /api/users/me:
+    get:
+      operationId: loadMyUser
+      summary: Load my user
+      description: Load the record of the session user
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - User
+      responses:
+        '200':
+          description: User record
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '404':
+          description: User not found
+  /api/users/verifyEmail/{uuid}:
+    parameters:
+      - name: uuid
+        in: path
+        description: Email verification link ID
+        required: true
+        schema:
+          type: string
+    put:
+      operationId: verifyUserEmail
+      summary: Verify user email
+      description: Endpoint for email verification links
+      parameteters:
+        - name: function
+          in: query
+          description: Accept or reject new email
+          required: true
+          schema:
+            type: string
+            enum:
+              - accept
+              - reject
+      security:
+        - bearer_token: []
+      tags:
+        - User
+      responses:
+        '204':
+          description: Email address was successfully verified or rejected
+        '400':
+          description: Bad request
+        '403':
+          description: Authenticated user not allowed to perform this operation
+        '404':
+          description: Invalid uuid
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        username:
+          type: string
+        role:
+          type: string
+          enum:
+            - ADMIN
+            - USER
+        email:
+          type: string
+          format: email
+        companyId:
+          type: string
+    UserResponse:
+       allOf:
+        - $ref: '#/components/schemas/User'
+        - type: object
+          properties:
+            id:
+              type: string
+    ListUserResponse:
+      allOf:
+        - $ref: '../api.yml#/components/schemas/ListResponse'
+        - type: object
+          properties:
+            records:
+              type: array
+              items:
+                $ref: '#/components/schemas/UserResponse'
+              default: []
+  requestBodies:
+    CreateUserInput:
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/User'
+              - type: object
+                required:
+                  - username
+                  - password
+                  - role
+                  - companyId
+                properties:
+                  password:
+                    type: string
+      description: User to be created
+      required: true
+    UpdateCompanyInput:
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/User'
+              - type: object
+                properties:
+                  password:
+                    type: string
+      description: User properties to be updated
+      required: true

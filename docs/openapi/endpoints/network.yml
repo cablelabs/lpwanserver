@@ -1,0 +1,182 @@
+openapi: 3.0.0
+info:
+  version: 1.2.1
+  title: An include file to define Network endpoints
+  license:
+    name: Apache 2.0
+paths:
+  /api/networks:
+    post:
+      operationId: createNetwork
+      summary: Create a Network
+      description: Create a Network, available only to system administrators
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - Network
+      requestBody:
+        $ref: '#/components/requestBodies/CreateNetworkInput'
+      responses:
+        '200':
+          description: Network created
+          content:
+            application/json:
+              schema:
+                $ref: '../api.yml#/components/schemas/ResourceCreatedResponse'
+        '403':
+          description: Authenticated user not allowed to perform this operation
+        '400':
+          description: Bad request
+    get:
+      operationId: listNetworks
+      summary: List Networks
+      description: List Networks, available only to system administrators
+      parameters:
+        - $ref: '../api.yml#/components/parameters/offsetParam'
+        - $ref: '../api.yml#/components/parameters/limitParam'
+        - $ref: '../api.yml#/components/parameters/nameSearch'
+        - name: networkProviderId
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: networkTypeId
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: networkProtocolId
+          in: query
+          required: false
+          schema:
+            type: string
+      security:
+        - bearer_token: []
+      tags:
+        - Network
+      responses:
+        '200':
+          description: Query response with totalCount and list of records
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListNetworkResponse'
+        '403':
+          description: Authenticated user not allowed to perform this operation
+        '400':
+          description: Bad request
+  /api/networks/{id}:
+    parameters:
+      - $ref: '../api.yml#/components/parameters/idParam'
+    get:
+      operationId: loadNetwork
+      summary: Get Network
+      description: Get Network
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - Network
+      responses:
+        '200':
+          description: Network record
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NetworkResponse'
+        '403':
+          description: Authenticated user not allowed to perform this operation
+        '404':
+          description: Network not found
+    put:
+      operationId: updateNetwork
+      summary: Update Network
+      description: Update Network, available only to system administrators
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - Network
+      requestBody:
+        $ref: '#/components/requestBodies/UpdateNetworkInput'
+      responses:
+        '204':
+          description: Network update succeeded
+        '400':
+          description: Bad request
+        '403':
+          description: Authenticated user not allowed to perform this operation
+        '404':
+          description: Network not found
+    delete:
+      operationId: deleteNetwork
+      summary: Delete Network
+      description: Delete Network, available only to system administrators
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - Network
+      responses:
+        '204':
+          description: Network record was deleted
+        '403':
+          description: Authenticated user not allowed to perform this operation
+        '404':
+          description: Network not found
+components:
+  schemas:
+    Network:
+      type: object
+      properties:
+        name:
+          type: string
+          description: The Network's name
+        networkProviderId:
+          type: string
+          description: The ID of the Network Provider that provides the Network
+        networkTypeId:
+          type: string
+          description: The ID of the NetworkType that the Network uses
+        networkProtocolId:
+          type: string
+          description: The ID of the Network Protocol that the Network uses
+        baseUrl:
+          type: string
+          description: The base URL used by the Network Protocol to reach the Network's API server
+        securityData:
+          type: object
+          description: The data used to grant secure access to the Network's server API. This data is defined by the NetworkType
+    NetworkResponse:
+       allOf:
+        - $ref: '#/components/schemas/Network'
+        - type: object
+          properties:
+            id:
+              type: string
+    ListNetworkResponse:
+      allOf:
+        - $ref: '../api.yml#/components/schemas/ListResponse'
+        - type: object
+          properties:
+            records:
+              type: array
+              items:
+                $ref: '#/components/schemas/NetworkResponse'
+              default: []
+  requestBodies:
+    CreateNetworkInput:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Network'
+      description: Network to be created
+      required: true
+    UpdateNetworkInput:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Network'
+      description: Network properties to be updated
+      required: true
