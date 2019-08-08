@@ -1,4 +1,4 @@
-const { prisma } = require('../../generated/prisma-client')
+const { prisma } = require('../../../app/generated/prisma-client')
 const createRecords = require('../../lib/seed-util')
 
 // example

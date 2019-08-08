@@ -1,6 +1,6 @@
 cd ../lpwanserver-web-client
 npm run build
 cd ../lpwanserver
-rm -rf public
-mkdir public
-mv ../lpwanserver-web-client/build/* public
+rm -rf app/generated/public
+mkdir -p app/generated/public
+mv ../lpwanserver-web-client/build/* app/generated/public

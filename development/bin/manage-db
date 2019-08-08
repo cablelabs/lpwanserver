@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+
+if [ "$1" = "start" ]
+then
+  docker-compose -f development/databases/docker-compose.yml up -d
+  exit 0
+fi
+
+if [ "$1" = "deploy" ]
+then
+  sleep 5s
+  prisma_url=http://localhost:4466/lpwanserver/dev npm run prisma -- deploy
+  sleep 2s
+  exit 0
+fi
+
+if [ "$1" = "reset" ]
+then
+  primsa_url='http://localhost:4466/lpwanserver/dev' npm run prisma -- seed --reset
+  exit 0
+fi
+
+if [ "$1" = "stop" ]
+then
+  docker-compose -f development/databases/docker-compose.yml down
+  exit 0
+fi

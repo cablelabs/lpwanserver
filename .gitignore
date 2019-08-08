@@ -46,7 +46,6 @@ b146.json
 sensorTest
 b146add.json
 
-
 .idea/
 *.idea
 lpwanserver.iml
@@ -66,7 +65,5 @@ certs
 
 development/credentials
 
-public/*
-
-# Prisma generated files
-prisma/generated
+# Generated app files
+app/generated
