@@ -1,10 +1,10 @@
 var assert = require('assert')
 var chai = require('chai')
 var chaiHttp = require('chai-http')
-var createApp = require('../../restApp')
+const { createApp } = require('../../../app/express-app')
 var expect = chai.expect
 var should = chai.should()
-const { prisma } = require('../../prisma/generated/prisma-client')
+const { prisma } = require('../../../app/generated/prisma-client')
 
 chai.use(chaiHttp)
 var server

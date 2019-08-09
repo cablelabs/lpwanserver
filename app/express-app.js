@@ -1,3 +1,4 @@
+const config = require('./config')
 const { logger } = require('./log')
 const express = require('express')
 const morgan = require('morgan')
@@ -6,7 +7,7 @@ const cookieParser = require('cookie-parser')
 const RestServer = require('./rest/restServer')
 const serveSpa = require('./lib/serve-spa')
 
-function buildCorsMiddlewareOptions (config) {
+function buildCorsMiddlewareOptions () {
   var whitelist = config.cors_whitelist.map(x => new RegExp(x))
   return {
     origin (origin, callback) {
@@ -19,7 +20,7 @@ function buildCorsMiddlewareOptions (config) {
   }
 }
 
-module.exports = async function createApp (config) {
+async function createApp () {
   // Create the REST application.
   var app = express()
 
@@ -38,7 +39,7 @@ module.exports = async function createApp (config) {
   }
 
   // stream morgan to winston
-  app.use(morgan('combined', { stream: logger.stream }))
+  app.use(morgan('tiny', { stream: { write: x => logger.info(x.trim()) } }))
 
   // Add the body parser.
   app.use(express.json())
@@ -54,4 +55,8 @@ module.exports = async function createApp (config) {
   await restServer.initialize()
 
   return app
+}
+
+module.exports = {
+  createApp
 }

@@ -1,4 +1,4 @@
-const Client = require('../../rest/networkProtocols/handlers/LoraOpenSource/v2/client')
+const Client = require('../../../app/networkProtocols/handlers/LoraOpenSource/v2/client')
 
 const network = {
   id: 'mylora1servernetwork',

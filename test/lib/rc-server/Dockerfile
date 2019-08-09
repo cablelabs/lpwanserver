@@ -4,7 +4,7 @@ FROM node:10.15-alpine
 WORKDIR /usr/src/app
 
 # Copy project files
-COPY lib/rc-server/* ./
+COPY test/lib/rc-server/* ./
 
 RUN npm install --production
 

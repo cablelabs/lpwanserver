@@ -1,19 +1,18 @@
 FROM node:10.15
 
-# set working directory
-WORKDIR /usr/src/app
+WORKDIR /app
 
-RUN npm install -g mocha
-
-# Copy project file
 COPY package*.json ./
+COPY app app
+COPY development/config.json app/config/dev.json
+COPY test/e2e test/e2e
+COPY test/networks test/networks
+COPY test/lib test/lib
+COPY test/data test/data
 
-# install all dependencies, not dev dependencies
 RUN npm install
 
-# copy all project
-COPY . .
-COPY test2.0 test2.0
+# Prevent server from attempting to serve UI
+ENV public_dir=
 
-# Override the command, to run the test instead of the application
-CMD ["mocha", "./test2.0/e2e/specs", "--recursive", "--reporter", "spec", "--bail", "--exit", "--timeout", "100000"]
+CMD ["npm", "run", "test:e2e"]

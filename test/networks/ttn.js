@@ -1,4 +1,4 @@
-const Client = require('../../../rest/networkProtocols/handlers/TheThingsNetwork/TtnRestClient')
+const Client = require('../../app/networkProtocols/handlers/TheThingsNetwork/TtnRestClient')
 const client = new Client()
 const { key } = require('ttn')
 // const crypto = require('crypto')

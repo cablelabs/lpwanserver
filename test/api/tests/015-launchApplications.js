@@ -2,7 +2,7 @@ var assert = require('assert')
 var fs = require('fs')
 var chai = require('chai')
 var chaiHttp = require('chai-http')
-var createApp = require('../../restApp.js')
+const { createApp } = require('../../../app/express-app')
 var should = chai.should()
 
 chai.use(chaiHttp)

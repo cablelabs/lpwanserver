@@ -1,4 +1,4 @@
-const { prisma } = require('../../../prisma/generated/prisma-client')
+const { prisma } = require('../../../../app/generated/prisma-client')
 
 async function setupData () {
   const cos = await prisma.companies()

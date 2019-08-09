@@ -52,10 +52,8 @@ LPWAN Server uses Redis for PubSub and DB caching.
 
 Set these environment variables when running LPWAN Server.
 
-- **prisma_protocol** - http or https
-- **prisma_host** - host address of prisma instance
-- **prisma_port** - port, usually 4466
-- **redis_url** - url to your redis service
+- **prisma_url** - url to your Prisma service
+- **redis_url** - url to your Redis service
 
 ### LPWAN Server
 

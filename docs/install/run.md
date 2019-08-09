@@ -16,16 +16,16 @@ There is a script for making it easier to start and stop persistence services.
 
 ```
 # Start all persistence services
-$ ./bin/manage-db start
+$ ./development/bin/manage-db start
 
 # Deploy the data models to Prisma
-$ ./bin/manage-db deploy
+$ ./development/bin/manage-db deploy
 
 # Stop all persistence services
-$ ./bin/manage-db stop
+$ ./development/bin/manage-db stop
 
 # Reset the database to the base set of seeded records contained in `prisma/verions/v{x}`
-$ ./bin/manage-db reset
+$ ./development/bin/manage-db reset
 ```
 
 Prisma runs a GraphQL Playground at `http://localhost:4466` that allows you
@@ -37,7 +37,7 @@ a UI dashboard to the data.
 Run this command to start versions 1 and 2 of LoRa Server and LoRa App Server.
 
 ```
-$ docker-compose -f docker/dev/loraserver/docker-compose.yml up
+$ docker-compose -f development/loraserver/docker-compose.yml up
 ```
 
 LoRa App Servers are at:
@@ -50,7 +50,7 @@ LoRa App Servers are at:
 Run this command to start LPWAN Server for development.
 
 ```
-$ docker-compose -f docker/dev/docker-compose.yml up --build
+$ docker-compose -f development/docker-compose.yml up --build
 ```
 
 LPWAN Server is run with `nodemon` inside of a docker container.  Any

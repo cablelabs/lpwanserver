@@ -4,6 +4,5 @@
 --reporter spec
 --bail
 --exit
---spec test/e2e-https/tests/**/*.spec.js
+--spec test/api/tests/**/*.js
 --timeout 100000
---file test/e2e-https/setup.js

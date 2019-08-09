@@ -8,14 +8,14 @@ sidebar_label: Configuration
 
 ### Configuration Options
 
-The configuration options for the REST server are specified in the `config`
+The configuration options for the REST server are specified in the `app/config`
 folder.  The configuration parameters are documented as a JSON Schema in the
-file `config/schema.json`.  Note that as new versions of this software are made available,
+file `app/config/schema.json`.  Note that as new versions of this software are made available,
 the administrator is expected to keep the configuration up-to-date.
 
-You can make a file to hold a group of configuration settings.  See `config/dev.json`.
-Use the `config_file` environment variable to point to that file.   The environment variable
-to point to the example above would be `config_file=config/dev.json`.
+You can make a file to hold a group of configuration settings.  See `development/config.json`.
+Mount your config file into the docker container, and then use the `config_file` environment
+variable to point to that file.  See the `docker-compose.yml` file for an example.
 
 ### Environment Variables
 
@@ -23,9 +23,8 @@ All top-level config settings can be overridden by an environment variable with 
 
 ### File paths
 
-All file paths in the configuration can be either absolute or relative to the root
-of the repository.  If the first character is `/`, the path will be regarded
-as absolute.
+All file paths in the configuration can be either absolute or relative to the app folder.
+If the first character is `/`, the path will be regarded as absolute.
 
 ### CORS
 

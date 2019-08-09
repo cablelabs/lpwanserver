@@ -1,5 +1,5 @@
-const Lora1 = require('../clients/lora-server1')
-const Lora2 = require('../clients/lora-server2')
+const Lora1 = require('./clients/lora-server1')
+const Lora2 = require('./clients/lora-server2')
 const Seeder = require('../../lib/seeder')
 const R = require('ramda')
 

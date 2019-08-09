@@ -1,0 +1,8 @@
+# mocha.opts
+
+--recursive
+--bail
+--exit
+--spec test/unit/tests/**/*.js
+--timeout 100000
+--file test/unit/setup.js

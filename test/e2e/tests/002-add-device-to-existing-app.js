@@ -1,12 +1,11 @@
 let chai = require('chai')
 let chaiHttp = require('chai-http')
-let createApp = require('../../../restApp')
+const { createApp } = require('../../../app/express-app')
 let should = chai.should()
 let setup = require('../setup.js')
-let appLogger = require('../../../rest/lib/appLogger.js')
-const Lora1 = require('../networks/lora-v1')
-const Lora2 = require('../networks/lora-v2')
-const { prisma } = require('../../../prisma/generated/prisma-client')
+const Lora1 = require('../../networks/lora-v1')
+const Lora2 = require('../../networks/lora-v2')
+const { prisma } = require('../../../app/generated/prisma-client')
 
 chai.use(chaiHttp)
 let server
@@ -198,7 +197,6 @@ describe('E2E Test for Adding a Device to an Existing Application Use Case #190'
         .end(function (err, res) {
           res.should.have.status(200)
           let appObj = JSON.parse(res.text)
-          appLogger.log(appObj)
           done()
         })
     })
@@ -242,7 +240,6 @@ describe('E2E Test for Adding a Device to an Existing Application Use Case #190'
         .set('Content-Type', 'application/json')
         .send(device)
         .end(function (err, res) {
-          appLogger.log(res)
           res.should.have.status(200)
           let ret = JSON.parse(res.text)
           deviceId1 = ret.id
@@ -259,7 +256,6 @@ describe('E2E Test for Adding a Device to an Existing Application Use Case #190'
         .end(function (err, res) {
           res.should.have.status(200)
           let devObj = JSON.parse(res.text)
-          appLogger.log(devObj)
           devObj.name.should.equal(device.name)
           devObj.description.should.equal(device.description)
           devObj.deviceModel.should.equal(device.deviceModel)
@@ -277,7 +273,6 @@ describe('E2E Test for Adding a Device to an Existing Application Use Case #190'
         .end(function (err, res) {
           res.should.have.status(200)
           var dnlObj = JSON.parse(res.text)
-          appLogger.log(dnlObj)
           dnlId1 = dnlObj.id
           done()
         })
@@ -413,7 +408,6 @@ describe('E2E Test for Adding a Device to an Existing Application Use Case #190'
         .set('Content-Type', 'application/json')
         .send(device2)
         .end(function (err, res) {
-          appLogger.log(res)
           res.should.have.status(200)
           let ret = JSON.parse(res.text)
           deviceId2 = ret.id
@@ -430,7 +424,6 @@ describe('E2E Test for Adding a Device to an Existing Application Use Case #190'
         .end(function (err, res) {
           res.should.have.status(200)
           let devObj = JSON.parse(res.text)
-          appLogger.log(devObj)
           devObj.name.should.equal(device2.name)
           devObj.description.should.equal(device2.description)
           devObj.deviceModel.should.equal(device2.deviceModel)
@@ -448,7 +441,6 @@ describe('E2E Test for Adding a Device to an Existing Application Use Case #190'
         .end(function (err, res) {
           res.should.have.status(200)
           var dnlObj = JSON.parse(res.text)
-          appLogger.log(dnlObj)
           dnlId2 = dnlObj.id
           done()
         })

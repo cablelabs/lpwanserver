@@ -1,4 +1,4 @@
-const Client = require('../../../rest/networkProtocols/handlers/Loriot/v4/client')
+const Client = require('../../app/networkProtocols/handlers/Loriot/v4/client')
 const client = new Client()
 
 module.exports = {

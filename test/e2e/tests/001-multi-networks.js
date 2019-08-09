@@ -2,16 +2,15 @@
 var assert = require('assert')
 var chai = require('chai')
 var chaiHttp = require('chai-http')
-var createApp = require('../../../restApp')
+const { createApp } = require('../../../app/express-app')
 var should = chai.should()
 var setup = require('../setup.js')
 const { wait } = require('../../lib/helpers')
-var appLogger = require('../../../rest/lib/appLogger.js')
-const Lora1 = require('../networks/lora-v1')
-const Lora2 = require('../networks/lora-v2')
-const Loriot = require('../networks/loriot')
-const Ttn = require('../networks/ttn')
-const { prisma } = require('../../../prisma/generated/prisma-client')
+const Lora1 = require('../../networks/lora-v1')
+const Lora2 = require('../../networks/lora-v2')
+const Loriot = require('../../networks/loriot')
+const Ttn = require('../../networks/ttn')
+const { prisma } = require('../../../app/generated/prisma-client')
 
 chai.use(chaiHttp)
 var server
@@ -130,7 +129,6 @@ describe('E2E Test for Multiple Networks', () => {
           .set('Content-Type', 'application/json')
         res.should.have.status(200)
         let result = JSON.parse(res.text)
-        appLogger.log(result)
         result.records.should.be.instanceof(Array)
         result.records.should.have.length(1)
         result.totalCount.should.equal(1)
@@ -155,7 +153,6 @@ describe('E2E Test for Multiple Networks', () => {
             if (err) done(err)
             res.should.have.status(201)
             let network = JSON.parse(res.text)
-            appLogger.log(network)
             network.securityData.authorized.should.equal(true)
             network.securityData.message.should.equal('ok')
             lora.loraV1.networkId = network.id
@@ -192,7 +189,6 @@ describe('E2E Test for Multiple Networks', () => {
             if (err) done(err)
             res.should.have.status(200)
             let result = JSON.parse(res.text)
-            appLogger.log(result)
             result.records.should.be.instanceof(Array)
             result.records.should.have.length(1)
             result.totalCount.should.equal(1)
@@ -219,7 +215,6 @@ describe('E2E Test for Multiple Networks', () => {
             if (err) done(err)
             res.should.have.status(201)
             let network = JSON.parse(res.text)
-            appLogger.log(network)
             network.securityData.authorized.should.equal(true)
             network.securityData.message.should.equal('ok')
             lora.loraV2.networkId = network.id
@@ -257,7 +252,6 @@ describe('E2E Test for Multiple Networks', () => {
             if (err) done(err)
             res.should.have.status(200)
             let result = JSON.parse(res.text)
-            appLogger.log(result)
             result.records.should.be.instanceof(Array)
             result.records.should.have.length(1)
             result.totalCount.should.equal(1)
@@ -286,7 +280,6 @@ describe('E2E Test for Multiple Networks', () => {
             if (err) done(err)
             res.should.have.status(201)
             let network = JSON.parse(res.text)
-            appLogger.log(network)
             network.securityData.authorized.should.equal(true)
             network.securityData.message.should.equal('ok')
             lora.loriot.networkId = network.id
@@ -305,7 +298,6 @@ describe('E2E Test for Multiple Networks', () => {
             if (err) done(err)
             res.should.have.status(200)
             let result = JSON.parse(res.text)
-            appLogger.log(result)
             result.records.should.be.instanceof(Array)
             result.records.should.have.length(1)
             result.totalCount.should.equal(1)
@@ -332,7 +324,6 @@ describe('E2E Test for Multiple Networks', () => {
             if (err) done(err)
             res.should.have.status(201)
             let network = JSON.parse(res.text)
-            appLogger.log(network)
             network.securityData.authorized.should.equal(true)
             network.securityData.message.should.equal('ok')
             lora.ttn.networkId = network.id
@@ -371,7 +362,6 @@ describe('E2E Test for Multiple Networks', () => {
             res.should.have.status(200)
             res.should.have.property('text')
             let applications = JSON.parse(res.text)
-            appLogger.log(applications)
             applications.should.have.property('totalCount')
             applications.should.have.property('records')
             // applications.totalCount.should.equal(2)
@@ -424,8 +414,6 @@ describe('E2E Test for Multiple Networks', () => {
             res.should.have.status(200)
             res.should.have.property('text')
             let appNTLs = JSON.parse(res.text)
-            appLogger.log(appNTLs)
-            appLogger.log(lora.loraV1.apps)
             appNTLs.should.have.property('totalCount')
             appNTLs.should.have.property('records')
             // appNTLs.totalCount.should.equal(2)
@@ -449,7 +437,6 @@ describe('E2E Test for Multiple Networks', () => {
             let applications = JSON.parse(res.text)
             applications.should.have.property('totalCount')
             applications.should.have.property('records')
-            appLogger.log(applications, 'error')
             // applications.totalCount.should.equal(2)
             let application = applications.records.find(x => x.name === Lora2.application.name)
             should.exist(application)
@@ -492,7 +479,6 @@ describe('E2E Test for Multiple Networks', () => {
 
           }
         }
-        appLogger.log(lora.loraV2)
         should.exist(lora.loraV2.apps[0].appId)
         server
           .get('/api/applicationNetworkTypeLinks')
@@ -524,7 +510,6 @@ describe('E2E Test for Multiple Networks', () => {
             res.should.have.status(200)
             res.should.have.property('text')
             let applications = JSON.parse(res.text)
-            appLogger.log(applications)
             applications.should.have.property('totalCount')
             applications.should.have.property('records')
             // applications.totalCount.should.equal(2)
@@ -568,14 +553,11 @@ describe('E2E Test for Multiple Networks', () => {
             res.should.have.status(200)
             res.should.have.property('text')
             let appNTLs = JSON.parse(res.text)
-            appLogger.log(appNTLs)
-            appLogger.log(lora.loraV1.apps)
             appNTLs.should.have.property('totalCount')
             appNTLs.should.have.property('records')
             // appNTLs.totalCount.should.equal(2)
             let appNTL = appNTLs.records.find(x => x.applicationId === lora.loriot.apps[0].appId)
             should.exist(appNTL)
-            appLogger.log(appNTL)
             // appNTL.should.eql(expected)
             lora.loraV1.apps[0].appNTLId = appNTL.id
             done()
@@ -595,7 +577,6 @@ describe('E2E Test for Multiple Networks', () => {
             let applications = JSON.parse(res.text)
             applications.should.have.property('totalCount')
             applications.should.have.property('records')
-            appLogger.log(applications, 'error')
             let application = applications.records.find(x => x.name === Ttn.application.id)
             should.exist(application)
             application.description.should.equal(Ttn.application.name)
@@ -625,7 +606,6 @@ describe('E2E Test for Multiple Networks', () => {
           'networkTypeId': networkTypeId
         }
 
-        appLogger.log(lora.ttn)
         should.exist(lora.ttn.apps[0].appId)
         server
           .get('/api/applicationNetworkTypeLinks/' + lora.ttn.apps[0].appId)
@@ -637,7 +617,6 @@ describe('E2E Test for Multiple Networks', () => {
             res.should.have.property('text')
             let appNTL = JSON.parse(res.text)
             should.exist(appNTL)
-            appLogger.log(appNTL)
             // appNTL.should.eql(expected)
             lora.ttn.apps[0].appNTLId = appNTL.id
             done()
@@ -727,7 +706,6 @@ describe('E2E Test for Multiple Networks', () => {
           })
       })
       it('Verify the Test Device NTL was Created', (done) => {
-        appLogger.log(lora, 'info')
         let expected = {
           'id': 1,
           'deviceId': lora.loraV1.apps[0].deviceIds[0],
@@ -847,7 +825,6 @@ describe('E2E Test for Multiple Networks', () => {
             // devices.totalCount.should.equal(2)
             let device = devices.records.find(x => x.name === Lora2.device.name)
             should.exist(device)
-            appLogger.log(device)
             // device.should.eql(expected)
             lora.loraV2.apps[0].deviceIds.push(device.id)
             done()
@@ -896,7 +873,6 @@ describe('E2E Test for Multiple Networks', () => {
             // deviceNTLs.totalCount.should.equal(2)
             let deviceNTL = deviceNTLs.records.find(x => x.deviceId === lora.loraV2.apps[0].deviceIds[0])
             should.exist(deviceNTL)
-            appLogger.log(deviceNTL)
             // deviceNTL.should.eql(expected)
             lora.loraV2.apps[0].deviceNTLIds.push(deviceNTL.id)
             done()
@@ -957,14 +933,12 @@ describe('E2E Test for Multiple Networks', () => {
             // devices.totalCount.should.equal(2)
             let device = devices.records.find(x => x.name === expected.name)
             should.exist(device)
-            appLogger.log(device)
             device.should.eql(expected)
             lora.loriot.apps[0].deviceIds.push(device.id)
             done()
           })
       })
       it('Verify the Test Device NTL was Created', (done) => {
-        appLogger.log(lora, 'info')
         let expected = {
           'id': 1,
           'deviceId': lora.loriot.apps[0].deviceIds[0],
@@ -988,7 +962,6 @@ describe('E2E Test for Multiple Networks', () => {
             // deviceNTLs.totalCount.should.equal(2)
             let deviceNTL = deviceNTLs.records.find(x => x.deviceId === expected.deviceId)
             should.exist(deviceNTL)
-            appLogger.log(deviceNTL)
             // deviceNTL.should.eql(expected)
             lora.loriot.apps[0].deviceNTLIds.push(deviceNTL.id)
             done()
@@ -1069,7 +1042,6 @@ describe('E2E Test for Multiple Networks', () => {
             let devices = JSON.parse(res.text)
             devices.should.have.property('totalCount')
             devices.should.have.property('records')
-            appLogger.log(devices)
             // devices.totalCount.should.equal(2)
             let device1 = devices.records.find(x => x.name === Ttn.abpDevice.lorawan_device.dev_eui)
             let device2 = devices.records.find(x => x.name === Ttn.otaaDevice.lorawan_device.dev_eui)
@@ -1121,12 +1093,9 @@ describe('E2E Test for Multiple Networks', () => {
             let deviceNTLs = JSON.parse(res.text)
             deviceNTLs.should.have.property('totalCount')
             deviceNTLs.should.have.property('records')
-            appLogger.log(deviceNTLs)
-
             // deviceNTLs.totalCount.should.equal(2)
             let deviceNTL = deviceNTLs.records.find(x => x.deviceId === lora.loraV2.apps[0].deviceIds[0])
             should.exist(deviceNTL)
-            appLogger.log(deviceNTL)
             // deviceNTL.should.eql(expected)
             lora.ttn.apps[0].deviceNTLIds.push(deviceNTL.id)
             done()

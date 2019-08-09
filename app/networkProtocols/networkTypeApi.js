@@ -3,7 +3,7 @@ var { logger } = require('../log')
 
 // An object to access dataModel data and cache it for operations across
 // multiple networks, preventing a lot of redundant database hits.
-var NetworkProtocolDataAccess = require('./networkProtocolDataAccess.js.js')
+var NetworkProtocolDataAccess = require('./networkProtocolDataAccess')
 
 //* *****************************************************************************
 // Defines the generic cross-network API from the perspective of a networkType,

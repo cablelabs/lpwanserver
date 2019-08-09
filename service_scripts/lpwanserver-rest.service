@@ -3,7 +3,7 @@ Description=LPWANSERVERREST
 
 [Service]
 WorkingDirectory=/var/node/lpwanserver-rest
-ExecStart=/usr/bin/nodejs /var/node/lpwanserver-rest/bin/rest
+ExecStart=/usr/bin/nodejs /var/node/lpwanserver-rest/app/index.js
 Restart=always
 
 [Install]

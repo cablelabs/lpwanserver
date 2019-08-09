@@ -9,7 +9,7 @@ services:
     depends_on:
       - mosquitto
     volumes:
-      - ../configuration/loraserver:/etc/loraserver
+      - ./configuration/loraserver:/etc/loraserver
 
   loraserver1:
     image: loraserver/loraserver:1
@@ -19,7 +19,7 @@ services:
     depends_on:
       - mosquitto
     volumes:
-      - ../configuration/loraserver_1:/etc/loraserver
+      - ./configuration/loraserver_1:/etc/loraserver
 
   lora_appserver:
     image: loraserver/lora-app-server:2
@@ -31,7 +31,7 @@ services:
     ports:
       - 8082:8080
     volumes:
-      - ../configuration/lora-app-server:/etc/lora-app-server
+      - ./configuration/lora-app-server:/etc/lora-app-server
 
   lora_appserver1:
     image: loraserver/lora-app-server:1
@@ -43,7 +43,7 @@ services:
     ports:
       - 8081:8080
     volumes:
-      - ../configuration/lora-app-server_1:/etc/lora-app-server
+      - ./configuration/lora-app-server_1:/etc/lora-app-server
 
   mosquitto:
     image: eclipse-mosquitto

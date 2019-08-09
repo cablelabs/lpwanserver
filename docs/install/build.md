@@ -13,7 +13,7 @@ It would also be necessary if you want LPWAN Server to serve a custom UI.
 Run docker build:
 
 ```
-$ docker build -f docker/Dockerfile -t <my-registry>/<my-lpwanserver>:<version> .
+$ docker build -f Dockerfile -t <my-registry>/<my-lpwanserver>:<version> .
 ```
 
 ## Web Client
@@ -33,7 +33,7 @@ so it's easiest to use the `public` folder.  Also make sure the LPWAN Server's `
 config variable is set to `public`.
 
 ```
-mv build/* ../lpwanserver/public
+mv build/* ../lpwanserver/app/generated/public
 # run docker build command above
 ```
 

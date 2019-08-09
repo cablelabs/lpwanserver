@@ -3,7 +3,7 @@ const { createLpwanClient } = require('../../clients/lpwan')
 const Lora1 = require('../../clients/lora-server1')
 const Lora2 = require('../../clients/lora-server2')
 const { seedData } = require('./setup')
-const { prisma } = require('../../../prisma/generated/prisma-client')
+const { prisma } = require('../../../../app/generated/prisma-client')
 const R = require('ramda')
 
 const Lpwan = createLpwanClient()

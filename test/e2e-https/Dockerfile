@@ -1,25 +1,19 @@
 FROM node:10.15
 
-# set working directory
-WORKDIR /usr/src/app
-
-RUN npm install -g mocha
-
-# Copy project files
-COPY test test
-COPY prisma/generated prisma/generated
-COPY lib/axios-rest-client lib/axios-rest-client
-COPY lib/seeder lib/seeder
-COPY rest-client rest-client
-
-# Because LoRa clients are imported from rest folder
-COPY rest rest
-COPY config config
+WORKDIR /usr/src
 
 COPY package*.json ./
+COPY app app
+COPY development/config.json app/config/dev.json
+COPY test/e2e-https test/e2e-https
+COPY test/networks test/networks
+COPY test/lib test/lib
+COPY lib lib
+COPY certs certs
 
-# install all dependencies
 RUN npm install
 
-# Override the command, to run the test instead of the application
-CMD ["mocha", "--opts", "./test/e2e/mocha.opts"]
+# Prevent server from attempting to serve UI
+ENV public_dir=
+
+CMD ["npm", "run", "test:e2e-https"]

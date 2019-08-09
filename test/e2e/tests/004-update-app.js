@@ -1,13 +1,12 @@
 /* eslint-disable no-unused-vars */
 let chai = require('chai')
 let chaiHttp = require('chai-http')
-let createApp = require('../../../restApp')
+const { createApp } = require('../../../app/express-app')
 let should = chai.should()
 let setup = require('../setup.js')
-let appLogger = require('../../../rest/lib/appLogger.js')
-const Lora1 = require('../networks/lora-v1')
-const Lora2 = require('../networks/lora-v2')
-const { prisma } = require('../../../prisma/generated/prisma-client')
+const Lora1 = require('../../networks/lora-v1')
+const Lora2 = require('../../networks/lora-v2')
+const { prisma } = require('../../../app/generated/prisma-client')
 
 chai.use(chaiHttp)
 let server
@@ -235,7 +234,6 @@ describe('E2E Test for Updating an Application Use Case #189', () => {
         .send(device)
         .end(function (err, res) {
           if (err) done(err)
-          appLogger.log(res)
           res.should.have.status(200)
           let ret = JSON.parse(res.text)
           deviceId1 = ret.id

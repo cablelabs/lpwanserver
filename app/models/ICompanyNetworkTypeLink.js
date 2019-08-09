@@ -3,6 +3,7 @@ const R = require('ramda')
 const CacheFirstStrategy = require('../lib/prisma-cache/src/cache-first-strategy')
 const { redisClient } = require('../lib/redis')
 const { stringifyProp, parseProp } = require('../lib/utils')
+const { logger } = require('../log')
 
 //* *****************************************************************************
 // Fragments for how the data should be returned from Prisma.

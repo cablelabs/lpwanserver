@@ -1,7 +1,7 @@
 const cryptoRandomString = require('crypto-random-string')
 const { client, cache } = require('../../clients/lora-server1')
 const R = require('ramda')
-const Seeder = require('../../../lib/seeder')
+const Seeder = require('../../../../lib/seeder')
 
 const devEUIs = {
   deviceAbp: cryptoRandomString({ length: 16 }),

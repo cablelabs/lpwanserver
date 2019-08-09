@@ -1,4 +1,4 @@
-const { AxiosRestApi, AxiosRestApiCache } = require('../lib/axios-rest-client')
+const { AxiosRestApi, AxiosRestApiCache } = require('../axios-rest-client')
 
 class LpwanServerRestApi extends AxiosRestApi {
   constructor (opts) {

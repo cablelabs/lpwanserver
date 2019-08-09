@@ -1,5 +1,5 @@
-const Loriot = require('../networks/loriot')
-const Ttn = require('../networks/ttn')
+const Loriot = require('../../networks/loriot')
+const Ttn = require('../../networks/ttn')
 
 const describeTTN = process.env.TTN_ENABLED === 'true' ? describe : describe.skip.bind(describe)
 const describeLoriot = process.env.LORIOT_ENABLED === 'true' ? describe : describe.skip.bind(describe)

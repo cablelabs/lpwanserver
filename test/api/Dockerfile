@@ -1,19 +1,16 @@
 FROM node:10.15
 
-# set working directory
 WORKDIR /app
 
-RUN npm install -g mocha
-
-# Copy project file
 COPY package*.json ./
+COPY app app
+COPY development/config.json app/config/dev.json
+COPY test/api test/api
+COPY test/networks test/networks
 
-# install all dependencies, not dev dependencies
 RUN npm install
 
-# copy all project
-COPY . .
-COPY test2.0 test2.0
+# Prevent server from attempting to serve UI
+ENV public_dir=
 
-# Override the command, to run the test instead of the application
-CMD ["mocha", "./test2.0/api", "--recursive", "--reporter", "spec", "--exit", "--bail", "--timeout", "10000"]
+CMD ["npm", "run", "test:api"]

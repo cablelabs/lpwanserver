@@ -1,13 +1,12 @@
 let chai = require('chai')
 let chaiHttp = require('chai-http')
-let createApp = require('../../../restApp')
+const { createApp } = require('../../../app/express-app')
 let setup = require('../setup.js')
-let appLogger = require('../../../rest/lib/appLogger.js')
 let Data = require('../../data')
 const { assertEqualProps } = require('../../lib/helpers')
-const Lora1 = require('../networks/lora-v1')
-const Lora2 = require('../networks/lora-v2')
-const { prisma } = require('../../../prisma/generated/prisma-client')
+const Lora1 = require('../../networks/lora-v1')
+const Lora2 = require('../../networks/lora-v2')
+const { prisma } = require('../../../app/generated/prisma-client')
 
 const should = chai.should()
 chai.use(chaiHttp)
@@ -166,7 +165,6 @@ describe('E2E Test for Deleting a Device Use Case #192', () => {
         .set('Content-Type', 'application/json')
         .send(testData.device)
         .end(function (err, res) {
-          appLogger.log(res)
           res.should.have.status(200)
           let ret = JSON.parse(res.text)
           testData.device.id = ret.id

@@ -1,7 +1,8 @@
+const config = require('./config')
 const https = require('https')
 const fs = require('fs')
 
-function createRestServer (app, config) {
+function createRestServer (app) {
   const opts = {
     key: fs.readFileSync(config.ssl_key_file),
     cert: fs.readFileSync(config.ssl_cert_file),

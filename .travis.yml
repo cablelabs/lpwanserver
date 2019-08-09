@@ -13,8 +13,7 @@ before_install:
   - sudo mv docker-compose /usr/local/bin
 install:
   - npm ci
-  - mkdir certs && ./bin/generate-development-certificates
-  - mkdir public
+  - mkdir certs && ./development/bin/generate-development-certificates
 cache:
   directories:
     - "$HOME/.npm"
