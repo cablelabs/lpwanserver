@@ -11,6 +11,6 @@ COPY test/networks test/networks
 RUN npm install
 
 # Prevent server from attempting to serve UI
-ENV public_dir=
+ENV public_dir=""
 
 CMD ["npm", "run", "test:api"]

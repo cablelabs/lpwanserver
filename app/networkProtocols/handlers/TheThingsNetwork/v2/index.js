@@ -80,7 +80,7 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
   async pullNetwork (network, dataAPI, modelAPI) {
     try {
       const apps = await this.pullApplications(network, modelAPI, dataAPI)
-      const devices = await Promise.all(apps.map(x =>
+      await Promise.all(apps.map(x =>
         this.pullDevices(network, x.remoteApplication, x.localApplication, {}, modelAPI, dataAPI)
       ))
       logger.info('Success Pulling Network ' + network.name)
@@ -227,7 +227,7 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
         deviceProfileId: dp.localDeviceProfile,
         networkSettings: normalizedDevice
       }
-      const existingDeviceNTL = await modelAPI.deviceNetworkTypeLinks.create(devNtlData, { validateCompanyId: company.id, remoteOrigin: true })
+      await modelAPI.deviceNetworkTypeLinks.create(devNtlData, { validateCompanyId: company.id, remoteOrigin: true })
       await this.modelAPI.protocolData.upsert(network, makeDeviceDataKey(existingDevice.id, 'devNwkId'), remoteDevice.dev_id)
       return { localDevice: existingDevice.id, remoteDevice: remoteDevice.dev_id }
     }
@@ -272,7 +272,7 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
   async pushNetwork (network, dataAPI, modelAPI) {
     try {
       await this.pushApplications(network, dataAPI, modelAPI)
-      const pushedResource = await this.pushDevices(network, dataAPI, modelAPI)
+      await this.pushDevices(network, dataAPI, modelAPI)
       logger.info('Success Pushing Network ' + network.name)
     }
     catch (e) {
@@ -538,10 +538,8 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
     await this.client.unsubscribeFromApplicationData(network, appNwkId)
   }
 
-  async postSingleDevice (network, device, deviceProfile, application, remoteApplicationId, dataAPI) {
+  async postSingleDevice (network, device, deviceProfile, application, remoteApplicationId) {
     try {
-      console.log('******postSingleDevice******')
-      console.log(JSON.stringify(device, null, 2))
       let ttnDevice = this.deNormalizeDeviceData(device.networkSettings, deviceProfile.networkSettings, application.networkSettings, remoteApplicationId)
       delete ttnDevice.attributes
       await this.client.createDevice(network, ttnDevice.app_id, ttnDevice)
@@ -786,7 +784,7 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
       return this.setApplication(network, handlerApp, accountServerApp, dataAPI)
     }
     catch (e) {
-      logger.error('Error on register Application', error)
+      logger.error('Error on register Application', e)
       throw e
     }
   }

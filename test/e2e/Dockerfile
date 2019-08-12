@@ -13,6 +13,6 @@ COPY test/data test/data
 RUN npm install
 
 # Prevent server from attempting to serve UI
-ENV public_dir=
+ENV public_dir=""
 
 CMD ["npm", "run", "test:e2e"]
