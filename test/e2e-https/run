@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+
+npm run clean
+
+# Start databases and prisma
+./development/bin/manage-db start
+./development/bin/manage-db deploy
+
+# Start Lora Servers
+docker-compose -f development/loraserver/docker-compose.yml up -d
+
+# Run tests
+docker-compose -f test/e2e-https/docker-compose.yml up --build \
+  --abort-on-container-exit \
+  --exit-code-from e2e-test
+
+TEST_EXIT_CODE=$?
+
+#Stop LoRa Servers
+docker-compose -f development/loraserver/docker-compose.yml down
+
+# Stop databases
+./development/bin/manage-db stop
+
+# Exit script with the code from the test
+exit $TEST_EXIT_CODE

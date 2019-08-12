@@ -13,14 +13,13 @@ before_install:
   - sudo mv docker-compose /usr/local/bin
 install:
   - npm ci
-  - mkdir certs && ./bin/generate-development-certificates
-  - mkdir public
+  - mkdir certs && ./development/bin/generate-development-certificates
 cache:
   directories:
     - "$HOME/.npm"
 script:
-  - npm run test:e2e
-after_success: npm run coverage
+  - ./test/e2e/run
+# after_success: npm run coverage
 before_deploy:
   - cd .. && git clone --depth 1 https://github.com/cablelabs/lpwanserver-web-client.git && cd lpwanserver-web-client && npm ci && cd ../lpwanserver
   - ./bin/build-ui

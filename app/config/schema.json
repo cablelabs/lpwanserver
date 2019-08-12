@@ -1,0 +1,104 @@
+{
+  "$id": "https://github.com/cablelabs/lpwanserver/blob/master/config/schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "LPWAN Server Config",
+  "type": "object",
+  "required": [
+    "ssl_key_file",
+    "ssl_cert_file",
+    "jwt_secret",
+    "port",
+    "base_url",
+    "prisma_url"
+  ],
+  "properties": {
+    "log_level": {
+      "type": "string",
+      "description": "Winston log level.  Anything logged above this level will not be in the logs.",
+      "default": "info"
+    },
+    "log_file": {
+      "type": "string",
+      "description": "File path to which logs are written.",
+      "default": ""
+    },
+    "log_errors_file": {
+      "type": "string",
+      "description": "File path to which error logs are written.",
+      "default": ""
+    },
+    "jwt_algo": {
+      "type": "string",
+      "description": "The algorithm to use for the signature.",
+      "default": "HS256"
+    },
+    "jwt_secret": {
+      "type": "string",
+      "description": "The secret passphrase for the signature.",
+      "default": ""
+    },
+    "jwt_ttl": {
+      "type": "string",
+      "description": "The time-to-live for a token (1d (1 day), 12h (12 hours), 20m (20 minutes))",
+      "default": "12h"
+    },
+    "jwt_issuer": {
+      "type": "string",
+      "description": "The content for the issuer field.  Just a string that we can check.",
+      "default": "lpwanserver"
+    },
+    "port": {
+      "type": "integer",
+      "description": "The port for the HTTP server",
+      "default": 8080,
+      "minimum": 0
+    },
+    "ssl_key_file": {
+      "type": "string",
+      "description": "Path to SSL key file, absolute or relative to root of repository"
+    },
+    "ssl_cert_file": {
+      "type": "string",
+      "description": "Path to SSL certificate file, absolute or relative to root of repository"
+    },
+    "ssl_ca_file": {
+      "type": "string",
+      "description": "Path to certificate authority certificate file, absolute or relative to root of repository",
+      "default": ""
+    },
+    "ssl_crl_file": {
+      "type": "string",
+      "description": "Path to certificate revokation list file, absolute or relative to root of repository",
+      "default": ""
+    },
+    "base_url": {
+      "type": "string",
+      "description": "The base URL to use for links back to this site. Used for emails and application integrations.",
+      "default": ""
+    },
+    "prisma_url": {
+      "type": "string",
+      "description": "URL of running prisma instance",
+      "default": ""
+    },
+    "cors_whitelist": {
+      "type": "array",
+      "description": "Whitelist allowing remote access. Default value allows all origins.",
+      "items": {
+        "type": "string",
+        "description": "Regular expression for testing request origin"
+      },
+      "default": [".*"]
+    },
+    "public_dir": {
+      "type": "string",
+      "description": "Path to folder holding web-client public assets, absolute or relative to root of repository",
+      "default": "generated/public"
+    },
+    "redis_url": {
+      "type": "string",
+      "description": "URL of redis.",
+      "default": ""
+    }
+  }
+}

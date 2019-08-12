@@ -1,0 +1,17 @@
+version: '3.5'
+
+services:
+  api-test:
+    build:
+      context: ../..
+      dockerfile: test/api/Dockerfile
+    container_name: lpwanserver_dev_api_test
+    networks:
+      - lpwanserver_dev
+    ports:
+      - '3200:3200'
+    environment:
+      - config_file=../config.json
+networks:
+  lpwanserver_dev:
+    name: lpwanserver_dev

@@ -1,0 +1,27 @@
+version: '3.5'
+
+services:
+  e2e-test:
+    build:
+      context: ../..
+      dockerfile: test/e2e/Dockerfile
+    container_name: lpwanserver_dev_e2e_test
+    networks:
+      - lpwanserver_dev
+    ports:
+      - 3200:3200
+    environment:
+      - config_file=../config.json
+      - APP_SERVER_PORT=3201
+      - TTN_ENABLED=${TTN_ENABLED:-false}
+      - TTN_USERNAME=${TTN_USERNAME}
+      - TTN_PASSWORD=${TTN_PASSWORD}
+      - TTN_CLIENT_ID=${TTN_CLIENT_ID}
+      - TTN_CLIENT_SECRET=${TTN_CLIENT_SECRET}
+      - LORIOT_ENABLED=${LORIOT_ENABLED:-false}
+      - LORIOT_API_KEY=${LORIOT_API_KEY}
+    volumes:
+      - ../../certs:/usr/src/certs
+networks:
+  lpwanserver_dev:
+    name: lpwanserver_dev

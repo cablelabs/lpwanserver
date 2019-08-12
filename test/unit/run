@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+
+# Remove old containers, volumes, and images
+npm run clean
+
+# Start databases and prisma
+./development/bin/manage-db start
+./development/bin/manage-db deploy
+
+# Run docker-compose with development configuration
+docker-compose \
+  -f ./test/unit/docker-compose.yml up --build \
+  --abort-on-container-exit \
+  --exit-code-from unit-test
+
+TEST_EXIT_CODE=$?
+
+# Stop databases
+./development/bin/manage-db stop
+
+# Exit script with the code from the test
+exit $TEST_EXIT_CODE

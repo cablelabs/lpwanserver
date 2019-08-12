@@ -1,0 +1,8 @@
+# mocha.opts
+
+--recursive
+--reporter spec
+--bail
+--exit
+--spec test/api/tests/**/*.js
+--timeout 100000

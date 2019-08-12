@@ -1,0 +1,22 @@
+version: '3.5'
+
+services:
+  unit-test:
+    build:
+      context: ../..
+      dockerfile: test/unit/Dockerfile
+    container_name: lpwanerver_unit_test
+    networks:
+      - lpwanserver_dev
+    ports:
+      - '3200:3200'
+    environment:
+      - config_file=../config.json
+    volumes:
+      - ../../coverage:/usr/src/coverage
+networks:
+  lpwanserver_dev:
+    name: lpwanserver_dev
+volumes:
+  coverage:
+    name: lpwanserver_test_coverage

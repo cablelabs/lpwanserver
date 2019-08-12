@@ -2,9 +2,9 @@
 
 if [ "$1" = "stop" ]
 then
-  docker-compose -f docker/docker-compose.yml down
-  docker-compose -f docker/dev/loraserver/docker-compose.yml down
-  docker-compose -f docker/dev/databases/docker-compose.demo-db.yml down
+  docker-compose -f docker-compose.yml down
+  docker-compose -f development/loraserver/docker-compose.yml down
+  docker-compose -f development/databases/docker-compose.demo-db.yml down
   exit 0
 fi
 
@@ -12,16 +12,16 @@ fi
 ./bin/clean.js
 
 # Start databases and prisma
-docker-compose -f docker/dev/databases/docker-compose.demo-db.yml up -d
+docker-compose -f development/databases/docker-compose.demo-db.yml up -d
 
 # Build UI
 ./bin/build-ui
 
 # Deploy Prisma
-./bin/manage-db deploy
+./development/bin/manage-db deploy
 
 # Start Lora Server
-docker-compose -f ./docker/dev/loraserver/docker-compose.yml up -d
+docker-compose -f development/loraserver/docker-compose.yml up -d
 
 # Start demo
-docker-compose -f ./docker/docker-compose.yml up -d --build
+docker-compose -f docker-compose.yml up -d --build

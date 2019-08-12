@@ -46,7 +46,6 @@ b146.json
 sensorTest
 b146add.json
 
-
 .idea/
 *.idea
 lpwanserver.iml
@@ -61,12 +60,10 @@ credentials
 secrets
 
 certs
-!docker/dev/configuration/lora-app-server/certs
-!docker/dev/configuration/lora-app-server_1/certs
+!development/loraserver/configuration/lora-app-server/certs
+!development/loraserver/configuration/lora-app-server_1/certs
 
 development/credentials
 
-public/*
-
-# Prisma generated files
-prisma/generated
+# Generated app files
+app/generated

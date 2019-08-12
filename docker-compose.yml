@@ -1,0 +1,23 @@
+version: '3.5'
+
+services:
+  lpwanserver:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: lpwanserver/lpwanserver
+    container_name: lpwanserver
+    networks:
+      - lpwanserver_dev
+    ports:
+      - '3200:3200'
+    environment:
+      - port=3200
+      - config_file=config/dev.json
+    volumes:
+      - ./development/config.json:/usr/src/config.json
+      - ./certs:/usr/src/certs
+
+networks:
+  lpwanserver_dev:
+    name: lpwanserver_dev
