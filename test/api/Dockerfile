@@ -1,10 +1,10 @@
 FROM node:10.15
 
-WORKDIR /app
+WORKDIR /usr/src
 
 COPY package*.json ./
 COPY app app
-COPY development/config.json app/config/dev.json
+COPY development/config.json config.json
 COPY test/api test/api
 COPY test/networks test/networks
 

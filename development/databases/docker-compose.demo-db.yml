@@ -2,7 +2,7 @@ version: '3.5'
 
 services:
   prisma:
-    image: prismagraphql/prisma:1.33
+    image: prismagraphql/prisma:1.34
     container_name: lpwanserver_dev_prisma
     networks:
       - lpwanserver_dev

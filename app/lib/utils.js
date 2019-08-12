@@ -13,7 +13,7 @@ async function onFail (status, action) {
     return result
   }
   catch (err) {
-    throw createError(status, err.message, err)
+    throw createError(status, err.toString(), err)
   }
 }
 

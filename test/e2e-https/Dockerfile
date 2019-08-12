@@ -4,7 +4,7 @@ WORKDIR /usr/src
 
 COPY package*.json ./
 COPY app app
-COPY development/config.json app/config/dev.json
+COPY development/config.json config.json
 COPY test/e2e-https test/e2e-https
 COPY test/networks test/networks
 COPY test/lib test/lib

@@ -15,8 +15,8 @@ services:
       - port=3200
       - config_file=config/dev.json
     volumes:
-      - ./development/config.json:/usr/src/app/config/dev.json
-      - ./certs:/usr/src/app/certs
+      - ./development/config.json:/usr/src/config.json
+      - ./certs:/usr/src/certs
 
 networks:
   lpwanserver_dev:

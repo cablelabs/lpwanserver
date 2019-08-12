@@ -12,11 +12,11 @@ services:
     ports:
       - '3200:3200'
     environment:
-      - config_file=config/dev.json
+      - config_file=../config.json
       - public_dir=
     volumes:
-      - ../../development/config.json:/usr/src/app/config/dev.json
-      - ../../certs:/usr/src/app/certs
+      - ../../development/config.json:/usr/src/config.json
+      - ../../certs:/usr/src/certs
 
   app-server:
     build:
@@ -41,7 +41,7 @@ services:
       - lpwanserver
       - app-server
     environment:
-      - config_file=config/dev.json
+      - config_file=../config.json
       - LPWANSERVER_URL=https://lpwanserver:3200
       - APP_SERVER_URL=http://app-server:3201
       - LORA_APPSERVER1_URL=https://lora_appserver1:8080
@@ -56,7 +56,7 @@ services:
       - LORIOT_ENABLED=${LORIOT_ENABLED:-false}
       - LORIOT_API_KEY=${LORIOT_API_KEY}
     volumes:
-      - ../../certs:/usr/src/app/certs
+      - ../../certs:/usr/src/certs
 
 networks:
   lpwanserver_dev:

@@ -2,6 +2,8 @@ const config = require('./config')
 const { logger } = require('./log')
 const { createApp } = require('./express-app')
 const { createRestServer } = require('./rest-server')
+const fs = require('fs')
+const path = require('path')
 
 // uncaughtExceptions
 // uncaughtExceptions are handled and logged by winston
@@ -16,6 +18,9 @@ process.on('warning', warning => {
 })
 
 async function main () {
+  // ensure api.yml was copied in from docs/dist
+  fs.accessSync(path.join(__dirname, 'api.yml'))
+
   const app = await createApp()
   const restServer = createRestServer(app, config)
 

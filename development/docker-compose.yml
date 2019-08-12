@@ -3,18 +3,19 @@ version: '3.5'
 services:
   lpwanserver:
     build:
-      context: ../..
-      dockerfile: docker/dev/Dockerfile
+      context: ../
+      dockerfile: development/Dockerfile
     volumes:
-      - ../../rest:/usr/src/app/rest
-      - ../../certs:/usr/src/app/certs
+      - ../app:/usr/src/app
+      - ../certs:/usr/src/certs
+      - ./config.json:/usr/src/config.json
     ports:
       - 3200:3200
     networks:
       - lpwanserver_dev
     environment:
       - port=3200
-      - config_file=config/dev.json
+      - config_file=../config.json
 networks:
   lpwanserver_dev:
     name: lpwanserver_dev

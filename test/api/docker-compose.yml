@@ -11,7 +11,7 @@ services:
     ports:
       - '3200:3200'
     environment:
-      - config_file=config/dev.json
+      - config_file=../config.json
 networks:
   lpwanserver_dev:
     name: lpwanserver_dev
