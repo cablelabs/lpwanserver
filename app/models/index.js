@@ -1,27 +1,27 @@
 // Define the parts of the Model API
 
 // Data models - what can be done with each data type.
-var UserModel = require('./IUser.js')
-var CompanyModel = require('./ICompany.js')
-var PasswordPolicyModel = require('./IPasswordPolicy.js')
-var SessionManagerModel = require('./sessionManager.js')
-var NetworkProtocolModel = require('./INetworkProtocol.js')
-var NetworkModel = require('./INetwork.js')
-var CompanyNetworkTypeLinkModel = require('./ICompanyNetworkTypeLink.js')
-var ReportingProtocolModel = require('./IReportingProtocol.js')
-var { Application: ApplicationModel } = require('./IApplication.js')
-var ApplicationNetworkTypeLinkModel = require('./IApplicationNetworkTypeLink.js')
-var DeviceProfileModel = require('./IDeviceProfile.js')
-var DeviceModel = require('./IDevice.js')
-var DeviceNetworkTypeLinkModel = require('./IDeviceNetworkTypeLink.js')
-var NetworkTypeModel = require('./INetworkType.js')
-var NetworkProviderModel = require('./INetworkProvider.js')
-var ProtocolDataModel = require('./IProtocolData.js')
-var EmailModel = require('./IEmail.js')
+var UserModel = require('./IUser')
+var CompanyModel = require('./ICompany')
+var PasswordPolicyModel = require('./IPasswordPolicy')
+var SessionManagerModel = require('./Session')
+var NetworkProtocolModel = require('./INetworkProtocol')
+var NetworkModel = require('./INetwork')
+var CompanyNetworkTypeLinkModel = require('./ICompanyNetworkTypeLink')
+var ReportingProtocolModel = require('./IReportingProtocol')
+var ApplicationModel = require('./IApplication')
+var ApplicationNetworkTypeLinkModel = require('./IApplicationNetworkTypeLink')
+var DeviceProfileModel = require('./IDeviceProfile')
+var DeviceModel = require('./IDevice')
+var DeviceNetworkTypeLinkModel = require('./IDeviceNetworkTypeLink')
+var NetworkTypeModel = require('./INetworkType')
+var NetworkProviderModel = require('./INetworkProvider')
+var ProtocolDataModel = require('./IProtocolData')
+var EmailModel = require('./IEmail')
 
 // Network Protocol use.
-var NetworkTypeAPI = require('../networkProtocols/networkTypeApi.js')
-var NetworkProtocolAPI = require('../networkProtocols/networkProtocols.js')
+var NetworkTypeAPI = require('../networkProtocols/networkTypeApi')
+var NetworkProtocolAPI = require('../networkProtocols/networkProtocols')
 
 function ModelAPI () {
   // Companies.
@@ -87,17 +87,10 @@ function ModelAPI () {
 }
 
 ModelAPI.prototype.initialize = async function initializeModelAPI () {
-  // await Promise.all([
-  //   this.networkProtocols.initialize(this),
-  //   this.reportingProtocols.initialize(),
-  //   this.users.init(),
-  //   this.emails.init()
-  // ])
-
   await this.networkProtocols.initialize(this)
   await this.reportingProtocols.initialize()
   await this.users.init()
   await this.emails.init()
 }
 
-module.exports = ModelAPI
+module.exports = new ModelAPI()

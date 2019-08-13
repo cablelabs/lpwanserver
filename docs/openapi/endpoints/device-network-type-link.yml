@@ -37,16 +37,19 @@ paths:
         - $ref: '../api.yml#/components/parameters/limitParam'
         - name: deviceId
           in: query
+          description: The ID of the Device
           required: false
           schema:
             type: string
         - name: networkTypeId
           in: query
+          description: The ID of the Network
           required: false
           schema:
             type: string
         - name: applicationId
           in: query
+          description: The ID of the Device's Application
           required: false
           schema:
             type: string
@@ -109,9 +112,9 @@ paths:
         '404':
           description: DeviceNetworkTypeLink not found
     delete:
-      operationId: deleteDeviceNetworkTypeLink
-      summary: Delete DeviceNetworkTypeLink
-      description: Delete DeviceNetworkTypeLink
+      operationId: removeDeviceNetworkTypeLink
+      summary: Remove DeviceNetworkTypeLink
+      description: Remove DeviceNetworkTypeLink
       parameters: []
       security:
         - bearer_token: []

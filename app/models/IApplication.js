@@ -52,7 +52,7 @@ const renameQueryKeys = renameKeys({ search: 'name_contains' })
 // ******************************************************************************
 // Model
 // ******************************************************************************
-class Application {
+module.exports = class Application {
   constructor (modelAPI) {
     this.modelAPI = modelAPI
   }
@@ -160,11 +160,4 @@ class Application {
     let dataAPI = new NetworkProtocolDataAccess(this.modelAPI, 'ReportingProtocol')
     await proto.passDataToApplication(network, id, data, dataAPI)
   }
-}
-
-//* *****************************************************************************
-// Exports
-//* *****************************************************************************
-module.exports = {
-  Application
 }

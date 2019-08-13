@@ -37,11 +37,13 @@ paths:
         - $ref: '../api.yml#/components/parameters/limitParam'
         - name: companyId
           in: query
+          description: The ID of the Company
           required: false
           schema:
             type: string
         - name: networkTypeId
           in: query
+          description: The ID of the Network
           required: false
           schema:
             type: string
@@ -104,9 +106,9 @@ paths:
         '404':
           description: CompanyNetworkTypeLink not found
     delete:
-      operationId: deleteCompanyNetworkTypeLink
-      summary: Delete CompanyNetworkTypeLink
-      description: Delete CompanyNetworkTypeLink, available only to company administrators
+      operationId: removeCompanyNetworkTypeLink
+      summary: Remove CompanyNetworkTypeLink
+      description: Remove CompanyNetworkTypeLink, available only to company administrators
       parameters: []
       security:
         - bearer_token: []

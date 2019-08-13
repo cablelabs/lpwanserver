@@ -106,9 +106,9 @@ paths:
         '404':
           description: User not found
     delete:
-      operationId: deleteUser
-      summary: Delete User
-      description: Delete User, available only to system administrators
+      operationId: removeUser
+      summary: Remove User
+      description: Remove User, available only to system administrators
       parameters: []
       security:
         - bearer_token: []
@@ -152,7 +152,7 @@ paths:
       operationId: verifyUserEmail
       summary: Verify user email
       description: Endpoint for email verification links
-      parameteters:
+      parameters:
         - name: function
           in: query
           description: Accept or reject new email
@@ -227,7 +227,7 @@ components:
                     type: string
       description: User to be created
       required: true
-    UpdateCompanyInput:
+    UpdateUserInput:
       content:
         application/json:
           schema:

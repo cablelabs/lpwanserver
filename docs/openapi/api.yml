@@ -7,18 +7,12 @@ info:
     additional networks.
   version: 1.2.1
   title: LPWAN Server
-  termsOfService: ''
   contact:
     email: n.baroni@cablelabs.com
     name: Nick Baroni
   license:
     name: Apache 2.0
     url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
-securitySchemes:
-  bearer_token:
-    type: http
-    scheme: bearer
-    bearerFormat: JWT
 tags:
   - name: Application
     description: An Application is a grouping of devices that share data reporting configuration.
@@ -118,6 +112,11 @@ paths:
   /api/users/verifyEmail/{uuid}:
     $ref: 'endpoints/user.yml#/paths/~1api~1users~1verifyEmail~1{uuid}'
 components:
+  securitySchemes:
+    bearer_token:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
   parameters:
     idParam:
       name: id
@@ -133,7 +132,6 @@ components:
       required: false
       schema:
         type: integer
-        format: int32
         minimum: 0
         default: 0
     limitParam:
@@ -143,7 +141,6 @@ components:
       required: false
       schema:
         type: integer
-        format: int32
     nameSearch:
       name: search
       in: query
@@ -163,11 +160,6 @@ components:
       type: object
       required:
         - totalCount
-        - records
       properties:
         totalCount:
           type: integer
-          format: int32
-        records:
-          type: array
-          default: []

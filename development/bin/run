@@ -8,7 +8,7 @@
 docker-compose -f development/loraserver/docker-compose.yml up -d
 
 # Start development docker container
-docker-compose -f development/docker-compose.yml up
+docker-compose -f development/docker-compose.yml up --build
 
 # Stop Lora Servers
 docker-compose -f development/loraserver/docker-compose.yml down

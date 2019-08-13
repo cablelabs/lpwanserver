@@ -95,9 +95,9 @@ paths:
         '404':
           description: Company not found
     delete:
-      operationId: deleteCompany
-      summary: Delete Company
-      description: Delete Company, available only to system administrators
+      operationId: removeCompany
+      summary: Remove Company
+      description: Remove Company, available only to system administrators
       parameters: []
       security:
         - bearer_token: []

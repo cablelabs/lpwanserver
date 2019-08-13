@@ -4,7 +4,7 @@ const config = require('../config')
 const logger = createLogger({
   level: config.log_level,
   defaultMeta: {
-    service: 'lpwanserver'
+    // service: 'lpwanserver'
   },
   transports: [
     new transports.Console({

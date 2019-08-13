@@ -8,8 +8,8 @@ paths:
   /api/applicationNetworkTypeLinks:
     post:
       operationId: createApplicationNetworkTypeLink
-      summary: Create a ApplicationNetworkTypeLink
-      description: Create a ApplicationNetworkTypeLink
+      summary: Create an ApplicationNetworkTypeLink
+      description: Create an ApplicationNetworkTypeLink
       parameters: []
       security:
         - bearer_token: []
@@ -37,16 +37,19 @@ paths:
         - $ref: '../api.yml#/components/parameters/limitParam'
         - name: applicationId
           in: query
+          description: The ID of the Application
           required: false
           schema:
             type: string
         - name: networkTypeId
           in: query
+          description: The ID of the Network
           required: false
           schema:
             type: string
         - name: companyId
           in: query
+          description: The ID of the Company who owns the Application.
           required: false
           schema:
             type: string
@@ -109,9 +112,9 @@ paths:
         '404':
           description: ApplicationNetworkTypeLink not found
     delete:
-      operationId: deleteApplicationNetworkTypeLink
-      summary: Delete ApplicationNetworkTypeLink
-      description: Delete ApplicationNetworkTypeLink
+      operationId: removeApplicationNetworkTypeLink
+      summary: Remove ApplicationNetworkTypeLink
+      description: Remove ApplicationNetworkTypeLink
       parameters: []
       security:
         - bearer_token: []
@@ -124,6 +127,31 @@ paths:
           description: Authenticated user not allowed to perform this operation
         '404':
           description: ApplicationNetworkTypeLink not found
+  /api/applicationNetworkTypeLinks/{id}/push:
+    parameters:
+      - $ref: '../api.yml#/components/parameters/idParam'
+    post:
+      operationId: pushApplicationNetworkTypeLink
+      summary: Push an ApplicationNetworkTypeLink
+      description: Push the Application and Devices to the linked Network.
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - ApplicationNetworkTypeLink
+      responses:
+        '200':
+          description: Logs from pusing ApplicationNetworkTypeLink
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+        '403':
+          description: Authenticated user not allowed to perform this operation
+        '400':
+          description: Bad request
 components:
   schemas:
     ApplicationNetworkTypeLink:

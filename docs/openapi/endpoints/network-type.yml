@@ -95,9 +95,9 @@ paths:
         '404':
           description: NetworkType not found
     delete:
-      operationId: deleteNetworkType
-      summary: Delete NetworkType
-      description: Delete NetworkType, available only to system administrators
+      operationId: removeNetworkType
+      summary: Remove NetworkType
+      description: Remove NetworkType, available only to system administrators
       parameters: []
       security:
         - bearer_token: []

@@ -38,11 +38,13 @@ paths:
         - $ref: '../api.yml#/components/parameters/nameSearch'
         - name: companyId
           in: query
+          description: The ID of the Company who owns the Application.
           required: false
           schema:
             type: string
         - name: reportingProtocolId
           in: query
+          description: The ID of the ReportingProtocol used by the Application.
           required: false
           schema:
             type: string
@@ -105,9 +107,9 @@ paths:
         '404':
           description: Application not found
     delete:
-      operationId: deleteApplication
-      summary: Delete Application
-      description: Delete Application
+      operationId: removeApplication
+      summary: Remove Application
+      description: Remove Application
       parameters: []
       security:
         - bearer_token: []
@@ -249,6 +251,8 @@ components:
       allOf:
         - $ref: '../api.yml#/components/schemas/ListResponse'
         - type: object
+          required:
+            - records
           properties:
             records:
               type: array
@@ -287,7 +291,6 @@ components:
             description: Device's devEUI
           row:
             type: integer
-            format: int32
             descripton: The index of the device in the array that was posted.
           error:
             type: string

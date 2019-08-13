@@ -38,11 +38,13 @@ paths:
         - $ref: '../api.yml#/components/parameters/nameSearch'
         - name: companyId
           in: query
+          description: The ID of the Company who owns the Device's Application
           required: false
           schema:
             type: string
         - name: applicationId
           in: query
+          description: The ID of the Device's Application
           required: false
           schema:
             type: string
@@ -105,9 +107,9 @@ paths:
         '404':
           description: Device not found
     delete:
-      operationId: deleteDevice
-      summary: Delete Device
-      description: Delete Device
+      operationId: removeDevice
+      summary: Remove Device
+      description: Remove Device
       parameters: []
       security:
         - bearer_token: []
@@ -256,11 +258,9 @@ components:
             properties:
               fCnt:
                 type: integer
-                format: int32
                 description: Application's downlink frame counter
               fPort:
                 type: integer
-                format: int32
                 description: The intended port for LoRa devices
               data:
                 type: string

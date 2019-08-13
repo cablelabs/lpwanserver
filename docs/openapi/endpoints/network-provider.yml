@@ -95,9 +95,9 @@ paths:
         '404':
           description: NetworkProvider not found
     delete:
-      operationId: deleteNetworkProvider
-      summary: Delete NetworkProvider
-      description: Delete NetworkProvider, available only to system administrators
+      operationId: removeNetworkProvider
+      summary: Remove NetworkProvider
+      description: Remove NetworkProvider, available only to system administrators
       parameters: []
       security:
         - bearer_token: []

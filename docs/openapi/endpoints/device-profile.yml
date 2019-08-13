@@ -38,11 +38,13 @@ paths:
         - $ref: '../api.yml#/components/parameters/nameSearch'
         - name: companyId
           in: query
+          description: The ID of the Company who owns the DeviceProfile
           required: false
           schema:
             type: string
         - name: networkTypeId
           in: query
+          description: The ID of the DeviceProfile's NetworkType
           required: false
           schema:
             type: string
@@ -105,9 +107,9 @@ paths:
         '404':
           description: DeviceProfile not found
     delete:
-      operationId: deleteDeviceProfile
-      summary: Delete DeviceProfile
-      description: Delete DeviceProfile
+      operationId: removeDeviceProfile
+      summary: Remove DeviceProfile
+      description: Remove DeviceProfile
       parameters: []
       security:
         - bearer_token: []

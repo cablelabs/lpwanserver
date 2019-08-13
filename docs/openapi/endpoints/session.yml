@@ -28,8 +28,8 @@ paths:
         '400':
           description: Bad Request
     delete:
-      operationId: deleteSession
-      summary: Delete a Session
+      operationId: removeSession
+      summary: Remove a Session
       description: Invalidate the user's current jwt token
       parameters: []
       security:

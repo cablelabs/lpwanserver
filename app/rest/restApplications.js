@@ -1,65 +1,29 @@
-var { logger } = require('../log')
+const config = require('../config')
+const { logger } = require('../log')
 var restServer
 var modelAPI
 const { formatRelationshipsOut } = require('../lib/prisma')
 const R = require('ramda')
+const jwt = require('express-jwt')
+
+const authenticate = jwt({ secret: config.jwt_secret })
 
 exports.initialize = function (app, server) {
   restServer = server
   modelAPI = server.modelAPI
 
-  /*********************************************************************
-    * Applications API
-    ********************************************************************/
-  /**
-     * Gets the applications available for access by the calling account.
-     *
-     * @api {get} /api/applications Get Applications
-     * @apiGroup Applications
-     * @apiDescription Returns an array of the Applications that match the
-     *      options.
-     * @apiPermission System Admin accesses all Applications, others access
-     *       only their own Company's Applications.
-     * @apiHeader {String} Authorization The Create Session's returned token
-     *      prepended with "Bearer "
-     * @apiParam (Query Parameters) {Number} [limit] The maximum number of
-     *      records to return.  Use with offset to manage paging.  0 is the
-     *      same as unspecified, returning all users that match other query
-     *      parameters.
-     * @apiParam (Query Parameters) {Number} [offset] The offset into the
-     *      returned database query set.  Use with limit to manage paging.  0 is
-     *      the same as unspecified, returning the list from the beginning.
-     * @apiParam (Query Parameters) {String} [search] Search the Applications
-     *      based on name matches to the passed string.  In the string, use "%"
-     *      to match 0 or more characters and "_" to match exactly one.  For
-     *      example, to match names starting with "D", use the string "D%".
-     * @apiParam (Query Parameters) {String} [companyId] Limit the Applications
-     *      to those belonging to the Company.
-     * @apiParam (Query Parameters) {String} [reportingProtocolId] Limit the
-     *      Applications to those that use the Reporting Protocol.
-     * @apiSuccess {Object} object
-     * @apiSuccess {Number} object.totalCount The total number of records that
-     *      would have been returned if offset and limit were not specified.
-     *      This allows for calculation of number of "pages" of data.
-     * @apiSuccess {Object[]} object.records An array of Application records.
-     * @apiSuccess {String} object.records.id The Application's Id
-     * @apiSuccess {String} object.records.name The Application's name
-     * @apiSuccess {String} object.records.description The Application's
-     *      description
-     * @apiSuccess {String} object.records.companyId The Id of the Company
-     *      that the Application belongs to.
-     * @apiSuccess {String} object.records.baseUrl The base URL used by the
-     *      Reporting Protocol
-     * @apiSuccess {String} object.records.reportingProtocolId The
-     *      Id of the Reporting Protocol used by the Application.
-     * @apiSuccess {Boolean} object.records.running If the Application is
-     *      currently sending data received from the Networks to the baseUrl via
-     *      the Reporting Protocol.
-     * @apiVersion 1.2.1
-     */
-  app.get('/api/applications', [restServer.isLoggedIn,
-    restServer.fetchCompany],
-  function (req, res, next) {
+  app.get(
+    '/api/applications',
+    [
+      authenticate,
+
+      restServer.isLoggedIn,
+      restServer.fetchCompany
+    ],
+    listApplications
+  )
+
+  function listApplications (req, res) {
     var options = {}
     if (req.company.type !== 'ADMIN') {
       // If they gave a companyId, make sure it's their own.
@@ -109,7 +73,9 @@ exports.initialize = function (app, server) {
         logger.error('Error getting applications: ', err)
         restServer.respond(res, err)
       })
-  })
+  }
+
+
 
   /**
      * @apiDescription Gets the Application record with the specified id.

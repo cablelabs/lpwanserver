@@ -20,7 +20,7 @@ const ROOT = path.join(__dirname, '../..')
 const opts = { cwd: ROOT, stdio: 'inherit' }
 
 function packageRestServer () {
-  execSync(`docker build -f docker/Dockerfile -t ${imageTags.releaseCandidate} -t ${imageTags.latest} .`, opts)
+  execSync(`docker build -f Dockerfile -t ${imageTags.releaseCandidate} -t ${imageTags.latest} .`, opts)
 }
 
 module.exports = {

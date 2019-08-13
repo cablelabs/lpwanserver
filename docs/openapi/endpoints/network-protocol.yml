@@ -95,9 +95,9 @@ paths:
         '404':
           description: NetworkProtocol not found
     delete:
-      operationId: deleteNetworkProtocol
-      summary: Delete NetworkProtocol
-      description: Delete NetworkProtocol, available only to system administrators
+      operationId: removeNetworkProtocol
+      summary: Remove NetworkProtocol
+      description: Remove NetworkProtocol, available only to system administrators
       parameters: []
       security:
         - bearer_token: []

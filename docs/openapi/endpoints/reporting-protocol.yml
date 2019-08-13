@@ -95,9 +95,9 @@ paths:
         '404':
           description: ReportingProtocol not found
     delete:
-      operationId: deleteReportingProtocol
-      summary: Delete ReportingProtocol
-      description: Delete ReportingProtocol, available only to system administrators
+      operationId: removeReportingProtocol
+      summary: Remove ReportingProtocol
+      description: Remove ReportingProtocol, available only to system administrators
       parameters: []
       security:
         - bearer_token: []
