@@ -77,6 +77,10 @@ module.exports = class ApplicationNetworkTypeLink {
 
   async update ({ id, ...data }, { companyId, remoteOrigin = false } = {}) {
     try {
+      // No changing the application or the network.
+      if (data.applicationId || data.networkTypeId) {
+        throw httpError(403, 'Cannot change link targets')
+      }
       await this.validateCompanyForApplicationNetworkTypeLink(companyId, id)
       const rec = await DB.update({ id }, stringifyNetworkSettings(data))
       if (!remoteOrigin) {

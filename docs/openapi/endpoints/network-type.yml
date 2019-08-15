@@ -1,33 +1,11 @@
 openapi: 3.0.0
 info:
-  version: 1.2.1
+  version: 2.0.0
   title: An include file to define NetworkType endpoints
   license:
     name: Apache 2.0
 paths:
   /api/networkTypes:
-    post:
-      operationId: createNetworkType
-      summary: Create a NetworkType
-      description: Create a NetworkType, available only to system administrators
-      parameters: []
-      security:
-        - bearer_token: []
-      tags:
-        - NetworkType
-      requestBody:
-        $ref: '#/components/requestBodies/CreateNetworkTypeInput'
-      responses:
-        '200':
-          description: NetworkType created
-          content:
-            application/json:
-              schema:
-                $ref: '../api.yml#/components/schemas/ResourceCreatedResponse'
-        '403':
-          description: Authenticated user not allowed to perform this operation
-        '400':
-          description: Bad request
     get:
       operationId: listNetworkTypes
       summary: List NetworkTypes
@@ -47,8 +25,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ListNetworkTypeResponse'
-        '403':
-          description: Authenticated user not allowed to perform this operation
         '400':
           description: Bad request
   /api/networkTypes/{id}:
@@ -70,44 +46,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/NetworkTypeResponse'
-        '403':
-          description: Authenticated user not allowed to perform this operation
-        '404':
-          description: NetworkType not found
-    put:
-      operationId: updateNetworkType
-      summary: Update NetworkType
-      description: Update NetworkType, available only to system administrators
-      parameters: []
-      security:
-        - bearer_token: []
-      tags:
-        - NetworkType
-      requestBody:
-        $ref: '#/components/requestBodies/UpdateNetworkTypeInput'
-      responses:
-        '204':
-          description: NetworkType update succeeded
-        '400':
-          description: Bad request
-        '403':
-          description: Authenticated user not allowed to perform this operation
-        '404':
-          description: NetworkType not found
-    delete:
-      operationId: removeNetworkType
-      summary: Remove NetworkType
-      description: Remove NetworkType, available only to system administrators
-      parameters: []
-      security:
-        - bearer_token: []
-      tags:
-        - NetworkType
-      responses:
-        '204':
-          description: NetworkType record was deleted
-        '403':
-          description: Authenticated user not allowed to perform this operation
         '404':
           description: NetworkType not found
 components:
@@ -116,8 +54,11 @@ components:
       type: object
       required:
         - name
+        - version
       properties:
         name:
+          type: string
+        version:
           type: string
     NetworkTypeResponse:
        allOf:
@@ -136,18 +77,3 @@ components:
               items:
                 $ref: '#/components/schemas/NetworkTypeResponse'
               default: []
-  requestBodies:
-    CreateNetworkTypeInput:
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/NetworkType'
-      description: NetworkType to be created
-      required: true
-    UpdateNetworkTypeInput:
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/NetworkType'
-      description: NetworkType properties to be updated
-      required: true

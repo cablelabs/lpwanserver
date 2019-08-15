@@ -1,6 +1,6 @@
 openapi: 3.0.0
 info:
-  version: 1.2.1
+  version: 2.0.0
   title: An include file to define DeviceNetworkTypeLink endpoints
   license:
     name: Apache 2.0
@@ -24,8 +24,6 @@ paths:
             application/json:
               schema:
                 $ref: '../api.yml#/components/schemas/ResourceCreatedResponse'
-        '403':
-          description: Authenticated user not allowed to perform this operation
         '400':
           description: Bad request
     get:
@@ -35,24 +33,9 @@ paths:
       parameters:
         - $ref: '../api.yml#/components/parameters/offsetParam'
         - $ref: '../api.yml#/components/parameters/limitParam'
-        - name: deviceId
-          in: query
-          description: The ID of the Device
-          required: false
-          schema:
-            type: string
-        - name: networkTypeId
-          in: query
-          description: The ID of the Network
-          required: false
-          schema:
-            type: string
-        - name: applicationId
-          in: query
-          description: The ID of the Device's Application
-          required: false
-          schema:
-            type: string
+        - $ref: '../api.yml#/components/parameters/deviceId'
+        - $ref: '../api.yml#/components/parameters/applicationId'
+        - $ref: '../api.yml#/components/parameters/networkTypeId'
       security:
         - bearer_token: []
       tags:
@@ -64,8 +47,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ListDeviceNetworkTypeLinkResponse'
-        '403':
-          description: Authenticated user not allowed to perform this operation
         '400':
           description: Bad request
   /api/deviceNetworkTypeLinks/{id}:
@@ -87,8 +68,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/DeviceNetworkTypeLinkResponse'
-        '403':
-          description: Authenticated user not allowed to perform this operation
         '404':
           description: DeviceNetworkTypeLink not found
     put:
@@ -107,8 +86,6 @@ paths:
           description: DeviceNetworkTypeLink update succeeded
         '400':
           description: Bad request
-        '403':
-          description: Authenticated user not allowed to perform this operation
         '404':
           description: DeviceNetworkTypeLink not found
     delete:
@@ -123,8 +100,6 @@ paths:
       responses:
         '204':
           description: DeviceNetworkTypeLink record was deleted
-        '403':
-          description: Authenticated user not allowed to perform this operation
         '404':
           description: DeviceNetworkTypeLink not found
 components:
@@ -176,6 +151,10 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/DeviceNetworkTypeLink'
+            type: object
+            properties:
+              networkSettings:
+                type: string
+                description: The settings in a JSON string that correspond to the NetworkType
       description: DeviceNetworkTypeLink properties to be updated
       required: true

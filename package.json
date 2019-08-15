@@ -15,7 +15,7 @@
     "lint": "eslint app/",
     "coverage": "cat ./coverage/lcov.info | codacy-coverage",
     "openapi:lint": "speccy lint docs/openapi/api.yml",
-    "openapi:publish": "speccy resolve -o docs/openapi/dist/api.yml docs/openapi/api.yml && cp docs/openapi/dist/api.yml app/api.yml",
+    "openapi:publish": "speccy resolve -o docs/openapi/dist/api.yml docs/openapi/api.yml && cp docs/openapi/dist/api.yml app/api/openapi.yml",
     "openapi:serve": "speccy serve docs/openapi/api.yml"
   },
   "dependencies": {

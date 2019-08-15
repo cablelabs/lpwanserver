@@ -1,10 +1,10 @@
 const fs = require('fs')
 const path = require('path')
 const yaml = require('js-yaml')
-const { logger } = require('../log')
+const { logger } = require('../../log')
 
 let apiDefinition
-let openApiPath = path.join(__dirname, '../api.yml')
+let openApiPath = path.join(__dirname, './openapi.yml')
 
 try {
   apiDefinition = yaml.safeLoad(fs.readFileSync(openApiPath, 'utf8'))

@@ -1,52 +1,33 @@
-const config = require('./config')
-const { logger } = require('./log')
+const config = require('../config')
+const { logger } = require('../log')
 const express = require('express')
 const morgan = require('morgan')
-const cors = require('cors')
-const Api = require('./rest-2')
-const serveSpa = require('./lib/serve-spa')
+const { configureCors, serveSpa: serveWebClient } = require('./middleware')
 const jwt = require('express-jwt')
+const { default: OpenApiBackend } = require('openapi-backend')
+const api = require('../api')
+const handlers = require('./handlers')
+const cors = require('cors')
 
 const validateJwt = jwt({ secret: config.jwt_secret })
-
-function buildCorsMiddlewareOptions () {
-  var whitelist = config.cors_whitelist.map(x => new RegExp(x))
-  return {
-    origin (origin, callback) {
-      if (whitelist.some(x => x.test(origin))) {
-        callback(null, true)
-        return
-      }
-      callback(new Error('Not allowed by CORS settings'))
-    }
-  }
-}
-
-function serveWebClient (app) {
-  try {
-    serveSpa({
-      app,
-      public: config.public_dir,
-      omit: req => /^\/api/.test(req.path)
-    })
-  }
-  catch (err) {
-    logger.error('Failed to add Express middleware to serve UI. Set public_dir to empty string to avoid error.', err)
-    throw err
-  }
-}
 
 async function createApp () {
   // Create the REST application.
   var app = express()
 
-  if (config.public_dir) serveWebClient(app)
+  if (config.public_dir) {
+    serveWebClient({
+      app,
+      publicDir: config.public_dir,
+      omit: req => /^\/api/.test(req.path)
+    })
+  }
 
   // stream morgan to winston
   app.use(morgan('tiny', { stream: { write: x => logger.info(x.trim()) } }))
 
   app.use(express.json())
-  app.use(cors(buildCorsMiddlewareOptions(config)))
+  app.use(cors(configureCors(config.cors_whitelist)))
 
   // Authentication is a 2 step process
   // This middleware will validate and decode JWTs when present
@@ -55,8 +36,9 @@ async function createApp () {
     req.headers.authorization ? validateJwt(req, res, next) : next()
   })
 
+  const OpenApi = new OpenApiBackend({ definition: api, handlers })
   app.use((req, res, next) => {
-    Api.handleRequest(req, req, res).catch(e => next(e))
+    OpenApi.handleRequest(req, req, res).catch(e => next(e))
   })
 
   // 4 arguments are needed for Express error handlers

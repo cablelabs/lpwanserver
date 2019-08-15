@@ -1,11 +1,11 @@
 openapi: 3.0.0
 info:
-  version: 1.2.1
+  version: 2.0.0
   title: An include file to define DeviceProfile endpoints
   license:
     name: Apache 2.0
 paths:
-  /api/networkTypes:
+  /api/deviceProfiles:
     post:
       operationId: createDeviceProfile
       summary: Create a DeviceProfile
@@ -24,8 +24,6 @@ paths:
             application/json:
               schema:
                 $ref: '../api.yml#/components/schemas/ResourceCreatedResponse'
-        '403':
-          description: Authenticated user not allowed to perform this operation
         '400':
           description: Bad request
     get:
@@ -36,18 +34,7 @@ paths:
         - $ref: '../api.yml#/components/parameters/offsetParam'
         - $ref: '../api.yml#/components/parameters/limitParam'
         - $ref: '../api.yml#/components/parameters/nameSearch'
-        - name: companyId
-          in: query
-          description: The ID of the Company who owns the DeviceProfile
-          required: false
-          schema:
-            type: string
-        - name: networkTypeId
-          in: query
-          description: The ID of the DeviceProfile's NetworkType
-          required: false
-          schema:
-            type: string
+        - $ref: '../api.yml#/components/parameters/networkTypeId'
       security:
         - bearer_token: []
       tags:
@@ -59,11 +46,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ListDeviceProfileResponse'
-        '403':
-          description: Authenticated user not allowed to perform this operation
         '400':
           description: Bad request
-  /api/networkTypes/{id}:
+  /api/deviceProfiles/{id}:
     parameters:
       - $ref: '../api.yml#/components/parameters/idParam'
     get:
@@ -82,8 +67,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/DeviceProfileResponse'
-        '403':
-          description: Authenticated user not allowed to perform this operation
         '404':
           description: DeviceProfile not found
     put:
@@ -102,8 +85,6 @@ paths:
           description: DeviceProfile update succeeded
         '400':
           description: Bad request
-        '403':
-          description: Authenticated user not allowed to perform this operation
         '404':
           description: DeviceProfile not found
     delete:
@@ -118,33 +99,6 @@ paths:
       responses:
         '204':
           description: DeviceProfile record was deleted
-        '403':
-          description: Authenticated user not allowed to perform this operation
-        '404':
-          description: DeviceProfile not found
-  /api/deviceProfiles/:id/push:
-    parameters:
-      - $ref: '../api.yml#/components/parameters/idParam'
-    post:
-      operationId: pushDeviceProfile
-      summary: Push DeviceProfile
-      description: Push DeviceProfile to all networks of the DeviceProfile's NetworkType
-      parameters: []
-      security:
-        - bearer_token: []
-      tags:
-        - DeviceProfile
-      responses:
-        '200':
-          description: List of logs from pushing DeviceProfile to networks
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: string
-        '403':
-          description: Authenticated user not allowed to perform this operation
         '404':
           description: DeviceProfile not found
 components:
@@ -158,9 +112,6 @@ components:
         description:
           type: string
           description: The Device Profile's description
-        companyId:
-          type: string
-          description: The ID of the Company to which the DeviceProfile belongs
         networkTypeId:
           type: string
           description: The NetworkType for this DeviceProfile
@@ -194,7 +145,6 @@ components:
               - type: object
                 required:
                   - name
-                  - companyId
                   - networkTypeId
       description: DeviceProfile to be created
       required: true

@@ -1,6 +1,6 @@
 const httpError = require('http-errors')
-const { users, sessions, companies } = require('../models')
-const { logger } = require('../log')
+const { users, sessions } = require('../../models')
+const { logger } = require('../../log')
 const R = require('ramda')
 
 function pipeOpenApiBackendMiddleware (...fns) {
@@ -29,27 +29,11 @@ function authorize (permissions = []) {
     req.user = await users.load(req.user.user)
     // Ensure user has required permissions for operation
     if (permissions.length && !users.hasPermissions(req.user, permissions)) {
-      logger.debug('HTTP request failed due to lack of permissions', {
+      logger.info('HTTP request failed due to lack of permissions', {
         jwt: req.jwtPayload,
         requiredPermissions: permissions,
         userRole: req.user.role
       })
-      throw new httpError.Forbidden()
-    }
-  }
-}
-
-// use after the authorize middleware
-function companyScope (companyPath, setCompanyIdInRequest) {
-  return async (_, req) => {
-    req.company = await companies.load(req.user.company.id)
-    if (req.company.type === 'ADMIN') return
-    const lens = R.lensPath(companyPath)
-    if (R.view(lens, req) !== req.user.company.id) {
-      if (setCompanyIdInRequest) {
-        R.set(lens, req.user.company.id, req)
-        return
-      }
       throw new httpError.Forbidden()
     }
   }
@@ -69,9 +53,11 @@ function parseQueryIntegers (keys) {
   }
 }
 
+const parsePaginationQuery = parseQueryIntegers(['limit', 'offset'])
+
 module.exports = {
   pipe: pipeOpenApiBackendMiddleware,
   authorize,
-  companyScope,
-  parseQueryIntegers
+  parseQueryIntegers,
+  parsePaginationQuery
 }

@@ -5,7 +5,7 @@ info:
     This service goes between an IoT application server and the various networks
     to which the devices connect.  LPWAN Server uses extensions to support
     additional networks.
-  version: 1.2.1
+  version: 2.0.0
   title: LPWAN Server
   contact:
     email: n.baroni@cablelabs.com
@@ -17,90 +17,78 @@ tags:
   - name: Application
     description: An Application is a grouping of devices that share data reporting configuration.
   - name: ApplicationNetworkTypeLink
-    description: An ApplicationNetworkTypeLink enables an Application for a NetworkType.  These records also store Application configuration for the NetworkType.
-  - name: Company
-    description: A Company is a grouping of Users.  Companies also have an ownership relationship with other entities, such as Applications.
-  - name: CompanyNetworkTypeLink
-    description: A CompanyNetworkTypeLink enables links a company's entities and a NetworkType.
+    description: An ApplicationNetworkTypeLink enables an Application for a NetworkType.  These records store Application configuration for the NetworkType.
   - name: Device
     description: A Device represents a physical device.
   - name: DeviceNetworkTypeLink
-    description: A DeviceNetworkTypeLink enables a Device for a NetworkType.  These records also store Device configuration for a the NetworkType.
+    description: A DeviceNetworkTypeLink enables a Device for a NetworkType.  These records store Device configuration for a the NetworkType.
   - name: DeviceProfile
-    description: A DeviceProfile profiles a type of device for a specific NetworkType.  These records store configuration for Devices in regards to the NetworkType.
+    description: A DeviceProfile profiles a type of device for a specific NetworkType.  These records store Device configuration for the NetworkType.
   - name: Network
-    description: A Network represents a remote IoT network, such as an instance of LoRa Server.
+    description: A Network represents an IoT device network.
   - name: NetworkProtocol
-    description: A NetworkProtocol wraps the API used by LPWAN Server to communicate with Networks.  A NeworkProtocol references the code that communicates with the remote network.
+    description: A NetworkProtocol represents a unique Network API.  A NeworkProtocol represents the code responsible for callinga remote network's API.
   - name: NetworkProvider
     description: A NetworkProvider identifies who hosts/provides a Network.
   - name: NetworkType
-    description: A NetworkType represents an LPWAN type, such as LoRa or IP (3GPP).
-  - name: PasswordPolicy
-    description: PasswordPolicies are used by companies to enforce password requirements on their users.
+    description: A NetworkType represents a unique LPWAN type and version, such as LoRa 1.1.
   - name: ReportingProtocol
     description: ReportingProtocols are used by the Application to forward data from the devices to the IoT application server.
   - name: Session
     description: Session endpoints allow for the management of User authentication.
   - name: User
-    description: A user of the system
+    description: A user of the system.  Users can have the role ADMIN or USER.  In general, ADMINs can do anything and USERs are restricted to Application and Device management.
 paths:
   /api/applications:
     $ref: 'endpoints/application.yml#/paths/~1api~1applications'
   /api/applications/{id}:
     $ref: 'endpoints/application.yml#/paths/~1api~1applications~1{id}'
-  /api/applicationNetworkTypeLinks:
-    $ref: 'endpoints/application-network-type-link.yml#/paths/~1api~1applicationNetworkTypeLinks'
-  /api/applicationNetworkTypeLinks/{id}:
-    $ref: 'endpoints/application-network-type-link.yml#/paths/~1api~1applicationNetworkTypeLinks~1{id}'
-  /api/companies:
-    $ref: 'endpoints/company.yml#/paths/~1api~1companies'
-  /api/companies/{id}:
-    $ref: 'endpoints/company.yml#/paths/~1api~1companies~1{id}'
-  /api/companyNetworkTypeLinks:
-    $ref: 'endpoints/company-network-type-link.yml#/paths/~1api~1companyNetworkTypeLinks'
-  /api/companyNetworkTypeLinks/{id}:
-    $ref: 'endpoints/company-network-type-link.yml#/paths/~1api~1companyNetworkTypeLinks~1{id}'
+  /api/applications/{id}/devices/bulk-create:
+    $ref: 'endpoints/application.yml#/paths/~1api~1applications~1{id}~1devices~1bulk-create'
+  /api/application-network-type-links:
+    $ref: 'endpoints/application-network-type-link.yml#/paths/~1api~1application-network-type-links'
+  /api/application-network-type-links/{id}:
+    $ref: 'endpoints/application-network-type-link.yml#/paths/~1api~1application-network-type-links~1{id}'
   /api/devices:
     $ref: 'endpoints/device.yml#/paths/~1api~1devices'
   /api/devices/{id}:
     $ref: 'endpoints/device.yml#/paths/~1api~1devices~1{id}'
-  /api/deviceNetworkTypeLinks:
-    $ref: 'endpoints/device-network-type-link.yml#/paths/~1api~1deviceNetworkTypeLinks'
-  /api/deviceNetworkTypeLinks/{id}:
-    $ref: 'endpoints/device-network-type-link.yml#/paths/~1api~1deviceNetworkTypeLinks~1{id}'
-  /api/deviceProfiles:
-    $ref: 'endpoints/device-profile.yml#/paths/~1api~1deviceProfiles'
-  /api/deviceProfiles/{id}:
-    $ref: 'endpoints/device-profile.yml#/paths/~1api~1deviceProfiles~1{id}'
+  /api/devices/{id}/downlinks:
+    $ref: 'endpoints/device.yml#/paths/~1api~1devices~1{id}~1downlinks'
+  /api/uplinks:
+    $ref: 'endpoints/device.yml#/paths/~1api~1uplinks'
+  /api/uplinks/{applicationId}/{networkId}:
+    $ref: 'endpoints/device.yml#/paths/~1api~1uplinks~1{applicationId}~1{networkId}'
+  /api/downlinks:
+    $ref: 'endpoints/device.yml#/paths/~1api~1downlinks'
+  /api/device-network-type-links:
+    $ref: 'endpoints/device-network-type-link.yml#/paths/~1api~1device-network-type-links'
+  /api/device-network-type-links/{id}:
+    $ref: 'endpoints/device-network-type-link.yml#/paths/~1api~1device-network-type-links~1{id}'
+  /api/device-profiles:
+    $ref: 'endpoints/device-profile.yml#/paths/~1api~device-profiles'
+  /api/device-profiles/{id}:
+    $ref: 'endpoints/device-profile.yml#/paths/~1api~device-profiles~1{id}'
   /api/networks:
     $ref: 'endpoints/network.yml#/paths/~1api~1networks'
   /api/networks/{id}:
     $ref: 'endpoints/network.yml#/paths/~1api~1networks~1{id}'
-  /api/networkProtocols:
-    $ref: 'endpoints/network-protocol.yml#/paths/~1api~1networkProtocols'
-  /api/networkProtocols/{id}:
-    $ref: 'endpoints/network-protocol.yml#/paths/~1api~1networkProtocols~1{id}'
-  /api/networkProtocolHandlers:
-    $ref: 'endpoints/network-protocol.yml#/paths/~1api~1networkProtocolHandlers'
-  /api/networkProviders:
-    $ref: 'endpoints/network-provider.yml#/paths/~1api~1networkProviders'
-  /api/networkProviders/{id}:
-    $ref: 'endpoints/network-provider.yml#/paths/~1api~1networkProviders~1{id}'
-  /api/networkTypes:
-    $ref: 'endpoints/network-type.yml#/paths/~1api~1networkTypes'
-  /api/networkTypes/{id}:
-    $ref: 'endpoints/network-type.yml#/paths/~1api~1networkTypes~1{id}'
-  /api/passwordPolicies:
-    $ref: 'endpoints/password-policy.yml#/paths/~1api~1passwordPolicies'
-  /api/passwordPolicies/{id}:
-    $ref: 'endpoints/password-policy.yml#/paths/~1api~1passwordPolicies~1{id}'
-  /api/reportingProtocols:
-    $ref: 'endpoints/reporting-protocol.yml#/paths/~1api~1reportingProtocols'
-  /api/reportingProtocols/{id}:
-    $ref: 'endpoints/reporting-protocol.yml#/paths/~1api~1reportingProtocols~1{id}'
-  /api/reportingProtocolHandlers:
-    $ref: 'endpoints/reporting-protocol.yml#/paths/~1api~1reportingProtocolHandlers'
+  /api/network-protocols:
+    $ref: 'endpoints/network-protocol.yml#/paths/~1api~1network-protocols'
+  /api/network-protocols/{id}:
+    $ref: 'endpoints/network-protocol.yml#/paths/~1api~1network-protocols~1{id}'
+  /api/network-providers:
+    $ref: 'endpoints/network-provider.yml#/paths/~1api~1network-providers'
+  /api/network-providers/{id}:
+    $ref: 'endpoints/network-provider.yml#/paths/~1api~1network-providers~1{id}'
+  /api/network-types:
+    $ref: 'endpoints/network-type.yml#/paths/~1api~1network-types'
+  /api/network-types/{id}:
+    $ref: 'endpoints/network-type.yml#/paths/~1api~1network-types~1{id}'
+  /api/reporting-protocols:
+    $ref: 'endpoints/reporting-protocol.yml#/paths/~1api~1reporting-protocols'
+  /api/reporting-protocols/{id}:
+    $ref: 'endpoints/reporting-protocol.yml#/paths/~1api~1reporting-protocols~1{id}'
   /api/sessions:
     $ref: 'endpoints/session.yml#/paths/~1api~1sessions'
   /api/users:
@@ -109,8 +97,8 @@ paths:
     $ref: 'endpoints/user.yml#/paths/~1api~1users~1{id}'
   /api/users/me:
     $ref: 'endpoints/user.yml#/paths/~1api~1users~1me'
-  /api/users/verifyEmail/{uuid}:
-    $ref: 'endpoints/user.yml#/paths/~1api~1users~1verifyEmail~1{uuid}'
+  /api/users/verify-email/{uuid}:
+    $ref: 'endpoints/user.yml#/paths/~1api~1users~1verify-email~1{uuid}'
 components:
   securitySchemes:
     bearer_token:
@@ -145,6 +133,27 @@ components:
       name: search
       in: query
       description: Search for a string within name
+      required: false
+      schema:
+        type: string
+    applicationId:
+      name: applicationId
+      in: query
+      description: The ID of the Application
+      required: false
+      schema:
+        type: string
+    networkTypeId:
+      name: networkTypeId
+      in: query
+      description: The ID of the NetworkType
+      required: false
+      schema:
+        type: string
+    deviceId:
+      name: deviceId
+      in: query
+      description: The ID of the Device
       required: false
       schema:
         type: string

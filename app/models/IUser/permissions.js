@@ -19,7 +19,8 @@ const resources = [
 
 const otherPermissions = [
   'Session:remove',
-  'ApplicationNetworkTypeLink:push'
+  'ApplicationNetworkTypeLink:push',
+  'DeviceNetworkTypeLink:push'
 ]
 
 function createResourcePermissions (resource, operations) {
