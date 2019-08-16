@@ -63,23 +63,23 @@ with each other.</p>
 by LPWAN Server and the Lora Server instance used in development.
 There is a script for making it easier to start and stop persistence services.</p>
 <pre><code class="hljs"><span class="hljs-comment"># Start all persistence services</span>
-$ ./bin/manage-db <span class="hljs-keyword">start</span>
+$ ./development/bin/manage-db <span class="hljs-keyword">start</span>
 
 <span class="hljs-comment"># Deploy the data models to Prisma</span>
-$ ./<span class="hljs-keyword">bin</span>/manage-db deploy
+$ ./development/<span class="hljs-keyword">bin</span>/manage-db deploy
 
 <span class="hljs-comment"># Stop all persistence services</span>
-$ ./<span class="hljs-keyword">bin</span>/manage-db <span class="hljs-keyword">stop</span>
+$ ./development/<span class="hljs-keyword">bin</span>/manage-db <span class="hljs-keyword">stop</span>
 
 <span class="hljs-comment"># Reset the database to the base set of seeded records contained in `prisma/verions/v{x}`</span>
-$ ./<span class="hljs-keyword">bin</span>/manage-db <span class="hljs-keyword">reset</span>
+$ ./development/<span class="hljs-keyword">bin</span>/manage-db <span class="hljs-keyword">reset</span>
 </code></pre>
 <p>Prisma runs a GraphQL Playground at <code>http://localhost:4466</code> that allows you
 to query and mutate the database.  You can also deploy it with a setting that enables
 a UI dashboard to the data.</p>
 <h2><a class="anchor" aria-hidden="true" id="lora-server"></a><a href="#lora-server" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>LoRa Server</h2>
 <p>Run this command to start versions 1 and 2 of LoRa Server and LoRa App Server.</p>
-<pre><code class="hljs">$ docker-compose -f docker/dev/loraserver/docker-compose<span class="hljs-selector-class">.yml</span> up
+<pre><code class="hljs">$ docker-compose -f development/loraserver/docker-compose<span class="hljs-selector-class">.yml</span> up
 </code></pre>
 <p>LoRa App Servers are at:</p>
 <ul>
@@ -88,7 +88,7 @@ a UI dashboard to the data.</p>
 </ul>
 <h2><a class="anchor" aria-hidden="true" id="lpwan-server"></a><a href="#lpwan-server" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>LPWAN Server</h2>
 <p>Run this command to start LPWAN Server for development.</p>
-<pre><code class="hljs">$ docker-compose -f docker/dev/docker-compose<span class="hljs-selector-class">.yml</span> up --build
+<pre><code class="hljs">$ docker-compose -f development/docker-compose<span class="hljs-selector-class">.yml</span> up --build
 </code></pre>
 <p>LPWAN Server is run with <code>nodemon</code> inside of a docker container.  Any
 changes within the <code>rest</code> folder will cause the server to restart.
