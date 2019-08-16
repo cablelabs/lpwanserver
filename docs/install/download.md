@@ -32,7 +32,7 @@ Run these commands to generate self-signed certificates for development.
 
 ```
 mkdir certs
-./bin/generate-development-certificates
+./development/bin/generate-development-certificates
 ```
 
 ## LPWAN Server Web Client

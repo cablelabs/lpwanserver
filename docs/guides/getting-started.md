@@ -32,9 +32,9 @@ files to find out more about what commands and configurations are involved in
 running the demo.
 
 - `/bin/demo`
-- `/docker/dev/databases/docker-compose.demo-db.yml`
-- `/docker/dev/loraserver/docker-compose.yml`
-- `/docker/docker-compose.demo.yml`
+- `/development/databases/docker-compose.demo-db.yml`
+- `/development/loraserver/docker-compose.yml`
+- `/docker-compose.demo.yml`
 
 ## Start Demo
 
