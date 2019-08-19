@@ -2,12 +2,9 @@
 
 // Data models - what can be done with each data type.
 var UserModel = require('./IUser')
-var CompanyModel = require('./ICompany')
-var PasswordPolicyModel = require('./IPasswordPolicy')
 var SessionManagerModel = require('./Session')
 var NetworkProtocolModel = require('./INetworkProtocol')
 var NetworkModel = require('./INetwork')
-var CompanyNetworkTypeLinkModel = require('./ICompanyNetworkTypeLink')
 var ReportingProtocolModel = require('./IReportingProtocol')
 var ApplicationModel = require('./IApplication')
 var ApplicationNetworkTypeLinkModel = require('./IApplicationNetworkTypeLink')
@@ -24,12 +21,6 @@ var NetworkTypeAPI = require('../networkProtocols/networkTypeApi')
 var NetworkProtocolAPI = require('../networkProtocols/networkProtocols')
 
 function ModelAPI () {
-  // Companies.
-  this.companies = new CompanyModel(this)
-
-  // Password policies.  Manages password rules for companies.
-  this.passwordPolicies = new PasswordPolicyModel(this.companies)
-
   // Users.  And start the user email verification background task that
   // expires old email verification records.
   this.users = new UserModel(this)
@@ -69,9 +60,6 @@ function ModelAPI () {
   // The networkType API, giving access to the various remote networks of a
   // given type.
   this.networkTypeAPI = new NetworkTypeAPI(this)
-
-  // The companyNetworkTypeLink model.
-  this.companyNetworkTypeLinks = new CompanyNetworkTypeLinkModel(this)
 
   // The deviceProfile model.
   this.deviceProfiles = new DeviceProfileModel(this)

@@ -1,9 +1,9 @@
 const { logger } = require('../log')
 const { prisma } = require('../lib/prisma')
-var httpError = require('http-errors')
-const { renameKeys, stringifyProp, parseProp } = require('../lib/utils')
+// var httpError = require('http-errors')
 const { redisClient } = require('../lib/redis')
 const CacheFirstStrategy = require('../lib/prisma-cache/src/cache-first-strategy')
+const { createModel, load, list } = require('./Model')
 
 //* *****************************************************************************
 // Fragments for how the data should be returned from Prisma.
@@ -13,10 +13,7 @@ const fragments = {
     id
     name
     description
-    networkSettings
-    company {
-      id
-    }
+    settings
     networkType {
       id
     }
@@ -24,105 +21,105 @@ const fragments = {
 }
 
 // ******************************************************************************
-// Database Client
+// Model Context
 // ******************************************************************************
-const DB = new CacheFirstStrategy({
-  name: 'deviceProfile',
-  pluralName: 'deviceProfiles',
-  fragments,
-  defaultFragmentKey: 'basic',
-  prisma,
-  redis: redisClient,
-  log: logger.info.bind(logger)
-})
+const modelContext = {
+  DB: new CacheFirstStrategy({
+    name: 'deviceProfile',
+    pluralName: 'deviceProfiles',
+    fragments,
+    defaultFragmentKey: 'basic',
+    prisma,
+    redis: redisClient,
+    log: logger.info.bind(logger)
+  })
+}
 
 // ******************************************************************************
-// Helpers
+// Model API
 // ******************************************************************************
-const parseNetworkSettings = parseProp('networkSettings')
-const stringifyNetworkSettings = stringifyProp('networkSettings')
-const renameQueryKeys = renameKeys({ search: 'name_contains' })
+async function create (ctx, { data, remoteOrigin = false } = {}) {
+  try {
+    const rec = await ctx.DB.create(data)
+    if (!remoteOrigin) {
+      var logs = await ctx.$models.networkTypeAPI.addDeviceProfile({
+        networkTypeId: data.networkTypeId,
+        deviceProfileId: rec.id
+      })
+      rec.remoteAccessLogs = logs
+    }
+    return rec
+  }
+  catch (err) {
+    logger.error('Failed to create deviceProfile:', err)
+    throw err
+  }
+}
+
+async function update (ctx, args) {
+  try {
+    const rec = await ctx.DB.update(args)
+    var logs = await ctx.$models.networkTypeAPI.pushDeviceProfile(rec.networkType.id, rec.id)
+    rec.remoteAccessLogs = logs
+    return rec
+  }
+  catch (err) {
+    logger.error('Error updating deviceProfile:', err)
+    throw err
+  }
+}
+
+async function remove (ctx, id) {
+  try {
+    var rec = await ctx.DB.load({ where: { id } })
+    // Don't delete the local record until the remote operations complete.
+    var logs = await ctx.$models.networkTypeAPI.deleteDeviceProfile(rec.networkType.id, id)
+    await ctx.DB.remove(id)
+    return logs
+  }
+  catch (err) {
+    logger.error('Error deleting deviceProfile: ', err)
+    throw err
+  }
+}
+
+async function pushDeviceProfile (ctx, id) {
+  try {
+    var rec = await ctx.DB.load({ where: { id } })
+    var logs = await ctx.$models.networkTypeAPI.pushDeviceProfile({
+      networkTypeId: rec.networkType.id,
+      deviceProfileId: id
+    })
+    rec.remoteAccessLogs = logs
+    return rec
+  }
+  catch (err) {
+    logger.error('Error pushing deviceProfile:', err)
+    throw err
+  }
+}
 
 // ******************************************************************************
 // Model
 // ******************************************************************************
-module.exports = class DeviceProfile {
-  constructor (modelAPI) {
-    this.modelAPI = modelAPI
+const model = createModel(
+  modelContext,
+  {
+    create,
+    list,
+    load,
+    update,
+    remove,
+    pushDeviceProfile
   }
+)
 
-  async load (id) {
-    return parseNetworkSettings(await DB.load({ id }))
-  }
-
-  async list (query = {}, opts) {
-    let [ records, totalCount ] = await DB.list(renameQueryKeys(query), opts)
-    return [ records.map(parseNetworkSettings), totalCount ]
-  }
-
-  async create (networkTypeId, companyId, name, description, networkSettings, { remoteOrigin = false } = {}) {
-    try {
-      const data = { networkTypeId, companyId, name, description, networkSettings }
-      const rec = await DB.create(stringifyNetworkSettings(data))
-      if (!remoteOrigin) {
-        var logs = await this.modelAPI.networkTypeAPI.addDeviceProfile(networkTypeId, rec.id)
-        rec.remoteAccessLogs = logs
-      }
-      return parseNetworkSettings(rec)
-    }
-    catch (err) {
-      logger.error('Failed to create deviceProfile:', err)
-      throw err
-    }
-  }
-
-  async update ({ id, ...data }) {
-    try {
-      if (!id) throw httpError(400, 'No existing DeviceProfile ID')
-      const rec = await DB.update({ id }, stringifyNetworkSettings(data))
-      var logs = await this.modelAPI.networkTypeAPI.pushDeviceProfile(rec.networkType.id, id)
-      rec.remoteAccessLogs = logs
-      return rec
-    }
-    catch (err) {
-      logger.error('Error updating deviceProfile:', err)
-      throw err
-    }
-  }
-
-  async remove (id, validateCompanyId) {
-    try {
-      // Since we clear the remote networks before we delete the local
-      // record, validate the company now, if required.  Also, we need the
-      // networkTypeId from the record to delete it from the relevant
-      // networks.  So get the record to start anyway.
-      var rec = await DB.load({ id })
-
-      if (validateCompanyId && validateCompanyId !== rec.company.id) {
-        throw new httpError.Unauthorized()
-      }
-
-      // Don't delete the local record until the remote operations complete.
-      var logs = await this.modelAPI.networkTypeAPI.deleteDeviceProfile(rec.networkType.id, id)
-      await DB.remove({ id })
-      return logs
-    }
-    catch (err) {
-      logger.error('Error deleting deviceProfile: ', err)
-      throw err
-    }
-  }
-
-  async pushDeviceProfile (id) {
-    try {
-      var rec = await this.load(id)
-      var logs = await this.modelAPI.networkTypeAPI.pushDeviceProfile(rec.networkType.id, id)
-      rec.remoteAccessLogs = logs
-      return rec
-    }
-    catch (err) {
-      logger.error('Error pushing deviceProfile:', err)
-      throw err
-    }
-  }
+module.exports = {
+  model,
+  create,
+  list,
+  load,
+  update,
+  remove,
+  pushDeviceProfile
 }

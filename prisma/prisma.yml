@@ -1,9 +1,9 @@
 endpoint: ${env:prisma_url}
-datamodel: ./versions/v1/datamodel.prisma
+datamodel: ./datamodel.prisma
 
 generate:
   - generator: javascript-client
     output: ../app/generated/prisma-client/
 
 seed:
-  run: node ./versions/v1/seed.js
+  run: node ./seed.js

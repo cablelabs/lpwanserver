@@ -3,6 +3,7 @@ const { users, sessions } = require('../../models')
 const { logger } = require('../../log')
 const R = require('ramda')
 
+
 function pipeOpenApiBackendMiddleware (...fns) {
   return async (context, request, response) => {
     for (let i = 0; i < fns.length; i++) {

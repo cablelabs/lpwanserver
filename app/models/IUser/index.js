@@ -1,15 +1,15 @@
 const { logger } = require('../../log')
 const config = require('../../config')
-const { prisma, formatInputData } = require('../../lib/prisma')
+const { prisma } = require('../../lib/prisma')
 const crypto = require('../../lib/crypto.js')
-const uuidgen = require('uuid')
 const httpError = require('http-errors')
-const { onFail, renameKeys } = require('../../lib/utils')
+const { renameKeys } = require('../../lib/utils')
 const R = require('ramda')
 const Joi = require('@hapi/joi')
 const { redisClient } = require('../../lib/redis')
 const CacheFirstStrategy = require('../../lib/prisma-cache/src/cache-first-strategy')
 const { adminPermissions, userPermissions } = require('./permissions')
+const { createModel, load, listAll } = require('../Model')
 
 //* *****************************************************************************
 // Fragments for how the data should be returned from Prisma.
@@ -17,303 +17,174 @@ const { adminPermissions, userPermissions } = require('./permissions')
 const fragments = {
   internal: `fragment InternalUser on User {
     id
-    username
-    email
-    emailVerified
-    lastVerifiedEmail
-    passwordHash
     role
-    company {
-      id
-    }
+    email
+    passwordHash
   }`,
   basic: `fragment BasicUser on User {
     id
-    username
-    email
     role
-    company {
-      id
-    }
+    email
   }`,
-  profile: `fragment UserProfile on User {
+  id: `fragment UserId on User {
     id
-    username
-    email
-    emailVerified
-    role
-    company {
-      id
-      name
-      type
-    }
   }`,
   userEmail: `fragment UserEmail on User {
     email
-  }`,
-  emailVerification: `fragment BasicEmailVerification on EmailVerification {
-    id
-    uuid
-    email
-    changeRequested
-    user {
-      id
-    }
   }`
 }
 
 // ******************************************************************************
-// Database Client
+// Model Context
 // ******************************************************************************
-const DB = new CacheFirstStrategy({
-  name: 'user',
-  pluralName: 'users',
-  fragments,
-  defaultFragmentKey: 'basic',
-  prisma,
-  redis: redisClient,
-  log: logger.info.bind(logger)
-})
+const modelContext = {
+  DB: new CacheFirstStrategy({
+    name: 'user',
+    pluralName: 'users',
+    fragments,
+    defaultFragmentKey: 'basic',
+    prisma,
+    redis: redisClient,
+    log: logger.info.bind(logger)
+  })
+}
 
 // *********************************************************************
 // Helpers
 // *********************************************************************
 const userCreateSchema = Joi.object().keys({
-  username: Joi.string().required(),
+  email: Joi.string().email({ minDomainSegments: 2 }).required(),
   password: Joi.string().required(),
-  companyId: Joi.string().required(),
-  role: Joi.string(),
-  email: Joi.string().email({ minDomainSegments: 2 }).when('role', { is: 'ADMIN', then: Joi.required(), otherwise: Joi.optional() })
+  role: Joi.string().required()
 })
 
 const renameQueryKeys = renameKeys({ search: 'username_contains' })
 
-async function retrieveEmailVerification (uuid) {
-  const ev = await onFail(400, () => prisma.emailVerification({ uuid }).$fragment(fragments.emailVerification))
-  if (!ev) throw httpError(404, 'Email verification token not found')
-  return ev
-}
+const dropInternalProps = R.omit(['passwordHash'])
 
-function deleteEmailVerification (uuid) {
-  return onFail(400, () => prisma.deleteEmailVerification({ uuid }))
-}
-
-// Starts the process of verifying email.  We assume the email address has
-// already been updated by the caller, with the old email saved and the new
-// email set in the database, and emailVerified is set to false (otherwise we
-// get into this whole big chicken-and-the-egg problem, trying to update the
-// same record).  Sends email to old and new email addresses.  New can accept or
-// reject the change, old can reject.  Emails include links to accept/reject.
-//
-// userId   - the id of the user to sent the email for
-// username - the user's username (for emails)
-// newemail - the new email address for this user
-// oldemail - the previous email address for this user, if any
-// urlRoot  - the root URL for verification/rejection links
-//
-// Returns a promise that handles the email verification.
-async function emailVerify (userId, username, newemail, oldemail, urlRoot) {
-  var data = formatInputData({
-    // Need a UUID for the verification record.
-    uuid: uuidgen.v4(),
-    userId,
-    email: newemail,
-    // timestamp
-    changeRequested: new Date().toISOString()
-  })
+// *********************************************************************
+// Model API
+// *********************************************************************
+async function create (ctx, { data, ...opts }) {
+  // Check payload against Joi schema
+  let { error } = Joi.validate(data, userCreateSchema)
+  if (error) throw httpError(400, error.message)
+  data = this.validateAndHashPassword(data)
+  let user = await ctx.DB.create({ ...opts, data, fragment = 'basic' })
   try {
-    const record = await prisma.createEmailVerification(data)
-    // Sending verification emails.
-    this.modelAPI.emails.verifyEmail(oldemail,
-      newemail,
-      username,
-      urlRoot,
-      data.uuid)
-    return record
+    // send verification emails
   }
   catch (err) {
-    logger.error('Failed to write emailVerification record: ', err)
-    throw err
+    // Log error, but resolve anyway.
+    logger.error('Error starting email verification:', err)
+  }
+  return user
+}
+
+async function list (ctx, { where = {}, ...opts }) {
+  return ctx.DB.list({ where: renameQueryKeys(where), ...opts, fragment = 'basic' })
+}
+
+async function update (ctx, { where, data, ...opts }) {
+  if (!where) throw httpError(400, 'No record identifier "where"')
+
+  let oldRec = await ctx.DB.load({ where })
+
+  // To allow users to update their own info, users without "User:update"
+  // permission can access this method.
+  if (ctx.user) {
+    let authorized = this.hasPermissions(ctx, { permissions: ['User:update'] })
+    if (!authorized && oldRec.id === ctx.user.id) {
+      // limit what fields a user can change
+      const allowed = ['email', 'password']
+      if (Object.keys(data).every(x => allowed.includes(x))) {
+        authorized = true
+      }
+    }
+    if (!authorized) throw new httpError.Forbidden()
+  }
+
+  if (data.password) {
+    data = await this.validateAndHashPassword(data)
+  }
+
+  let user = await ctx.DB.update({ where, data, ...opts, fragment = 'basic' })
+
+  if (data.email) {
+    try {
+      // send verification emails
+    }
+    catch (err) {
+      logger.error('Error starting email verification:', err)
+    }
+  }
+
+  return user
+}
+
+function remove (ctx, id) {
+  if (!id) throw httpError(400, 'Missing record identifier')
+  if (ctx.user && ctx.user.id === id) {
+    throw httpError(403, 'Cannot delete your own account')
+  }
+  return ctx.DB.remove(id)
+}
+
+async function validateAndHashPassword (ctx, data) {
+  const pwdRe = new RegExp(config.password_regex)
+  if (!pwdRe.test(data.password)) {
+    throw httpError(400, config.password_validation_message)
+  }
+  return {
+    ...R.omit(['password'], data),
+    passwordHash: await crypto.hashPassword(data.password)
   }
 }
 
-const dropInternalProps = R.omit(['passwordHash', 'emailVerified', 'lastVerifiedEmail'])
+async function authenticateUser (ctx, { username, password }) {
+  if (!username || !password) throw new httpError.BadRequest()
+  try {
+    const user = await this.loadByUsername(username, 'internal')
+    const matches = await crypto.verifyPassword(password, user.passwordHash)
+    if (!matches) throw new Error('Invalid password')
+    return dropInternalProps(user)
+  }
+  catch (err) {
+    // don't specify whether or not username is valid
+    throw new httpError.Unauthorized()
+  }
+}
+
+function hasPermissions (ctx, { permissions }) {
+  const has = ctx.user.role === 'ADMIN' ? adminPermissions : userPermissions
+  return permissions.every(x => has.includes(x))
+}
 
 // *********************************************************************
 // Model
 // *********************************************************************
-module.exports = class User {
-  constructor (modelAPI) {
-    this.modelAPI = modelAPI
+const model = createModel(
+  modelContext,
+  {
+    create,
+    list,
+    listAll,
+    load,
+    update,
+    remove,
+    validateAndHashPassword,
+    authenticateUser,
+    hasPermissions
   }
+)
 
-  async init () {
-    // Expire records every 24 hours.
-    // (24 hours * 60 minutes * 60 seconds * 1000 milliseconds)
-    setInterval(this.expireEmailVerify.bind(this), 24 * 60 * 60 * 1000)
-    // Run expiration code at startup as well.
-    this.expireEmailVerify()
-  }
-
-  load (id, fragment = 'basic') {
-    return DB.load({ id }, { fragment })
-  }
-
-  loadByUsername (username, fragment = 'basic') {
-    return DB.load({ username }, { fragment })
-  }
-
-  async list (query = {}, opts) {
-    return DB.list(renameQueryKeys(query), opts)
-  }
-
-  async create (data) {
-    // Check payload against Joi schema
-    let { error } = Joi.validate(data, userCreateSchema)
-    if (error) throw httpError(400, error.message)
-    // Verify password passes company password policy
-    await this.modelAPI.passwordPolicies.validatePassword(data.companyId, data.password)
-    let user
-    try {
-      data.passwordHash = await crypto.hashPassword(data.password)
-      delete data.password
-      user = await DB.create(data, { fragment: 'profile' })
-    }
-    catch (err) {
-      throw httpError(400, err.message)
-    }
-    if (user.email) {
-      try {
-        await emailVerify.call(this, user.id, user.username, user.email, null, config.base_url)
-      }
-      catch (err) {
-        // Log error, but resolve anyway.
-        logger.error('Error starting email verification:', err)
-      }
-    }
-    return dropInternalProps(user)
-  }
-
-  async update ({ id, ...data }) {
-    // MUST have at least an ID field in the passed update record.
-    if (!id) throw httpError(400, 'No existing user ID')
-
-    let originalUser = await this.load(id)
-
-    if (data.password) {
-      const companyId = data.companyId || data.company ? data.company.id : originalUser.company.id
-      // Validate the password.
-      await this.modelAPI.passwordPolicies.validatePassword(companyId, data.password)
-      data.passwordHash = await crypto.hashPassword(data.password)
-      delete data.password
-    }
-
-    if (data.role === 'ADMIN' && !(data.email || originalUser.email)) {
-      throw httpError(400, 'Invalid change to ADMIN without an email')
-    }
-
-    function setEmailProps ({ email, ...data }) {
-      if (email === originalUser.email) return data
-      const result = { ...data, emailVerified: false }
-      if (originalUser.emailVerified) {
-        result.lastVerifiedEmail = originalUser.email
-      }
-      return result
-    }
-
-    if (data.email) data = setEmailProps(data)
-
-    let user = await DB.update({ id }, data, { fragment: 'internal' })
-
-    if (data.email) {
-      try {
-        await emailVerify(
-          user.id,
-          user.username,
-          user.email,
-          user.lastVerifiedEmail,
-          config.base_url
-        )
-      }
-      catch (err) {
-        logger.error('Error starting email verification:', err)
-      }
-    }
-
-    return dropInternalProps(user)
-  }
-
-  remove (id) {
-    return DB.remove({ id })
-  }
-
-  // We run this "periodically" to delete old emailVerify records.  We user
-  // the handler code above with a "reject" type and an "expired" source so
-  // the handling and reporting code is in one place.
-  async expireEmailVerify () {
-    logger.info('Running expiration of email verify records')
-    // 14 day limit on email changes.
-    var timedOut = new Date()
-    // Move now back 14 days.
-    timedOut.setDate(timedOut.getDate() - 14)
-    const where = { changeRequested_lt: timedOut.toISOString() }
-    const records = await prisma.emailVerifications({ where })
-    logger.info(records.length + ' email verify records to be expired')
-    return Promise.all(
-      records.map(x => this.handleEmailVerifyResponse(x.uuid, 'reject', 'expired verification request'))
-    )
-  }
-
-  async authenticateUser (username, password) {
-    if (!username || !password) throw new httpError.BadRequest()
-    try {
-      const user = await this.loadByUsername(username, 'internal')
-      const matches = await crypto.verifyPassword(password, user.passwordHash)
-      if (!matches) throw new Error('Invalid password')
-      return dropInternalProps(user)
-    }
-    catch (err) {
-      // don't specify whether or not username is valid
-      throw new httpError.Unauthorized()
-    }
-  }
-
-  async handleEmailVerifyResponse (uuid, type, source) {
-    const ev = await retrieveEmailVerification(uuid)
-    const user = await this.load(ev.user.id)
-    let userUpdate = { id: user.id }
-    if (type === 'accept') {
-      userUpdate.emailVerified = true
-    }
-    else {
-      this.modelAPI.emails.notifyAdminsAboutReject(user, source)
-      Object.assign(userUpdate, {
-        email: user.lastVerifiedEmail,
-        lastVerifiedEmail: '',
-        emailVerified: true
-      })
-    }
-    try {
-      await this.update(userUpdate)
-      await deleteEmailVerification(uuid)
-    }
-    catch (err) {
-      logger.error('Update for EmailVerify failed. UUID = ' + uuid +
-                                           ', type = ' + type +
-                                           ', source = ' + source +
-                                          ': ', err)
-      throw httpError.InternalServerError()
-    }
-  }
-
-  async getCompanyAdmins (companyId) {
-    const where = { company: { id: companyId } }
-    const users = await prisma.users({ where }).$fragment(fragments.userEmail)
-    return users.map(x => x.email).filter(R.identity)
-  }
-
-  hasPermissions (user, requiredPermissions) {
-    const permissions = user.role === 'ADMIN' ? adminPermissions : userPermissions
-    return requiredPermissions.every(x => permissions.includes(x))
-  }
+module.exports = {
+  model,
+  create,
+  list,
+  update,
+  remove,
+  validateAndHashPassword,
+  authenticateUser,
+  hasPermissions
 }

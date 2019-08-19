@@ -4,7 +4,6 @@ const { logger } = require('../../../log')
 const { joinUrl, renameKeys, attempt } = require('../../../lib/utils')
 const httpError = require('http-errors')
 const config = require('../../../config')
-const { encrypt, decrypt, genKey } = require('../../../lib/crypto')
 
 module.exports = class LoraOpenSource extends NetworkProtocol {
   async connect (network) {
@@ -16,132 +15,6 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
     return true
   }
 
-  getCompanyAccessAccount (network) {
-    const result = super.getCompanyAccessAccount(network)
-    return {
-      ...R.pick(['username', 'password'], result),
-      isAdmin: true
-    }
-  }
-
-  async getCompanyAccount (network, dataAPI, companyId, generateIfMissing) {
-    // Obtain the security data from the protocol storage in the dataAPI, then
-    // access it for the user.
-    var srd
-    var kd
-    var secData
-    try {
-      srd = await this.modelAPI.protocolData.loadValue(network, makeCompanyDataKey(companyId, 'sd'))
-      kd = await this.modelAPI.protocolData.loadValue(network, makeCompanyDataKey(companyId, 'kd'))
-    }
-    catch (err) {
-      // Something's off.  Generate new if allowed.
-      if (generateIfMissing) {
-        logger.info('Generating account for ' + companyId)
-        // Take the company name, make it suitable for a user name, and then
-        // add "admin" for the username.
-        var corec = await dataAPI.getCompanyById(companyId)
-        var uname = corec.name.replace(/[^a-zA-Z0-9]/g, '')
-        uname += 'admin'
-        var pass = await genKey(12)
-        kd = await genKey()
-        secData = { 'username': uname, 'password': pass }
-        srd = encrypt(secData, kd)
-
-        // Save for future reference.networkId, networkProtocolId, key, data
-        await this.modelAPI.protocolData.upsert(network, makeCompanyDataKey(companyId, 'sd'), srd)
-        await this.modelAPI.protocolData.upsert(network, makeCompanyDataKey(companyId, 'kd'), kd)
-        return secData
-      }
-      else {
-        logger.error('LoraOS: Company security data is missing for company id ' + companyId, err)
-        return null
-      }
-    }
-
-    try {
-      secData = await decrypt(srd, kd)
-    }
-    catch (err) {
-      return null
-    }
-
-    if (!secData.username || !secData.password) {
-      logger.error('Company security data is incomplete for company id ' + companyId)
-      return null
-    }
-
-    return secData
-  }
-
-  async addCompany (network, companyId, dataAPI) {
-    let company = await dataAPI.getCompanyById(companyId)
-    let org = await this.client.createOrganization(network, {
-      name: company.name,
-      displayName: company.name,
-      canHaveGateways: false
-    })
-
-    await this.modelAPI.protocolData.upsert(network, makeCompanyDataKey(company.id, 'coNwkId'), org.id)
-
-    try {
-      await this.addDefaultOrgAdminUser(network, company, dataAPI, org.id)
-      const networkSettings = await this.addDefaultOrgServiceProfile(network, company, dataAPI, org.id)
-      return { ...networkSettings, organizationId: org.id }
-    }
-    catch (err) {
-      logger.error(`Failed to add ancillary data to remote host`, err)
-      throw err
-    }
-  }
-
-  async addDefaultOrgAdminUser (network, company, dataAPI, organizationId) {
-    var creds = await this.getCompanyAccount(network, dataAPI, company.id, true)
-    const body = await this.client.createUser(network, {
-      password: creds.password,
-      organizations: [
-        { isAdmin: true, organizationID: organizationId }
-      ],
-      username: creds.username,
-      isActive: true,
-      isAdmin: false,
-      sessionTTL: 0,
-      email: 'fake@emailaddress.com',
-      note: 'Created by and for LPWAN Server'
-    })
-
-    await this.modelAPI.protocolData.upsert(network, makeCompanyDataKey(company.id, 'coUsrId'), body.id)
-
-    return body
-  }
-
-  async addDefaultOrgServiceProfile (network, company, dataAPI, organizationId) {
-    var networkServerId = await this.getANetworkServerID(network)
-    const body = await this.client.createServiceProfile(network, {
-      name: 'defaultForLPWANServer',
-      networkServerID: networkServerId,
-      organizationID: organizationId,
-      addGWMetadata: true,
-      devStatusReqFreq: 1,
-      dlBucketSize: 0,
-      ulRate: 100000,
-      dlRate: 100000,
-      dlRatePolicy: 'DROP',
-      ulRatePolicy: 'DROP',
-      drMax: 3,
-      drMin: 0,
-      reportDevStatusBattery: true,
-      reportDevStatusMargin: true
-    })
-
-    // Save the ServiceProfile ID from the remote network.
-    await this.modelAPI.protocolData.upsert(network, makeCompanyDataKey(company.id, 'coSPId'), body.id)
-    // TODO: Remove this HACK.  Should not store the service profile locally
-    // in case it gets changed on the remote server.
-    await this.modelAPI.protocolData.upsert(network, makeCompanyDataKey(company.id, 'coSPNwkId'), networkServerId)
-    return { serviceProfileId: body.id, networkServerId }
-  }
-
   async getANetworkServerID (network) {
     logger.info('LoRaOpenSource: getANetworkServerID')
     const { result: nsList } = await this.client.listNetworkServers(network, { limit: 20, offset: 0 })
@@ -150,104 +23,6 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
       throw httpError.NotFound()
     }
     return nsList[0].id
-  }
-
-  async getServiceProfileForOrg (network, orgId, companyId) {
-    const body = await this.client.listServiceProfiles(network, {
-      organizationID: orgId,
-      limit: 20,
-      offset: 0
-    })
-    const serviceProfile = body.result[0]
-    if (serviceProfile) {
-      logger.warn('LoraOpenSource service profile found', { serviceProfile })
-      // TODO: Remove this HACK.  Should not store the service profile locally
-      //       in case it gets changed on the remote server.
-      await this.modelAPI.protocolData.upsert(network, makeCompanyDataKey(companyId, 'coSPNwkId'), serviceProfile.networkServerID)
-      await this.modelAPI.protocolData.upsert(network, makeCompanyDataKey(companyId, 'coSPId'), serviceProfile.id)
-    }
-    return serviceProfile
-  }
-
-  async getCompany (network, companyId, dataAPI) {
-    // Get the remote company id.
-    const company = await dataAPI.getCompanyById(companyId)
-    let orgId = await attempt(
-      () => this.modelAPI.protocolData.loadValue(network, makeCompanyDataKey(company.id, 'coNwkId')),
-      err => logger.error(`Company ${company.name} does not have a key for the remote network.  Company has not yet been created.`, err)
-    )
-    return this.client.loadCompany(network, orgId)
-  }
-
-  async updateCompany (network, companyId, dataAPI) {
-    // Get the remote company id.
-    const company = await dataAPI.getCompanyById(companyId)
-    let orgId = await attempt(
-      () => this.modelAPI.protocolData.loadValue(network, makeCompanyDataKey(company.id, 'coNwkId')),
-      err => logger.error(`Company ${company.name} does not have a key for the remote network.  Company has not yet been created.`, err)
-    )
-    await this.client.updateOrganization(network, orgId, {
-      'id': orgId,
-      'name': company.name,
-      'displayName': company.name,
-      canHaveGateways: false
-    })
-  }
-
-  async deleteCompany (network, companyId, dataAPI) {
-    // Get the remote company id.
-    let orgId
-    let userId
-    try {
-      orgId = await this.modelAPI.protocolData.loadValue(network, makeCompanyDataKey(companyId, 'coNwkId'))
-      // Get the admin user's id, too.
-      userId = await this.modelAPI.protocolData.loadValue(network, makeCompanyDataKey(companyId, 'coUsrId'))
-    }
-    catch (err) {
-      // No data.
-      logger.info(`Company ${companyId} does not have a key for the remote network.  Company has not yet been created.  ${err}`)
-      throw err
-    }
-    await attempt(
-      () => this.client.deleteUser(network, userId),
-      err => logger.error(`Error on delete admin user for company ${companyId}`, err)
-    )
-    await this.client.deleteOrganization(network, orgId)
-    // Clear the data for this company from the
-    // protocolData store.
-    await dataAPI.deleteProtocolDataForKey(
-      network.id,
-      network.networkProtocol.id,
-      makeCompanyDataKey(companyId, 'kd')
-    )
-    await dataAPI.deleteProtocolDataForKey(
-      network.id,
-      network.networkProtocol.id,
-      makeCompanyDataKey(companyId, 'coUsrId')
-    )
-    await dataAPI.deleteProtocolDataForKey(
-      network.id,
-      network.networkProtocol.id,
-      makeCompanyDataKey(companyId, 'coNwkId')
-    )
-    await dataAPI.deleteProtocolDataForKey(
-      network.id,
-      network.networkProtocol.id,
-      makeCompanyDataKey(companyId, 'sd')
-    )
-    await dataAPI.deleteProtocolDataForKey(
-      network.id,
-      network.networkProtocol.id,
-      makeCompanyDataKey(companyId, 'coSPId')
-    )
-    // TODO: Remove this HACK.  Should not store the
-    // service profile locally in case it gets changed on
-    // the remote server.
-    await dataAPI.deleteProtocolDataForKey(
-      network.id,
-      network.networkProtocol.id,
-      makeCompanyDataKey(companyId, 'coSPNwkId')
-    )
   }
 
   async pushNetwork (network, dataAPI, modelAPI) {
@@ -335,55 +110,17 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
   }
 
   async pullNetwork (network, dataAPI, modelAPI) {
-    const companyNtl = await this.setupOrganization(network, modelAPI, dataAPI)
     const [pulledDevProfiles, pulledApps] = await Promise.all([
-      this.pullDeviceProfiles(network, modelAPI, companyNtl, dataAPI),
-      this.pullApplications(network, modelAPI, dataAPI, companyNtl)
+      this.pullDeviceProfiles(network, modelAPI, dataAPI),
+      this.pullApplications(network, modelAPI, dataAPI)
     ])
     await Promise.all(pulledApps.map(x =>
       this.pullDevices(network, x.remoteApplication, x.localApplication, pulledDevProfiles, modelAPI, dataAPI)
     ))
   }
 
-  async setupOrganization (network, modelAPI, dataAPI) {
-    const [ cos ] = await this.modelAPI.companies.list({ limit: 1 })
-    let company = cos[0]
-    let companyNtl = await dataAPI.getCompanyNetworkType(company.id, network.networkType.id)
-    let loraNetworkSettings = { network: network.id }
-    if (!companyNtl) {
-      companyNtl = await this.modelAPI.companyNetworkTypeLinks.create(company.id, network.networkType.id, {}, { remoteOrigin: true })
-    }
-    const { result } = await attempt(
-      () => this.client.listOrganizations(network, { search: company.name, limit: 1 }),
-      err => logger.error(`Error getting operator ${company.name} from network ${network.name}`, err)
-    )
-    let organization = result[0]
-    if (!organization) {
-      logger.warn('Adding company to network ')
-      let networkSettings = await this.addCompany(network, company.id, dataAPI)
-      networkSettings = { ...companyNtl.networkSettings, networkSettings }
-      // add serviceProfileId, networkServerId, and organizationId to networkSettings
-      await this.modelAPI.companyNetworkTypeLinks.update({ id: companyNtl.id, networkSettings }, { remoteOrigin: true })
-      return networkSettings.networkSettings
-    }
-    logger.warn('Setting up company to match network Organization')
-    let serviceProfile = await this.getServiceProfileForOrg(network, organization.id, company.id, dataAPI)
-    await this.modelAPI.protocolData.upsert(network, makeCompanyDataKey(company.id, 'coNwkId'), organization.id)
-    const networkServer = await this.client.loadNetworkServer(network, serviceProfile.networkServerID)
-    loraNetworkSettings.serviceProfileId = serviceProfile.id
-    loraNetworkSettings.networkServerId = serviceProfile.networkServerID
-    loraNetworkSettings.organizationId = organization.id
-    loraNetworkSettings.networkId = network.id
-
-    companyNtl.networkSettings.serviceProfile = { region: networkServer.region }
-    companyNtl.networkSettings[network.name] = loraNetworkSettings
-    await this.modelAPI.companyNetworkTypeLinks.update(R.pick(['id', 'networkSettings'], companyNtl), { remoteOrigin: true })
-    return loraNetworkSettings
-  }
-
-  async pullDeviceProfiles (network, modelAPI, companyNtl, dataAPI) {
+  async pullDeviceProfiles (network, modelAPI, dataAPI) {
     const { result } = await this.client.listDeviceProfiles(network, {
-      organizationID: companyNtl.organizationId,
       limit: 9999,
       offset: 0
     })
@@ -391,8 +128,6 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
   }
 
   async addRemoteDeviceProfile (network, remoteDevProfileId) {
-    const [ cos ] = await this.modelAPI.companies.list({ limit: 1 })
-    let company = cos[0]
     const remoteDeviceProfile = await this.client.loadDeviceProfile(network, remoteDevProfileId)
     logger.info('Adding ' + remoteDeviceProfile.name)
     const [ dps ] = await this.modelAPI.deviceProfiles.list({ search: remoteDeviceProfile.name, limit: 1 })
@@ -409,7 +144,6 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
     let networkSettings = this.buildDeviceProfileNetworkSettings(remoteDeviceProfile)
     let localDp = await this.modelAPI.deviceProfiles.create(
       network.networkType.id,
-      company.id,
       remoteDeviceProfile.name,
       'Device Profile managed by LPWAN Server, perform changes via LPWAN',
       networkSettings,
@@ -422,9 +156,8 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
     }
   }
 
-  async pullApplications (network, modelAPI, dataAPI, companyNtl) {
+  async pullApplications (network, modelAPI, dataAPI) {
     let { result } = await this.client.listApplications(network, {
-      organizationID: companyNtl.organizationId,
       limit: 9999,
       offset: 0
     })
@@ -443,12 +176,10 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
     // Check for local app with the same name
     const [localApps] = await this.modelAPI.applications.list({ search: remoteApp.name })
     let localApp = localApps[0]
-    const [ cos ] = await this.modelAPI.companies.list({ limit: 1 })
     const [ reportingProtos ] = await this.modelAPI.reportingProtocols.list()
     if (!localApp) {
       let localAppData = {
         ...R.pick(['name', 'description'], remoteApp),
-        companyId: cos[0].id,
         reportingProtocolId: reportingProtos[0].id
       }
       if (integration) localAppData.baseUrl = integration.uplinkDataURL
@@ -470,7 +201,6 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
           networkSettings: this.buildApplicationNetworkSettings(remoteApp)
         },
         {
-          companyId: localApp.company.id,
           remoteOrigin: true
         }
       )
@@ -519,8 +249,6 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
       logger.info(localDevice.name + ' link already exists')
     }
     else {
-      const [ cos ] = await this.modelAPI.companies.list({ limit: 1 })
-      let company = cos[0]
       logger.info('creating Network Link for ' + localDevice.name)
       let networkSettings = this.buildDeviceNetworkSettings(remoteDevice, deviceProfile)
       let devNtlData = {
@@ -529,7 +257,7 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
         deviceProfileId: deviceProfile.id,
         networkSettings
       }
-      await this.modelAPI.deviceNetworkTypeLinks.create(devNtlData, { validateCompanyId: company.id, remoteOrigin: true })
+      await this.modelAPI.deviceNetworkTypeLinks.create(devNtlData, { remoteOrigin: true })
     }
     await this.modelAPI.protocolData.upsert(network, makeDeviceDataKey(localDevice.id, 'devNwkId'), remoteDevice.devEUI)
     return localDevice.id
@@ -540,12 +268,8 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
       // Get the local application data.
       const localApp = await dataAPI.getApplicationById(appId)
       const appNtl = await dataAPI.getApplicationNetworkType(appId, network.networkType.id)
-      const coNetworkId = await this.modelAPI.protocolData.loadValue(network, makeCompanyDataKey(localApp.company.id, 'coNwkId'))
-      const coSPId = await this.modelAPI.protocolData.loadValue(network, makeCompanyDataKey(localApp.company.id, 'coSPId'))
       const body = await this.client.createApplication(network, this.buildRemoteApplication(
         appNtl && appNtl.networkSettings,
-        coSPId,
-        coNetworkId,
         localApp
       ))
       // Save the application ID from the remote network.
@@ -567,14 +291,10 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
   async updateApplication (network, appId, dataAPI) {
     // Get the application data.
     var localApp = await dataAPI.getApplicationById(appId)
-    var coNetworkId = await this.modelAPI.protocolData.loadValue(network, makeCompanyDataKey(localApp.company.id, 'coNwkId'))
     var appNetworkId = await this.modelAPI.protocolData.loadValue(network, makeApplicationDataKey(appId, 'appNwkId'))
     var applicationData = await dataAPI.getApplicationNetworkType(appId, network.networkType.id)
-    let coSPId = await this.modelAPI.protocolData.loadValue(network, makeCompanyDataKey(localApp.company.id, 'coSPId'))
     let reqBody = this.buildRemoteApplication(
       applicationData.networkSettings,
-      coSPId,
-      coNetworkId,
       localApp
     )
 
@@ -652,14 +372,9 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
     logger.info('Adding DP ' + deviceProfileId)
     // Get the deviceProfile data.
     const deviceProfile = await dataAPI.getDeviceProfileById(deviceProfileId)
-    const [ cos ] = await this.modelAPI.companies.list({ limit: 1 })
-    let company = cos[0]
-    let orgId = await this.modelAPI.protocolData.loadValue(network, makeCompanyDataKey(company.id, 'coNwkId'))
-    let networkServerId = await this.modelAPI.protocolData.loadValue(network, makeCompanyDataKey(company.id, 'coSPNwkId'))
     const { id } = await this.client.createDeviceProfile(network, this.buildRemoteDeviceProfile(
       deviceProfile,
-      networkServerId,
-      orgId
+      networkServerId
     ))
     await this.modelAPI.protocolData.upsert(network, makeDeviceProfileDataKey(deviceProfile.id, 'dpNwkId'), id)
     return id
@@ -681,11 +396,9 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
     // Get the application data.
     var deviceProfile
     var dpNetworkId
-    var coNetworkId
     try {
       deviceProfile = await dataAPI.getDeviceProfileById(deviceProfileId)
       dpNetworkId = await this.modelAPI.protocolData.loadValue(network, makeDeviceProfileDataKey(deviceProfileId, 'dpNwkId'))
-      coNetworkId = await this.modelAPI.protocolData.loadValue(network, makeCompanyDataKey(deviceProfile.company.id, 'coNwkId'))
     }
     catch (err) {
       logger.error('Error getting supporting data for update device Profile:', err)
@@ -693,8 +406,7 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
     }
     const reqBody = {
       id: dpNetworkId,
-      name: deviceProfile.name,
-      organizationID: coNetworkId
+      name: deviceProfile.name
     }
     // Optional data
     if (deviceProfile.networkSettings) {
@@ -889,10 +601,6 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
       deviceProfileID: remoteDeviceProfileId
     } }
   }
-}
-
-function makeCompanyDataKey (companyId, dataName) {
-  return 'co:' + companyId + '/' + dataName
 }
 
 function makeApplicationDataKey (applicationId, dataName) {

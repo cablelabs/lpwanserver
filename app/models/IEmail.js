@@ -89,7 +89,7 @@ module.exports = class Email {
       .replace('%NEW_EMAIL%', user.email)
       .replace('%OLD_EMAIL%', user.lastVerifiedEmail)
 
-    this.userModel.getCompanyAdmins(user.company.id).then(function (usersAdmins) {
+    this.userModel.getAdmins().then(function (usersAdmins) {
       var emailOptions = {
         from: reportEmailReject.from,
         to: usersAdmins,

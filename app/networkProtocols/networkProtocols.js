@@ -60,23 +60,6 @@ module.exports = class NetworkProtocolAccess {
     return proto.disconnect(network)
   }
 
-  // Add company.
-  //
-  // dataAPI   - Access to the data we may need to execute this operation.
-  // network   - The network data.
-  // companyId - The company Id for the company data to be propogated,.
-  //
-  // Returns a Promise that ostensibly connects to the remote system and creates
-  // the company.  This may or may not do as promised (haha), and the
-  // implementation is completely up to the developer of the protocol.  Options
-  // include creating the company and an admin account for that company which
-  // can be used in lower-level (application, device) methods, or simply ignoring
-  // this call and using a global admin account to add applications and devices.
-  async addCompany (dataAPI, network, companyId) {
-    const proto = await this.getProtocol(network)
-    return proto.addCompany(network, companyId, dataAPI)
-  }
-
   // Push company.  If the company exists on the remote system, update it to match
   // the local data.  Otherwise, create it.
   //
@@ -106,17 +89,6 @@ module.exports = class NetworkProtocolAccess {
     return proto.pullNetwork(network, dataAPI, modelAPI)
   }
 
-  // Delete the company.
-  //
-  // dataAPI       - Access to the data we may need to execute this operation.
-  // network       - The network data.
-  // companyId     - The company Id for the company data to be deleted.
-  //
-  // Returns a Promise that gets the application record from the remote system.
-  async deleteCompany (dataAPI, network, companyId) {
-    const proto = await this.getProtocol(network)
-    return proto.deleteCompany(network, companyId, dataAPI)
-  }
   // Add application.
   //
   // dataAPI       - Access to the data we may need to execute this operation.

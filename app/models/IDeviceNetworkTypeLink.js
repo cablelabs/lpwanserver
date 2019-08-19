@@ -1,10 +1,11 @@
 const { logger } = require('../log')
 const { prisma } = require('../lib/prisma')
-const { normalizeDevEUI, parseProp, stringifyProp } = require('../lib/utils')
+const { normalizeDevEUI } = require('../lib/utils')
 const { redisClient } = require('../lib/redis')
 const CacheFirstStrategy = require('../lib/prisma-cache/src/cache-first-strategy')
 const R = require('ramda')
 const httpError = require('http-errors')
+const { createModel, load, list, removeMany } = require('./Model')
 
 //* *****************************************************************************
 // Fragments for how the data should be returned from Prisma.
@@ -12,7 +13,8 @@ const httpError = require('http-errors')
 const fragments = {
   basic: `fragment BasicDeviceNetworkTypeLink on DeviceNetworkTypeLink {
     id
-    networkSettings
+    settings
+    enabled
     device {
       id
     }
@@ -26,136 +28,137 @@ const fragments = {
 }
 
 // ******************************************************************************
-// Database Client
+// Model Context
 // ******************************************************************************
-const DB = new CacheFirstStrategy({
-  name: 'deviceNetworkTypeLink',
-  pluralName: 'deviceNetworkTypeLinks',
-  fragments,
-  defaultFragmentKey: 'basic',
-  prisma,
-  redis: redisClient,
-  log: logger.info.bind(logger)
-})
+const modelContext = {
+  DB: new CacheFirstStrategy({
+    name: 'deviceNetworkTypeLink',
+    pluralName: 'deviceNetworkTypeLinks',
+    fragments,
+    defaultFragmentKey: 'basic',
+    prisma,
+    redis: redisClient,
+    log: logger.info.bind(logger)
+  })
+}
 
 // ******************************************************************************
-// Helpers
+// Model API
 // ******************************************************************************
-const parseNetworkSettings = parseProp('networkSettings')
-const stringifyNetworkSettings = stringifyProp('networkSettings')
+async function create (ctx, { data, remoteOrigin = false }) {
+  try {
+    if (data.settings && data.settings.devEUI) {
+      data = R.assocPath(['settings', 'devEUI'], normalizeDevEUI(data.settings.devEUI), data)
+    }
+    const rec = await ctx.DB.create({ data })
+    if (!remoteOrigin) {
+      var logs = await ctx.$models.networkTypeAPI.addDevice(data)
+      rec.remoteAccessLogs = logs
+    }
+    return rec
+  }
+  catch (err) {
+    logger.error('Error creating deviceNetworkTypeLink: ', err)
+    throw err
+  }
+}
+
+async function update (ctx, { where, data }) {
+  try {
+    // No changing the application or the network.
+    if (data.applicationId || data.networkTypeId) {
+      throw httpError(403, 'Cannot change link targets')
+    }
+    if (data.settings && data.settings.devEUI) {
+      data.settings.devEUI = normalizeDevEUI(data.settings.devEUI)
+    }
+    const rec = await ctx.DB.update({ where, data })
+    const device = await ctx.$models.devices.load({ where: rec.device })
+    var logs = await ctx.$models.networkTypeAPI.pushDevice(rec.networkType.id, device)
+    rec.remoteAccessLogs = logs
+    return rec
+  }
+  catch (err) {
+    logger.error('Error updating deviceNetworkTypeLink: ', err)
+    throw err
+  }
+}
+
+async function remove (ctx, id) {
+  try {
+    const rec = await ctx.DB.load({ where: { id } })
+    // Don't delete the local record until the remote operations complete.
+    var logs = await ctx.$models.networkTypeAPI.deleteDevice({
+      networkTypeId: rec.networkType.id,
+      deviceId: rec.device.id
+    })
+    await ctx.DB.remove(id)
+    return logs
+  }
+  catch (err) {
+    logger.error('Error deleting deviceNetworkTypeLink: ', err)
+    throw err
+  }
+}
+
+async function pushDeviceNetworkTypeLink (ctx, id) {
+  try {
+    var rec = await ctx.DB.load({ where: { id } })
+    var logs = await ctx.$models.networkTypeAPI.pushDevice({
+      networkTypeId: rec.networkType.id,
+      deviceId: rec.device.id,
+      settings: rec.settings
+    })
+    rec.remoteAccessLogs = logs
+    return rec
+  }
+  catch (err) {
+    logger.error('Error updating deviceNetworkTypeLink: ', err)
+    throw err
+  }
+}
+
+async function findByDevEUI (ctx, { devEUI, networkTypeId }) {
+  let devNtl
+  // Check cache for devNtl ID
+  let devNtlId = await redisClient.getAsync(`ip-devNtl-${devEUI}`)
+  if (devNtlId) {
+    devNtl = await ctx.DB.load({ id: devNtlId })
+    if (!devNtl) await redisClient.delAsync(`ip-devNtl-${devEUI}`)
+  }
+  else {
+    const devNTLQuery = { networkType: { id: networkTypeId }, settings_contains: devEUI }
+    let [ devNtls ] = await ctx.DB.list(devNTLQuery)
+    devNtl = devNtls[0]
+    if (devNtl) await redisClient.setAsync(`ip-devNtl-${devEUI}`, devNtl.id)
+  }
+  return devNtl
+}
 
 // ******************************************************************************
 // Model
 // ******************************************************************************
-module.exports = class DeviceNetworkTypeLink {
-  constructor (modelAPI) {
-    this.modelAPI = modelAPI
+const model = createModel(
+  modelContext,
+  {
+    create,
+    list,
+    load,
+    update,
+    remove,
+    removeMany,
+    pushDeviceNetworkTypeLink,
+    findByDevEUI
   }
+)
 
-  async load (id) {
-    return parseNetworkSettings(await DB.load({ id }))
-  }
-
-  async list (query, opts) {
-    let [ records, totalCount ] = await DB.list(query, opts)
-    return [ records.map(parseNetworkSettings), totalCount ]
-  }
-
-  async create (data, { validateCompanyId, remoteOrigin = false } = {}) {
-    try {
-      if (validateCompanyId) await this.validateCompanyForDevice(validateCompanyId, data.deviceId)
-      if (data.networkSettings && data.networkSettings.devEUI) {
-        data = R.assocPath(['networkSettings', 'devEUI'], normalizeDevEUI(data.networkSettings.devEUI), data)
-      }
-      const rec = await DB.create(stringifyNetworkSettings(data))
-      if (!remoteOrigin) {
-        var logs = await this.modelAPI.networkTypeAPI.addDevice(data.networkTypeId, data.deviceId, data.networkSettings)
-        rec.remoteAccessLogs = logs
-      }
-      return rec
-    }
-    catch (err) {
-      logger.error('Error creating deviceNetworkTypeLink: ', err)
-      throw err
-    }
-  }
-
-  async update ({ id, ...data }, validateCompanyId) {
-    try {
-      // No changing the application or the network.
-      if (data.applicationId || data.networkTypeId) {
-        throw httpError(403, 'Cannot change link targets')
-      }
-      await this.validateCompanyForDeviceNetworkTypeLink(validateCompanyId, id)
-      if (data.networkSettings && data.networkSettings.devEUI) {
-        data.networkSettings.devEUI = normalizeDevEUI(data.networkSettings.devEUI)
-      }
-      const rec = await DB.update({ id }, stringifyNetworkSettings(data))
-      const device = await this.modelAPI.devices.load(rec.device.id)
-      var logs = await this.modelAPI.networkTypeAPI.pushDevice(rec.networkType.id, device)
-      rec.remoteAccessLogs = logs
-      return rec
-    }
-    catch (err) {
-      logger.error('Error updating deviceNetworkTypeLink: ', err)
-      throw err
-    }
-  }
-
-  async remove (id, validateCompanyId) {
-    try {
-      const rec = await DB.load({ id })
-      await this.validateCompanyForDeviceNetworkTypeLink(validateCompanyId, id)
-      // Don't delete the local record until the remote operations complete.
-      var logs = await this.modelAPI.networkTypeAPI.deleteDevice(rec.networkType.id, rec.device.id)
-      await DB.remove({ id })
-      return logs
-    }
-    catch (err) {
-      logger.error('Error deleting deviceNetworkTypeLink: ', err)
-      throw err
-    }
-  }
-
-  async pushDeviceNetworkTypeLink (deviceNetworkTypeLink) {
-    try {
-      var rec = await this.load(deviceNetworkTypeLink)
-      var logs = await this.modelAPI.networkTypeAPI.pushDevice(rec.networkType.id, rec.device.id, rec.networkSettings)
-      rec.remoteAccessLogs = logs
-      return rec
-    }
-    catch (err) {
-      logger.error('Error updating deviceNetworkTypeLink: ', err)
-      throw err
-    }
-  }
-
-  async validateCompanyForDevice (companyId, deviceId) {
-    if (!companyId) return
-    const d = await this.modelAPI.devices.load(deviceId)
-    await this.modelAPI.applicationNetworkTypeLinks.validateCompanyForApplication(companyId, d.application.id)
-  }
-
-  async validateCompanyForDeviceNetworkTypeLink (companyId, dnlId) {
-    if (!companyId) return
-    const dnl = await this.load(dnlId)
-    await this.validateCompanyForDevice(companyId, dnl.device.id)
-  }
-
-  async findByDevEUI (devEUI, networkTypeId) {
-    let devNtl
-    // Check cache for devNtl ID
-    let devNtlId = await redisClient.getAsync(`ip-devNtl-${devEUI}`)
-    if (devNtlId) {
-      devNtl = await this.load(devNtlId)
-      if (!devNtl) await redisClient.delAsync(`ip-devNtl-${devEUI}`)
-    }
-    else {
-      const devNTLQuery = { networkType: { id: networkTypeId }, networkSettings_contains: devEUI }
-      let [ devNtls ] = await this.list(devNTLQuery)
-      devNtl = devNtls[0]
-      if (devNtl) await redisClient.setAsync(`ip-devNtl-${devEUI}`, devNtl.id)
-    }
-    return devNtl
-  }
+module.exports = {
+  model,
+  create,
+  list,
+  load,
+  update,
+  remove,
+  pushDeviceNetworkTypeLink,
+  findByDevEUI
 }

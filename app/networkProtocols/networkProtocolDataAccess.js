@@ -35,13 +35,6 @@ module.exports = class NetworkProtocolDataAccess {
       err => logger.error(`${this.funcDesc}: ${errMessage}`, err)
     )
   }
-  getCompanyById (id) {
-    return this.cacheFirst(
-      ['companies', `${id}`],
-      () => this.modelAPI.companies.load(id),
-      `Failed to load company ${id}`
-    )
-  }
   getApplicationById (id) {
     return this.cacheFirst(
       ['applications', `${id}`],
@@ -63,18 +56,6 @@ module.exports = class NetworkProtocolDataAccess {
       `Failed to load device profile ${id}`
     )
   }
-  async getCompanyByApplicationId (appId) {
-    let app = await this.getApplicationById(appId)
-    return this.getCompanyById(app.company.id)
-  }
-  async getCompanyByDeviceId (devId) {
-    let dev = await this.getDeviceById(devId)
-    return this.getCompanyByApplicationId(dev.application.id)
-  }
-  async getCompanyByDeviceProfileId (devProId) {
-    let devPro = await this.getDeviceProfileById(devProId)
-    return this.getCompanyById(devPro.company.id)
-  }
   async getApplicationByDeviceId (devId) {
     let dev = await this.getDeviceById(devId)
     return this.getApplicationById(dev.application.id)
@@ -82,17 +63,6 @@ module.exports = class NetworkProtocolDataAccess {
   async getDeviceProfileByDeviceIdNetworkTypeId (devId, ntId) {
     let dnt = await this.getDeviceNetworkType(devId, ntId)
     return this.getDeviceProfileById(dnt.deviceProfile.id)
-  }
-  async getCompanyNetworkType (companyId, networkTypeId) {
-    const request = async () => {
-      const [ records ] = await this.modelAPI.companyNetworkTypeLinks.list({ companyId, networkTypeId })
-      return records[0]
-    }
-    return this.cacheFirst(
-      ['companyNetworkTypeLinks', `${companyId}:${networkTypeId}`],
-      request,
-      `Failed to load CompanyNetworkTypeLink for company ${companyId} and networkType ${networkTypeId}`
-    )
   }
   async getApplicationNetworkType (applicationId, networkTypeId) {
     const request = async () => {

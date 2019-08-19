@@ -3,8 +3,6 @@ const R = require('ramda')
 const resources = [
   'Application',
   'ApplicationNetworkTypeLink',
-  'Company',
-  'CompanyNetworkTypeLink',
   'Device',
   'DeviceNetworkTypeLink',
   'DeviceProfile',
@@ -12,7 +10,6 @@ const resources = [
   'NetworkProtocol',
   'NetworkProvider',
   'NetworkType',
-  'PasswordPolicy',
   'ReportingProtocol',
   'User'
 ]

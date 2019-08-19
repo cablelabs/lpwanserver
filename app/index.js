@@ -18,9 +18,6 @@ process.on('warning', warning => {
 })
 
 async function main () {
-  // ensure api.yml was copied in from docs/dist
-  fs.accessSync(path.join(__dirname, 'api.yml'))
-
   await models.initialize()
 
   const restServer = await createRestServer()

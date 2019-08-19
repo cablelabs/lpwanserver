@@ -1,0 +1,149 @@
+enum UserRole {
+  ADMIN
+  USER
+}
+
+type User {
+  id: ID! @id
+  role: UserRole!
+  email: EmailAddress!
+  passwordHash: String!
+  emails: [EmailAddress!]! @relation(name: "UserEmailAddresses" onDelete: CASCADE)
+}
+
+type EmailAddress {
+  id: ID! @id
+  email: String! @unique
+  verified: Boolean!
+  user: User @relation(name: "UserEmailAddresses")
+}
+
+enum NetworkTypeName {
+  LORA
+  IP
+}
+
+type NetworkType {
+  id: ID! @id
+  name: NetworkTypeName!
+  version: String
+  networkProtocols: [NetworkProtocol!]!
+}
+
+type Network {
+  id: ID! @id
+  name: String
+  enabled: Boolean! @default(value: true)
+  settings: Json
+  securityData: String
+  networkProtocol: NetworkProtocol! @relation(name: "NetworkProtocolNetworks")
+}
+
+type NetworkProtocol {
+  id: ID! @id
+  name: String!
+  displayName: String!
+  version: String!
+  networkTypes: [NetworkType!]!
+  networks: [Network!]! @relation(name: "NetworkProtocolNetworks")
+}
+
+enum DeploymentStatus {
+  PUSH
+  PULL
+  PUSHED
+  PULLED
+  PUSH_FAILED
+  PULL_FAILED
+}
+
+type ReportingProtocol {
+  id: ID! @id
+  name: String! @unique
+  displayName: String!
+  applications: [Application!]!
+}
+
+type Application {
+  id: ID! @id
+  name: String
+  description: String
+  enabled: Boolean! @default(value: true)
+  reportingProtocols: [ApplicationReportingProtocol!]! @relation(name: "ApplicationReportingProtocols" onDelete: CASCADE)
+  devices: [Device!]! @relation(name: "ApplicationDevices" onDelete: CASCADE)
+  networkTypes: [ApplicationNetworkTypeLink!]! @relation(name: "ApplicationNetworkTypes" onDelete: CASCADE)
+  deployments: [ApplicationDeployment!]! @relation(name: "ApplicationDeployments" onDelete: CASCADE)
+}
+
+type ApplicationReportingProtocol {
+  id: ID! @id
+  settings: Json
+  reportingProtocol: ReportingProtocol!
+  application: Application!
+}
+
+type ApplicationNetworkTypeLink {
+  id: ID! @id
+  settings: Json
+  enabled: Boolean!
+  application: Application! @relation(name: "ApplicationNetworkTypes")
+  networkType: NetworkType!
+}
+
+type ApplicationDeployment {
+  id: ID! @id
+  remoteId: String!
+  origin: Boolean! @default(value: false)
+  status: DeploymentStatus!
+  meta: Json
+  application: Application! @relation(name: "ApplicationDeployments")
+  network: Network!
+}
+
+type Device {
+  id: ID! @id
+  name: String
+  description: String
+  deviceModel: String
+  application: Application! @relation(name: "ApplicationDevices")
+  networkTypes: [DeviceNetworkTypeLink!]! @relation(name: "DeviceNetworkTypes" onDelete: CASCADE)
+  deployments: [DeviceDeployment!]! @relation(name: "DeviceDeployments" onDelete: CASCADE)
+}
+
+type DeviceNetworkTypeLink {
+  id: ID! @id
+  settings: Json
+  enabled: Boolean!
+  device: Device! @relation(name: "DeviceNetworkTypes")
+  networkType: NetworkType!
+  deviceProfile: DeviceProfile
+}
+
+type DeviceDeployment {
+  id: ID! @id
+  remoteId: String!
+  status: DeploymentStatus!
+  origin: Boolean!
+  meta: Json
+  device: Device! @relation(name: "DeviceDeployments")
+  network: Network!
+}
+
+type DeviceProfile {
+  id: ID! @id
+  name: String
+  description: String
+  networkType: NetworkType!
+  settings: Json
+  deployments: [DeviceProfileDeployment!]! @relation(name: "DeviceProfileDeployments" onDelete: CASCADE)
+}
+
+type DeviceProfileDeployment {
+  id: ID! @id
+  remoteId: String!
+  status: DeploymentStatus!
+  origin: Boolean!
+  meta: Json
+  deviceProfile: DeviceProfile! @relation(name: "DeviceProfileDeployments")
+  network: Network!
+}

@@ -1,11 +1,11 @@
 const { logger } = require('../log')
 const NetworkProtocolDataAccess = require('../networkProtocols/networkProtocolDataAccess.js')
 const { prisma } = require('../lib/prisma')
-var httpError = require('http-errors')
-const { renameKeys } = require('../lib/utils')
+const httpError = require('http-errors')
 const R = require('ramda')
 const CacheFirstStrategy = require('../lib/prisma-cache/src/cache-first-strategy')
 const { redisClient } = require('../lib/redis')
+const { createModel, create, list, load } = require('./Model')
 
 // ******************************************************************************
 // Fragments for how the data should be returned from Prisma.
@@ -15,14 +15,7 @@ const fragments = {
     id
     name
     description
-    baseUrl
     enabled
-    company {
-      id
-    }
-    reportingProtocol {
-      id
-    }
   }`,
   id: `fragment ApplicationId on Application {
     id
@@ -30,134 +23,125 @@ const fragments = {
 }
 
 // ******************************************************************************
-// Database Client
+// Model Context
 // ******************************************************************************
-const DB = new CacheFirstStrategy({
-  name: 'application',
-  pluralName: 'applications',
-  fragments,
-  defaultFragmentKey: 'basic',
-  prisma,
-  redis: redisClient,
-  log: logger.info.bind(logger)
-})
+const modelContext = {
+  DB: new CacheFirstStrategy({
+    name: 'application',
+    pluralName: 'applications',
+    fragments,
+    defaultFragmentKey: 'basic',
+    prisma,
+    redis: redisClient,
+    log: logger.info.bind(logger)
+  })
+}
 
 // ******************************************************************************
-// Helpers
+// Model API
 // ******************************************************************************
-const renameEnabledToRunning = renameKeys({ enabled: 'running' })
-const renameRunningToEnabled = renameKeys({ running: 'enabled' })
-const renameQueryKeys = renameKeys({ search: 'name_contains' })
+async function update (ctx, args) {
+  if (!args.where) throw httpError(400, 'Missing record identifier "where"')
+  let oldRec = await ctx.DB.load({ where: args.where })
+  const result = await ctx.DB.update(args)
+  if ('enabled' in args.data && args.data.enabled !== oldRec.enabled) {
+    await this[args.data.enabled ? 'start' : 'stop'](ctx, oldRec.id)
+  }
+  return result
+}
+
+async function remove (ctx, id) {
+  try {
+    for await (let state of ctx.$models.devices.removeMany({ where: { application: { id } } })) {
+      // state can be analyzed here to see what was just removed and how many remain
+    }
+  }
+  catch (err) {
+    logger.error('Error deleting application\'s devices', err)
+    throw err
+  }
+
+  try {
+    for await (let state of ctx.$models.applicationNetworkTypeLinks.removeMany({ where: { application: { id } } })) {
+      // state can be analyzed here to see what was just removed and how many remain
+    }
+  }
+  catch (err) {
+    logger.error('Error deleting application\'s networkTypeLinks', err)
+    throw err
+  }
+
+  // TODO: stop application if it's enabled
+  await ctx.DB.remove(id)
+}
+
+async function startApplication (ctx, id) {
+  // Ensure app has a ReportingProtocol
+  const [reportingProtocols] = await ctx.$models.applicationReportingProtocols.list({
+    where: { application: { id } }
+  })
+  if (!reportingProtocols.length) {
+    throw httpError(400, 'Application must have a ReportingProtocol to be enabled.')
+  }
+  // Call startApplication on NetworkTypes
+  let [ records ] = await ctx.$models.applicationNetworkTypeLinks.list({ where: { application: { id } } })
+  const logs = await Promise.all(records.map(x => ctx.$models.networkTypeAPI.startApplication({
+    networkTypeId: x.networkType.id,
+    applicationId: id
+  })))
+  return R.flatten(logs)
+}
+
+async function stopApplication (ctx, id) {
+  // Call stopApplication on NetworkTypes
+  let [ records ] = await ctx.$models.applicationNetworkTypeLinks.list({ where: { application: { id } } })
+  const logs = await Promise.all(records.map(x => ctx.$models.networkTypeAPI.stopApplication({
+    networkTypeId: x.networkType.id,
+    applicationId: id
+  })))
+  return R.flatten(logs)
+}
+
+async function passDataToApplication (ctx, { id, networkId, data }) {
+  // Ensure application is running
+  const app = await ctx.DB.load({ where: { id } })
+  if (!app.enabled) return
+  // Ensure network is enabled
+  const network = await ctx.$models.networks.load({ where: { id: networkId } })
+  if (!network.securityData.enabled) return
+  // Ensure applicationNetworkTypeLink exists
+  let [ records ] = await ctx.$models.applicationNetworkTypeLinks.list({ where: {
+    application: { id },
+    networkType: { id: network.networkType.id },
+    limit: 1
+  } })
+  if (!records.length) return
+  // Pass data
+  let proto = await ctx.$models.networkProtocolAPI.getProtocol(network)
+  let dataAPI = new NetworkProtocolDataAccess(ctx.$models, 'ReportingProtocol')
+  await proto.passDataToApplication(network, id, data, dataAPI)
+}
 
 // ******************************************************************************
 // Model
 // ******************************************************************************
-module.exports = class Application {
-  constructor (modelAPI) {
-    this.modelAPI = modelAPI
+const model = createModel(
+  modelContext,
+  {
+    create,
+    list,
+    load,
+    update,
+    remove,
+    passDataToApplication
   }
+)
 
-  async load (id, opts) {
-    const app = await DB.load({ id }, opts)
-    try {
-      const [ records ] = await this.modelAPI.applicationNetworkTypeLinks.list({ applicationId: id })
-      if (records.length) {
-        app.networks = records.map(x => x.networkType.id)
-      }
-    }
-    catch (err) {
-      // ignore
-    }
-    return renameEnabledToRunning(app)
-  }
-
-  async list (query = {}, opts) {
-    let [ records, totalCount ] = await DB.list(renameQueryKeys(query), opts)
-    return [ records.map(renameEnabledToRunning), totalCount ]
-  }
-
-  create (data) {
-    return DB.create(renameRunningToEnabled(data))
-  }
-
-  update ({ id, ...data }, opts) {
-    // Throw away running prop, if present
-    if (!id) throw httpError(400, 'No existing Application ID')
-    return DB.update({ id }, R.omit(['running', 'enabled'], data), opts)
-  }
-
-  async remove (id) {
-    // Delete devices
-    try {
-      let [ records ] = await this.modelAPI.devices.list({ applicationId: id })
-      await Promise.all(records.map(x => this.modelAPI.devices.remove(x.id)))
-    }
-    catch (err) {
-      logger.error('Error deleting application\'s devices', err)
-    }
-    // Delete applicationNetworkTypeLinks
-    try {
-      let [ records ] = await this.modelAPI.applicationNetworkTypeLinks.list({ applicationId: id })
-      await Promise.all(records.map(x => this.modelAPI.applicationNetworkTypeLinks.remove(x.id)))
-    }
-    catch (err) {
-      logger.error('Error deleting application\'s networkTypeLinks', err)
-    }
-    const app = DB.load({ id })
-    // Kill the application if it's running.
-    if (app.enabled) await this.stopApplication(id, false)
-    // Delete application record
-    await DB.remove({ id })
-  }
-
-  async startApplication (id) {
-    // Ensure app has baseUrl
-    let app = await DB.load({ id })
-    if (!app.baseUrl) {
-      throw httpError(400, 'Base URL required to start application.')
-    }
-    await DB.update({ id }, { enabled: true })
-    // Call startApplication on NetworkTypes
-    let [ records ] = await this.modelAPI.applicationNetworkTypeLinks.list({ application: { id } })
-    const logs = await Promise.all(records.map(x => this.modelAPI.networkTypeAPI.startApplication(x.networkType.id, id)))
-    return R.flatten(logs)
-  }
-
-  async stopApplication (id, update = true) {
-    if (update) await DB.update({ id }, { enabled: false })
-    // Call stopApplication on NetworkTypes
-    let [ records ] = await this.modelAPI.applicationNetworkTypeLinks.list({ application: { id } })
-    const logs = await Promise.all(records.map(x => this.modelAPI.networkTypeAPI.stopApplication(x.networkType.id, id)))
-    return R.flatten(logs)
-  }
-
-  async testApplication (id, data) {
-    try {
-      const app = await DB.load({ id })
-      const reportingProtocol = await this.modelAPI.reportingProtocols.getHandler(app.reportingProtocol.id)
-      let response = await reportingProtocol.report(data, app.baseUrl, app.name)
-      return response.statusCode
-    }
-    catch (err) {
-      logger.info('Failed to test application', err)
-      throw err
-    }
-  }
-
-  async passDataToApplication (id, networkId, data) {
-    // Ensure application is running
-    const app = await DB.load({ id })
-    if (!app.enabled) return
-    // Ensure network is enabled
-    const network = await this.modelAPI.networks.load(networkId)
-    if (!network.securityData.enabled) return
-    // Ensure applicationNetworkTypeLink exists
-    const appNtlQuery = { application: { id }, networkType: { id: network.networkType.id }, limit: 1 }
-    let [ records ] = await this.modelAPI.applicationNetworkTypeLinks.list(appNtlQuery)
-    if (!records.length) return
-    // Pass data
-    let proto = await this.modelAPI.networkProtocolAPI.getProtocol(network)
-    let dataAPI = new NetworkProtocolDataAccess(this.modelAPI, 'ReportingProtocol')
-    await proto.passDataToApplication(network, id, data, dataAPI)
-  }
+module.exports = {
+  model,
+  update,
+  remove,
+  startApplication,
+  stopApplication,
+  passDataToApplication
 }

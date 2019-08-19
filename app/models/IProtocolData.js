@@ -3,6 +3,7 @@ const httpError = require('http-errors')
 const { logger } = require('../log')
 const CacheFirstStrategy = require('../lib/prisma-cache/src/cache-first-strategy')
 const { redisClient } = require('../lib/redis')
+const { createModel, create, update, remove } = require('./Model')
 
 // ******************************************************************************
 // Fragments for how the data should be returned from Prisma.
@@ -22,72 +23,91 @@ const fragments = {
 }
 
 // ******************************************************************************
-// Database Client
+// Model Context
 // ******************************************************************************
-const DB = new CacheFirstStrategy({
-  name: 'protocolData',
-  pluralName: 'protocolDatas',
-  fragments,
-  defaultFragmentKey: 'basic',
-  prisma,
-  redis: redisClient,
-  log: logger.info.bind(logger)
-})
+const modelContext = {
+  DB: new CacheFirstStrategy({
+    name: 'protocolData',
+    pluralName: 'protocolDatas',
+    fragments,
+    defaultFragmentKey: 'basic',
+    prisma,
+    redis: redisClient,
+    log: logger.info.bind(logger)
+  })
+}
+
+// ******************************************************************************
+// Model API
+// ******************************************************************************
+async function load (ctx, args) {
+  const [ records ] = await ctx.DB.list(args)
+  if (!records.length) throw httpError.NotFound()
+  return records[0]
+}
+
+async function loadValue (ctx, { network, dataIdentifier }) {
+  const rec = await this.load(ctx, { where: {
+    networkId: network.id,
+    networkProtocolId: network.networkProtocol.id,
+    dataIdentifier
+  } })
+  return rec.dataValue
+}
+
+async function upsert (ctx, { network, dataIdentifier, dataValue }) {
+  const where = {
+    networkId: network.id,
+    networkProtocolId: network.networkProtocol.id,
+    dataIdentifier
+  }
+  try {
+    const rec = await this.load({ where })
+    return this.update({ where: { id: rec.id }, data: { dataValue } })
+  }
+  catch (err) {
+    return this.create({ data: { ...where, dataValue } })
+  }
+}
+
+function clearProtocolData (ctx, { networkId, networkProtocolId, keyStartsWith }) {
+  const where = formatRelationshipsIn({
+    networkId,
+    networkProtocolId,
+    dataIdentifier_contains: keyStartsWith
+  })
+  return prisma.deleteManyProtocolDatas(where)
+}
+
+function reverseLookupProtocolData (ctx, { networkId, keyLike, dataValue }) {
+  const where = formatRelationshipsIn({
+    networkId,
+    dataIdentifier_contains: keyLike,
+    dataValue
+  })
+  return prisma.protocolDatas({ where })
+}
 
 // ******************************************************************************
 // Model
 // ******************************************************************************
-module.exports = class ProtocolData {
-  async load (networkId, networkProtocolId, dataIdentifier) {
-    const [ records ] = await DB.list({ networkId, networkProtocolId, dataIdentifier })
-    if (!records.length) throw httpError.NotFound()
-    return records[0]
+const model = createModel(
+  modelContext,
+  {
+    load,
+    loadValue,
+    create,
+    upsert,
+    update,
+    remove,
+    clearProtocolData,
+    reverseLookupProtocolData
   }
+)
 
-  async loadValue (network, dataId) {
-    const rec = await this.load(network.id, network.networkProtocol.id, dataId)
-    return rec.dataValue
-  }
-
-  create (networkId, networkProtocolId, dataIdentifier, dataValue) {
-    const data = { networkId, networkProtocolId, dataIdentifier, dataValue }
-    return DB.create(data)
-  }
-
-  async upsert (network, dataId, dataValue) {
-    try {
-      const rec = await this.load(network.id, network.networkProtocol.id, dataId)
-      return this.update({ id: rec.id, dataValue })
-    }
-    catch (err) {
-      return this.create(network.id, network.networkProtocol.id, dataId, dataValue)
-    }
-  }
-
-  update ({ id, ...data }) {
-    if (!id) throw httpError(400, 'No existing ProtocolData ID')
-    return DB.update({ id }, data)
-  }
-
-  remove (id) {
-    return DB.remove({ id })
-  }
-
-  clearProtocolData (networkId, networkProtocolId, keyStartsWith) {
-    const where = formatRelationshipsIn({
-      networkId,
-      networkProtocolId,
-      dataIdentifier_contains: keyStartsWith
-    })
-    return prisma.deleteManyProtocolDatas(where)
-  }
-
-  reverseLookupProtocolData (networkId, keyLike, dataValue) {
-    const where = formatRelationshipsIn({
-      networkId,
-      dataIdentifier_contains: keyLike,
-      dataValue
-    })
-    return prisma.protocolDatas({ where })
-  }
+module.exports = {
+  model,
+  load,
+  loadValue,
+  upsert
 }
