@@ -1,6 +1,6 @@
 openapi: 3.0.0
 info:
-  version: 1.2.1
+  version: 2.0.0
   title: An include file to define Application endpoints
   license:
     name: Apache 2.0
@@ -18,14 +18,12 @@ paths:
       requestBody:
         $ref: '#/components/requestBodies/CreateApplicationInput'
       responses:
-        '200':
+        '201':
           description: Application created
           content:
             application/json:
               schema:
                 $ref: '../api.yml#/components/schemas/ResourceCreatedResponse'
-        '403':
-          description: Authenticated user not allowed to perform this operation
         '400':
           description: Bad request
     get:
@@ -36,16 +34,6 @@ paths:
         - $ref: '../api.yml#/components/parameters/offsetParam'
         - $ref: '../api.yml#/components/parameters/limitParam'
         - $ref: '../api.yml#/components/parameters/nameSearch'
-        - name: companyId
-          in: query
-          required: false
-          schema:
-            type: string
-        - name: reportingProtocolId
-          in: query
-          required: false
-          schema:
-            type: string
       security:
         - bearer_token: []
       tags:
@@ -57,8 +45,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ListApplicationResponse'
-        '403':
-          description: Authenticated user not allowed to perform this operation
         '400':
           description: Bad request
   /api/applications/{id}:
@@ -80,8 +66,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ApplicationResponse'
-        '403':
-          description: Authenticated user not allowed to perform this operation
         '404':
           description: Application not found
     put:
@@ -100,14 +84,12 @@ paths:
           description: Application update succeeded
         '400':
           description: Bad request
-        '403':
-          description: Authenticated user not allowed to perform this operation
         '404':
           description: Application not found
     delete:
-      operationId: deleteApplication
-      summary: Delete Application
-      description: Delete Application
+      operationId: removeApplication
+      summary: Remove Application
+      description: Remove Application
       parameters: []
       security:
         - bearer_token: []
@@ -116,16 +98,14 @@ paths:
       responses:
         '204':
           description: Application record was deleted
-        '403':
-          description: Authenticated user not allowed to perform this operation
         '404':
           description: Application not found
-  /api/applications/{id}/bulk-device-import:
+  /api/applications/{id}/devices/bulk-create:
     parameters:
       - $ref: '../api.yml#/components/parameters/idParam'
     post:
       operationId: bulkCreateDevices
-      summary: Add several devices to an application
+      summary: Add many devices
       description: Add many devices to an application
       parameters: []
       security:
@@ -141,80 +121,8 @@ paths:
             application/json:
               schema:
                 $ref: '../api.yml#/components/schemas/BulkCreateDeviceResponse'
-        '403':
-          description: Authenticated user not allowed to perform this operation
         '400':
           description: Bad request
-  /api/applications/{id}/start:
-    parameters:
-      - $ref: '../api.yml#/components/parameters/idParam'
-    post:
-      operationId: startApplication
-      summary: Start application
-      description: Enable application to forward uplinks and downlinks
-      parameters: []
-      security:
-        - bearer_token: []
-      tags:
-        - Application
-      responses:
-        '200':
-          description: Application was started. Response contains logs from remote networks.
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: string
-  /api/applications/{id}/stop:
-    parameters:
-      - $ref: '../api.yml#/components/parameters/idParam'
-    post:
-      operationId: stopApplication
-      summary: Stop application
-      description: Disable application from forwarding uplinks and downlinks
-      parameters: []
-      security:
-        - bearer_token: []
-      tags:
-        - Application
-      responses:
-        '200':
-          description: Application was stopped. Response contains logs from remote networks.
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: string
-  /api/ingest/:applicationId/:networkId:
-    parameters:
-      - name: applicationId
-        in: path
-        description: ID of application
-        required: true
-        schema:
-          type: string
-      - name: networkId
-        in: path
-        description: ID of network sending device uplink
-        required: true
-        schema:
-          type: string
-    post:
-      operationId: receiveUplink
-      summary: Receive uplink
-      description: Receive a device uplink from a remove network
-      parameters: []
-      security: []
-      tags:
-        - Application
-      requestBody:
-        $ref: '#/components/requestBodies/UplinkInput'
-      responses:
-        '204':
-          description: 'Uplink received'
-
 components:
   schemas:
     Application:
@@ -226,9 +134,6 @@ components:
         description:
           type: string
           description: The Application's description
-        companyId:
-          type: string
-          description: The ID of the Company to which the Application belongs. For a Company Admin user, this can only be the Id of their own Company.
         baseUrl:
           type: string
           description: The URL that the Reporting Protocol sends the data to. This may have additional paths added, depending on the Reporting Protocol.
@@ -244,11 +149,13 @@ components:
               type: string
             running:
               type: boolean
-              description: If the Application is currently sending data received from the Networks to the baseUrl via the Reporting Protocol
+              description: If the Application is currently forwarding uplink and downlink messages
     ListApplicationResponse:
       allOf:
         - $ref: '../api.yml#/components/schemas/ListResponse'
         - type: object
+          required:
+            - records
           properties:
             records:
               type: array
@@ -287,7 +194,6 @@ components:
             description: Device's devEUI
           row:
             type: integer
-            format: int32
             descripton: The index of the device in the array that was posted.
           error:
             type: string
@@ -302,7 +208,6 @@ components:
               - type: object
                 required:
                   - name
-                  - companyId
       description: Application to be created
       required: true
     UpdateApplicationInput:
@@ -316,6 +221,7 @@ components:
       content:
         application/json:
           schema:
+            type: object
             required:
               - deviceProfileId
               - devices
@@ -328,8 +234,3 @@ components:
                 items:
                   $ref: '#/components/schemas/BulkCreateDeviceItemInput'
                   minLength: 1
-    UplinkInput:
-      content:
-        application/json:
-          schema:
-            type: object

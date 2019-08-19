@@ -1,14 +1,15 @@
-const { logger } = require('../log')
-const config = require('../config')
-const { prisma, formatInputData } = require('../lib/prisma')
-const crypto = require('../lib/crypto.js')
+const { logger } = require('../../log')
+const config = require('../../config')
+const { prisma, formatInputData } = require('../../lib/prisma')
+const crypto = require('../../lib/crypto.js')
 const uuidgen = require('uuid')
 const httpError = require('http-errors')
-const { onFail, renameKeys } = require('../lib/utils')
+const { onFail, renameKeys } = require('../../lib/utils')
 const R = require('ramda')
 const Joi = require('@hapi/joi')
-const { redisClient } = require('../lib/redis')
-const CacheFirstStrategy = require('../lib/prisma-cache/src/cache-first-strategy')
+const { redisClient } = require('../../lib/redis')
+const CacheFirstStrategy = require('../../lib/prisma-cache/src/cache-first-strategy')
+const { adminPermissions, userPermissions } = require('./permissions')
 
 //* *****************************************************************************
 // Fragments for how the data should be returned from Prisma.
@@ -263,11 +264,12 @@ module.exports = class User {
     )
   }
 
-  async authorizeUser (username, password) {
+  async authenticateUser (username, password) {
+    if (!username || !password) throw new httpError.BadRequest()
     try {
       const user = await this.loadByUsername(username, 'internal')
       const matches = await crypto.verifyPassword(password, user.passwordHash)
-      if (!matches) throw new Error(`authorizeUser: passwords don't match username "${username}`)
+      if (!matches) throw new Error('Invalid password')
       return dropInternalProps(user)
     }
     catch (err) {
@@ -308,5 +310,10 @@ module.exports = class User {
     const where = { company: { id: companyId } }
     const users = await prisma.users({ where }).$fragment(fragments.userEmail)
     return users.map(x => x.email).filter(R.identity)
+  }
+
+  hasPermissions (user, requiredPermissions) {
+    const permissions = user.role === 'ADMIN' ? adminPermissions : userPermissions
+    return requiredPermissions.every(x => permissions.includes(x))
   }
 }

@@ -1,6 +1,6 @@
 openapi: 3.0.0
 info:
-  version: 1.2.1
+  version: 2.0.0
   title: An include file to define NetworkProvider endpoints
   license:
     name: Apache 2.0
@@ -24,8 +24,6 @@ paths:
             application/json:
               schema:
                 $ref: '../api.yml#/components/schemas/ResourceCreatedResponse'
-        '403':
-          description: Authenticated user not allowed to perform this operation
         '400':
           description: Bad request
     get:
@@ -47,8 +45,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ListNetworkProviderResponse'
-        '403':
-          description: Authenticated user not allowed to perform this operation
         '400':
           description: Bad request
   /api/networkProviders/{id}:
@@ -70,8 +66,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/NetworkProviderResponse'
-        '403':
-          description: Authenticated user not allowed to perform this operation
         '404':
           description: NetworkProvider not found
     put:
@@ -90,14 +84,12 @@ paths:
           description: NetworkProvider update succeeded
         '400':
           description: Bad request
-        '403':
-          description: Authenticated user not allowed to perform this operation
         '404':
           description: NetworkProvider not found
     delete:
-      operationId: deleteNetworkProvider
-      summary: Delete NetworkProvider
-      description: Delete NetworkProvider, available only to system administrators
+      operationId: removeNetworkProvider
+      summary: Remove NetworkProvider
+      description: Remove NetworkProvider, available only to system administrators
       parameters: []
       security:
         - bearer_token: []
@@ -106,8 +98,6 @@ paths:
       responses:
         '204':
           description: NetworkProvider record was deleted
-        '403':
-          description: Authenticated user not allowed to perform this operation
         '404':
           description: NetworkProvider not found
 components:

@@ -4,6 +4,7 @@ const { normalizeDevEUI, parseProp, stringifyProp } = require('../lib/utils')
 const { redisClient } = require('../lib/redis')
 const CacheFirstStrategy = require('../lib/prisma-cache/src/cache-first-strategy')
 const R = require('ramda')
+const httpError = require('http-errors')
 
 //* *****************************************************************************
 // Fragments for how the data should be returned from Prisma.
@@ -81,6 +82,10 @@ module.exports = class DeviceNetworkTypeLink {
 
   async update ({ id, ...data }, validateCompanyId) {
     try {
+      // No changing the application or the network.
+      if (data.applicationId || data.networkTypeId) {
+        throw httpError(403, 'Cannot change link targets')
+      }
       await this.validateCompanyForDeviceNetworkTypeLink(validateCompanyId, id)
       if (data.networkSettings && data.networkSettings.devEUI) {
         data.networkSettings.devEUI = normalizeDevEUI(data.networkSettings.devEUI)

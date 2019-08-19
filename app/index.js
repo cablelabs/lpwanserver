@@ -1,9 +1,9 @@
 const config = require('./config')
 const { logger } = require('./log')
-const { createApp } = require('./express-app')
 const { createRestServer } = require('./rest-server')
 const fs = require('fs')
 const path = require('path')
+const models = require('./models')
 
 // uncaughtExceptions
 // uncaughtExceptions are handled and logged by winston
@@ -21,8 +21,9 @@ async function main () {
   // ensure api.yml was copied in from docs/dist
   fs.accessSync(path.join(__dirname, 'api.yml'))
 
-  const app = await createApp()
-  const restServer = createRestServer(app, config)
+  await models.initialize()
+
+  const restServer = await createRestServer()
 
   const shutdown = (staticMeta = {}) => (dynamicMeta = {}) => {
     logger.info(`LPWAN to shutdown.`, { ...staticMeta, ...dynamicMeta })
@@ -35,8 +36,8 @@ async function main () {
   process.on('SIGINT', shutdown({ signal: 'SIGINT' }))
 
   restServer.on('error', err => {
-    logger.error('REST server error.', { ...err, message: err.message })
-    shutdown()({ error: err.message })
+    logger.error(`REST server: ${err}`, { error: err })
+    shutdown()({ error: err.toString() })
   })
 
   restServer.listen(config.port, () => {
