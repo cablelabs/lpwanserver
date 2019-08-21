@@ -1,5 +1,5 @@
 const NetworkProtocol = require('../../NetworkProtocol')
-const { logger } = require('../../../log')
+const { log } = require('../../../log')
 const R = require('ramda')
 const config = require('../../../config')
 const httpError = require('http-errors')
@@ -57,12 +57,12 @@ module.exports = class Loriot extends NetworkProtocol {
       }
       if (integration) localAppData.baseUrl = integration.url
       localApp = await modelAPI.applications.create(localAppData)
-      logger.info('Created ' + localApp.name)
+      log.info('Created ' + localApp.name)
     }
     const [ appNtls ] = await modelAPI.applicationNetworkTypeLinks.list({ applicationId: localApp.id })
     let appNtl = appNtls[0]
     if (appNtl) {
-      logger.info(localApp.name + ' link already exists')
+      log.info(localApp.name + ' link already exists')
     }
     else {
       appNtl = await modelAPI.applicationNetworkTypeLinks.create(
@@ -92,14 +92,14 @@ module.exports = class Loriot extends NetworkProtocol {
         return this.updateApplication(network, app.id, dataAPI)
       }
       else if (appNetworkId) {
-        logger.info('Ignoring Application  ' + app.id + ' already on network ' + network.name)
+        log.info('Ignoring Application  ' + app.id + ' already on network ' + network.name)
         return { localApplication: app.id, remoteApplication: appNetworkId }
       }
       throw new Error('Bad things in the Protocol Table')
     }
     catch (err) {
       appNetworkId = await this.addApplication(network, app.id, dataAPI)
-      logger.info('Added application ' + app.id + ' to network ' + network.name)
+      log.info('Added application ' + app.id + ' to network ' + network.name)
       return { localApplication: app.id, remoteApplication: appNetworkId }
     }
   }
@@ -115,7 +115,7 @@ module.exports = class Loriot extends NetworkProtocol {
       await this.modelAPI.protocolData.upsert(network, makeApplicationDataKey(localApp.id, 'appNwkId'), `${body._id}`)
     }
     catch (err) {
-      logger.error('Failed to get required data for addApplication', err)
+      log.error('Failed to get required data for addApplication', err)
       throw err
     }
   }
@@ -166,7 +166,7 @@ module.exports = class Loriot extends NetworkProtocol {
       await this.client.deleteApplicationIntegration(network, appNwkId, 'httppush')
     }
     catch (err) {
-      logger.info(`Cannot delete http integration for application ${appId} on network ${network.name}: ${err}`)
+      log.info(`Cannot delete http integration for application ${appId} on network ${network.name}: ${err}`)
       throw err
     }
   }
@@ -181,25 +181,25 @@ module.exports = class Loriot extends NetworkProtocol {
     const [ cos ] = await this.modelAPI.companies.list({ limit: 1 })
     let company = cos[0]
     const remoteDevice = await this.client.loadDevice(network, remoteAppId, remoteDeviceId)
-    logger.info('Adding ' + remoteDevice.title)
+    log.info('Adding ' + remoteDevice.title)
     let [ devices ] = await modelAPI.devices.list({ search: remoteDevice.title })
     let localDevice = devices[0]
     if (localDevice) {
-      logger.info(localDevice.name + ' already exists')
+      log.info(localDevice.name + ' already exists')
     }
     else {
-      logger.info('creating ' + remoteDevice.title)
+      log.info('creating ' + remoteDevice.title)
       const devData = { name: remoteDevice.title, description: remoteDevice.description, applicationId: localAppId }
       localDevice = await modelAPI.devices.create(devData)
-      logger.info('Created ' + localDevice.name)
+      log.info('Created ' + localDevice.name)
     }
 
     let [ devNtls ] = await modelAPI.deviceNetworkTypeLinks.list({ deviceId: localDevice.id, limit: 1 })
     if (devNtls.length) {
-      logger.info(localDevice.name + ' link already exists')
+      log.info(localDevice.name + ' link already exists')
     }
     else {
-      logger.info('creating Network Link for ' + localDevice.name)
+      log.info('creating Network Link for ' + localDevice.name)
       const dp = await this.addRemoteDeviceProfile(remoteDevice, network, modelAPI)
       let networkSettings = this.buildDeviceNetworkSettings(remoteDevice, dp.localDeviceProfile)
       let devNtlData = {
@@ -233,7 +233,7 @@ module.exports = class Loriot extends NetworkProtocol {
       }
     }
     catch (e) {
-      logger.error(e.message, e)
+      log.error(e.message, e)
       throw e
     }
   }
@@ -251,25 +251,25 @@ module.exports = class Loriot extends NetworkProtocol {
         return this.updateDevice(network, device.id, dataAPI)
       }
       else if (devNetworkId) {
-        logger.info('Ignoring Device  ' + device.id + ' already on network ' + network.name)
+        log.info('Ignoring Device  ' + device.id + ' already on network ' + network.name)
         return { localDevice: device.id, remoteDevice: devNetworkId }
       }
       throw new Error('Bad things in the Protocol Table')
     }
     catch (err) {
       devNetworkId = await this.addDevice(network, device.id, dataAPI)
-      logger.info('Added Device ' + device.id + ' to network ' + network.name)
+      log.info('Added Device ' + device.id + ' to network ' + network.name)
       return { localDevice: device.id, remoteDevice: devNetworkId }
     }
   }
 
   async addDevice (network, deviceId, dataAPI) {
-    logger.info(`Adding Device ${deviceId} to ${network.name}`)
+    log.info(`Adding Device ${deviceId} to ${network.name}`)
     const device = await dataAPI.getDeviceById(deviceId)
     const dntl = await dataAPI.getDeviceNetworkType(deviceId, network.networkType.id)
     const deviceProfile = await dataAPI.getDeviceProfileById(dntl.deviceProfile.id)
     if (!dntl.networkSettings || !dntl.networkSettings.devEUI) {
-      logger.error('deviceNetworkTypeLink MUST have networkSettings which MUST have devEUI')
+      log.error('deviceNetworkTypeLink MUST have networkSettings which MUST have devEUI')
       throw httpError.BadRequest()
     }
     let appNwkId = await this.modelAPI.protocolData.loadValue(network, makeApplicationDataKey(device.application.id, 'appNwkId'))
@@ -293,7 +293,7 @@ module.exports = class Loriot extends NetworkProtocol {
       await this.client.createAbpDevice(network, appNwkId, data)
     }
     else {
-      logger.info('Remote Device ' + deviceData.device.name + ' does not have authentication parameters')
+      log.info('Remote Device ' + deviceData.device.name + ' does not have authentication parameters')
       await this.client.createDevice(network, appNwkId, data)
     }
     await this.modelAPI.protocolData.upsert(network, makeDeviceDataKey(device.id, 'devNwkId'), deviceData.device.deveui)
@@ -326,7 +326,7 @@ module.exports = class Loriot extends NetworkProtocol {
     //   await this.client.activateDevice(network, appNwkId, deviceData.deviceActivation)
     // }
     // else {
-    //   logger.info('Remote Device ' + deviceData.device.name + ' does not have authentication parameters')
+    //   log.info('Remote Device ' + deviceData.device.name + ' does not have authentication parameters')
     // }
     const data = R.omit(['deveui'], deviceData.device)
     await this.client.updateDevice(network, appNwkId, devNetworkId, data)
@@ -343,7 +343,7 @@ module.exports = class Loriot extends NetworkProtocol {
     }
     catch (err) {
       // Can't delete without the remote ID.
-      logger.error("Failed to get remote network's device ID: ", err)
+      log.error("Failed to get remote network's device ID: ", err)
       throw err
     }
     await this.client.deleteDevice(network, appNwkId, devNetworkId)
@@ -354,7 +354,7 @@ module.exports = class Loriot extends NetworkProtocol {
         makeDeviceDataKey(deviceId, 'devNwkId'))
     }
     catch (err) {
-      logger.error("Failed to delete remote network's device ID: ", err)
+      log.error("Failed to delete remote network's device ID: ", err)
     }
   }
 

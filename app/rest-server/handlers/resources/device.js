@@ -2,8 +2,8 @@ const { devices, applications } = require('../../../models')
 const httpError = require('http-errors')
 const { pipe, authorize, requestContext } = require('../openapi-middleware')
 const { getCertificateCn, getHttpRequestPreferedWaitMs, normalizeDevEUI } = require('../../../lib/utils')
-const { redisSub } = require('../../../lib/redis')
-const { logger } = require('../../../log')
+const { sub: redisSub } = require('../../../lib/redis')
+const { log } = require('../../../log')
 
 const sendDownlink = model => async (_, req, res) => {
   const logs = await model.passDataToDevice(req.params.id, req.body, requestContext(req))
@@ -52,7 +52,7 @@ const listIpDeviceDownlinks = model => async (_, req, res) => {
     })
   }
   catch (err) {
-    logger.error(`Error getting downlinks for ip device ${devEUI}`, err)
+    log.error(`Error getting downlinks for ip device ${devEUI}`, err)
     res.status(500).send(err.toString())
     req.connection.end()
   }

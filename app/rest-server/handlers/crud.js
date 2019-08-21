@@ -1,4 +1,4 @@
-const { formatRelationshipsOut } = require('../../lib/prisma')
+const { formatRelationshipsOut, formatRelationshipsIn } = require('../../lib/prisma')
 const { pipe, authorize, parsePaginationQuery } = require('./index')
 const R = require('ramda')
 
@@ -6,24 +6,28 @@ const R = require('ramda')
 // CRUD Handlers
 // ************************************************************
 const requestContext = R.pick(['user'])
+const pickId = R.pick(['id'])
 
 const create = model => async (_, req, res) => {
-  const rec = await model.create(req.body, requestContext(req))
-  res.status(201).json({ id: rec.id })
+  let data = formatRelationshipsIn(req.body)
+  const rec = await model.create({ data }, requestContext(req))
+  res.status(201).json(pickId(rec))
 }
 
 const list = model => async (_, req, res) => {
-  const [records, totalCount] = await model.list(req.query, { includeTotal: true }, requestContext(req))
+  let args = { where: formatRelationshipsIn(req.query), includeTotal: true }
+  const [records, totalCount] = await model.list(args, requestContext(req))
   res.status(200).json({ records: records.map(formatRelationshipsOut), totalCount })
 }
 
 const load = model => async (_, req, res) => {
-  const rec = await model.load(req.params.id, requestContext(req))
+  const rec = await model.load({ where: pickId(req.params) }, requestContext(req))
   res.status(200).json(formatRelationshipsOut(rec))
 }
 
 const update = model => async (_, req, res) => {
-  await model.update({ id: req.params.id, ...req.body }, requestContext(req))
+  let data = formatRelationshipsIn(req.body)
+  await model.update({ where: pickId(req.params), data }, requestContext(req))
   res.status(204).send()
 }
 

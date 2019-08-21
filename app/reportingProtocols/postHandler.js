@@ -1,5 +1,5 @@
 // General libraries in use in this module.
-var { logger } = require('../log')
+var { log } = require('../log')
 
 var request = require('request')
 
@@ -28,7 +28,7 @@ module.exports = class PostReportingProtocol {
       options.json = dataObject
       request(options, function (error, response, body) {
         if (error) {
-          logger.error('Error reporting data (' +
+          log.error('Error reporting data (' +
                                  JSON.stringify(dataObject) +
                                  ') for ' + appName +
                                  ' to ' + url +

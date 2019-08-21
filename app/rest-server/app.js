@@ -1,5 +1,5 @@
 const config = require('../config')
-const { logger } = require('../log')
+const { log } = require('../log')
 const express = require('express')
 const morgan = require('morgan')
 const { configureCors, serveSpa: serveWebClient } = require('./middleware')
@@ -24,7 +24,7 @@ async function createApp () {
   }
 
   // stream morgan to winston
-  app.use(morgan('tiny', { stream: { write: x => logger.info(x.trim()) } }))
+  app.use(morgan('tiny', { stream: { write: x => log.info(x.trim()) } }))
 
   app.use(express.json())
   app.use(cors(configureCors(config.cors_whitelist)))
@@ -44,7 +44,7 @@ async function createApp () {
   // 4 arguments are needed for Express error handlers
   // eslint-disable-next-line no-unused-vars
   app.use((err, req, res, next) => {
-    logger.debug(`HTTP request error: ${err}`, { error: err })
+    log.debug(`HTTP request error: ${err}`, { error: err })
     if (!err.statusCode) err.statusCode = 500
     res.status(err.statusCode).send(err.toString())
   })

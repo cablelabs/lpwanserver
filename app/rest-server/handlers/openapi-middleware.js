@@ -1,6 +1,6 @@
 const httpError = require('http-errors')
 const { users, sessions } = require('../../models')
-const { logger } = require('../../log')
+const { log } = require('../../log')
 const R = require('ramda')
 
 
@@ -17,12 +17,12 @@ function authorize (permissions = []) {
     // If the operation has declared a security scheme in the OpenAPI definition
     // but there is no user (no jwt was provided), reject request
     if (ctx.operation.security.length && !req.user) {
-      logger.debug('HTTP request failed due to no token in header.')
+      log.debug('HTTP request failed due to no token in header.')
       throw new httpError.Unauthorized()
     }
     // Check that token hasn't been revoked
     if (await sessions.tokenWasRevoked(req.user)) {
-      logger.info('HTTP request failed due to revoked token', { jwt: req.user })
+      log.info('HTTP request failed due to revoked token', { jwt: req.user })
       throw new httpError.Unauthorized()
     }
     // Overwrite req.user with User record
@@ -30,7 +30,7 @@ function authorize (permissions = []) {
     req.user = await users.load(req.user.user)
     // Ensure user has required permissions for operation
     if (permissions.length && !users.hasPermissions(req.user, permissions)) {
-      logger.info('HTTP request failed due to lack of permissions', {
+      log.info('HTTP request failed due to lack of permissions', {
         jwt: req.jwtPayload,
         requiredPermissions: permissions,
         userRole: req.user.role

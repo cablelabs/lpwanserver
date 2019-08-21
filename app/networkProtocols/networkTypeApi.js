@@ -1,5 +1,5 @@
 // General libraries in use in this module.
-var { logger } = require('../log')
+var { log } = require('../log')
 
 // An object to access dataModel data and cache it for operations across
 // multiple networks, preventing a lot of redundant database hits.
@@ -63,7 +63,7 @@ NetworkTypeApi.prototype.forAllNetworksOfType = function forAllNetworksOfType (o
       [networks] = await this.modelAPI.networks.list({ 'networkTypeId': networkTypeId })
     }
     catch (err) {
-      logger.info('Error retrieving networks for type ID ' + networkTypeId)
+      log.info('Error retrieving networks for type ID ' + networkTypeId)
       npda.addLog(null, 'Error retrieving networks for type ID ' + networkTypeId)
       resolve(npda.getLogs())
       return

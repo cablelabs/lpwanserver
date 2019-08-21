@@ -1,5 +1,5 @@
 // Logging
-const { logger } = require('../log')
+const { log } = require('../log')
 const { attempt } = require('../lib/utils')
 
 //* *****************************************************************************
@@ -32,7 +32,7 @@ module.exports = class NetworkProtocolDataAccess {
     // Next cache implementation should be Redis or Memcache at the model level.
     return attempt(
       request,
-      err => logger.error(`${this.funcDesc}: ${errMessage}`, err)
+      err => log.error(`${this.funcDesc}: ${errMessage}`, err)
     )
   }
   getApplicationById (id) {

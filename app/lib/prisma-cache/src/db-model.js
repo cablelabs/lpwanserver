@@ -5,11 +5,10 @@ const {
   lowerFirst,
   upperFirst,
   formatRelationshipsIn,
-  formatInputData,
-  mkError } = require('./utils')
+  formatInputData } = require('./utils')
 
 module.exports = class DbModel {
-  constructor ({ name, pluralName, fragments, defaultFragmentKey, prisma, log }) {
+  constructor ({ name, pluralName, fragments, defaultFragmentKey, prisma }) {
     this.lowerName = lowerFirst(name)
     this.upperName = upperFirst(name)
     this.lowerPluralName = lowerFirst(pluralName)
@@ -17,7 +16,6 @@ module.exports = class DbModel {
     this.fragments = fragments
     this.defaultFragmentKey = defaultFragmentKey
     this.prisma = prisma
-    this.log = log || console.log.bind(console)
   }
 
   async load ({ where, ...opts }) {
@@ -25,7 +23,7 @@ module.exports = class DbModel {
     let { prisma, lowerName, fragments } = this
     let fragment = opts.fragment || this.defaultFragmentKey
     const rec = await onFail(400, () => prisma[lowerName](where).$fragment(fragments[fragment]))
-    if (!rec) throw mkError(404, `${this.upperName} not found.`)
+    if (!rec) throw httpError(404, `${this.upperName} not found.`)
     return rec
   }
 

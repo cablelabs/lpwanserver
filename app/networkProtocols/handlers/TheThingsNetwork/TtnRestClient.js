@@ -2,7 +2,7 @@ const RestClient = require('../../RestClient')
 const R = require('ramda')
 const jwt = require('jsonwebtoken')
 const ttn = require('ttn')
-const { logger } = require('../../../log')
+const { log } = require('../../../log')
 const { joinUrl } = require('../../../lib/utils')
 
 module.exports = class TtnRestClient extends RestClient {
@@ -166,34 +166,34 @@ module.exports = class TtnRestClient extends RestClient {
   }
 
   async accountClientRequest (network, method, ...args) {
-    const logReq = () => logger.info(`TTN REQUEST: ${method}:`, { args })
+    const logReq = () => log.info(`TTN REQUEST: ${method}:`, { args })
     try {
       const { accountClient } = await this.getTtnClients(network)
       const res = await (args.length ? accountClient[method](...args) : accountClient[method]())
       logReq()
-      logger.info(`TTN RESPONSE`, res)
+      log.info(`TTN RESPONSE`, res)
       return res
     }
     catch (err) {
       logReq()
-      logger.error('TTN ERROR', err)
+      log.error('TTN ERROR', err)
       throw err
     }
   }
 
   async appClientRequest (network, clientOpts, method, ...args) {
-    const logReq = () => logger.info(`TTN APP REQUEST: APP_ID: ${clientOpts.appId}: ${clientOpts.client || 'application'}.${method}:`, { args })
+    const logReq = () => log.info(`TTN APP REQUEST: APP_ID: ${clientOpts.appId}: ${clientOpts.client || 'application'}.${method}:`, { args })
     try {
       let { appClient: client } = await this.getAppClients(network, clientOpts.appId)
       if (clientOpts.client === 'account') client = client.accountClient
       const res = await (args.length ? client[method](...args) : client[method]())
       logReq()
-      logger.info(`TTN RESPONSE`, res)
+      log.info(`TTN RESPONSE`, res)
       return res
     }
     catch (err) {
       logReq()
-      logger.error('TTN ERROR', err)
+      log.error('TTN ERROR', err)
       throw err
     }
   }

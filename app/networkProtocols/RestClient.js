@@ -1,7 +1,7 @@
 const requestClient = require('request-promise')
 const R = require('ramda')
 const { URLSearchParams } = require('url')
-var { logger } = require('../log')
+var { log } = require('../log')
 const { joinUrl } = require('../lib/utils')
 const EventEmitter = require('events')
 
@@ -16,11 +16,11 @@ module.exports = class RestClient extends EventEmitter {
     let body
     try {
       body = await requestClient(opts)
-      logger.info(`NETWORK REQUEST`, { opts })
-      logger.info(`NETWORK RESPONSE`, { body })
+      log.info(`NETWORK REQUEST`, { opts })
+      log.info(`NETWORK RESPONSE`, { body })
     }
     catch (err) {
-      logger.error(`NETWORK ERROR`, { opts, error: err })
+      log.error(`NETWORK ERROR`, { opts, error: err })
       throw err
     }
     return transformResponse(body)

@@ -1,7 +1,6 @@
 const ObjectHash = require('object-hash')
 const httpError = require('http-errors')
 const DbModel = require('./db-model')
-const { mkError } = require('./utils')
 
 module.exports = class CacheFirstStrategy extends DbModel {
   constructor (opts) {
@@ -20,8 +19,8 @@ module.exports = class CacheFirstStrategy extends DbModel {
       await this.redis.setAsync(this.key('load', hash), JSON.stringify(record))
     }
     catch (err) {
-      this.log(`Failed to cache ${this.name} record: ${err}`)
-      this.log(JSON.stringify({ record, args }))
+      console.error(`Failed to cache ${this.name} record: ${err}`)
+      console.error(JSON.stringify({ record, args }))
     }
   }
 
@@ -45,8 +44,8 @@ module.exports = class CacheFirstStrategy extends DbModel {
       ])
     }
     catch (err) {
-      this.log(`Unable to remove ${this.lowerName} cache for: ${JSON.stringify(where)}`)
-      throw mkError(500, err)
+      console.error(`Unable to remove ${this.lowerName} cache for: ${JSON.stringify(where)}`)
+      throw httpError(500, err.toString(), err)
     }
   }
 

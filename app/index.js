@@ -1,8 +1,6 @@
 const config = require('./config')
-const { logger } = require('./log')
+const { log } = require('./log')
 const { createRestServer } = require('./rest-server')
-const fs = require('fs')
-const path = require('path')
 const models = require('./models')
 
 // uncaughtExceptions
@@ -10,11 +8,11 @@ const models = require('./models')
 
 // Log exit code to console
 process.on('exit', (code) => {
-  logger.info(`LPWAN Server to exit with code: ${code}`, { exitCode: code })
+  log.info(`LPWAN Server to exit with code: ${code}`, { exitCode: code })
 })
 
 process.on('warning', warning => {
-  logger.warn(warning.name, warning)
+  log.warn(warning.name, warning)
 })
 
 async function main () {
@@ -23,7 +21,7 @@ async function main () {
   const restServer = await createRestServer()
 
   const shutdown = (staticMeta = {}) => (dynamicMeta = {}) => {
-    logger.info(`LPWAN to shutdown.`, { ...staticMeta, ...dynamicMeta })
+    log.info(`LPWAN to shutdown.`, { ...staticMeta, ...dynamicMeta })
     restServer.close(() => {
       process.exit()
     })
@@ -33,15 +31,15 @@ async function main () {
   process.on('SIGINT', shutdown({ signal: 'SIGINT' }))
 
   restServer.on('error', err => {
-    logger.error(`REST server: ${err}`, { error: err })
+    log.error(`REST server: ${err}`, { error: err })
     shutdown()({ error: err.toString() })
   })
 
   restServer.listen(config.port, () => {
-    logger.info(`Listening on ${config.port}`)
+    log.info(`Listening on ${config.port}`)
   })
 }
 
 main().catch(err => {
-  logger.log({ ...err, message: `${err}`, level: 'error' })
+  log({ ...err, message: `${err}`, level: 'error' })
 })

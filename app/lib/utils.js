@@ -1,4 +1,4 @@
-var createError = require('http-errors')
+var httpError = require('http-errors')
 const R = require('ramda')
 const path = require('path')
 
@@ -13,7 +13,7 @@ async function onFail (status, action) {
     return result
   }
   catch (err) {
-    throw createError(status, err.toString(), err)
+    throw httpError(status, err.toString(), err)
   }
 }
 
@@ -95,6 +95,10 @@ attempt.catch = function catchAttempt (fn, onError, opts = {}) {
   return attempt(fn, onError, { ...opts, catch: true })
 }
 
+function camelCaseToHyphen (word) {
+  return word.replace(/([A-Z])/g, (g) => `-${g[0].toLowerCase()}`)
+}
+
 module.exports = {
   mutate,
   onFail,
@@ -110,5 +114,6 @@ module.exports = {
   upperFirst,
   parseProp,
   stringifyProp,
-  attempt
+  attempt,
+  camelCaseToHyphen
 }

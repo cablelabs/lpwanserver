@@ -6,16 +6,23 @@ enum UserRole {
 type User {
   id: ID! @id
   role: UserRole!
-  email: EmailAddress!
-  passwordHash: String!
+  email: String! @unique
+  pwdHash: String!
   emails: [EmailAddress!]! @relation(name: "UserEmailAddresses" onDelete: CASCADE)
 }
 
-type EmailAddress {
+enum EmailStatus {
+  UNVERIFIED
+  VERIFIED
+  REVOKED
+}
+
+type Email {
   id: ID! @id
-  email: String! @unique
-  verified: Boolean!
-  user: User @relation(name: "UserEmailAddresses")
+  address: String! @unique
+  status: EmailStatus!
+  tokenHash: String! @unique
+  user: User! @relation(name: "UserEmailAddresses")
 }
 
 enum NetworkTypeName {
