@@ -27,7 +27,7 @@ module.exports = class DbModel {
     return rec
   }
 
-  async list ({ limit, offset, where, ...opts }) {
+  async list ({ limit, offset, where = {}, ...opts } = {}) {
     if (!where) throw httpError(400, 'Missing record selector "where"')
     let { prisma, lowerPluralName } = this
     let fragment = opts.fragment || this.defaultFragmentKey

@@ -76,8 +76,8 @@ module.exports = class Loriot extends NetworkProtocol {
           remoteOrigin: true
         }
       )
-      await this.modelAPI.protocolData.upsert(network, makeApplicationDataKey(localApp.id, 'appNwkId'), `${remoteApp._id}`)
-      await this.modelAPI.protocolData.upsert(network, makeApplicationDataKey(localApp.id, 'appEUI'), remoteApp.appeui)
+      await this.modelAPI.protocolData.upsert([network, makeApplicationDataKey(localApp.id, 'appNwkId'), `${remoteApp._id}`])
+      await this.modelAPI.protocolData.upsert([network, makeApplicationDataKey(localApp.id, 'appEUI'), remoteApp.appeui])
     }
     if (localApp.baseUrl) await this.startApplication(network, localApp.id, dataAPI)
     return { localApp, remoteApp }
@@ -112,7 +112,7 @@ module.exports = class Loriot extends NetworkProtocol {
       // Title is called name when fetching the app, only it's title on create.
       const body = await this.client.createApplication(network, { title: localApp.name, capacity: 10 })
       // Save the application ID from the remote network.
-      await this.modelAPI.protocolData.upsert(network, makeApplicationDataKey(localApp.id, 'appNwkId'), `${body._id}`)
+      await this.modelAPI.protocolData.upsert([network, makeApplicationDataKey(localApp.id, 'appNwkId'), `${body._id}`])
     }
     catch (err) {
       log.error('Failed to get required data for addApplication', err)
@@ -210,7 +210,7 @@ module.exports = class Loriot extends NetworkProtocol {
       }
       const deviceNtl = await modelAPI.deviceNetworkTypeLinks.create(devNtlData, { validateCompanyId: company.id, remoteOrigin: true })
     }
-    await this.modelAPI.protocolData.upsert(network, makeDeviceDataKey(localDevice.id, 'devNwkId'), remoteDevice._id)
+    await this.modelAPI.protocolData.upsert([network, makeDeviceDataKey(localDevice.id, 'devNwkId'), remoteDevice._id])
     return localDevice.id
   }
 
@@ -296,7 +296,7 @@ module.exports = class Loriot extends NetworkProtocol {
       log.info('Remote Device ' + deviceData.device.name + ' does not have authentication parameters')
       await this.client.createDevice(network, appNwkId, data)
     }
-    await this.modelAPI.protocolData.upsert(network, makeDeviceDataKey(device.id, 'devNwkId'), deviceData.device.deveui)
+    await this.modelAPI.protocolData.upsert([network, makeDeviceDataKey(device.id, 'devNwkId'), deviceData.device.deveui])
     return dntl.networkSettings.devEUI
   }
 

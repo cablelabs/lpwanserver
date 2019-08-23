@@ -9,7 +9,7 @@ const fragments = {
     id
     name
     description
-    settings
+    networkSettings
     networkType {
       id
     }
@@ -21,13 +21,12 @@ const fragments = {
 // ******************************************************************************
 async function create (ctx, { data, remoteOrigin = false } = {}) {
   try {
-    const rec = await ctx.DB.create(data)
+    const rec = await ctx.db.create(data)
     if (!remoteOrigin) {
-      var logs = await ctx.$m.networkTypeAPI.addDeviceProfile({
+      rec.remoteAccessLogs = await ctx.$.m.networkTypes.forAllNetworks({
         networkTypeId: data.networkTypeId,
-        deviceProfileId: rec.id
+        op: network => ctx.$m.networkProtocols.addDeviceProfile({ network, deviceProfileId: rec.id })
       })
-      rec.remoteAccessLogs = logs
     }
     return rec
   }
@@ -39,9 +38,11 @@ async function create (ctx, { data, remoteOrigin = false } = {}) {
 
 async function update (ctx, args) {
   try {
-    const rec = await ctx.DB.update(args)
-    var logs = await ctx.$m.networkTypeAPI.pushDeviceProfile(rec.networkType.id, rec.id)
-    rec.remoteAccessLogs = logs
+    const rec = await ctx.db.update(args)
+    rec.remoteAccessLogs = await ctx.$.m.networkTypes.forAllNetworks({
+      networkTypeId: rec.networkType.id,
+      op: network => ctx.$m.networkProtocols.pushDeviceProfile({ network, deviceProfileId: rec.id })
+    })
     return rec
   }
   catch (err) {
@@ -52,10 +53,13 @@ async function update (ctx, args) {
 
 async function remove (ctx, id) {
   try {
-    var rec = await ctx.DB.load({ where: { id } })
+    var rec = await ctx.db.load({ where: { id } })
     // Don't delete the local record until the remote operations complete.
-    var logs = await ctx.$m.networkTypeAPI.deleteDeviceProfile(rec.networkType.id, id)
-    await ctx.DB.remove(id)
+    const logs = await ctx.$.m.networkTypes.forAllNetworks({
+      networkTypeId: rec.networkType.id,
+      op: network => ctx.$m.networkProtocols.deleteDeviceProfile({ network, deviceProfileId: id })
+    })
+    await ctx.db.remove(id)
     return logs
   }
   catch (err) {
@@ -66,13 +70,12 @@ async function remove (ctx, id) {
 
 async function pushDeviceProfile (ctx, id) {
   try {
-    var rec = await ctx.DB.load({ where: { id } })
-    var logs = await ctx.$m.networkTypeAPI.pushDeviceProfile({
+    var rec = await ctx.db.load({ where: { id } })
+    const logs = await ctx.$.m.networkTypes.forAllNetworks({
       networkTypeId: rec.networkType.id,
-      deviceProfileId: id
+      op: network => ctx.$m.networkProtocols.pushDeviceProfile({ network, deviceProfileId: id })
     })
-    rec.remoteAccessLogs = logs
-    return rec
+    return logs
   }
   catch (err) {
     ctx.log.error('Error pushing deviceProfile:', err)

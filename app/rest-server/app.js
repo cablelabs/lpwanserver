@@ -8,12 +8,18 @@ const { default: OpenApiBackend } = require('openapi-backend')
 const api = require('../api')
 const handlers = require('./handlers')
 const cors = require('cors')
+const models = require('../models')
 
 const validateJwt = jwt({ secret: config.jwt_secret })
 
 async function createApp () {
   // Create the REST application.
   var app = express()
+
+  // Initialize Models
+  await models.emails.initialize()
+  await models.networkProtocols.initialize()
+  await models.reportingProtocols.initialize()
 
   if (config.public_dir) {
     serveWebClient({
@@ -44,8 +50,9 @@ async function createApp () {
   // 4 arguments are needed for Express error handlers
   // eslint-disable-next-line no-unused-vars
   app.use((err, req, res, next) => {
-    log.debug(`HTTP request error: ${err}`, { error: err })
     if (!err.statusCode) err.statusCode = 500
+    let command = err.statusCode === 500 ? 'error' : 'debug'
+    log[command](`HTTP request error: ${err}`, { error: err })
     res.status(err.statusCode).send(err.toString())
   })
 

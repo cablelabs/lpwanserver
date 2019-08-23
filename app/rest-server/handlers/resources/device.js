@@ -5,12 +5,12 @@ const { getCertificateCn, getHttpRequestPreferedWaitMs, normalizeDevEUI } = requ
 const { sub: redisSub } = require('../../../lib/redis')
 const { log } = require('../../../log')
 
-const sendDownlink = model => async (_, req, res) => {
+const sendUnicastDownlink = model => async (_, req, res) => {
   const logs = await model.passDataToDevice(req.params.id, req.body, requestContext(req))
   res.status(200).json(logs)
 }
 
-const sendUplink = applicationModel => async (_, req, res) => {
+const sendNetworkUplink = applicationModel => async (_, req, res) => {
   await applicationModel.passDataToApplication(
     req.params.applicationId,
     req.params.networkId,
@@ -19,13 +19,13 @@ const sendUplink = applicationModel => async (_, req, res) => {
   res.status(204).send()
 }
 
-const listIpDeviceDownlinks = model => async (_, req, res) => {
+const listDownlink = model => async (_, req, res) => {
   const devEUI = getCertificateCn(req.connection.getPeerCertificate())
   if (!devEUI) throw httpError(401, 'Device EUI must be the subject CN of the client certificate')
   const normDevEui = normalizeDevEUI(devEUI)
   try {
     const waitMs = getHttpRequestPreferedWaitMs(req.get('prefer'))
-    const downlinks = await model.listIpDeviceDownlinks(devEUI)
+    const downlinks = await model.listDownlinks(devEUI)
     if (downlinks.length || !waitMs) {
       res.status(200).json(downlinks)
       return
@@ -37,7 +37,7 @@ const listIpDeviceDownlinks = model => async (_, req, res) => {
     redisSub.on('message', async channel => {
       if (channel !== `downlink_received:${normDevEui}`) return
       redisSub.unsubscribe(`downlink_received:${normDevEui}`)
-      let downlinks = await model.listIpDeviceDownlinks(devEUI)
+      let downlinks = await model.listDownlinks(devEUI)
       res.status(200).json(downlinks)
       // put timeout back at default 2min
       req.connection.setTimeout(120000)
@@ -58,7 +58,7 @@ const listIpDeviceDownlinks = model => async (_, req, res) => {
   }
 }
 
-const sendIpDeviceUplink = model => async (_, req, res) => {
+const sendUplink = model => async (_, req, res) => {
   const devEUI = getCertificateCn(req.connection.getPeerCertificate())
   if (!devEUI) throw httpError(401, 'Device EUI must be the subject CN of the client certificate')
   model.receiveIpDeviceUplink(devEUI, req.body)
@@ -66,17 +66,17 @@ const sendIpDeviceUplink = model => async (_, req, res) => {
 }
 
 module.exports = {
-  sendDownlink,
+  sendUnicastDownlink,
+  sendNetworkUplink,
+  listDownlink,
   sendUplink,
-  listIpDeviceDownlinks,
-  sendIpDeviceUplink,
   handlers: {
-    sendDownlink: pipe(
+    sendUnicastDownlink: pipe(
       authorize('Device:read'),
-      sendDownlink(devices)
+      sendUnicastDownlink(devices)
     ),
-    sendUplink: sendUplink(applications),
-    listIpDeviceDownlinks(devices),
-    sendIpDeviceUplink(devices)
+    sendNetworkUplink: sendNetworkUplink(applications),
+    listDownlink: listDownlink(devices),
+    sendUplink: sendUplink(devices)
   }
 }

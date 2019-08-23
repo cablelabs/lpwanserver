@@ -1,7 +1,7 @@
 var assert = require('assert')
 var chai = require('chai')
 var chaiHttp = require('chai-http')
-const { createApp } = require('../../../app/express-app')
+const { createApp } = require('../../../app/rest-server/app')
 var should = chai.should()
 const Lora1 = require('../../networks/lora-v1')
 // const Lora2 = require('../e2e/networks/lora-v2')
@@ -11,24 +11,17 @@ chai.use(chaiHttp)
 var server
 let nwkTypeId
 
-describe('Networks', function () {
+describe.only('Networks', function () {
   var adminToken
   var npId1
-  var netProvId
 
   before('User Sessions', async () => {
     const app = await createApp()
     server = chai.request(app).keepOpen()
     let res = await server
       .post('/api/sessions')
-      .send({ 'login_username': 'admin', 'login_password': 'password' })
+      .send({ 'username': 'admin', 'password': 'password' })
     adminToken = res.text
-    res = await server
-      .post('/api/networkProviders')
-      .set('Authorization', 'Bearer ' + adminToken)
-      .set('Content-Type', 'application/json')
-      .send({ 'name': 'Kyrio' })
-    netProvId = JSON.parse(res.text).id
     await Lora1.setup()
     // await Lora2.setup()
     nwkTypeId = (await prisma.networkType({ name: 'LoRa' })).id
@@ -39,7 +32,7 @@ describe('Networks', function () {
   describe('POST /api/networks', function () {
     it('Get Network Protocol for Lora OS', function (done) {
       server
-        .get('/api/networkProtocols?search=LoRa Server')
+        .get('/api/network-protocols?search=LoRa Server')
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {
@@ -61,7 +54,6 @@ describe('Networks', function () {
         .set('Content-Type', 'application/json')
         .send({
           'name': 'MachQLoRa',
-          'networkProviderId': netProvId,
           'networkTypeId': nwkTypeId,
           'baseUrl': 'https://localhost:9999/api',
           'networkProtocolId': npId1
@@ -83,9 +75,8 @@ describe('Networks', function () {
         .set('Content-Type', 'application/json')
         .send({
           'name': 'Funky network',
-          'networkProviderId': netProvId,
           'networkTypeId': nwkTypeId,
-          'baseUrl': 'https://lora_appserver1:8080/api/',
+          'baseUrl': 'https://lora_appserver1:8080/api',
           'networkProtocolId': npId1,
           'securityData': { 'username': 'admin', 'password': 'admin' }
         })
@@ -94,8 +85,6 @@ describe('Networks', function () {
           res.should.have.status(201)
           var ret = JSON.parse(res.text)
           netId1 = ret.id
-          ret.should.have.property('baseUrl')
-          ret.baseUrl.should.equal('https://lora_appserver1:8080/api')
           done()
         })
     })
@@ -238,7 +227,7 @@ describe('Networks', function () {
         .send('{"name": "KyrioLoRa" }')
         .end(function (err, res) {
           if (err) return done(err)
-          res.should.have.status(200)
+          res.should.have.status(204)
           done()
         })
     })

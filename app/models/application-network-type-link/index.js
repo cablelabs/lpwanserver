@@ -1,5 +1,5 @@
 var httpError = require('http-errors')
-const { list, listAll, load, removeMany } = require('./model-lib')
+const { list, listAll, load, removeMany } = require('../model-lib')
 const R = require('ramda')
 
 //* *****************************************************************************
@@ -8,7 +8,7 @@ const R = require('ramda')
 const fragments = {
   basic: `fragment BasicApplicationNetworkTypeLink on ApplicationNetworkTypeLink {
     id
-    settings
+    networkSettings
     enabled
     application {
       id
@@ -24,14 +24,16 @@ const fragments = {
 // ******************************************************************************
 async function create (ctx, { data, remoteOrigin = false }) {
   try {
-    const rec = await ctx.DB.create({ data })
+    const rec = await ctx.db.create({ data })
     if (!remoteOrigin) {
-      const logs = await ctx.$m.networkTypeAPI.addApplication({
+      rec.remoteAccessLogs = ctx.$.m.networkTypes.forAllNetworks({
         networkTypeId: rec.networkType.id,
-        applicationId: rec.application.id,
-        settings: data.settings
+        op: network => ctx.$m.networkProtocols.addApplication({
+          network,
+          applicationId: rec.application.id,
+          networkSettings: data.networkSettings
+        })
       })
-      rec.remoteAccessLogs = logs
     }
     return rec
   }
@@ -47,14 +49,13 @@ async function update (ctx, { where, data, remoteOrigin = false }) {
     if (data.applicationId || data.networkTypeId) {
       throw httpError(403, 'Cannot change link targets')
     }
-    const rec = await ctx.DB.update({ where, data })
+    const rec = await ctx.db.update({ where, data })
     if (!remoteOrigin) {
-      const app = await ctx.$m.applications.load({ where: rec.application })
-      var logs = await ctx.$m.networkTypeAPI.pushApplication({
+      const application = await ctx.$m.applications.load({ where: rec.application })
+      rec.remoteAccessLogs = ctx.$.m.networkTypes.forAllNetworks({
         networkTypeId: rec.networkType.id,
-        application: app
+        op: network => ctx.$m.networkProtocols.pushApplication({ network, application })
       })
-      rec.remoteAccessLogs = logs
     }
     return rec
   }
@@ -66,7 +67,7 @@ async function update (ctx, { where, data, remoteOrigin = false }) {
 
 async function remove (ctx, id) {
   try {
-    var rec = await ctx.DB.load({ where: { id } })
+    var rec = await ctx.db.load({ where: { id } })
 
     // Delete deviceNetworkTypeLinks
     for await (let devState of ctx.$m.devices.listAll({ where: { application: rec.application } })) {
@@ -75,11 +76,12 @@ async function remove (ctx, id) {
       }
     }
 
-    var logs = await ctx.$m.networkTypeAPI.deleteApplication({
+    const logs = ctx.$.m.networkTypes.forAllNetworks({
       networkTypeId: rec.networkType.id,
-      applicationId: rec.application.id
+      op: network => ctx.$m.networkProtocols.deleteApplication({ network, applicationId: rec.application.id })
     })
-    await ctx.DB.remove(id)
+
+    await ctx.db.remove(id)
     return logs
   }
   catch (err) {
@@ -90,7 +92,7 @@ async function remove (ctx, id) {
 
 async function pushApplicationNetworkTypeLink (ctx, id) {
   try {
-    var rec = await ctx.DB.load({ where: { id } })
+    var rec = await ctx.db.load({ where: { id } })
 
     // Push deviceNetworkTypeLinks
     for await (let devState of ctx.$m.devices.listAll({ where: { application: { id } } })) {
@@ -101,12 +103,15 @@ async function pushApplicationNetworkTypeLink (ctx, id) {
       }
     }
 
-    var logs = await ctx.$m.networkTypeAPI.pushApplication({
+    rec.remoteAccessLogs = ctx.$.m.networkTypes.forAllNetworks({
       networkTypeId: rec.networkType.id,
-      applicationId: rec.application.id,
-      settings: rec.settings
+      op: network => ctx.$m.networkProtocols.pushApplication({
+        network,
+        applicationId: rec.application.id,
+        networkSettings: rec.networkSettings
+      })
     })
-    rec.remoteAccessLogs = logs
+
     return rec
   }
   catch (err) {

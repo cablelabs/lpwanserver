@@ -1,5 +1,4 @@
 const jwt = require('jsonwebtoken')
-// const { log } = require('../log')
 const uuidv4 = require('uuid/v4')
 const httpError = require('http-errors')
 
@@ -15,8 +14,8 @@ async function tokenWasRevoked (ctx, payload) {
   return ctx.revokedTokens.some(x => x.jti === payload.jti)
 }
 
-async function authenticateUser (ctx, { username, password }) {
-  const user = await ctx.$m.users.authenticateUser(username, password)
+async function authenticateUser (ctx, args) {
+  const user = await ctx.$m.users.authenticateUser(args)
   return jwt.sign(
     { user: user.id, jti: uuidv4() },
     ctx.config.jwt_secret,
@@ -42,7 +41,7 @@ async function revokeToken (ctx, payload) {
 // ******************************************************************************
 module.exports = {
   context: {
-    removedTokens: []
+    revokedTokens: []
   },
   api: {
     removeExpiredRevokedTokens,

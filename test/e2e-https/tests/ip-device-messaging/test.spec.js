@@ -17,7 +17,7 @@ describe('E2E Test for IP Device Uplink/Downlink Device Messaging', () => {
   before(async () => {
     Data = await setupData({ appBaseUrl: `${APP_SERVER_URL}${uplinkPath}` })
     await Lpwan.login({
-      data: { login_username: 'admin', login_password: 'password' }
+      data: { username: 'admin', password: 'password' }
     })
   })
 

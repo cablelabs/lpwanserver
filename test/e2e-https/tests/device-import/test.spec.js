@@ -11,7 +11,7 @@ describe('Bulk device import', () => {
   before(async () => {
     Data = await setupData()
     await Lpwan.login({
-      data: { login_username: 'admin', login_password: 'password' }
+      data: { username: 'admin', password: 'password' }
     })
   })
 

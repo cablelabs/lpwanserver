@@ -16,13 +16,13 @@ const dbClientFactory = (opts) => new CacheFirstStrategy({
 
 const models = {}
 
-const addModel = R.curry((createModel, name, pluralName, path) => {
+const addModel = (createModel => (name, pluralName, path) => {
   pluralName = pluralName || `${name}s`
-  path = path || `./${camelCaseToHyphen(name)}}`
+  path = path || `./${camelCaseToHyphen(name)}`
   let { context, api, fragments } = require(path)
   context = R.merge({ log, config, redis }, context)
   if (fragments) {
-    context.DB = dbClientFactory({ fragments, name, pluralName })
+    context.db = dbClientFactory({ fragments, name, pluralName })
   }
   createModel({ key: pluralName, context, api })
 })(ModelFactory(models))
@@ -36,8 +36,9 @@ addModel('email')
 addModel('network')
 addModel('networkProtocol')
 addModel('networkType')
+addModel('protocolData', 'protocolData')
 addModel('reportingProtocol')
 addModel('session')
-addModel('user', 'users', '../user')
+addModel('user')
 
 module.exports = models

@@ -15,7 +15,7 @@ describe('Transfer Lora Server v1 network to Lora Server v2', () => {
     await Promise.all([
       seedData(),
       Lpwan.client.login({
-        data: { login_username: 'admin', login_password: 'password' }
+        data: { username: 'admin', password: 'password' }
       })
     ])
     const nwkType = await prisma.networkType({ name: 'LoRa' })

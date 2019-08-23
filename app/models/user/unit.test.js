@@ -19,13 +19,14 @@ function editUserContext () {
 describe('User Model', () => {
   it('create valid user', async () => {
     let data = {
+      username: 'schmitty',
       password: '123456',
       email: 'fake@example.com',
       role: 'ADMIN'
     }
     let ctx = {
       ...editUserContext(),
-      DB: {
+      db: {
         create: jest.fn(x => Promise.resolve(x.data))
       }
     }
@@ -38,10 +39,10 @@ describe('User Model', () => {
   })
 
   it('list users', async () => {
-    let ctx = { DB: { list: jest.fn(promiseIdentity) } }
+    let ctx = { db: { list: jest.fn(promiseIdentity) } }
     await api.list(ctx, { where: { search: 'fake' } })
-    const args = ctx.DB.list.mock.calls[0][0]
-    expect(args.where).toEqual({ 'email_contains': 'fake' })
+    const args = ctx.db.list.mock.calls[0][0]
+    expect(args.where).toEqual({ 'username_contains': 'fake' })
     expect(args.fragment).toBe('basic')
   })
 
@@ -51,7 +52,7 @@ describe('User Model', () => {
     }
     let ctx = {
       ...editUserContext(),
-      DB: {
+      db: {
         load: jest.fn(() => Promise.resolve({ email: 'fake@example.com' })),
         update: jest.fn(x => Promise.resolve(x.data))
       }

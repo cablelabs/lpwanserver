@@ -4,45 +4,45 @@
 // This gets us dependency injection and more easily tested model functions
 const R = require('ramda')
 const { renameKeys } = require('../lib/utils')
+const { log } = require('../log')
 
-const ModelFactory = models => ({ key, context: ctx, api }) => {
+const ModelFactory = models => ({ key, context, api }) => {
   let mergeCtx
 
-  const proxyHandler = {
-    get: (api, command) => {
-      if (command in api) {
-        return (args, ctx) => api[command](mergeCtx(ctx), args)
-      }
-      throw new TypeError(`Command "${command}" is not part of the ${key} model's API.`)
+  // Wrap api functions to pass context
+  const $self = Object.keys(api).reduce((acc, x) => {
+    acc[x] = (args, ctx) => {
+      log.silly(`${key} ${x}`, { args })
+      return api[x](mergeCtx(ctx), args)
     }
-  }
+    return acc
+  }, {})
 
-  const $self = new Proxy(api, proxyHandler)
   models[key] = $self
-  mergeCtx = R.merge({ ...ctx, $m: models, $self })
+  mergeCtx = R.merge({ ...context, $m: models, $self })
   return $self
 }
 
 function create (ctx, args) {
-  return ctx.DB.create(args)
+  return ctx.db.create(args)
 }
 
 const renameQueryKeys = renameKeys({ search: 'name_contains' })
 
 function list (ctx, { where = {}, ...opts }) {
-  return ctx.DB.list({ where: renameQueryKeys(where), ...opts })
+  return ctx.db.list({ where: renameQueryKeys(where), ...opts })
 }
 
 function load (ctx, args) {
-  return ctx.DB.load(args)
+  return ctx.db.load(args)
 }
 
 function update (ctx, args) {
-  return ctx.DB.update(args)
+  return ctx.db.update(args)
 }
 
 function remove (ctx, id) {
-  return ctx.DB.remove(id)
+  return ctx.db.remove(id)
 }
 
 // Async generator for removing many records

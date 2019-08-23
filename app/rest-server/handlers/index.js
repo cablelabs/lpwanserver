@@ -14,7 +14,6 @@ module.exports = {
   ...crudHandlers(models.deviceNetworkTypeLinks, 'DeviceNetworkTypeLink'),
   ...crudHandlers(models.deviceProfiles, 'DeviceProfile'),
   ...crudHandlers(models.networks, 'Network'),
-  ...crudHandlers(models.networkProviders, 'NetworkProvider'),
 
   // These models are partly managed by the system, so CRUD access is restricted
   ...crudHandlers(models.networkProtocols, 'NetworkProtocol', null, ['list', 'load']),

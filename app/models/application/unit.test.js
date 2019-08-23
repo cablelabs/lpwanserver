@@ -13,13 +13,13 @@ describe('Application Model', () => {
       $self: {
         stop: jest.fn()
       },
-      DB: {
+      db: {
         load: jest.fn(() => Promise.resolve({ id: 'a', enabled: true })),
         update: jest.fn()
       }
     }
     await api.update(ctx, { where: { id: 'a' }, data })
-    expect(ctx.DB.update.mock.calls[0][0].data.enabled).toBe(false)
+    expect(ctx.db.update.mock.calls[0][0].data.enabled).toBe(false)
     expect(ctx.$self.stop.mock.calls[0][0]).toEqual('a')
   })
   it('Remove Application', async () => {
@@ -28,7 +28,7 @@ describe('Application Model', () => {
         devices: { removeMany: jest.fn(generator) },
         applicationNetworkTypeLinks: { removeMany: jest.fn(generator) }
       },
-      DB: {
+      db: {
         remove: jest.fn()
       }
     }
@@ -37,7 +37,7 @@ describe('Application Model', () => {
     await api.remove(ctx, id)
     expect(ctx.$m.devices.removeMany.mock.calls[0][0]).toEqual(expectedRemoveManyArgs)
     expect(ctx.$m.applicationNetworkTypeLinks.removeMany.mock.calls[0][0]).toEqual(expectedRemoveManyArgs)
-    expect(ctx.DB.remove.mock.calls[0][0]).toBe(id)
+    expect(ctx.db.remove.mock.calls[0][0]).toBe(id)
   })
   // it(testName + ' Start', async () => {
   //   let testModule = new TestModule(modelAPIMock)

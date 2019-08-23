@@ -8,7 +8,6 @@ const log = createLogger({
   },
   transports: [
     new transports.Console({
-      level: 'debug',
       format: format.combine(
         format.colorize(),
         format.simple(),
@@ -32,7 +31,7 @@ const fileTransportOpts = {
   handleExceptions: true
 }
 if (config.log_file) {
-  log.add(new transports.File({ ...fileTransportOpts, level: 'info', filename: config.log_file }))
+  log.add(new transports.File({ ...fileTransportOpts, filename: config.log_file }))
 }
 if (config.log_file_errors) {
   log.add(new transports.File({ ...fileTransportOpts, level: 'error', filename: config.log_file_errors }))

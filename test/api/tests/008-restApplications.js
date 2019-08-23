@@ -1,7 +1,7 @@
 var assert = require('assert')
 var chai = require('chai')
 var chaiHttp = require('chai-http')
-const { createApp } = require('../../../app/express-app')
+const { createApp } = require('../../../app/rest-server/app')
 var should = chai.should()
 const { prisma } = require('../../../app/generated/prisma-client')
 
@@ -18,7 +18,7 @@ describe('Applications', function () {
     server = chai.request(app).keepOpen()
     let res = await server
       .post('/api/sessions')
-      .send({ 'login_username': 'admin', 'login_password': 'password' })
+      .send({ 'username': 'admin', 'password': 'password' })
     adminToken = res.text
     const cos = await prisma.companies({ first: 1 })
     companyId = cos[0].id

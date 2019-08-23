@@ -8,14 +8,8 @@ const seeds = [
     plural: 'NetworkTypes',
     bodyList: [
       {
-        id: 'LORA10',
-        name: 'LoRa',
-        version: '1.0'
-      },
-      {
-        id: 'LORA11',
-        name: 'LoRa',
-        version: '1.1'
+        id: 'LORA',
+        name: 'LoRa'
       },
       {
         id: 'IP',
@@ -28,9 +22,9 @@ const seeds = [
     plural: 'ReportingProtocols',
     bodyList: [
       {
-        id: 'HTTPPOST',
-        name: 'HTTP_POST',
-        displayName: 'HTTP POST'
+        id: 'POST',
+        name: 'POST',
+        protocolHandler: 'postHandler'
       }
     ]
   },
@@ -42,7 +36,7 @@ const seeds = [
         id: 'ADMIN',
         username: 'admin',
         // password is "password"
-        passwordHash: '000000100000003238bd33bdf92cfc3a8e7847e377e51ff8a3689913919b39d7dd0fe77c89610ce2947ab0b43a36895510d7d1f2924d84ab',
+        pwdHash: '000000100000003238bd33bdf92cfc3a8e7847e377e51ff8a3689913919b39d7dd0fe77c89610ce2947ab0b43a36895510d7d1f2924d84ab',
         email: 'fake@example.com',
         role: 'ADMIN'
       }

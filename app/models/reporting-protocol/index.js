@@ -1,5 +1,5 @@
 const path = require('path')
-const { create, list, load, update, remove } = require('./model-lib')
+const { create, list, load, update, remove } = require('../model-lib')
 
 // ******************************************************************************
 // Fragments for how the data should be returned from Prisma.
@@ -8,7 +8,7 @@ const fragments = {
   basic: `fragment BasicReportingProtocol on ReportingProtocol {
     id
     name
-    displayName
+    protocolHandler
   }`
 }
 
@@ -16,8 +16,8 @@ const fragments = {
 // Model Functions
 // ******************************************************************************
 async function initialize (ctx) {
-  const [ records ] = await ctx.DB.list()
-  const handlersDir = path.join(__dirname, '../reportingProtocols')
+  const [ records ] = await ctx.db.list()
+  const handlersDir = path.join(__dirname, '../../reportingProtocols')
   records.forEach(x => {
     let Handler = require(path.join(handlersDir, x.protocolHandler))
     ctx.handlers[x.id] = new Handler({ reportingProtocolId: x.id })

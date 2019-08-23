@@ -5,9 +5,9 @@ info:
   license:
     name: Apache 2.0
 paths:
-  /api/networkTypes:
+  /api/network-types:
     get:
-      operationId: listNetworkTypes
+      operationId: listNetworkType
       summary: List NetworkTypes
       description: List NetworkTypes, available only to system administrators
       parameters:
@@ -27,7 +27,7 @@ paths:
                 $ref: '#/components/schemas/ListNetworkTypeResponse'
         '400':
           description: Bad request
-  /api/networkTypes/{id}:
+  /api/network-types/{id}:
     parameters:
       - $ref: '../api.yml#/components/parameters/idParam'
     get:
@@ -54,11 +54,8 @@ components:
       type: object
       required:
         - name
-        - version
       properties:
         name:
-          type: string
-        version:
           type: string
     NetworkTypeResponse:
        allOf:

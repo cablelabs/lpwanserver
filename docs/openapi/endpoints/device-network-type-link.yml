@@ -5,7 +5,7 @@ info:
   license:
     name: Apache 2.0
 paths:
-  /api/deviceNetworkTypeLinks:
+  /api/device-network-type-links:
     post:
       operationId: createDeviceNetworkTypeLink
       summary: Create a DeviceNetworkTypeLink
@@ -27,7 +27,7 @@ paths:
         '400':
           description: Bad request
     get:
-      operationId: listDeviceNetworkTypeLinks
+      operationId: listDeviceNetworkTypeLink
       summary: List DeviceNetworkTypeLinks
       description: List DeviceNetworkTypeLinks
       parameters:
@@ -49,7 +49,7 @@ paths:
                 $ref: '#/components/schemas/ListDeviceNetworkTypeLinkResponse'
         '400':
           description: Bad request
-  /api/deviceNetworkTypeLinks/{id}:
+  /api/device-network-type-links/{id}:
     parameters:
       - $ref: '../api.yml#/components/parameters/idParam'
     get:
@@ -113,9 +113,15 @@ components:
         networkTypeId:
           type: string
           description: The NetworkType to which the Application is linked
+        deviceProfileId:
+          type: string
+          description: The DeviceProfile from which this device receives network settings
         networkSettings:
           type: string
           description: The settings in a JSON string that correspond to the NetworkType
+        enabled:
+          type: boolean
+          description: Whether or not messages are forwarded for this application and network type
     DeviceNetworkTypeLinkResponse:
        allOf:
         - $ref: '#/components/schemas/DeviceNetworkTypeLink'

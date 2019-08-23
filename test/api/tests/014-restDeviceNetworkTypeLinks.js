@@ -1,7 +1,7 @@
 var assert = require('assert')
 var chai = require('chai')
 var chaiHttp = require('chai-http')
-const { createApp } = require('../../../app/express-app')
+const { createApp } = require('../../../app/rest-server/app')
 var should = chai.should()
 
 chai.use(chaiHttp)
@@ -15,16 +15,16 @@ describe.skip('DeviceNetworkTypeLinks', function () {
     server = chai.request(app).keepOpen()
     let res = await server
       .post('/api/sessions')
-      .send({ 'login_username': 'admin', 'login_password': 'password' })
+      .send({ 'username': 'admin', 'password': 'password' })
     adminToken = res.text
   })
 
   var dnlId1
   var dnlId2
-  describe('POST /api/deviceNetworkTypeLinks', function () {
+  describe('POST /api/device-network-type-links', function () {
     it('should return 403 (forbidden) on user', function (done) {
       server
-        .post('/api/deviceNetworkTypeLinks')
+        .post('/api/device-network-type-links')
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .send({ 'deviceId': 1,
@@ -40,7 +40,7 @@ describe.skip('DeviceNetworkTypeLinks', function () {
 
     it('should return 200 on admin', function (done) {
       server
-        .post('/api/deviceNetworkTypeLinks')
+        .post('/api/device-network-type-links')
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .send({ 'deviceId': 1,
@@ -59,7 +59,7 @@ describe.skip('DeviceNetworkTypeLinks', function () {
 
     it('should return 200 on admin', function (done) {
       server
-        .post('/api/deviceNetworkTypeLinks')
+        .post('/api/device-network-type-links')
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .send({ 'deviceId': 1,
@@ -77,7 +77,7 @@ describe.skip('DeviceNetworkTypeLinks', function () {
 
     it('should return 200 on get', function (done) {
       server
-        .get('/api/deviceNetworkTypeLinks/' + dnlId1)
+        .get('/api/device-network-type-links/' + dnlId1)
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .send()
@@ -91,10 +91,10 @@ describe.skip('DeviceNetworkTypeLinks', function () {
     })
   })
 
-  describe('GET /api/deviceNetworkTypeLinks (search/paging)', function () {
+  describe('GET /api/device-network-type-links (search/paging)', function () {
     it('should return 200 with 1 deviceNetworkTypeLink on admin', function (done) {
       server
-        .get('/api/deviceNetworkTypeLinks')
+        .get('/api/device-network-type-links')
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {
@@ -109,7 +109,7 @@ describe.skip('DeviceNetworkTypeLinks', function () {
 
     it('should return 200 on user', function (done) {
       server
-        .get('/api/deviceNetworkTypeLinks')
+        .get('/api/device-network-type-links')
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {
@@ -124,7 +124,7 @@ describe.skip('DeviceNetworkTypeLinks', function () {
 
     it('should return 200 with 2 deviceNetworkTypeLinks on admin', function (done) {
       server
-        .get('/api/deviceNetworkTypeLinks')
+        .get('/api/device-network-type-links')
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {
@@ -139,7 +139,7 @@ describe.skip('DeviceNetworkTypeLinks', function () {
 
     it('should return 200 with 1 deviceNetworkTypeLink on admin, limit 2, offset 1', function (done) {
       server
-        .get('/api/deviceNetworkTypeLinks')
+        .get('/api/device-network-type-links')
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .query({ 'limit': 2, 'offset': 1 })
@@ -154,10 +154,10 @@ describe.skip('DeviceNetworkTypeLinks', function () {
     })
   })
 
-  describe('GET /api/deviceNetworkTypeLinks/{id}', function () {
+  describe('GET /api/device-network-type-links/{id}', function () {
     it('should return 200 on admin', function (done) {
       server
-        .get('/api/deviceNetworkTypeLinks/' + dnlId1)
+        .get('/api/device-network-type-links/' + dnlId1)
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {
@@ -168,7 +168,7 @@ describe.skip('DeviceNetworkTypeLinks', function () {
 
     it('should return 200 on user', function (done) {
       server
-        .get('/api/deviceNetworkTypeLinks/' + dnlId1)
+        .get('/api/device-network-type-links/' + dnlId1)
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {
@@ -179,7 +179,7 @@ describe.skip('DeviceNetworkTypeLinks', function () {
 
     it('should return 200 on admin', function (done) {
       server
-        .get('/api/deviceNetworkTypeLinks/' + dnlId1)
+        .get('/api/device-network-type-links/' + dnlId1)
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {
@@ -192,7 +192,7 @@ describe.skip('DeviceNetworkTypeLinks', function () {
 
     it('should return 200 on get', function (done) {
       server
-        .get('/api/deviceNetworkTypeLinks/' + dnlId1)
+        .get('/api/device-network-type-links/' + dnlId1)
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .send()
@@ -208,7 +208,7 @@ describe.skip('DeviceNetworkTypeLinks', function () {
 
     it('should return 200 on get', function (done) {
       server
-        .get('/api/deviceNetworkTypeLinks/' + dnlId1)
+        .get('/api/device-network-type-links/' + dnlId1)
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .send()
@@ -224,7 +224,7 @@ describe.skip('DeviceNetworkTypeLinks', function () {
 
     it('should return 200 on admin getting my application', function (done) {
       server
-        .get('/api/deviceNetworkTypeLinks/' + dnlId1)
+        .get('/api/device-network-type-links/' + dnlId1)
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {
@@ -235,7 +235,7 @@ describe.skip('DeviceNetworkTypeLinks', function () {
 
     it('should return 200 on user getting my application', function (done) {
       server
-        .get('/api/deviceNetworkTypeLinks/' + dnlId1)
+        .get('/api/device-network-type-links/' + dnlId1)
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {
@@ -245,10 +245,10 @@ describe.skip('DeviceNetworkTypeLinks', function () {
     })
   })
 
-  describe('PUT /api/deviceNetworkTypeLinks', function () {
+  describe('PUT /api/device-network-type-links', function () {
     it('should return 204 on admin', function (done) {
       server
-        .put('/api/deviceNetworkTypeLinks/' + dnlId1)
+        .put('/api/device-network-type-links/' + dnlId1)
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .send({ 'networkSettings': { 'devEUI': '0080000000000102',
@@ -261,7 +261,7 @@ describe.skip('DeviceNetworkTypeLinks', function () {
 
     it('should return 403 (forbidden) on user', function (done) {
       server
-        .put('/api/deviceNetworkTypeLinks/' + dnlId1)
+        .put('/api/device-network-type-links/' + dnlId1)
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .send({ 'networkSettings': { 'devEUI': '0080000000000102',
@@ -274,7 +274,7 @@ describe.skip('DeviceNetworkTypeLinks', function () {
 
     it('should return 204 on admin', function (done) {
       server
-        .put('/api/deviceNetworkTypeLinks/' + dnlId1)
+        .put('/api/device-network-type-links/' + dnlId1)
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .send({ 'networkSettings': { 'devEUI': '0080000000000102',
@@ -287,7 +287,7 @@ describe.skip('DeviceNetworkTypeLinks', function () {
 
     it('should return 200 on get with new networkSettings', function (done) {
       server
-        .get('/api/deviceNetworkTypeLinks/' + dnlId1)
+        .get('/api/device-network-type-links/' + dnlId1)
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .send()
@@ -303,7 +303,7 @@ describe.skip('DeviceNetworkTypeLinks', function () {
   describe('DELETE /api/deviceNetworkTypes', function () {
     it('should return 403 (forbidden) on user', function (done) {
       server
-        .delete('/api/deviceNetworkTypeLinks/' + dnlId2)
+        .delete('/api/device-network-type-links/' + dnlId2)
         .set('Authorization', 'Bearer ' + adminToken)
         .end(function (err, res) {
           res.should.have.status(403)
@@ -313,7 +313,7 @@ describe.skip('DeviceNetworkTypeLinks', function () {
 
     it('should return 204 on admin', function (done) {
       server
-        .delete('/api/deviceNetworkTypeLinks/' + dnlId2)
+        .delete('/api/device-network-type-links/' + dnlId2)
         .set('Authorization', 'Bearer ' + adminToken)
         .end(function (err, res) {
           res.should.have.status(204)
@@ -323,7 +323,7 @@ describe.skip('DeviceNetworkTypeLinks', function () {
 
     it('should return 404 on get', function (done) {
       server
-        .get('/api/deviceNetworkTypeLinks/' + dnlId2)
+        .get('/api/device-network-type-links/' + dnlId2)
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .send()

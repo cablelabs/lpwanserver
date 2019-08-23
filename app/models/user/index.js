@@ -13,12 +13,14 @@ const fragments = {
   internal: `fragment InternalUser on User {
     id
     role
+    username
     email
-    passwordHash
+    pwdHash
   }`,
   basic: `fragment BasicUser on User {
     id
     role
+    username
     email
   }`
 }
@@ -27,13 +29,14 @@ const fragments = {
 // Helpers
 // *********************************************************************
 const userCreateSchema = Joi.object().keys({
-  email: Joi.string().email({ minDomainSegments: 2 }).required(),
-  password: Joi.string().required(),
-  role: Joi.string().required()
+  role: Joi.string().required(),
+  username: Joi.string().required(),
+  email: Joi.string().email({ minDomainSegments: 2 }).when('role', { is: 'ADMIN', then: Joi.required(), otherwise: Joi.optional() }),
+  password: Joi.string().required()
 })
 
-const renameQueryKeys = renameKeys({ search: 'email_contains' })
-const dropInternalProps = R.omit(['passwordHash'])
+const renameQueryKeys = renameKeys({ search: 'username_contains' })
+const dropInternalProps = R.omit(['pwdHash'])
 const omitPwd = R.omit(['password'])
 
 // *********************************************************************
@@ -44,15 +47,16 @@ async function create (ctx, { data }) {
   let { error } = Joi.validate(data, userCreateSchema)
   if (error) throw httpError(400, error.message)
   // Async validation
-  let [pwdHash, emailInUse] = await Promise.all([
-    ctx.$self.validateAndHashPassword(data),
-    ctx.$m.emails.isInUse({ address: data.email })
-  ])
-  if (emailInUse) {
+  let promises = [ctx.$self.validateAndHashPassword(data)]
+  if (data.email) {
+    promises.push(ctx.$m.emails.isInUse({ address: data.email }))
+  }
+  let [pwdHash, emailInUse] = await Promise.all(promises)
+  if (data.email && emailInUse) {
     throw httpError(400, 'Email is already in use.')
   }
   // Create record
-  let user = await ctx.DB.create({
+  let user = await ctx.db.create({
     data: { ...omitPwd(data), pwdHash }
   })
   // Send verification email
@@ -63,17 +67,17 @@ async function create (ctx, { data }) {
 }
 
 async function list (ctx, { where = {}, ...opts }) {
-  return ctx.DB.list({ where: renameQueryKeys(where), ...opts, fragment: 'basic' })
+  return ctx.db.list({ where: renameQueryKeys(where), ...opts, fragment: 'basic' })
 }
 
 async function update (ctx, { where, data }) {
   if (!where) throw httpError(400, 'No record identifier "where"')
-  let oldRec = await ctx.DB.load({ where })
+  let oldRec = await ctx.db.load({ where })
   // ctx.user indicates
   if (ctx.user) {
     // To update own user, users without "User:update" permission can access this method.
     // If a user has the "User:update permission", allow all updates
-    let authorized = ctx.$self.hasPermissions({ permissions: ['User:update'] })
+    let authorized = ctx.$self.hasPermissions({ permissions: ['User:update'] }, ctx)
     // limit what fields a user can change on their own record
     if (!authorized && oldRec.id === ctx.user.id) {
       const allowed = ['email', 'password']
@@ -88,8 +92,12 @@ async function update (ctx, { where, data }) {
   if (data.password) {
     data = { ...omitPwd(data), pwdHash: await ctx.$self.validateAndHashPassword(data) }
   }
+  // Ensure admins have emails
+  if (data.role === 'ADMIN' && !data.email && !oldRec.email) {
+    throw httpError(400, 'Admin users must have an email address.')
+  }
   // Update User record
-  let user = await ctx.DB.update({ where, data })
+  let user = await ctx.db.update({ where, data })
   // Verify new email
   // Check for ctx.user ensures this is not run when the Email model updates a user's email
   if (ctx.user && data.email) {
@@ -105,7 +113,7 @@ function remove (ctx, id) {
   if (ctx.user && ctx.user.id === id) {
     throw httpError(403, 'Cannot delete your own account')
   }
-  return ctx.DB.remove(id)
+  return ctx.db.remove(id)
 }
 
 function validateAndHashPassword (ctx, { password }) {
@@ -116,17 +124,16 @@ function validateAndHashPassword (ctx, { password }) {
   return crypto.hashString(password)
 }
 
-async function authenticateUser (ctx, { email, password }) {
-  // TODO: require email address have a verified status, or maybe put in config?
-  if (!email || !password) throw new httpError.BadRequest()
+async function authenticateUser (ctx, { username, password }) {
+  if (!username || !password) throw new httpError.BadRequest()
   try {
-    const user = await ctx.DB.load({ where: { email }, fragment: 'internal' })
-    const matches = await crypto.verifyString(password, user.passwordHash)
+    const user = await ctx.db.load({ where: { username }, fragment: 'internal' })
+    const matches = await crypto.verifyString(password, user.pwdHash)
     if (!matches) throw new Error('Invalid password')
     return dropInternalProps(user)
   }
   catch (err) {
-    // don't specify whether or not username is valid
+    // don't specify whether username or password failed
     throw new httpError.Unauthorized()
   }
 }

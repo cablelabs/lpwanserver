@@ -1,50 +1,40 @@
 const NetworkProtocol = require('../../NetworkProtocol')
 const R = require('ramda')
 const { log } = require('../../../log')
-const { joinUrl, renameKeys, attempt } = require('../../../lib/utils')
+const { joinUrl, renameKeys } = require('../../../lib/utils')
 const httpError = require('http-errors')
 const config = require('../../../config')
 
 module.exports = class LoraOpenSource extends NetworkProtocol {
-  async connect (network) {
+  async connect ({ network }) {
     await this.client.getSession(network)
   }
 
-  async test (network) {
+  async test ({ network }) {
     await this.client.listApplications(network, { limit: 1, offset: 0 })
     return true
   }
 
-  async getANetworkServerID (network) {
-    log.info('LoRaOpenSource: getANetworkServerID')
-    const { result: nsList } = await this.client.listNetworkServers(network, { limit: 20, offset: 0 })
-    if (!nsList.length) {
-      log.info('Empty list of Network Servers returned')
-      throw httpError.NotFound()
-    }
-    return nsList[0].id
-  }
-
-  async pushNetwork (network, dataAPI, modelAPI) {
+  async pushNetwork ({ network }) {
     await Promise.all([
-      this.pushDeviceProfiles(network, modelAPI, dataAPI),
-      this.pushApplications(network, modelAPI, dataAPI)
+      this.pushDeviceProfiles(network),
+      this.pushApplications(network)
     ])
-    await this.pushDevices(network, modelAPI, dataAPI)
+    await this.pushDevices(network)
   }
 
-  async pushApplications (network, modelAPI, dataAPI) {
+  async pushApplications (network) {
     let [apps] = await this.modelAPI.applications.list()
-    await Promise.all(apps.map(x => this.pushApplication(network, x, dataAPI, false)))
+    await Promise.all(apps.map(x => this.pushApplication({ network, application: x, update: false })))
   }
 
-  async pushApplication (network, app, dataAPI, update = true) {
+  async pushApplication ({ network, application: app, update = true }) {
     let appNetworkId
     try {
-      appNetworkId = await this.modelAPI.protocolData.loadValue(network, makeApplicationDataKey(app.id, 'appNwkId'))
+      appNetworkId = await this.modelAPI.protocolData.loadValue([network, makeApplicationDataKey(app.id, 'appNwkId')])
       log.info(`PUSH_APPLICATION: ${appNetworkId}`)
       if (update && appNetworkId) {
-        return this.updateApplication(network, app.id, dataAPI)
+        return this.updateApplication(network, app.id)
       }
       else if (appNetworkId) {
         log.info('Ignoring Application  ' + app.id + ' already on network ' + network.name)
@@ -53,23 +43,23 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
       throw new Error('Bad things in the Protocol Table')
     }
     catch (err) {
-      appNetworkId = await this.addApplication(network, app.id, dataAPI)
+      appNetworkId = await this.addApplication({ network, applicationId: app.id })
       log.info('Added application ' + app.id + ' to network ' + network.name)
       return { localApplication: app.id, remoteApplication: appNetworkId }
     }
   }
 
-  async pushDeviceProfiles (network, modelAPI, dataAPI) {
+  async pushDeviceProfiles ({ network }) {
     let [ dps ] = await this.modelAPI.deviceProfiles.list()
-    await Promise.all(dps.map(x => this.pushDeviceProfile(network, x, dataAPI, false)))
+    await Promise.all(dps.map(x => this.pushDeviceProfile({ network, deviceProfile: x, update: false })))
   }
 
-  async pushDeviceProfile (network, deviceProfile, dataAPI, update = true) {
+  async pushDeviceProfile ({ network, deviceProfile, update = true }) {
     let dpNetworkId
     try {
-      dpNetworkId = await this.modelAPI.protocolData.loadValue(network, makeDeviceProfileDataKey(deviceProfile.id, 'dpNwkId'))
+      dpNetworkId = await this.modelAPI.protocolData.loadValue([network, makeDeviceProfileDataKey(deviceProfile.id, 'dpNwkId')])
       if (update && dpNetworkId) {
-        return this.updateDeviceProfile(network, deviceProfile.id, dataAPI)
+        return this.updateDeviceProfile(network, deviceProfile.id)
       }
       else if (dpNetworkId) {
         log.info('Ignoring DeviceProfile  ' + deviceProfile.id + ' already on network ' + network.name)
@@ -78,23 +68,23 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
       throw new Error('Bad things in the Protocol Table')
     }
     catch (err) {
-      dpNetworkId = await this.addDeviceProfile(network, deviceProfile.id, dataAPI)
+      dpNetworkId = await this.addDeviceProfile({ network, deviceProfileId: deviceProfile.id })
       log.info('Added DeviceProfile ' + deviceProfile.id + ' to network ' + network.name)
       return { localDeviceProfile: deviceProfile.id, remoteDeviceProfile: dpNetworkId }
     }
   }
 
-  async pushDevices (network, modelAPI, dataAPI) {
+  async pushDevices ({ network }) {
     let [ devices ] = await this.modelAPI.devices.list()
-    await Promise.all(devices.map(x => this.pushDevice(network, x, dataAPI, false)))
+    await Promise.all(devices.map(x => this.pushDevice({ network, device: x, update: false })))
   }
 
-  async pushDevice (network, device, dataAPI, update = true) {
+  async pushDevice ({ network, device, update = true }) {
     let devNetworkId
     try {
-      devNetworkId = await this.modelAPI.protocolData.loadValue(network, makeDeviceDataKey(device.id, 'devNwkId'))
+      devNetworkId = await this.modelAPI.protocolData.loadValue([network, makeDeviceDataKey(device.id, 'devNwkId')])
       if (update && devNetworkId) {
-        return this.updateDevice(network, device.id, dataAPI)
+        return this.updateDevice(network, device.id)
       }
       else if (devNetworkId) {
         log.info('Ignoring Device  ' + device.id + ' already on network ' + network.name)
@@ -103,38 +93,38 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
       throw new Error('Bad things in the Protocol Table')
     }
     catch (err) {
-      devNetworkId = await this.addDevice(network, device.id, dataAPI)
+      devNetworkId = await this.addDevice({ network, deviceId: device.id })
       log.info('Added Device ' + device.id + ' to network ' + network.name)
       return { localDevice: device.id, remoteDevice: devNetworkId }
     }
   }
 
-  async pullNetwork (network, dataAPI, modelAPI) {
+  async pullNetwork ({ network }) {
     const [pulledDevProfiles, pulledApps] = await Promise.all([
-      this.pullDeviceProfiles(network, modelAPI, dataAPI),
-      this.pullApplications(network, modelAPI, dataAPI)
+      this.pullDeviceProfiles(network),
+      this.pullApplications(network)
     ])
     await Promise.all(pulledApps.map(x =>
-      this.pullDevices(network, x.remoteApplication, x.localApplication, pulledDevProfiles, modelAPI, dataAPI)
+      this.pullDevices(network, x.remoteApplication, x.localApplication, pulledDevProfiles)
     ))
   }
 
-  async pullDeviceProfiles (network, modelAPI, dataAPI) {
+  async pullDeviceProfiles ({ network }) {
     const { result } = await this.client.listDeviceProfiles(network, {
       limit: 9999,
       offset: 0
     })
-    return Promise.all(result.map(x => this.addRemoteDeviceProfile(network, x.id, modelAPI, dataAPI)))
+    return Promise.all(result.map(x => this.addRemoteDeviceProfile(network, x.id)))
   }
 
   async addRemoteDeviceProfile (network, remoteDevProfileId) {
     const remoteDeviceProfile = await this.client.loadDeviceProfile(network, remoteDevProfileId)
     log.info('Adding ' + remoteDeviceProfile.name)
-    const [ dps ] = await this.modelAPI.deviceProfiles.list({ search: remoteDeviceProfile.name, limit: 1 })
+    const [ dps ] = await this.modelAPI.deviceProfiles.list({ where: { search: remoteDeviceProfile.name }, limit: 1 })
     if (dps.length) {
       let localDp = dps[0]
       log.info(localDp.name + ' already exists')
-      await this.modelAPI.protocolData.upsert(network, makeDeviceProfileDataKey(localDp.id, 'dpNwkId'), remoteDeviceProfile.id)
+      await this.modelAPI.protocolData.upsert([network, makeDeviceProfileDataKey(localDp.id, 'dpNwkId'), remoteDeviceProfile.id])
       return {
         localDeviceProfile: localDp.id,
         remoteDeviceProfile: remoteDeviceProfile.id
@@ -142,29 +132,31 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
     }
     log.info('creating ' + remoteDeviceProfile.name)
     let networkSettings = this.buildDeviceProfileNetworkSettings(remoteDeviceProfile)
-    let localDp = await this.modelAPI.deviceProfiles.create(
-      network.networkType.id,
-      remoteDeviceProfile.name,
-      'Device Profile managed by LPWAN Server, perform changes via LPWAN',
-      networkSettings,
-      { remoteOrigin: true }
-    )
-    await this.modelAPI.protocolData.upsert(network, makeDeviceProfileDataKey(localDp.id, 'dpNwkId'), remoteDeviceProfile.id)
+    let localDp = await this.modelAPI.deviceProfiles.create({
+      data: {
+        networkTypeId: network.networkType.id,
+        name: remoteDeviceProfile.name,
+        description: 'Device Profile managed by LPWAN Server, perform changes via LPWAN',
+        networkSettings
+      },
+      remoteOrigin: true
+    })
+    await this.modelAPI.protocolData.upsert([network, makeDeviceProfileDataKey(localDp.id, 'dpNwkId'), remoteDeviceProfile.id])
     return {
       localDeviceProfile: localDp.id,
       remoteDeviceProfile: remoteDeviceProfile.id
     }
   }
 
-  async pullApplications (network, modelAPI, dataAPI) {
+  async pullApplications (network) {
     let { result } = await this.client.listApplications(network, {
       limit: 9999,
       offset: 0
     })
-    return Promise.all(result.map(app => this.addRemoteApplication(network, app.id, modelAPI, dataAPI)))
+    return Promise.all(result.map(app => this.addRemoteApplication(network, app.id)))
   }
 
-  async addRemoteApplication (network, remoteAppId, modelAPI, dataAPI) {
+  async addRemoteApplication (network, remoteAppId) {
     const remoteApp = await this.client.loadApplication(network, remoteAppId)
     let integration
     try {
@@ -174,7 +166,7 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
       if (err.statusCode !== 404) throw err
     }
     // Check for local app with the same name
-    const [localApps] = await this.modelAPI.applications.list({ search: remoteApp.name })
+    const [localApps] = await this.modelAPI.applications.list({ where: { search: remoteApp.name } })
     let localApp = localApps[0]
     const [ reportingProtos ] = await this.modelAPI.reportingProtocols.list()
     if (!localApp) {
@@ -183,43 +175,41 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
         reportingProtocolId: reportingProtos[0].id
       }
       if (integration) localAppData.baseUrl = integration.uplinkDataURL
-      localApp = await this.modelAPI.applications.create(localAppData)
+      localApp = await this.modelAPI.applications.create({ data: localAppData })
       log.info('Created ' + localApp.name)
     }
-    await this.modelAPI.protocolData.upsert(network, makeApplicationDataKey(localApp.id, 'appNwkId'), remoteApp.id)
+    await this.modelAPI.protocolData.upsert([network, makeApplicationDataKey(localApp.id, 'appNwkId'), remoteApp.id])
 
-    const [ appNtls ] = await this.modelAPI.applicationNetworkTypeLinks.list({ applicationId: localApp.id })
+    const [ appNtls ] = await this.modelAPI.applicationNetworkTypeLinks.list({ where: { applicationId: localApp.id } })
     let appNtl = appNtls[0]
     if (appNtl) {
       log.info(localApp.name + ' link already exists')
     }
     else {
-      appNtl = await this.modelAPI.applicationNetworkTypeLinks.create(
-        {
+      appNtl = await this.modelAPI.applicationNetworkTypeLinks.create({
+        data: {
           applicationId: localApp.id,
           networkTypeId: network.networkType.id,
           networkSettings: this.buildApplicationNetworkSettings(remoteApp)
         },
-        {
-          remoteOrigin: true
-        }
-      )
+        remoteOrigin: true
+      })
     }
-    if (localApp.baseUrl) await this.startApplication(network, localApp.id, dataAPI)
+    if (localApp.baseUrl) await this.startApplication({ network, applicationId: localApp.id })
     return { localApplication: localApp.id, remoteApplication: remoteApp.id }
   }
 
-  async pullDevices (network, remoteAppId, localAppId, dpMap, modelAPI, dataAPI) {
+  async pullDevices (network, remoteAppId, localAppId, dpMap) {
     const params = { limit: 9999, offset: 0 }
     const { result } = await this.client.listDevices(network, remoteAppId, params)
-    return Promise.all(result.map(device => this.addRemoteDevice(network, device.devEUI, localAppId, dpMap, modelAPI, dataAPI)))
+    return Promise.all(result.map(device => this.addRemoteDevice(network, device.devEUI, localAppId, dpMap)))
   }
 
-  async addRemoteDevice (network, remoteDeviceId, localAppId, dpMap, modelAPI, dataAPI) {
+  async addRemoteDevice (network, remoteDeviceId, localAppId, dpMap) {
     const remoteDevice = await this.client.loadDevice(network, remoteDeviceId)
     log.info('Adding ' + remoteDevice.name)
     let deviceProfileIdMap = dpMap.find(o => o.remoteDeviceProfile === remoteDevice.deviceProfileID)
-    let deviceProfile = await dataAPI.getDeviceProfileById(deviceProfileIdMap.localDeviceProfile)
+    let deviceProfile = await this.modelAPI.deviceProfiles.load({ where: { id: deviceProfileIdMap.localDeviceProfile } })
     try {
       if (deviceProfile.networkSettings.supportsJoin) {
         remoteDevice.deviceKeys = await this.client.loadDeviceKeys(network, remoteDevice.devEUI)
@@ -232,7 +222,7 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
       log.info('Device does not have keys or activation')
     }
 
-    let [ localDevices ] = await this.modelAPI.devices.list({ search: remoteDevice.name }, { limit: 1 })
+    let [ localDevices ] = await this.modelAPI.devices.list({ where: { search: remoteDevice.name }, limit: 1 })
     let localDevice
     if (localDevices.length) {
       localDevice = localDevices[0]
@@ -241,10 +231,10 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
     else {
       log.info('creating ' + remoteDevice.name)
       const devData = { ...R.pick(['name', 'description'], remoteDevice), applicationId: localAppId }
-      localDevice = await this.modelAPI.devices.create(devData)
+      localDevice = await this.modelAPI.devices.create({ data: devData })
       log.info('Created ' + localDevice.name)
     }
-    let [ devNtls ] = await this.modelAPI.deviceNetworkTypeLinks.list({ deviceId: localDevice.id, limit: 1 })
+    let [ devNtls ] = await this.modelAPI.deviceNetworkTypeLinks.list({ where: { deviceId: localDevice.id }, limit: 1 })
     if (devNtls.length) {
       log.info(localDevice.name + ' link already exists')
     }
@@ -257,25 +247,29 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
         deviceProfileId: deviceProfile.id,
         networkSettings
       }
-      await this.modelAPI.deviceNetworkTypeLinks.create(devNtlData, { remoteOrigin: true })
+      await this.modelAPI.deviceNetworkTypeLinks.create({ data: devNtlData, remoteOrigin: true })
     }
-    await this.modelAPI.protocolData.upsert(network, makeDeviceDataKey(localDevice.id, 'devNwkId'), remoteDevice.devEUI)
+    await this.modelAPI.protocolData.upsert([network, makeDeviceDataKey(localDevice.id, 'devNwkId'), remoteDevice.devEUI])
     return localDevice.id
   }
 
-  async addApplication (network, appId, dataAPI) {
+  async addApplication ({ network, applicationId: appId }) {
     try {
       // Get the local application data.
-      const localApp = await dataAPI.getApplicationById(appId)
-      const appNtl = await dataAPI.getApplicationNetworkType(appId, network.networkType.id)
+      const localApp = await this.modelAPI.applications.load({ where: { id: appId } })
+      const [appNtls] = await this.modelAPI.applicationNetworkTypeLinks.list({ where: {
+        applicationId: appId,
+        networkTypeId: network.networkType.id
+      } })
+      const [appNtl] = appNtls[0]
       const body = await this.client.createApplication(network, this.buildRemoteApplication(
         appNtl && appNtl.networkSettings,
         localApp
       ))
       // Save the application ID from the remote network.
-      await this.modelAPI.protocolData.upsert(network, makeApplicationDataKey(localApp.id, 'appNwkId'), body.id)
+      await this.modelAPI.protocolData.upsert([network, makeApplicationDataKey(localApp.id, 'appNwkId'), body.id])
       // Start application if baseUrl
-      if (localApp.baseUrl && localApp.running) await this.startApplication(network, appId)
+      if (localApp.baseUrl && localApp.running) await this.startApplication({ network, applicationId: appId })
     }
     catch (err) {
       log.info('Failed to get required data for addApplication: ' + err)
@@ -284,51 +278,51 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
   }
 
   async getApplication (network, appId) {
-    const appNetworkId = await this.modelAPI.protocolData.loadValue(network, makeApplicationDataKey(appId, 'appNwkId'))
+    const appNetworkId = await this.modelAPI.protocolData.loadValue([network, makeApplicationDataKey(appId, 'appNwkId')])
     return this.client.loadApplication(network, appNetworkId)
   }
 
-  async updateApplication (network, appId, dataAPI) {
+  async updateApplication (network, appId) {
     // Get the application data.
-    var localApp = await dataAPI.getApplicationById(appId)
-    var appNetworkId = await this.modelAPI.protocolData.loadValue(network, makeApplicationDataKey(appId, 'appNwkId'))
-    var applicationData = await dataAPI.getApplicationNetworkType(appId, network.networkType.id)
+    var localApp = await this.modelAPI.applications.load({ where: { id: appId } })
+    var appNetworkId = await this.modelAPI.protocolData.loadValue([network, makeApplicationDataKey(appId, 'appNwkId')])
+    const [appNtls] = await this.modelAPI.applicationNetworkTypeLinks.list({ where: {
+      application: { id: appId },
+      networkType: { id: network.networkType.id }
+    } })
+    const [appNtl] = appNtls[0]
     let reqBody = this.buildRemoteApplication(
-      applicationData.networkSettings,
+      appNtl.networkSettings,
       localApp
     )
 
     reqBody.id = appNetworkId
 
     // Optional data
-    if (applicationData && applicationData.networkSettings) {
+    if (appNtl && appNtl.networkSettings) {
       let props = ['isABP', 'isClassC', 'relaxFCnt', 'rXDelay', 'rX1DROffset', 'rXWindow', 'rX2DR', 'aDRInterval', 'installationMargin', 'payloadDecoderScript', 'payloadEncoderScript']
-      Object.assign(reqBody, R.pick(props, applicationData.networkSettings))
-      if (applicationData.networkSettings.payloadCodec && applicationData.networkSettings.payloadCodec !== 'NONE') {
-        reqBody.payloadCodec = applicationData.networkSettings.payloadCodec
+      Object.assign(reqBody, R.pick(props, appNtl.networkSettings))
+      if (appNtl.networkSettings.payloadCodec && appNtl.networkSettings.payloadCodec !== 'NONE') {
+        reqBody.payloadCodec = appNtl.networkSettings.payloadCodec
       }
     }
     await this.client.updateApplication(network, reqBody.id, reqBody)
   }
 
-  async deleteApplication (network, appId, dataAPI) {
-    var appNetworkId = await this.modelAPI.protocolData.loadValue(network, makeApplicationDataKey(appId, 'appNwkId'))
+  async deleteApplication ({ network, applicationId: appId }) {
+    var appNetworkId = await this.modelAPI.protocolData.loadValue([network, makeApplicationDataKey(appId, 'appNwkId')])
     await this.client.deleteApplication(network, appNetworkId)
-    await dataAPI.deleteProtocolDataForKey(
-      network.id,
-      network.networkProtocol.id,
-      makeApplicationDataKey(appId, 'appNwkId')
-    )
+    await this.modelAPI.protocolData.clearProtocolData([network.id, network.networkProtocol.id, makeApplicationDataKey(appId, 'appNwkId')])
   }
 
-  async startApplication (network, appId) {
+  async startApplication ({ network, applicationId: appId }) {
     // Create a new endpoint to get POSTs, and call the deliveryFunc.
     // Use the local applicationId and the networkId to create a unique
     // URL.
     const url = joinUrl(config.base_url, 'api/ingest', appId, network.id)
 
     // Set up the Forwarding with LoRa App Server
-    var appNwkId = await this.modelAPI.protocolData.loadValue(network, makeApplicationDataKey(appId, 'appNwkId'))
+    var appNwkId = await this.modelAPI.protocolData.loadValue([network, makeApplicationDataKey(appId, 'appNwkId')])
 
     const body = {
       ackNotificationURL: url,
@@ -349,10 +343,10 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
     }
   }
 
-  async stopApplication (network, appId) {
+  async stopApplication ({ network, applicationId: appId }) {
     let appNwkId
     try {
-      appNwkId = await this.modelAPI.protocolData.loadValue(network, makeApplicationDataKey(appId, 'appNwkId'))
+      appNwkId = await this.modelAPI.protocolData.loadValue([network, makeApplicationDataKey(appId, 'appNwkId')])
       try {
         await this.client.loadApplicationIntegration(network, appNwkId, 'http')
       }
@@ -368,22 +362,21 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
     }
   }
 
-  async addDeviceProfile (network, deviceProfileId, dataAPI) {
+  async addDeviceProfile ({ network, deviceProfileId }) {
     log.info('Adding DP ' + deviceProfileId)
     // Get the deviceProfile data.
-    const deviceProfile = await dataAPI.getDeviceProfileById(deviceProfileId)
+    const deviceProfile = await this.modelAPI.deviceProfiles.load({ where: { id: deviceProfileId } })
     const { id } = await this.client.createDeviceProfile(network, this.buildRemoteDeviceProfile(
-      deviceProfile,
-      networkServerId
+      deviceProfile
     ))
-    await this.modelAPI.protocolData.upsert(network, makeDeviceProfileDataKey(deviceProfile.id, 'dpNwkId'), id)
+    await this.modelAPI.protocolData.upsert([network, makeDeviceProfileDataKey(deviceProfile.id, 'dpNwkId'), id])
     return id
   }
 
   async getDeviceProfile (network, deviceProfileId) {
     var dpNetworkId
     try {
-      dpNetworkId = await this.modelAPI.protocolData.loadValue(network, makeDeviceProfileDataKey(deviceProfileId, 'dpNwkId'))
+      dpNetworkId = await this.modelAPI.protocolData.loadValue([network, makeDeviceProfileDataKey(deviceProfileId, 'dpNwkId')])
     }
     catch (err) {
       log.error('Error on get deviceProfile network ID:', err)
@@ -392,13 +385,13 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
     return this.client.loadDeviceProfile(network, dpNetworkId)
   }
 
-  async updateDeviceProfile (network, deviceProfileId, dataAPI) {
+  async updateDeviceProfile (network, deviceProfileId) {
     // Get the application data.
     var deviceProfile
     var dpNetworkId
     try {
-      deviceProfile = await dataAPI.getDeviceProfileById(deviceProfileId)
-      dpNetworkId = await this.modelAPI.protocolData.loadValue(network, makeDeviceProfileDataKey(deviceProfileId, 'dpNwkId'))
+      deviceProfile = await this.modelAPI.deviceProfiles.load({ where: { id: deviceProfileId } })
+      dpNetworkId = await this.modelAPI.protocolData.loadValue([network, makeDeviceProfileDataKey(deviceProfileId, 'dpNwkId')])
     }
     catch (err) {
       log.error('Error getting supporting data for update device Profile:', err)
@@ -436,15 +429,15 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
     }
   }
 
-  async deleteDeviceProfile (network, deviceProfileId, dataAPI) {
+  async deleteDeviceProfile ({ network, deviceProfileId }) {
     let dpNetworkId
     try {
-      dpNetworkId = await this.modelAPI.protocolData.loadValue(network, makeDeviceProfileDataKey(deviceProfileId, 'dpNwkId'))
-      await dataAPI.deleteProtocolDataForKey(
+      dpNetworkId = await this.modelAPI.protocolData.loadValue([network, makeDeviceProfileDataKey(deviceProfileId, 'dpNwkId')])
+      await this.modelAPI.protocolData.clearProtocolData([
         network.id,
         network.networkProtocol.id,
         makeDeviceProfileDataKey(deviceProfileId, 'dpNwkId')
-      )
+      ])
     }
     catch (err) {
       log.error('Error getting supporting data for delete deviceProfile:', err)
@@ -453,28 +446,32 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
     await this.client.deleteDeviceProfile(network, dpNetworkId)
   }
 
-  async addDevice (network, deviceId, dataAPI) {
+  async addDevice ({ network, deviceId }) {
     log.info(`Adding Device ${deviceId} to ${network.name}`)
-    const device = await dataAPI.getDeviceById(deviceId)
-    const dntl = await dataAPI.getDeviceNetworkType(deviceId, network.networkType.id)
-    if (!dntl) return
-    const deviceProfile = await dataAPI.getDeviceProfileById(dntl.deviceProfile.id)
-    if (!dntl.networkSettings || !dntl.networkSettings.devEUI) {
+    const device = await this.modelAPI.devices.load({ where: { id: deviceId } })
+    const [devNtls] = await this.modelAPI.deviceNetworkTypeLinks.list({ where: {
+      deviceId,
+      networkTypeId: network.networkType.id
+    } })
+    const [devNtl] = devNtls[0]
+    if (!devNtl) return
+    const deviceProfile = await this.modelAPI.deviceProfiles.load({ where: devNtl.deviceProfile })
+    if (!devNtl.networkSettings || !devNtl.networkSettings.devEUI) {
       log.error('deviceNetworkTypeLink MUST have networkSettings which MUST have devEUI')
       throw httpError.BadRequest()
     }
-    const appNwkId = await this.modelAPI.protocolData.loadValue(network, makeApplicationDataKey(device.application.id, 'appNwkId'))
-    const dpNwkId = await this.modelAPI.protocolData.loadValue(network, makeDeviceProfileDataKey(dntl.deviceProfile.id, 'dpNwkId'))
+    const appNwkId = await this.modelAPI.protocolData.loadValue([network, makeApplicationDataKey(device.application.id, 'appNwkId')])
+    const dpNwkId = await this.modelAPI.protocolData.loadValue([network, makeDeviceProfileDataKey(devNtl.deviceProfile.id, 'dpNwkId')])
 
     let deviceData = this.buildRemoteDevice(
       device,
-      dntl,
+      devNtl,
       deviceProfile,
       appNwkId,
       dpNwkId
     )
     await this.client.createDevice(network, deviceData.device)
-    await this.modelAPI.protocolData.upsert(network, makeDeviceDataKey(device.id, 'devNwkId'), deviceData.device.devEUI)
+    await this.modelAPI.protocolData.upsert([network, makeDeviceDataKey(device.id, 'devNwkId'), deviceData.device.devEUI])
     if (deviceProfile.networkSettings.supportsJoin && deviceData.deviceKeys) {
       await this.client.createDeviceKeys(network, deviceData.device.devEUI, deviceData.deviceKeys)
     }
@@ -488,20 +485,24 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
   }
 
   async getDevice (network, deviceId) {
-    var devNetworkId = await this.modelAPI.protocolData.loadValue(network, makeDeviceDataKey(deviceId, 'devNwkId'))
+    var devNetworkId = await this.modelAPI.protocolData.loadValue([network, makeDeviceDataKey(deviceId, 'devNwkId')])
     return this.client.loadDevice(network, devNetworkId)
   }
 
-  async updateDevice (network, deviceId, dataAPI) {
-    let device = await dataAPI.getDeviceById(deviceId)
-    const dntl = await dataAPI.getDeviceNetworkType(device.id, network.networkType.id)
-    const deviceProfile = await dataAPI.getDeviceProfileById(dntl.deviceProfile.id)
-    const devNetworkId = await this.modelAPI.protocolData.loadValue(network, makeDeviceDataKey(device.id, 'devNwkId'))
-    const appNwkId = await this.modelAPI.protocolData.loadValue(network, makeApplicationDataKey(device.application.id, 'appNwkId'))
-    const dpNwkId = await this.modelAPI.protocolData.loadValue(network, makeDeviceProfileDataKey(deviceProfile.id, 'dpNwkId'))
+  async updateDevice (network, deviceId) {
+    const device = await this.modelAPI.devices.load({ where: { id: deviceId } })
+    const [devNtls] = await this.modelAPI.deviceNetworkTypeLinks.list({ where: {
+      deviceId,
+      networkTypeId: network.networkType.id
+    } })
+    const [devNtl] = devNtls[0]
+    const deviceProfile = await this.modelAPI.deviceProfiles.load({ where: devNtl.deviceProfile })
+    const devNetworkId = await this.modelAPI.protocolData.loadValue([network, makeDeviceDataKey(device.id, 'devNwkId')])
+    const appNwkId = await this.modelAPI.protocolData.loadValue([network, makeApplicationDataKey(device.application.id, 'appNwkId')])
+    const dpNwkId = await this.modelAPI.protocolData.loadValue([network, makeDeviceProfileDataKey(deviceProfile.id, 'dpNwkId')])
     let deviceData = this.buildRemoteDevice(
       device,
-      dntl,
+      devNtl,
       deviceProfile,
       appNwkId,
       dpNwkId
@@ -520,10 +521,10 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
     }
   }
 
-  async deleteDevice (network, deviceId, dataAPI) {
+  async deleteDevice ({ network, deviceId }) {
     var devNetworkId
     try {
-      devNetworkId = await this.modelAPI.protocolData.loadValue(network, makeDeviceDataKey(deviceId, 'devNwkId'))
+      devNetworkId = await this.modelAPI.protocolData.loadValue([network, makeDeviceDataKey(deviceId, 'devNwkId')])
     }
     catch (err) {
       // Can't delete without the remote ID.
@@ -532,10 +533,11 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
     }
     await this.client.deleteDevice(network, devNetworkId)
     try {
-      await dataAPI.deleteProtocolDataForKey(
+      await this.modelAPI.protocolData.clearProtocolData([
         network.id,
         network.networkProtocol.id,
-        makeDeviceDataKey(deviceId, 'devNwkId'))
+        makeDeviceDataKey(deviceId, 'devNwkId')
+      ])
     }
     catch (err) {
       log.error("Failed to delete remote network's device ID: ", err)
@@ -543,12 +545,12 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
     await this.client.deleteDeviceKeys(network, devNetworkId)
   }
 
-  async passDataToDevice (network, appId, deviceId, body) {
+  async passDataToDevice ({ network, deviceId, data }) {
     // Ensure network is enabled
     if (!network.securityData.enabled) return
-    const devNwkId = await this.modelAPI.protocolData.loadValue(network, makeDeviceDataKey(deviceId, 'devNwkId'))
-    body = renameKeys({ jsonData: 'jsonObject' }, body)
-    return this.client.createDeviceMessage(network, devNwkId, { ...body, devEUI: devNwkId })
+    const devNwkId = await this.modelAPI.protocolData.loadValue([network, makeDeviceDataKey(deviceId, 'devNwkId')])
+    data = renameKeys({ jsonData: 'jsonObject' }, data)
+    return this.client.createDeviceMessage(network, devNwkId, { ...data, devEUI: devNwkId })
   }
 
   buildApplicationNetworkSettings (remoteApplication) {

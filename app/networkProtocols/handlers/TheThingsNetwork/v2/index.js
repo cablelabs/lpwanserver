@@ -26,7 +26,7 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
   }
 
   async subscribeToDataForEnabledApps () {
-    const nwkType = await this.modelAPI.networkTypes.loadByName('LoRa')
+    const nwkType = await this.modelAPI.networkTypes.load({ where: { name: 'LoRa' } })
     const antlQuery = { networkType: { id: nwkType.id } }
     const [ antls ] = await this.modelAPI.applicationNetworkTypeLinks.list(antlQuery)
     let appIds = antls.map(R.path(['application', 'id']))
@@ -152,7 +152,7 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
             remoteOrigin: true
           }
         )
-        await this.modelAPI.protocolData.upsert(network, makeApplicationDataKey(localApp.id, 'appNwkId'), normalizedApplication.id)
+        await this.modelAPI.protocolData.upsert([network, makeApplicationDataKey(localApp.id, 'appNwkId'), normalizedApplication.id])
       }
       if (localApp.baseUrl) await this.startApplication(network, localApp.id)
       return { localApplication: localApp, remoteApplication: normalizedApplication }
@@ -228,7 +228,7 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
         networkSettings: normalizedDevice
       }
       await modelAPI.deviceNetworkTypeLinks.create(devNtlData, { validateCompanyId: company.id, remoteOrigin: true })
-      await this.modelAPI.protocolData.upsert(network, makeDeviceDataKey(existingDevice.id, 'devNwkId'), remoteDevice.dev_id)
+      await this.modelAPI.protocolData.upsert([network, makeDeviceDataKey(existingDevice.id, 'devNwkId'), remoteDevice.dev_id])
       return { localDevice: existingDevice.id, remoteDevice: remoteDevice.dev_id }
     }
     catch (e) {
@@ -386,7 +386,7 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
       accountServerApp = await this.client.createApplication(network, accountServerApp)
       applicationData.networkSettings.applicationEUI = accountServerApp.euis[0]
       await modelAPI.applicationNetworkTypeLinks.update(applicationData, { companyId: 2, remoteOrigin: true })
-      await this.modelAPI.protocolData.upsert(network, makeApplicationDataKey(application.id, 'appNwkId'), accountServerApp.id)
+      await this.modelAPI.protocolData.upsert([network, makeApplicationDataKey(application.id, 'appNwkId'), accountServerApp.id])
       return this.registerApplicationWithHandler(network, handlerApp, accountServerApp, dataAPI)
     }
     catch (err) {
@@ -543,7 +543,7 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
       let ttnDevice = this.deNormalizeDeviceData(device.networkSettings, deviceProfile.networkSettings, application.networkSettings, remoteApplicationId)
       delete ttnDevice.attributes
       await this.client.createDevice(network, ttnDevice.app_id, ttnDevice)
-      await this.modelAPI.protocolData.upsert(network, makeDeviceDataKey(device.id, 'devNwkId'), ttnDevice.dev_id)
+      await this.modelAPI.protocolData.upsert([network, makeDeviceDataKey(device.id, 'devNwkId'), ttnDevice.dev_id])
       return ttnDevice.dev_id
     }
     catch (err) {

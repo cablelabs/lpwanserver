@@ -1,4 +1,3 @@
-// const NetworkProtocolDataAccess = require('../../networkProtocols/networkProtocolDataAccess.js')
 const httpError = require('http-errors')
 const R = require('ramda')
 const { create, list, load } = require('../model-lib')
@@ -12,6 +11,10 @@ const fragments = {
     name
     description
     enabled
+    baseUrl
+    reportingProtocol {
+      id
+    }
   }`
 }
 
@@ -20,8 +23,8 @@ const fragments = {
 // ******************************************************************************
 async function update (ctx, args) {
   if (!args.where) throw httpError(400, 'Missing record identifier "where"')
-  let oldRec = await ctx.DB.load({ where: args.where })
-  const result = await ctx.DB.update(args)
+  let oldRec = await ctx.db.load({ where: args.where })
+  const result = await ctx.db.update(args)
   if ('enabled' in args.data && args.data.enabled !== oldRec.enabled) {
     await ctx.$self[args.data.enabled ? 'start' : 'stop'](oldRec.id)
   }
@@ -50,7 +53,7 @@ async function remove (ctx, id) {
     throw err
   }
   // TODO: stop application if it's enabled
-  await ctx.DB.remove(id)
+  await ctx.db.remove(id)
 }
 
 async function startApplication (ctx, id) {
@@ -63,26 +66,30 @@ async function startApplication (ctx, id) {
   }
   // Call startApplication on NetworkTypes
   let [appNtls] = await ctx.$m.applicationNetworkTypeLinks.list({ where: { application: { id } } })
-  const logs = await Promise.all(appNtls.map(x => ctx.$m.networkTypeAPI.startApplication({
-    networkTypeId: x.networkType.id,
-    applicationId: id
-  })))
+  let logs = await Promise.all(appNtls.map(
+    appNtl => ctx.$.m.networkTypes.forAllNetworks({
+      networkTypeId: appNtl.networkType.id,
+      op: network => ctx.$m.networkProtocols.startApplication({ network, applicationId: id })
+    })
+  ))
   return R.flatten(logs)
 }
 
 async function stopApplication (ctx, id) {
   // Call stopApplication on NetworkTypes
-  let [ records ] = await ctx.$m.applicationNetworkTypeLinks.list({ where: { application: { id } } })
-  const logs = await Promise.all(records.map(x => ctx.$m.networkTypeAPI.stopApplication({
-    networkTypeId: x.networkType.id,
-    applicationId: id
-  })))
+  let [appNtls] = await ctx.$m.applicationNetworkTypeLinks.list({ where: { application: { id } } })
+  let logs = await Promise.all(appNtls.map(
+    appNtl => ctx.$.m.networkTypes.forAllNetworks({
+      networkTypeId: appNtl.networkType.id,
+      op: network => ctx.$m.networkProtocols.stopApplication({ network, applicationId: id })
+    })
+  ))
   return R.flatten(logs)
 }
 
 async function passDataToApplication (ctx, { id, networkId, data }) {
   // Ensure application is running
-  const app = await ctx.DB.load({ where: { id } })
+  const app = await ctx.db.load({ where: { id } })
   if (!app.enabled) return
   // Ensure network is enabled
   const network = await ctx.$m.networks.load({ where: { id: networkId } })
@@ -95,9 +102,7 @@ async function passDataToApplication (ctx, { id, networkId, data }) {
   } })
   if (!appNtls.length) return
   // Pass data
-  let proto = await ctx.$m.networkProtocolAPI.getProtocol(network)
-  // let dataAPI = new NetworkProtocolDataAccess(ctx.$m, 'ReportingProtocol')
-  await proto.passDataToApplication(network, id, data/*, dataAPI */)
+  await ctx.$m.networkProtocols.passDataToApplication({ network, applicationId: id, data })
 }
 
 // ******************************************************************************

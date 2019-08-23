@@ -36,12 +36,12 @@ async function update (ctx, { where, data }) {
   if (!where) throw httpError(400, 'No record identifier "where"')
   let appId = R.path(['application', 'id'])
   if (ctx.user && appId(data)) {
-    const device = await ctx.DB.load({ where })
+    const device = await ctx.db.load({ where })
     if (appId(data) !== device.application.id && ctx.user.role !== 'ADMIN') {
       throw new httpError.Forbidden()
     }
   }
-  return ctx.DB.update({ where, data })
+  return ctx.db.update({ where, data })
 }
 
 async function remove (ctx, id) {
@@ -53,20 +53,25 @@ async function remove (ctx, id) {
   catch (err) {
     ctx.log.error('Error deleting device-dependant networkTypeLinks:', err)
   }
-  return ctx.DB.remove(id)
+  return ctx.db.remove(id)
 }
 
 async function passDataToDevice (ctx, { id, data }) {
   // check for required fields
   let { error } = Joi.validate(data, unicastDownlinkSchema)
   if (error) throw httpError(400, error.message)
-  const device = await ctx.DB.load({ id })
+  const device = await ctx.db.load({ id })
   const app = await ctx.$m.applications.load({ id: device.application.id })
   if (!app.enabled) return
   // Get all device networkType links
   const devNtlQuery = { device: { id } }
   let [ devNtls ] = await ctx.$m.deviceNetworkTypeLinks.list({ query: devNtlQuery })
-  const logs = await Promise.all(devNtls.map(x => ctx.$m.networkTypeAPI.passDataToDevice(x, app.id, id, data)))
+  const logs = await Promise.all(devNtls.map(
+    devNtl => ctx.$.m.networkTypes.forAllNetworks({
+      networkTypeId: devNtl.networkType.id,
+      op: network => ctx.$m.networkProtocols.passDataToDevice({ network, applicationId: app.id, deviceId: id, data })
+    })
+  ))
   return R.flatten(logs)
 }
 
@@ -82,7 +87,7 @@ async function receiveIpDeviceUplink (ctx, { devEUI, data }) {
   // Ensure application is enabled
   if (!app.running) return
   // Pass data
-  let [ nwkProtos ] = await ctx.$m.networkProtocols.list({ networkType: { id: nwkType.id }, limit: 1 })
+  let [ nwkProtos ] = await ctx.$m.networkProtocols.list({ where: { networkType: { id: nwkType.id } }, limit: 1 })
   const ipProtoHandler = await ctx.$m.networkProtocols.getHandler(nwkProtos[0].id)
   await ipProtoHandler.passDataToApplication(app, device, devEUI, data)
 }
@@ -120,7 +125,7 @@ async function importDevices (ctx, { applicationId, deviceProfileId, devices }) 
       if (!devEUI) {
         throw new Error('devEUI required for each imported device.')
       }
-      const device = await ctx.DB.create({
+      const device = await ctx.db.create({
         name: name || devEUI,
         applicationId,
         description,

@@ -1,7 +1,7 @@
-const { normalizeDevEUI } = require('../lib/utils')
+const { normalizeDevEUI } = require('../../lib/utils')
 const R = require('ramda')
 const httpError = require('http-errors')
-const { load, list, removeMany } = require('./model-lib')
+const { load, list, removeMany } = require('../model-lib')
 
 //* *****************************************************************************
 // Fragments for how the data should be returned from Prisma.
@@ -9,7 +9,7 @@ const { load, list, removeMany } = require('./model-lib')
 const fragments = {
   basic: `fragment BasicDeviceNetworkTypeLink on DeviceNetworkTypeLink {
     id
-    settings
+    networkSettings
     enabled
     device {
       id
@@ -28,13 +28,15 @@ const fragments = {
 // ******************************************************************************
 async function create (ctx, { data, remoteOrigin = false }) {
   try {
-    if (data.settings && data.settings.devEUI) {
-      data = R.assocPath(['settings', 'devEUI'], normalizeDevEUI(data.settings.devEUI), data)
+    if (data.networkSettings && data.networkSettings.devEUI) {
+      data = R.assocPath(['networkSettings', 'devEUI'], normalizeDevEUI(data.networkSettings.devEUI), data)
     }
-    const rec = await ctx.DB.create({ data })
+    const rec = await ctx.db.create({ data })
     if (!remoteOrigin) {
-      var logs = await ctx.$m.networkTypeAPI.addDevice(data)
-      rec.remoteAccessLogs = logs
+      rec.remoteAccessLogs = await ctx.$.m.networkTypes.forAllNetworks({
+        networkTypeId: rec.networkType.id,
+        op: network => ctx.$m.networkProtocols.addDevice({ network, deviceNetworkTypeLink: rec })
+      })
     }
     return rec
   }
@@ -50,13 +52,15 @@ async function update (ctx, { where, data }) {
     if (data.applicationId || data.networkTypeId) {
       throw httpError(403, 'Cannot change link targets')
     }
-    if (data.settings && data.settings.devEUI) {
-      data.settings.devEUI = normalizeDevEUI(data.settings.devEUI)
+    if (data.networkSettings && data.networkSettings.devEUI) {
+      data.networkSettings.devEUI = normalizeDevEUI(data.networkSettings.devEUI)
     }
-    const rec = await ctx.DB.update({ where, data })
+    const rec = await ctx.db.update({ where, data })
     const device = await ctx.$m.devices.load({ where: rec.device })
-    var logs = await ctx.$m.networkTypeAPI.pushDevice(rec.networkType.id, device)
-    rec.remoteAccessLogs = logs
+    rec.remoteAccessLogs = await ctx.$.m.networkTypes.forAllNetworks({
+      networkTypeId: rec.networkType.id,
+      op: network => ctx.$m.networkProtocols.pushDevice({ network, device })
+    })
     return rec
   }
   catch (err) {
@@ -67,13 +71,13 @@ async function update (ctx, { where, data }) {
 
 async function remove (ctx, id) {
   try {
-    const rec = await ctx.DB.load({ where: { id } })
+    const rec = await ctx.db.load({ where: { id } })
     // Don't delete the local record until the remote operations complete.
-    var logs = await ctx.$m.networkTypeAPI.deleteDevice({
+    const logs = await ctx.$.m.networkTypes.forAllNetworks({
       networkTypeId: rec.networkType.id,
-      deviceId: rec.device.id
+      op: network => ctx.$m.networkProtocols.deleteDevice({ network, deviceId: rec.device.id })
     })
-    await ctx.DB.remove(id)
+    await ctx.db.remove(id)
     return logs
   }
   catch (err) {
@@ -84,13 +88,15 @@ async function remove (ctx, id) {
 
 async function pushDeviceNetworkTypeLink (ctx, id) {
   try {
-    var rec = await ctx.DB.load({ where: { id } })
-    var logs = await ctx.$m.networkTypeAPI.pushDevice({
+    var rec = await ctx.db.load({ where: { id } })
+    rec.remoteAccessLogs = await ctx.$.m.networkTypes.forAllNetworks({
       networkTypeId: rec.networkType.id,
-      deviceId: rec.device.id,
-      settings: rec.settings
+      op: network => ctx.$m.networkProtocols.pushDevice({
+        network,
+        deviceId: rec.device.id,
+        networkSettings: rec.networkSettings
+      })
     })
-    rec.remoteAccessLogs = logs
     return rec
   }
   catch (err) {
@@ -104,12 +110,12 @@ async function findByDevEUI (ctx, { devEUI, networkTypeId }) {
   // Check cache for devNtl ID
   let devNtlId = await ctx.redis.keyval.getAsync(`ip-devNtl-${devEUI}`)
   if (devNtlId) {
-    devNtl = await ctx.DB.load({ id: devNtlId })
+    devNtl = await ctx.db.load({ id: devNtlId })
     if (!devNtl) await ctx.redis.keyval.delAsync(`ip-devNtl-${devEUI}`)
   }
   else {
-    const devNTLQuery = { networkType: { id: networkTypeId }, settings_contains: devEUI }
-    let [ devNtls ] = await ctx.DB.list(devNTLQuery)
+    const devNTLQuery = { networkType: { id: networkTypeId }, networkSettings_contains: devEUI }
+    let [ devNtls ] = await ctx.db.list({ where: devNTLQuery })
     devNtl = devNtls[0]
     if (devNtl) await ctx.redis.keyval.setAsync(`ip-devNtl-${devEUI}`, devNtl.id)
   }

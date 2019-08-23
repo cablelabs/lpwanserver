@@ -1,7 +1,6 @@
 const config = require('./config')
 const { log } = require('./log')
 const { createRestServer } = require('./rest-server')
-const models = require('./models')
 
 // uncaughtExceptions
 // uncaughtExceptions are handled and logged by winston
@@ -16,8 +15,6 @@ process.on('warning', warning => {
 })
 
 async function main () {
-  await models.initialize()
-
   const restServer = await createRestServer()
 
   const shutdown = (staticMeta = {}) => (dynamicMeta = {}) => {
@@ -41,5 +38,5 @@ async function main () {
 }
 
 main().catch(err => {
-  log({ ...err, message: `${err}`, level: 'error' })
+  log.log({ ...err, message: `${err}`, level: 'error' })
 })

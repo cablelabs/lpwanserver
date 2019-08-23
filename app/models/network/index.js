@@ -1,9 +1,8 @@
-const NetworkProtocolDataAccess = require('../networkProtocols/networkProtocolDataAccess')
 const R = require('ramda')
 // const httpError = require('http-errors')
-const { renameKeys } = require('../lib/utils')
-const { encrypt, decrypt, genKey } = require('../lib/crypto')
-const { listAll } = require('./Model')
+const { renameKeys } = require('../../lib/utils')
+const { encrypt, decrypt, genKey } = require('../../lib/crypto')
+const { listAll } = require('../model-lib')
 
 //* *****************************************************************************
 // Fragments for how the data should be returned from Prisma.
@@ -13,9 +12,12 @@ const fragments = {
     id
     name
     enabled
-    settings
+    baseUrl
     securityData
     networkProtocol {
+      id
+    }
+    networkType {
       id
     }
   }`
@@ -44,22 +46,22 @@ async function create (ctx, { data }) {
     data.securityData = R.merge(securityDataDefaults, data.securityData)
     data.securityData = encrypt(data.securityData, k)
   }
-  let record = await ctx.DB.create({ data })
+  let record = await ctx.db.create({ data })
   if (record.securityData) {
-    await ctx.$m.protocolData.upsert(record, genNwkKey(record.id), k)
+    await ctx.$m.protocolData.upsert([record, genNwkKey(record.id), k])
     record.securityData = decrypt(record.securityData, k)
     let { securityData } = await ctx.$self.authorizeAndTest(record)
     securityData = encrypt(securityData, k)
-    await ctx.DB.update({ where: { id: record.id }, data: { securityData } })
+    await ctx.db.update({ where: { id: record.id }, data: { securityData } })
   }
   return ctx.$self.load({ where: { id: record.id } })
 }
 
 async function list (ctx, { where = {}, ...opts }) {
-  let [ records, totalCount ] = await ctx.DB.list({ where: renameQueryKeys(where), ...opts })
+  let [ records, totalCount ] = await ctx.db.list({ where: renameQueryKeys(where), ...opts })
   records = await Promise.all(records.map(async rec => {
     if (!rec.securityData) return rec
-    let k = await ctx.$m.protocolData.loadValue(rec, genNwkKey(rec.id))
+    let k = await ctx.$m.protocolData.loadValue([rec, genNwkKey(rec.id)])
     const securityData = await decrypt(rec.securityData, k)
     return { ...rec, securityData }
   }))
@@ -67,37 +69,34 @@ async function list (ctx, { where = {}, ...opts }) {
 }
 
 async function load (ctx, args) {
-  const rec = await ctx.DB.load(args)
+  const rec = await ctx.db.load(args)
   if (rec.securityData) {
-    let k = await ctx.$m.protocolData.loadValue(rec, genNwkKey(rec.id))
+    let k = await ctx.$m.protocolData.loadValue([rec, genNwkKey(rec.id)])
     rec.securityData = await decrypt(rec.securityData, k)
   }
   return rec
 }
 
 async function update (ctx, { where, data }) {
-  const old = await ctx.DB.load({ where })
-  const k = await ctx.$m.protocolData.loadValue({
-    network: old,
-    dataIdentifier: genNwkKey(old.id)
-  })
+  const old = await ctx.db.load({ where })
+  const k = await ctx.$m.protocolData.loadValue([old, genNwkKey(old.id)])
   const candidate = R.merge(old, data)
   let { securityData } = await ctx.$self.authorizeAndTest(candidate)
   if (data.securityData) {
     data.securityData = encrypt(securityData, k)
   }
-  await ctx.DB.update({ where, data })
+  await ctx.db.update({ where, data })
   return ctx.$self.load({ where })
 }
 
 async function remove (ctx, id) {
-  let old = await ctx.DB.load({ where: { id } })
+  let old = await ctx.db.load({ where: { id } })
   await ctx.$m.protocolData.clearProtocolData({
     networkId: id,
     networkProtocolId: old.networkProtocol.id,
     keyStartsWith: genNwkKey(id)
   })
-  await ctx.DB.remove(id)
+  await ctx.db.remove(id)
 }
 
 async function authorizeAndTest (ctx, network) {
@@ -105,15 +104,15 @@ async function authorizeAndTest (ctx, network) {
     return network
   }
   try {
-    await ctx.$m.networkProtocolAPI.connect(network)
+    await ctx.$m.networkProtocols.connect({ network })
     network.securityData.authorized = true
     try {
-      await ctx.$m.networkProtocolAPI.test(network)
-      ctx.log.info('Test Success ' + network.name, 'info')
+      await ctx.$m.networkProtocols.test({ network })
+      ctx.log.info('Network Test Success', { network: network.name })
       network.securityData.message = 'ok'
     }
     catch (err) {
-      ctx.log.error('Test of ' + network.name + ':', err)
+      ctx.log.error(`Network Test Failure: ${err}`, { network: network.name, error: err })
       network.securityData.authorized = false
       network.securityData.message = err.toString()
     }
@@ -144,10 +143,7 @@ async function pullNetwork (ctx, id) {
     if (!network.securityData.authorized) {
       throw new Error('Network is not authorized.  Cannot pull')
     }
-    let networkType = await ctx.$m.networkTypes.load({ id: network.networkType.id })
-    var npda = new NetworkProtocolDataAccess(ctx.$m, 'Pull Network')
-    npda.initLog(networkType, network)
-    let result = await ctx.$m.networkProtocolAPI.pullNetwork({ npda, network })
+    let result = await ctx.$m.networkProtocols.pullNetwork({ network })
     ctx.log.info('Success pulling from Network : ' + id)
     return result
   }
@@ -160,10 +156,7 @@ async function pullNetwork (ctx, id) {
 async function pushNetwork (ctx, id) {
   try {
     let network = await ctx.$self.load({ where: { id } })
-    let networkType = await ctx.$m.networkTypes.load({ id: network.networkType.id })
-    var npda = new NetworkProtocolDataAccess(this.$m, 'Push Network')
-    npda.initLog(networkType, network)
-    let result = await ctx.$m.networkProtocolAPI.pushNetwork({ npda, network })
+    let result = await ctx.$m.networkProtcols.pushNetwork({ network })
     ctx.log.info('Success pushing to Network : ' + id)
     return result
   }
@@ -175,12 +168,9 @@ async function pushNetwork (ctx, id) {
 
 async function pushNetworks (ctx, networkTypeId) {
   try {
-    let networkType = await ctx.$m.networkTypes.load({ id: networkTypeId })
-    var npda = new NetworkProtocolDataAccess(ctx.$m, 'Push Network')
     for await (let state of ctx.$self.listAll({ where: { networkTypeId } })) {
-      npda.initLog(networkType, state.records)
-      let records = state.records.filter(R.path(['securityData', 'authorized']))
-      await Promise.all(records.map(rec => ctx.$m.networkProtocolAPI.pushNetwork({ npda, rec })))
+      let networks = state.records.filter(R.path(['securityData', 'authorized']))
+      await Promise.all(networks.map(network => ctx.$m.networkProtcols.pushNetwork({ network })))
     }
     ctx.log.info('Success pushing to Networks')
   }

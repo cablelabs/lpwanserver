@@ -59,7 +59,7 @@ describe('E2E Test for Deleting an Application Use Case #191', () => {
     it('Admin Login to LPWan Server', (done) => {
       server
         .post('/api/sessions')
-        .send({'login_username': 'admin', 'login_password': 'password'})
+        .send({'username': 'admin', 'password': 'password'})
         .end(function (err, res) {
           if (err) done(err)
           res.should.have.status(200)
@@ -103,7 +103,7 @@ describe('E2E Test for Deleting an Application Use Case #191', () => {
     })
     it('Create Network Type Links for Application', function (done) {
       server
-        .post('/api/applicationNetworkTypeLinks')
+        .post('/api/application-network-type-links')
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .send(testData.appNTL)
@@ -116,7 +116,7 @@ describe('E2E Test for Deleting an Application Use Case #191', () => {
     })
     it('should return 200 on get', function (done) {
       server
-        .get('/api/applicationNetworkTypeLinks/' + testData.appNTL.id)
+        .get('/api/application-network-type-links/' + testData.appNTL.id)
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .send()
@@ -131,7 +131,7 @@ describe('E2E Test for Deleting an Application Use Case #191', () => {
   describe('Create Device Profile for Application', () => {
     it('Create Device Profile', function (done) {
       server
-        .post('/api/deviceProfiles')
+        .post('/api/device-profiles')
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .send(testData.deviceProfile)
@@ -145,7 +145,7 @@ describe('E2E Test for Deleting an Application Use Case #191', () => {
     })
     it('should return 200 on get', function (done) {
       server
-        .get('/api/deviceProfiles/' + testData.deviceProfile.id)
+        .get('/api/device-profiles/' + testData.deviceProfile.id)
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .send()
@@ -196,7 +196,7 @@ describe('E2E Test for Deleting an Application Use Case #191', () => {
     })
     it('Create Device NTL', function (done) {
       server
-        .post('/api/deviceNetworkTypeLinks')
+        .post('/api/device-network-type-links')
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .send(testData.deviceNTL)
@@ -211,7 +211,7 @@ describe('E2E Test for Deleting an Application Use Case #191', () => {
 
     it('should return 200 on get', function (done) {
       server
-        .get('/api/deviceNetworkTypeLinks/' + testData.deviceNTL.id)
+        .get('/api/device-network-type-links/' + testData.deviceNTL.id)
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .send()
@@ -358,7 +358,7 @@ describe('E2E Test for Deleting an Application Use Case #191', () => {
   describe('Remove Device from Application', () => {
     it('Delete Device NTL', function (done) {
       server
-        .delete(`/api/deviceNetworkTypeLinks/${testData.deviceNTL.id}`)
+        .delete(`/api/device-network-type-links/${testData.deviceNTL.id}`)
         .set('Authorization', 'Bearer ' + adminToken)
         .send()
         .end(function (err, res) {
@@ -368,7 +368,7 @@ describe('E2E Test for Deleting an Application Use Case #191', () => {
     })
     it('should return 404 on get', function (done) {
       server
-        .get(`/api/deviceNetworkTypeLinks/${testData.deviceNTL.id}`)
+        .get(`/api/device-network-type-links/${testData.deviceNTL.id}`)
         .set('Authorization', 'Bearer ' + adminToken)
         .send()
         .end(function (err, res) {
@@ -398,7 +398,7 @@ describe('E2E Test for Deleting an Application Use Case #191', () => {
     })
     it('Delete Device Profile', function (done) {
       server
-        .delete('/api/deviceProfiles/' + testData.deviceProfile.id)
+        .delete('/api/device-profiles/' + testData.deviceProfile.id)
         .set('Authorization', 'Bearer ' + adminToken)
         .send()
         .end(function (err, res) {
@@ -408,7 +408,7 @@ describe('E2E Test for Deleting an Application Use Case #191', () => {
     })
     it('should return 404 on get', function (done) {
       server
-        .get('/api/deviceProfiles/' + testData.deviceProfile.id)
+        .get('/api/device-profiles/' + testData.deviceProfile.id)
         .set('Authorization', 'Bearer ' + adminToken)
         .send()
         .end(function (err, res) {
@@ -464,7 +464,7 @@ describe('E2E Test for Deleting an Application Use Case #191', () => {
   describe('Delete Application', () => {
     it('Delete Network Type Links for Application', function (done) {
       server
-        .delete('/api/applicationNetworkTypeLinks/' + testData.appNTL.id)
+        .delete('/api/application-network-type-links/' + testData.appNTL.id)
         .set('Authorization', 'Bearer ' + adminToken)
         .send()
         .end(function (err, res) {
@@ -474,7 +474,7 @@ describe('E2E Test for Deleting an Application Use Case #191', () => {
     })
     it('should return 404 on get', function (done) {
       server
-        .get('/api/applicationNetworkTypeLinks/' + testData.appNTL.id)
+        .get('/api/application-network-type-links/' + testData.appNTL.id)
         .set('Authorization', 'Bearer ' + adminToken)
         .send()
         .end(function (err, res) {

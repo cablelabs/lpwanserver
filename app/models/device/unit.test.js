@@ -10,19 +10,19 @@ describe('Device Model', () => {
       name: 'updated name'
     }
     let ctx = {
-      DB: {
+      db: {
         update: jest.fn()
       }
     }
     await api.update(ctx, { where: { id: 'a' }, data })
-    expect(ctx.DB.update.mock.calls[0][0].data).toEqual(data)
+    expect(ctx.db.update.mock.calls[0][0].data).toEqual(data)
   })
   it('Remove Device', async () => {
     let ctx = {
       $m: {
         deviceNetworkTypeLinks: { removeMany: jest.fn(generator) }
       },
-      DB: {
+      db: {
         remove: jest.fn()
       }
     }
@@ -30,7 +30,7 @@ describe('Device Model', () => {
     const expectedRemoveManyArgs = { where: { device: { id } } }
     await api.remove(ctx, id)
     expect(ctx.$m.deviceNetworkTypeLinks.removeMany.mock.calls[0][0]).toEqual(expectedRemoveManyArgs)
-    expect(ctx.DB.remove.mock.calls[0][0]).toBe(id)
+    expect(ctx.db.remove.mock.calls[0][0]).toBe(id)
   })
 
 })

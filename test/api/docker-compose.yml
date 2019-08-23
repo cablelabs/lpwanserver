@@ -12,6 +12,7 @@ services:
       - '3200:3200'
     environment:
       - config_file=../config.json
+      - log_level=silly
 networks:
   lpwanserver_dev:
     name: lpwanserver_dev

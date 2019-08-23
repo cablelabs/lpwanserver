@@ -1,5 +1,5 @@
 var httpError = require('http-errors')
-const { list, listAll, load } = require('./Model')
+const { list, listAll, load } = require('../model-lib')
 // const mail = require('nodemailer')
 const os = require('os')
 const dns = require('dns')
@@ -44,14 +44,14 @@ function initialize (ctx) {
 }
 
 function isInUse (ctx, { address }) {
-  return ctx.DB.load({ where: { address } }).then(R.always(true), R.always(false))
+  return ctx.db.load({ where: { address } }).then(R.always(true), R.always(false))
 }
 
 function verifyEmail (ctx, { user, oldAddress }) {
   return Promise.all([
     async () => {
       let verifyToken = uuidv4()
-      await ctx.DB.create({
+      await ctx.db.create({
         user: { id: user.id },
         address: user.email,
         verified: false,
@@ -62,7 +62,7 @@ function verifyEmail (ctx, { user, oldAddress }) {
     async () => {
       if (!oldAddress) return
       let revokeToken = uuidv4()
-      await ctx.DB.update({
+      await ctx.db.update({
         where: { address: oldAddress },
         data: { tokenHash: await crypto.hashString(revokeToken) }
       })
@@ -76,7 +76,7 @@ async function revertToPreviousEmail (ctx, { token }) {
   const tokenHash = crypto.hashString(token)
   let rec
   try {
-    rec = await ctx.DB.load({ where: { tokenHash } })
+    rec = await ctx.db.load({ where: { tokenHash } })
   }
   catch (err) {
     // If email or user not found, throw Unauthorized error
@@ -85,13 +85,13 @@ async function revertToPreviousEmail (ctx, { token }) {
   // Update user's email to rec.address
   await ctx.$m.users.update({ where: rec.user, data: { email: rec.address } })
   // Revoke all Emails created after rec
-  let [recs] = await ctx.DB.list({
+  let [recs] = await ctx.db.list({
     where: {
       user: rec.user,
       createdAt_gt: rec.createdAt
     }
   })
-  await Promise.all(recs.map(x => ctx.DB.update({ where: { id: x.id }, data: { status: 'REVOKED' } })))
+  await Promise.all(recs.map(x => ctx.db.update({ where: { id: x.id }, data: { status: 'REVOKED' } })))
   // send notification emails, to user and admins
 }
 

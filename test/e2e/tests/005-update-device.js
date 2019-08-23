@@ -115,7 +115,7 @@ describe('E2E Test for Updating a Device Use Case #193', () => {
     it('Admin Login to LPWan Server', (done) => {
       server
         .post('/api/sessions')
-        .send({'login_username': 'admin', 'login_password': 'password'})
+        .send({'username': 'admin', 'password': 'password'})
         .end(function (err, res) {
           if (err) done(err)
           if (err) done(err)
@@ -174,7 +174,7 @@ describe('E2E Test for Updating a Device Use Case #193', () => {
     })
     it('Create Network Type Links for Application', function (done) {
       server
-        .post('/api/applicationNetworkTypeLinks')
+        .post('/api/application-network-type-links')
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .send({
@@ -192,7 +192,7 @@ describe('E2E Test for Updating a Device Use Case #193', () => {
     })
     it('should return 200 on get', function (done) {
       server
-        .get('/api/applicationNetworkTypeLinks/' + anlId1)
+        .get('/api/application-network-type-links/' + anlId1)
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .send()
@@ -208,7 +208,7 @@ describe('E2E Test for Updating a Device Use Case #193', () => {
   describe('Create Device Profile for Application', () => {
     it('Create Device Profile', function (done) {
       server
-        .post('/api/deviceProfiles')
+        .post('/api/device-profiles')
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .send(deviceProfile)
@@ -222,7 +222,7 @@ describe('E2E Test for Updating a Device Use Case #193', () => {
     })
     it('should return 200 on get', function (done) {
       server
-        .get('/api/deviceProfiles/' + dpId1)
+        .get('/api/device-profiles/' + dpId1)
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .send()
@@ -275,7 +275,7 @@ describe('E2E Test for Updating a Device Use Case #193', () => {
       deviceNTL.deviceId = deviceId1
       deviceNTL.deviceProfileId = dpId1
       server
-        .post('/api/deviceNetworkTypeLinks')
+        .post('/api/device-network-type-links')
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .send(deviceNTL)
@@ -291,7 +291,7 @@ describe('E2E Test for Updating a Device Use Case #193', () => {
 
     it('should return 200 on get', function (done) {
       server
-        .get('/api/deviceNetworkTypeLinks/' + dnlId1)
+        .get('/api/device-network-type-links/' + dnlId1)
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .send()
@@ -448,7 +448,7 @@ describe('E2E Test for Updating a Device Use Case #193', () => {
     })
     it('Update Network Type Links for Application', function (done) {
       server
-        .put('/api/deviceNetworkTypeLinks/' + dnlId1)
+        .put('/api/device-network-type-links/' + dnlId1)
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .send({
@@ -463,7 +463,7 @@ describe('E2E Test for Updating a Device Use Case #193', () => {
     })
     it('Verify Device NTL Updated', function (done) {
       server
-        .get('/api/deviceNetworkTypeLinks/' + dnlId1)
+        .get('/api/device-network-type-links/' + dnlId1)
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .send()

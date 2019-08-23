@@ -27,9 +27,9 @@ function authorize (permissions = []) {
     }
     // Overwrite req.user with User record
     req.jwtPayload = req.user
-    req.user = await users.load(req.user.user)
+    req.user = await users.load({ where: { id: req.user.user } })
     // Ensure user has required permissions for operation
-    if (permissions.length && !users.hasPermissions(req.user, permissions)) {
+    if (permissions.length && !users.hasPermissions({ permissions }, { user: req.user })) {
       log.info('HTTP request failed due to lack of permissions', {
         jwt: req.jwtPayload,
         requiredPermissions: permissions,
