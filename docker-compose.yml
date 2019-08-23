@@ -13,7 +13,7 @@ services:
       - '3200:3200'
     environment:
       - port=3200
-      - config_file=config/dev.json
+      - config_file=../config.json
     volumes:
       - ./development/config.json:/usr/src/config.json
       - ./certs:/usr/src/certs
