@@ -24,7 +24,7 @@ const siteConfig = {
   title: 'LPWAN Server',
   tagline: 'LPWAN Provisioning and Management',
   url: 'https://cablelabs.github.io',
-  baseUrl: '/lpwanserver/',
+  baseUrl: '/',
   cname: 'lpwanserver.com',
 
   // Used for publishing and more
