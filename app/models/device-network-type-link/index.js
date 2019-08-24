@@ -31,7 +31,7 @@ async function create (ctx, { data, remoteOrigin = false }) {
     if (data.networkSettings && data.networkSettings.devEUI) {
       data = R.assocPath(['networkSettings', 'devEUI'], normalizeDevEUI(data.networkSettings.devEUI), data)
     }
-    const rec = await ctx.db.create({ data })
+    const rec = await ctx.db.create({ data: { enabled: true, ...data } })
     if (!remoteOrigin) {
       rec.remoteAccessLogs = await ctx.$.m.networkTypes.forAllNetworks({
         networkTypeId: rec.networkType.id,

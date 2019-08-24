@@ -7,7 +7,6 @@ const { prisma } = require('../../../app/generated/prisma-client')
 
 chai.use(chaiHttp)
 var server
-let companyId
 
 describe('Devices', function () {
   var adminToken
@@ -20,15 +19,12 @@ describe('Devices', function () {
       .post('/api/sessions')
       .send({ 'username': 'admin', 'password': 'password' })
     adminToken = res.text
-    const cos = await prisma.companies({ first: 1 })
-    companyId = cos[0].id
     const reportingProtocols = await prisma.reportingProtocols({ first: 1 })
     res = await server
       .post('/api/applications')
       .set('Authorization', 'Bearer ' + adminToken)
       .set('Content-Type', 'application/json')
       .send({
-        'companyId': companyId,
         'name': 'MyGetRichQuickApp2',
         'description': 'A really good idea that was boring',
         'baseUrl': 'http://localhost:5086',

@@ -53,7 +53,12 @@ async function create (ctx, { data }) {
     let { securityData } = await ctx.$self.authorizeAndTest(record)
     securityData = encrypt(securityData, k)
     await ctx.db.update({ where: { id: record.id }, data: { securityData } })
+    await ctx.$self.pullNetwork({ id: record.id })
   }
+  await ctx.$m.networkTypes.forAllNetworks({
+    networkTypeId: record.networkType.id,
+    op: network => ctx.$self.pushNetwork({ id: network.id })
+  })
   return ctx.$self.load({ where: { id: record.id } })
 }
 
@@ -91,11 +96,7 @@ async function update (ctx, { where, data }) {
 
 async function remove (ctx, id) {
   let old = await ctx.db.load({ where: { id } })
-  await ctx.$m.protocolData.clearProtocolData({
-    networkId: id,
-    networkProtocolId: old.networkProtocol.id,
-    keyStartsWith: genNwkKey(id)
-  })
+  await ctx.$m.protocolData.clearProtocolData([id, old.networkProtocol.id, genNwkKey(id)])
   await ctx.db.remove(id)
 }
 
@@ -137,7 +138,7 @@ async function authorizeAndTest (ctx, network) {
   }
 }
 
-async function pullNetwork (ctx, id) {
+async function pullNetwork (ctx, { id }) {
   try {
     let network = await ctx.$self.load({ where: { id } })
     if (!network.securityData.authorized) {
@@ -153,7 +154,7 @@ async function pullNetwork (ctx, id) {
   }
 }
 
-async function pushNetwork (ctx, id) {
+async function pushNetwork (ctx, { id }) {
   try {
     let network = await ctx.$self.load({ where: { id } })
     let result = await ctx.$m.networkProtcols.pushNetwork({ network })
@@ -162,20 +163,6 @@ async function pushNetwork (ctx, id) {
   }
   catch (err) {
     ctx.log.error('Error pushing to Network : ' + id + ':', err)
-    throw err
-  }
-}
-
-async function pushNetworks (ctx, networkTypeId) {
-  try {
-    for await (let state of ctx.$self.listAll({ where: { networkTypeId } })) {
-      let networks = state.records.filter(R.path(['securityData', 'authorized']))
-      await Promise.all(networks.map(network => ctx.$m.networkProtcols.pushNetwork({ network })))
-    }
-    ctx.log.info('Success pushing to Networks')
-  }
-  catch (err) {
-    ctx.log.error('Error pushing to Networks : ' + ':', err)
     throw err
   }
 }
@@ -193,8 +180,7 @@ module.exports = {
     remove,
     authorizeAndTest,
     pullNetwork,
-    pushNetwork,
-    pushNetworks
+    pushNetwork
   },
   fragments
 }

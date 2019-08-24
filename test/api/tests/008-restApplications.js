@@ -7,7 +7,6 @@ const { prisma } = require('../../../app/generated/prisma-client')
 
 chai.use(chaiHttp)
 var server
-let companyId
 let reportingProtocolId
 
 describe('Applications', function () {
@@ -20,8 +19,6 @@ describe('Applications', function () {
       .post('/api/sessions')
       .send({ 'username': 'admin', 'password': 'password' })
     adminToken = res.text
-    const cos = await prisma.companies({ first: 1 })
-    companyId = cos[0].id
     const reportingProtos = await prisma.reportingProtocols({ first: 1 })
     reportingProtocolId = reportingProtos[0].id
   })
@@ -34,14 +31,15 @@ describe('Applications', function () {
         .post('/api/applications')
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
-        .send({ 'companyId': companyId,
+        .send({
           'name': 'MyGetRichQuickApp',
           'description': 'A really good idea that was boring',
           'baseUrl': 'http://localhost:5086',
-          'reportingProtocolId': reportingProtocolId })
+          'reportingProtocolId': reportingProtocolId
+        })
         .end(function (err, res) {
           if (err) return done(err)
-          res.should.have.status(200)
+          res.should.have.status(201)
           var ret = JSON.parse(res.text)
           appId1 = ret.id
 
@@ -54,14 +52,15 @@ describe('Applications', function () {
         .post('/api/applications')
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
-        .send({ 'companyId': companyId,
+        .send({
           'name': 'MyEnterpriseApp',
           'description': 'Ugh, enterprise apps',
           'baseUrl': 'http://localhost:5086',
-          'reportingProtocolId': reportingProtocolId })
+          'reportingProtocolId': reportingProtocolId
+        })
         .end(function (err, res) {
           if (err) return done(err)
-          res.should.have.status(200)
+          res.should.have.status(201)
           var ret = JSON.parse(res.text)
           appId2 = ret.id
           done()

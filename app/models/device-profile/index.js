@@ -19,11 +19,11 @@ const fragments = {
 // ******************************************************************************
 // Model Functions
 // ******************************************************************************
-async function create (ctx, { data, remoteOrigin = false } = {}) {
+async function create (ctx, { data, remoteOrigin = false }) {
   try {
-    const rec = await ctx.db.create(data)
+    const rec = await ctx.db.create({ data })
     if (!remoteOrigin) {
-      rec.remoteAccessLogs = await ctx.$.m.networkTypes.forAllNetworks({
+      rec.remoteAccessLogs = await ctx.$m.networkTypes.forAllNetworks({
         networkTypeId: data.networkTypeId,
         op: network => ctx.$m.networkProtocols.addDeviceProfile({ network, deviceProfileId: rec.id })
       })
@@ -39,7 +39,7 @@ async function create (ctx, { data, remoteOrigin = false } = {}) {
 async function update (ctx, args) {
   try {
     const rec = await ctx.db.update(args)
-    rec.remoteAccessLogs = await ctx.$.m.networkTypes.forAllNetworks({
+    rec.remoteAccessLogs = await ctx.$m.networkTypes.forAllNetworks({
       networkTypeId: rec.networkType.id,
       op: network => ctx.$m.networkProtocols.pushDeviceProfile({ network, deviceProfileId: rec.id })
     })
@@ -55,7 +55,7 @@ async function remove (ctx, id) {
   try {
     var rec = await ctx.db.load({ where: { id } })
     // Don't delete the local record until the remote operations complete.
-    const logs = await ctx.$.m.networkTypes.forAllNetworks({
+    const logs = await ctx.$m.networkTypes.forAllNetworks({
       networkTypeId: rec.networkType.id,
       op: network => ctx.$m.networkProtocols.deleteDeviceProfile({ network, deviceProfileId: id })
     })
@@ -71,7 +71,7 @@ async function remove (ctx, id) {
 async function pushDeviceProfile (ctx, id) {
   try {
     var rec = await ctx.db.load({ where: { id } })
-    const logs = await ctx.$.m.networkTypes.forAllNetworks({
+    const logs = await ctx.$m.networkTypes.forAllNetworks({
       networkTypeId: rec.networkType.id,
       op: network => ctx.$m.networkProtocols.pushDeviceProfile({ network, deviceProfileId: id })
     })

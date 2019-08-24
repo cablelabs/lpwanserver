@@ -28,10 +28,10 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
   async subscribeToDataForEnabledApps () {
     const nwkType = await this.modelAPI.networkTypes.load({ where: { name: 'LoRa' } })
     const antlQuery = { networkType: { id: nwkType.id } }
-    const [ antls ] = await this.modelAPI.applicationNetworkTypeLinks.list(antlQuery)
+    const [ antls ] = await this.modelAPI.applicationNetworkTypeLinks.list({ where: antlQuery })
     let appIds = antls.map(R.path(['application', 'id']))
     const networkQuery = { networkProtocol: { id: this.networkProtocolId } }
-    const [ networks ] = await this.modelAPI.networks.list(networkQuery)
+    const [ networks ] = await this.modelAPI.networks.list({ where: networkQuery })
     try {
       const promises = R.flatten(networks.map(nwk => appIds.map(id => this.startApplication(nwk, id))))
       await Promise.all(promises)

@@ -109,7 +109,7 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
     ))
   }
 
-  async pullDeviceProfiles ({ network }) {
+  async pullDeviceProfiles (network) {
     const { result } = await this.client.listDeviceProfiles(network, {
       limit: 9999,
       offset: 0

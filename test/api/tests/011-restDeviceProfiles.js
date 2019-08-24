@@ -7,7 +7,6 @@ const { prisma } = require('../../../app/generated/prisma-client')
 
 chai.use(chaiHttp)
 var server
-let companyId
 let nwkTypeId
 
 describe('DeviceProfiles', function () {
@@ -20,8 +19,6 @@ describe('DeviceProfiles', function () {
       .post('/api/sessions')
       .send({ 'username': 'admin', 'password': 'password' })
     adminToken = res.text
-    const cos = await prisma.companies()
-    companyId = cos[0].id
     const nwkTypes = await prisma.networkTypes()
     nwkTypeId = nwkTypes[0].id
   })
@@ -35,14 +32,15 @@ describe('DeviceProfiles', function () {
         .post('/api/device-profiles')
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
-        .send({ 'networkTypeId': nwkTypeId,
-          'companyId': companyId,
+        .send({
+          'networkTypeId': nwkTypeId,
           'name': 'LoRaGPSNode',
           'description': 'GPS Node that works with LoRa',
-          'networkSettings': { 'foo': 'bar' } })
+          'networkSettings': { 'foo': 'bar' }
+        })
         .end(function (err, res) {
           if (err) return done(err)
-          res.should.have.status(200)
+          res.should.have.status(201)
           var ret = JSON.parse(res.text)
           dpId1 = ret.id
 
@@ -55,14 +53,15 @@ describe('DeviceProfiles', function () {
         .post('/api/device-profiles')
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
-        .send({ 'networkTypeId': nwkTypeId,
-          'companyId': companyId,
+        .send({
+          'networkTypeId': nwkTypeId,
           'name': 'LoRaWeatherNode',
           'description': 'GPS Node that works with LoRa',
-          'networkSettings': { 'tempType': 'C' } })
+          'networkSettings': { 'tempType': 'C' }
+        })
         .end(function (err, res) {
           if (err) return done(err)
-          res.should.have.status(200)
+          res.should.have.status(201)
           var ret = JSON.parse(res.text)
           dpId2 = ret.id
           done()
@@ -82,7 +81,6 @@ describe('DeviceProfiles', function () {
           dpObj.name.should.equal('LoRaGPSNode')
           dpObj.description.should.equal('GPS Node that works with LoRa')
           dpObj.networkTypeId.should.equal(nwkTypeId)
-          dpObj.companyId.should.equal(companyId)
           done()
         })
     })
@@ -266,7 +264,7 @@ describe('DeviceProfiles', function () {
         .set('Authorization', 'Bearer ' + adminToken)
         .end(function (err, res) {
           if (err) return done(err)
-          res.should.have.status(200)
+          res.should.have.status(204)
           done()
         })
     })

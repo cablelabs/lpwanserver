@@ -29,7 +29,7 @@ function create (ctx, args) {
 
 const renameQueryKeys = renameKeys({ search: 'name_contains' })
 
-function list (ctx, { where = {}, ...opts }) {
+function list (ctx, { where = {}, ...opts } = {}) {
   return ctx.db.list({ where: renameQueryKeys(where), ...opts })
 }
 
@@ -51,7 +51,7 @@ async function * removeMany (ctx, { where, limit = 100 }) {
   let remaining = Infinity
   while (remaining > 0) {
     let [records, count] = await ctx.$self.list({ where, offset, limit, includeTotal: true })
-    await Promise.all(records.map(x => ctx.$self.remove({ where: { id: x.id } })))
+    await Promise.all(records.map(x => ctx.$self.remove(x.id)))
     offset = offset + limit
     remaining = count - limit
     yield {

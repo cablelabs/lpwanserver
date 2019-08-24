@@ -11,7 +11,7 @@ chai.use(chaiHttp)
 var server
 let nwkTypeId
 
-describe.only('Networks', function () {
+describe('Networks', function () {
   var adminToken
   var npId1
 

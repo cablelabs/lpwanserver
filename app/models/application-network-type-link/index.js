@@ -24,7 +24,7 @@ const fragments = {
 // ******************************************************************************
 async function create (ctx, { data, remoteOrigin = false }) {
   try {
-    const rec = await ctx.db.create({ data })
+    const rec = await ctx.db.create({ data: { enabled: true, ...data } })
     if (!remoteOrigin) {
       rec.remoteAccessLogs = ctx.$.m.networkTypes.forAllNetworks({
         networkTypeId: rec.networkType.id,
