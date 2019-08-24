@@ -38,7 +38,7 @@ describe.skip('DeviceNetworkTypeLinks', function () {
         })
     })
 
-    it('should return 200 on admin', function (done) {
+    it('should return 201 on admin', function (done) {
       server
         .post('/api/device-network-type-links')
         .set('Authorization', 'Bearer ' + adminToken)
@@ -50,14 +50,14 @@ describe.skip('DeviceNetworkTypeLinks', function () {
             'appKey': '11223344556677889900112233445566' }
         })
         .end(function (err, res) {
-          res.should.have.status(200)
+          res.should.have.status(201)
           var dnlObj = JSON.parse(res.text)
           dnlId1 = dnlObj.id
           done()
         })
     })
 
-    it('should return 200 on admin', function (done) {
+    it('should return 201 on admin', function (done) {
       server
         .post('/api/device-network-type-links')
         .set('Authorization', 'Bearer ' + adminToken)
@@ -68,7 +68,7 @@ describe.skip('DeviceNetworkTypeLinks', function () {
           'networkSettings': { 'devEUI': '0080000000000103',
             'appKey': '11223344556677889900112233445567' } })
         .end(function (err, res) {
-          res.should.have.status(200)
+          res.should.have.status(201)
           var dnlObj = JSON.parse(res.text)
           dnlId2 = dnlObj.id
           done()

@@ -56,7 +56,7 @@ async function remove (ctx, id) {
   await ctx.db.remove(id)
 }
 
-async function startApplication (ctx, id) {
+async function start (ctx, id) {
   // Ensure app has a ReportingProtocol
   const [reportingProtocols] = await ctx.$m.applicationReportingProtocols.list({
     where: { application: { id } }
@@ -75,7 +75,7 @@ async function startApplication (ctx, id) {
   return R.flatten(logs)
 }
 
-async function stopApplication (ctx, id) {
+async function stop (ctx, id) {
   // Call stopApplication on NetworkTypes
   let [appNtls] = await ctx.$m.applicationNetworkTypeLinks.list({ where: { application: { id } } })
   let logs = await Promise.all(appNtls.map(
@@ -115,9 +115,9 @@ module.exports = {
     load,
     update,
     remove,
-    passDataToApplication
+    passDataToApplication,
+    start,
+    stop
   },
-  fragments,
-  startApplication,
-  stopApplication
+  fragments
 }

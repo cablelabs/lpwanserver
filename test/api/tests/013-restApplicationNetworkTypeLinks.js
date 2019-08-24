@@ -36,7 +36,7 @@ describe.skip('ApplicationNetworkTypeLinks', function () {
         })
     })
 
-    it('should return 200 on admin', function (done) {
+    it('should return 201 on admin', function (done) {
       server
         .post('/api/application-network-type-links')
         .set('Authorization', 'Bearer ' + adminToken)
@@ -45,7 +45,7 @@ describe.skip('ApplicationNetworkTypeLinks', function () {
           'networkTypeId': 1,
           'networkSettings': { } })
         .end(function (err, res) {
-          res.should.have.status(200)
+          res.should.have.status(201)
           var ret = JSON.parse(res.text)
           anlId1 = ret.id
 
@@ -53,7 +53,7 @@ describe.skip('ApplicationNetworkTypeLinks', function () {
         })
     })
 
-    it('should return 200 on admin', function (done) {
+    it('should return 201 on admin', function (done) {
       server
         .post('/api/application-network-type-links')
         .set('Authorization', 'Bearer ' + adminToken)
@@ -62,7 +62,7 @@ describe.skip('ApplicationNetworkTypeLinks', function () {
           'networkTypeId': 2,
           'networkSettings': { } })
         .end(function (err, res) {
-          res.should.have.status(200)
+          res.should.have.status(201)
           var ret = JSON.parse(res.text)
           anlId2 = ret.id
           done()
@@ -305,7 +305,7 @@ describe.skip('ApplicationNetworkTypeLinks', function () {
         .delete('/api/application-network-type-links/' + anlId2)
         .set('Authorization', 'Bearer ' + adminToken)
         .end(function (err, res) {
-          res.should.have.status(200)
+          res.should.have.status(204)
           done()
         })
     })

@@ -37,7 +37,7 @@ describe('Devices', function () {
   var devId1
   var devId2
   describe('POST /api/devices', function () {
-    it('should return 200 on admin', function (done) {
+    it('should return 201 on admin', function (done) {
       server
         .post('/api/devices')
         .set('Authorization', 'Bearer ' + adminToken)
@@ -48,14 +48,14 @@ describe('Devices', function () {
           'deviceModel': 'Mark1' })
         .end(function (err, res) {
           if (err) return done(err)
-          res.should.have.status(200)
+          res.should.have.status(201)
           var ret = JSON.parse(res.text)
           devId1 = ret.id
           done()
         })
     })
 
-    it('should return 200 on admin', function (done) {
+    it('should return 201 on admin', function (done) {
       server
         .post('/api/devices')
         .set('Authorization', 'Bearer ' + adminToken)
@@ -66,7 +66,7 @@ describe('Devices', function () {
           'deviceModel': 'Mark2' })
         .end(function (err, res) {
           if (err) return done(err)
-          res.should.have.status(200)
+          res.should.have.status(201)
           var ret = JSON.parse(res.text)
           devId2 = ret.id
           done()

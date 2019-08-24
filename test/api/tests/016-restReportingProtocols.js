@@ -8,7 +8,6 @@ chai.use(chaiHttp)
 var server
 
 var npId1
-var npId2
 
 describe('ReportingProtocols', function () {
   var adminToken
@@ -22,38 +21,8 @@ describe('ReportingProtocols', function () {
     adminToken = res.text
   })
 
-  describe('POST /api/reporting-protocols', function () {
-
-    it('should return 200 on creating new reporting Protocol with admin account #1', function (done) {
-      server
-        .post('/api/reporting-protocols')
-        .set('Authorization', 'Bearer ' + adminToken)
-        .set('Content-Type', 'application/json')
-        .send({ 'name': 'LoRa Server', 'networkTypeId': 1, 'protocolHandler': 'LoRaOpenSource.js' })
-        .end(function (err, res) {
-          res.should.have.status(200)
-          var ret = JSON.parse(res.text)
-          npId1 = ret.id
-          done()
-        })
-    })
-
-    it('should return 200 on creating new reporting Protocol with admin account #2', function (done) {
-      server
-        .post('/api/reporting-protocols')
-        .set('Authorization', 'Bearer ' + adminToken)
-        .set('Content-Type', 'application/json')
-        .send({ 'name': 'T-Mobile NB-IoT', 'networkTypeId': 2, 'protocolHandler': 'TMobileNBIoT.js' })
-        .end(function (err, res) {
-          res.should.have.status(200)
-          var ret = JSON.parse(res.text)
-          npId2 = ret.id
-          done()
-        })
-    })
-  })
   describe('GET /api/reporting-protocols', function () {
-    it('should return 200 with 3 protocols on admin', function (done) {
+    it('should return 200 with 1 protocol on admin', function (done) {
       server
         .get('/api/reporting-protocols')
         .set('Authorization', 'Bearer ' + adminToken)
@@ -63,14 +32,15 @@ describe('ReportingProtocols', function () {
           var result = JSON.parse(res.text)
           result.should.have.property('totalCount')
           result.should.have.property('records')
-          result.records.should.have.length(3)
+          result.records.should.have.length(1)
+          npId1 = result.records[0].id
           done()
         })
     })
 
-    it.skip('should return 200 with 1 protocol search NB-IoT', function (done) {
+    it('should return 200 with 1 protocol search POST', function (done) {
       server
-        .get('/api/reporting-protocols?search=%NB-IoT%')
+        .get('/api/reporting-protocols?search=POST')
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {
@@ -83,7 +53,7 @@ describe('ReportingProtocols', function () {
           done()
         })
     })
-    it.skip('should return 200 with 1 protocol limit 1 offset 1', function (done) {
+    it('should return 200 with 0 protocols limit 1 offset 1', function (done) {
       server
         .get('/api/reporting-protocols?limit=1&offset=1')
         .set('Authorization', 'Bearer ' + adminToken)
@@ -93,7 +63,7 @@ describe('ReportingProtocols', function () {
           var result = JSON.parse(res.text)
           result.should.have.property('totalCount')
           result.should.have.property('records')
-          result.records.should.have.length(1)
+          result.records.should.have.length(0)
           result.totalCount.should.equal(1)
           done()
         })
@@ -108,91 +78,6 @@ describe('ReportingProtocols', function () {
         .set('Content-Type', 'application/json')
         .end(function (err, res) {
           res.should.have.status(200)
-          done()
-        })
-    })
-
-    it('should return 200 on user', function (done) {
-      server
-        .get('/api/reporting-protocols/' + npId2)
-        .set('Authorization', 'Bearer ' + adminToken)
-        .set('Content-Type', 'application/json')
-        .end(function (err, res) {
-          res.should.have.status(200)
-          done()
-        })
-    })
-
-    it('should return 200 on admin', function (done) {
-      server
-        .get('/api/reporting-protocols/' + npId2)
-        .set('Authorization', 'Bearer ' + adminToken)
-        .set('Content-Type', 'application/json')
-        .end(function (err, res) {
-          res.should.have.status(200)
-          done()
-        })
-    })
-  })
-
-  describe('PUT /api/reporting-protocols', function () {
-
-    it('should return 204 on admin', function (done) {
-      server
-        .put('/api/reporting-protocols/' + npId2)
-        .set('Authorization', 'Bearer ' + adminToken)
-        .set('Content-Type', 'application/json')
-        .send('{"name": "Sprint NB-IoT" }')
-        .end(function (err, res) {
-          res.should.have.status(204)
-          done()
-        })
-    })
-
-    it('should return 200 on get with new company name', function (done) {
-      server
-        .get('/api/reporting-protocols/' + npId2)
-        .set('Authorization', 'Bearer ' + adminToken)
-        .set('Content-Type', 'application/json')
-        .send()
-        .end(function (err, res) {
-          res.should.have.status(200)
-          var coObj = JSON.parse(res.text)
-          coObj.name.should.equal('Sprint NB-IoT')
-          done()
-        })
-    })
-  })
-
-  describe('DELETE /api/reporting-protocols', function () {
-    it('should return 204 on admin', function (done) {
-      server
-        .delete('/api/reporting-protocols/' + npId1)
-        .set('Authorization', 'Bearer ' + adminToken)
-        .end(function (err, res) {
-          res.should.have.status(204)
-          done()
-        })
-    })
-
-    it('should return 204 on admin', function (done) {
-      server
-        .delete('/api/reporting-protocols/' + npId2)
-        .set('Authorization', 'Bearer ' + adminToken)
-        .end(function (err, res) {
-          res.should.have.status(204)
-          done()
-        })
-    })
-
-    it('should return 404 on get', function (done) {
-      server
-        .get('/api/reporting-protocols/' + npId2)
-        .set('Authorization', 'Bearer ' + adminToken)
-        .set('Content-Type', 'application/json')
-        .send()
-        .end(function (err, res) {
-          res.should.have.status(404)
           done()
         })
     })
