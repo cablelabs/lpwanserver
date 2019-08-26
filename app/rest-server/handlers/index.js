@@ -5,7 +5,7 @@ function validationFail (c, _, res) {
   return res.status(400).json({ status: 400, err: c.validation.errors })
 }
 
-module.exports = {
+const handlers = {
   validationFail,
   // These resources expose all CRUD endpoints, protected by the appropriate permission
   ...crudHandlers(models.applicationNetworkTypeLinks, 'ApplicationNetworkTypeLink'),
@@ -38,3 +38,5 @@ module.exports = {
   // Device custom endpoints
   ...require('./resources/device').handlers
 }
+
+module.exports = handlers

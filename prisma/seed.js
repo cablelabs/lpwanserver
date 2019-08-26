@@ -1,12 +1,12 @@
 const { prisma } = require('../app/generated/prisma-client')
-const createRecords = require('./lib/seed-util')
+const { seedData } = require('../lib/seeder')
 
 // example
 const seeds = [
   {
-    type: 'NetworkType',
-    plural: 'NetworkTypes',
-    bodyList: [
+    id: 'NetworkType',
+    create: x => prisma.createNetworkType(x),
+    items: [
       {
         id: 'LORA',
         name: 'LoRa'
@@ -18,9 +18,9 @@ const seeds = [
     ]
   },
   {
-    type: 'ReportingProtocol',
-    plural: 'ReportingProtocols',
-    bodyList: [
+    id: 'ReportingProtocol',
+    create: x => prisma.createReportingProtocol(x),
+    items: [
       {
         id: 'POST',
         name: 'POST',
@@ -30,8 +30,8 @@ const seeds = [
   },
   {
     type: 'User',
-    plural: 'Users',
-    bodyList: [
+    create: x => prisma.createUser(x),
+    items: [
       {
         id: 'ADMIN',
         username: 'admin',
@@ -44,4 +44,4 @@ const seeds = [
   }
 ]
 
-createRecords(seeds, prisma).catch(e => console.error(e))
+seedData(seeds).catch(e => console.error(e))
