@@ -1,4 +1,4 @@
-openapi: 3.0.0
+openapi: 3.0.1
 servers: []
 info:
   description: >-
@@ -66,9 +66,9 @@ paths:
   /api/device-network-type-links/{id}:
     $ref: 'endpoints/device-network-type-link.yml#/paths/~1api~1device-network-type-links~1{id}'
   /api/device-profiles:
-    $ref: 'endpoints/device-profile.yml#/paths/~1api~device-profiles'
+    $ref: 'endpoints/device-profile.yml#/paths/~1api~1device-profiles'
   /api/device-profiles/{id}:
-    $ref: 'endpoints/device-profile.yml#/paths/~1api~device-profiles~1{id}'
+    $ref: 'endpoints/device-profile.yml#/paths/~1api~1device-profiles~1{id}'
   /api/networks:
     $ref: 'endpoints/network.yml#/paths/~1api~1networks'
   /api/networks/{id}:
@@ -77,10 +77,6 @@ paths:
     $ref: 'endpoints/network-protocol.yml#/paths/~1api~1network-protocols'
   /api/network-protocols/{id}:
     $ref: 'endpoints/network-protocol.yml#/paths/~1api~1network-protocols~1{id}'
-  /api/network-providers:
-    $ref: 'endpoints/network-provider.yml#/paths/~1api~1network-providers'
-  /api/network-providers/{id}:
-    $ref: 'endpoints/network-provider.yml#/paths/~1api~1network-providers~1{id}'
   /api/network-types:
     $ref: 'endpoints/network-type.yml#/paths/~1api~1network-types'
   /api/network-types/{id}:

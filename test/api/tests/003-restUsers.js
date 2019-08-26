@@ -1,14 +1,12 @@
 var assert = require('assert')
 var chai = require('chai')
 var chaiHttp = require('chai-http')
-const { createApp } = require('../../../app/express-app')
+const { createApp } = require('../../../app/rest-server/app')
 var expect = chai.expect
 var should = chai.should()
-const { prisma } = require('../../../app/generated/prisma-client')
 
 chai.use(chaiHttp)
 var server
-let companyId
 
 describe('Users', function () {
   var adminToken
@@ -18,24 +16,22 @@ describe('Users', function () {
     server = chai.request(app).keepOpen()
     const res = await server
       .post('/api/sessions')
-      .send({ 'login_username': 'admin', 'login_password': 'password' })
+      .send({ 'username': 'admin', 'password': 'password' })
     adminToken = res.text
-    const cos = await prisma.companies({ first: 1 })
-    companyId = cos[0].id
   })
 
   var userId1
   describe('POST /api/users', function () {
-    it('should return 200 on admin', function (done) {
+    it('should return 201', function (done) {
       server
         .post('/api/users')
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
-        .send({ 'username': 'test1', 'password': 'test13', 'role': 'USER', 'companyId': companyId })
+        .send({ 'username': 'test1', 'password': 'test13', 'role': 'USER' })
         .end(function (err, res) {
           console.error(err)
           if (err) return done(err)
-          res.should.have.status(200)
+          res.should.have.status(201)
           var ret = JSON.parse(res.text)
           userId1 = ret.id
           done()
@@ -161,19 +157,6 @@ describe('Users', function () {
         })
     })
 
-    it('should return 204 on admin changing user\'s company', function (done) {
-      server
-        .put('/api/users/' + userId1)
-        .set('Authorization', 'Bearer ' + adminToken)
-        .set('Content-Type', 'application/json')
-        .send(`{"companyId": "${companyId}" }`)
-        .end(function (err, res) {
-          if (err) return done(err)
-          res.should.have.status(204)
-          done()
-        })
-    })
-
     it('should return 200 on get with new user name', function (done) {
       server
         .get('/api/users/' + userId1)
@@ -185,7 +168,6 @@ describe('Users', function () {
           res.should.have.status(200)
           var userObj = JSON.parse(res.text)
           userObj.username.should.equal('test1still')
-          userObj.companyId.should.equal(companyId)
           done()
         })
     })
@@ -202,9 +184,7 @@ describe('Users', function () {
           res.should.have.status(200)
           var userObj = JSON.parse(res.text)
           userObj.username.should.equal('admin')
-          userObj.companyId.should.equal(companyId)
-          expect(userObj.passwordHash).to.not.exist
-          expect(userObj.lastVerifiedEmail).to.not.exist
+          expect(userObj.pwdHash).to.not.exist
           done()
         })
     })

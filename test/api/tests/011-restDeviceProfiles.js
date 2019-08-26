@@ -1,13 +1,12 @@
 var assert = require('assert')
 var chai = require('chai')
 var chaiHttp = require('chai-http')
-const { createApp } = require('../../../app/express-app')
+const { createApp } = require('../../../app/rest-server/app')
 var should = chai.should()
 const { prisma } = require('../../../app/generated/prisma-client')
 
 chai.use(chaiHttp)
 var server
-let companyId
 let nwkTypeId
 
 describe('DeviceProfiles', function () {
@@ -18,31 +17,30 @@ describe('DeviceProfiles', function () {
     server = chai.request(app).keepOpen()
     let res = await server
       .post('/api/sessions')
-      .send({ 'login_username': 'admin', 'login_password': 'password' })
+      .send({ 'username': 'admin', 'password': 'password' })
     adminToken = res.text
-    const cos = await prisma.companies()
-    companyId = cos[0].id
     const nwkTypes = await prisma.networkTypes()
     nwkTypeId = nwkTypes[0].id
   })
 
   var dpId1
   var dpId2
-  describe('POST /api/deviceProfiles', function () {
+  describe('POST /api/device-profiles', function () {
 
     it('should return 200 on admin', function (done) {
       server
-        .post('/api/deviceProfiles')
+        .post('/api/device-profiles')
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
-        .send({ 'networkTypeId': nwkTypeId,
-          'companyId': companyId,
+        .send({
+          'networkTypeId': nwkTypeId,
           'name': 'LoRaGPSNode',
           'description': 'GPS Node that works with LoRa',
-          'networkSettings': { 'foo': 'bar' } })
+          'networkSettings': { 'foo': 'bar' }
+        })
         .end(function (err, res) {
           if (err) return done(err)
-          res.should.have.status(200)
+          res.should.have.status(201)
           var ret = JSON.parse(res.text)
           dpId1 = ret.id
 
@@ -52,17 +50,18 @@ describe('DeviceProfiles', function () {
 
     it('should return 200 on admin', function (done) {
       server
-        .post('/api/deviceProfiles')
+        .post('/api/device-profiles')
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
-        .send({ 'networkTypeId': nwkTypeId,
-          'companyId': companyId,
+        .send({
+          'networkTypeId': nwkTypeId,
           'name': 'LoRaWeatherNode',
           'description': 'GPS Node that works with LoRa',
-          'networkSettings': { 'tempType': 'C' } })
+          'networkSettings': { 'tempType': 'C' }
+        })
         .end(function (err, res) {
           if (err) return done(err)
-          res.should.have.status(200)
+          res.should.have.status(201)
           var ret = JSON.parse(res.text)
           dpId2 = ret.id
           done()
@@ -71,7 +70,7 @@ describe('DeviceProfiles', function () {
 
     it('should return 200 on get', function (done) {
       server
-        .get('/api/deviceProfiles/' + dpId1)
+        .get('/api/device-profiles/' + dpId1)
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .send()
@@ -82,16 +81,15 @@ describe('DeviceProfiles', function () {
           dpObj.name.should.equal('LoRaGPSNode')
           dpObj.description.should.equal('GPS Node that works with LoRa')
           dpObj.networkTypeId.should.equal(nwkTypeId)
-          dpObj.companyId.should.equal(companyId)
           done()
         })
     })
   })
 
-  describe('GET /api/deviceProfiles (search/paging)', function () {
+  describe('GET /api/device-profiles (search/paging)', function () {
     it('should return 200 with 2 deviceProfiles on admin', function (done) {
       server
-        .get('/api/deviceProfiles')
+        .get('/api/device-profiles')
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {
@@ -107,7 +105,7 @@ describe('DeviceProfiles', function () {
 
     it('should return 200 with 1 device on admin, limit 2, offset 1', function (done) {
       server
-        .get('/api/deviceProfiles')
+        .get('/api/device-profiles')
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .query({ 'limit': 2, 'offset': 1 })
@@ -124,7 +122,7 @@ describe('DeviceProfiles', function () {
 
     it('should return 200 with 2 deviceProfiles on admin, search LoRa%', function (done) {
       server
-        .get('/api/deviceProfiles')
+        .get('/api/device-profiles')
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .query({ 'search': 'LoRa%' })
@@ -141,7 +139,7 @@ describe('DeviceProfiles', function () {
 
     it('should return 200 with 1 deviceProfiles on admin, search LoRaGPS%', function (done) {
       server
-        .get('/api/deviceProfiles')
+        .get('/api/device-profiles')
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .query({ 'search': 'LoRaGPS%' })
@@ -158,7 +156,7 @@ describe('DeviceProfiles', function () {
 
     it('should return 200 with 2 device on admin, search L%', function (done) {
       server
-        .get('/api/deviceProfiles')
+        .get('/api/device-profiles')
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .query({ 'search': 'L%' })
@@ -174,10 +172,10 @@ describe('DeviceProfiles', function () {
     })
   })
 
-  describe('GET /api/deviceProfiles/{id}', function () {
+  describe('GET /api/device-profiles/{id}', function () {
     it('should return 200 on admin', function (done) {
       server
-        .get('/api/deviceProfiles/' + dpId2)
+        .get('/api/device-profiles/' + dpId2)
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {
@@ -189,7 +187,7 @@ describe('DeviceProfiles', function () {
 
     it('should return 200 on admin', function (done) {
       server
-        .get('/api/deviceProfiles/' + dpId1)
+        .get('/api/device-profiles/' + dpId1)
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {
@@ -203,7 +201,7 @@ describe('DeviceProfiles', function () {
 
     it('should return 200 on admin getting my device', function (done) {
       server
-        .get('/api/deviceProfiles/' + dpId1)
+        .get('/api/device-profiles/' + dpId1)
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {
@@ -215,10 +213,10 @@ describe('DeviceProfiles', function () {
 
   })
 
-  describe('PUT /api/deviceProfiles', function () {
+  describe('PUT /api/device-profiles', function () {
     it('should return 204 on admin', function (done) {
       server
-        .put('/api/deviceProfiles/' + dpId2)
+        .put('/api/device-profiles/' + dpId2)
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .send('{"name": "Funky DeviceProfile" }')
@@ -231,7 +229,7 @@ describe('DeviceProfiles', function () {
 
     it('should return 204 on admin', function (done) {
       server
-        .put('/api/deviceProfiles/' + dpId2)
+        .put('/api/device-profiles/' + dpId2)
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .send('{"name": "Funky Punky DeviceProfile" }')
@@ -244,7 +242,7 @@ describe('DeviceProfiles', function () {
 
     it('should return 200 on get with new device name', function (done) {
       server
-        .get('/api/deviceProfiles/' + dpId2)
+        .get('/api/device-profiles/' + dpId2)
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .send()
@@ -258,22 +256,22 @@ describe('DeviceProfiles', function () {
     })
   })
 
-  describe('DELETE /api/deviceProfiles', function () {
+  describe('DELETE /api/device-profiles', function () {
 
     it('should return 200 on admin', function (done) {
       server
-        .delete('/api/deviceProfiles/' + dpId2)
+        .delete('/api/device-profiles/' + dpId2)
         .set('Authorization', 'Bearer ' + adminToken)
         .end(function (err, res) {
           if (err) return done(err)
-          res.should.have.status(200)
+          res.should.have.status(204)
           done()
         })
     })
 
     it('should return 404 on get', function (done) {
       server
-        .get('/api/deviceProfiles/' + dpId2)
+        .get('/api/device-profiles/' + dpId2)
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .send()

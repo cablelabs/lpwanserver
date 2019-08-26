@@ -5,7 +5,8 @@ const { buildConfig } = require('../lib/json-schema-config')
 const fs = require('fs')
 
 function normalizeFilePath (x) {
-  const filePath = (!x || x.charAt(0) === '/') ? x : path.join(__dirname, '..', x)
+  if (!x) return x
+  const filePath = x.charAt(0) === '/' ? x : path.join(__dirname, '..', x)
   return filePath.charAt(filePath.length - 1) === '/' ? filePath.slice(0, -1) : filePath
 }
 

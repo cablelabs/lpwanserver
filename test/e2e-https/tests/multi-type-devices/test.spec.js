@@ -43,7 +43,7 @@ describe('Manage a device model that supports multiple network types', () => {
 
   before(async () => {
     await Lpwan.client.login({
-      data: { login_username: 'admin', login_password: 'password' }
+      data: { username: 'admin', password: 'password' }
     })
     await Promise.all([
       Lpwan.client.list('networkTypes', {}),

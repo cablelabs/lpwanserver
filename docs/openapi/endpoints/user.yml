@@ -27,7 +27,7 @@ paths:
         '400':
           description: Bad request
     get:
-      operationId: listUsers
+      operationId: listUser
       summary: List Users
       description: List Users, available only to system administrators
       parameters:
@@ -59,7 +59,6 @@ paths:
       operationId: loadUser
       summary: Get User
       description: Get User
-      parameters: []
       security:
         - bearer_token: []
       tags:
@@ -77,7 +76,6 @@ paths:
       operationId: updateUser
       summary: Update User
       description: Update User, available only to system administrators
-      parameters: []
       security:
         - bearer_token: []
       tags:
@@ -95,7 +93,6 @@ paths:
       operationId: removeUser
       summary: Remove User
       description: Remove User, available only to system administrators
-      parameters: []
       security:
         - bearer_token: []
       tags:

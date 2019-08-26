@@ -27,7 +27,7 @@ paths:
         '400':
           description: Bad request
     get:
-      operationId: listApplications
+      operationId: listApplication
       summary: List Applications
       description: List Applications
       parameters:
@@ -140,6 +140,9 @@ components:
         reportingProtocolId:
           type: string
           description: The ID of the Reporting Protocol the Application will use to pass Device data back to the Application Vendor
+        enabled:
+          type: boolean
+          description: Whether or not the application is enabled to forward uplinks and downlinks
     ApplicationResponse:
        allOf:
         - $ref: '#/components/schemas/Application'
@@ -147,9 +150,6 @@ components:
           properties:
             id:
               type: string
-            running:
-              type: boolean
-              description: If the Application is currently forwarding uplink and downlink messages
     ListApplicationResponse:
       allOf:
         - $ref: '../api.yml#/components/schemas/ListResponse'

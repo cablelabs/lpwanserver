@@ -55,7 +55,7 @@ describe('E2E Test for Uplink/Downlink Device Messaging', () => {
   it('Admin Login to LPWan Server', async () => {
     const res = await server
       .post('/api/sessions')
-      .send({ 'login_username': 'admin', 'login_password': 'password' })
+      .send({ 'username': 'admin', 'password': 'password' })
     res.should.have.status(200)
     adminToken = res.text
   })

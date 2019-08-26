@@ -1,4 +1,4 @@
-openapi: 3.0.0
+openapi: 3.0.1
 servers: []
 info:
   description: This service goes between an IoT application server and the various networks
@@ -80,6 +80,10 @@ paths:
                       type: string
                       description: The ID of the Reporting Protocol the Application will
                         use to pass Device data back to the Application Vendor
+                    enabled:
+                      type: boolean
+                      description: Whether or not the application is enabled to forward
+                        uplinks and downlinks
                 - type: object
                   required:
                     - name
@@ -100,7 +104,7 @@ paths:
         "400":
           description: Bad request
     get:
-      operationId: listApplications
+      operationId: listApplication
       summary: List Applications
       description: List Applications
       parameters:
@@ -155,10 +159,6 @@ paths:
                               properties:
                                 id:
                                   type: string
-                                running:
-                                  type: boolean
-                                  description: If the Application is currently forwarding
-                                    uplink and downlink messages
                         default: []
         "400":
           description: Bad request
@@ -203,14 +203,14 @@ paths:
                         type: string
                         description: The ID of the Reporting Protocol the Application will
                           use to pass Device data back to the Application Vendor
+                      enabled:
+                        type: boolean
+                        description: Whether or not the application is enabled to forward
+                          uplinks and downlinks
                   - type: object
                     properties:
                       id:
                         type: string
-                      running:
-                        type: boolean
-                        description: If the Application is currently forwarding uplink and
-                          downlink messages
         "404":
           description: Application not found
     put:
@@ -300,8 +300,186 @@ paths:
               schema: {}
         "400":
           description: Bad request
-  /api/application-network-type-links: {}
-  "/api/application-network-type-links/{id}": {}
+  /api/application-network-type-links:
+    post:
+      operationId: createApplicationNetworkTypeLink
+      summary: Create an ApplicationNetworkTypeLink
+      description: Create an ApplicationNetworkTypeLink
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - ApplicationNetworkTypeLink
+      requestBody:
+        content:
+          application/json:
+            schema:
+              allOf:
+                - type: object
+                  properties:
+                    applicationId:
+                      type: string
+                      description: The Application the record is linking to the NetworkType
+                    networkTypeId:
+                      type: string
+                      description: The NetworkType to which the Application is linked
+                    networkSettings:
+                      type: string
+                      description: The settings in a JSON string that correspond to the
+                        NetworkType
+                    enabled:
+                      type: boolean
+                      description: Whether or not messages are forwarded for this
+                        application and network type
+                - type: object
+                  required:
+                    - applicationId
+                    - networkTypeId
+                    - networkSettings
+        description: ApplicationNetworkTypeLink to be created
+        required: true
+      responses:
+        "200":
+          description: ApplicationNetworkTypeLink created
+          content:
+            application/json:
+              schema:
+                $ref: "#/paths/~1api~1applications/post/responses/201/content/appli\
+                  cation~1json/schema"
+        "400":
+          description: Bad request
+    get:
+      operationId: listApplicationNetworkTypeLink
+      summary: List ApplicationNetworkTypeLinks
+      description: List ApplicationNetworkTypeLinks
+      parameters:
+        - $ref: "#/paths/~1api~1applications/get/parameters/0"
+        - $ref: "#/paths/~1api~1applications/get/parameters/1"
+        - name: applicationId
+          in: query
+          description: The ID of the Application
+          required: false
+          schema:
+            type: string
+        - name: networkTypeId
+          in: query
+          description: The ID of the NetworkType
+          required: false
+          schema:
+            type: string
+      security:
+        - bearer_token: []
+      tags:
+        - ApplicationNetworkTypeLink
+      responses:
+        "200":
+          description: Query response with totalCount and list of records
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/paths/~1api~1applications/get/responses/200/content/ap\
+                      plication~1json/schema/allOf/0"
+                  - type: object
+                    properties:
+                      records:
+                        type: array
+                        items:
+                          allOf:
+                            - $ref: "#/paths/~1api~1application-network-type-links/\
+                                post/requestBody/content/application~1json/sche\
+                                ma/allOf/0"
+                            - type: object
+                              properties:
+                                id:
+                                  type: string
+                        default: []
+        "400":
+          description: Bad request
+  "/api/application-network-type-links/{id}":
+    parameters:
+      - $ref: "#/paths/~1api~1applications~1%7Bid%7D/parameters/0"
+    get:
+      operationId: loadApplicationNetworkTypeLink
+      summary: Get ApplicationNetworkTypeLink
+      description: Get ApplicationNetworkTypeLink
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - ApplicationNetworkTypeLink
+      responses:
+        "200":
+          description: ApplicationNetworkTypeLink record
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - type: object
+                    properties:
+                      applicationId:
+                        type: string
+                        description: The Application the record is linking to the
+                          NetworkType
+                      networkTypeId:
+                        type: string
+                        description: The NetworkType to which the Application is linked
+                      networkSettings:
+                        type: string
+                        description: The settings in a JSON string that correspond to the
+                          NetworkType
+                      enabled:
+                        type: boolean
+                        description: Whether or not messages are forwarded for this
+                          application and network type
+                  - type: object
+                    properties:
+                      id:
+                        type: string
+        "404":
+          description: ApplicationNetworkTypeLink not found
+    put:
+      operationId: updateApplicationNetworkTypeLink
+      summary: Update ApplicationNetworkTypeLink
+      description: Update ApplicationNetworkTypeLink
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - ApplicationNetworkTypeLink
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                networkSettings:
+                  type: string
+                  description: The settings in a JSON string that correspond to the
+                    NetworkType
+        description: ApplicationNetworkTypeLink properties to be updated
+        required: true
+      responses:
+        "204":
+          description: ApplicationNetworkTypeLink update succeeded
+        "400":
+          description: Bad request
+        "404":
+          description: ApplicationNetworkTypeLink not found
+    delete:
+      operationId: removeApplicationNetworkTypeLink
+      summary: Remove ApplicationNetworkTypeLink
+      description: Remove ApplicationNetworkTypeLink
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - ApplicationNetworkTypeLink
+      responses:
+        "204":
+          description: ApplicationNetworkTypeLink record was deleted
+        "404":
+          description: ApplicationNetworkTypeLink not found
   /api/devices:
     post:
       operationId: createDevice
@@ -350,19 +528,14 @@ paths:
         "400":
           description: Bad request
     get:
-      operationId: listDevices
+      operationId: listDevice
       summary: List Devices
       description: List Devices
       parameters:
         - $ref: "#/paths/~1api~1applications/get/parameters/0"
         - $ref: "#/paths/~1api~1applications/get/parameters/1"
         - $ref: "#/paths/~1api~1applications/get/parameters/2"
-        - name: applicationId
-          in: query
-          description: The ID of the Application
-          required: false
-          schema:
-            type: string
+        - $ref: "#/paths/~1api~1application-network-type-links/get/parameters/2"
       security:
         - bearer_token: []
       tags:
@@ -564,7 +737,7 @@ paths:
         schema:
           type: string
     post:
-      operationId: sendUplinkAsNetwork
+      operationId: sendNetworkUplink
       summary: Send uplink from a network
       description: Send a device uplink from a remote IoT network
       parameters: []
@@ -583,7 +756,7 @@ paths:
           description: Unable to find either Network or Application
   /api/downlinks:
     get:
-      operationId: listDownlinks
+      operationId: listDownlink
       summary: Get device downlinks
       description: Get queued downlinks for one device. x509 client certificate is
         required. Certificate must contain devEUI as the subject CN.
@@ -627,10 +800,355 @@ paths:
                       description: A JSON object to send to the device
         "404":
           description: Unable to locate device with matching devEUI
-  /api/device-network-type-links: {}
-  "/api/device-network-type-links/{id}": {}
-  /api/device-profiles: {}
-  "/api/device-profiles/{id}": {}
+  /api/device-network-type-links:
+    post:
+      operationId: createDeviceNetworkTypeLink
+      summary: Create a DeviceNetworkTypeLink
+      description: Create a DeviceNetworkTypeLink
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - DeviceNetworkTypeLink
+      requestBody:
+        content:
+          application/json:
+            schema:
+              allOf:
+                - type: object
+                  properties:
+                    deviceId:
+                      type: string
+                      description: The Application the record is linking to the NetworkType
+                    networkTypeId:
+                      type: string
+                      description: The NetworkType to which the Application is linked
+                    deviceProfileId:
+                      type: string
+                      description: The DeviceProfile from which this device receives
+                        network settings
+                    networkSettings:
+                      type: string
+                      description: The settings in a JSON string that correspond to the
+                        NetworkType
+                    enabled:
+                      type: boolean
+                      description: Whether or not messages are forwarded for this
+                        application and network type
+                - type: object
+                  required:
+                    - deviceId
+                    - networkTypeId
+                    - networkSettings
+        description: DeviceNetworkTypeLink to be created
+        required: true
+      responses:
+        "200":
+          description: DeviceNetworkTypeLink created
+          content:
+            application/json:
+              schema:
+                $ref: "#/paths/~1api~1applications/post/responses/201/content/appli\
+                  cation~1json/schema"
+        "400":
+          description: Bad request
+    get:
+      operationId: listDeviceNetworkTypeLink
+      summary: List DeviceNetworkTypeLinks
+      description: List DeviceNetworkTypeLinks
+      parameters:
+        - $ref: "#/paths/~1api~1applications/get/parameters/0"
+        - $ref: "#/paths/~1api~1applications/get/parameters/1"
+        - name: deviceId
+          in: query
+          description: The ID of the Device
+          required: false
+          schema:
+            type: string
+        - $ref: "#/paths/~1api~1application-network-type-links/get/parameters/2"
+        - $ref: "#/paths/~1api~1application-network-type-links/get/parameters/3"
+      security:
+        - bearer_token: []
+      tags:
+        - DeviceNetworkTypeLink
+      responses:
+        "200":
+          description: Query response with totalCount and list of records
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/paths/~1api~1applications/get/responses/200/content/ap\
+                      plication~1json/schema/allOf/0"
+                  - type: object
+                    properties:
+                      records:
+                        type: array
+                        items:
+                          allOf:
+                            - $ref: "#/paths/~1api~1device-network-type-links/post/\
+                                requestBody/content/application~1json/schema/al\
+                                lOf/0"
+                            - type: object
+                              properties:
+                                id:
+                                  type: string
+                        default: []
+        "400":
+          description: Bad request
+  "/api/device-network-type-links/{id}":
+    parameters:
+      - $ref: "#/paths/~1api~1applications~1%7Bid%7D/parameters/0"
+    get:
+      operationId: loadDeviceNetworkTypeLink
+      summary: Get DeviceNetworkTypeLink
+      description: Get DeviceNetworkTypeLink
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - DeviceNetworkTypeLink
+      responses:
+        "200":
+          description: DeviceNetworkTypeLink record
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - type: object
+                    properties:
+                      deviceId:
+                        type: string
+                        description: The Application the record is linking to the
+                          NetworkType
+                      networkTypeId:
+                        type: string
+                        description: The NetworkType to which the Application is linked
+                      deviceProfileId:
+                        type: string
+                        description: The DeviceProfile from which this device receives
+                          network settings
+                      networkSettings:
+                        type: string
+                        description: The settings in a JSON string that correspond to the
+                          NetworkType
+                      enabled:
+                        type: boolean
+                        description: Whether or not messages are forwarded for this
+                          application and network type
+                  - type: object
+                    properties:
+                      id:
+                        type: string
+        "404":
+          description: DeviceNetworkTypeLink not found
+    put:
+      operationId: updateDeviceNetworkTypeLink
+      summary: Update DeviceNetworkTypeLink
+      description: Update DeviceNetworkTypeLink
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - DeviceNetworkTypeLink
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                networkSettings:
+                  type: string
+                  description: The settings in a JSON string that correspond to the
+                    NetworkType
+        description: DeviceNetworkTypeLink properties to be updated
+        required: true
+      responses:
+        "204":
+          description: DeviceNetworkTypeLink update succeeded
+        "400":
+          description: Bad request
+        "404":
+          description: DeviceNetworkTypeLink not found
+    delete:
+      operationId: removeDeviceNetworkTypeLink
+      summary: Remove DeviceNetworkTypeLink
+      description: Remove DeviceNetworkTypeLink
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - DeviceNetworkTypeLink
+      responses:
+        "204":
+          description: DeviceNetworkTypeLink record was deleted
+        "404":
+          description: DeviceNetworkTypeLink not found
+  /api/device-profiles:
+    post:
+      operationId: createDeviceProfile
+      summary: Create a DeviceProfile
+      description: Create a DeviceProfile
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - DeviceProfile
+      requestBody:
+        content:
+          application/json:
+            schema:
+              allOf:
+                - type: object
+                  properties:
+                    name:
+                      type: string
+                      description: The Device Profile's name
+                    description:
+                      type: string
+                      description: The Device Profile's description
+                    networkTypeId:
+                      type: string
+                      description: The NetworkType for this DeviceProfile
+                    networkSettings:
+                      type: object
+                      description: The JSON data structure that has the settings for the
+                        NetworkType. This is expected to match the Network
+                        Protocol's expected data used to set up the device on
+                        the remote Network(s).
+                - type: object
+                  required:
+                    - name
+                    - networkTypeId
+        description: DeviceProfile to be created
+        required: true
+      responses:
+        "200":
+          description: DeviceProfile created
+          content:
+            application/json:
+              schema:
+                $ref: "#/paths/~1api~1applications/post/responses/201/content/appli\
+                  cation~1json/schema"
+        "400":
+          description: Bad request
+    get:
+      operationId: listDeviceProfile
+      summary: List DeviceProfiles
+      description: List DeviceProfiles
+      parameters:
+        - $ref: "#/paths/~1api~1applications/get/parameters/0"
+        - $ref: "#/paths/~1api~1applications/get/parameters/1"
+        - $ref: "#/paths/~1api~1applications/get/parameters/2"
+        - $ref: "#/paths/~1api~1application-network-type-links/get/parameters/3"
+      security:
+        - bearer_token: []
+      tags:
+        - DeviceProfile
+      responses:
+        "200":
+          description: Query response with totalCount and list of records
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/paths/~1api~1applications/get/responses/200/content/ap\
+                      plication~1json/schema/allOf/0"
+                  - type: object
+                    properties:
+                      records:
+                        type: array
+                        items:
+                          allOf:
+                            - $ref: "#/paths/~1api~1device-profiles/post/requestBod\
+                                y/content/application~1json/schema/allOf/0"
+                            - type: object
+                              properties:
+                                id:
+                                  type: string
+                        default: []
+        "400":
+          description: Bad request
+  "/api/device-profiles/{id}":
+    parameters:
+      - $ref: "#/paths/~1api~1applications~1%7Bid%7D/parameters/0"
+    get:
+      operationId: loadDeviceProfile
+      summary: Get DeviceProfile
+      description: Get DeviceProfile
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - DeviceProfile
+      responses:
+        "200":
+          description: DeviceProfile record
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - type: object
+                    properties:
+                      name:
+                        type: string
+                        description: The Device Profile's name
+                      description:
+                        type: string
+                        description: The Device Profile's description
+                      networkTypeId:
+                        type: string
+                        description: The NetworkType for this DeviceProfile
+                      networkSettings:
+                        type: object
+                        description: The JSON data structure that has the settings for the
+                          NetworkType. This is expected to match the Network
+                          Protocol's expected data used to set up the device on
+                          the remote Network(s).
+                  - type: object
+                    properties:
+                      id:
+                        type: string
+        "404":
+          description: DeviceProfile not found
+    put:
+      operationId: updateDeviceProfile
+      summary: Update DeviceProfile
+      description: Update DeviceProfile
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - DeviceProfile
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/paths/~1api~1device-profiles~1%7Bid%7D/get/responses/200/con\
+                tent/application~1json/schema/allOf/0"
+        description: DeviceProfile properties to be updated
+        required: true
+      responses:
+        "204":
+          description: DeviceProfile update succeeded
+        "400":
+          description: Bad request
+        "404":
+          description: DeviceProfile not found
+    delete:
+      operationId: removeDeviceProfile
+      summary: Remove DeviceProfile
+      description: Remove DeviceProfile
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - DeviceProfile
+      responses:
+        "204":
+          description: DeviceProfile record was deleted
+        "404":
+          description: DeviceProfile not found
   /api/networks:
     post:
       operationId: createNetwork
@@ -682,7 +1200,7 @@ paths:
         "403":
           description: Authenticated user not allowed to perform this operation
     get:
-      operationId: listNetworks
+      operationId: listNetwork
       summary: List Networks
       description: List Networks, available only to system administrators
       parameters:
@@ -825,14 +1343,238 @@ paths:
           description: Network record was deleted
         "404":
           description: Network not found
-  /api/network-protocols: {}
-  "/api/network-protocols/{id}": {}
-  /api/network-providers: {}
-  "/api/network-providers/{id}": {}
-  /api/network-types: {}
-  "/api/network-types/{id}": {}
-  /api/reporting-protocols: {}
-  "/api/reporting-protocols/{id}": {}
+  /api/network-protocols:
+    get:
+      operationId: listNetworkProtocol
+      summary: List NetworkProtocols
+      description: List NetworkProtocols, available only to system administrators
+      parameters:
+        - $ref: "#/paths/~1api~1applications/get/parameters/0"
+        - $ref: "#/paths/~1api~1applications/get/parameters/1"
+        - $ref: "#/paths/~1api~1applications/get/parameters/2"
+      security:
+        - bearer_token: []
+      tags:
+        - NetworkProtocol
+      responses:
+        "200":
+          description: Query response with totalCount and list of records
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/paths/~1api~1applications/get/responses/200/content/ap\
+                      plication~1json/schema/allOf/0"
+                  - type: object
+                    properties:
+                      records:
+                        type: array
+                        items:
+                          allOf:
+                            - type: object
+                              properties:
+                                name:
+                                  type: string
+                                protocolHandler:
+                                  type: string
+                                  description: Path to file that contains the handler code,
+                                    relative to the handlers dir
+                                networkTypeId:
+                                  type: string
+                                networkProtocolVersion:
+                                  type: string
+                            - type: object
+                              properties:
+                                id:
+                                  type: string
+                        default: []
+        "400":
+          description: Bad request
+  "/api/network-protocols/{id}":
+    parameters:
+      - $ref: "#/paths/~1api~1applications~1%7Bid%7D/parameters/0"
+    get:
+      operationId: loadNetworkProtocol
+      summary: Get NetworkProtocol
+      description: Get NetworkProtocol
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - NetworkProtocol
+      responses:
+        "200":
+          description: NetworkProtocol record
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - type: object
+                    properties:
+                      name:
+                        type: string
+                      protocolHandler:
+                        type: string
+                        description: Path to file that contains the handler code, relative
+                          to the handlers dir
+                      networkTypeId:
+                        type: string
+                      networkProtocolVersion:
+                        type: string
+                  - type: object
+                    properties:
+                      id:
+                        type: string
+        "404":
+          description: NetworkProtocol not found
+  /api/network-types:
+    get:
+      operationId: listNetworkType
+      summary: List NetworkTypes
+      description: List NetworkTypes, available only to system administrators
+      parameters:
+        - $ref: "#/paths/~1api~1applications/get/parameters/0"
+        - $ref: "#/paths/~1api~1applications/get/parameters/1"
+        - $ref: "#/paths/~1api~1applications/get/parameters/2"
+      security:
+        - bearer_token: []
+      tags:
+        - NetworkType
+      responses:
+        "200":
+          description: Query response with totalCount and list of records
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/paths/~1api~1applications/get/responses/200/content/ap\
+                      plication~1json/schema/allOf/0"
+                  - type: object
+                    properties:
+                      records:
+                        type: array
+                        items:
+                          allOf:
+                            - type: object
+                              required:
+                                - name
+                              properties:
+                                name:
+                                  type: string
+                            - type: object
+                              properties:
+                                id:
+                                  type: string
+                        default: []
+        "400":
+          description: Bad request
+  "/api/network-types/{id}":
+    parameters:
+      - $ref: "#/paths/~1api~1applications~1%7Bid%7D/parameters/0"
+    get:
+      operationId: loadNetworkType
+      summary: Get NetworkType
+      description: Get NetworkType
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - NetworkType
+      responses:
+        "200":
+          description: NetworkType record
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - type: object
+                    required:
+                      - name
+                    properties:
+                      name:
+                        type: string
+                  - type: object
+                    properties:
+                      id:
+                        type: string
+        "404":
+          description: NetworkType not found
+  /api/reporting-protocols:
+    get:
+      operationId: listReportingProtocol
+      summary: List ReportingProtocols
+      description: List ReportingProtocols, available only to system administrators
+      parameters:
+        - $ref: "#/paths/~1api~1applications/get/parameters/0"
+        - $ref: "#/paths/~1api~1applications/get/parameters/1"
+        - $ref: "#/paths/~1api~1applications/get/parameters/2"
+      security:
+        - bearer_token: []
+      tags:
+        - ReportingProtocol
+      responses:
+        "200":
+          description: Query response with totalCount and list of records
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/paths/~1api~1applications/get/responses/200/content/ap\
+                      plication~1json/schema/allOf/0"
+                  - type: object
+                    properties:
+                      records:
+                        type: array
+                        items:
+                          allOf:
+                            - type: object
+                              properties:
+                                name:
+                                  type: string
+                                protocolHandler:
+                                  type: string
+                                  description: Path to file that contains the handler code,
+                                    relative to the handlers dir
+                            - type: object
+                              properties:
+                                id:
+                                  type: string
+                        default: []
+        "400":
+          description: Bad request
+  "/api/reporting-protocols/{id}":
+    parameters:
+      - $ref: "#/paths/~1api~1applications~1%7Bid%7D/parameters/0"
+    get:
+      operationId: loadReportingProtocol
+      summary: Get ReportingProtocol
+      description: Get ReportingProtocol
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - ReportingProtocol
+      responses:
+        "200":
+          description: ReportingProtocol record
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - type: object
+                    properties:
+                      name:
+                        type: string
+                      protocolHandler:
+                        type: string
+                        description: Path to file that contains the handler code, relative
+                          to the handlers dir
+                  - type: object
+                    properties:
+                      id:
+                        type: string
+        "404":
+          description: ReportingProtocol not found
   /api/sessions:
     post:
       operationId: createSession
@@ -930,7 +1672,7 @@ paths:
         "400":
           description: Bad request
     get:
-      operationId: listUsers
+      operationId: listUser
       summary: List Users
       description: List Users, available only to system administrators
       parameters:
@@ -977,7 +1719,6 @@ paths:
       operationId: loadUser
       summary: Get User
       description: Get User
-      parameters: []
       security:
         - bearer_token: []
       tags:
@@ -1011,7 +1752,6 @@ paths:
       operationId: updateUser
       summary: Update User
       description: Update User, available only to system administrators
-      parameters: []
       security:
         - bearer_token: []
       tags:
@@ -1040,7 +1780,6 @@ paths:
       operationId: removeUser
       summary: Remove User
       description: Remove User, available only to system administrators
-      parameters: []
       security:
         - bearer_token: []
       tags:

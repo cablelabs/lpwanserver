@@ -5,7 +5,7 @@ info:
   license:
     name: Apache 2.0
 paths:
-  /api/applicationNetworkTypeLinks:
+  /api/application-network-type-links:
     post:
       operationId: createApplicationNetworkTypeLink
       summary: Create an ApplicationNetworkTypeLink
@@ -27,7 +27,7 @@ paths:
         '400':
           description: Bad request
     get:
-      operationId: listApplicationNetworkTypeLinks
+      operationId: listApplicationNetworkTypeLink
       summary: List ApplicationNetworkTypeLinks
       description: List ApplicationNetworkTypeLinks
       parameters:
@@ -48,7 +48,7 @@ paths:
                 $ref: '#/components/schemas/ListApplicationNetworkTypeLinkResponse'
         '400':
           description: Bad request
-  /api/applicationNetworkTypeLinks/{id}:
+  /api/application-network-type-links/{id}:
     parameters:
       - $ref: '../api.yml#/components/parameters/idParam'
     get:
@@ -115,6 +115,9 @@ components:
         networkSettings:
           type: string
           description: The settings in a JSON string that correspond to the NetworkType
+        enabled:
+          type: boolean
+          description: Whether or not messages are forwarded for this application and network type
     ApplicationNetworkTypeLinkResponse:
        allOf:
         - $ref: '#/components/schemas/ApplicationNetworkTypeLink'

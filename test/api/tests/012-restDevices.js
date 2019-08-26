@@ -1,13 +1,12 @@
 var assert = require('assert')
 var chai = require('chai')
 var chaiHttp = require('chai-http')
-const { createApp } = require('../../../app/express-app')
+const { createApp } = require('../../../app/rest-server/app')
 var should = chai.should()
 const { prisma } = require('../../../app/generated/prisma-client')
 
 chai.use(chaiHttp)
 var server
-let companyId
 
 describe('Devices', function () {
   var adminToken
@@ -18,17 +17,14 @@ describe('Devices', function () {
     server = chai.request(app).keepOpen()
     let res = await server
       .post('/api/sessions')
-      .send({ 'login_username': 'admin', 'login_password': 'password' })
+      .send({ 'username': 'admin', 'password': 'password' })
     adminToken = res.text
-    const cos = await prisma.companies({ first: 1 })
-    companyId = cos[0].id
     const reportingProtocols = await prisma.reportingProtocols({ first: 1 })
     res = await server
       .post('/api/applications')
       .set('Authorization', 'Bearer ' + adminToken)
       .set('Content-Type', 'application/json')
       .send({
-        'companyId': companyId,
         'name': 'MyGetRichQuickApp2',
         'description': 'A really good idea that was boring',
         'baseUrl': 'http://localhost:5086',
@@ -41,7 +37,7 @@ describe('Devices', function () {
   var devId1
   var devId2
   describe('POST /api/devices', function () {
-    it('should return 200 on admin', function (done) {
+    it('should return 201 on admin', function (done) {
       server
         .post('/api/devices')
         .set('Authorization', 'Bearer ' + adminToken)
@@ -52,14 +48,14 @@ describe('Devices', function () {
           'deviceModel': 'Mark1' })
         .end(function (err, res) {
           if (err) return done(err)
-          res.should.have.status(200)
+          res.should.have.status(201)
           var ret = JSON.parse(res.text)
           devId1 = ret.id
           done()
         })
     })
 
-    it('should return 200 on admin', function (done) {
+    it('should return 201 on admin', function (done) {
       server
         .post('/api/devices')
         .set('Authorization', 'Bearer ' + adminToken)
@@ -70,7 +66,7 @@ describe('Devices', function () {
           'deviceModel': 'Mark2' })
         .end(function (err, res) {
           if (err) return done(err)
-          res.should.have.status(200)
+          res.should.have.status(201)
           var ret = JSON.parse(res.text)
           devId2 = ret.id
           done()

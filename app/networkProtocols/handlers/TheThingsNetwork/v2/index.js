@@ -1,5 +1,5 @@
 const NetworkProtocol = require('../../../NetworkProtocol')
-const { logger } = require('../../../../log')
+const { log } = require('../../../../log')
 const uuid = require('uuid/v1')
 const R = require('ramda')
 const { tryCatch, renameKeys } = require('../../../../lib/utils')
@@ -26,18 +26,18 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
   }
 
   async subscribeToDataForEnabledApps () {
-    const nwkType = await this.modelAPI.networkTypes.loadByName('LoRa')
+    const nwkType = await this.modelAPI.networkTypes.load({ where: { name: 'LoRa' } })
     const antlQuery = { networkType: { id: nwkType.id } }
-    const [ antls ] = await this.modelAPI.applicationNetworkTypeLinks.list(antlQuery)
+    const [ antls ] = await this.modelAPI.applicationNetworkTypeLinks.list({ where: antlQuery })
     let appIds = antls.map(R.path(['application', 'id']))
     const networkQuery = { networkProtocol: { id: this.networkProtocolId } }
-    const [ networks ] = await this.modelAPI.networks.list(networkQuery)
+    const [ networks ] = await this.modelAPI.networks.list({ where: networkQuery })
     try {
       const promises = R.flatten(networks.map(nwk => appIds.map(id => this.startApplication(nwk, id))))
       await Promise.all(promises)
     }
     catch (err) {
-      logger.error(`Error subscribing to TTN data`, err)
+      log.error(`Error subscribing to TTN data`, err)
     }
   }
 
@@ -83,10 +83,10 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
       await Promise.all(apps.map(x =>
         this.pullDevices(network, x.remoteApplication, x.localApplication, {}, modelAPI, dataAPI)
       ))
-      logger.info('Success Pulling Network ' + network.name)
+      log.info('Success Pulling Network ' + network.name)
     }
     catch (err) {
-      logger.error(err.message, err)
+      log.error(err.message, err)
       throw err
     }
   }
@@ -107,7 +107,7 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
       return Promise.all(apps.map(x => this.addRemoteApplication(x, network, modelAPI, dataAPI)))
     }
     catch (e) {
-      logger.error('Error pulling applications from network ' + network.name + ':', e)
+      log.error('Error pulling applications from network ' + network.name + ':', e)
       throw e
     }
   }
@@ -135,7 +135,7 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
         }
         if (integration) localAppData.baseUrl = integration.settings.TTI_URL
         localApp = await modelAPI.applications.create(localAppData)
-        logger.info('Created ' + localApp.name)
+        log.info('Created ' + localApp.name)
       }
 
       let [ appNtls ] = await modelAPI.applicationNetworkTypeLinks.list({ applicationId: localApp.id })
@@ -152,13 +152,13 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
             remoteOrigin: true
           }
         )
-        await this.modelAPI.protocolData.upsert(network, makeApplicationDataKey(localApp.id, 'appNwkId'), normalizedApplication.id)
+        await this.modelAPI.protocolData.upsert([network, makeApplicationDataKey(localApp.id, 'appNwkId'), normalizedApplication.id])
       }
       if (localApp.baseUrl) await this.startApplication(network, localApp.id)
       return { localApplication: localApp, remoteApplication: normalizedApplication }
     }
     catch (e) {
-      logger.error(e.message, e)
+      log.error(e.message, e)
       throw e
     }
   }
@@ -183,39 +183,39 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
       return devices
     }
     catch (e) {
-      logger.error('Error pulling devices from network ' + network.name, e)
+      log.error('Error pulling devices from network ' + network.name, e)
       throw e
     }
   }
 
   async addRemoteDevice (remoteDevice, network, localAppId, dpMap, modelAPI, dataAPI) {
     let existingDevice
-    logger.info('Adding ' + remoteDevice.deveui)
+    log.info('Adding ' + remoteDevice.deveui)
     let [ existingDevices ] = await modelAPI.devices.list({ search: remoteDevice.lorawan_device.dev_eui, limit: 1 })
 
     if (existingDevices.length) {
       existingDevice = existingDevices[0]
-      logger.info(existingDevice.name + ' already exists')
+      log.info(existingDevice.name + ' already exists')
     }
     else {
-      logger.info('creating ' + remoteDevice.lorawan_device.dev_eui)
+      log.info('creating ' + remoteDevice.lorawan_device.dev_eui)
       const devData = {
         name: remoteDevice.lorawan_device.dev_eui,
         description: remoteDevice.description,
         applicationId: localAppId
       }
       existingDevice = await modelAPI.devices.create(devData)
-      logger.info('Created ' + existingDevice.name)
+      log.info('Created ' + existingDevice.name)
     }
 
     let [ devNtls ] = await modelAPI.deviceNetworkTypeLinks.list({ deviceId: existingDevice.id, limit: 1 })
     let existingApplicationNTL = await modelAPI.applicationNetworkTypeLinks.load(localAppId)
 
     if (devNtls.length) {
-      logger.info(existingDevice.name + ' link already exists')
+      log.info(existingDevice.name + ' link already exists')
       return { localDevice: existingDevice.id, remoteDevice: remoteDevice.dev_id }
     }
-    logger.info('creating Network Link for ' + existingDevice.name)
+    log.info('creating Network Link for ' + existingDevice.name)
     try {
       const dp = await this.addRemoteDeviceProfile(remoteDevice, existingApplicationNTL, network, modelAPI, dataAPI)
       let normalizedDevice = this.normalizeDeviceData(remoteDevice, dp.localDeviceProfile)
@@ -228,11 +228,11 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
         networkSettings: normalizedDevice
       }
       await modelAPI.deviceNetworkTypeLinks.create(devNtlData, { validateCompanyId: company.id, remoteOrigin: true })
-      await this.modelAPI.protocolData.upsert(network, makeDeviceDataKey(existingDevice.id, 'devNwkId'), remoteDevice.dev_id)
+      await this.modelAPI.protocolData.upsert([network, makeDeviceDataKey(existingDevice.id, 'devNwkId'), remoteDevice.dev_id])
       return { localDevice: existingDevice.id, remoteDevice: remoteDevice.dev_id }
     }
     catch (e) {
-      logger.error(e.message, e)
+      log.error(e.message, e)
       throw e
     }
   }
@@ -256,7 +256,7 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
       }
     }
     catch (e) {
-      logger.error(e.message, e)
+      log.error(e.message, e)
       throw e
     }
   }
@@ -273,10 +273,10 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
     try {
       await this.pushApplications(network, dataAPI, modelAPI)
       await this.pushDevices(network, dataAPI, modelAPI)
-      logger.info('Success Pushing Network ' + network.name)
+      log.info('Success Pushing Network ' + network.name)
     }
     catch (e) {
-      logger.error(e.message, e)
+      log.error(e.message, e)
       throw e
     }
   }
@@ -287,11 +287,11 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
       const pushedResources = await Promise.all(existingApplications.map(record => {
         return this.pushApplication(network, record, dataAPI, modelAPI)
       }))
-      logger.info('Success Pushing Applications')
+      log.info('Success Pushing Applications')
       return pushedResources
     }
     catch (e) {
-      logger.error(e.message, e)
+      log.error(e.message, e)
       throw e
     }
   }
@@ -304,19 +304,19 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
       if (!appNetworkId) {
         throw badProtocolTableError
       }
-      logger.info('Ignoring Application  ' + application.id + ' already on network ' + network.name + ' as ' + appNetworkId)
+      log.info('Ignoring Application  ' + application.id + ' already on network ' + network.name + ' as ' + appNetworkId)
       return { localApplication: application.id, remoteApplication: appNetworkId }
     }
     catch (e) {
       if (e === badProtocolTableError) throw e
       try {
-        logger.info('Pushing Application ' + application.name)
+        log.info('Pushing Application ' + application.name)
         const appNetworkId = await this.addApplication(network, application.id, dataAPI, modelAPI)
-        logger.info('Added application ' + application.id + ' to network ' + network.name)
+        log.info('Added application ' + application.id + ' to network ' + network.name)
         return { localApplication: application.id, remoteApplication: appNetworkId }
       }
       catch (err) {
-        logger.error(err.message, err)
+        log.error(err.message, err)
         throw err
       }
     }
@@ -330,7 +330,7 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
       }))
     }
     catch (e) {
-      logger.error(e.message, e)
+      log.error(e.message, e)
       throw e
     }
   }
@@ -339,23 +339,23 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
     const badProtocolTableError = new Error('Something bad happened with the Protocol Table')
     try {
       const devNetworkId = await this.modelAPI.protocolData.loadValue(network, makeDeviceDataKey(device.id, 'devNwkId'))
-      logger.info('Ignoring Device  ' + device.id + ' already on network ' + network.name)
+      log.info('Ignoring Device  ' + device.id + ' already on network ' + network.name)
       if (devNetworkId) {
         return { localDevice: device.id, remoteDevice: devNetworkId }
       }
-      logger.info(devNetworkId + ' found for network ' + network.name + ' for device ' + device.id)
+      log.info(devNetworkId + ' found for network ' + network.name + ' for device ' + device.id)
       throw badProtocolTableError
     }
     catch (e) {
       if (e === badProtocolTableError) throw e
       try {
-        logger.info('Adding Device  ' + device.id + ' to network ' + network.name)
+        log.info('Adding Device  ' + device.id + ' to network ' + network.name)
         const devNetworkId = await this.addDevice(network, device.id, dataAPI)
-        logger.info('Added Device  ' + device.id + ' to network ' + network.name)
+        log.info('Added Device  ' + device.id + ' to network ' + network.name)
         return { localDevice: device.id, remoteDevice: devNetworkId }
       }
       catch (err) {
-        logger.error(err.message, err)
+        log.error(err.message, err)
         throw err
       }
     }
@@ -378,7 +378,7 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
       applicationData = await dataAPI.getApplicationNetworkType(applicationId, network.networkType.id)
     }
     catch (err) {
-      logger.error('Failed to get required data for addApplication: ' + applicationId, err)
+      log.error('Failed to get required data for addApplication: ' + applicationId, err)
       throw err
     }
     let { handlerApp, accountServerApp } = this.deNormalizeApplicationData(applicationData.networkSettings, application)
@@ -386,11 +386,11 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
       accountServerApp = await this.client.createApplication(network, accountServerApp)
       applicationData.networkSettings.applicationEUI = accountServerApp.euis[0]
       await modelAPI.applicationNetworkTypeLinks.update(applicationData, { companyId: 2, remoteOrigin: true })
-      await this.modelAPI.protocolData.upsert(network, makeApplicationDataKey(application.id, 'appNwkId'), accountServerApp.id)
+      await this.modelAPI.protocolData.upsert([network, makeApplicationDataKey(application.id, 'appNwkId'), accountServerApp.id])
       return this.registerApplicationWithHandler(network, handlerApp, accountServerApp, dataAPI)
     }
     catch (err) {
-      logger.error('Error on create application', err)
+      log.error('Error on create application', err)
       throw err
     }
   }
@@ -409,7 +409,7 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
       return this.client.loadApplication(network, appNetworkId)
     }
     catch (e) {
-      logger.error('Error on get application', e)
+      log.error('Error on get application', e)
       throw e
     }
   }
@@ -484,7 +484,7 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
       return
     }
     catch (e) {
-      logger.error('Error on update application', e)
+      log.error('Error on update application', e)
       throw e
     }
   }
@@ -509,7 +509,7 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
       )
     }
     catch (err) {
-      logger.error('Error on delete application', err)
+      log.error('Error on delete application', err)
       throw err
     }
   }
@@ -543,11 +543,11 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
       let ttnDevice = this.deNormalizeDeviceData(device.networkSettings, deviceProfile.networkSettings, application.networkSettings, remoteApplicationId)
       delete ttnDevice.attributes
       await this.client.createDevice(network, ttnDevice.app_id, ttnDevice)
-      await this.modelAPI.protocolData.upsert(network, makeDeviceDataKey(device.id, 'devNwkId'), ttnDevice.dev_id)
+      await this.modelAPI.protocolData.upsert([network, makeDeviceDataKey(device.id, 'devNwkId'), ttnDevice.dev_id])
       return ttnDevice.dev_id
     }
     catch (err) {
-      logger.error('Error on create device', err)
+      log.error('Error on create device', err)
       throw err
     }
   }
@@ -573,16 +573,16 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
       const applicationData = result[1]
       result = await tryCatch(this.modelAPI.protocolData.loadValue(network, makeApplicationDataKey(application.id, 'appNwkId')))
       if (result[0]) {
-        logger.error('Error fetching Remote Application Id')
+        log.error('Error fetching Remote Application Id')
         throw result[0]
       }
       const remoteApplicationId = result[1]
       const postDeviceResult = await this.postSingleDevice(network, dntl, deviceProfile, applicationData, remoteApplicationId, dataAPI)
-      logger.info('Success Adding Device ' + ' to ' + network.name)
+      log.info('Success Adding Device ' + ' to ' + network.name)
       return postDeviceResult
     }
     catch (err) {
-      logger.error(err.message, err)
+      log.error(err.message, err)
       throw err
     }
   }
@@ -601,7 +601,7 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
       return this.client.loadDevice(network, devNetworkId)
     }
     catch (err) {
-      logger.error('Error on get device', err)
+      log.error('Error on get device', err)
       throw err
     }
   }
@@ -630,7 +630,7 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
       dpNwkId = await this.modelAPI.protocolData.loadValue(network, makeDeviceProfileDataKey(dp.id, 'dpNwkId'))
     }
     catch (err) {
-      logger.error('Failed to get supporting data for updateDevice', err)
+      log.error('Failed to get supporting data for updateDevice', err)
       throw err
     }
 
@@ -652,12 +652,12 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
         })
       }
       catch (err) {
-        logger.error('Error on update device keys', err)
+        log.error('Error on update device keys', err)
         throw err
       }
     }
     catch (err) {
-      logger.error('Error on update device', err)
+      log.error('Error on update device', err)
       throw err
     }
   }
@@ -677,7 +677,7 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
     }
     catch (err) {
       // Can't delete without the remote ID.
-      logger.error("Failed to get remote network's device ID", err)
+      log.error("Failed to get remote network's device ID", err)
       throw err
     }
 
@@ -691,13 +691,13 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
           makeDeviceDataKey(deviceId, 'devNwkId'))
       }
       catch (err) {
-        logger.error("Failed to delete remote network's device ID", err)
+        log.error("Failed to delete remote network's device ID", err)
       }
       // Devices have a separate API for appkeys...
       await this.client.deleteDeviceKeys(network, devNetworkId)
     }
     catch (err) {
-      logger.error('Error on delete device', err)
+      log.error('Error on delete device', err)
       throw err
     }
   }
@@ -711,10 +711,10 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
    * @returns {Error}
    */
   addDeviceProfile () {
-    logger.info('The Things Network: addDeviceProfile')
-    logger.info('Device Profiles are not supported by The Things Network')
+    log.info('The Things Network: addDeviceProfile')
+    log.info('Device Profiles are not supported by The Things Network')
     let error = new Error('Device Profiles are not supported by The Things Network')
-    logger.error('Error on addDeviceProfile', error)
+    log.error('Error on addDeviceProfile', error)
     return (error)
   }
 
@@ -726,10 +726,10 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
    * @returns {Error}
    */
   getDeviceProfile () {
-    logger.info('The Things Network: getDeviceProfile')
-    logger.info('Device Profiles are not supported by The Things Network')
+    log.info('The Things Network: getDeviceProfile')
+    log.info('Device Profiles are not supported by The Things Network')
     let error = new Error('Device Profiles are not supported by The Things Network')
-    logger.error('Error on getDeviceProfile', error)
+    log.error('Error on getDeviceProfile', error)
     return (error)
   }
 
@@ -741,10 +741,10 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
    * @returns {Error}
    */
   updateDeviceProfile () {
-    logger.info('The Things Network: updateDeviceProfile')
-    logger.info('Device Profiles are not supported by The Things Network')
+    log.info('The Things Network: updateDeviceProfile')
+    log.info('Device Profiles are not supported by The Things Network')
     let error = new Error('Device Profiles are not supported by The Things Network')
-    logger.error('Error on updateDeviceProfile', error)
+    log.error('Error on updateDeviceProfile', error)
     return (error)
   }
 
@@ -756,10 +756,10 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
    * @returns {Error}
    */
   deleteDeviceProfile () {
-    logger.info('The Things Network: deleteDeviceProfile')
-    logger.info('Device Profiles are not supported by The Things Network')
+    log.info('The Things Network: deleteDeviceProfile')
+    log.info('Device Profiles are not supported by The Things Network')
     let error = new Error('Device Profiles are not supported by The Things Network')
-    logger.error('Error on deleteDeviceProfile', error)
+    log.error('Error on deleteDeviceProfile', error)
     return (error)
   }
 
@@ -771,10 +771,10 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
    * @returns {Error}
    */
   pushDeviceProfile () {
-    logger.info('The Things Network: pushDeviceProfile')
-    logger.info('Device Profiles are not supported by The Things Network')
+    log.info('The Things Network: pushDeviceProfile')
+    log.info('Device Profiles are not supported by The Things Network')
     let error = new Error('Device Profiles are not supported by The Things Network')
-    logger.error('Error on pushDeviceProfile', error)
+    log.error('Error on pushDeviceProfile', error)
     return (error)
   }
 
@@ -784,7 +784,7 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
       return this.setApplication(network, handlerApp, accountServerApp, dataAPI)
     }
     catch (e) {
-      logger.error('Error on register Application', e)
+      log.error('Error on register Application', e)
       throw e
     }
   }
@@ -795,7 +795,7 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
       return accountServerApp.id
     }
     catch (e) {
-      logger.error('Error on get Application', e)
+      log.error('Error on get Application', e)
       throw e
     }
   }

@@ -1,7 +1,7 @@
 const config = require('../config')
 const https = require('https')
 const fs = require('fs')
-const createApp = require('./app')
+const { createApp } = require('./app')
 
 async function createRestServer () {
   const app = await createApp()

@@ -5,9 +5,9 @@ info:
   license:
     name: Apache 2.0
 paths:
-  /api/reportingProtocols:
+  /api/reporting-protocols:
     get:
-      operationId: listReportingProtocols
+      operationId: listReportingProtocol
       summary: List ReportingProtocols
       description: List ReportingProtocols, available only to system administrators
       parameters:
@@ -27,7 +27,7 @@ paths:
                 $ref: '#/components/schemas/ListReportingProtocolResponse'
         '400':
           description: Bad request
-  /api/reportingProtocols/{id}:
+  /api/reporting-protocols/{id}:
     parameters:
       - $ref: '../api.yml#/components/parameters/idParam'
     get:

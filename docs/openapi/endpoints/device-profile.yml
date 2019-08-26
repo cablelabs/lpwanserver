@@ -5,7 +5,7 @@ info:
   license:
     name: Apache 2.0
 paths:
-  /api/deviceProfiles:
+  /api/device-profiles:
     post:
       operationId: createDeviceProfile
       summary: Create a DeviceProfile
@@ -27,7 +27,7 @@ paths:
         '400':
           description: Bad request
     get:
-      operationId: listDeviceProfiles
+      operationId: listDeviceProfile
       summary: List DeviceProfiles
       description: List DeviceProfiles
       parameters:
@@ -48,7 +48,7 @@ paths:
                 $ref: '#/components/schemas/ListDeviceProfileResponse'
         '400':
           description: Bad request
-  /api/deviceProfiles/{id}:
+  /api/device-profiles/{id}:
     parameters:
       - $ref: '../api.yml#/components/parameters/idParam'
     get:

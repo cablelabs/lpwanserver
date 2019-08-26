@@ -75,7 +75,7 @@ describe('E2E Test for Multiple Networks', () => {
     it('Admin Login to LPWan Server', async () => {
       const res = await server
         .post('/api/sessions')
-        .send({ 'login_username': 'admin', 'login_password': 'password' })
+        .send({ 'username': 'admin', 'password': 'password' })
       res.should.have.status(200)
       adminToken = res.text
     })
@@ -105,7 +105,7 @@ describe('E2E Test for Multiple Networks', () => {
   //   it('Application User Login to LPWan Server', async () => {
   //     const res = await server
   //       .post('/api/sessions')
-  //       .send({'login_username': 'bobmouse', 'login_password': 'mousetrap'})
+  //       .send({'username': 'bobmouse', 'password': 'mousetrap'})
   //     res.should.have.status(200)
   //     userToken = res.text
   //     should.exist(userToken)
@@ -124,7 +124,7 @@ describe('E2E Test for Multiple Networks', () => {
       })
       it('Verify LoraOS 1.0 Protocol Exists', async () => {
         const res = await server
-          .get('/api/networkProtocols?search=LoRa Server&networkProtocolVersion=1.0')
+          .get('/api/network-protocols?search=LoRa Server&networkProtocolVersion=1.0')
           .set('Authorization', 'Bearer ' + adminToken)
           .set('Content-Type', 'application/json')
         res.should.have.status(200)
@@ -182,7 +182,7 @@ describe('E2E Test for Multiple Networks', () => {
     describe('Setup Lora 2.0 Network', () => {
       it('Verify LoraOS 2.0 Protocol Exists', (done) => {
         server
-          .get('/api/networkProtocols?search=LoRa Server&networkProtocolVersion=2.0')
+          .get('/api/network-protocols?search=LoRa Server&networkProtocolVersion=2.0')
           .set('Authorization', 'Bearer ' + adminToken)
           .set('Content-Type', 'application/json')
           .end(function (err, res) {
@@ -245,7 +245,7 @@ describe('E2E Test for Multiple Networks', () => {
     describeLoriot('Setup Loriot Network', () => {
       it('Verify Loriot Protocol Exists', (done) => {
         server
-          .get('/api/networkProtocols?search=Loriot&networkProtocolVersion=4.0')
+          .get('/api/network-protocols?search=Loriot&networkProtocolVersion=4.0')
           .set('Authorization', 'Bearer ' + adminToken)
           .set('Content-Type', 'application/json')
           .end(function (err, res) {
@@ -291,7 +291,7 @@ describe('E2E Test for Multiple Networks', () => {
     describeTTN('Setup TTN Network', () => {
       it('Verify TTN Protocol Exists', (done) => {
         server
-          .get('/api/networkProtocols?search=The Things Network&networkProtocolVersion=2.0')
+          .get('/api/network-protocols?search=The Things Network&networkProtocolVersion=2.0')
           .set('Authorization', 'Bearer ' + adminToken)
           .set('Content-Type', 'application/json')
           .end(function (err, res) {
@@ -406,7 +406,7 @@ describe('E2E Test for Multiple Networks', () => {
         }
         should.exist(lora.loraV1.apps[0].appId)
         server
-          .get('/api/applicationNetworkTypeLinks')
+          .get('/api/application-network-type-links')
           .set('Authorization', 'Bearer ' + adminToken)
           .set('Content-Type', 'application/json')
           .end(function (err, res) {
@@ -481,7 +481,7 @@ describe('E2E Test for Multiple Networks', () => {
         }
         should.exist(lora.loraV2.apps[0].appId)
         server
-          .get('/api/applicationNetworkTypeLinks')
+          .get('/api/application-network-type-links')
           .set('Authorization', 'Bearer ' + adminToken)
           .set('Content-Type', 'application/json')
           .end(function (err, res) {
@@ -545,7 +545,7 @@ describe('E2E Test for Multiple Networks', () => {
         }
         should.exist(lora.loriot.apps[0].appId)
         server
-          .get('/api/applicationNetworkTypeLinks')
+          .get('/api/application-network-type-links')
           .set('Authorization', 'Bearer ' + adminToken)
           .set('Content-Type', 'application/json')
           .end(function (err, res) {
@@ -608,7 +608,7 @@ describe('E2E Test for Multiple Networks', () => {
 
         should.exist(lora.ttn.apps[0].appId)
         server
-          .get('/api/applicationNetworkTypeLinks/' + lora.ttn.apps[0].appId)
+          .get('/api/application-network-type-links/' + lora.ttn.apps[0].appId)
           .set('Authorization', 'Bearer ' + adminToken)
           .set('Content-Type', 'application/json')
           .end(function (err, res) {
@@ -656,7 +656,7 @@ describe('E2E Test for Multiple Networks', () => {
           'description': 'Device Profile managed by LPWAN Server, perform changes via LPWAN'
         }
         server
-          .get('/api/deviceProfiles')
+          .get('/api/device-profiles')
           .set('Authorization', 'Bearer ' + adminToken)
           .set('Content-Type', 'application/json')
           .end(function (err, res) {
@@ -733,7 +733,7 @@ describe('E2E Test for Multiple Networks', () => {
           }
         }
         server
-          .get('/api/deviceNetworkTypeLinks')
+          .get('/api/device-network-type-links')
           .set('Authorization', 'Bearer ' + adminToken)
           .set('Content-Type', 'application/json')
           .end(function (err, res) {
@@ -785,7 +785,7 @@ describe('E2E Test for Multiple Networks', () => {
           'description': 'Device Profile managed by LPWAN Server, perform changes via LPWAN'
         }
         server
-          .get('/api/deviceProfiles')
+          .get('/api/device-profiles')
           .set('Authorization', 'Bearer ' + adminToken)
           .set('Content-Type', 'application/json')
           .end(function (err, res) {
@@ -860,7 +860,7 @@ describe('E2E Test for Multiple Networks', () => {
           }
         }
         server
-          .get('/api/deviceNetworkTypeLinks')
+          .get('/api/device-network-type-links')
           .set('Authorization', 'Bearer ' + adminToken)
           .set('Content-Type', 'application/json')
           .end(function (err, res) {
@@ -893,7 +893,7 @@ describe('E2E Test for Multiple Networks', () => {
           'description': 'Device Profile managed by LPWAN Server, perform changes via LPWAN'
         }
         server
-          .get('/api/deviceProfiles')
+          .get('/api/device-profiles')
           .set('Authorization', 'Bearer ' + adminToken)
           .set('Content-Type', 'application/json')
           .end(function (err, res) {
@@ -949,7 +949,7 @@ describe('E2E Test for Multiple Networks', () => {
           }
         }
         server
-          .get('/api/deviceNetworkTypeLinks')
+          .get('/api/device-network-type-links')
           .set('Authorization', 'Bearer ' + adminToken)
           .set('Content-Type', 'application/json')
           .end(function (err, res) {
@@ -1001,7 +1001,7 @@ describe('E2E Test for Multiple Networks', () => {
           'description': 'Device Profile managed by LPWAN Server, perform changes via LPWAN'
         }
         server
-          .get('/api/deviceProfiles')
+          .get('/api/device-profiles')
           .set('Authorization', 'Bearer ' + adminToken)
           .set('Content-Type', 'application/json')
           .end(function (err, res) {
@@ -1083,7 +1083,7 @@ describe('E2E Test for Multiple Networks', () => {
           }
         }
         server
-          .get('/api/deviceNetworkTypeLinks')
+          .get('/api/device-network-type-links')
           .set('Authorization', 'Bearer ' + adminToken)
           .set('Content-Type', 'application/json')
           .end(function (err, res) {

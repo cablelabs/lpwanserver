@@ -5,7 +5,7 @@ const bluebird = require('bluebird')
 bluebird.promisifyAll(redis)
 
 module.exports = {
-  redisClient: redis.createClient({ url: config.redis_url }),
-  redisPub: redis.createClient({ url: config.redis_url }),
-  redisSub: redis.createClient({ url: config.redis_url })
+  keyval: redis.createClient({ url: config.redis_url }),
+  pub: redis.createClient({ url: config.redis_url }),
+  sub: redis.createClient({ url: config.redis_url })
 }

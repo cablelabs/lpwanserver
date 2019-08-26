@@ -1,6 +1,6 @@
 const ObjectHash = require('object-hash')
+const httpError = require('http-errors')
 const DbModel = require('./db-model')
-const { mkError } = require('./utils')
 
 module.exports = class CacheFirstStrategy extends DbModel {
   constructor (opts) {
@@ -19,18 +19,18 @@ module.exports = class CacheFirstStrategy extends DbModel {
       await this.redis.setAsync(this.key('load', hash), JSON.stringify(record))
     }
     catch (err) {
-      this.log(`Failed to cache ${this.name} record: ${err}`)
-      this.log(JSON.stringify({ record, args }))
+      console.error(`Failed to cache ${this.name} record: ${err}`)
+      console.error(JSON.stringify({ record, args }))
     }
   }
 
-  async removeFromCache (uniqueKeyObj) {
+  async removeFromCache (where) {
     let scanAsync = async (id, start) => {
       const result = await this.redis.sscanAsync(this.key('loadIndex', id), start)
       return [ parseInt(result[0], 10), ...result.slice(1) ]
     }
     try {
-      const { id } = await this.resolveId(uniqueKeyObj)
+      const id = await this.resolveId(where)
       let scan = await scanAsync(id, 0)
       let hashes = scan[1]
       while (scan[0]) {
@@ -44,33 +44,29 @@ module.exports = class CacheFirstStrategy extends DbModel {
       ])
     }
     catch (err) {
-      this.log(`Unable to remove ${this.lowerName} cache for: ${JSON.stringify(uniqueKeyObj)}`)
-      throw mkError(500, err)
+      console.error(`Unable to remove ${this.lowerName} cache for: ${JSON.stringify(where)}`)
+      throw httpError(500, err.toString(), err)
     }
   }
 
-  async resolveId (uniqueKeyObj) {
-    if (uniqueKeyObj.id) return uniqueKeyObj
-    return super.load(uniqueKeyObj)
-  }
-
-  async load (...args) {
+  async load (args) {
     const hash = ObjectHash.sha1(args)
     let record = await this.redis.getAsync(this.key('load', hash))
     if (record) return JSON.parse(record)
-    record = await super.load(...args)
+    record = await super.load(args)
     await this.cacheRecord(record, args)
     return record
   }
 
-  async update (uniqueKeyObj, data, opts = {}) {
-    await this.removeFromCache(uniqueKeyObj)
-    return super.update(uniqueKeyObj, data, opts)
+  async update (args) {
+    if (!args.where) throw httpError(400, 'Missing record identifier "where"')
+    await this.removeFromCache(args.where)
+    return super.update(args)
   }
 
-  async remove (uniqueKeyObj) {
-    await this.removeFromCache(uniqueKeyObj)
-    return super.remove(uniqueKeyObj)
+  async remove (id) {
+    await this.removeFromCache({ id })
+    return super.remove(id)
   }
 
   async clearModelFromCache () {

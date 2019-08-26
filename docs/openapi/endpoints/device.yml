@@ -27,7 +27,7 @@ paths:
         '400':
           description: Bad request
     get:
-      operationId: listDevices
+      operationId: listDevice
       summary: List Devices
       description: List Devices
       parameters:
@@ -142,7 +142,7 @@ paths:
           description: Unable to locate device with matching devEUI
   /api/downlinks:
     get:
-      operationId: listDownlinks
+      operationId: listDownlink
       summary: Get device downlinks
       description: Get queued downlinks for one device. x509 client certificate is required. Certificate must contain devEUI as the subject CN. Long-polling supported.
       parameters:
@@ -179,7 +179,7 @@ paths:
         schema:
           type: string
     post:
-      operationId: sendUplinkAsNetwork
+      operationId: sendNetworkUplink
       summary: Send uplink from a network
       description: Send a device uplink from a remote IoT network
       parameters: []

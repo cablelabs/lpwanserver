@@ -29,7 +29,7 @@ paths:
         '400':
           description: Bad request
     get:
-      operationId: listNetworks
+      operationId: listNetwork
       summary: List Networks
       description: List Networks, available only to system administrators
       parameters:

@@ -1,12 +1,7 @@
 // Config access.
 const R = require('ramda')
 const { prune } = require('dead-leaves')
-
-function mkError (status, err) {
-  if (typeof err === 'string') err = new Error(err)
-  err.status = err.statusCode = status
-  throw err
-}
+const httpError = require('http-errors')
 
 async function onFail (status, action) {
   try {
@@ -14,7 +9,7 @@ async function onFail (status, action) {
     return result
   }
   catch (err) {
-    throw mkError(status, err)
+    throw httpError(status, err)
   }
 }
 
@@ -69,7 +64,6 @@ const formatInputData = R.compose(
 )
 
 module.exports = {
-  mkError,
   onFail,
   lowerFirst,
   upperFirst,

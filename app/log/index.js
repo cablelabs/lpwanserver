@@ -1,14 +1,13 @@
 const { createLogger, format, transports } = require('winston')
 const config = require('../config')
 
-const logger = createLogger({
+const log = createLogger({
   level: config.log_level,
   defaultMeta: {
     // service: 'lpwanserver'
   },
   transports: [
     new transports.Console({
-      level: 'debug',
       format: format.combine(
         format.colorize(),
         format.simple(),
@@ -32,12 +31,12 @@ const fileTransportOpts = {
   handleExceptions: true
 }
 if (config.log_file) {
-  logger.add(new transports.File({ ...fileTransportOpts, level: 'info', filename: config.log_file }))
+  log.add(new transports.File({ ...fileTransportOpts, filename: config.log_file }))
 }
 if (config.log_file_errors) {
-  logger.add(new transports.File({ ...fileTransportOpts, level: 'error', filename: config.log_file_errors }))
+  log.add(new transports.File({ ...fileTransportOpts, level: 'error', filename: config.log_file_errors }))
 }
 
 module.exports = {
-  logger
+  log
 }

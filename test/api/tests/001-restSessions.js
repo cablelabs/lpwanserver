@@ -1,7 +1,7 @@
 var assert = require('assert')
 var chai = require('chai')
 var chaiHttp = require('chai-http')
-const { createApp } = require('../../../app/express-app')
+const { createApp } = require('../../../app/rest-server/app')
 var should = chai.should()
 
 chai.use(chaiHttp)
@@ -18,22 +18,21 @@ describe('Sessions', () => {
     it('should return 401 when the login is not valid', async () => {
       const res = await server
         .post('/api/sessions')
-        .send({ 'login_username': 'foo', 'login_password': 'bar' })
+        .send({ 'username': 'foo', 'password': 'bar' })
       res.should.have.status(401)
     })
 
     it('should return 200 and a jwt when the login is valid', async () => {
       const res = await server
         .post('/api/sessions')
-        .send({ 'login_username': 'admin', 'login_password': 'password' })
+        .send({ 'username': 'admin', 'password': 'password' })
       res.should.have.status(200)
       adminToken = res.text
-      console.log("ADMIN_TOKEN", adminToken)
     })
 
-    it('should be able to use the admin jwt to get all companies', async () => {
+    it('should be able to use the admin jwt to get all users', async () => {
       const res = await server
-        .get('/api/companies')
+        .get('/api/users')
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
       res.should.have.status(200)
