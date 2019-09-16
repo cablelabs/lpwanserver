@@ -70,6 +70,9 @@ with each other.</p>
 <p>All persistence services are contained in one docker-compose file.  These are used
 by LPWAN Server and the Lora Server instance used in development.
 There is a script for making it easier to start and stop persistence services.</p>
+<p>Before starting the LPWAN Server for development, you must first start the database
+and then deploy the models.  The <code>deploy</code> command, listed below, generates the database
+client, which is required by the LPWAN server.</p>
 <pre><code class="hljs"><span class="hljs-comment"># Start all persistence services</span>
 $ ./development/bin/manage-db <span class="hljs-keyword">start</span>
 
