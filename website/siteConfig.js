@@ -105,7 +105,9 @@ const siteConfig = {
   repoUrl: 'https://github.com/cablelabs/lpwanserver',
 
   // omit these stylesheets from main docs css bundle
-  separateCss: ['rest']
+  separateCss: ['rest'],
+
+  gaTrackingId: 'UA-24446455-9'
 };
 
 module.exports = siteConfig;
