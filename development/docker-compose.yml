@@ -16,6 +16,7 @@ services:
     environment:
       - port=3200
       - config_file=../config.json
+      - public_dir=
 networks:
   lpwanserver_dev:
     name: lpwanserver_dev

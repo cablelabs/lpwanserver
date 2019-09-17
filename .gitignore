@@ -67,3 +67,6 @@ development/credentials
 
 # Generated app files
 app/generated
+
+# docs website
+website
