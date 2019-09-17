@@ -3,6 +3,8 @@
 OUT=certs
 CONF=development/cert-conf
 
+mkdir -p $OUT
+
 # Certificate Authority
 openssl req -new -x509 -days 9999 -config "$CONF/ca.cnf" -keyout "$OUT/ca-key.pem" -out "$OUT/ca-crt.pem"
 
