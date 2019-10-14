@@ -53,7 +53,6 @@
     "request-promise": "^4.2.2",
     "serve-favicon": "^2.5.0",
     "session-file-store": "^1.2.0",
-    "strip-indent": "^3.0.0",
     "ttn": "^2.3.2",
     "uuid": "^3.3.2",
     "winston": "^3.1.0",
