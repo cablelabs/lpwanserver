@@ -119,41 +119,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/UserResponse'
-  /api/users/verify-email/{uuid}:
-    parameters:
-      - name: uuid
-        in: path
-        description: Email verification link ID
-        required: true
-        schema:
-          type: string
-    put:
-      operationId: verifyUserEmail
-      summary: Verify user email
-      description: Endpoint for email verification links
-      parameters:
-        - name: function
-          in: query
-          description: Accept or reject new email
-          required: true
-          schema:
-            type: string
-            enum:
-              - accept
-              - reject
-      security:
-        - bearer_token: []
-      tags:
-        - User
-      responses:
-        '204':
-          description: Email address was successfully verified or rejected
-        '400':
-          description: Bad request
-        '403':
-          description: Authenticated user not allowed to perform this operation
-        '404':
-          description: Invalid uuid
 components:
   schemas:
     User:

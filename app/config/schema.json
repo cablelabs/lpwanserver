@@ -14,7 +14,7 @@
   "properties": {
     "base_url": {
       "type": "string",
-      "description": "The base URL to use for links back to this site. Used for emails and application integrations.",
+      "description": "The base URL used to create application integrations.",
       "default": ""
     },
     "cors_whitelist": {

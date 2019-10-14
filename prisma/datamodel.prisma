@@ -9,21 +9,6 @@ type User {
   username: String! @unique
   email: String @unique
   pwdHash: String!
-  emails: [Email!]! @relation(name: "UserEmailAddresses" onDelete: CASCADE)
-}
-
-enum EmailStatus {
-  UNVERIFIED
-  VERIFIED
-  REVOKED
-}
-
-type Email {
-  id: ID! @id
-  address: String! @unique
-  status: EmailStatus!
-  tokenHash: String! @unique
-  user: User! @relation(name: "UserEmailAddresses")
 }
 
 enum NetworkTypeName {

@@ -93,8 +93,6 @@ paths:
     $ref: 'endpoints/user.yml#/paths/~1api~1users~1{id}'
   /api/users/me:
     $ref: 'endpoints/user.yml#/paths/~1api~1users~1me'
-  /api/users/verify-email/{uuid}:
-    $ref: 'endpoints/user.yml#/paths/~1api~1users~1verify-email~1{uuid}'
 components:
   securitySchemes:
     bearer_token:
