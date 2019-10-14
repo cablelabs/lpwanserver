@@ -47,23 +47,11 @@ async function create (ctx, { data }) {
   let { error } = Joi.validate(data, userCreateSchema)
   if (error) throw httpError(400, error.message)
   // Async validation
-  let promises = [ctx.$self.validateAndHashPassword(data)]
-  if (data.email) {
-    promises.push(ctx.$m.emails.isInUse({ address: data.email }))
-  }
-  let [pwdHash, emailInUse] = await Promise.all(promises)
-  if (data.email && emailInUse) {
-    throw httpError(400, 'Email is already in use.')
-  }
+  let pwdHash = await ctx.$self.validateAndHashPassword(data)
   // Create record
-  let user = await ctx.db.create({
+  return ctx.db.create({
     data: { ...omitPwd(data), pwdHash }
   })
-  // Send verification email
-  await ctx.$m.emails.verifyEmail({ user }).catch(err => {
-    ctx.log.error('Error starting email verification:', err)
-  })
-  return user
 }
 
 async function list (ctx, { where = {}, ...opts }) {
@@ -84,9 +72,6 @@ async function update (ctx, { where, data }) {
       authorized = Object.keys(data).every(x => allowed.includes(x))
     }
     if (!authorized) throw new httpError.Forbidden()
-    if (data.email && await ctx.$m.emails.isInUse({ address: data.email })) {
-      throw httpError(400, 'Email is already in use.')
-    }
   }
   // Validate and hash password
   if (data.password) {
@@ -97,15 +82,7 @@ async function update (ctx, { where, data }) {
     throw httpError(400, 'Admin users must have an email address.')
   }
   // Update User record
-  let user = await ctx.db.update({ where, data })
-  // Verify new email
-  // Check for ctx.user ensures this is not run when the Email model updates a user's email
-  if (ctx.user && data.email) {
-    await ctx.$m.emails.verifyEmail({ user, oldAddress: oldRec.email }).catch(err => {
-      ctx.log.error('Error starting email verification:', err)
-    })
-  }
-  return user
+  return ctx.db.update({ where, data })
 }
 
 function remove (ctx, id) {

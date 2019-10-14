@@ -4,7 +4,6 @@
 // This gets us dependency injection and more easily tested model functions
 const R = require('ramda')
 const { renameKeys } = require('../lib/utils')
-const { log } = require('../log')
 
 const ModelFactory = models => ({ key, context, api }) => {
   let mergeCtx
@@ -12,7 +11,6 @@ const ModelFactory = models => ({ key, context, api }) => {
   // Wrap api functions to pass context
   const $self = Object.keys(api).reduce((acc, x) => {
     acc[x] = (args, ctx) => {
-      log.silly(`${key} ${x}`, { args })
       return api[x](mergeCtx(ctx), args)
     }
     return acc

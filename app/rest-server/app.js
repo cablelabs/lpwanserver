@@ -17,7 +17,6 @@ async function createApp () {
   var app = express()
 
   // Initialize Models
-  await models.emails.initialize()
   await models.networkProtocols.initialize()
   await models.reportingProtocols.initialize()
 
