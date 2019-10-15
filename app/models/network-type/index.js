@@ -14,7 +14,7 @@ const fragments = {
 // Model Functions
 // ******************************************************************************
 async function forAllNetworks (ctx, { networkTypeId, op }) {
-  let [networks] = await ctx.$m.networks.list({ where: { networkTypeId } })
+  let [networks] = await ctx.$m.network.list({ where: { networkTypeId } })
   const mapFn = network => op(network)
     .then(result => ({ result }))
     .catch(e => ({ error: e.toString() }))
@@ -25,7 +25,8 @@ async function forAllNetworks (ctx, { networkTypeId, op }) {
 // Model
 // ******************************************************************************
 module.exports = {
-  api: {
+  role: 'networkType',
+  publicApi: {
     create,
     list,
     load,

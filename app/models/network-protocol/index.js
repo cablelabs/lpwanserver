@@ -99,8 +99,9 @@ async function test (ctx, { network }) {
 // Model
 // ******************************************************************************
 module.exports = {
+  role: 'networkProtocol',
   context: { handlers: {} },
-  api: {
+  publicApi: {
     initialize,
     create,
     list,

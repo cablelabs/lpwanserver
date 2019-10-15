@@ -99,6 +99,20 @@ function camelCaseToHyphen (word) {
   return word.replace(/([A-Z])/g, (g) => `-${g[0].toLowerCase()}`)
 }
 
+function traceError (message, data, err) {
+  if (!Array.isArray(err.trace)) {
+    err.trace = []
+  }
+  const item = [message]
+  if (data != null) item.push(data)
+  err.trace.push(item)
+  return err
+}
+
+const throwError = R.curry(function throwError (message, data, err) {
+  throw traceError(message, data, err)
+})
+
 module.exports = {
   mutate,
   onFail,
@@ -115,5 +129,7 @@ module.exports = {
   parseProp,
   stringifyProp,
   attempt,
-  camelCaseToHyphen
+  camelCaseToHyphen,
+  traceError,
+  throwError
 }

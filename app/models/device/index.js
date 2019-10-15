@@ -47,7 +47,7 @@ async function update (ctx, { where, data }) {
 async function remove (ctx, id) {
   // Delete my deviceNetworkTypeLinks first.
   try {
-    for await (let state of ctx.$m.deviceNetworkTypeLinks.removeMany({ where: { device: { id } } })) {
+    for await (let state of ctx.$m.deviceNetworkTypeLink.removeMany({ where: { device: { id } } })) {
     }
   }
   catch (err) {
@@ -61,15 +61,15 @@ async function passDataToDevice (ctx, { id, data }) {
   let { error } = Joi.validate(data, unicastDownlinkSchema)
   if (error) throw httpError(400, error.message)
   const device = await ctx.db.load({ id })
-  const app = await ctx.$m.applications.load({ id: device.application.id })
+  const app = await ctx.$m.application.load({ id: device.application.id })
   if (!app.enabled) return
   // Get all device networkType links
   const devNtlQuery = { device: { id } }
-  let [ devNtls ] = await ctx.$m.deviceNetworkTypeLinks.list({ query: devNtlQuery })
+  let [ devNtls ] = await ctx.$m.deviceNetworkTypeLink.list({ query: devNtlQuery })
   const logs = await Promise.all(devNtls.map(
     devNtl => ctx.$.m.networkTypes.forAllNetworks({
       networkTypeId: devNtl.networkType.id,
-      op: network => ctx.$m.networkProtocols.passDataToDevice({ network, applicationId: app.id, deviceId: id, data })
+      op: network => ctx.$m.networkProtocol.passDataToDevice({ network, applicationId: app.id, deviceId: id, data })
     })
   ))
   return R.flatten(logs)
@@ -77,18 +77,18 @@ async function passDataToDevice (ctx, { id, data }) {
 
 async function receiveIpDeviceUplink (ctx, { devEUI, data }) {
   devEUI = normalizeDevEUI(devEUI)
-  let nwkType = await ctx.$m.networkTypes.load({ name: 'IP' })
-  const devNtl = await ctx.$m.deviceNetworkTypeLinks.findByDevEUI({ devEUI, networkTypeId: nwkType.id })
+  let nwkType = await ctx.$m.networkType.load({ name: 'IP' })
+  const devNtl = await ctx.$m.deviceNetworkTypeLink.findByDevEUI({ devEUI, networkTypeId: nwkType.id })
   if (!devNtl) return
   // Get device
   const device = await ctx.$self.load({ where: { id: devNtl.device.id } })
   // Get application
-  const app = await ctx.$m.applications.load({ where: device.application })
+  const app = await ctx.$m.application.load({ where: device.application })
   // Ensure application is enabled
   if (!app.running) return
   // Pass data
-  let [ nwkProtos ] = await ctx.$m.networkProtocols.list({ where: { networkType: { id: nwkType.id } }, limit: 1 })
-  const ipProtoHandler = await ctx.$m.networkProtocols.getHandler(nwkProtos[0].id)
+  let [ nwkProtos ] = await ctx.$m.networkProtocol.list({ where: { networkType: { id: nwkType.id } }, limit: 1 })
+  const ipProtoHandler = await ctx.$m.networkProtocol.getHandler(nwkProtos[0].id)
   await ipProtoHandler.passDataToApplication(app, device, devEUI, data)
 }
 
@@ -112,10 +112,10 @@ async function listIpDeviceDownlinks (ctx, { devEUI }) {
 
 async function importDevices (ctx, { applicationId, deviceProfileId, devices }) {
   // ensure app exists
-  await ctx.$m.applications.load({ id: applicationId })
+  await ctx.$m.application.load({ id: applicationId })
   // Load device profile
-  const deviceProfile = await ctx.$m.deviceProfiles.load({ id: deviceProfileId })
-  const nwkType = await ctx.$m.networkTypes.load({ id: deviceProfile.networkType.id })
+  const deviceProfile = await ctx.$m.deviceProfile.load({ id: deviceProfileId })
+  const nwkType = await ctx.$m.networkType.load({ id: deviceProfile.networkType.id })
   if (!nwkType.name === 'IP') {
     throw httpError(400, 'Device import currently only supports IP devices.')
   }
@@ -131,7 +131,7 @@ async function importDevices (ctx, { applicationId, deviceProfileId, devices }) 
         description,
         deviceModel
       })
-      await ctx.$m.deviceNetworkTypeLinks.create({
+      await ctx.$m.deviceNetworkTypeLink.create({
         deviceId: device.id,
         networkTypeId: deviceProfile.networkType.id,
         deviceProfileId,
@@ -149,7 +149,8 @@ async function importDevices (ctx, { applicationId, deviceProfileId, devices }) 
 // Model
 // ******************************************************************************
 module.exports = {
-  api: {
+  role: 'device',
+  publicApi: {
     create,
     list,
     listAll,

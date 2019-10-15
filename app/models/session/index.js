@@ -15,7 +15,7 @@ async function tokenWasRevoked (ctx, payload) {
 }
 
 async function authenticateUser (ctx, args) {
-  const user = await ctx.$m.users.authenticateUser(args)
+  const user = await ctx.$m.user.authenticateUser(args)
   return jwt.sign(
     { user: user.id, jti: uuidv4() },
     ctx.config.jwt_secret,
@@ -40,10 +40,11 @@ async function revokeToken (ctx, payload) {
 // Model
 // ******************************************************************************
 module.exports = {
+  role: 'session',
   context: {
     revokedTokens: []
   },
-  api: {
+  publicApi: {
     removeExpiredRevokedTokens,
     tokenWasRevoked,
     authenticateUser,

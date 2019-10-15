@@ -32,10 +32,11 @@ function getHandler (ctx, { id }) {
 // Model
 // ******************************************************************************
 module.exports = {
+  role: 'reportingProtocol',
   context: {
     handlers: {}
   },
-  api: {
+  publicApi: {
     initialize,
     create,
     list,

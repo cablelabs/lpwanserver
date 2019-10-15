@@ -28,7 +28,7 @@ async function create (ctx, { data, remoteOrigin = false }) {
     if (!remoteOrigin) {
       rec.remoteAccessLogs = ctx.$.m.networkTypes.forAllNetworks({
         networkTypeId: rec.networkType.id,
-        op: network => ctx.$m.networkProtocols.addApplication({
+        op: network => ctx.$m.networkProtocol.addApplication({
           network,
           applicationId: rec.application.id,
           networkSettings: data.networkSettings
@@ -51,10 +51,10 @@ async function update (ctx, { where, data, remoteOrigin = false }) {
     }
     const rec = await ctx.db.update({ where, data })
     if (!remoteOrigin) {
-      const application = await ctx.$m.applications.load({ where: rec.application })
+      const application = await ctx.$m.application.load({ where: rec.application })
       rec.remoteAccessLogs = ctx.$.m.networkTypes.forAllNetworks({
         networkTypeId: rec.networkType.id,
-        op: network => ctx.$m.networkProtocols.pushApplication({ network, application })
+        op: network => ctx.$m.networkProtocol.pushApplication({ network, application })
       })
     }
     return rec
@@ -70,15 +70,15 @@ async function remove (ctx, id) {
     var rec = await ctx.db.load({ where: { id } })
 
     // Delete deviceNetworkTypeLinks
-    for await (let devState of ctx.$m.devices.listAll({ where: { application: rec.application } })) {
+    for await (let devState of ctx.$m.device.listAll({ where: { application: rec.application } })) {
       let ids = devState.records.map(R.prop('id'))
-      for await (let state of ctx.$m.deviceNetworkTypeLinks.removeMany({ where: { device: { id_in: ids } } })) {
+      for await (let state of ctx.$m.deviceNetworkTypeLink.removeMany({ where: { device: { id_in: ids } } })) {
       }
     }
 
     const logs = ctx.$.m.networkTypes.forAllNetworks({
       networkTypeId: rec.networkType.id,
-      op: network => ctx.$m.networkProtocols.deleteApplication({ network, applicationId: rec.application.id })
+      op: network => ctx.$m.networkProtocol.deleteApplication({ network, applicationId: rec.application.id })
     })
 
     await ctx.db.remove(id)
@@ -95,17 +95,17 @@ async function pushApplicationNetworkTypeLink (ctx, id) {
     var rec = await ctx.db.load({ where: { id } })
 
     // Push deviceNetworkTypeLinks
-    for await (let devState of ctx.$m.devices.listAll({ where: { application: { id } } })) {
+    for await (let devState of ctx.$m.device.listAll({ where: { application: { id } } })) {
       let ids = devState.records.map(R.prop('id'))
-      for await (let devNtlState of ctx.$m.deviceNetworkTypeLinks.listAll({ where: { device: { id_in: ids } } })) {
+      for await (let devNtlState of ctx.$m.deviceNetworkTypeLink.listAll({ where: { device: { id_in: ids } } })) {
         let ids = devNtlState.map(R.prop('id'))
-        await Promise.all(ids.map(ctx.$m.deviceNetworkTypeLinks.pushDeviceNetworkTypeLink))
+        await Promise.all(ids.map(ctx.$m.deviceNetworkTypeLink.pushDeviceNetworkTypeLink))
       }
     }
 
     rec.remoteAccessLogs = ctx.$.m.networkTypes.forAllNetworks({
       networkTypeId: rec.networkType.id,
-      op: network => ctx.$m.networkProtocols.pushApplication({
+      op: network => ctx.$m.networkProtocol.pushApplication({
         network,
         applicationId: rec.application.id,
         networkSettings: rec.networkSettings
@@ -124,7 +124,8 @@ async function pushApplicationNetworkTypeLink (ctx, id) {
 // Model
 // ******************************************************************************
 module.exports = {
-  api: {
+  role: 'applicationNetworkTypeLink',
+  publicApi: {
     create,
     list,
     listAll,

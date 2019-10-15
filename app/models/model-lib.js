@@ -3,24 +3,39 @@
 // Which is passes to the methods called
 // This gets us dependency injection and more easily tested model functions
 const R = require('ramda')
-const { renameKeys } = require('../lib/utils')
+const { renameKeys, traceError } = require('../lib/utils')
 
-const ModelFactory = models => ({ key, context, api }) => {
-  let mergeCtx
-
-  // Wrap api functions to pass context
-  const $self = Object.keys(api).reduce((acc, x) => {
-    acc[x] = (args, ctx) => {
-      return api[x](mergeCtx(ctx), args)
-    }
-    return acc
-  }, {})
-
-  models[key] = $self
-  mergeCtx = R.merge({ ...context, $m: models, $self })
-  return $self
+// *********************************************************************
+// Model Library
+// *********************************************************************
+const wrapCommand = (context, api, role, cmd) => async (args, ctx) => {
+  try {
+    ctx = R.merge(context, ctx)
+    const result = await api[cmd](ctx, args)
+    return result
+  } catch (err) {
+    if (ctx.traceError !== false) traceError(`${role}:${cmd}`, args, err)
+    throw err
+  }
 }
 
+const buildApi = (context, role, api, seed = {}) => R.reduce(
+  (acc, cmd) => R.assoc(cmd, wrapCommand(context, api, role, cmd), acc),
+  seed,
+  R.keys(api)
+)
+
+const createModel = ({ context = {}, role, publicApi, privateApi, init }) => {
+  context = { ...context }
+  let $publicApi = buildApi(context, role, publicApi)
+  context.$self = privateApi ? buildApi(context, role, privateApi, $publicApi) : $publicApi
+  if (init) init(context)
+  return $publicApi
+}
+
+// *********************************************************************
+// Common Model CRUD Implementations
+// *********************************************************************
 function create (ctx, args) {
   return ctx.db.create(args)
 }
@@ -72,7 +87,7 @@ async function * listAll (ctx, { where, limit = 100, ...opts }) {
 }
 
 module.exports = {
-  ModelFactory,
+  createModel,
   create,
   list,
   listAll,

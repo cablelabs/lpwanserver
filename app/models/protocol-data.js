@@ -90,7 +90,7 @@ module.exports = {
       pluralName: 'protocolDatas'
     })
   },
-  api: {
+  publicApi: {
     load,
     loadValue,
     create,

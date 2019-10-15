@@ -34,7 +34,7 @@ async function update (ctx, args) {
 async function remove (ctx, id) {
   // remove all Application Devices
   try {
-    for await (let state of ctx.$m.devices.removeMany({ where: { application: { id } } })) {
+    for await (let state of ctx.$m.device.removeMany({ where: { application: { id } } })) {
       // state can be analyzed here to see what was just removed and how many remain
     }
   }
@@ -44,7 +44,7 @@ async function remove (ctx, id) {
   }
   // remove all ApplicationNetworkTypeLinks
   try {
-    for await (let state of ctx.$m.applicationNetworkTypeLinks.removeMany({ where: { application: { id } } })) {
+    for await (let state of ctx.$m.applicationNetworkTypeLink.removeMany({ where: { application: { id } } })) {
       // state can be analyzed here to see what was just removed and how many remain
     }
   }
@@ -65,11 +65,11 @@ async function start (ctx, id) {
     throw httpError(400, 'Application must have a ReportingProtocol to be enabled.')
   }
   // Call startApplication on NetworkTypes
-  let [appNtls] = await ctx.$m.applicationNetworkTypeLinks.list({ where: { application: { id } } })
+  let [appNtls] = await ctx.$m.applicationNetworkTypeLink.list({ where: { application: { id } } })
   let logs = await Promise.all(appNtls.map(
     appNtl => ctx.$.m.networkTypes.forAllNetworks({
       networkTypeId: appNtl.networkType.id,
-      op: network => ctx.$m.networkProtocols.startApplication({ network, applicationId: id })
+      op: network => ctx.$m.networkProtocol.startApplication({ network, applicationId: id })
     })
   ))
   return R.flatten(logs)
@@ -77,11 +77,11 @@ async function start (ctx, id) {
 
 async function stop (ctx, id) {
   // Call stopApplication on NetworkTypes
-  let [appNtls] = await ctx.$m.applicationNetworkTypeLinks.list({ where: { application: { id } } })
+  let [appNtls] = await ctx.$m.applicationNetworkTypeLink.list({ where: { application: { id } } })
   let logs = await Promise.all(appNtls.map(
     appNtl => ctx.$.m.networkTypes.forAllNetworks({
       networkTypeId: appNtl.networkType.id,
-      op: network => ctx.$m.networkProtocols.stopApplication({ network, applicationId: id })
+      op: network => ctx.$m.networkProtocol.stopApplication({ network, applicationId: id })
     })
   ))
   return R.flatten(logs)
@@ -92,24 +92,25 @@ async function passDataToApplication (ctx, { id, networkId, data }) {
   const app = await ctx.db.load({ where: { id } })
   if (!app.enabled) return
   // Ensure network is enabled
-  const network = await ctx.$m.networks.load({ where: { id: networkId } })
+  const network = await ctx.$m.network.load({ where: { id: networkId } })
   if (!network.securityData.enabled) return
   // Ensure applicationNetworkTypeLink exists
-  let [appNtls] = await ctx.$m.applicationNetworkTypeLinks.list({ where: {
+  let [appNtls] = await ctx.$m.applicationNetworkTypeLink.list({ where: {
     application: { id },
     networkType: { id: network.networkType.id },
     limit: 1
   } })
   if (!appNtls.length) return
   // Pass data
-  await ctx.$m.networkProtocols.passDataToApplication({ network, applicationId: id, data })
+  await ctx.$m.networkProtocol.passDataToApplication({ network, applicationId: id, data })
 }
 
 // ******************************************************************************
 // Model
 // ******************************************************************************
 module.exports = {
-  api: {
+  role: 'application',
+  publicApi: {
     create,
     list,
     load,

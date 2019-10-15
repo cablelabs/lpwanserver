@@ -35,8 +35,8 @@ describe('Application Model', () => {
     let id = 'a'
     const expectedRemoveManyArgs = { where: { application: { id } } }
     await api.remove(ctx, id)
-    expect(ctx.$m.devices.removeMany.mock.calls[0][0]).toEqual(expectedRemoveManyArgs)
-    expect(ctx.$m.applicationNetworkTypeLinks.removeMany.mock.calls[0][0]).toEqual(expectedRemoveManyArgs)
+    expect(ctx.$m.device.removeMany.mock.calls[0][0]).toEqual(expectedRemoveManyArgs)
+    expect(ctx.$m.applicationNetworkTypeLink.removeMany.mock.calls[0][0]).toEqual(expectedRemoveManyArgs)
     expect(ctx.db.remove.mock.calls[0][0]).toBe(id)
   })
   // it(testName + ' Start', async () => {

@@ -35,7 +35,7 @@ async function create (ctx, { data, remoteOrigin = false }) {
     if (!remoteOrigin) {
       rec.remoteAccessLogs = await ctx.$.m.networkTypes.forAllNetworks({
         networkTypeId: rec.networkType.id,
-        op: network => ctx.$m.networkProtocols.addDevice({ network, deviceNetworkTypeLink: rec })
+        op: network => ctx.$m.networkProtocol.addDevice({ network, deviceNetworkTypeLink: rec })
       })
     }
     return rec
@@ -56,10 +56,10 @@ async function update (ctx, { where, data }) {
       data.networkSettings.devEUI = normalizeDevEUI(data.networkSettings.devEUI)
     }
     const rec = await ctx.db.update({ where, data })
-    const device = await ctx.$m.devices.load({ where: rec.device })
+    const device = await ctx.$m.device.load({ where: rec.device })
     rec.remoteAccessLogs = await ctx.$.m.networkTypes.forAllNetworks({
       networkTypeId: rec.networkType.id,
-      op: network => ctx.$m.networkProtocols.pushDevice({ network, device })
+      op: network => ctx.$m.networkProtocol.pushDevice({ network, device })
     })
     return rec
   }
@@ -75,7 +75,7 @@ async function remove (ctx, id) {
     // Don't delete the local record until the remote operations complete.
     const logs = await ctx.$.m.networkTypes.forAllNetworks({
       networkTypeId: rec.networkType.id,
-      op: network => ctx.$m.networkProtocols.deleteDevice({ network, deviceId: rec.device.id })
+      op: network => ctx.$m.networkProtocol.deleteDevice({ network, deviceId: rec.device.id })
     })
     await ctx.db.remove(id)
     return logs
@@ -91,7 +91,7 @@ async function pushDeviceNetworkTypeLink (ctx, id) {
     var rec = await ctx.db.load({ where: { id } })
     rec.remoteAccessLogs = await ctx.$.m.networkTypes.forAllNetworks({
       networkTypeId: rec.networkType.id,
-      op: network => ctx.$m.networkProtocols.pushDevice({
+      op: network => ctx.$m.networkProtocol.pushDevice({
         network,
         deviceId: rec.device.id,
         networkSettings: rec.networkSettings
@@ -126,7 +126,8 @@ async function findByDevEUI (ctx, { devEUI, networkTypeId }) {
 // Model
 // ******************************************************************************
 module.exports = {
-  api: {
+  role: 'deviceNetworkTypeLink',
+  publicApi: {
     create,
     list,
     load,

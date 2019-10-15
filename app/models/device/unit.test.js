@@ -29,7 +29,7 @@ describe('Device Model', () => {
     let id = 'a'
     const expectedRemoveManyArgs = { where: { device: { id } } }
     await api.remove(ctx, id)
-    expect(ctx.$m.deviceNetworkTypeLinks.removeMany.mock.calls[0][0]).toEqual(expectedRemoveManyArgs)
+    expect(ctx.$m.deviceNetworkTypeLink.removeMany.mock.calls[0][0]).toEqual(expectedRemoveManyArgs)
     expect(ctx.db.remove.mock.calls[0][0]).toBe(id)
   })
 

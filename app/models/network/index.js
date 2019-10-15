@@ -55,7 +55,7 @@ async function create (ctx, { data }) {
     await ctx.db.update({ where: { id: record.id }, data: { securityData } })
     await ctx.$self.pullNetwork({ id: record.id })
   }
-  await ctx.$m.networkTypes.forAllNetworks({
+  await ctx.$m.networkType.forAllNetworks({
     networkTypeId: record.networkType.id,
     op: network => ctx.$self.pushNetwork({ id: network.id })
   })
@@ -105,10 +105,10 @@ async function authorizeAndTest (ctx, network) {
     return network
   }
   try {
-    await ctx.$m.networkProtocols.connect({ network })
+    await ctx.$m.networkProtocol.connect({ network })
     network.securityData.authorized = true
     try {
-      await ctx.$m.networkProtocols.test({ network })
+      await ctx.$m.networkProtocol.test({ network })
       ctx.log.info('Network Test Success', { network: network.name })
       network.securityData.message = 'ok'
     }
@@ -144,7 +144,7 @@ async function pullNetwork (ctx, { id }) {
     if (!network.securityData.authorized) {
       throw new Error('Network is not authorized.  Cannot pull')
     }
-    let result = await ctx.$m.networkProtocols.pullNetwork({ network })
+    let result = await ctx.$m.networkProtocol.pullNetwork({ network })
     ctx.log.info('Success pulling from Network : ' + id)
     return result
   }
@@ -171,7 +171,8 @@ async function pushNetwork (ctx, { id }) {
 // Model
 // ******************************************************************************
 module.exports = {
-  api: {
+  role: 'network',
+  publicApi: {
     create,
     list,
     listAll,

@@ -6,9 +6,9 @@ const Joi = require('@hapi/joi')
 const { adminPermissions, userPermissions } = require('./permissions')
 const { load, listAll } = require('../model-lib')
 
-//* *****************************************************************************
+// ******************************************************************************
 // Fragments for how the data should be returned from Prisma.
-//* *****************************************************************************
+// ******************************************************************************
 const fragments = {
   internal: `fragment InternalUser on User {
     id
@@ -124,7 +124,8 @@ function hasPermissions (ctx, { permissions }) {
 // Model
 // *********************************************************************
 module.exports = {
-  api: {
+  role: 'user',
+  publicApi: {
     create,
     list,
     listAll,
