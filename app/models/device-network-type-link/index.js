@@ -32,12 +32,17 @@ async function create (ctx, { data, remoteOrigin = false }) {
       data = R.assocPath(['networkSettings', 'devEUI'], normalizeDevEUI(data.networkSettings.devEUI), data)
     }
     const rec = await ctx.db.create({ data: { enabled: true, ...data } })
-    if (!remoteOrigin) {
-      rec.remoteAccessLogs = await ctx.$.m.networkTypes.forAllNetworks({
-        networkTypeId: rec.networkType.id,
-        op: network => ctx.$m.networkProtocol.addDevice({ network, deviceNetworkTypeLink: rec })
+    await ctx.$.m.networkTypes.forAllNetworks({
+      networkTypeId: rec.networkType.id,
+      op: network => ctx.$m.networkDeployment.create({
+        data: {
+          status: remoteOrigin ? 'SYNCED' : 'CREATED',
+          type: 'DEVICE',
+          network: { id: network.id },
+          device: rec.device
+        }
       })
-    }
+    })
     return rec
   }
   catch (err) {
@@ -46,7 +51,7 @@ async function create (ctx, { data, remoteOrigin = false }) {
   }
 }
 
-async function update (ctx, { where, data }) {
+async function update (ctx, { where, data, remoteOrigin = false }) {
   try {
     // No changing the application or the network.
     if (data.applicationId || data.networkTypeId) {
@@ -56,11 +61,21 @@ async function update (ctx, { where, data }) {
       data.networkSettings.devEUI = normalizeDevEUI(data.networkSettings.devEUI)
     }
     const rec = await ctx.db.update({ where, data })
-    const device = await ctx.$m.device.load({ where: rec.device })
-    rec.remoteAccessLogs = await ctx.$.m.networkTypes.forAllNetworks({
+    await ctx.$.m.networkTypes.forAllNetworks({
       networkTypeId: rec.networkType.id,
-      op: network => ctx.$m.networkProtocol.pushDevice({ network, device })
+      op: async network => ctx.$m.networkDeployment.updateByQuery({
+        where: { network: { id: network.id }, device: rec.device },
+        data: {
+          status: remoteOrigin ? 'SYNCED' : 'UPDATED',
+          logs: []
+        }
+      })
     })
+    // const device = await ctx.$m.device.load({ where: rec.device })
+    // rec.remoteAccessLogs = await ctx.$.m.networkTypes.forAllNetworks({
+    //   networkTypeId: rec.networkType.id,
+    //   op: network => ctx.$m.networkProtocol.pushDevice({ network, device })
+    // })
     return rec
   }
   catch (err) {
@@ -73,12 +88,18 @@ async function remove (ctx, id) {
   try {
     const rec = await ctx.db.load({ where: { id } })
     // Don't delete the local record until the remote operations complete.
-    const logs = await ctx.$.m.networkTypes.forAllNetworks({
+    await ctx.$.m.networkTypes.forAllNetworks({
       networkTypeId: rec.networkType.id,
-      op: network => ctx.$m.networkProtocol.deleteDevice({ network, deviceId: rec.device.id })
+      op: async network => ctx.$m.networkDeployment.updateByQuery({
+        where: { network: { id: network.id }, device: rec.device },
+        data: {
+          status: 'REMOVED',
+          logs: []
+        }
+      })
+      // op: network => ctx.$m.networkProtocol.deleteDevice({ network, deviceId: rec.device.id })
     })
     await ctx.db.remove(id)
-    return logs
   }
   catch (err) {
     ctx.log.error('Error deleting deviceNetworkTypeLink: ', err)

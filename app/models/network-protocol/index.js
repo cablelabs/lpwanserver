@@ -3,6 +3,7 @@ const { renameKeys } = require('../../lib/utils')
 const registerNetworkProtocols = require('../../networkProtocols/register')
 const { load, update, remove } = require('../model-lib')
 const httpError = require('http-errors')
+const R = require('ramda')
 
 // ******************************************************************************
 // Fragments for how the data should be returned from Prisma.
@@ -95,6 +96,36 @@ async function test (ctx, { network }) {
   await handler.test({ network })
 }
 
+async function syncApplication (ctx, { network, networkDeployment }) {
+  let recs = networkDeployment.status === 'REMOVED'
+    ? []
+    : await Promise.all([
+      ctx.$m.applicationNetworkTypeLink.loadByQuery({
+        where: { networkType: network.networkType, application: networkDeployment.application }
+      }),
+      ctx.$m.application.load({ where: networkDeployment.application })
+    ])
+  let [applicationNetworkTypeLink, application] = recs
+  const handler = ctx.$self.getHandler({ id: network.networkProtocol.id })
+  const args = { network, networkDeployment }
+  if (recs.length) {
+    args.applicationNetworkTypeLink = R.mergeDeepRight(applicationNetworkTypeLink, {
+      networkSettings: R.pick(['name', 'description'], application)
+    })
+  }
+  const remoteDoc = await handler.syncApplication(args)
+  let meta = { ...networkDeployment.meta }
+  if (networkDeployment.status === 'CREATED') {
+    meta = { id: remoteDoc.id }
+  }
+  const { enabled } = applicationNetworkTypeLink
+  if (networkDeployment.meta.enabled !== enabled) {
+    await ctx.$self[enabled ? 'startApplication' : 'stopApplication']({ network, applicationId: application.id })
+    meta.enabled = enabled
+  }
+  return meta
+}
+
 // ******************************************************************************
 // Model
 // ******************************************************************************
@@ -115,10 +146,11 @@ module.exports = {
     test,
     pushNetwork: handlerCommand('pushNetwork'),
     pullNetwork: handlerCommand('pullNetwork'),
-    addApplication: handlerCommand('addApplication'),
-    deleteApplication: handlerCommand('deleteApplication'),
+    syncApplication,
     pushApplication: handlerCommand('pushApplication'),
     pullApplication: handlerCommand('pullApplication'),
+    addApplication: handlerCommand('addApplication'),
+    deleteApplication: handlerCommand('deleteApplication'),
     startApplication: handlerCommand('startApplication'),
     stopApplication: handlerCommand('stopApplication'),
     addDevice: handlerCommand('addDevice'),

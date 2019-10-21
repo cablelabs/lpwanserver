@@ -5,6 +5,7 @@ const { prisma } = require('../lib/prisma')
 const CacheFirstStrategy = require('../lib/prisma-cache/src/cache-first-strategy')
 const redis = require('../lib/redis')
 const { log } = require('../log')
+const emitter = require('../lib/emitter')
 
 const dbClientFactory = (opts) => new CacheFirstStrategy({
   defaultFragmentKey: 'basic',
@@ -19,7 +20,8 @@ const globalContext = {
   $m: models,
   log,
   config,
-  redis
+  redis,
+  emitter
 }
 
 const addModel = path => {
@@ -38,6 +40,7 @@ addModel('./device')
 addModel('./device-network-type-link')
 addModel('./device-profile')
 addModel('./network')
+addModel('./network-deployment')
 addModel('./network-protocol')
 addModel('./network-type')
 addModel('./protocol-data')

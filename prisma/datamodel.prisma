@@ -58,7 +58,6 @@ type Application {
   name: String
   description: String
   baseUrl: String
-  enabled: Boolean! @default(value: true)
   reportingProtocol: ReportingProtocol @relation(name: "ReportingProtocolApplications")
   networkTypes: [ApplicationNetworkTypeLink!]! @relation(name: "ApplicationNetworkTypes" onDelete: CASCADE)
   devices: [Device!]! @relation(name: "ApplicationDevices" onDelete: CASCADE)
@@ -105,4 +104,30 @@ type ProtocolData {
   networkProtocol: NetworkProtocol!
   dataIdentifier: String
   dataValue: String
+}
+
+enum DeploymentStatus {
+  CREATED
+  UPDATED
+  REMOVED
+  SYNCED
+  SYNC_FAILED
+}
+
+enum DeploymentType {
+  APPLICATION
+  DEVICE
+  DEVICE_PROFILE
+}
+
+type NetworkDeployment {
+  id: ID! @id
+  status: DeploymentStatus!
+  type: DeploymentType!
+  meta: Json
+  logs: Json
+  network: Network!
+  application: Application
+  device: Device
+  deviceProfile: DeviceProfile
 }

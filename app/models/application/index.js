@@ -1,5 +1,5 @@
 const httpError = require('http-errors')
-const R = require('ramda')
+// const R = require('ramda')
 const { create, list, load } = require('../model-lib')
 
 // ******************************************************************************
@@ -10,7 +10,6 @@ const fragments = {
     id
     name
     description
-    enabled
     baseUrl
     reportingProtocol {
       id
@@ -23,25 +22,26 @@ const fragments = {
 // ******************************************************************************
 async function update (ctx, args) {
   if (!args.where) throw httpError(400, 'Missing record identifier "where"')
-  let oldRec = await ctx.db.load({ where: args.where })
-  const result = await ctx.db.update(args)
-  if ('enabled' in args.data && args.data.enabled !== oldRec.enabled) {
-    await ctx.$self[args.data.enabled ? 'start' : 'stop'](oldRec.id)
+  const rec = await ctx.db.update(args)
+  // if name or description updated, set status on deployment record
+  if (args.data.name || args.data.description) {
+    const [appNwkTypeLinks] = await ctx.$m.applicationNetworkTypeLink.list({
+      where: { application: { id: rec.id } }
+    })
+    await Promise.all(appNwkTypeLinks.map(appNwkTypeLink => {
+      return ctx.$.m.networkTypes.forAllNetworks({
+        networkTypeId: appNwkTypeLink.networkType.id,
+        op: network => ctx.$m.networkDeployment.updateByQuery({
+          where: { network: { id: network.id }, application: { id: rec.id } },
+          data: { status: 'UPDATED' }
+        })
+      })
+    }))
   }
-  return result
+  return rec
 }
 
 async function remove (ctx, id) {
-  // remove all Application Devices
-  try {
-    for await (let state of ctx.$m.device.removeMany({ where: { application: { id } } })) {
-      // state can be analyzed here to see what was just removed and how many remain
-    }
-  }
-  catch (err) {
-    ctx.log.error('Error deleting application\'s devices', err)
-    throw err
-  }
   // remove all ApplicationNetworkTypeLinks
   try {
     for await (let state of ctx.$m.applicationNetworkTypeLink.removeMany({ where: { application: { id } } })) {
@@ -52,55 +52,70 @@ async function remove (ctx, id) {
     ctx.log.error('Error deleting application\'s networkTypeLinks', err)
     throw err
   }
-  // TODO: stop application if it's enabled
+  // remove all Application Devices
+  try {
+    for await (let state of ctx.$m.device.removeMany({ where: { application: { id } } })) {
+      // state can be analyzed here to see what was just removed and how many remain
+    }
+  }
+  catch (err) {
+    ctx.log.error('Error deleting application\'s devices', err)
+    throw err
+  }
   await ctx.db.remove(id)
 }
 
-async function start (ctx, id) {
-  // Ensure app has a ReportingProtocol
-  const [reportingProtocols] = await ctx.$m.applicationReportingProtocols.list({
-    where: { application: { id } }
-  })
-  if (!reportingProtocols.length) {
-    throw httpError(400, 'Application must have a ReportingProtocol to be enabled.')
-  }
-  // Call startApplication on NetworkTypes
-  let [appNtls] = await ctx.$m.applicationNetworkTypeLink.list({ where: { application: { id } } })
-  let logs = await Promise.all(appNtls.map(
-    appNtl => ctx.$.m.networkTypes.forAllNetworks({
-      networkTypeId: appNtl.networkType.id,
-      op: network => ctx.$m.networkProtocol.startApplication({ network, applicationId: id })
-    })
-  ))
-  return R.flatten(logs)
-}
+// async function start (ctx, id) {
+//   // Ensure app has a ReportingProtocol
+//   const [reportingProtocols] = await ctx.$m.applicationReportingProtocols.list({
+//     where: { application: { id } }
+//   })
+//   if (!reportingProtocols.length) {
+//     throw httpError(400, 'Application must have a ReportingProtocol to be enabled.')
+//   }
+//   // Call startApplication on NetworkTypes
+//   let [appNtls] = await ctx.$m.applicationNetworkTypeLink.list({ where: { application: { id } } })
+//   let logs = await Promise.all(appNtls.map(
+//     appNtl => ctx.$.m.networkTypes.forAllNetworks({
+//       networkTypeId: appNtl.networkType.id,
+//       op: network => ctx.$m.networkProtocol.startApplication({ network, applicationId: id })
+//     })
+//   ))
+//   return R.flatten(logs)
+// }
 
-async function stop (ctx, id) {
-  // Call stopApplication on NetworkTypes
-  let [appNtls] = await ctx.$m.applicationNetworkTypeLink.list({ where: { application: { id } } })
-  let logs = await Promise.all(appNtls.map(
-    appNtl => ctx.$.m.networkTypes.forAllNetworks({
-      networkTypeId: appNtl.networkType.id,
-      op: network => ctx.$m.networkProtocol.stopApplication({ network, applicationId: id })
-    })
-  ))
-  return R.flatten(logs)
-}
+// async function stop (ctx, id) {
+//   // Call stopApplication on NetworkTypes
+//   let [appNtls] = await ctx.$m.applicationNetworkTypeLink.list({ where: { application: { id } } })
+//   let logs = await Promise.all(appNtls.map(
+//     appNtl => ctx.$.m.networkTypes.forAllNetworks({
+//       networkTypeId: appNtl.networkType.id,
+//       op: network => ctx.$m.networkProtocol.stopApplication({ network, applicationId: id })
+//     })
+//   ))
+//   return R.flatten(logs)
+// }
 
 async function passDataToApplication (ctx, { id, networkId, data }) {
-  // Ensure application is running
-  const app = await ctx.db.load({ where: { id } })
-  if (!app.enabled) return
   // Ensure network is enabled
   const network = await ctx.$m.network.load({ where: { id: networkId } })
-  if (!network.securityData.enabled) return
-  // Ensure applicationNetworkTypeLink exists
-  let [appNtls] = await ctx.$m.applicationNetworkTypeLink.list({ where: {
-    application: { id },
-    networkType: { id: network.networkType.id },
-    limit: 1
-  } })
-  if (!appNtls.length) return
+  if (!network.enabled) return
+  // Ensure applicationNetworkTypeLink exists and is enabled
+  let appNtl
+  try {
+    appNtl = await ctx.$m.applicationNetworkTypeLink.loadByQuery({ where: {
+      application: { id },
+      networkType: { id: network.networkType.id }
+    } })
+  }
+  catch (err) {
+    ctx.log.warn(`Received data from network ${networkId} for Application ${id}, but no ApplicationNetworkTypeLink found.`)
+    return
+  }
+  if (!appNtl.enabled) {
+    ctx.log.warn(`Received data from network ${networkId} for Application ${id}, but no ApplicationNetworkTypeLink is disabled.`)
+    return
+  }
   // Pass data
   await ctx.$m.networkProtocol.passDataToApplication({ network, applicationId: id, data })
 }
@@ -116,9 +131,9 @@ module.exports = {
     load,
     update,
     remove,
-    passDataToApplication,
-    start,
-    stop
+    passDataToApplication
+    // start,
+    // stop
   },
   fragments
 }

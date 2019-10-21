@@ -22,12 +22,17 @@ const fragments = {
 async function create (ctx, { data, remoteOrigin = false }) {
   try {
     const rec = await ctx.db.create({ data })
-    if (!remoteOrigin) {
-      rec.remoteAccessLogs = await ctx.$m.networkType.forAllNetworks({
-        networkTypeId: data.networkTypeId,
-        op: network => ctx.$m.networkProtocol.addDeviceProfile({ network, deviceProfileId: rec.id })
+    await ctx.$m.networkType.forAllNetworks({
+      networkTypeId: data.networkTypeId,
+      op: network => ctx.$m.networkDeployment.create({
+        data: {
+          status: remoteOrigin ? 'SYNCED' : 'CREATED',
+          type: 'DEVICE_PROFILE',
+          network: { id: network.id },
+          deviceProfile: { id: rec.id }
+        }
       })
-    }
+    })
     return rec
   }
   catch (err) {
@@ -36,12 +41,19 @@ async function create (ctx, { data, remoteOrigin = false }) {
   }
 }
 
-async function update (ctx, args) {
+async function update (ctx, { where, data, remoteOrigin = false }) {
   try {
-    const rec = await ctx.db.update(args)
-    rec.remoteAccessLogs = await ctx.$m.networkType.forAllNetworks({
+    const rec = await ctx.db.update({ where, data })
+    await ctx.$m.networkType.forAllNetworks({
       networkTypeId: rec.networkType.id,
-      op: network => ctx.$m.networkProtocol.pushDeviceProfile({ network, deviceProfileId: rec.id })
+      op: async network => ctx.$m.networkDeployment.updateByQuery({
+        where: { network: { id: network.id }, deviceProfile: { id: rec.id } },
+        data: {
+          status: remoteOrigin ? 'SYNCED' : 'UPDATED',
+          logs: []
+        }
+      })
+      // op: network => ctx.$m.networkProtocol.pushDeviceProfile({ network, deviceProfileId: rec.id })
     })
     return rec
   }
@@ -55,12 +67,18 @@ async function remove (ctx, id) {
   try {
     var rec = await ctx.db.load({ where: { id } })
     // Don't delete the local record until the remote operations complete.
-    const logs = await ctx.$m.networkType.forAllNetworks({
+    await ctx.$m.networkType.forAllNetworks({
       networkTypeId: rec.networkType.id,
-      op: network => ctx.$m.networkProtocol.deleteDeviceProfile({ network, deviceProfileId: id })
+      op: async network => ctx.$m.networkDeployment.updateByQuery({
+        where: { network: { id: network.id }, deviceProfile: { id: rec.id } },
+        data: {
+          status: 'REMOVED',
+          logs: []
+        }
+      })
+      // op: network => ctx.$m.networkProtocol.deleteDeviceProfile({ network, deviceProfileId: id })
     })
     await ctx.db.remove(id)
-    return logs
   }
   catch (err) {
     ctx.log.error('Error deleting deviceProfile: ', err)

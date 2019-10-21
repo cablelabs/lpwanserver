@@ -15,6 +15,22 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
     return true
   }
 
+  async syncApplication ({ network, networkDeployment, applicationNetworkTypeLink }) {
+    const { id } = networkDeployment.meta
+    if (networkDeployment.status === 'REMOVED') {
+      if (networkDeployment.meta.enabled) {
+        await this.stopApplication({ network, applicationId: networkDeployment.application.id })
+      }
+      await this.client.deleteApplication(network, id)
+      return
+    }
+    if (id == null) {
+
+    }
+    // If no ID in networkDeployment.networkSettings.id, create application
+    // else, update application
+  }
+
   async pushNetwork ({ network }) {
     await Promise.all([
       this.pushDeviceProfiles(network),

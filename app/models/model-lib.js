@@ -4,6 +4,7 @@
 // This gets us dependency injection and more easily tested model functions
 const R = require('ramda')
 const { renameKeys, traceError } = require('../lib/utils')
+const httpErrors = require('http-errors')
 
 // *********************************************************************
 // Model Library
@@ -50,12 +51,28 @@ function load (ctx, args) {
   return ctx.db.load(args)
 }
 
+async function loadByQuery (ctx, args) {
+  let [recs] = await ctx.db.list({ ...args, limit: 1 })
+  if (!recs.length) throw new httpErrors.NotFound()
+  return recs[0]
+}
+
 function update (ctx, args) {
   return ctx.db.update(args)
 }
 
 function remove (ctx, id) {
   return ctx.db.remove(id)
+}
+
+async function updateByQuery (ctx, { where, data, ...opts }) {
+  const [recs] = await ctx.db.list({ where })
+  if (!recs.length) throw new httpErrors.NotFound()
+  return ctx.db.update({
+    where: { id: recs[0].id },
+    data,
+    ...opts
+  })
 }
 
 // Async generator for removing many records
@@ -92,7 +109,9 @@ module.exports = {
   list,
   listAll,
   load,
+  loadByQuery,
   update,
+  updateByQuery,
   remove,
   removeMany
 }
