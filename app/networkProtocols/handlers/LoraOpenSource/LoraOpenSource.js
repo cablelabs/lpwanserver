@@ -15,7 +15,69 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
     return true
   }
 
-  async syncApplication ({ network, networkDeployment, applicationNetworkTypeLink }) {
+  async listAllApplications ({ network }) {
+    let { result } = await this.client.listApplications(network, {
+      limit: 9999,
+      offset: 0
+    })
+    return result
+  }
+
+  async listAllDeviceProfiles (network) {
+    const { result } = await this.client.listDeviceProfiles(network, {
+      limit: 9999,
+      offset: 0
+    })
+    return result
+  }
+
+  async listAllApplicationDevices (network, remoteApp) {
+    const { result } = await this.client.listDevices(network, remoteApp.id, { limit: 9999, offset: 0 })
+    return result
+  }
+
+  // build and return LPWAN application and applicationNetworkTypeLink.networkSettings
+  async buildApplication (network, remoteApp) {
+    remoteApp = await this.client.loadApplication(network, remoteApp.id)
+    let integration = await this.client.loadApplicationIntegration(network, remoteApp.id, 'http')
+      .catch(err => {
+        if (err.statusCode !== 404) throw err
+      })
+    let application = R.pick(['name', 'description'], remoteApp)
+    if (integration) application.baseUrl = integration.uplinkDataURL
+    let networkSettings = this.buildApplicationNetworkSettings(remoteApp)
+    return { application, networkSettings }
+  }
+
+  async buildDeviceProfile (network, remoteDeviceProfile) {
+    remoteDeviceProfile = await this.client.loadDeviceProfile(network, remoteDeviceProfile.id)
+    let networkSettings = this.buildDeviceProfileNetworkSettings(remoteDeviceProfile)
+    return {
+      description: remoteDeviceProfile.description,
+      networkSettings
+    }
+  }
+
+  async buildDevice (network, remoteDevice, deviceProfile) {
+    // device profiles are required for all devices in LoRa App Server
+    if (!deviceProfile) {
+      throw httpError(400, `No deviceProfile provided for remote device ${remoteDevice.id}.`)
+    }
+    remoteDevice = await this.client.loadDevice(network, remoteDevice.id)
+    let deviceKeys
+    let deviceActivation
+    if (deviceProfile.networkSettings.supportsJoin) {
+      deviceKeys = await this.client.loadDeviceKeys(network, remoteDevice.devEUI)
+    }
+    else {
+      deviceActivation = await this.client.loadDeviceActivation(network, remoteDevice.devEUI)
+    }
+    const device = R.pick(['name', 'description'], remoteDevice)
+    let networkSettings = this.buildDeviceNetworkSettings(remoteDevice, deviceKeys, deviceActivation)
+    return { device, networkSettings }
+  }
+
+  async syncApplication ({ network, networkDeployment, application, applicationNetworkTypeLink }) {
     const { id } = networkDeployment.meta
     if (networkDeployment.status === 'REMOVED') {
       if (networkDeployment.meta.enabled) {
@@ -27,7 +89,7 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
     if (id == null) {
 
     }
-    // If no ID in networkDeployment.networkSettings.id, create application
+    // If no ID at networkDeployment.meta.remoteId, create application
     // else, update application
   }
 
@@ -113,160 +175,6 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
       log.info('Added Device ' + device.id + ' to network ' + network.name)
       return { localDevice: device.id, remoteDevice: devNetworkId }
     }
-  }
-
-  async pullNetwork ({ network }) {
-    const [pulledDevProfiles, pulledApps] = await Promise.all([
-      this.pullDeviceProfiles(network),
-      this.pullApplications(network)
-    ])
-    await Promise.all(pulledApps.map(x =>
-      this.pullDevices(network, x.remoteApplication, x.localApplication, pulledDevProfiles)
-    ))
-  }
-
-  async pullDeviceProfiles (network) {
-    const { result } = await this.client.listDeviceProfiles(network, {
-      limit: 9999,
-      offset: 0
-    })
-    return Promise.all(result.map(x => this.addRemoteDeviceProfile(network, x.id)))
-  }
-
-  async addRemoteDeviceProfile (network, remoteDevProfileId) {
-    const remoteDeviceProfile = await this.client.loadDeviceProfile(network, remoteDevProfileId)
-    log.info('Adding ' + remoteDeviceProfile.name)
-    const [ dps ] = await this.modelAPI.deviceProfiles.list({ where: { search: remoteDeviceProfile.name }, limit: 1 })
-    if (dps.length) {
-      let localDp = dps[0]
-      log.info(localDp.name + ' already exists')
-      await this.modelAPI.protocolData.upsert([network, makeDeviceProfileDataKey(localDp.id, 'dpNwkId'), remoteDeviceProfile.id])
-      return {
-        localDeviceProfile: localDp.id,
-        remoteDeviceProfile: remoteDeviceProfile.id
-      }
-    }
-    log.info('creating ' + remoteDeviceProfile.name)
-    let networkSettings = this.buildDeviceProfileNetworkSettings(remoteDeviceProfile)
-    let localDp = await this.modelAPI.deviceProfiles.create({
-      data: {
-        networkTypeId: network.networkType.id,
-        name: remoteDeviceProfile.name,
-        description: 'Device Profile managed by LPWAN Server, perform changes via LPWAN',
-        networkSettings
-      },
-      remoteOrigin: true
-    })
-    await this.modelAPI.protocolData.upsert([network, makeDeviceProfileDataKey(localDp.id, 'dpNwkId'), remoteDeviceProfile.id])
-    return {
-      localDeviceProfile: localDp.id,
-      remoteDeviceProfile: remoteDeviceProfile.id
-    }
-  }
-
-  async pullApplications (network) {
-    let { result } = await this.client.listApplications(network, {
-      limit: 9999,
-      offset: 0
-    })
-    return Promise.all(result.map(app => this.addRemoteApplication(network, app.id)))
-  }
-
-  async addRemoteApplication (network, remoteAppId) {
-    const remoteApp = await this.client.loadApplication(network, remoteAppId)
-    let integration
-    try {
-      integration = await this.client.loadApplicationIntegration(network, remoteAppId, 'http')
-    }
-    catch (err) {
-      if (err.statusCode !== 404) throw err
-    }
-    // Check for local app with the same name
-    const [localApps] = await this.modelAPI.applications.list({ where: { search: remoteApp.name } })
-    let localApp = localApps[0]
-    const [ reportingProtos ] = await this.modelAPI.reportingProtocols.list()
-    if (!localApp) {
-      let localAppData = {
-        ...R.pick(['name', 'description'], remoteApp),
-        reportingProtocolId: reportingProtos[0].id
-      }
-      if (integration) localAppData.baseUrl = integration.uplinkDataURL
-      localApp = await this.modelAPI.applications.create({ data: localAppData })
-      log.info('Created ' + localApp.name)
-    }
-    await this.modelAPI.protocolData.upsert([network, makeApplicationDataKey(localApp.id, 'appNwkId'), remoteApp.id])
-
-    const [ appNtls ] = await this.modelAPI.applicationNetworkTypeLinks.list({ where: { applicationId: localApp.id } })
-    let appNtl = appNtls[0]
-    if (appNtl) {
-      log.info(localApp.name + ' link already exists')
-    }
-    else {
-      appNtl = await this.modelAPI.applicationNetworkTypeLinks.create({
-        data: {
-          applicationId: localApp.id,
-          networkTypeId: network.networkType.id,
-          networkSettings: this.buildApplicationNetworkSettings(remoteApp)
-        },
-        remoteOrigin: true
-      })
-    }
-    if (localApp.baseUrl) await this.startApplication({ network, applicationId: localApp.id })
-    return { localApplication: localApp.id, remoteApplication: remoteApp.id }
-  }
-
-  async pullDevices (network, remoteAppId, localAppId, dpMap) {
-    const params = { limit: 9999, offset: 0 }
-    const { result } = await this.client.listDevices(network, remoteAppId, params)
-    return Promise.all(result.map(device => this.addRemoteDevice(network, device.devEUI, localAppId, dpMap)))
-  }
-
-  async addRemoteDevice (network, remoteDeviceId, localAppId, dpMap) {
-    const remoteDevice = await this.client.loadDevice(network, remoteDeviceId)
-    log.info('Adding ' + remoteDevice.name)
-    let deviceProfileIdMap = dpMap.find(o => o.remoteDeviceProfile === remoteDevice.deviceProfileID)
-    let deviceProfile = await this.modelAPI.deviceProfiles.load({ where: { id: deviceProfileIdMap.localDeviceProfile } })
-    try {
-      if (deviceProfile.networkSettings.supportsJoin) {
-        remoteDevice.deviceKeys = await this.client.loadDeviceKeys(network, remoteDevice.devEUI)
-      }
-      else {
-        remoteDevice.deviceActivation = await this.client.loadDeviceActivation(network, remoteDevice.devEUI)
-      }
-    }
-    catch (err) {
-      log.info('Device does not have keys or activation')
-    }
-
-    let [ localDevices ] = await this.modelAPI.devices.list({ where: { search: remoteDevice.name }, limit: 1 })
-    let localDevice
-    if (localDevices.length) {
-      localDevice = localDevices[0]
-      log.info(localDevice.name + ' already exists')
-    }
-    else {
-      log.info('creating ' + remoteDevice.name)
-      const devData = { ...R.pick(['name', 'description'], remoteDevice), applicationId: localAppId }
-      localDevice = await this.modelAPI.devices.create({ data: devData })
-      log.info('Created ' + localDevice.name)
-    }
-    let [ devNtls ] = await this.modelAPI.deviceNetworkTypeLinks.list({ where: { deviceId: localDevice.id }, limit: 1 })
-    if (devNtls.length) {
-      log.info(localDevice.name + ' link already exists')
-    }
-    else {
-      log.info('creating Network Link for ' + localDevice.name)
-      let networkSettings = this.buildDeviceNetworkSettings(remoteDevice, deviceProfile)
-      let devNtlData = {
-        deviceId: localDevice.id,
-        networkTypeId: network.networkType.id,
-        deviceProfileId: deviceProfile.id,
-        networkSettings
-      }
-      await this.modelAPI.deviceNetworkTypeLinks.create({ data: devNtlData, remoteOrigin: true })
-    }
-    await this.modelAPI.protocolData.upsert([network, makeDeviceDataKey(localDevice.id, 'devNwkId'), remoteDevice.devEUI])
-    return localDevice.id
   }
 
   async addApplication ({ network, applicationId: appId }) {
@@ -599,16 +507,17 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
     }
   }
 
-  buildDeviceNetworkSettings (remoteDevice) {
-    return R.pick([
-      'devEUI',
-      'skipFCntCheck',
-      'deviceStatusBattery',
-      'deviceStatusMargin',
-      'lastSeenAt',
-      'deviceKeys',
-      'deviceActivation'
-    ], remoteDevice)
+  buildDeviceNetworkSettings(remoteDevice, deviceKeys, deviceActivation) {
+    return {
+      ...R.pick([
+        'devEUI',
+        'skipFCntCheck',
+        'deviceStatusBattery',
+        'deviceStatusMargin',
+        'lastSeenAt'
+      ], remoteDevice),
+      ...R.pick(['deviceKeys', 'deviceActivation'], { deviceKeys, deviceActivation })
+    }
   }
 
   buildRemoteDevice (device, deviceNtl, deviceProfile, remoteAppId, remoteDeviceProfileId) {

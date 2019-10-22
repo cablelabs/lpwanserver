@@ -38,24 +38,7 @@ async function handleNetworkDeploymentUpdated (networkDeployment) {
   else {
     await $m.networkDeployment.update({
       where: { id: networkDeployment.id },
-      data: { status: 'SYNCED', logs: [], meta }
+      data: { status: 'SYNCED', meta }
     })
   }
 }
-
-// async function createNetworkDevice (network, nwkDeployment) {
-//   const deviceNetworkTypeLink = await $m.deviceNetworkTypeLink.loadByQuery({
-//     where: { networkType: network.networkType, device: nwkDeployment.device }
-//   })
-//   await $m.networkProtocol.addDevice({
-//     network,
-//     deviceNetworkTypeLink
-//   })
-// }
-
-// async function createNetworkDeviceProfile (network, nwkDeployment) {
-//   await $m.networkProtocol.addDeviceProfile({
-//     network,
-//     deviceProfileId: nwkDeployment.deviceProfile.id
-//   })
-// }

@@ -1,6 +1,7 @@
 const httpError = require('http-errors')
-// const R = require('ramda')
+const R = require('ramda')
 const { create, list, load } = require('../model-lib')
+const { getUpdates } = require('../../lib/utils')
 
 // ******************************************************************************
 // Fragments for how the data should be returned from Prisma.
@@ -20,25 +21,35 @@ const fragments = {
 // ******************************************************************************
 // Model Functions
 // ******************************************************************************
-async function update (ctx, args) {
-  if (!args.where) throw httpError(400, 'Missing record identifier "where"')
-  const rec = await ctx.db.update(args)
-  // if name or description updated, set status on deployment record
-  if (args.data.name || args.data.description) {
+async function update (ctx, { where, data, origin, ...args }) {
+  if (!where) throw httpError(400, 'Missing record identifier "where"')
+  const rec = await ctx.db.update({ where, data, ...args })
+  // if certain props updated, set status on deployment record
+  if (data.name || data.description || data.baseUrl) {
     const [appNwkTypeLinks] = await ctx.$m.applicationNetworkTypeLink.list({
       where: { application: { id: rec.id } }
     })
     await Promise.all(appNwkTypeLinks.map(appNwkTypeLink => {
       return ctx.$.m.networkTypes.forAllNetworks({
         networkTypeId: appNwkTypeLink.networkType.id,
-        op: network => ctx.$m.networkDeployment.updateByQuery({
-          where: { network: { id: network.id }, application: { id: rec.id } },
-          data: { status: 'UPDATED' }
-        })
+        op: network => {
+          if (origin && origin.network.id === network.id) return Promise.resolve()
+          return ctx.$m.networkDeployment.updateByQuery({
+            where: { network: { id: network.id }, application: { id: rec.id } },
+            data: { status: 'UPDATED' }
+          })
+        }
       })
     }))
   }
   return rec
+}
+
+async function upsert (ctx, { data, ...args }) {
+  let rec = await ctx.$self.load({ where: { name: data.name } })
+  if (!rec) return ctx.$self.create({ ...args, data })
+  data = getUpdates(rec, data)
+  return R.empty(data) ? rec : ctx.$self.update({ ...args, where: { id: rec.id }, data })
 }
 
 async function remove (ctx, id) {
@@ -130,6 +141,7 @@ module.exports = {
     list,
     load,
     update,
+    upsert,
     remove,
     passDataToApplication
     // start,

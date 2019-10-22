@@ -1,6 +1,7 @@
 var httpError = require('http-errors')
 const { list, listAll, load, removeMany, loadByQuery } = require('../model-lib')
 const R = require('ramda')
+const { getUpdates } = require('../../lib/utils')
 
 //* *****************************************************************************
 // Fragments for how the data should be returned from Prisma.
@@ -42,16 +43,13 @@ async function create (ctx, { data, origin }) {
     networkTypeId: rec.networkType.id,
     op: network => {
       const isOrigin = origin && origin.network.id === network.id
-      const meta = {
-        isOrigin,
-        enabled: origin.enabled || false
-      }
+      const meta = { isOrigin, enabled: false }
       if (isOrigin) meta.remoteId = origin.remoteId
       ctx.$m.networkDeployment.create({
         data: {
           status: 'CREATED',
           type: 'APPLICATION',
-          meta: meta,
+          meta,
           network: { id: network.id },
           application: rec.application
         }
@@ -61,7 +59,7 @@ async function create (ctx, { data, origin }) {
   return rec
 }
 
-async function update (ctx, { where, data, origin }) {
+async function update (ctx, { where, data }) {
   let rec
   // No changing the application or the network.
   if (data.applicationId || data.networkTypeId) {
@@ -74,16 +72,19 @@ async function update (ctx, { where, data, origin }) {
   rec = await ctx.db.update({ where, data })
   await ctx.$.m.networkTypes.forAllNetworks({
     networkTypeId: rec.networkType.id,
-    op: network => {
-      // Nothing to do if update came from remote application
-      if (origin && origin.network.id === network.id) return Promise.resolve()
-      return ctx.$m.networkDeployment.updateByQuery({
-        where: { network: { id: network.id }, application: rec.application },
-        data: { status: 'UPDATED' }
-      })
-    }
+    op: network => ctx.$m.networkDeployment.updateByQuery({
+      where: { network: { id: network.id }, application: rec.application },
+      data: { status: 'UPDATED' }
+    })
   })
   return rec
+}
+
+async function upsert (ctx, { data, ...args }) {
+  let rec = await ctx.$self.loadByQuery({ where: R.pick(['networkType', 'application'], data) })
+  if (!rec) return ctx.$self.create({ ...args, data })
+  data = getUpdates(rec, data)
+  return R.empty(data) ? rec : ctx.$self.update({ ...args, where: { id: rec.id }, data })
 }
 
 async function remove (ctx, id) {
@@ -143,6 +144,7 @@ module.exports = {
     load,
     loadByQuery,
     update,
+    upsert,
     remove,
     removeMany
     // pushApplicationNetworkTypeLink

@@ -1,5 +1,5 @@
 // const httpError = require('http-errors')
-const { list, load, update: _update, remove, updateByQuery: _updateByQuery } = require('../model-lib')
+const { list, load, update: _update, remove, updateByQuery: _updateByQuery, loadByQuery } = require('../model-lib')
 
 // ******************************************************************************
 // Fragments for how the data should be returned from Prisma.
@@ -36,8 +36,11 @@ async function create (ctx, { data, ...opts }) {
   return rec
 }
 
-async function update (ctx, args) {
-  const rec = await _update(ctx, args)
+async function update (ctx, { data, ...args }) {
+  if (data.status === 'SYNCED') {
+    data = { ...data, logs: [] }
+  }
+  const rec = await _update(ctx, { ...args, data })
   ctx.emitter.emit('networkDeployment:updated', rec)
   return rec
 }
@@ -57,6 +60,7 @@ module.exports = {
     create,
     list,
     load,
+    loadByQuery,
     update,
     updateByQuery,
     remove

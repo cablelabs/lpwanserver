@@ -37,11 +37,11 @@ const renameQueryKeys = renameKeys({ search: 'name_contains' })
 // ******************************************************************************
 async function create (ctx, { data }) {
   let k = genKey()
+  data = { enabled: true, ...data }
   if (data.securityData) {
     const securityDataDefaults = {
       authorized: false,
-      message: 'Pending Authorization',
-      enabled: true
+      message: 'Pending Authorization'
     }
     data.securityData = R.merge(securityDataDefaults, data.securityData)
     data.securityData = encrypt(data.securityData, k)

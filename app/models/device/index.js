@@ -3,6 +3,7 @@ const { normalizeDevEUI } = require('../../lib/utils')
 const R = require('ramda')
 const Joi = require('@hapi/joi')
 const { create, list, listAll, load, removeMany } = require('../model-lib')
+const { getUpdates } = require('../../lib/utils')
 
 //* *****************************************************************************
 // Fragments for how the data should be returned from Prisma.
@@ -32,16 +33,34 @@ const unicastDownlinkSchema = Joi.object().keys({
 // ******************************************************************************
 // Model Functions
 // ******************************************************************************
-async function update (ctx, { where, data }) {
+async function update (ctx, { where, data, origin }) {
   if (!where) throw httpError(400, 'No record identifier "where"')
-  let appId = R.path(['application', 'id'])
-  if (ctx.user && appId(data)) {
-    const device = await ctx.db.load({ where })
-    if (appId(data) !== device.application.id && ctx.user.role !== 'ADMIN') {
-      throw new httpError.Forbidden()
-    }
+  const rec = await ctx.db.update({ where, data })
+  // if certain props updated, set status on deployment record
+  if (data.name || data.description) {
+    const [devNwkTypeLinks] = await ctx.$m.deviceNetworkTypeLink.list({
+      where: { device: { id: rec.id } }
+    })
+    await Promise.all(devNwkTypeLinks.map(devNwkTypeLink => {
+      return ctx.$.m.networkTypes.forAllNetworks({
+        networkTypeId: devNwkTypeLink.networkType.id,
+        op: network => {
+          if (origin && origin.network.id === network.id) return Promise.resolve()
+          return ctx.$m.networkDeployment.updateByQuery({
+            where: { network: { id: network.id }, device: { id: rec.id } },
+            data: { status: 'UPDATED' }
+          })
+        }
+      })
+    }))
   }
-  return ctx.db.update({ where, data })
+}
+
+async function upsert (ctx, { data, ...args }) {
+  let rec = await ctx.$self.load({ where: { name: data.name } })
+  if (!rec) return ctx.$self.create({ ...args, data })
+  data = getUpdates(rec, data)
+  return R.empty(data) ? rec : ctx.$self.update({ ...args, where: { id: rec.id }, data })
 }
 
 async function remove (ctx, id) {
@@ -52,6 +71,7 @@ async function remove (ctx, id) {
   }
   catch (err) {
     ctx.log.error('Error deleting device-dependant networkTypeLinks:', err)
+    throw err
   }
   return ctx.db.remove(id)
 }
@@ -62,15 +82,16 @@ async function passDataToDevice (ctx, { id, data }) {
   if (error) throw httpError(400, error.message)
   const device = await ctx.db.load({ id })
   const app = await ctx.$m.application.load({ id: device.application.id })
-  if (!app.enabled) return
   // Get all device networkType links
   const devNtlQuery = { device: { id } }
   let [ devNtls ] = await ctx.$m.deviceNetworkTypeLink.list({ query: devNtlQuery })
   const logs = await Promise.all(devNtls.map(
-    devNtl => ctx.$.m.networkTypes.forAllNetworks({
-      networkTypeId: devNtl.networkType.id,
-      op: network => ctx.$m.networkProtocol.passDataToDevice({ network, applicationId: app.id, deviceId: id, data })
-    })
+    devNtl => {
+      if (!devNtl.enabled) return Promise.resolve()
+      return ctx.$.m.networkTypes.forAllNetworks({
+        networkTypeId: devNtl.networkType.id,
+        op: network => ctx.$m.networkProtocol.passDataToDevice({ network, applicationId: app.id, deviceId: id, data })
+      })
   ))
   return R.flatten(logs)
 }
@@ -156,6 +177,7 @@ module.exports = {
     listAll,
     load,
     update,
+    upsert,
     remove,
     removeMany,
     passDataToDevice,

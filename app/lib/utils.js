@@ -113,6 +113,11 @@ const throwError = R.curry(function throwError (message, data, err) {
   throw traceError(message, data, err)
 })
 
+const getUpdates = (rec, data) => R.keys(data).reduce((acc, x) => {
+  if (!R.equals(rec[x], data[x])) acc[x] = data[x]
+  return acc
+}, {})
+
 module.exports = {
   mutate,
   onFail,
@@ -131,5 +136,6 @@ module.exports = {
   attempt,
   camelCaseToHyphen,
   traceError,
-  throwError
+  throwError,
+  getUpdates
 }

@@ -48,14 +48,14 @@ type NetworkProtocol {
 
 type ReportingProtocol {
   id: ID! @id
-  name: String
+  name: String! @unique
   protocolHandler: String
   applications: [Application!]! @relation(name: "ReportingProtocolApplications")
 }
 
 type Application {
   id: ID! @id
-  name: String
+  name: String! @unique
   description: String
   baseUrl: String
   reportingProtocol: ReportingProtocol @relation(name: "ReportingProtocolApplications")
@@ -73,7 +73,7 @@ type ApplicationNetworkTypeLink {
 
 type Device {
   id: ID! @id
-  name: String
+  name: String! @unique
   description: String
   deviceModel: String
   application: Application! @relation(name: "ApplicationDevices")
@@ -85,13 +85,13 @@ type DeviceNetworkTypeLink {
   enabled: Boolean!
   device: Device! @relation(name: "DeviceNetworkTypes")
   networkType: NetworkType! @relation(name: "NetworkTypeDevices")
-  deviceProfile: DeviceProfile! @relation(name: "DeviceProfileDeviceNetworkTypeLinks")
+  deviceProfile: DeviceProfile @relation(name: "DeviceProfileDeviceNetworkTypeLinks")
   networkSettings: Json
 }
 
 type DeviceProfile {
   id: ID! @id
-  name: String
+  name: String! @unique
   description: String
   networkSettings: Json
   networkType: NetworkType! @relation(name: "NetworkTypeDeviceProfiles")
