@@ -1,6 +1,7 @@
 var httpError = require('http-errors')
 const R = require('ramda')
 const path = require('path')
+const Ajv = require('ajv')
 
 function mutate (key, val, data) {
   data[key] = val
@@ -60,7 +61,10 @@ const getHttpRequestPreferedWaitMs = R.compose(
   R.defaultTo('')
 )
 
-const normalizeDevEUI = R.replace(/[^0-9A-Fa-f]/g, '')
+const normalizeDevEUI = R.compose(
+  R.replace(/[^0-9A-Fa-f]/g, ''),
+  R.defaultTo('')
+)
 
 function lowerFirst (x) {
   return `${x.charAt(0).toLowerCase()}${x.slice(1)}`
@@ -118,6 +122,15 @@ const getUpdates = (rec, data) => R.keys(data).reduce((acc, x) => {
   return acc
 }, {})
 
+const ajv = new Ajv()
+const validateSchema = (msgPrefix, schema) => {
+  const validate = ajv.compile(schema)
+  return data => {
+    const valid = validate(data)
+    if (!valid) throw httpError(400, `${msgPrefix}: ${ajv.errorsText()}`)
+  }
+}
+
 module.exports = {
   mutate,
   onFail,
@@ -137,5 +150,6 @@ module.exports = {
   camelCaseToHyphen,
   traceError,
   throwError,
-  getUpdates
+  getUpdates,
+  validateSchema
 }

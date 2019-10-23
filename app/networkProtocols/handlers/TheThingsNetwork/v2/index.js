@@ -1,5 +1,5 @@
 const NetworkProtocol = require('../../../NetworkProtocol')
-const { log } = require('../../../../log')
+const { log } = require('../../../../lib/log')
 const uuid = require('uuid/v1')
 const R = require('ramda')
 const { tryCatch, renameKeys } = require('../../../../lib/utils')

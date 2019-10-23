@@ -1,4 +1,4 @@
-const { normalizeDevEUI } = require('../../lib/utils')
+const { normalizeDevEUI, validateSchema } = require('../../lib/utils')
 const R = require('ramda')
 const httpError = require('http-errors')
 const { load, list, removeMany } = require('../model-lib')
@@ -24,12 +24,17 @@ const fragments = {
 }
 
 // ******************************************************************************
+// Helpers
+// ******************************************************************************
+const validateNwkSettings = validateSchema('networkSettings failed validation', require('./nwk-settings-schema.json'))
+const devEUILens = R.lensPath(['networkSettings', 'devEUI'])
+
+// ******************************************************************************
 // Model Functions
 // ******************************************************************************
 async function create (ctx, { data, origin }) {
-  if (data.networkSettings && data.networkSettings.devEUI) {
-    data = R.assocPath(['networkSettings', 'devEUI'], normalizeDevEUI(data.networkSettings.devEUI), data)
-  }
+  data = R.set(devEUILens, normalizeDevEUI(R.view(devEUILens, data)), data)
+  validateNwkSettings(data.networkSettings)
   const rec = await ctx.db.create({ data: { enabled: true, ...data } })
   await ctx.$.m.networkTypes.forAllNetworks({
     networkTypeId: rec.networkType.id,
@@ -56,8 +61,9 @@ async function update (ctx, { where, data, origin }) {
   if (data.applicationId || data.networkTypeId) {
     throw httpError(403, 'Cannot change link targets')
   }
-  if (data.networkSettings && data.networkSettings.devEUI) {
-    data.networkSettings.devEUI = normalizeDevEUI(data.networkSettings.devEUI)
+  if (data.networkSettings) {
+    data = R.set(devEUILens, normalizeDevEUI(R.view(devEUILens, data)), data)
+    validateNwkSettings(data.networkSettings)
   }
   const rec = await ctx.db.update({ where, data })
   await ctx.$.m.networkTypes.forAllNetworks({

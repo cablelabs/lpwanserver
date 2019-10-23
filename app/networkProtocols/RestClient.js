@@ -1,7 +1,7 @@
 const requestClient = require('request-promise')
 const R = require('ramda')
 const { URLSearchParams } = require('url')
-var { log } = require('../log')
+var { log } = require('../lib/log')
 const { joinUrl } = require('../lib/utils')
 const EventEmitter = require('events')
 

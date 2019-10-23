@@ -1,7 +1,7 @@
 var httpError = require('http-errors')
 const { list, listAll, load, removeMany, loadByQuery } = require('../model-lib')
 const R = require('ramda')
-const { getUpdates } = require('../../lib/utils')
+const { getUpdates, validateSchema } = require('../../lib/utils')
 
 //* *****************************************************************************
 // Fragments for how the data should be returned from Prisma.
@@ -21,6 +21,11 @@ const fragments = {
 }
 
 // ******************************************************************************
+// Helpers
+// ******************************************************************************
+const validateNwkSettings = validateSchema('networkSettings failed validation', require('./nwk-settings-schema.json'))
+
+// ******************************************************************************
 // Model Functions
 // ******************************************************************************
 async function enabledValidation (ctx, { application }) {
@@ -35,6 +40,7 @@ async function enabledValidation (ctx, { application }) {
 
 async function create (ctx, { data, origin }) {
   data = { enabled: false, ...data }
+  validateNwkSettings(data.networkSettings)
   if (data.enabled) {
     await ctx.$self.enabledValidation({ application: data.application })
   }
@@ -61,6 +67,9 @@ async function create (ctx, { data, origin }) {
 
 async function update (ctx, { where, data }) {
   let rec
+  if (data.neworkSettings) {
+    validateNwkSettings(data.networkSettings)
+  }
   // No changing the application or the network.
   if (data.applicationId || data.networkTypeId) {
     throw httpError(403, 'Cannot change link targets')

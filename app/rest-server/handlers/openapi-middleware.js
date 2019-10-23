@@ -1,6 +1,6 @@
 const httpError = require('http-errors')
 const { users, sessions } = require('../../models')
-const { log } = require('../../log')
+const { log } = require('../../lib/log')
 const R = require('ramda')
 
 

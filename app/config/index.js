@@ -1,8 +1,8 @@
 const path = require('path')
-const Ajv = require('ajv')
 const schema = require('./schema.json')
 const { buildConfig } = require('../lib/json-schema-config')
 const fs = require('fs')
+const { validateSchema } = require('../lib/utils')
 
 function normalizeFilePath (x) {
   if (!x) return x
@@ -14,16 +14,6 @@ function readAndParseConfigFile (filePath) {
   if (!filePath) return {}
   filePath = normalizeFilePath(filePath)
   return JSON.parse(fs.readFileSync(filePath, { encoding: 'utf8' }))
-}
-
-function validateConfig (data) {
-  const ajv = new Ajv()
-  const valid = ajv.validate(schema, data)
-  if (!valid) {
-    const error = new Error('The configuration object failed validation.')
-    error.errors = ajv.errors
-    throw error
-  }
 }
 
 const config = buildConfig({
@@ -39,7 +29,7 @@ filePaths.forEach(x => {
 })
 
 // Validate config
-validateConfig(config)
+validateSchema('Application configuration failed validation', schema)(config)
 
 // add prisma_url to the environment
 process.env.prisma_url = config.prisma_url

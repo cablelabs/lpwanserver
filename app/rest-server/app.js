@@ -1,5 +1,5 @@
 const config = require('../config')
-const { log } = require('../log')
+const { log } = require('../lib/log')
 const express = require('express')
 const morgan = require('morgan')
 const { configureCors, serveSpa: serveWebClient } = require('./middleware')

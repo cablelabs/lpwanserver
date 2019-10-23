@@ -8,6 +8,7 @@
     "jwt_secret",
     "port",
     "prisma_url",
+    "security_data_secret",
     "ssl_key_file",
     "ssl_cert_file"
   ],
@@ -90,6 +91,11 @@
     "redis_url": {
       "type": "string",
       "description": "URL of redis.",
+      "default": ""
+    },
+    "security_data_secret": {
+      "type": "string",
+      "description": "Base64 encoded secret used to encode network security data",
       "default": ""
     },
     "ssl_key_file": {

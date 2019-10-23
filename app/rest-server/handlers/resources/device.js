@@ -3,7 +3,7 @@ const httpError = require('http-errors')
 const { pipe, authorize, requestContext } = require('../openapi-middleware')
 const { getCertificateCn, getHttpRequestPreferedWaitMs, normalizeDevEUI } = require('../../../lib/utils')
 const { sub: redisSub } = require('../../../lib/redis')
-const { log } = require('../../../log')
+const { log } = require('../../../lib/log')
 
 const sendUnicastDownlink = model => async (_, req, res) => {
   const logs = await model.passDataToDevice(req.params.id, req.body, requestContext(req))

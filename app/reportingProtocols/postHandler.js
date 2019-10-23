@@ -1,5 +1,5 @@
 // General libraries in use in this module.
-var { log } = require('../log')
+var { log } = require('../lib/log')
 
 var request = require('request')
 

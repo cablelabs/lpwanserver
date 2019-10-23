@@ -2,7 +2,7 @@ const RestClient = require('../../RestClient')
 const R = require('ramda')
 const jwt = require('jsonwebtoken')
 const ttn = require('ttn')
-const { log } = require('../../../log')
+const { log } = require('../../../lib/log')
 const { joinUrl } = require('../../../lib/utils')
 
 module.exports = class TtnRestClient extends RestClient {

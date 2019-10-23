@@ -1,5 +1,5 @@
 const path = require('path')
-const { renameKeys } = require('../../lib/utils')
+const { renameKeys, joinUrl } = require('../../lib/utils')
 const registerNetworkProtocols = require('../../networkProtocols/register')
 const { load, update, remove } = require('../model-lib')
 const httpError = require('http-errors')
@@ -22,6 +22,8 @@ const fragments = {
     }
   }`
 }
+
+const nameDesc = ['name', 'description']
 
 // ******************************************************************************
 // Helpers
@@ -107,19 +109,26 @@ async function pullNetwork (ctx, { network }) {
 async function pullApplications (ctx, { network }) {
   const handler = ctx.$self.getHandler(network.networkProtocol)
   const remoteApps = await handler.listAllApplications(network)
-  const postReportingProtocol = await ctx.$m.reportingProtocols.load({ where: { name: 'POST' } })
   return Promise.all(remoteApps.map(async remoteApp => {
     const origin = { network, remoteId: remoteApp.id }
-    const { application: appData, networkSettings } = await handler.buildApplication(network, remoteApp)
+    const appData = await handler.buildApplication(network, remoteApp)
     if (appData.baseUrl) {
       // if appData.baseUrl includes the network ID, the app is already activated
       // delete baseUrl so that it doesn't overwrite link to application server
-      if (appData.baseUrl.includes(network.id)) delete appData.baseUrl
-      else appData.reportingProtocol = { id: postReportingProtocol.id }
+      if (appData.baseUrl.includes(network.id)) {
+        delete appData.baseUrl
+      }
+      else {
+        const postReportingProtocol = await ctx.$m.reportingProtocols.load({ where: { name: 'POST' } })
+        appData.reportingProtocol = { id: postReportingProtocol.id }
+      }
     }
-    const application = await ctx.$m.application.upsert({ data: appData, origin })
+    const application = await ctx.$m.application.upsert({
+      data: R.pick(nameDesc, appData),
+      origin
+    })
     const appNtlData = {
-      networkSettings,
+      networkSettings: R.omit(nameDesc, appData),
       networkType: network.networkType,
       application: { id: application.id }
     }
@@ -137,12 +146,12 @@ async function pullDeviceProfiles (ctx, { network }) {
   const remoteDeviceProfiles = await handler.listAllDeviceProfiles(network)
   return Promise.all(remoteDeviceProfiles.map(async remoteDeviceProfile => {
     const origin = { network, remoteId: remoteDeviceProfile.id }
-    const data = await handler.buildDeviceProfile(network, remoteDeviceProfile)
+    const dpData = await handler.buildDeviceProfile(network, remoteDeviceProfile)
     const deviceProfile = await ctx.$.m.deviceProfile.upsert({
       origin,
       data: {
-        ...data,
-        name: remoteDeviceProfile.name || data.name,
+        ...R.pick(nameDesc, dpData),
+        networkSettings: R.omit(nameDesc, dpData),
         networkType: network.networkType
       }
     })
@@ -156,14 +165,13 @@ async function pullDevices (ctx, { network, application, remoteApp, deviceProfil
   return Promise.all(remoteDevices.map(async remoteDevice => {
     const origin = { network, remoteId: remoteDevice.id }
     const { deviceProfile } = deviceProfiles.find(x => x.remoteDeviceProfile.id === remoteDevice.deviceProfileID) || {}
-    const { device: devData, networkSettings } = await handler.buildDevice(network, remoteDevice, deviceProfile)
-    devData.applicationId = application.id
+    const devData = await handler.buildDevice(network, remoteDevice, deviceProfile)
     const device = await ctx.$m.device.upsert({
       origin,
-      data: devData
+      data: { ...R.pick(nameDesc, devData), applicationId: application.id }
     })
     let devNtlData = {
-      networkSettings,
+      networkSettings: R.omit(nameDesc, devData),
       deviceId: device.id,
       networkTypeId: network.networkType.id
     }
@@ -257,26 +265,128 @@ async function pushDevices (ctx, { network }) {
 
 async function syncApplication (ctx, { network, networkDeployment }) {
   const handler = ctx.$self.getHandler({ id: network.networkProtocol.id })
-  let [applicationNetworkTypeLink, application] = networkDeployment.status === 'REMOVED'
-    ? []
-    : await Promise.all([
-      ctx.$m.applicationNetworkTypeLink.loadByQuery({
-        where: { networkType: network.networkType, application: networkDeployment.application }
-      }),
-      ctx.$m.application.load({ where: networkDeployment.application })
-    ])
-  const args = { network, networkDeployment, application, applicationNetworkTypeLink }
-  const remoteDoc = await handler.syncApplication(args)
   let meta = { ...networkDeployment.meta }
-  if (networkDeployment.status === 'CREATED') {
-    meta = { id: remoteDoc.id }
+  if (networkDeployment.status === 'REMOVED') {
+    if (meta.isOrigin) return
+    return handler.removeApplication({ network, remoteId: meta.remoteId, stopApplication: meta.enabled })
+  }
+  const [application, applicationNetworkTypeLink] = await Promise.all([
+    ctx.$m.application.load({ where: networkDeployment.application }),
+    ctx.$m.applicationNetworkTypeLink.loadByQuery({
+      where: { networkType: network.networkType, application: networkDeployment.application }
+    })
+  ])
+  let args = {
+    network,
+    remoteId: meta.remoteId,
+    application: {
+      ...R.pick(nameDesc, application),
+      ...applicationNetworkTypeLink.networkSettings
+    }
+  }
+  if (networkDeployment.status === 'CREATED' && !meta.isOrigin) {
+    let remoteDoc = await handler.createApplication(args)
+    meta.remoteId = remoteDoc.id
+  }
+  else if (networkDeployment.status === 'UPDATED') {
+    await handler.updateApplication(args)
   }
   const { enabled } = applicationNetworkTypeLink
   if (networkDeployment.meta.enabled !== enabled) {
-    await ctx.$self[enabled ? 'startApplication' : 'stopApplication']({ network, applicationId: application.id })
+    if (enabled) {
+      const url = joinUrl(ctx.config.base_url, 'api/ingest', application.id, network.id)
+      await handler.startApplication({ network, networkDeployment, url })
+    }
+    else {
+      await handler.stopApplication({ network, networkDeployment })
+    }
     meta.enabled = enabled
   }
   return meta
+}
+
+async function syncDeviceProfile (ctx, { network, networkDeployment }) {
+  const handler = ctx.$self.getHandler({ id: network.networkProtocol.id })
+  let meta = { ...networkDeployment.meta }
+  if (networkDeployment.status === 'REMOVED') {
+    if (meta.isOrigin) return
+    return handler.removeDeviceProfile({ network, remoteId: meta.remoteId })
+  }
+  const deviceProfile = await ctx.$m.deviceProfile.load({ where: networkDeployment.deviceProfile })
+  let args = {
+    network,
+    remoteId: meta.remoteId,
+    deviceProfile: {
+      ...R.pick(nameDesc, deviceProfile),
+      ...deviceProfile.networkSettings
+    }
+  }
+  if (networkDeployment.status === 'CREATED' && !meta.isOrigin) {
+    let remoteDoc = await handler.createDeviceProfile(args)
+    meta.remoteId = remoteDoc.id
+  }
+  else if (networkDeployment.status === 'UPDATED') {
+    await handler.updateDeviceProfile(args)
+  }
+  return meta
+}
+
+async function syncDevice (ctx, { network, networkDeployment }) {
+  const handler = ctx.$self.getHandler({ id: network.networkProtocol.id })
+  let meta = { ...networkDeployment.meta }
+  if (networkDeployment.status === 'REMOVED') {
+    if (meta.isOrigin) return
+    return handler.removeDevice({ network, remoteId: meta.remoteId })
+  }
+  const [device, deviceNetworkTypeLink] = await Promise.all([
+    ctx.$m.device.load({ where: networkDeployment.device }),
+    ctx.$m.deviceNetworkTypeLink.loadByQuery({
+      where: { networkType: network.networkType, device: networkDeployment.device }
+    })
+  ])
+  const [appNwkDep, dpNwkDep, deviceProfile] = await Promise.all([
+    ctx.$m.networkDeployment.loadByQuery({
+      where: { network: { id: network.id }, application: device.application }
+    }),
+    ctx.$m.networkDeployment.loadByQuery({
+      where: { network: { id: network.id }, deviceProfile: deviceNetworkTypeLink.deviceProfile }
+    }),
+    ctx.$m.deviceProfile.load({ where: deviceNetworkTypeLink.deviceProfile })
+  ])
+  let args = {
+    network,
+    remoteId: meta.remoteId,
+    remoteApplicationId: appNwkDep.meta.remoteId,
+    remoteDeviceProfileId: dpNwkDep.meta.remoteId,
+    deviceProfile: {
+      ...R.pick(nameDesc, deviceProfile),
+      ...deviceProfile.networkSettings
+    },
+    device: {
+      ...R.pick(nameDesc, device),
+      ...deviceNetworkTypeLink.networkSettings
+    }
+  }
+  if (deviceNetworkTypeLink.deviceProfile) {
+    args.deviceProfile = await ctx.$m.deviceProfile.load({ where: deviceNetworkTypeLink.deviceProfile })
+  }
+  if (networkDeployment.status === 'CREATED' && !meta.isOrigin) {
+    let remoteDoc = await handler.createDevice(args)
+    meta.remoteId = remoteDoc.id
+  }
+  else if (networkDeployment.status === 'UPDATED') {
+    await handler.updateDevice(args)
+  }
+  return meta
+}
+
+async function passDataToDevice (ctx, { network, deviceId, data }) {
+  const handler = ctx.$self.getHandler({ id: network.networkProtocol.id })
+  if (!network.enabled) return
+  const networkDeployment = await ctx.$m.networkDeployment.loadByQuery({
+    where: { network: { id: network.id }, device: { id: deviceId } }
+  })
+  return handler.passDataToDevice({ network, data, remoteId: networkDeployment.meta.remoteId })
 }
 
 // ******************************************************************************
@@ -306,21 +416,9 @@ module.exports = {
     pullDevices,
     pushDevices,
     syncApplication,
-    pushApplication: handlerCommand('pushApplication'),
-    pullApplication: handlerCommand('pullApplication'),
-    addApplication: handlerCommand('addApplication'),
-    deleteApplication: handlerCommand('deleteApplication'),
-    startApplication: handlerCommand('startApplication'),
-    stopApplication: handlerCommand('stopApplication'),
-    addDevice: handlerCommand('addDevice'),
-    deleteDevice: handlerCommand('deleteDevice'),
-    pushDevice: handlerCommand('pushDevice'),
-    pullDevice: handlerCommand('pullDevice'),
-    addDeviceProfile: handlerCommand('addDeviceProfile'),
-    deleteDeviceProfile: handlerCommand('deleteDeviceProfile'),
-    pushDeviceProfile: handlerCommand('pushDeviceProfile'),
-    pullDeviceProfile: handlerCommand('pullDeviceProfile'),
-    passDataToDevicea: handlerCommand('passDataToDevice')
+    syncDeviceProfile,
+    syncDevice,
+    passDataToDevice
   },
   fragments
 }

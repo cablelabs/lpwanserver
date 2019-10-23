@@ -1,0 +1,22 @@
+{
+  "$id": "https://github.com/cablelabs/lpwanserver/blob/master/config/models/application-network-type-link/nwk-settings-schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "LPWAN Server ApplicationNetworkTypeLink NetworkSettings",
+  "type": "object",
+  "required": [
+  ],
+  "properties": {
+    "payloadCodec": {
+      "type": "string",
+      "description": ""
+    },
+    "payloadDecoderScript": {
+      "type": "string",
+      "description": ""
+    },
+    "payloadEncoderScript": {
+      "type": "string",
+      "description": ""
+    }
+  }
+}
