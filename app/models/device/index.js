@@ -92,6 +92,7 @@ async function passDataToDevice (ctx, { id, data }) {
         networkTypeId: devNtl.networkType.id,
         op: network => ctx.$m.networkProtocol.passDataToDevice({ network, applicationId: app.id, deviceId: id, data })
       })
+    }
   ))
   return R.flatten(logs)
 }

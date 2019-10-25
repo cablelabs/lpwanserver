@@ -1,4 +1,4 @@
-const { api } = require('./index')
+const { publicApi } = require('./index')
 
 let promiseIdentity = x => Promise.resolve(x)
 
@@ -24,7 +24,7 @@ describe('User Model', () => {
         create: jest.fn(x => Promise.resolve(x.data))
       }
     }
-    let user = await api.create(ctx, { data })
+    let user = await publicApi.create(ctx, { data })
     expect(user.pwdHash).toBe('xyz')
     expect(user.email).toBe(data.email)
     expect(user.role).toBe(data.role)
@@ -32,7 +32,7 @@ describe('User Model', () => {
 
   it('list users', async () => {
     let ctx = { db: { list: jest.fn(promiseIdentity) } }
-    await api.list(ctx, { where: { search: 'fake' } })
+    await publicApi.list(ctx, { where: { search: 'fake' } })
     const args = ctx.db.list.mock.calls[0][0]
     expect(args.where).toEqual({ 'username_contains': 'fake' })
     expect(args.fragment).toBe('basic')
@@ -49,7 +49,7 @@ describe('User Model', () => {
         update: jest.fn(x => Promise.resolve(x.data))
       }
     }
-    const user = await api.update(ctx, { where: { id: 'a' }, data })
+    const user = await publicApi.update(ctx, { where: { id: 'a' }, data })
     expect(user.pwdHash).toBe('xyz')
   })
 })

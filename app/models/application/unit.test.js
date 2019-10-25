@@ -1,4 +1,4 @@
-const { api } = require('./index')
+const { publicApi } = require('./index')
 
 const generator = async function * () {
   yield {}
@@ -7,26 +7,25 @@ const generator = async function * () {
 describe('Application Model', () => {
   it('Update Application', async () => {
     let data = {
-      enabled: false
+      name: 'A'
     }
     let ctx = {
-      $self: {
-        stop: jest.fn()
+      $m: {
+        applicationNetworkTypeLink: { list: jest.fn(async () => [[]]) }
       },
       db: {
-        load: jest.fn(() => Promise.resolve({ id: 'a', enabled: true })),
-        update: jest.fn()
+        load: jest.fn(() => Promise.resolve({ id: 'a', name: 'B' })),
+        update: jest.fn(async () => ({ ...data, id: 'a' }))
       }
     }
-    await api.update(ctx, { where: { id: 'a' }, data })
-    expect(ctx.db.update.mock.calls[0][0].data.enabled).toBe(false)
-    expect(ctx.$self.stop.mock.calls[0][0]).toEqual('a')
+    await publicApi.update(ctx, { where: { id: 'a' }, data })
+    expect(ctx.db.update.mock.calls[0][0].data.name).toBe('A')
   })
   it('Remove Application', async () => {
     let ctx = {
       $m: {
-        devices: { removeMany: jest.fn(generator) },
-        applicationNetworkTypeLinks: { removeMany: jest.fn(generator) }
+        device: { removeMany: jest.fn(generator) },
+        applicationNetworkTypeLink: { removeMany: jest.fn(generator) }
       },
       db: {
         remove: jest.fn()
@@ -34,7 +33,7 @@ describe('Application Model', () => {
     }
     let id = 'a'
     const expectedRemoveManyArgs = { where: { application: { id } } }
-    await api.remove(ctx, id)
+    await publicApi.remove(ctx, id)
     expect(ctx.$m.device.removeMany.mock.calls[0][0]).toEqual(expectedRemoveManyArgs)
     expect(ctx.$m.applicationNetworkTypeLink.removeMany.mock.calls[0][0]).toEqual(expectedRemoveManyArgs)
     expect(ctx.db.remove.mock.calls[0][0]).toBe(id)
