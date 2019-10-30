@@ -1,8 +1,7 @@
 const httpError = require('http-errors')
-const { users, sessions } = require('../../models')
+const { user, session } = require('../../models')
 const { log } = require('../../lib/log')
 const R = require('ramda')
-
 
 function pipeOpenApiBackendMiddleware (...fns) {
   return async (context, request, response) => {
@@ -21,15 +20,15 @@ function authorize (permissions = []) {
       throw new httpError.Unauthorized()
     }
     // Check that token hasn't been revoked
-    if (await sessions.tokenWasRevoked(req.user)) {
+    if (await session.tokenWasRevoked(req.user)) {
       log.info('HTTP request failed due to revoked token', { jwt: req.user })
       throw new httpError.Unauthorized()
     }
     // Overwrite req.user with User record
     req.jwtPayload = req.user
-    req.user = await users.load({ where: { id: req.user.user } })
+    req.user = await user.load({ where: { id: req.user.user } })
     // Ensure user has required permissions for operation
-    if (permissions.length && !users.hasPermissions({ permissions }, { user: req.user })) {
+    if (permissions.length && !user.hasPermissions({ permissions }, { user: req.user })) {
       log.info('HTTP request failed due to lack of permissions', {
         jwt: req.jwtPayload,
         requiredPermissions: permissions,

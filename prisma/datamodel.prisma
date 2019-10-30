@@ -30,6 +30,8 @@ type Network {
   id: ID! @id
   name: String
   baseUrl: String
+  meta: Json
+  networkSettings: Json
   securityData: String
   enabled: Boolean! @default(value: true)
   networkType: NetworkType! @relation(name: "NetworkTypeNetworks")

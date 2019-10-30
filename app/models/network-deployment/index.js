@@ -1,5 +1,5 @@
 // const httpError = require('http-errors')
-const { list, load, update: _update, remove, updateByQuery: _updateByQuery, loadByQuery } = require('../model-lib')
+const { list, load, update: _update, updateByQuery: _updateByQuery, loadByQuery, listAll, removeMany } = require('../model-lib')
 
 // ******************************************************************************
 // Fragments for how the data should be returned from Prisma.
@@ -32,8 +32,8 @@ const fragments = {
 // ******************************************************************************
 async function create (ctx, { data, ...opts }) {
   data = { meta: {}, logs: [], syncFailed: false, ...data }
-  const networkDeployment = ctx.db.create({ ...opts, data })
-  setImmediate(() => ctx.$self.syncNetworkDeployment({ networkDeployment }))
+  const networkDeployment = await ctx.db.create({ ...opts, data })
+  await ctx.$self.syncNetworkDeployment({ networkDeployment })
   return networkDeployment
 }
 
@@ -42,21 +42,38 @@ async function update (ctx, { data, ...args }) {
     data = { ...data, syncFailed: false, logs: [] }
   }
   const networkDeployment = await _update(ctx, { ...args, data })
-  setImmediate(() => ctx.$self.syncNetworkDeployment({ networkDeployment }))
+  await ctx.$self.syncNetworkDeployment({ networkDeployment })
   return networkDeployment
 }
 
 async function updateByQuery (ctx, args) {
   const networkDeployment = await _updateByQuery(ctx, args)
-  setImmediate(() => ctx.$self.syncNetworkDeployment({ networkDeployment }))
+  await ctx.$self.syncNetworkDeployment({ networkDeployment })
   return networkDeployment
+}
+
+async function remove (ctx, { id }) {
+  const rec = await ctx.db.update({ where: { id }, data: { status: 'REMOVED' } })
+  await ctx.$self.syncNetworkDeployment({ networkDeployment: rec })
 }
 
 async function syncNetworkDeployment (ctx, { networkDeployment }) {
   if (networkDeployment.status === 'SYNCED') return
   let meta
   try {
-    const network = await ctx.$m.network.load({ where: networkDeployment.network })
+    let network = await ctx.$m.network.load({ where: networkDeployment.network, decryptSecurityData: true })
+    if (!network.meta.authorized) {
+      if (!network.securityData && networkDeployment.status === 'REMOVED' && !networkDeployment.meta.remoteId) {
+        await ctx.db.remove(networkDeployment.id)
+        return
+      }
+      if (network.securityData) {
+        network = await ctx.$m.network.connect({ network })
+      }
+      if (!network.meta.authorized) {
+        throw new Error('Network is not authorized')
+      }
+    }
     switch (networkDeployment.type) {
       case 'APPLICATION':
         meta = await ctx.$m.networkProtocol.syncApplication({ network, networkDeployment })
@@ -70,28 +87,25 @@ async function syncNetworkDeployment (ctx, { networkDeployment }) {
     }
   }
   catch (err) {
-    await ctx.$self.update({
+    await ctx.db.update({
       where: { id: networkDeployment.id },
       data: {
         syncFailed: true,
-        logs: [...networkDeployment.logs, err.toString()]
+        logs: [...(networkDeployment.logs || []), err.toString()]
       }
     })
     return
   }
   if (networkDeployment.status === 'REMOVED') {
-    await ctx.$self.remove({
-      where: { id: networkDeployment.id }
-    })
+    await ctx.db.remove(networkDeployment.id)
   }
   else {
-    await ctx.$self.update({
+    await ctx.db.update({
       where: { id: networkDeployment.id },
       data: { status: 'SYNCED', meta }
     })
   }
 }
-
 
 // ******************************************************************************
 // Model
@@ -101,11 +115,13 @@ module.exports = {
   publicApi: {
     create,
     list,
+    listAll,
     load,
     loadByQuery,
     update,
     updateByQuery,
-    remove
+    remove,
+    removeMany
   },
   privateApi: {
     syncNetworkDeployment

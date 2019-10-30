@@ -11,34 +11,33 @@ module.exports = class LoraOpenSourceV1 extends LoraOpenSource {
     this.client = new ApiClient()
   }
 
-  buildDeviceNetworkSettings (remoteDevice) {
-    const result = super.buildDeviceNetworkSettings(remoteDevice)
-    if (result.deviceKeys) {
-      result.deviceKeys = renameAppKey(result.deviceKeys)
+  buildDevice (args) {
+    const device = super.buildDevice(args)
+    if (device.deviceKeys) {
+      device.deviceKeys = renameAppKey(device.deviceKeys)
     }
-    if (result.deviceActivation) {
-      result.deviceActivation = renameKeys({ fCntDown: 'aFCntDown', nwkSKey: 'fNwkSIntKey' }, result.deviceActivation)
+    if (device.deviceActivation) {
+      device.deviceActivation = renameKeys({ fCntDown: 'aFCntDown', nwkSKey: 'fNwkSIntKey' }, device.deviceActivation)
     }
-    return result
+    return device
   }
 
-  buildRemoteDevice (device, deviceNtl, deviceProfile, remoteAppId, remoteDeviceProfileId) {
-    const result = super.buildRemoteDevice(device, deviceNtl, deviceProfile, remoteAppId, remoteDeviceProfileId)
-    if (deviceNtl.networkSettings.deviceKeys) {
+  buildNetworkDevice (args) {
+    const { device } = args
+    const result = super.buildNetworkDevice(args)
+    if (device.deviceKeys) {
       result.deviceKeys = {
-        devEUI: deviceNtl.networkSettings.devEUI,
-        appKey: deviceNtl.networkSettings.deviceKeys.nwkKey
+        devEUI: device.devEUI,
+        appKey: device.deviceKeys.nwkKey
       }
     }
-    else if (deviceNtl.networkSettings.deviceActivation && deviceProfile.networkSettings.macVersion.slice(0, 3) === '1.0') {
+    else if (device.deviceActivation && device.macVersion.slice(0, 3) === '1.0') {
       result.deviceActivation = {
-        devEUI: deviceNtl.networkSettings.devEUI,
-        ...R.pick(['appSKey', 'devAddr', 'fCntUp'], deviceNtl.networkSettings.deviceActivation),
-        fCntDwn: deviceNtl.networkSettings.deviceActivation.aFCntDown,
-        nwkSKey: deviceNtl.networkSettings.deviceActivation.fNwkSIntKey
+        devEUI: device.devEUI,
+        ...R.pick(['appSKey', 'devAddr', 'fCntUp'], device.deviceActivation),
+        fCntDwn: device.deviceActivation.aFCntDown,
+        nwkSKey: device.deviceActivation.fNwkSIntKey
       }
-
-      Object.assign(result.deviceActivation, deviceNtl.networkSettings.deviceActivation)
     }
     return result
   }

@@ -30,7 +30,7 @@ async function update (ctx, { where, data, origin, ...args }) {
       where: { application: { id: rec.id } }
     })
     await Promise.all(appNwkTypeLinks.map(appNwkTypeLink => {
-      return ctx.$.m.networkTypes.forAllNetworks({
+      return ctx.$m.networkType.forAllNetworks({
         networkTypeId: appNwkTypeLink.networkType.id,
         op: network => {
           if (origin && origin.network.id === network.id) return Promise.resolve()
@@ -46,13 +46,18 @@ async function update (ctx, { where, data, origin, ...args }) {
 }
 
 async function upsert (ctx, { data, ...args }) {
-  let rec = await ctx.$self.load({ where: { name: data.name } })
-  if (!rec) return ctx.$self.create({ ...args, data })
-  data = getUpdates(rec, data)
-  return R.empty(data) ? rec : ctx.$self.update({ ...args, where: { id: rec.id }, data })
+  try {
+    let rec = await ctx.$self.load({ where: { name: data.name } })
+    data = getUpdates(rec, data)
+    return R.empty(data) ? rec : ctx.$self.update({ ...args, where: { id: rec.id }, data })
+  }
+  catch (err) {
+    if (err.statusCode === 404) return ctx.$self.create({ ...args, data })
+    throw err
+  }
 }
 
-async function remove (ctx, id) {
+async function remove (ctx, { id }) {
   // remove all ApplicationNetworkTypeLinks
   try {
     for await (let state of ctx.$m.applicationNetworkTypeLink.removeMany({ where: { application: { id } } })) {
@@ -87,7 +92,7 @@ async function remove (ctx, id) {
 //   // Call startApplication on NetworkTypes
 //   let [appNtls] = await ctx.$m.applicationNetworkTypeLink.list({ where: { application: { id } } })
 //   let logs = await Promise.all(appNtls.map(
-//     appNtl => ctx.$.m.networkTypes.forAllNetworks({
+//     appNtl => ctx.$m.networkType.forAllNetworks({
 //       networkTypeId: appNtl.networkType.id,
 //       op: network => ctx.$m.networkProtocol.startApplication({ network, applicationId: id })
 //     })
@@ -99,7 +104,7 @@ async function remove (ctx, id) {
 //   // Call stopApplication on NetworkTypes
 //   let [appNtls] = await ctx.$m.applicationNetworkTypeLink.list({ where: { application: { id } } })
 //   let logs = await Promise.all(appNtls.map(
-//     appNtl => ctx.$.m.networkTypes.forAllNetworks({
+//     appNtl => ctx.$m.networkType.forAllNetworks({
 //       networkTypeId: appNtl.networkType.id,
 //       op: network => ctx.$m.networkProtocol.stopApplication({ network, applicationId: id })
 //     })

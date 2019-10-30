@@ -95,7 +95,7 @@
     },
     "security_data_secret": {
       "type": "string",
-      "description": "Base64 encoded secret used to encode network security data",
+      "description": "32-byte long secret, Base64 encoded, used to encode network security data",
       "default": ""
     },
     "ssl_key_file": {

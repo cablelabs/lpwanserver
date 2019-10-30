@@ -360,7 +360,7 @@ module.exports = class Loriot extends NetworkProtocol {
 
   async passDataToDevice (network, appId, deviceId, body) {
     // Ensure network is enabled
-    if (!network.securityData.enabled) return
+    if (!network.enabled) return
     if (!body.data) {
       throw httpError(400, 'Downlinks to Loriot don\'t support JSON payloads')
     }

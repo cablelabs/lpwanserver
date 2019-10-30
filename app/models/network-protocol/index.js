@@ -1,7 +1,7 @@
 const path = require('path')
-const { renameKeys, joinUrl } = require('../../lib/utils')
+const { renameKeys, joinUrl, getUpdates } = require('../../lib/utils')
 const registerNetworkProtocols = require('../../networkProtocols/register')
-const { load, update, remove } = require('../model-lib')
+const { load, update, remove, loadByQuery } = require('../model-lib')
 const httpError = require('http-errors')
 const R = require('ramda')
 
@@ -70,15 +70,20 @@ async function list (ctx, { where = {}, ...opts }) {
   return [records.map(addMetadata), totalCount]
 }
 
-async function upsert (ctx, { data: { networkProtocolVersion, name, ...np } }) {
-  const [nps] = await ctx.$self.list({ where: { search: name, networkProtocolVersion }, limit: 1 })
-  if (nps.length) {
-    return ctx.$self.update({ where: { id: nps[0].id }, data: np })
+async function upsert (ctx, { data }) {
+  const { networkProtocolVersion, name } = data
+  try {
+    const rec = await ctx.$self.loadByQuery({ where: { name, networkProtocolVersion } })
+    data = getUpdates(rec, data)
+    return ctx.$self.update({ where: { id: rec.id }, data })
   }
-  return ctx.$self.create({ data: { ...np, networkProtocolVersion, name } })
+  catch (err) {
+    if (err.statusCode === 404) return ctx.$self.create({ data })
+    throw err
+  }
 }
 
-function getHandler (ctx, { id }) {
+async function getHandler (ctx, { id }) {
   return ctx.handlers[id]
 }
 
@@ -86,15 +91,15 @@ function getHandler (ctx, { id }) {
 // Network Protocol Handler API
 // ******************************************************************************
 const handlerCommand = command => async (ctx, args) => {
-  const handler = ctx.$self.getHandler(args.network.networkProtocol)
+  const handler = await ctx.$self.getHandler(args.network.networkProtocol)
   await handler[command](args)
 }
 
 async function test (ctx, { network }) {
-  if (!network.securityData.authorized) {
+  if (!network.meta.authorized) {
     throw httpError.Unauthorized()
   }
-  const handler = ctx.$self.getHandler(network.networkProtocol)
+  const handler = await ctx.$self.getHandler(network.networkProtocol)
   await handler.test({ network })
 }
 
@@ -107,11 +112,11 @@ async function pullNetwork (ctx, { network }) {
 }
 
 async function pullApplications (ctx, { network }) {
-  const handler = ctx.$self.getHandler(network.networkProtocol)
-  const remoteApps = await handler.listAllApplications(network)
-  return Promise.all(remoteApps.map(async remoteApp => {
-    const origin = { network, remoteId: remoteApp.id }
-    const appData = await handler.buildApplication(network, remoteApp)
+  const handler = await ctx.$self.getHandler(network.networkProtocol)
+  const remoteApps = await handler.listAllApplications({ network })
+  return Promise.all(remoteApps.map(async remoteApplication => {
+    const origin = { network, remoteId: remoteApplication.id }
+    const appData = await handler.buildApplication({ network, remoteApplication })
     if (appData.baseUrl) {
       // if appData.baseUrl includes the network ID, the app is already activated
       // delete baseUrl so that it doesn't overwrite link to application server
@@ -137,17 +142,17 @@ async function pullApplications (ctx, { network }) {
       origin,
       data: appNtlData
     })
-    return { application, applicationNetworkTypeLink, remoteApp }
+    return { application, applicationNetworkTypeLink, remoteApplication }
   }))
 }
 
 async function pullDeviceProfiles (ctx, { network }) {
-  const handler = ctx.$self.getHandler(network.networkProtocol)
-  const remoteDeviceProfiles = await handler.listAllDeviceProfiles(network)
+  const handler = await ctx.$self.getHandler(network.networkProtocol)
+  const remoteDeviceProfiles = await handler.listAllDeviceProfiles({ network })
   return Promise.all(remoteDeviceProfiles.map(async remoteDeviceProfile => {
     const origin = { network, remoteId: remoteDeviceProfile.id }
-    const dpData = await handler.buildDeviceProfile(network, remoteDeviceProfile)
-    const deviceProfile = await ctx.$.m.deviceProfile.upsert({
+    const dpData = await handler.buildDeviceProfile({ network, remoteDeviceProfile })
+    const deviceProfile = await ctx.$m.deviceProfile.upsert({
       origin,
       data: {
         ...R.pick(nameDesc, dpData),
@@ -159,24 +164,25 @@ async function pullDeviceProfiles (ctx, { network }) {
   }))
 }
 
-async function pullDevices (ctx, { network, application, remoteApp, deviceProfiles }) {
-  const handler = ctx.$self.getHandler(network.networkProtocol)
-  const remoteDevices = await handler.listAllApplicationDevices(network, remoteApp)
+async function pullDevices (ctx, { network, application, remoteApplication, deviceProfiles }) {
+  ctx.log.debug('pullDevices', { application })
+  const handler = await ctx.$self.getHandler(network.networkProtocol)
+  const remoteDevices = await handler.listAllApplicationDevices({ network, remoteApplication })
   return Promise.all(remoteDevices.map(async remoteDevice => {
     const origin = { network, remoteId: remoteDevice.id }
     const { deviceProfile } = deviceProfiles.find(x => x.remoteDeviceProfile.id === remoteDevice.deviceProfileID) || {}
-    const devData = await handler.buildDevice(network, remoteDevice, deviceProfile)
+    const devData = await handler.buildDevice({ network, remoteDevice, deviceProfile })
     const device = await ctx.$m.device.upsert({
       origin,
       data: { ...R.pick(nameDesc, devData), applicationId: application.id }
     })
     let devNtlData = {
       networkSettings: R.omit(nameDesc, devData),
-      deviceId: device.id,
-      networkTypeId: network.networkType.id
+      device: { id: device.id },
+      networkType: { id: network.networkType.id }
     }
     if (deviceProfile) {
-      devNtlData.deviceProfileId = deviceProfile.id
+      devNtlData.deviceProfile = { id: deviceProfile.id }
     }
     const deviceNetworkTypeLink = await ctx.$m.deviceNetworkTypeLink.upsert({
       origin,
@@ -264,7 +270,7 @@ async function pushDevices (ctx, { network }) {
 }
 
 async function syncApplication (ctx, { network, networkDeployment }) {
-  const handler = ctx.$self.getHandler({ id: network.networkProtocol.id })
+  const handler = await ctx.$self.getHandler({ id: network.networkProtocol.id })
   let meta = { ...networkDeployment.meta }
   if (networkDeployment.status === 'REMOVED') {
     if (meta.isOrigin) return
@@ -306,8 +312,12 @@ async function syncApplication (ctx, { network, networkDeployment }) {
 }
 
 async function syncDeviceProfile (ctx, { network, networkDeployment }) {
-  const handler = ctx.$self.getHandler({ id: network.networkProtocol.id })
+  ctx.log.debug('syncDeviceProfile', { network, networkDeployment })
   let meta = { ...networkDeployment.meta }
+  if (networkDeployment.status === 'CREATED' && meta.isOrigin) {
+    return meta
+  }
+  const handler = await ctx.$self.getHandler({ id: network.networkProtocol.id })
   if (networkDeployment.status === 'REMOVED') {
     if (meta.isOrigin) return
     return handler.removeDeviceProfile({ network, remoteId: meta.remoteId })
@@ -321,7 +331,7 @@ async function syncDeviceProfile (ctx, { network, networkDeployment }) {
       ...deviceProfile.networkSettings
     }
   }
-  if (networkDeployment.status === 'CREATED' && !meta.isOrigin) {
+  if (networkDeployment.status === 'CREATED') {
     let remoteDoc = await handler.createDeviceProfile(args)
     meta.remoteId = remoteDoc.id
   }
@@ -332,7 +342,7 @@ async function syncDeviceProfile (ctx, { network, networkDeployment }) {
 }
 
 async function syncDevice (ctx, { network, networkDeployment }) {
-  const handler = ctx.$self.getHandler({ id: network.networkProtocol.id })
+  const handler = await ctx.$self.getHandler({ id: network.networkProtocol.id })
   let meta = { ...networkDeployment.meta }
   if (networkDeployment.status === 'REMOVED') {
     if (meta.isOrigin) return
@@ -371,6 +381,7 @@ async function syncDevice (ctx, { network, networkDeployment }) {
     args.deviceProfile = await ctx.$m.deviceProfile.load({ where: deviceNetworkTypeLink.deviceProfile })
   }
   if (networkDeployment.status === 'CREATED' && !meta.isOrigin) {
+    ctx.log.debug('syncDevice', { networkDeployment, network })
     let remoteDoc = await handler.createDevice(args)
     meta.remoteId = remoteDoc.id
   }
@@ -381,7 +392,7 @@ async function syncDevice (ctx, { network, networkDeployment }) {
 }
 
 async function passDataToDevice (ctx, { network, deviceId, data }) {
-  const handler = ctx.$self.getHandler({ id: network.networkProtocol.id })
+  const handler = await ctx.$self.getHandler({ id: network.networkProtocol.id })
   if (!network.enabled) return
   const networkDeployment = await ctx.$m.networkDeployment.loadByQuery({
     where: { network: { id: network.id }, device: { id: deviceId } }
@@ -400,6 +411,7 @@ module.exports = {
     create,
     list,
     load,
+    loadByQuery,
     update,
     upsert,
     remove,

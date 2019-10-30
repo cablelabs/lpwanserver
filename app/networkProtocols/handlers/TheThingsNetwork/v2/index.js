@@ -21,17 +21,17 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
     super(opts)
     this.client = new ApiClient()
     this.networkProtocolId = opts.networkProtocolId
-    this.client.on('uplink', x => this.modelAPI.applications.passDataToApplication(x.appId, x.networkId, x.payload))
+    this.client.on('uplink', x => this.modelAPI.application.passDataToApplication(x.appId, x.networkId, x.payload))
     this.subscribeToDataForEnabledApps()
   }
 
   async subscribeToDataForEnabledApps () {
-    const nwkType = await this.modelAPI.networkTypes.load({ where: { name: 'LoRa' } })
+    const nwkType = await this.modelAPI.networkType.load({ where: { name: 'LoRa' } })
     const antlQuery = { networkType: { id: nwkType.id } }
-    const [ antls ] = await this.modelAPI.applicationNetworkTypeLinks.list({ where: antlQuery })
+    const [ antls ] = await this.modelAPI.applicationNetworkTypeLink.list({ where: antlQuery })
     let appIds = antls.map(R.path(['application', 'id']))
     const networkQuery = { networkProtocol: { id: this.networkProtocolId } }
-    const [ networks ] = await this.modelAPI.networks.list({ where: networkQuery })
+    const [ networks ] = await this.modelAPI.network.list({ where: networkQuery })
     try {
       const promises = R.flatten(networks.map(nwk => appIds.map(id => this.startApplication(nwk, id))))
       await Promise.all(promises)
@@ -123,7 +123,7 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
         if (err.statusCode !== 404) throw err
       }
       let normalizedApplication = this.normalizeApplicationData(handlerApp, accountServerApp, network)
-      const [localApps] = await modelAPI.applications.list({ search: accountServerApp.name })
+      const [localApps] = await modelAPI.application.list({ search: accountServerApp.name })
       let localApp = localApps[0]
       const [ cos ] = await this.modelAPI.companies.list({ limit: 1 })
       const [ reportingProtos ] = await modelAPI.reportingProtocols.list()
@@ -802,7 +802,7 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
 
   async passDataToDevice (network, appId, deviceId, body) {
     // Ensure network is enabled
-    if (!network.securityData.enabled) return
+    if (!network.enabled) return
     const devNwkId = await this.modelAPI.protocolData.loadValue(network, makeDeviceDataKey(deviceId, 'devNwkId'))
     const appNwkId = await this.modelAPI.protocolData.loadValue(network, makeApplicationDataKey(appId, 'appNwkId'))
     return this.client.createDeviceMessage(network, appNwkId, devNwkId, body)

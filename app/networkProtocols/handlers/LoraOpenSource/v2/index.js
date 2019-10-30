@@ -8,23 +8,21 @@ module.exports = class LoraOpenSourceV2 extends LoraOpenSource {
     this.client = new ApiClient()
   }
 
-  buildRemoteDevice (device, deviceNtl, deviceProfile, remoteAppId, remoteDeviceProfileId) {
-    const result = super.buildRemoteDevice(device, deviceNtl, deviceProfile, remoteAppId, remoteDeviceProfileId)
-    const NS = deviceNtl.networkSettings
-    const { deviceKeys, deviceActivation } = NS
-    if (deviceKeys) {
-      result.deviceKeys = { devEUI: NS.devEUI }
-      Object.assign(result.deviceKeys, deviceKeys)
+  buildNetworkDevice (args) {
+    const { device, deviceProfile } = args
+    const result = super.buildNetworkDevice(args)
+    if (device.deviceKeys) {
+      result.deviceKeys = R.merge(device.deviceKeys, { devEUI: device.devEUI })
       if (!result.deviceKeys.nwkKey) {
         result.deviceKeys.nwkKey = result.deviceKeys.appKey
       }
     }
-    else if (deviceActivation) {
+    else if (device.deviceActivation) {
       const mac = deviceProfile.networkSettings.macVersion.slice(0, 3)
-      result.deviceActivation = R.merge(deviceActivation, { devEUI: NS.devEUI })
+      result.deviceActivation = R.merge(device.deviceActivation, { devEUI: device.devEUI })
       if (mac === '1.0') {
-        result.deviceActivation.nwkSEncKey = deviceActivation.fNwkSIntKey
-        result.deviceActivation.sNwkSIntKey = deviceActivation.fNwkSIntKey
+        result.deviceActivation.nwkSEncKey = device.deviceActivation.fNwkSIntKey
+        result.deviceActivation.sNwkSIntKey = device.deviceActivation.fNwkSIntKey
       }
     }
     return result

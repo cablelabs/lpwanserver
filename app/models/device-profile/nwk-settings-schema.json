@@ -5,6 +5,7 @@
   "type": "object",
   "required": [
   ],
+  "additionalProperties": false,
   "properties": {
     "classBTimeout": {
       "type": "integer",

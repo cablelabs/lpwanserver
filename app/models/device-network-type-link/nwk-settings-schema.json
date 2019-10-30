@@ -6,6 +6,7 @@
   "required": [
     "devEUI"
   ],
+  "additionalProperties": false,
   "properties": {
     "devEUI": {
       "type": "string",

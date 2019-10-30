@@ -42,7 +42,7 @@ async function update (ctx, { where, data, origin }) {
       where: { device: { id: rec.id } }
     })
     await Promise.all(devNwkTypeLinks.map(devNwkTypeLink => {
-      return ctx.$.m.networkTypes.forAllNetworks({
+      return ctx.$m.networkType.forAllNetworks({
         networkTypeId: devNwkTypeLink.networkType.id,
         op: network => {
           if (origin && origin.network.id === network.id) return Promise.resolve()
@@ -57,13 +57,18 @@ async function update (ctx, { where, data, origin }) {
 }
 
 async function upsert (ctx, { data, ...args }) {
-  let rec = await ctx.$self.load({ where: { name: data.name } })
-  if (!rec) return ctx.$self.create({ ...args, data })
-  data = getUpdates(rec, data)
-  return R.empty(data) ? rec : ctx.$self.update({ ...args, where: { id: rec.id }, data })
+  try {
+    let rec = await ctx.$self.load({ where: { name: data.name } })
+    data = getUpdates(rec, data)
+    return R.empty(data) ? rec : ctx.$self.update({ ...args, where: { id: rec.id }, data })
+  }
+  catch (err) {
+    if (err.statusCode === 404) return ctx.$self.create({ ...args, data })
+    throw err
+  }
 }
 
-async function remove (ctx, id) {
+async function remove (ctx, { id }) {
   // Delete my deviceNetworkTypeLinks first.
   try {
     for await (let state of ctx.$m.deviceNetworkTypeLink.removeMany({ where: { device: { id } } })) {
@@ -88,7 +93,7 @@ async function passDataToDevice (ctx, { id, data }) {
   const logs = await Promise.all(devNtls.map(
     devNtl => {
       if (!devNtl.enabled) return Promise.resolve()
-      return ctx.$.m.networkTypes.forAllNetworks({
+      return ctx.$m.networkType.forAllNetworks({
         networkTypeId: devNtl.networkType.id,
         op: network => ctx.$m.networkProtocol.passDataToDevice({ network, applicationId: app.id, deviceId: id, data })
       })

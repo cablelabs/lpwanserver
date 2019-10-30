@@ -1,6 +1,6 @@
 let chai = require('chai')
 let chaiHttp = require('chai-http')
-const { createApp } = require('../../../app/express-app')
+const { createApp } = require('../../../app/rest-server/app')
 let should = chai.should()
 let setup = require('../setup.js')
 const Lora1 = require('../../networks/lora-v1')
@@ -11,7 +11,6 @@ chai.use(chaiHttp)
 let server
 
 describe('E2E Test for Creating an Application Use Case #188', () => {
-  let companyId
   let reportingProtocolId
   let networkTypeId
 
@@ -45,8 +44,6 @@ describe('E2E Test for Creating an Application Use Case #188', () => {
   before(async () => {
     const app = await createApp()
     server = chai.request(app).keepOpen()
-    const cos = await prisma.companies({ first: 1 })
-    companyId = cos[0].id
     const reportingProtocols = await prisma.reportingProtocols({ first: 1 })
     reportingProtocolId = reportingProtocols[0].id
     const nwkTypes = await prisma.networkTypes({ first: 1 })
@@ -55,7 +52,6 @@ describe('E2E Test for Creating an Application Use Case #188', () => {
 
     deviceProfile = {
       'networkTypeId': networkTypeId,
-      'companyId': companyId,
       'name': 'LoRaWeatherNodeB',
       'description': 'GPS Node that works with LoRa',
       'networkSettings': {
@@ -80,7 +76,6 @@ describe('E2E Test for Creating an Application Use Case #188', () => {
     }
 
     application = {
-      'companyId': companyId,
       'name': appName,
       'description': appDescription,
       'baseUrl': baseUrl,
@@ -133,7 +128,7 @@ describe('E2E Test for Creating an Application Use Case #188', () => {
         .send(application)
         .end(function (err, res) {
           if (err) done(err)
-          res.should.have.status(200)
+          res.should.have.status(201)
           let ret = JSON.parse(res.text)
           appId1 = ret.id
           device.applicationId = appId1
@@ -152,13 +147,11 @@ describe('E2E Test for Creating an Application Use Case #188', () => {
           res.should.have.status(200)
           let appObj = JSON.parse(res.text)
           appObj.should.have.property('id')
-          appObj.should.have.property('companyId')
           appObj.should.have.property('name')
           appObj.should.have.property('description')
           appObj.should.have.property('baseUrl')
           appObj.should.have.property('reportingProtocolId')
 
-          appObj.companyId.should.equal(companyId)
           appObj.name.should.equal(appName)
           appObj.description.should.equal(appDescription)
           appObj.baseUrl.should.equal(baseUrl)
@@ -179,7 +172,7 @@ describe('E2E Test for Creating an Application Use Case #188', () => {
         })
         .end(function (err, res) {
           if (err) done(err)
-          res.should.have.status(200)
+          res.should.have.status(201)
           let ret = JSON.parse(res.text)
           anlId1 = ret.id
           done()
@@ -209,7 +202,7 @@ describe('E2E Test for Creating an Application Use Case #188', () => {
         .send(deviceProfile)
         .end(function (err, res) {
           if (err) done(err)
-          res.should.have.status(200)
+          res.should.have.status(201)
           let ret = JSON.parse(res.text)
           dpId1 = ret.id
           done()
@@ -228,7 +221,6 @@ describe('E2E Test for Creating an Application Use Case #188', () => {
           dpObj.name.should.equal(deviceProfile.name)
           dpObj.description.should.equal(deviceProfile.description)
           dpObj.networkTypeId.should.equal(deviceProfile.networkTypeId)
-          dpObj.companyId.should.equal(deviceProfile.companyId)
           done()
         })
     })
@@ -242,7 +234,7 @@ describe('E2E Test for Creating an Application Use Case #188', () => {
         .send(device)
         .end(function (err, res) {
           if (err) done(err)
-          res.should.have.status(200)
+          res.should.have.status(201)
           let ret = JSON.parse(res.text)
           deviceId1 = ret.id
           done()
@@ -276,7 +268,7 @@ describe('E2E Test for Creating an Application Use Case #188', () => {
         .send(deviceNTL)
         .end(function (err, res) {
           if (err) done(err)
-          res.should.have.status(200)
+          res.should.have.status(201)
           var dnlObj = JSON.parse(res.text)
           console.log(dnlObj)
           dnlId1 = dnlObj.id

@@ -1,6 +1,6 @@
 let chai = require('chai')
 let chaiHttp = require('chai-http')
-const { createApp } = require('../../../app/express-app')
+const { createApp } = require('../../../app/rest-server/app')
 let setup = require('../setup.js')
 const Lora1 = require('../../networks/lora-v1')
 const Lora2 = require('../../networks/lora-v2')

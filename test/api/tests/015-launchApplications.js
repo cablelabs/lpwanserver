@@ -11,7 +11,7 @@ var server
 /**
  * @test
  */
-describe('Launch Applications', function () {
+describe.skip('Launch Applications', function () {
   var adminToken
 
   before('User Sessions', async () => {

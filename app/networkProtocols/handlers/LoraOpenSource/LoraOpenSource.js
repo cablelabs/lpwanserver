@@ -23,28 +23,26 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
     return result
   }
 
-  async buildApplication (network, remoteApp) {
-    remoteApp = await this.client.loadApplication(network, remoteApp.id)
-    let integration = await this.client.loadApplicationIntegration(network, remoteApp.id, 'http')
+  async buildApplication ({ network, remoteApplication }) {
+    remoteApplication = await this.client.loadApplication(network, remoteApplication.id)
+    let integration = await this.client.loadApplicationIntegration(network, remoteApplication.id, 'http')
       .catch(err => {
         if (err.statusCode !== 404) throw err
       })
     let props = ['name', 'description', 'payloadCodec', 'payloadDecoderScript', 'payloadEncoderScript']
-    let application = R.pick(props, remoteApp)
+    let application = R.pick(props, remoteApplication)
     if (integration) application.baseUrl = integration.uplinkDataURL
     return application
   }
 
   async createApplication ({ network, application }) {
-    // TODO: obtain serviceProfile and org and pass them to buildNetworkApplication
-    return this.client.createApplication(network, this.buildNetworkApplication(application))
+    return this.client.createApplication(network, this.buildNetworkApplication(network, application))
   }
 
   async updateApplication ({ network, remoteId, application }) {
-    // TODO: obtain serviceProfile and org and pass them to buildNetworkApplication
     return this.client.updateApplication(network, remoteId, {
       id: remoteId,
-      ...this.buildNetworkApplication(application)
+      ...this.buildNetworkApplication(network, application)
     })
   }
 
@@ -86,21 +84,20 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
     await this.client.deleteApplicationIntegration(network, remoteId, 'http')
   }
 
-  buildNetworkApplication (app, serviceProfileID, organizationID) {
+  buildNetworkApplication (network, app) {
     let props = [
       'name', 'description', 'payloadCodec', 'payloadDecoderScript', 'payloadEncoderScript'
     ]
     return {
       ...R.pick(props, app),
-      organizationID,
-      serviceProfileID
+      ...R.pick(['organizationID', 'serviceProfileID'], network.networkSettings)
     }
   }
 
   // *******************************************************************
   // Device Profile Methods
   // *******************************************************************
-  async listAllDeviceProfiles (network) {
+  async listAllDeviceProfiles ({ network }) {
     const { result } = await this.client.listDeviceProfiles(network, {
       limit: 9999,
       offset: 0
@@ -109,15 +106,13 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
   }
 
   async createDeviceProfile ({ network, deviceProfile }) {
-    // TODO: obtain serviceProfile and org and pass them to buildNetworkDeviceProfile
-    return this.client.createDeviceProfile(network, this.buildNetworkDeviceProfile(deviceProfile))
+    return this.client.createDeviceProfile(network, this.buildNetworkDeviceProfile(network, deviceProfile))
   }
 
   async updateDeviceProfile ({ network, remoteId, deviceProfile }) {
-    // TODO: obtain serviceProfile and org and pass them to buildNetworkDeviceProfile
     return this.client.updateDeviceProfile(network, remoteId, {
       id: remoteId,
-      ...this.buildNetworkDeviceProfile(deviceProfile)
+      ...this.buildNetworkDeviceProfile(network, deviceProfile)
     })
   }
 
@@ -125,12 +120,25 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
     await this.client.deleteDeviceProfile(network, remoteId)
   }
 
-  async buildDeviceProfile (network, remoteDeviceProfile) {
+  async buildDeviceProfile ({ network, remoteDeviceProfile }) {
     remoteDeviceProfile = await this.client.loadDeviceProfile(network, remoteDeviceProfile.id)
-    return R.omit(['createdAt', 'updatedAt'], remoteDeviceProfile)
+    if (remoteDeviceProfile.supports32bitFCnt && !remoteDeviceProfile.supports32BitFCnt) {
+      remoteDeviceProfile.supports32BitFCnt = remoteDeviceProfile.supports32bitFCnt
+    }
+    delete remoteDeviceProfile.supports32bitFCnt
+    const relIds = ['organizationID', 'networkServerID']
+    const unknownIds = relIds
+      .filter(x => remoteDeviceProfile[x])
+      .filter(x => remoteDeviceProfile[x] !== network.networkSettings[x])
+    if (!unknownIds.length) {
+      return R.omit([...relIds, 'id', 'createdAt', 'updatedAt'], remoteDeviceProfile)
+    }
+    const relStr = key => `${key}:(Network:${network.networkSettings[key]})(DeviceProfile:${remoteDeviceProfile[key]})`
+    let msg = `Remote DeviceProfile relationship IDs don't match those in network.  ${unknownIds.map(relStr).join('; ')}`
+    throw new Error(msg)
   }
 
-  buildNetworkDeviceProfile (deviceProfile, networkServerId, organizationId) {
+  buildNetworkDeviceProfile (network, deviceProfile) {
     const props = [
       'name', 'description', 'classBTimeout', 'classCTimeout', 'factoryPresetFreqs', 'macVersion',
       'maxDutyCycle', 'maxEIRP', 'pingSlotDR', 'pingSlotFreq', 'pingSlotPeriod',
@@ -138,8 +146,7 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
       'supports32bitFCnt', 'supportsClassB', 'supportsClassC', 'supportsJoin'
     ]
     return {
-      networkServerID: networkServerId,
-      organizationID: organizationId,
+      ...R.pick(['networkServerID', 'organizationID'], network.networkSettings),
       ...R.pick(props, deviceProfile)
     }
   }
@@ -147,37 +154,36 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
   // *******************************************************************
   // Device Methods
   // *******************************************************************
-  async listAllApplicationDevices (network, remoteApp) {
-    const { result } = await this.client.listDevices(network, remoteApp.id, { limit: 9999, offset: 0 })
+  async listAllApplicationDevices ({ network, remoteApplication }) {
+    const { result } = await this.client.listDevices(network, remoteApplication.id, { limit: 9999, offset: 0 })
     return result
   }
 
   async createDevice (args) {
-    const { network, device, deviceProfile } = args
-    const remoteDevice = await this.client.createDevice(network, this.buildNetworkDevice(args))
-    if (deviceProfile.supportsJoin && device.deviceKeys) {
-      await this.client.createDeviceKeys(network, device.devEUI, device.deviceKeys)
+    const { network, deviceProfile } = args
+    const { device, deviceKeys, deviceActivation } = this.buildNetworkDevice(args)
+    const result = await this.client.createDevice(network, device)
+    if (deviceProfile.supportsJoin && deviceKeys) {
+      await this.client.createDeviceKeys(network, device.devEUI, deviceKeys)
     }
-    else if (device.deviceActivation && device.deviceActivation.fCntUp >= 0) {
-      await this.client.activateDevice(network, device.devEUI, device.deviceActivation)
+    else if (deviceActivation && deviceActivation.fCntUp >= 0) {
+      await this.client.activateDevice(network, device.devEUI, deviceActivation)
     }
-    return remoteDevice
+    return result
   }
 
   async updateDevice (args) {
-    const { network, device, deviceProfile, remoteId } = args
-    const remoteDevice = await this.client.updateDevice(network, remoteId, {
-      id: remoteId,
-      ...this.buildNetworkDevice(args)
-    })
-    if (deviceProfile.supportsJoin && device.deviceKeys) {
-      await this.client.updateDeviceKeys(network, device.devEUI, device.deviceKeys)
+    const { network, deviceProfile, remoteId } = args
+    const { device, deviceKeys, deviceActivation } = this.buildNetworkDevice(args)
+    const result = await this.client.updateDevice(network, remoteId, device)
+    if (deviceProfile.supportsJoin && deviceKeys) {
+      await this.client.updateDeviceKeys(network, device.devEUI, deviceKeys)
     }
-    else if (device.deviceActivation) {
+    else if (deviceActivation) {
       await this.client.deleteDeviceActivation(network, device.devEUI)
-      await this.client.activateDevice(network, device.devEUI, device.deviceActivation)
+      await this.client.activateDevice(network, device.devEUI, deviceActivation)
     }
-    return remoteDevice
+    return result
   }
 
   async removeDevice ({ network, remoteId }) {
@@ -187,8 +193,8 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
     await this.client.deleteDevice(network, remoteId)
   }
 
-  async buildDevice (network, remoteDevice, deviceProfile) {
-    remoteDevice = await this.client.loadDevice(network, remoteDevice.id)
+  async buildDevice ({ network, remoteDevice, deviceProfile }) {
+    remoteDevice = await this.client.loadDevice(network, remoteDevice.devEUI)
     let props = [
       'name', 'description', 'devEUI', 'deviceStatusBattery', 'deviceStatusMargin', 'lastSeenAt',
       'location', 'referenceAltitude', 'skipFCntCheck'

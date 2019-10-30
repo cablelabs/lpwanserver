@@ -117,8 +117,8 @@ components:
           type: string
           description: The DeviceProfile from which this device receives network settings
         networkSettings:
-          type: string
-          description: The settings in a JSON string that correspond to the NetworkType
+          type: object
+          description: The settings that correspond to the NetworkType
         enabled:
           type: boolean
           description: Whether or not messages are forwarded for this application and network type
@@ -150,7 +150,6 @@ components:
                 required:
                   - deviceId
                   - networkTypeId
-                  - networkSettings
       description: DeviceNetworkTypeLink to be created
       required: true
     UpdateDeviceNetworkTypeLinkInput:

@@ -147,6 +147,9 @@ components:
         securityData:
           type: object
           description: The data used to grant secure access to the Network's server API. This data is defined by the NetworkType
+        networkSettings:
+          type: object
+          description: Properties and reference IDs needed to interact with the network
     NetworkResponse:
        allOf:
         - $ref: '#/components/schemas/Network'
@@ -154,6 +157,8 @@ components:
           properties:
             id:
               type: string
+            meta:
+              type: object
     ListNetworkResponse:
       allOf:
         - $ref: '../api.yml#/components/schemas/ListResponse'

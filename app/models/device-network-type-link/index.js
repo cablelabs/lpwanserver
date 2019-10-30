@@ -1,7 +1,8 @@
-const { normalizeDevEUI, validateSchema } = require('../../lib/utils')
+const { normalizeDevEUI, validateSchema, getUpdates } = require('../../lib/utils')
 const R = require('ramda')
 const httpError = require('http-errors')
-const { load, list, removeMany } = require('../model-lib')
+const { load, list, removeMany, loadByQuery } = require('../model-lib')
+const { prune } = require('dead-leaves')
 
 //* *****************************************************************************
 // Fragments for how the data should be returned from Prisma.
@@ -26,17 +27,26 @@ const fragments = {
 // ******************************************************************************
 // Helpers
 // ******************************************************************************
-const validateNwkSettings = validateSchema('networkSettings failed validation', require('./nwk-settings-schema.json'))
+const validateNwkSettings = validateSchema(
+  'DeviceNetworkTypeLink.networkSettings failed validation',
+  require('./nwk-settings-schema.json')
+)
 const devEUILens = R.lensPath(['networkSettings', 'devEUI'])
 
 // ******************************************************************************
 // Model Functions
 // ******************************************************************************
 async function create (ctx, { data, origin }) {
-  data = R.set(devEUILens, normalizeDevEUI(R.view(devEUILens, data)), data)
+  data = R.evolve({
+    networkSettings: R.compose(
+      R.evolve({ devEUI: normalizeDevEUI }),
+      prune,
+      R.defaultTo({})
+    )
+  }, { enabled: true, ...data })
   validateNwkSettings(data.networkSettings)
-  const rec = await ctx.db.create({ data: { enabled: true, ...data } })
-  await ctx.$.m.networkTypes.forAllNetworks({
+  const rec = await ctx.db.create({ data })
+  await ctx.$m.networkType.forAllNetworks({
     networkTypeId: rec.networkType.id,
     op: network => {
       const isOrigin = origin && origin.network.id === network.id
@@ -62,11 +72,14 @@ async function update (ctx, { where, data, origin }) {
     throw httpError(403, 'Cannot change link targets')
   }
   if (data.networkSettings) {
-    data = R.set(devEUILens, normalizeDevEUI(R.view(devEUILens, data)), data)
+    data = {
+      ...R.set(devEUILens, normalizeDevEUI(R.view(devEUILens, data)), data),
+      networkSettings: prune(data.networkSettings)
+    }
     validateNwkSettings(data.networkSettings)
   }
   const rec = await ctx.db.update({ where, data })
-  await ctx.$.m.networkTypes.forAllNetworks({
+  await ctx.$m.networkType.forAllNetworks({
     networkTypeId: rec.networkType.id,
     op: async network => ctx.$m.networkDeployment.updateByQuery({
       where: { network: { id: network.id }, device: rec.device },
@@ -78,22 +91,35 @@ async function update (ctx, { where, data, origin }) {
   return rec
 }
 
-async function remove (ctx, id) {
+async function upsert (ctx, { data, ...args }) {
+  try {
+    let rec = await ctx.$self.loadByQuery({ where: R.pick(['networkType', 'device'], data) })
+    data = getUpdates(rec, data)
+    return R.empty(data) ? rec : ctx.$self.update({ ...args, where: { id: rec.id }, data })
+  }
+  catch (err) {
+    if (err.statusCode === 404) return ctx.$self.create({ ...args, data })
+    throw err
+  }
+}
+
+async function remove (ctx, { id }) {
   const rec = await ctx.db.load({ where: { id } })
-  // Don't delete the local record until the remote operations complete.
-  await ctx.$.m.networkTypes.forAllNetworks({
+  await ctx.$m.networkType.forAllNetworks({
     networkTypeId: rec.networkType.id,
-    op: async network => ctx.$m.networkDeployment.updateByQuery({
-      where: { network: { id: network.id }, device: rec.device },
-      data: { status: 'REMOVED' }
-    })
+    op: async network => {
+      let where = { network: { id: network.id }, device: rec.device }
+      for await (let state of ctx.$m.networkDeployment.listAll({ where })) {
+        await Promise.all(state.records.map(rec => ctx.$m.networkDeployment.remove(rec)))
+      }
+    }
   })
   await ctx.db.remove(id)
 }
 
 async function pushDeviceNetworkTypeLink (ctx, id) {
   var rec = await ctx.db.load({ where: { id } })
-  rec.remoteAccessLogs = await ctx.$.m.networkTypes.forAllNetworks({
+  rec.remoteAccessLogs = await ctx.$m.networkType.forAllNetworks({
     networkTypeId: rec.networkType.id,
     op: network => ctx.$m.networkProtocol.pushDevice({
       network,
@@ -130,7 +156,9 @@ module.exports = {
     create,
     list,
     load,
+    loadByQuery,
     update,
+    upsert,
     remove,
     removeMany,
     pushDeviceNetworkTypeLink,

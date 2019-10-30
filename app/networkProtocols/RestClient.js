@@ -16,11 +16,11 @@ module.exports = class RestClient extends EventEmitter {
     let body
     try {
       body = await requestClient(opts)
-      log.info(`NETWORK REQUEST`, { opts })
-      log.info(`NETWORK RESPONSE`, { body })
+      log.debug(`NETWORK REQUEST`, { opts })
+      log.debug(`NETWORK RESPONSE`, { body })
     }
     catch (err) {
-      log.error(`NETWORK ERROR`, { opts, error: err })
+      log.verbose(`NETWORK ERROR`, { opts, error: err })
       throw err
     }
     return transformResponse(body)

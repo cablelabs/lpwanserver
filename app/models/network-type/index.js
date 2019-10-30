@@ -14,10 +14,17 @@ const fragments = {
 // Model Functions
 // ******************************************************************************
 async function forAllNetworks (ctx, { networkTypeId, op }) {
-  let [networks] = await ctx.$m.network.list({ where: { networkTypeId } })
-  const mapFn = network => op(network)
-    .then(result => ({ result }))
-    .catch(e => ({ error: e.toString() }))
+  let [networks] = await ctx.$m.network.list({ where: { networkTypeId }, decryptSecurityData: true })
+  const mapFn = network => {
+    const result = op(network)
+    if (result && typeof result === 'object' && typeof result.catch === 'function') {
+      return result.then(
+        result => ({ result }),
+        err => ({ error: err.toString() })
+      )
+    }
+    return { result }
+  }
   return Promise.all(networks.map(mapFn))
 }
 

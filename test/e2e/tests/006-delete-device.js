@@ -1,6 +1,6 @@
 let chai = require('chai')
 let chaiHttp = require('chai-http')
-const { createApp } = require('../../../app/express-app')
+const { createApp } = require('../../../app/rest-server/app')
 let setup = require('../setup.js')
 let Data = require('../../data')
 const { assertEqualProps } = require('../../lib/helpers')
@@ -19,7 +19,6 @@ let remoteDeviceProfileId = ''
 let remoteDeviceProfileId2 = ''
 
 describe('E2E Test for Deleting a Device Use Case #192', () => {
-  let companyId
   let reportingProtocolId
   let networkTypeId
 
@@ -28,8 +27,6 @@ describe('E2E Test for Deleting a Device Use Case #192', () => {
   before(async () => {
     const app = await createApp()
     server = chai.request(app).keepOpen()
-    const cos = await prisma.companies({ first: 1 })
-    companyId = cos[0].id
     const reportingProtocols = await prisma.reportingProtocols({ first: 1 })
     reportingProtocolId = reportingProtocols[0].id
     const nwkTypes = await prisma.networkTypes({ first: 1 })
@@ -39,13 +36,11 @@ describe('E2E Test for Deleting a Device Use Case #192', () => {
     testData = {
       ...Data.applicationTemplates.default({
         name: 'DLDV',
-        companyId,
         networkTypeId,
         reportingProtocolId
       }),
       ...Data.deviceTemplates.weatherNode({
         name: 'DLDV001',
-        companyId,
         networkTypeId,
         devEUI: '0080000000000601'
       })
@@ -73,7 +68,7 @@ describe('E2E Test for Deleting a Device Use Case #192', () => {
         .set('Content-Type', 'application/json')
         .send(testData.app)
         .end(function (err, res) {
-          res.should.have.status(200)
+          res.should.have.status(201)
           let ret = JSON.parse(res.text)
           testData.app.id = ret.id
           testData.device.applicationId = ret.id
@@ -105,7 +100,7 @@ describe('E2E Test for Deleting a Device Use Case #192', () => {
         .set('Content-Type', 'application/json')
         .send(testData.appNTL)
         .end(function (err, res) {
-          res.should.have.status(200)
+          res.should.have.status(201)
           let ret = JSON.parse(res.text)
           testData.appNTL.id = ret.id
           done()
@@ -133,7 +128,7 @@ describe('E2E Test for Deleting a Device Use Case #192', () => {
         .set('Content-Type', 'application/json')
         .send(testData.deviceProfile)
         .end(function (err, res) {
-          res.should.have.status(200)
+          res.should.have.status(201)
           let ret = JSON.parse(res.text)
           testData.deviceProfile.id = ret.id
           testData.deviceNTL.deviceProfileId = ret.id
@@ -149,7 +144,7 @@ describe('E2E Test for Deleting a Device Use Case #192', () => {
         .end(function (err, res) {
           res.should.have.status(200)
           assertEqualProps(
-            ['name', 'description', 'networkTypeId', 'companyId'],
+            ['name', 'description', 'networkTypeId'],
             JSON.parse(res.text),
             testData.deviceProfile
           )
@@ -165,7 +160,7 @@ describe('E2E Test for Deleting a Device Use Case #192', () => {
         .set('Content-Type', 'application/json')
         .send(testData.device)
         .end(function (err, res) {
-          res.should.have.status(200)
+          res.should.have.status(201)
           let ret = JSON.parse(res.text)
           testData.device.id = ret.id
           testData.deviceNTL.deviceId = ret.id
@@ -198,7 +193,7 @@ describe('E2E Test for Deleting a Device Use Case #192', () => {
         .set('Content-Type', 'application/json')
         .send(testData.deviceNTL)
         .end(function (err, res) {
-          res.should.have.status(200)
+          res.should.have.status(201)
           var dnlObj = JSON.parse(res.text)
           console.log(dnlObj)
           testData.deviceNTL.id = dnlObj.id

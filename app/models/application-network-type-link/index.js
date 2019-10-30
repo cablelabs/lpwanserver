@@ -2,6 +2,7 @@ var httpError = require('http-errors')
 const { list, listAll, load, removeMany, loadByQuery } = require('../model-lib')
 const R = require('ramda')
 const { getUpdates, validateSchema } = require('../../lib/utils')
+const { prune } = require('dead-leaves')
 
 //* *****************************************************************************
 // Fragments for how the data should be returned from Prisma.
@@ -23,7 +24,10 @@ const fragments = {
 // ******************************************************************************
 // Helpers
 // ******************************************************************************
-const validateNwkSettings = validateSchema('networkSettings failed validation', require('./nwk-settings-schema.json'))
+const validateNwkSettings = validateSchema(
+  'ApplicationNetworkTypeLink.networkSettings failed validation',
+  require('./nwk-settings-schema.json')
+)
 
 // ******************************************************************************
 // Model Functions
@@ -39,19 +43,19 @@ async function enabledValidation (ctx, { application }) {
 }
 
 async function create (ctx, { data, origin }) {
-  data = { enabled: false, ...data }
+  data = { enabled: false, ...data, networkSettings: prune(data.networkSettings || {}) }
   validateNwkSettings(data.networkSettings)
   if (data.enabled) {
     await ctx.$self.enabledValidation({ application: data.application })
   }
   const rec = await ctx.db.create({ data })
-  await ctx.$.m.networkTypes.forAllNetworks({
+  await ctx.$m.networkType.forAllNetworks({
     networkTypeId: rec.networkType.id,
     op: network => {
       const isOrigin = origin && origin.network.id === network.id
       const meta = { isOrigin, enabled: false }
       if (isOrigin) meta.remoteId = origin.remoteId
-      ctx.$m.networkDeployment.create({
+      return ctx.$m.networkDeployment.create({
         data: {
           status: 'CREATED',
           type: 'APPLICATION',
@@ -68,6 +72,7 @@ async function create (ctx, { data, origin }) {
 async function update (ctx, { where, data }) {
   let rec
   if (data.neworkSettings) {
+    data = { ...data, networkSettings: prune(data.networkSettings) }
     validateNwkSettings(data.networkSettings)
   }
   // No changing the application or the network.
@@ -79,7 +84,7 @@ async function update (ctx, { where, data }) {
     await ctx.$self.enabledValidation({ application: rec.application })
   }
   rec = await ctx.db.update({ where, data })
-  await ctx.$.m.networkTypes.forAllNetworks({
+  await ctx.$m.networkType.forAllNetworks({
     networkTypeId: rec.networkType.id,
     op: network => ctx.$m.networkDeployment.updateByQuery({
       where: { network: { id: network.id }, application: rec.application },
@@ -90,28 +95,36 @@ async function update (ctx, { where, data }) {
 }
 
 async function upsert (ctx, { data, ...args }) {
-  let rec = await ctx.$self.loadByQuery({ where: R.pick(['networkType', 'application'], data) })
-  if (!rec) return ctx.$self.create({ ...args, data })
-  data = getUpdates(rec, data)
-  return R.empty(data) ? rec : ctx.$self.update({ ...args, where: { id: rec.id }, data })
+  try {
+    let rec = await ctx.$self.loadByQuery({ where: R.pick(['networkType', 'application'], data) })
+    data = getUpdates(rec, data)
+    return R.empty(data) ? rec : ctx.$self.update({ ...args, where: { id: rec.id }, data })
+  }
+  catch (err) {
+    if (err.statusCode === 404) return ctx.$self.create({ ...args, data })
+    throw err
+  }
 }
 
-async function remove (ctx, id) {
+async function remove (ctx, { id }) {
   var rec = await ctx.db.load({ where: { id } })
 
-  // Delete deviceNetworkTypeLinks
+  // Delete DeviceNetworkTypeLinks
   for await (let devState of ctx.$m.device.listAll({ where: { application: rec.application } })) {
     let ids = devState.records.map(R.prop('id'))
     for await (let state of ctx.$m.deviceNetworkTypeLink.removeMany({ where: { device: { id_in: ids } } })) {
     }
   }
 
-  await ctx.$.m.networkTypes.forAllNetworks({
+  // Delete NetworkDeployments
+  await ctx.$m.networkType.forAllNetworks({
     networkTypeId: rec.networkType.id,
-    op: async network => ctx.$m.networkDeployment.updateByQuery({
-      where: { network: { id: network.id }, application: rec.application },
-      data: { status: 'REMOVED' }
-    })
+    op: async network => {
+      let where = { network: { id: network.id }, application: rec.application }
+      for await (let state of ctx.$m.networkDeployment.listAll({ where })) {
+        await Promise.all(state.records.map(rec => ctx.$m.networkDeployment.remove(rec)))
+      }
+    }
   })
 
   await ctx.db.remove(id)
@@ -129,7 +142,7 @@ async function remove (ctx, id) {
 //     }
 //   }
 
-//   rec.remoteAccessLogs = ctx.$.m.networkTypes.forAllNetworks({
+//   rec.remoteAccessLogs = ctx.$m.networkType.forAllNetworks({
 //     networkTypeId: rec.networkType.id,
 //     op: network => ctx.$m.networkProtocol.pushApplication({
 //       network,

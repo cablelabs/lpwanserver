@@ -78,7 +78,12 @@ describe('Networks', function () {
           'networkTypeId': nwkTypeId,
           'baseUrl': 'https://lora_appserver1:8080/api',
           'networkProtocolId': npId1,
-          'securityData': { 'username': 'admin', 'password': 'admin' }
+          'securityData': { 'username': 'admin', 'password': 'admin' },
+          'networkSettings': {
+            networkServerID: Lora1.networkServer.id,
+            organizationID: Lora1.organization.id,
+            serviceProfileID: Lora1.serviceProfile.id
+          }
         })
         .end(function (err, res) {
           if (err) return done(err)

@@ -1,4 +1,4 @@
-const { users } = require('../../../models')
+const { user } = require('../../../models')
 const { formatRelationshipsOut } = require('../../../lib/prisma')
 const { pipe, authorize: auth } = require('../openapi-middleware')
 const { update } = require('../crud')
@@ -16,7 +16,7 @@ module.exports = {
     ),
     updateUser: pipe(
       auth(),
-      update(users)
+      update(user)
     )
   }
 }

@@ -85,7 +85,7 @@ async function update (ctx, { where, data }) {
   return ctx.db.update({ where, data })
 }
 
-function remove (ctx, id) {
+function remove (ctx, { id }) {
   if (!id) throw httpError(400, 'Missing record identifier')
   if (ctx.user && ctx.user.id === id) {
     throw httpError(403, 'Cannot delete your own account')

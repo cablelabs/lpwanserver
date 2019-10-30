@@ -51,12 +51,12 @@ function registerIP (networkProtocolModel, ipNwkType) {
 
 module.exports = async function registerNetworkProtocols (models) {
   const [ loraNwkType, ipNwkType ] = await Promise.all([
-    models.networkTypes.load({ where: { name: 'LoRa' } }),
-    models.networkTypes.load({ where: { name: 'IP' } })
+    models.networkType.load({ where: { name: 'LoRa' } }),
+    models.networkType.load({ where: { name: 'IP' } })
   ])
-  await registerLora1(models.networkProtocols, loraNwkType)
-  await registerLora2(models.networkProtocols, loraNwkType)
-  await registerLoriot(models.networkProtocols, loraNwkType)
-  await registerTtnV2(models.networkProtocols, loraNwkType)
-  await registerIP(models.networkProtocols, ipNwkType)
+  await registerLora1(models.networkProtocol, loraNwkType)
+  await registerLora2(models.networkProtocol, loraNwkType)
+  await registerLoriot(models.networkProtocol, loraNwkType)
+  await registerTtnV2(models.networkProtocol, loraNwkType)
+  await registerIP(models.networkProtocol, ipNwkType)
 }

@@ -17,8 +17,8 @@ async function createApp () {
   var app = express()
 
   // Initialize Models
-  await models.networkProtocols.initialize()
-  await models.reportingProtocols.initialize()
+  await models.networkProtocol.initialize()
+  await models.reportingProtocol.initialize()
 
   if (config.public_dir) {
     serveWebClient({

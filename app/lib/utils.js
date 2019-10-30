@@ -127,7 +127,7 @@ const validateSchema = (msgPrefix, schema) => {
   const validate = ajv.compile(schema)
   return data => {
     const valid = validate(data)
-    if (!valid) throw httpError(400, `${msgPrefix}: ${ajv.errorsText()}`)
+    if (!valid) throw httpError(400, `${msgPrefix}: ${JSON.stringify(validate.errors)}`)
   }
 }
 
