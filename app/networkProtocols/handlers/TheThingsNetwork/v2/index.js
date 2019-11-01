@@ -21,8 +21,8 @@ module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
     super(opts)
     this.client = new ApiClient()
     this.networkProtocolId = opts.networkProtocolId
-    this.client.on('uplink', x => this.modelAPI.application.passDataToApplication(x.appId, x.networkId, x.payload))
-    this.subscribeToDataForEnabledApps()
+    // this.client.on('uplink', x => this.modelAPI.application.passDataToApplication(x.appId, x.networkId, x.payload))
+    // this.subscribeToDataForEnabledApps()
   }
 
   async subscribeToDataForEnabledApps () {

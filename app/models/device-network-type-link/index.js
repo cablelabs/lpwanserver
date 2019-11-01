@@ -72,10 +72,12 @@ async function update (ctx, { where, data, origin }) {
     throw httpError(403, 'Cannot change link targets')
   }
   if (data.networkSettings) {
-    data = {
-      ...R.set(devEUILens, normalizeDevEUI(R.view(devEUILens, data)), data),
-      networkSettings: prune(data.networkSettings)
-    }
+    data = R.evolve({
+      networkSettings: R.compose(
+        R.evolve({ devEUI: normalizeDevEUI }),
+        prune
+      )
+    }, data)
     validateNwkSettings(data.networkSettings)
   }
   const rec = await ctx.db.update({ where, data })

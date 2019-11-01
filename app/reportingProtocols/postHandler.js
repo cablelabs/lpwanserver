@@ -15,28 +15,27 @@ var request = require('request')
 //
 // Returns a Promise that sends the report.
 module.exports = class PostReportingProtocol {
-  report (dataObject, url, appName) {
+  report ({ application, data }) {
     return new Promise(function (resolve, reject) {
       // Set up the request options.
       var options = {}
       options.method = 'POST'
-      options.uri = url
+      options.uri = application.baseUrl
       options.headers = {}
       options.headers[ 'Content-Type' ] = 'application/json'
-      options.headers.appid = appName
-      if (dataObject === null) dataObject = {}
-      options.json = dataObject
+      options.headers.appid = application.name
+      options.json = data || {}
       request(options, function (error, response, body) {
         if (error) {
           log.error('Error reporting data (' +
-                                 JSON.stringify(dataObject) +
-                                 ') for ' + appName +
-                                 ' to ' + url +
+                                 JSON.stringify(data) +
+                                 ') for ' + application.name +
+                                 ' to ' + application.baseUrl +
                                  ':', error)
           reject(error)
         }
         else {
-          resolve(response)
+          resolve(body)
         }
       })
     })

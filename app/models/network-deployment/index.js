@@ -31,6 +31,7 @@ const fragments = {
 // Model Functions
 // ******************************************************************************
 async function create (ctx, { data, ...opts }) {
+  ctx.log.debug('networkDeployment:create', data)
   data = { meta: {}, logs: [], syncFailed: false, ...data }
   const networkDeployment = await ctx.db.create({ ...opts, data })
   await ctx.$self.syncNetworkDeployment({ networkDeployment })
@@ -38,6 +39,7 @@ async function create (ctx, { data, ...opts }) {
 }
 
 async function update (ctx, { data, ...args }) {
+  ctx.log.debug('networkDeployment:update', data)
   if (data.status === 'SYNCED') {
     data = { ...data, syncFailed: false, logs: [] }
   }

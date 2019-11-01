@@ -12,6 +12,9 @@ function pipeOpenApiBackendMiddleware (...fns) {
 }
 
 function authorize (permissions = []) {
+  if (!Array.isArray(permissions)) {
+    throw new TypeError(`openapi-middleware.js "authorize" function expects an array.  received ${permissions}`)
+  }
   return async (ctx, req) => {
     // If the operation has declared a security scheme in the OpenAPI definition
     // but there is no user (no jwt was provided), reject request

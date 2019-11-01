@@ -23,7 +23,7 @@ module.exports = class LoraOpenSourceV1 extends LoraOpenSource {
   }
 
   buildNetworkDevice (args) {
-    const { device } = args
+    const { device, deviceProfile } = args
     const result = super.buildNetworkDevice(args)
     if (device.deviceKeys) {
       result.deviceKeys = {
@@ -31,7 +31,9 @@ module.exports = class LoraOpenSourceV1 extends LoraOpenSource {
         appKey: device.deviceKeys.nwkKey
       }
     }
-    else if (device.deviceActivation && device.macVersion.slice(0, 3) === '1.0') {
+    else if (device.deviceActivation && deviceProfile.networkSettings.macVersion) {
+      const mac = deviceProfile.networkSettings.macVersion.slice(0, 3)
+      if (mac.slice(0, 3) !== '1.0') return result
       result.deviceActivation = {
         devEUI: device.devEUI,
         ...R.pick(['appSKey', 'devAddr', 'fCntUp'], device.deviceActivation),
@@ -40,5 +42,13 @@ module.exports = class LoraOpenSourceV1 extends LoraOpenSource {
       }
     }
     return result
+  }
+
+  async passDataToDevice ({ network, remoteDeviceId, data }) {
+    data = R.compose(
+      R.omit(['fCnt']),
+      renameKeys({ jsonData: 'jsonObject' })
+    )(data)
+    return this.client.createDeviceMessage(network, remoteDeviceId, { ...data, devEUI: remoteDeviceId })
   }
 }

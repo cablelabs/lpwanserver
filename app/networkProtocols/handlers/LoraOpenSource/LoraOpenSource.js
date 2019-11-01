@@ -23,18 +23,6 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
     return result
   }
 
-  async buildApplication ({ network, remoteApplication }) {
-    remoteApplication = await this.client.loadApplication(network, remoteApplication.id)
-    let integration = await this.client.loadApplicationIntegration(network, remoteApplication.id, 'http')
-      .catch(err => {
-        if (err.statusCode !== 404) throw err
-      })
-    let props = ['name', 'description', 'payloadCodec', 'payloadDecoderScript', 'payloadEncoderScript']
-    let application = R.pick(props, remoteApplication)
-    if (integration) application.baseUrl = integration.uplinkDataURL
-    return application
-  }
-
   async createApplication ({ network, application }) {
     return this.client.createApplication(network, this.buildNetworkApplication(network, application))
   }
@@ -84,6 +72,18 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
     await this.client.deleteApplicationIntegration(network, remoteId, 'http')
   }
 
+  async buildApplication ({ network, remoteApplication }) {
+    remoteApplication = await this.client.loadApplication(network, remoteApplication.id)
+    let integration = await this.client.loadApplicationIntegration(network, remoteApplication.id, 'http')
+      .catch(err => {
+        if (err.statusCode !== 404) throw err
+      })
+    let props = ['id', 'name', 'description', 'payloadCodec', 'payloadDecoderScript', 'payloadEncoderScript']
+    let application = R.pick(props, remoteApplication)
+    if (integration) application.baseUrl = integration.uplinkDataURL
+    return application
+  }
+
   buildNetworkApplication (network, app) {
     let props = [
       'name', 'description', 'payloadCodec', 'payloadDecoderScript', 'payloadEncoderScript'
@@ -131,7 +131,7 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
       .filter(x => remoteDeviceProfile[x])
       .filter(x => remoteDeviceProfile[x] !== network.networkSettings[x])
     if (!unknownIds.length) {
-      return R.omit([...relIds, 'id', 'createdAt', 'updatedAt'], remoteDeviceProfile)
+      return R.omit([...relIds, 'createdAt', 'updatedAt'], remoteDeviceProfile)
     }
     const relStr = key => `${key}:(Network:${network.networkSettings[key]})(DeviceProfile:${remoteDeviceProfile[key]})`
     let msg = `Remote DeviceProfile relationship IDs don't match those in network.  ${unknownIds.map(relStr).join('; ')}`
@@ -162,14 +162,14 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
   async createDevice (args) {
     const { network, deviceProfile } = args
     const { device, deviceKeys, deviceActivation } = this.buildNetworkDevice(args)
-    const result = await this.client.createDevice(network, device)
+    await this.client.createDevice(network, device)
     if (deviceProfile.supportsJoin && deviceKeys) {
       await this.client.createDeviceKeys(network, device.devEUI, deviceKeys)
     }
     else if (deviceActivation && deviceActivation.fCntUp >= 0) {
       await this.client.activateDevice(network, device.devEUI, deviceActivation)
     }
-    return result
+    return { id: device.devEUI }
   }
 
   async updateDevice (args) {
@@ -200,6 +200,7 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
       'location', 'referenceAltitude', 'skipFCntCheck'
     ]
     const device = R.pick(props, remoteDevice)
+    device.id = device.devEUI
     if (deviceProfile.supportsJoin) {
       device.deviceKeys = await this.client.loadDeviceKeys(network, remoteDevice.devEUI)
     }
@@ -217,8 +218,8 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
     } }
   }
 
-  async passDataToDevice ({ network, remoteId, data }) {
+  async passDataToDevice ({ network, remoteDeviceId, data }) {
     data = renameKeys({ jsonData: 'jsonObject' }, data)
-    return this.client.createDeviceMessage(network, remoteId, { ...data, devEUI: remoteId })
+    return this.client.createDeviceMessage(network, remoteDeviceId, { ...data, devEUI: remoteDeviceId })
   }
 }

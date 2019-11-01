@@ -34,6 +34,7 @@ describe('E2E Test for Uplink/Downlink Device Messaging', () => {
   let rcServer
   let lora2AppId = ''
   let lora2DevId = ''
+  let appNtlId = ''
 
   const APP_SERVER_UPLINK_URL = `http://e2e-test:${process.env.APP_SERVER_PORT}/uplinks`
 
@@ -70,22 +71,30 @@ describe('E2E Test for Uplink/Downlink Device Messaging', () => {
         should.exist(app)
         lora2AppId = app.id
       })
-      it('Update application baseUrl', async () => {
-        const res = await send(
+      it('Update application baseUrl and reportingProtocol', async () => {
+        let res = await send(server.get('/api/reporting-protocols'))
+        const { records } = JSON.parse(res.text)
+        res = await send(
           server.put('/api/applications/' + lora2AppId),
-          { baseUrl: APP_SERVER_UPLINK_URL }
+          { baseUrl: APP_SERVER_UPLINK_URL, reportingProtocolId: records[0].id }
         )
         res.should.have.status(204)
       })
-      it('Start application', async () => {
-        const res = await send(server.post(`/api/applications/${lora2AppId}/start`))
-        res.should.have.status(200)
+      it('Enable ApplicationNetworkTypeLink', async () => {
+        let res = await send(server.get(`/api/application-network-type-links?applicationId=${lora2AppId}`))
+        let { records } = JSON.parse(res.text)
+        appNtlId = records[0].id
+        res = await send(
+          server.put(`/api/application-network-type-links/${appNtlId}`),
+          { enabled: true }
+        )
+        res.should.have.status(204)
       })
     })
     describe('Send uplink message to LPWAN Server', () => {
       it('Post an uplink message to the LPWAN Server uplink endpoint', async () => {
         const res = await send(
-          server.post(`/api/ingest/${lora2AppId}/${Lora2.network.id}`),
+          server.post(`/api/uplinks/${lora2AppId}/${Lora2.network.id}`),
           { msgId: 1 }
         )
         res.should.have.status(204)
@@ -94,7 +103,7 @@ describe('E2E Test for Uplink/Downlink Device Messaging', () => {
         await rcServer.listRequests({
           method: 'POST',
           path: '/uplinks',
-          body: { msgId: 1 }
+          body: { data: { msgId: 1 } }
         })
       })
     })
@@ -113,7 +122,6 @@ describe('E2E Test for Uplink/Downlink Device Messaging', () => {
           server.post(`/api/devices/${lora2DevId}/downlinks`),
           { data, fCnt: 0, fPort: 1 }
         )
-        console.log(res.text)
         res.status.should.equal(200)
       })
       it('Get device message from Lora Server v1 queue', async () => {
@@ -126,23 +134,26 @@ describe('E2E Test for Uplink/Downlink Device Messaging', () => {
       })
     })
     describe('Ensure messages are dropped when an application is stopped', () => {
-      it('Stop application', async () => {
-        const res = await send(server.post(`/api/applications/${lora2AppId}/stop`))
-        res.should.have.status(200)
+      it('Disable ApplicationNetworkTypeLink', async () => {
+        let res = await send(
+          server.put(`/api/application-network-type-links/${appNtlId}`),
+          { enabled: false }
+        )
+        res.should.have.status(204)
       })
       it('Post an uplink message to the LPWAN Server uplink endpoint', async () => {
         const res = await send(
-          server.post(`/api/ingest/${lora2AppId}/${Lora2.network.id}`),
+          server.post(`/api/uplinks/${lora2AppId}/${Lora2.network.id}`),
           { msgId: 2 }
         )
         res.should.have.status(204)
       })
-      it('Ensure app server received message', async () => {
+      it('Ensure app server did not received message', async () => {
         try {
           await rcServer.listRequests({
             method: 'POST',
             path: '/uplinks',
-            body: { msgId: 1 }
+            body: { data: { msgId: 2 } }
           })
         }
         catch (err) {

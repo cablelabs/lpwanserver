@@ -1,22 +1,29 @@
-const { devices, applications } = require('../../../models')
+const { device, application, network, networkProtocol } = require('../../../models')
 const httpError = require('http-errors')
-const { pipe, authorize, requestContext } = require('../openapi-middleware')
+const { pipe, authorize } = require('../openapi-middleware')
 const { getCertificateCn, getHttpRequestPreferedWaitMs, normalizeDevEUI } = require('../../../lib/utils')
 const { sub: redisSub } = require('../../../lib/redis')
 const { log } = require('../../../lib/log')
+const { requestContext } = require('../crud')
 
-const sendUnicastDownlink = model => async (_, req, res) => {
-  const logs = await model.passDataToDevice(req.params.id, req.body, requestContext(req))
+const sendUnicastDownlink = model => async (ctx, req, res) => {
+  const logs = await model.passDataToDevice({
+    deviceId: ctx.request.params.id,
+    data: ctx.request.requestBody
+  }, requestContext(req))
   res.status(200).json(logs)
 }
 
-const sendNetworkUplink = applicationModel => async (_, req, res) => {
-  await applicationModel.passDataToApplication(
-    req.params.applicationId,
-    req.params.networkId,
-    req.body
-  )
-  res.status(204).send()
+const sendNetworkUplink = (models) => async (ctx, req, res) => {
+  const { networkId, applicationId } = ctx.request.params
+  const network = await models.network.load({ where: { id: networkId } })
+  const result = await models.networkProtocol.relayUplink({
+    network,
+    applicationId,
+    data: ctx.request.requestBody
+  })
+  if (result && typeof result !== 'string') JSON.stringify(result)
+  res.status(result ? 200 : 204).send(result)
 }
 
 const listDownlink = model => async (_, req, res) => {
@@ -58,10 +65,10 @@ const listDownlink = model => async (_, req, res) => {
   }
 }
 
-const sendUplink = model => async (_, req, res) => {
+const sendUplink = model => async (ctx, req, res) => {
   const devEUI = getCertificateCn(req.connection.getPeerCertificate())
   if (!devEUI) throw httpError(401, 'Device EUI must be the subject CN of the client certificate')
-  model.receiveIpDeviceUplink(devEUI, req.body)
+  model.receiveIpDeviceUplink(devEUI, ctx.request.requestBody)
   res.status(204).send()
 }
 
@@ -72,11 +79,11 @@ module.exports = {
   sendUplink,
   handlers: {
     sendUnicastDownlink: pipe(
-      authorize('Device:read'),
-      sendUnicastDownlink(devices)
+      authorize(['Device:load']),
+      sendUnicastDownlink(device)
     ),
-    sendNetworkUplink: sendNetworkUplink(applications),
-    listDownlink: listDownlink(devices),
-    sendUplink: sendUplink(devices)
+    sendNetworkUplink: sendNetworkUplink({ application, network, networkProtocol }),
+    listDownlink: listDownlink(device),
+    sendUplink: sendUplink(device)
   }
 }

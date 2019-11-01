@@ -1,10 +1,11 @@
-const { devices } = require('../../../models')
-const { pipe, authorize: auth, requestContext } = require('../openapi-middleware')
+const { device } = require('../../../models')
+const { pipe, authorize: auth } = require('../openapi-middleware')
+const { requestContext } = require('../crud')
 
-const bulkCreateDevices = deviceModel => async (_, req, res) => {
+const bulkCreateDevices = deviceModel => async (ctx, req, res) => {
   let result = await deviceModel.importDevices({
-    ...req.body,
-    applicationId: req.params.id
+    ...ctx.request.requestBody,
+    applicationId: ctx.request.params.id
   }, requestContext(req))
   res.status(200).json(result)
 }
@@ -14,7 +15,7 @@ module.exports = {
   handlers: {
     bulkCreateDevices: pipe(
       auth(['Device:create']),
-      bulkCreateDevices(devices)
+      bulkCreateDevices(device)
     )
   }
 }

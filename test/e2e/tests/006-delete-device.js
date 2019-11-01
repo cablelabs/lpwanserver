@@ -240,14 +240,14 @@ describe('E2E Test for Deleting a Device Use Case #192', () => {
     })
     it('Verify the LoRaServer V1 Device Profile Exists', async () => {
       const { result } = await Lora1.client.listDeviceProfiles(Lora1.network, { limit: 100 })
-      const dp = result.find(x => x.name === testData.deviceProfile.networkSettings.name)
+      const dp = result.find(x => x.name === testData.deviceProfile.name)
       should.exist(dp)
       remoteDeviceProfileId = dp.id
     })
     it('Verify the LoRaServer V1 Device Profile Exists', async () => {
       const dp = await Lora1.client.loadDeviceProfile(Lora1.network, remoteDeviceProfileId)
       dp.should.have.property('name')
-      dp.name.should.equal(testData.deviceProfile.networkSettings.name)
+      dp.name.should.equal(testData.deviceProfile.name)
       dp.should.have.property('organizationID')
       dp.should.have.property('networkServerID')
       dp.should.have.property('createdAt')
@@ -268,7 +268,7 @@ describe('E2E Test for Deleting a Device Use Case #192', () => {
       device.should.have.property('deviceStatusMargin')
       device.should.have.property('lastSeenAt')
       device.should.have.property('skipFCntCheck')
-      device.name.should.equal(testData.deviceNTL.networkSettings.name)
+      device.name.should.equal(testData.device.name)
       device.devEUI.should.equal(testData.deviceNTL.networkSettings.devEUI)
       device.deviceProfileID.should.equal(remoteDeviceProfileId)
     })
@@ -301,7 +301,7 @@ describe('E2E Test for Deleting a Device Use Case #192', () => {
     it('Verify the LoRaServer V2 Device Profile Exists', async () => {
       const dp = await Lora2.client.loadDeviceProfile(Lora2.network, remoteDeviceProfileId2)
       dp.should.have.property('name')
-      dp.name.should.equal(testData.deviceProfile.networkSettings.name)
+      dp.name.should.equal(testData.deviceProfile.name)
       dp.should.have.property('organizationID')
       dp.should.have.property('networkServerID')
       dp.should.have.property('macVersion')
@@ -320,7 +320,7 @@ describe('E2E Test for Deleting a Device Use Case #192', () => {
       device.should.have.property('deviceStatusBattery')
       device.should.have.property('deviceStatusMargin')
       device.should.have.property('lastSeenAt')
-      device.name.should.equal(testData.deviceNTL.networkSettings.name)
+      device.name.should.equal(testData.device.name)
       device.devEUI.should.equal(testData.deviceNTL.networkSettings.devEUI)
       device.deviceProfileID.should.equal(remoteDeviceProfileId2)
     })
@@ -372,7 +372,7 @@ describe('E2E Test for Deleting a Device Use Case #192', () => {
         .set('Authorization', 'Bearer ' + adminToken)
         .send()
         .end(function (err, res) {
-          res.should.have.status(200)
+          res.should.have.status(204)
           done()
         })
     })

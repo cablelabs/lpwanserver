@@ -34,10 +34,8 @@ const validateNwkSettings = validateSchema(
 // ******************************************************************************
 async function enabledValidation (ctx, { application }) {
   // Ensure app has a ReportingProtocol
-  const [reportingProtocols] = await ctx.$m.applicationReportingProtocols.list({
-    where: { application }
-  })
-  if (!reportingProtocols.length) {
+  const app = await ctx.$m.application.load({ where: application })
+  if (!app.reportingProtocol) {
     throw httpError(400, 'ApplicationNetworkTypeLink cannot be enabled because Application has no ReportingProtocol.')
   }
 }

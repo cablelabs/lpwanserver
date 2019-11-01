@@ -159,7 +159,7 @@ components:
             type: object
             properties:
               networkSettings:
-                type: string
+                type: object
                 description: The settings in a JSON string that correspond to the NetworkType
       description: DeviceNetworkTypeLink properties to be updated
       required: true

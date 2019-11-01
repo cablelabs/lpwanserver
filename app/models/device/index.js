@@ -81,15 +81,14 @@ async function remove (ctx, { id }) {
   return ctx.db.remove(id)
 }
 
-async function passDataToDevice (ctx, { id, data }) {
+async function passDataToDevice (ctx, { deviceId: id, data }) {
   // check for required fields
   let { error } = Joi.validate(data, unicastDownlinkSchema)
   if (error) throw httpError(400, error.message)
-  const device = await ctx.db.load({ id })
-  const app = await ctx.$m.application.load({ id: device.application.id })
+  const device = await ctx.db.load({ where: { id } })
+  const app = await ctx.$m.application.load({ where: { id: device.application.id } })
   // Get all device networkType links
-  const devNtlQuery = { device: { id } }
-  let [ devNtls ] = await ctx.$m.deviceNetworkTypeLink.list({ query: devNtlQuery })
+  let [ devNtls ] = await ctx.$m.deviceNetworkTypeLink.list({ where: { device: { id } } })
   const logs = await Promise.all(devNtls.map(
     devNtl => {
       if (!devNtl.enabled) return Promise.resolve()
