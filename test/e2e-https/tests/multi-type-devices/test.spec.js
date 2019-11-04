@@ -14,7 +14,7 @@ function cacheInsert (item, list = []) {
   ]
 }
 
-async function createResource (resource, data, status = 200) {
+async function createResource (resource, data, status = 201) {
   const res = await Lpwan.client.create(resource, {}, { data })
   assert.strictEqual(res.status, status)
   Lpwan.cache[resource] = cacheInsert({ ...data, ...res.data }, Lpwan.cache[resource])
@@ -47,7 +47,6 @@ describe('Manage a device model that supports multiple network types', () => {
     })
     await Promise.all([
       Lpwan.client.list('networkTypes', {}),
-      Lpwan.client.list('companies', {}),
       Lpwan.client.list('reportingProtocols', {})
     ])
     loraNwkType = Lpwan.cache.networkTypes.find(x => x.name === 'LoRa')
@@ -70,8 +69,13 @@ describe('Manage a device model that supports multiple network types', () => {
         networkTypeId: loraNwkType.id,
         baseUrl: Lora2.network.baseUrl,
         networkProtocolId: protocolId,
-        securityData: { authorized: false, ...Lora2.network.securityData }
-      }, 201)
+        securityData: { authorized: false, ...Lora2.network.securityData },
+        networkSettings: {
+          organizationID: Lora2.cache.Organization[0].id,
+          networkServerID: Lora2.cache.NetworkServer[0].id,
+          serviceProfileID: Lora2.cache.ServiceProfile[0].id
+        }
+      })
       network = Lpwan.cache.networks[0]
     })
   })
@@ -79,14 +83,12 @@ describe('Manage a device model that supports multiple network types', () => {
   describe('Add Device Profiles', () => {
     it('Create IP DeviceProfile', () => createResource('deviceProfiles', {
       networkTypeId: ipNwkType.id,
-      companyId: Lpwan.cache.companies[0].id,
       name: ipDeviceProfileName,
       description: `${ipDeviceProfileName} description`,
       networkSettings: {}
     }))
     it('Create LoRa DeviceProfile', () => createResource('deviceProfiles', {
       networkTypeId: loraNwkType.id,
-      companyId: Lpwan.cache.companies[0].id,
       name: loraDeviceProfileName,
       description: `${loraDeviceProfileName} description`,
       networkSettings: {
@@ -98,7 +100,6 @@ describe('Manage a device model that supports multiple network types', () => {
   describe('Create Application and ApplicationNetworkTypeLinks', () => {
     it('Create Application', async () => {
       await createResource('applications', {
-        companyId: Lpwan.cache.companies[0].id,
         name: appName,
         description: `${appName} description`,
         baseUrl: appBaseUrl,
@@ -109,11 +110,13 @@ describe('Manage a device model that supports multiple network types', () => {
     it('Create IP ApplicationNetworkTypeLink', () => createResource('applicationNetworkTypeLinks', {
       applicationId: app.id,
       networkTypeId: ipNwkType.id,
+      enabled: true,
       networkSettings: {}
     }))
     it('Create LoRa ApplicationNetworkTypeLink', () => createResource('applicationNetworkTypeLinks', {
       applicationId: app.id,
       networkTypeId: loraNwkType.id,
+      enabled: true,
       networkSettings: {}
     }))
     it('Confirm application is on LoRa Server', async () => {
@@ -137,12 +140,14 @@ describe('Manage a device model that supports multiple network types', () => {
       })
       deviceId = res.data.id
     })
-    it('Create IP DeviceNetworkTypeLink', () => createResource('deviceNetworkTypeLinks', {
-      deviceId,
-      networkTypeId: ipNwkType.id,
-      deviceProfileId: Lpwan.cache.deviceProfiles.find(x => x.name === ipDeviceProfileName).id,
-      networkSettings: { devEUI: '1122334455667788' }
-    }))
+    it('Create IP DeviceNetworkTypeLink', async () => {
+      await createResource('deviceNetworkTypeLinks', {
+        deviceId,
+        networkTypeId: ipNwkType.id,
+        deviceProfileId: Lpwan.cache.deviceProfiles.find(x => x.name === ipDeviceProfileName).id,
+        networkSettings: { devEUI: '1122334455667788' }
+      })
+    })
     it('Create LoRa DeviceNetworkTypeLink', async () => {
       const devEUI = cryptoRandomString({ length: 16 })
       await createResource('deviceNetworkTypeLinks', {
@@ -187,13 +192,13 @@ describe('Manage a device model that supports multiple network types', () => {
 
   describe('Send Device Uplinks', () => {
     it('Confirm Lora Server Application Integration', async () => {
-      const uplinkDataURL = `${process.env.LPWANSERVER_URL}/api/ingest/${app.id}/${network.id}`
+      const uplinkDataURL = `${process.env.LPWANSERVER_URL}/api/uplinks/${app.id}/${network.id}`
       const res = await Lora2.client.loadApplicationIntegration(loraAppId, 'http')
       assert.strictEqual(res.uplinkDataURL, uplinkDataURL)
     })
     it('Send an uplink as the Lora Server', async () => {
       const data = { msgId: 'multi_type_devices_uplink_lora' }
-      const res = await Lpwan.client.create('uplinks', { applicationId: app.id, networkId: network.id }, { data })
+      const res = await Lpwan.client.create('networkUplinks', { applicationId: app.id, networkId: network.id }, { data })
       assert.strictEqual(res.status, 204)
     })
     it('Send an uplink as an IP device', async () => {
@@ -202,7 +207,7 @@ describe('Manage a device model that supports multiple network types', () => {
         useSession: false,
         httpsAgent: nbIotDeviceAgent
       }
-      const res = await Lpwan.client.create('ip-device-uplinks', {}, opts)
+      const res = await Lpwan.client.create('uplinks', {}, opts)
       assert.strictEqual(res.status, 204)
     })
     it('Confirm app server received uplinks', async () => {
@@ -231,7 +236,7 @@ describe('Manage a device model that supports multiple network types', () => {
     })
     it('Confirm downlink is available to IP devices', async () => {
       const opts = { httpsAgent: nbIotDeviceAgent }
-      const res = await Lpwan.client.list('ip-device-downlinks', {}, opts)
+      const res = await Lpwan.client.list('downlinks', {}, opts)
       assert.deepStrictEqual(res.data[0], downlink)
     })
   })
@@ -240,7 +245,7 @@ describe('Manage a device model that supports multiple network types', () => {
     it('Remove ApplicationNetworkTypeLink', async () => {
       const appNtl = Lpwan.cache.applicationNetworkTypeLinks.find(x => x.networkTypeId === loraNwkType.id)
       let res = await Lpwan.client.remove('applicationNetworkTypeLinks', { id: appNtl.id })
-      assert.strictEqual(res.status, 200)
+      assert.strictEqual(res.status, 204)
     })
     it('Confirm Application is not on Lora Server', async () => {
       const res = await Lora2.client.listApplications({ search: appName, limit: 1 })

@@ -150,6 +150,7 @@ components:
                 required:
                   - deviceId
                   - networkTypeId
+                  - deviceProfileId
       description: DeviceNetworkTypeLink to be created
       required: true
     UpdateDeviceNetworkTypeLinkInput:

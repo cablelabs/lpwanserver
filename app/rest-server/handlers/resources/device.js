@@ -32,7 +32,7 @@ const listDownlink = model => async (_, req, res) => {
   const normDevEui = normalizeDevEUI(devEUI)
   try {
     const waitMs = getHttpRequestPreferedWaitMs(req.get('prefer'))
-    const downlinks = await model.listDownlinks(devEUI)
+    const downlinks = await model.listIpDeviceDownlinks({ devEUI })
     if (downlinks.length || !waitMs) {
       res.status(200).json(downlinks)
       return
@@ -44,7 +44,7 @@ const listDownlink = model => async (_, req, res) => {
     redisSub.on('message', async channel => {
       if (channel !== `downlink_received:${normDevEui}`) return
       redisSub.unsubscribe(`downlink_received:${normDevEui}`)
-      let downlinks = await model.listDownlinks(devEUI)
+      let downlinks = await model.listIpDeviceDownlinks({ devEUI })
       res.status(200).json(downlinks)
       // put timeout back at default 2min
       req.connection.setTimeout(120000)
@@ -59,7 +59,7 @@ const listDownlink = model => async (_, req, res) => {
     })
   }
   catch (err) {
-    log.error(`Error getting downlinks for ip device ${devEUI}`, err)
+    log.error(`Error getting downlinks for ip device ${devEUI}: `, err)
     res.status(500).send(err.toString())
     req.connection.end()
   }
@@ -68,7 +68,7 @@ const listDownlink = model => async (_, req, res) => {
 const sendUplink = model => async (ctx, req, res) => {
   const devEUI = getCertificateCn(req.connection.getPeerCertificate())
   if (!devEUI) throw httpError(401, 'Device EUI must be the subject CN of the client certificate')
-  model.receiveIpDeviceUplink(devEUI, ctx.request.requestBody)
+  await model.receiveIpDeviceUplink({ devEUI, data: ctx.request.requestBody })
   res.status(204).send()
 }
 
@@ -78,12 +78,12 @@ module.exports = {
   listDownlink,
   sendUplink,
   handlers: {
+    sendUplink: sendUplink(device),
+    sendNetworkUplink: sendNetworkUplink({ application, network, networkProtocol }),
+    listDownlink: listDownlink(device),
     sendUnicastDownlink: pipe(
       authorize(['Device:load']),
       sendUnicastDownlink(device)
-    ),
-    sendNetworkUplink: sendNetworkUplink({ application, network, networkProtocol }),
-    listDownlink: listDownlink(device),
-    sendUplink: sendUplink(device)
+    )
   }
 }

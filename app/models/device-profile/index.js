@@ -31,7 +31,7 @@ const validateNwkSettings = validateSchema(
 // Model Functions
 // ******************************************************************************
 async function create (ctx, { data, origin }) {
-  data = { ...data, networkSettings: prune(data.networkSettings) }
+  data = { ...data, networkSettings: prune(data.networkSettings || {}) }
   validateNwkSettings(data.networkSettings)
   const rec = await ctx.db.create({ data })
   await ctx.$m.networkType.forAllNetworks({

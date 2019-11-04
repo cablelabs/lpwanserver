@@ -35,8 +35,7 @@ describe('DeviceProfiles', function () {
         .send({
           'networkTypeId': nwkTypeId,
           'name': 'LoRaGPSNode',
-          'description': 'GPS Node that works with LoRa',
-          'networkSettings': { 'foo': 'bar' }
+          'description': 'GPS Node that works with LoRa'
         })
         .end(function (err, res) {
           if (err) return done(err)
@@ -57,7 +56,7 @@ describe('DeviceProfiles', function () {
           'networkTypeId': nwkTypeId,
           'name': 'LoRaWeatherNode',
           'description': 'GPS Node that works with LoRa',
-          'networkSettings': { 'tempType': 'C' }
+          'networkSettings': { 'macVersion': '1.0.0' }
         })
         .end(function (err, res) {
           if (err) return done(err)

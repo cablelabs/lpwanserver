@@ -88,7 +88,7 @@ type DeviceNetworkTypeLink {
   device: Device! @relation(name: "DeviceNetworkTypes")
   networkType: NetworkType! @relation(name: "NetworkTypeDevices")
   deviceProfile: DeviceProfile! @relation(name: "DeviceProfileDeviceNetworkTypeLinks")
-  networkSettings: Json
+  networkSettings: String
 }
 
 type DeviceProfile {

@@ -112,9 +112,10 @@ async function remove (ctx, { id }) {
 //   return R.flatten(logs)
 // }
 
-async function passDataToApplication (ctx, { applicationId: id, networkId, data }) {
-  // Ensure network is enabled
-  const network = await ctx.$m.network.load({ where: { id: networkId } })
+async function passDataToApplication (ctx, { applicationId: id, networkId, network, devEUI, data }) {
+  if (!network) {
+    network = await ctx.$m.network.load({ where: { id: networkId } })
+  }
   if (!network.enabled) return
   // Ensure applicationNetworkTypeLink exists and is enabled
   let appNtl
@@ -140,18 +141,21 @@ async function passDataToApplication (ctx, { applicationId: id, networkId, data 
   }
   let payload = {
     applicationInfo: { name: application.name },
-    networkInfo: { name: network.name },
     data
   }
-  if (payload.data.devEUI) {
+  if (network.name) {
+    payload.networkInfo = { name: network.name }
+  }
+  devEUI = devEUI || data.devEUI
+  if (devEUI) {
     const devNtl = await ctx.$m.deviceNetworkTypeLink.findByDevEUI({
       networkTypeId: network.networkType.id,
-      devEUI: payload.deviceInfo.devEUI
+      devEUI
     })
-    const device = await ctx.$m.device.load(devNtl.device)
+    const device = await ctx.$m.device.load({ where: devNtl.device })
     payload.deviceInfo = {
-      ...payload.deviceInfo,
-      ...R.pick(['name', 'description', 'deviceModel'], device)
+      ...R.pick(['name', 'description', 'deviceModel'], device),
+      devEUI
     }
   }
   return ctx.$m.reportingProtocol.report({ application, data: payload })

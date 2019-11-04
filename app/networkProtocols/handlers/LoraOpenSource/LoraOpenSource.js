@@ -18,7 +18,8 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
   async listAllApplications ({ network }) {
     let { result } = await this.client.listApplications(network, {
       limit: 9999,
-      offset: 0
+      offset: 0,
+      params: { orgainzationID: network.networkSettings.orgainzationID }
     })
     return result
   }
@@ -100,7 +101,8 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
   async listAllDeviceProfiles ({ network }) {
     const { result } = await this.client.listDeviceProfiles(network, {
       limit: 9999,
-      offset: 0
+      offset: 0,
+      params: { orgainzationID: network.networkSettings.orgainzationID }
     })
     return result
   }
@@ -201,11 +203,17 @@ module.exports = class LoraOpenSource extends NetworkProtocol {
     ]
     const device = R.pick(props, remoteDevice)
     device.id = device.devEUI
-    if (deviceProfile.supportsJoin) {
-      device.deviceKeys = await this.client.loadDeviceKeys(network, remoteDevice.devEUI)
+    try {
+      if (deviceProfile.supportsJoin) {
+        device.deviceKeys = await this.client.loadDeviceKeys(network, remoteDevice.devEUI)
+      }
+      else {
+        device.deviceActivation = await this.client.loadDeviceActivation(network, remoteDevice.devEUI)
+      }
     }
-    else {
-      device.deviceActivation = await this.client.loadDeviceActivation(network, remoteDevice.devEUI)
+    catch (err) {
+      console.error(err.toString())
+      // device does not have keys or activation
     }
     return device
   }

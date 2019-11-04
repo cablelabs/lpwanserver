@@ -181,7 +181,6 @@ describe('E2E Test for Creating an Application Use Case #188', () => {
           if (err) done(err)
           res.should.have.status(200)
           let appObj = JSON.parse(res.text)
-          console.log(appObj)
           done()
         })
     })
@@ -244,7 +243,6 @@ describe('E2E Test for Creating an Application Use Case #188', () => {
           if (err) done(err)
           res.should.have.status(200)
           let devObj = JSON.parse(res.text)
-          console.log(devObj)
           devObj.name.should.equal(device.name)
           devObj.description.should.equal(device.description)
           devObj.deviceModel.should.equal(device.deviceModel)
@@ -263,7 +261,6 @@ describe('E2E Test for Creating an Application Use Case #188', () => {
           if (err) done(err)
           res.should.have.status(201)
           var dnlObj = JSON.parse(res.text)
-          console.log(dnlObj)
           dnlId1 = dnlObj.id
           done()
         })

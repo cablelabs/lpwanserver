@@ -163,10 +163,16 @@ async function pullNetwork (ctx, { id }) {
 }
 
 async function pushNetwork (ctx, { id }) {
-  let network = await ctx.$self.load({ where: { id } })
-  let result = await ctx.$m.networkProtcols.pushNetwork({ network })
-  ctx.log.info('Success pushing to Network : ' + id)
-  return result
+  try {
+    let network = await ctx.$self.load({ where: { id } })
+    let result = await ctx.$m.networkProtocol.pushNetwork({ network })
+    ctx.log.info('Success pushing to Network : ' + id)
+    return result
+  }
+  catch (err) {
+    ctx.log.error(`Failed to push network: ${err}`)
+    throw err
+  }
 }
 
 // ******************************************************************************

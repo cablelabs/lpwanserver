@@ -115,7 +115,6 @@ describe('E2E Test for Deleting a Device Use Case #192', () => {
         .end(function (err, res) {
           res.should.have.status(200)
           let appObj = JSON.parse(res.text)
-          console.log(appObj)
           done()
         })
     })
@@ -177,7 +176,6 @@ describe('E2E Test for Deleting a Device Use Case #192', () => {
         .end(function (err, res) {
           res.should.have.status(200)
           let devObj = JSON.parse(res.text)
-          console.log(devObj)
           assertEqualProps(
             ['name', 'description', 'deviceModel'],
             devObj,
@@ -195,7 +193,6 @@ describe('E2E Test for Deleting a Device Use Case #192', () => {
         .end(function (err, res) {
           res.should.have.status(201)
           var dnlObj = JSON.parse(res.text)
-          console.log(dnlObj)
           testData.deviceNTL.id = dnlObj.id
           done()
         })

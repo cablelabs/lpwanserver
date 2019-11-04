@@ -89,12 +89,19 @@ async function passDataToDevice (ctx, { deviceId: id, data }) {
   const app = await ctx.$m.application.load({ where: { id: device.application.id } })
   // Get all device networkType links
   let [ devNtls ] = await ctx.$m.deviceNetworkTypeLink.list({ where: { device: { id } } })
+
   const logs = await Promise.all(devNtls.map(
     devNtl => {
       if (!devNtl.enabled) return Promise.resolve()
       return ctx.$m.networkType.forAllNetworks({
         networkTypeId: devNtl.networkType.id,
-        op: network => ctx.$m.networkProtocol.passDataToDevice({ network, applicationId: app.id, deviceId: id, data })
+        op: async network => {
+          const nwkProto = await ctx.$m.networkProtocol.load({ where: network.networkProtocol })
+          if (nwkProto.name !== 'IP') {
+            return ctx.$m.networkProtocol.passDataToDevice({ network, applicationId: app.id, deviceId: id, data })
+          }
+          return ctx.$self.pushIpDeviceDownlink({ devEUI: devNtl.networkSettings.devEUI, data })
+        }
       })
     }
   ))
@@ -103,24 +110,27 @@ async function passDataToDevice (ctx, { deviceId: id, data }) {
 
 async function receiveIpDeviceUplink (ctx, { devEUI, data }) {
   devEUI = normalizeDevEUI(devEUI)
-  let nwkType = await ctx.$m.networkType.load({ name: 'IP' })
+  let nwkType = await ctx.$m.networkType.load({ where: { name: 'IP' } })
   const devNtl = await ctx.$m.deviceNetworkTypeLink.findByDevEUI({ devEUI, networkTypeId: nwkType.id })
   if (!devNtl) return
-  // Get device
+  let nwkProto = await ctx.$m.networkProtocol.loadByQuery({ where: { networkType: { id: nwkType.id } } })
   const device = await ctx.$self.load({ where: { id: devNtl.device.id } })
-  // Get application
-  const app = await ctx.$m.application.load({ where: device.application })
-  // Ensure application is enabled
-  if (!app.running) return
-  // Pass data
-  let [ nwkProtos ] = await ctx.$m.networkProtocol.list({ where: { networkType: { id: nwkType.id } }, limit: 1 })
-  const ipProtoHandler = await ctx.$m.networkProtocol.getHandler(nwkProtos[0].id)
-  await ipProtoHandler.passDataToApplication(app, device, devEUI, data)
+  return ctx.$m.networkProtocol.relayUplink({
+    network: {
+      networkProtocol: { id: nwkProto.id },
+      networkType: { id: nwkType.id },
+      enabled: true
+    },
+    applicationId: device.application.id,
+    devEUI,
+    data
+  })
 }
 
 async function pushIpDeviceDownlink (ctx, { devEUI, data }) {
   devEUI = normalizeDevEUI(devEUI)
   data = JSON.stringify(data)
+  ctx.log.debug('pushIpDeviceDownlink', { devEUI, data })
   const result = await ctx.redis.keyval.rpushAsync(`ip_downlinks:${devEUI}`, data)
   ctx.redis.pub.publish(`downlink_received:${devEUI}`, '')
   return result
@@ -130,6 +140,7 @@ async function listIpDeviceDownlinks (ctx, { devEUI }) {
   devEUI = normalizeDevEUI(devEUI)
   let key = `ip_downlinks:${devEUI}`
   const len = await ctx.redis.keyval.llenAsync(key)
+  ctx.log.debug('listIpDeviceDownlinks', { devEUI, len })
   if (!len) return []
   let msgs = await ctx.redis.keyval.lrangeAsync(key, 0, len)
   await ctx.redis.keyval.del(key)
@@ -138,10 +149,10 @@ async function listIpDeviceDownlinks (ctx, { devEUI }) {
 
 async function importDevices (ctx, { applicationId, deviceProfileId, devices }) {
   // ensure app exists
-  await ctx.$m.application.load({ id: applicationId })
+  await ctx.$m.application.load({ where: { id: applicationId } })
   // Load device profile
-  const deviceProfile = await ctx.$m.deviceProfile.load({ id: deviceProfileId })
-  const nwkType = await ctx.$m.networkType.load({ id: deviceProfile.networkType.id })
+  const deviceProfile = await ctx.$m.deviceProfile.load({ where: { id: deviceProfileId } })
+  const nwkType = await ctx.$m.networkType.load({ where: { id: deviceProfile.networkType.id } })
   if (!nwkType.name === 'IP') {
     throw httpError(400, 'Device import currently only supports IP devices.')
   }
@@ -151,18 +162,18 @@ async function importDevices (ctx, { applicationId, deviceProfileId, devices }) 
       if (!devEUI) {
         throw new Error('devEUI required for each imported device.')
       }
-      const device = await ctx.db.create({
+      const device = await ctx.db.create({ data: {
         name: name || devEUI,
         applicationId,
         description,
         deviceModel
-      })
-      await ctx.$m.deviceNetworkTypeLink.create({
+      } })
+      await ctx.$m.deviceNetworkTypeLink.create({ data: {
         deviceId: device.id,
         networkTypeId: deviceProfile.networkType.id,
         deviceProfileId,
         networkSettings: { devEUI }
-      })
+      } })
       return { status: 'OK', deviceId: device.id, devEUI, row }
     }
     catch (err) {

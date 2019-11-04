@@ -15,6 +15,15 @@ const fragments = {
 // ******************************************************************************
 async function forAllNetworks (ctx, { networkTypeId, op }) {
   let [networks] = await ctx.$m.network.list({ where: { networkTypeId }, decryptSecurityData: true })
+  if (!networks.length) {
+    // possible that it's an IP NetworkType, for which there are no networks
+    // In that case, spoof a network
+    let nwkType = await ctx.$m.networkType.load({ where: { id: networkTypeId } })
+    if (nwkType.name === 'IP') {
+      let ipNwkProto = await ctx.$m.networkProtocol.loadByQuery({ where: { name: 'IP' } })
+      networks = [{ networkProtocol: { id: ipNwkProto.id } }]
+    }
+  }
   const mapFn = network => {
     const result = op(network)
     if (result && typeof result === 'object' && typeof result.catch === 'function') {

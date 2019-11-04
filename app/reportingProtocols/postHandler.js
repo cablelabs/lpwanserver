@@ -25,6 +25,7 @@ module.exports = class PostReportingProtocol {
       options.headers[ 'Content-Type' ] = 'application/json'
       options.headers.appid = application.name
       options.json = data || {}
+      log.debug('ReportingProtocolHandler.report', options)
       request(options, function (error, response, body) {
         if (error) {
           log.error('Error reporting data (' +

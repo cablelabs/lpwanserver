@@ -15,10 +15,11 @@ module.exports = class LoraOpenSourceV2 extends LoraOpenSource {
       result.deviceKeys = R.merge(device.deviceKeys, { devEUI: device.devEUI })
       if (!result.deviceKeys.nwkKey) {
         result.deviceKeys.nwkKey = result.deviceKeys.appKey
+        delete result.deviceKeys.appKey
       }
     }
-    else if (device.deviceActivation && deviceProfile.networkSettings.macVersion) {
-      const mac = deviceProfile.networkSettings.macVersion.slice(0, 3)
+    else if (device.deviceActivation && deviceProfile.macVersion) {
+      const mac = deviceProfile.macVersion.slice(0, 3)
       result.deviceActivation = R.merge(device.deviceActivation, { devEUI: device.devEUI })
       if (mac === '1.0') {
         result.deviceActivation.nwkSEncKey = device.deviceActivation.fNwkSIntKey

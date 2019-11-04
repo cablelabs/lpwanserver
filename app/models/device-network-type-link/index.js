@@ -1,7 +1,7 @@
-const { normalizeDevEUI, validateSchema, getUpdates } = require('../../lib/utils')
+const { normalizeDevEUI, validateSchema, getUpdates, renameKeys } = require('../../lib/utils')
 const R = require('ramda')
 const httpError = require('http-errors')
-const { load, list, removeMany, loadByQuery } = require('../model-lib')
+const { removeMany } = require('../model-lib')
 const { prune } = require('dead-leaves')
 
 //* *****************************************************************************
@@ -27,15 +27,39 @@ const fragments = {
 // ******************************************************************************
 // Helpers
 // ******************************************************************************
+const renameQueryKeys = renameKeys({ search: 'name_contains' })
+
 const validateNwkSettings = validateSchema(
   'DeviceNetworkTypeLink.networkSettings failed validation',
   require('./nwk-settings-schema.json')
 )
-const devEUILens = R.lensPath(['networkSettings', 'devEUI'])
+
+const parseNwkSettings = data => !data.networkSettings || typeof data.networkSettings !== 'string'
+  ? data
+  : { ...data, networkSettings: JSON.parse(data.networkSettings) }
+
+const serializeNwkSettings = data => !data.networkSettings || typeof data.networkSettings === 'string'
+  ? data
+  : { ...data, networkSettings: JSON.stringify(data.networkSettings) }
 
 // ******************************************************************************
 // Model Functions
 // ******************************************************************************
+async function load (ctx, args) {
+  return parseNwkSettings(await ctx.db.load(args))
+}
+
+async function list (ctx, { where = {}, ...opts } = {}) {
+  const [recs, total] = await ctx.db.list({ where: renameQueryKeys(where), ...opts })
+  return [recs.map(parseNwkSettings), total]
+}
+
+async function loadByQuery (ctx, args) {
+  let [recs] = await ctx.db.list({ ...args, limit: 1 })
+  if (!recs.length) throw new httpError.NotFound()
+  return parseNwkSettings(recs[0])
+}
+
 async function create (ctx, { data, origin }) {
   data = R.evolve({
     networkSettings: R.compose(
@@ -45,7 +69,7 @@ async function create (ctx, { data, origin }) {
     )
   }, { enabled: true, ...data })
   validateNwkSettings(data.networkSettings)
-  const rec = await ctx.db.create({ data })
+  const rec = await ctx.db.create({ data: serializeNwkSettings(data) })
   await ctx.$m.networkType.forAllNetworks({
     networkTypeId: rec.networkType.id,
     op: network => {
@@ -63,7 +87,7 @@ async function create (ctx, { data, origin }) {
       })
     }
   })
-  return rec
+  return parseNwkSettings(rec)
 }
 
 async function update (ctx, { where, data, origin }) {
@@ -79,6 +103,7 @@ async function update (ctx, { where, data, origin }) {
       )
     }, data)
     validateNwkSettings(data.networkSettings)
+    data = serializeNwkSettings(data)
   }
   const rec = await ctx.db.update({ where, data })
   await ctx.$m.networkType.forAllNetworks({
@@ -90,7 +115,7 @@ async function update (ctx, { where, data, origin }) {
       }
     })
   })
-  return rec
+  return parseNwkSettings(rec)
 }
 
 async function upsert (ctx, { data, ...args }) {
@@ -137,7 +162,7 @@ async function findByDevEUI (ctx, { devEUI, networkTypeId }) {
   // Check cache for devNtl ID
   let devNtlId = await ctx.redis.keyval.getAsync(`ip-devNtl-${devEUI}`)
   if (devNtlId) {
-    devNtl = await ctx.db.load({ id: devNtlId })
+    devNtl = await ctx.db.load({ where: { id: devNtlId } })
     if (!devNtl) await ctx.redis.keyval.delAsync(`ip-devNtl-${devEUI}`)
   }
   else {

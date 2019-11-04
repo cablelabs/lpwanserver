@@ -18,8 +18,14 @@ const commonSeeds = [
     items: [
       {
         id: 1,
-        name: 'SysAdmins',
-        displayName: 'SysAdmins',
+        name: 'MultiTypeTest',
+        displayName: 'MultiTypeTest',
+        canHaveGateways: false
+      },
+      {
+        id: 2,
+        name: 'TransferLoraTest',
+        displayName: 'TransferLoraTest',
         canHaveGateways: false
       }
     ]
@@ -29,9 +35,15 @@ const commonSeeds = [
     items: [
       {
         id: 1,
-        name: 'e2e_test_service_profile',
+        name: 'multitype_test_service_profile',
         networkServerID: { $type: 'NetworkServer', $id: 1 },
         organizationID: { $type: 'Organization', $id: 1 }
+      },
+      {
+        id: 1,
+        name: 'transferlora_test_service_profile',
+        networkServerID: { $type: 'NetworkServer', $id: 1 },
+        organizationID: { $type: 'Organization', $id: 2 }
       }
     ]
   }

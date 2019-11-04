@@ -73,7 +73,7 @@ describe('E2E Test for Updating a Device Use Case #193', () => {
       'networkSettings': {
         'devEUI': '0080000000000501',
         deviceKeys: {
-          'appKey': '112233445566889900112233445511'
+          'nwkKey': '11223344556688990011223344551122'
         }
       }
     }
@@ -82,7 +82,7 @@ describe('E2E Test for Updating a Device Use Case #193', () => {
       'networkSettings': {
         'devEUI': '0080000000000501',
         deviceKeys: {
-          'appKey': '112233445566889900112233445522'
+          'nwkKey': '11223344556688990011223344552211'
         }
       }
     }
@@ -177,7 +177,6 @@ describe('E2E Test for Updating a Device Use Case #193', () => {
           if (err) done(err)
           res.should.have.status(200)
           let appObj = JSON.parse(res.text)
-          console.log(appObj)
           done()
         })
     })
@@ -240,7 +239,6 @@ describe('E2E Test for Updating a Device Use Case #193', () => {
           if (err) done(err)
           res.should.have.status(200)
           let devObj = JSON.parse(res.text)
-          console.log(devObj)
           devObj.name.should.equal(device.name)
           devObj.description.should.equal(device.description)
           devObj.deviceModel.should.equal(device.deviceModel)
@@ -259,7 +257,6 @@ describe('E2E Test for Updating a Device Use Case #193', () => {
           if (err) done(err)
           res.should.have.status(201)
           var dnlObj = JSON.parse(res.text)
-          console.log(dnlObj)
           dnlId1 = dnlObj.id
           done()
         })
@@ -428,7 +425,6 @@ describe('E2E Test for Updating a Device Use Case #193', () => {
         .send(deviceNTLUpdate)
         .end(function (err, res) {
           if (err) done(err)
-          console.log(res.text)
           res.should.have.status(204)
           done()
         })
@@ -443,7 +439,6 @@ describe('E2E Test for Updating a Device Use Case #193', () => {
           if (err) done(err)
           res.should.have.status(200)
           let deviceNTL = JSON.parse(res.text)
-          console.log(deviceNTL)
           done()
         })
     })

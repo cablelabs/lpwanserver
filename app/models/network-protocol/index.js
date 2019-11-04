@@ -131,16 +131,16 @@ async function pullApplications (ctx, { network }) {
         delete appData.baseUrl
       }
       else {
-        const postReportingProtocol = await ctx.$m.reportingProtocols.load({ where: { name: 'POST' } })
+        const postReportingProtocol = await ctx.$m.reportingProtocol.load({ where: { name: 'POST' } })
         appData.reportingProtocol = { id: postReportingProtocol.id }
       }
     }
     const application = await ctx.$m.application.upsert({
-      data: R.pick(nameDesc, appData),
+      data: R.pick([...nameDesc, 'baseUrl', 'reportingProtocol'], appData),
       origin
     })
     const appNtlData = {
-      networkSettings: R.omit([...nameDesc, 'id'], appData),
+      networkSettings: R.omit([...nameDesc, 'id', 'baseUrl', 'reportingProtocol'], appData),
       networkType: network.networkType,
       application: { id: application.id }
     }
@@ -177,7 +177,11 @@ async function pullDevices (ctx, { network, application, remoteApplication, devi
   const remoteDevices = await handler.listAllApplicationDevices({ network, remoteApplication })
   return Promise.all(remoteDevices.map(async remoteDevice => {
     const { deviceProfile } = deviceProfiles.find(x => x.remoteDeviceProfile.id === remoteDevice.deviceProfileID) || {}
-    const devData = await handler.buildDevice({ network, remoteDevice, deviceProfile })
+    const devData = await handler.buildDevice({
+      network,
+      remoteDevice,
+      deviceProfile: deviceProfile.networkSettings
+    })
     const origin = { network, remoteId: devData.id }
     const device = await ctx.$m.device.upsert({
       origin,
@@ -200,6 +204,7 @@ async function pullDevices (ctx, { network, application, remoteApplication, devi
 }
 
 async function pushNetwork (ctx, { network }) {
+  ctx.log.debug('networkProtocol:pushNetwork', { network })
   await Promise.all([
     ctx.$self.pushApplications({ network }),
     ctx.$self.pushDeviceProfiles({ network })
@@ -208,18 +213,16 @@ async function pushNetwork (ctx, { network }) {
 }
 
 async function pushApplications (ctx, { network }) {
-  const [appNtls, nwkDeployments] = await Promise.all([
-    ctx.$m.applicationNetworkTypeLink.list({
-      where: { networkType: network.networkType },
-      limit: 9999
-    }),
-    ctx.$m.networkDeployment.list({
-      where: { network: { id: network.id }, type: 'APPLICATION' },
-      limit: 9999
-    })
-  ])
+  const [appNtls] = await ctx.$m.applicationNetworkTypeLink.list({
+    where: { networkType: network.networkType },
+    limit: 9999
+  })
+  const [nwkDeployments] = await ctx.$m.networkDeployment.list({
+    where: { network: { id: network.id }, type: 'APPLICATION' },
+    limit: 9999
+  })
   const notDeployed = appNtls.filter(x => !nwkDeployments.find(y => y.application.id === x.application.id))
-  return Promise.all(notDeployed.map(appNtl => ctx.$m.networkProtocol.create({
+  return Promise.all(notDeployed.map(appNtl => ctx.$m.networkDeployment.create({
     data: {
       status: 'CREATED',
       type: 'APPLICATION',
@@ -231,41 +234,37 @@ async function pushApplications (ctx, { network }) {
 }
 
 async function pushDeviceProfiles (ctx, { network }) {
-  const [deviceProfiles, nwkDeployments] = await Promise.all([
-    ctx.$m.deviceProfile.list({
-      where: { networkType: network.networkType },
-      limit: 9999
-    }),
-    ctx.$m.networkDeployment.list({
-      where: { network: { id: network.id }, type: 'DEVICE_PROFILE' },
-      limit: 9999
-    })
-  ])
+  const [deviceProfiles] = await ctx.$m.deviceProfile.list({
+    where: { networkType: network.networkType },
+    limit: 9999
+  })
+  const [nwkDeployments] = await ctx.$m.networkDeployment.list({
+    where: { network: { id: network.id }, type: 'DEVICE_PROFILE' },
+    limit: 9999
+  })
   const notDeployed = deviceProfiles.filter(x => !nwkDeployments.find(y => y.deviceProfile.id === x.id))
-  return Promise.all(notDeployed.map(devProfile => ctx.$m.networkProtocol.create({
+  return Promise.all(notDeployed.map(devProfile => ctx.$m.networkDeployment.create({
     data: {
       status: 'CREATED',
       type: 'DEVICE_PROFILE',
       meta: {},
       network: { id: network.id },
-      deviceProfile: devProfile.id
+      deviceProfile: { id: devProfile.id }
     }
   })))
 }
 
 async function pushDevices (ctx, { network }) {
-  const [devNtls, nwkDeployments] = await Promise.all([
-    ctx.$m.deviceNetworkTypeLink.list({
-      where: { networkType: network.networkType },
-      limit: 9999
-    }),
-    ctx.$m.networkDeployment.list({
-      where: { network: { id: network.id }, type: 'DEVICE' },
-      limit: 9999
-    })
-  ])
+  const [devNtls] = await ctx.$m.deviceNetworkTypeLink.list({
+    where: { networkType: network.networkType },
+    limit: 9999
+  })
+  const [nwkDeployments] = await ctx.$m.networkDeployment.list({
+    where: { network: { id: network.id }, type: 'DEVICE' },
+    limit: 9999
+  })
   const notDeployed = devNtls.filter(x => !nwkDeployments.find(y => y.device.id === x.device.id))
-  return Promise.all(notDeployed.map(devNtl => ctx.$m.networkProtocol.create({
+  return Promise.all(notDeployed.map(devNtl => ctx.$m.networkDeployment.create({
     data: {
       status: 'CREATED',
       type: 'DEVICE',
@@ -300,6 +299,7 @@ async function syncApplication (ctx, { network, networkDeployment }) {
   if (networkDeployment.status === 'CREATED' && !meta.isOrigin) {
     let remoteDoc = await handler.createApplication(args)
     meta.remoteId = remoteDoc.id
+    networkDeployment = { ...networkDeployment, meta }
   }
   else if (networkDeployment.status === 'UPDATED') {
     await handler.updateApplication(args)
@@ -307,7 +307,7 @@ async function syncApplication (ctx, { network, networkDeployment }) {
   const { enabled } = applicationNetworkTypeLink
   if (networkDeployment.meta.enabled !== enabled) {
     if (enabled) {
-      const url = joinUrl(ctx.config.base_url, 'api/ingest', application.id, network.id)
+      const url = joinUrl(ctx.config.base_url, 'api/uplinks', application.id, network.id)
       await handler.startApplication({ network, networkDeployment, url })
     }
     else {
@@ -383,11 +383,8 @@ async function syncDevice (ctx, { network, networkDeployment }) {
       ...deviceNetworkTypeLink.networkSettings
     }
   }
-  if (deviceNetworkTypeLink.deviceProfile) {
-    args.deviceProfile = await ctx.$m.deviceProfile.load({ where: deviceNetworkTypeLink.deviceProfile })
-  }
   if (networkDeployment.status === 'CREATED' && !meta.isOrigin) {
-    ctx.log.debug('syncDevice', { networkDeployment, network })
+    ctx.log.debug('syncDevice', R.pick(['device', 'deviceProfile'], args))
     let remoteDoc = await handler.createDevice(args)
     meta.remoteId = remoteDoc.id
   }
@@ -397,13 +394,13 @@ async function syncDevice (ctx, { network, networkDeployment }) {
   return meta
 }
 
-async function relayUplink (ctx, { network, applicationId, data }) {
-  const handler = await ctx.$self.getHandler(network.networkProtocol)
-  await handler.handleUplink({ networkId: network.id, applicationId, data })
+async function relayUplink (ctx, args) {
+  const handler = await ctx.$self.getHandler(args.network.networkProtocol)
+  await handler.handleUplink(args)
 }
 
 async function passDataToDevice (ctx, { network, deviceId, applicationId, data }) {
-  const handler = await ctx.$self.getHandler({ id: network.networkProtocol.id })
+  const handler = await ctx.$self.getHandler(network.networkProtocol)
   if (!network.enabled) return
   const [applicationNetworkDeployment, deviceNetworkDeployment] = await Promise.all([
     ctx.$m.networkDeployment.loadByQuery({
@@ -413,7 +410,6 @@ async function passDataToDevice (ctx, { network, deviceId, applicationId, data }
       where: { network: { id: network.id }, device: { id: deviceId } }
     })
   ])
-  ctx.log.debug('networkProtocol.passDataToDevice', { applicationNetworkDeployment, deviceNetworkDeployment, data })
   return handler.passDataToDevice({
     network,
     data,
