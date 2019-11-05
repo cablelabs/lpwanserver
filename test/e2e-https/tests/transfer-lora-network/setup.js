@@ -13,8 +13,8 @@ const omitAppId = R.omit(['applicationID'])
 
 function makeSeeds (cache) {
   let nwkSvr = cache.NetworkServer[0]
-  let org = cache.Organization[0]
-  let svcProf = cache.ServiceProfile[0]
+  let org = cache.Organization[1]
+  let svcProf = cache.ServiceProfile[1]
 
   return [
     {

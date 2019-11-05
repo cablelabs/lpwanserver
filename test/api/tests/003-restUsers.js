@@ -82,7 +82,6 @@ describe('Users', function () {
           if (err) return done(err)
           res.should.have.status(200)
           var result = JSON.parse(res.text)
-          console.log(result)
           result.records.should.be.instanceof(Array)
           result.records.should.have.length(0)
           result.totalCount.should.equal(2)

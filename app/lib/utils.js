@@ -1,6 +1,7 @@
 var httpError = require('http-errors')
 const R = require('ramda')
 const path = require('path')
+const Ajv = require('ajv')
 
 function mutate (key, val, data) {
   data[key] = val
@@ -60,7 +61,10 @@ const getHttpRequestPreferedWaitMs = R.compose(
   R.defaultTo('')
 )
 
-const normalizeDevEUI = R.replace(/[^0-9A-Fa-f]/g, '')
+const normalizeDevEUI = R.compose(
+  R.replace(/[^0-9A-Fa-f]/g, ''),
+  R.defaultTo('')
+)
 
 function lowerFirst (x) {
   return `${x.charAt(0).toLowerCase()}${x.slice(1)}`
@@ -99,6 +103,34 @@ function camelCaseToHyphen (word) {
   return word.replace(/([A-Z])/g, (g) => `-${g[0].toLowerCase()}`)
 }
 
+function traceError (message, data, err) {
+  if (!Array.isArray(err.trace)) {
+    err.trace = []
+  }
+  const item = [message]
+  if (data != null) item.push(data)
+  err.trace.push(item)
+  return err
+}
+
+const throwError = R.curry(function throwError (message, data, err) {
+  throw traceError(message, data, err)
+})
+
+const getUpdates = (rec, data) => R.keys(data).reduce((acc, x) => {
+  if (!R.equals(rec[x], data[x])) acc[x] = data[x]
+  return acc
+}, {})
+
+const ajv = new Ajv()
+const validateSchema = (msgPrefix, schema) => {
+  const validate = ajv.compile(schema)
+  return data => {
+    const valid = validate(data)
+    if (!valid) throw httpError(400, `${msgPrefix}: ${JSON.stringify(validate.errors)}`)
+  }
+}
+
 module.exports = {
   mutate,
   onFail,
@@ -115,5 +147,9 @@ module.exports = {
   parseProp,
   stringifyProp,
   attempt,
-  camelCaseToHyphen
+  camelCaseToHyphen,
+  traceError,
+  throwError,
+  getUpdates,
+  validateSchema
 }

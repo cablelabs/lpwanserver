@@ -1,7 +1,7 @@
 const R = require('ramda')
 // const httpError = require('http-errors')
 const { renameKeys } = require('../../lib/utils')
-const { encrypt, decrypt, genKey } = require('../../lib/crypto')
+const { encrypt, decrypt } = require('../../lib/crypto')
 const { listAll } = require('../model-lib')
 
 //* *****************************************************************************
@@ -13,6 +13,8 @@ const fragments = {
     name
     enabled
     baseUrl
+    meta
+    networkSettings
     securityData
     networkProtocol {
       id
@@ -26,130 +28,136 @@ const fragments = {
 // ******************************************************************************
 // Helpers
 // ******************************************************************************
-const genNwkKey = function (networkId) {
-  return 'nk' + networkId
-}
-
 const renameQueryKeys = renameKeys({ search: 'name_contains' })
+const omitSecurityData = R.omit(['securityData'])
+const mapSecurityData = (decryptSc, config) => rec => !rec.securityData || !decryptSc
+  ? omitSecurityData(rec)
+  : {
+    ...rec,
+    securityData: decrypt(rec.securityData, config.security_data_secret)
+  }
 
 // ******************************************************************************
 // Model Functions
 // ******************************************************************************
 async function create (ctx, { data }) {
-  let k = genKey()
+  const { security_data_secret: sdSecret } = ctx.config
+  data = {
+    enabled: true,
+    networkSettings: {},
+    ...data,
+    meta: { authorized: false, message: 'Not Authorized' }
+  }
   if (data.securityData) {
-    const securityDataDefaults = {
-      authorized: false,
-      message: 'Pending Authorization',
-      enabled: true
-    }
-    data.securityData = R.merge(securityDataDefaults, data.securityData)
-    data.securityData = encrypt(data.securityData, k)
+    data.securityData = encrypt(data.securityData, sdSecret)
   }
-  let record = await ctx.db.create({ data })
-  if (record.securityData) {
-    await ctx.$m.protocolData.upsert([record, genNwkKey(record.id), k])
-    record.securityData = decrypt(record.securityData, k)
-    let { securityData } = await ctx.$self.authorizeAndTest(record)
-    securityData = encrypt(securityData, k)
-    await ctx.db.update({ where: { id: record.id }, data: { securityData } })
-    await ctx.$self.pullNetwork({ id: record.id })
+  let network = await ctx.db.create({ data })
+  if (network.securityData) {
+    network.securityData = decrypt(network.securityData, sdSecret)
+    network = await ctx.$self.authorizeAndTest({ network })
+    await ctx.$self.pullNetwork({ id: network.id }).catch(() => {})
   }
-  await ctx.$m.networkTypes.forAllNetworks({
-    networkTypeId: record.networkType.id,
-    op: network => ctx.$self.pushNetwork({ id: network.id })
-  })
-  return ctx.$self.load({ where: { id: record.id } })
+  await ctx.$m.networkType
+    .forAllNetworks({
+      networkTypeId: network.networkType.id,
+      op: network => ctx.$self.pushNetwork({ id: network.id })
+    })
+    .catch(() => {})
+  return omitSecurityData(network)
 }
 
-async function list (ctx, { where = {}, ...opts }) {
-  let [ records, totalCount ] = await ctx.db.list({ where: renameQueryKeys(where), ...opts })
-  records = await Promise.all(records.map(async rec => {
-    if (!rec.securityData) return rec
-    let k = await ctx.$m.protocolData.loadValue([rec, genNwkKey(rec.id)])
-    const securityData = await decrypt(rec.securityData, k)
-    return { ...rec, securityData }
-  }))
+async function list (ctx, { where = {}, ...args }) {
+  let [ records, totalCount ] = await ctx.db.list({ where: renameQueryKeys(where), ...args })
+  records = records.map(mapSecurityData(args.decryptSecurityData, ctx.config))
   return [records, totalCount]
 }
 
 async function load (ctx, args) {
   const rec = await ctx.db.load(args)
-  if (rec.securityData) {
-    let k = await ctx.$m.protocolData.loadValue([rec, genNwkKey(rec.id)])
-    rec.securityData = await decrypt(rec.securityData, k)
-  }
-  return rec
+  return mapSecurityData(args.decryptSecurityData, ctx.config)(rec)
 }
 
-async function update (ctx, { where, data }) {
-  const old = await ctx.db.load({ where })
-  const k = await ctx.$m.protocolData.loadValue([old, genNwkKey(old.id)])
-  const candidate = R.merge(old, data)
-  let { securityData } = await ctx.$self.authorizeAndTest(candidate)
+async function update (ctx, { where, data, ...args }) {
+  const { security_data_secret: sdSecret } = ctx.config
   if (data.securityData) {
-    data.securityData = encrypt(securityData, k)
+    data.securityData = encrypt(data.securityData, sdSecret)
   }
-  await ctx.db.update({ where, data })
-  return ctx.$self.load({ where })
+  let rec = await ctx.db.update({ where, data })
+  if (!data.baseUrl && !data.securityData) {
+    return mapSecurityData(args.decryptSecurityData, ctx.config)(rec)
+  }
+  rec = await ctx.$self.authorizeAndTest({
+    network: mapSecurityData(true, ctx.config)(rec)
+  })
+  return args.decryptSecurityData ? rec : omitSecurityData(rec)
 }
 
-async function remove (ctx, id) {
-  let old = await ctx.db.load({ where: { id } })
-  await ctx.$m.protocolData.clearProtocolData([id, old.networkProtocol.id, genNwkKey(id)])
+async function remove (ctx, { id }) {
+  for await (let state of ctx.$m.networkDeployment.listAll({ where: { network: { id } } })) {
+    await Promise.all(state.records.map(rec => ctx.$m.networkDeployment.remove(rec)))
+  }
   await ctx.db.remove(id)
 }
 
-async function authorizeAndTest (ctx, network) {
-  if (network.securityData.authorized) {
-    return network
-  }
+async function connect (ctx, { network }) {
+  const { security_data_secret: sdSecret } = ctx.config
+  if (network.meta.authorized) return network
+  let authorized = false
+  let message
   try {
-    await ctx.$m.networkProtocols.connect({ network })
-    network.securityData.authorized = true
-    try {
-      await ctx.$m.networkProtocols.test({ network })
-      ctx.log.info('Network Test Success', { network: network.name })
-      network.securityData.message = 'ok'
+    await ctx.$m.networkProtocol.connect({ network })
+    authorized = true
+    message = 'Authorized'
+  }
+  catch (err) {
+    ctx.log.debug(`Connection of ${network.name} failed: ${err}`)
+    if (err === 301 || err === 405 || err === 404) {
+      message = 'Invalid URI to the ' + network.name + ' Network: "' + network.baseUrl + '"'
     }
-    catch (err) {
-      ctx.log.error(`Network Test Failure: ${err}`, { network: network.name, error: err })
-      network.securityData.authorized = false
-      network.securityData.message = err.toString()
+    else if (err === 401) {
+      message = 'Authentication not recognized for the ' + network.name + ' Network'
     }
+    else {
+      message = 'Server Error on ' + network.name + ' Network:'
+    }
+  }
+  network = await ctx.db.update({
+    where: { id: network.id },
+    data: { meta: { ...network.meta, authorized, message } }
+  })
+  return { ...network, securityData: decrypt(network.securityData, sdSecret) }
+}
+
+async function authorizeAndTest (ctx, { network }) {
+  const { security_data_secret: sdSecret } = ctx.config
+  if (network.meta.authorized) return network
+  network = await ctx.$self.connect({ network })
+  try {
+    if (network.meta.authorized) await ctx.$m.networkProtocol.test({ network })
     return network
   }
   catch (err) {
-    if (err.code === 42) return network
-    ctx.log.error('Connection of ' + network.name + ' Failed:', err)
-    let errorMessage = {}
-    if (err === 301 || err === 405 || err === 404) {
-      errorMessage = new Error('Invalid URI to the ' + network.name + ' Network: "' + network.baseUrl + '"')
-    }
-    else if (err === 401) {
-      errorMessage = new Error('Authentication not recognized for the ' + network.name + ' Network')
-    }
-    else {
-      errorMessage = new Error('Server Error on ' + network.name + ' Network:')
-    }
-    network.securityData.authorized = false
-    network.securityData.message = errorMessage.toString()
-    return network
+    ctx.log.debug(`Network Test Failure: ${err}`, { network: network.name, error: err })
+    network = await ctx.db.update({
+      where: { id: network.id },
+      data: { meta: { ...network.meta, authorized: false, message: err.toString() } }
+    })
+    return { ...network, securityData: decrypt(network.securityData, sdSecret) }
   }
 }
 
 async function pullNetwork (ctx, { id }) {
   try {
     let network = await ctx.$self.load({ where: { id } })
-    if (!network.securityData.authorized) {
+    if (!network.meta.authorized) {
       throw new Error('Network is not authorized.  Cannot pull')
     }
-    let result = await ctx.$m.networkProtocols.pullNetwork({ network })
-    ctx.log.info('Success pulling from Network : ' + id)
+    let result = await ctx.$m.networkProtocol.pullNetwork({ network })
+    ctx.log.verbose('Success pulling from Network : ' + id)
     return result
   }
   catch (err) {
-    ctx.log.error('Error pulling from Network : ' + id + ':', err)
+    ctx.log.error(`Failed to pull network: ${err}`)
     throw err
   }
 }
@@ -157,12 +165,12 @@ async function pullNetwork (ctx, { id }) {
 async function pushNetwork (ctx, { id }) {
   try {
     let network = await ctx.$self.load({ where: { id } })
-    let result = await ctx.$m.networkProtcols.pushNetwork({ network })
+    let result = await ctx.$m.networkProtocol.pushNetwork({ network })
     ctx.log.info('Success pushing to Network : ' + id)
     return result
   }
   catch (err) {
-    ctx.log.error('Error pushing to Network : ' + id + ':', err)
+    ctx.log.error(`Failed to push network: ${err}`)
     throw err
   }
 }
@@ -171,13 +179,15 @@ async function pushNetwork (ctx, { id }) {
 // Model
 // ******************************************************************************
 module.exports = {
-  api: {
+  role: 'network',
+  publicApi: {
     create,
     list,
     listAll,
     load,
     update,
     remove,
+    connect,
     authorizeAndTest,
     pullNetwork,
     pushNetwork

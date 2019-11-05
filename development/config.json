@@ -1,12 +1,13 @@
 {
-  "log_level": "debug",
-  "ssl_key_file": "../certs/server-key.pem",
-  "ssl_cert_file": "../certs/server-crt.pem",
-  "ssl_ca_file": "../certs/ca-crt.pem",
+  "base_url": "https://lpwanserver:3200",
   "jwt_secret": "replace-this-value-for-your-installation",
   "port": 3200,
-  "base_url": "https://lpwanserver:3200",
+  "log_level": "debug",
   "prisma_url": "http://prisma:4466/lpwanserver/dev",
   "public_dir": "",
-  "redis_url": "redis://redis:6379/1"
+  "redis_url": "redis://redis:6379/1",
+  "security_data_secret": "4KI0Mv2rTPy9dNkWY+gONvBfl2IpOTPrJs2HMcjNDoM=",
+  "ssl_key_file": "../certs/server-key.pem",
+  "ssl_cert_file": "../certs/server-crt.pem",
+  "ssl_ca_file": "../certs/ca-crt.pem"
 }

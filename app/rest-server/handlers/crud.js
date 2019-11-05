@@ -39,7 +39,7 @@ const update = model => async (ctx, req, res) => {
 }
 
 const remove = model => async (ctx, req, res) => {
-  await model.remove(ctx.request.params.id, requestContext(req))
+  await model.remove({ id: ctx.request.params.id }, requestContext(req))
   res.status(204).send()
 }
 

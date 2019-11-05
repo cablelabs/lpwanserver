@@ -39,7 +39,12 @@ describe('Transfer Lora Server v1 network to Lora Server v2', () => {
         'networkTypeId': networkTypeId,
         'baseUrl': Lora1.network.baseUrl,
         'networkProtocolId': protocolId,
-        'securityData': { authorized: false, ...Lora1.network.securityData }
+        'securityData': { authorized: false, ...Lora1.network.securityData },
+        networkSettings: {
+          organizationID: Lora1.cache.Organization[1].id,
+          networkServerID: Lora1.cache.NetworkServer[0].id,
+          serviceProfileID: Lora1.cache.ServiceProfile[1].id
+        }
       }
       const res = await Lpwan.client.create('networks', {}, { data: network })
       assert.strictEqual(res.status, 201)
@@ -146,7 +151,12 @@ describe('Transfer Lora Server v1 network to Lora Server v2', () => {
         'networkTypeId': networkTypeId,
         'baseUrl': Lora2.network.baseUrl,
         'networkProtocolId': protocolId,
-        'securityData': { authorized: false, ...Lora2.network.securityData }
+        'securityData': { authorized: false, ...Lora2.network.securityData },
+        networkSettings: {
+          organizationID: Lora2.cache.Organization[1].id,
+          networkServerID: Lora2.cache.NetworkServer[0].id,
+          serviceProfileID: Lora2.cache.ServiceProfile[1].id
+        }
       }
       const res = await Lpwan.client.create('networks', {}, { data: network })
       assert.strictEqual(res.status, 201)

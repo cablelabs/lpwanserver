@@ -1,6 +1,6 @@
 let chai = require('chai')
 let chaiHttp = require('chai-http')
-const { createApp } = require('../../../app/express-app')
+const { createApp } = require('../../../app/rest-server/app')
 let setup = require('../setup.js')
 let Data = require('../../data')
 const { assertEqualProps } = require('../../lib/helpers')
@@ -23,7 +23,6 @@ let remoteDeviceProfileId = ''
 let remoteDeviceProfileId2 = ''
 
 describe('E2E Test for Deleting an Application Use Case #191', () => {
-  let companyId
   let reportingProtocolId
   let networkTypeId
   let testData
@@ -31,8 +30,6 @@ describe('E2E Test for Deleting an Application Use Case #191', () => {
   before(async () => {
     const app = await createApp()
     server = chai.request(app).keepOpen()
-    const cos = await prisma.companies({ first: 1 })
-    companyId = cos[0].id
     const reportingProtocols = await prisma.reportingProtocols({ first: 1 })
     reportingProtocolId = reportingProtocols[0].id
     const nwkTypes = await prisma.networkTypes({ first: 1 })
@@ -42,13 +39,11 @@ describe('E2E Test for Deleting an Application Use Case #191', () => {
     testData = {
       ...Data.applicationTemplates.default({
         name: 'DLAP',
-        companyId,
         networkTypeId,
         reportingProtocolId
       }),
       ...Data.deviceTemplates.weatherNode({
         name: 'DLAP001',
-        companyId,
         networkTypeId,
         devEUI: '0080000000000701'
       })
@@ -76,7 +71,7 @@ describe('E2E Test for Deleting an Application Use Case #191', () => {
         .set('Content-Type', 'application/json')
         .send(testData.app)
         .end(function (err, res) {
-          res.should.have.status(200)
+          res.should.have.status(201)
           let ret = JSON.parse(res.text)
           testData.app.id = ret.id
           testData.device.applicationId = ret.id
@@ -108,7 +103,7 @@ describe('E2E Test for Deleting an Application Use Case #191', () => {
         .set('Content-Type', 'application/json')
         .send(testData.appNTL)
         .end(function (err, res) {
-          res.should.have.status(200)
+          res.should.have.status(201)
           let ret = JSON.parse(res.text)
           testData.appNTL.id = ret.id
           done()
@@ -123,7 +118,6 @@ describe('E2E Test for Deleting an Application Use Case #191', () => {
         .end(function (err, res) {
           res.should.have.status(200)
           let appObj = JSON.parse(res.text)
-          console.log(appObj)
           done()
         })
     })
@@ -136,7 +130,7 @@ describe('E2E Test for Deleting an Application Use Case #191', () => {
         .set('Content-Type', 'application/json')
         .send(testData.deviceProfile)
         .end(function (err, res) {
-          res.should.have.status(200)
+          res.should.have.status(201)
           let ret = JSON.parse(res.text)
           testData.deviceProfile.id = ret.id
           testData.deviceNTL.deviceProfileId = ret.id
@@ -152,7 +146,7 @@ describe('E2E Test for Deleting an Application Use Case #191', () => {
         .end(function (err, res) {
           res.should.have.status(200)
           assertEqualProps(
-            ['name', 'description', 'networkTypeId', 'companyId'],
+            ['name', 'description', 'networkTypeId'],
             JSON.parse(res.text),
             testData.deviceProfile
           )
@@ -168,7 +162,7 @@ describe('E2E Test for Deleting an Application Use Case #191', () => {
         .set('Content-Type', 'application/json')
         .send(testData.device)
         .end(function (err, res) {
-          res.should.have.status(200)
+          res.should.have.status(201)
           let ret = JSON.parse(res.text)
           testData.device.id = ret.id
           testData.deviceNTL.deviceId = ret.id
@@ -185,7 +179,6 @@ describe('E2E Test for Deleting an Application Use Case #191', () => {
         .end(function (err, res) {
           res.should.have.status(200)
           let devObj = JSON.parse(res.text)
-          console.log(devObj)
           assertEqualProps(
             ['name', 'description', 'deviceModel'],
             devObj,
@@ -201,9 +194,8 @@ describe('E2E Test for Deleting an Application Use Case #191', () => {
         .set('Content-Type', 'application/json')
         .send(testData.deviceNTL)
         .end(function (err, res) {
-          res.should.have.status(200)
+          res.should.have.status(201)
           var dnlObj = JSON.parse(res.text)
-          console.log(dnlObj)
           testData.deviceNTL.id = dnlObj.id
           done()
         })
@@ -248,14 +240,14 @@ describe('E2E Test for Deleting an Application Use Case #191', () => {
     })
     it('Verify the LoRaServer V1 Device Profile Exists', async () => {
       const { result } = await Lora1.client.listDeviceProfiles(Lora1.network, { limit: 100 })
-      const dp = result.find(x => x.name === testData.deviceProfile.networkSettings.name)
+      const dp = result.find(x => x.name === testData.deviceProfile.name)
       should.exist(dp)
       remoteDeviceProfileId = dp.id
     })
     it('Verify the LoRaServer V1 Device Profile Exists', async () => {
       const dp = await Lora1.client.loadDeviceProfile(Lora1.network, remoteDeviceProfileId)
       dp.should.have.property('name')
-      dp.name.should.equal(testData.deviceProfile.networkSettings.name)
+      dp.name.should.equal(testData.deviceProfile.name)
       dp.should.have.property('organizationID')
       dp.should.have.property('networkServerID')
       dp.should.have.property('createdAt')
@@ -276,7 +268,7 @@ describe('E2E Test for Deleting an Application Use Case #191', () => {
       device.should.have.property('deviceStatusMargin')
       device.should.have.property('lastSeenAt')
       device.should.have.property('skipFCntCheck')
-      device.name.should.equal(testData.deviceNTL.networkSettings.name)
+      device.name.should.equal(testData.device.name)
       device.devEUI.should.equal(testData.deviceNTL.networkSettings.devEUI)
       device.deviceProfileID.should.equal(remoteDeviceProfileId)
     })
@@ -309,7 +301,7 @@ describe('E2E Test for Deleting an Application Use Case #191', () => {
     it('Verify the LoRaServer V2 Device Profile Exists', async () => {
       const dp = await Lora2.client.loadDeviceProfile(Lora2.network, remoteDeviceProfileId2)
       dp.should.have.property('name')
-      dp.name.should.equal(testData.deviceProfile.networkSettings.name)
+      dp.name.should.equal(testData.deviceProfile.name)
       dp.should.have.property('organizationID')
       dp.should.have.property('networkServerID')
       dp.should.have.property('macVersion')
@@ -328,7 +320,7 @@ describe('E2E Test for Deleting an Application Use Case #191', () => {
       device.should.have.property('deviceStatusBattery')
       device.should.have.property('deviceStatusMargin')
       device.should.have.property('lastSeenAt')
-      device.name.should.equal(testData.deviceNTL.networkSettings.name)
+      device.name.should.equal(testData.device.name)
       device.devEUI.should.equal(testData.deviceNTL.networkSettings.devEUI)
       device.deviceProfileID.should.equal(remoteDeviceProfileId2)
     })
@@ -351,7 +343,7 @@ describe('E2E Test for Deleting an Application Use Case #191', () => {
       device.should.have.property('title')
       device.should.have.property('deveui')
       device.should.have.property('description')
-      device.title.should.equal(testData.deviceNTL.networkSettings.name)
+      device.title.should.equal(testData.device.name)
       device.deveui.should.equal(testData.deviceNTL.networkSettings.devEUI)
     })
   })
@@ -402,7 +394,7 @@ describe('E2E Test for Deleting an Application Use Case #191', () => {
         .set('Authorization', 'Bearer ' + adminToken)
         .send()
         .end(function (err, res) {
-          res.should.have.status(200)
+          res.should.have.status(204)
           done()
         })
     })
@@ -468,7 +460,7 @@ describe('E2E Test for Deleting an Application Use Case #191', () => {
         .set('Authorization', 'Bearer ' + adminToken)
         .send()
         .end(function (err, res) {
-          res.should.have.status(200)
+          res.should.have.status(204)
           done()
         })
     })

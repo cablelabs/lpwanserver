@@ -14,6 +14,12 @@ paths:
         - $ref: '../api.yml#/components/parameters/offsetParam'
         - $ref: '../api.yml#/components/parameters/limitParam'
         - $ref: '../api.yml#/components/parameters/nameSearch'
+        - name: networkProtocolVersion
+          in: query
+          description: NetworkProtocol version
+          required: false
+          schema:
+            type: string
       security:
         - bearer_token: []
       tags:

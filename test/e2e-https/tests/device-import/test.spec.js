@@ -37,9 +37,7 @@ describe('Bulk device import', () => {
           { name: 'invalid' }
         ]
       }
-      const res = await Lpwan.importDevices({ id: Data.application.id }, { data })
-      const invalid = res.data.filter(x => x.status === 'ERROR')
-      assert.strictEqual(invalid.length, 1)
+      assert.rejects(() => Lpwan.importDevices({ id: Data.application.id }, { data }))
     })
   })
 })

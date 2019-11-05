@@ -1,7 +1,7 @@
 const fs = require('fs')
 const path = require('path')
 const yaml = require('js-yaml')
-const { log } = require('../log')
+const { log } = require('../lib/log')
 
 let apiDefinition
 let openApiPath = path.join(__dirname, './openapi.yml')

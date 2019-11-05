@@ -98,14 +98,9 @@ function decrypt (encData, key, delimiter = '-') {
   return JSON.parse(res)
 }
 
-function genKey (length = 32) {
-  return crypto.randomBytes(length).toString('base64')
-}
-
 module.exports = {
   hashString,
   verifyString,
   encrypt,
-  decrypt,
-  genKey
+  decrypt
 }

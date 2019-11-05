@@ -60,7 +60,6 @@ describe('Networks', function () {
         })
         .end(function (err, res) {
           if (err) return done(err)
-          console.log(res.text)
           res.should.have.status(201)
           var ret = JSON.parse(res.text)
           netId2 = ret.id
@@ -78,7 +77,12 @@ describe('Networks', function () {
           'networkTypeId': nwkTypeId,
           'baseUrl': 'https://lora_appserver1:8080/api',
           'networkProtocolId': npId1,
-          'securityData': { 'username': 'admin', 'password': 'admin' }
+          'securityData': { 'username': 'admin', 'password': 'admin' },
+          'networkSettings': {
+            networkServerID: Lora1.networkServer.id,
+            organizationID: Lora1.organization.id,
+            serviceProfileID: Lora1.serviceProfile.id
+          }
         })
         .end(function (err, res) {
           if (err) return done(err)
@@ -166,7 +170,6 @@ describe('Networks', function () {
           if (err) return done(err)
           res.should.have.status(200)
           var result = JSON.parse(res.text)
-          console.log(result.records)
           result.records.should.be.instanceof(Array)
           result.records.should.have.length(1)
           result.totalCount.should.equal(1)

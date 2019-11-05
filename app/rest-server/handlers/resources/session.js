@@ -1,4 +1,4 @@
-const { sessions } = require('../../../models')
+const { session } = require('../../../models')
 const { pipe, authorize: auth } = require('../openapi-middleware')
 
 const createSession = model => async (_, req, res) => {
@@ -14,10 +14,10 @@ module.exports = {
   createSession,
   removeSession,
   handlers: {
-    createSession: createSession(sessions),
+    createSession: createSession(session),
     removeSession: pipe(
       auth(['Session:remove']),
-      removeSession(sessions)
+      removeSession(session)
     )
   }
 }

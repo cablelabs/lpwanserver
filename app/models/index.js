@@ -1,11 +1,11 @@
 const R = require('ramda')
 const config = require('../config')
-const { ModelFactory } = require('./model-lib')
+const { createModel } = require('./model-lib')
 const { prisma } = require('../lib/prisma')
 const CacheFirstStrategy = require('../lib/prisma-cache/src/cache-first-strategy')
 const redis = require('../lib/redis')
-const { log } = require('../log')
-const { camelCaseToHyphen } = require('../lib/utils')
+const { log } = require('../lib/log')
+const emitter = require('../lib/emitter')
 
 const dbClientFactory = (opts) => new CacheFirstStrategy({
   defaultFragmentKey: 'basic',
@@ -16,28 +16,35 @@ const dbClientFactory = (opts) => new CacheFirstStrategy({
 
 const models = {}
 
-const addModel = (createModel => (name, pluralName, path) => {
-  pluralName = pluralName || `${name}s`
-  path = path || `./${camelCaseToHyphen(name)}`
-  let { context, api, fragments } = require(path)
-  context = R.merge({ log, config, redis }, context)
-  if (fragments) {
-    context.db = dbClientFactory({ fragments, name, pluralName })
-  }
-  createModel({ key: pluralName, context, api })
-})(ModelFactory(models))
+const globalContext = {
+  $m: models,
+  log,
+  config,
+  redis,
+  emitter
+}
 
-addModel('application')
-addModel('applicationNetworkTypeLink')
-addModel('device')
-addModel('deviceNetworkTypeLink')
-addModel('deviceProfile')
-addModel('network')
-addModel('networkProtocol')
-addModel('networkType')
-addModel('protocolData', 'protocolData')
-addModel('reportingProtocol')
-addModel('session')
-addModel('user')
+const addModel = path => {
+  let { role, context, fragments, ...args } = require(path)
+  context = R.merge(globalContext, context)
+  if (fragments) {
+    let pluralName = `${role}s`
+    context.db = dbClientFactory({ fragments, name: role, pluralName })
+  }
+  models[role] = createModel({ ...args, role, context })
+}
+
+addModel('./application')
+addModel('./application-network-type-link')
+addModel('./device')
+addModel('./device-network-type-link')
+addModel('./device-profile')
+addModel('./network')
+addModel('./network-deployment')
+addModel('./network-protocol')
+addModel('./network-type')
+addModel('./reporting-protocol')
+addModel('./session')
+addModel('./user')
 
 module.exports = models

@@ -1,4 +1,4 @@
-const { api } = require('./index')
+const { publicApi } = require('./index')
 
 const generator = async function * () {
   yield {}
@@ -10,17 +10,20 @@ describe('Device Model', () => {
       name: 'updated name'
     }
     let ctx = {
+      $m: {
+        deviceNetworkTypeLink: { list: jest.fn(() => Promise.resolve([[]])) }
+      },
       db: {
-        update: jest.fn()
+        update: jest.fn(async () => ({ ...data, id: 'a' }))
       }
     }
-    await api.update(ctx, { where: { id: 'a' }, data })
+    await publicApi.update(ctx, { where: { id: 'a' }, data })
     expect(ctx.db.update.mock.calls[0][0].data).toEqual(data)
   })
   it('Remove Device', async () => {
     let ctx = {
       $m: {
-        deviceNetworkTypeLinks: { removeMany: jest.fn(generator) }
+        deviceNetworkTypeLink: { removeMany: jest.fn(generator) }
       },
       db: {
         remove: jest.fn()
@@ -28,8 +31,8 @@ describe('Device Model', () => {
     }
     let id = 'a'
     const expectedRemoveManyArgs = { where: { device: { id } } }
-    await api.remove(ctx, id)
-    expect(ctx.$m.deviceNetworkTypeLinks.removeMany.mock.calls[0][0]).toEqual(expectedRemoveManyArgs)
+    await publicApi.remove(ctx, { id })
+    expect(ctx.$m.deviceNetworkTypeLink.removeMany.mock.calls[0][0]).toEqual(expectedRemoveManyArgs)
     expect(ctx.db.remove.mock.calls[0][0]).toBe(id)
   })
 

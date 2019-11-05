@@ -1,0 +1,113 @@
+{
+  "$id": "https://github.com/cablelabs/lpwanserver/blob/master/config/models/device-network-type-link/nwk-settings-schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "LPWAN Server DeviceNetworkTypeLink NetworkSettings",
+  "type": "object",
+  "required": [
+    "devEUI"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "devEUI": {
+      "type": "string",
+      "description": "Unique identifier for device"
+    },
+    "deviceKeys": {
+      "type": "object",
+      "properties": {
+        "appKey": {
+          "type": "string"
+        },
+        "nwkKey": {
+          "type": "string"
+        }
+      }
+    },
+    "deviceActivation": {
+      "type": "object",
+      "properties": {
+        "aFCntDown": {
+          "type": "integer",
+          "default": 0
+        },
+        "appSKey": {
+          "type": "string"
+        },
+        "devAddr": {
+          "type": "string"
+        },
+        "fCntUp": {
+          "type": "integer",
+          "default": 0
+        },
+        "fNwkSIntKey": {
+          "type": "string"
+        },
+        "nFCntDown": {
+          "type": "integer",
+          "default": 0
+        },
+        "nwkSEncKey": {
+          "type": "string"
+        },
+        "sNwkSIntKey": {
+          "type": "string"
+        }
+      }
+    },
+    "deviceStatusBattery": {
+      "type": "integer",
+      "description": "",
+      "default": 0
+    },
+    "deviceStatusMargin": {
+      "type": "integer",
+      "description": "",
+      "default": 0
+    },
+    "lastSeenAt": {
+      "type": "string",
+      "description": "",
+      "format": "date-time"
+    },
+    "location": {
+      "type": "object",
+      "properties": {
+        "accuracy": {
+          "type": "integer",
+          "description": "",
+          "default": 0
+        },
+        "altitude": {
+          "type": "integer",
+          "description": "",
+          "default": 0
+        },
+        "latitude": {
+          "type": "integer",
+          "description": "",
+          "default": 0
+        },
+        "longitude": {
+          "type": "integer",
+          "description": "",
+          "default": 0
+        },
+        "source": {
+          "type": "string",
+          "description": ""
+        }
+      }
+    },
+    "referenceAltitude": {
+      "type": "integer",
+      "description": "",
+      "default": 0
+    },
+    "skipFCntCheck": {
+      "type": "boolean",
+      "description": "",
+      "default": false
+    }
+  }
+}

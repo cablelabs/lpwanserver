@@ -35,8 +35,7 @@ describe('DeviceProfiles', function () {
         .send({
           'networkTypeId': nwkTypeId,
           'name': 'LoRaGPSNode',
-          'description': 'GPS Node that works with LoRa',
-          'networkSettings': { 'foo': 'bar' }
+          'description': 'GPS Node that works with LoRa'
         })
         .end(function (err, res) {
           if (err) return done(err)
@@ -57,7 +56,7 @@ describe('DeviceProfiles', function () {
           'networkTypeId': nwkTypeId,
           'name': 'LoRaWeatherNode',
           'description': 'GPS Node that works with LoRa',
-          'networkSettings': { 'tempType': 'C' }
+          'networkSettings': { 'macVersion': '1.0.0' }
         })
         .end(function (err, res) {
           if (err) return done(err)
@@ -219,20 +218,7 @@ describe('DeviceProfiles', function () {
         .put('/api/device-profiles/' + dpId2)
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
-        .send('{"name": "Funky DeviceProfile" }')
-        .end(function (err, res) {
-          if (err) return done(err)
-          res.should.have.status(204)
-          done()
-        })
-    })
-
-    it('should return 204 on admin', function (done) {
-      server
-        .put('/api/device-profiles/' + dpId2)
-        .set('Authorization', 'Bearer ' + adminToken)
-        .set('Content-Type', 'application/json')
-        .send('{"name": "Funky Punky DeviceProfile" }')
+        .send('{"name": "Funky Punky DeviceProfile"}')
         .end(function (err, res) {
           if (err) return done(err)
           res.should.have.status(204)

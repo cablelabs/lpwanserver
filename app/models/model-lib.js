@@ -3,24 +3,41 @@
 // Which is passes to the methods called
 // This gets us dependency injection and more easily tested model functions
 const R = require('ramda')
-const { renameKeys } = require('../lib/utils')
+const { renameKeys, traceError } = require('../lib/utils')
+const httpErrors = require('http-errors')
 
-const ModelFactory = models => ({ key, context, api }) => {
-  let mergeCtx
-
-  // Wrap api functions to pass context
-  const $self = Object.keys(api).reduce((acc, x) => {
-    acc[x] = (args, ctx) => {
-      return api[x](mergeCtx(ctx), args)
-    }
-    return acc
-  }, {})
-
-  models[key] = $self
-  mergeCtx = R.merge({ ...context, $m: models, $self })
-  return $self
+// *********************************************************************
+// Model Library
+// *********************************************************************
+const wrapCommand = (context, api, role, cmd) => (args, ctx) => {
+  ctx = R.merge(context, ctx)
+  const result = api[cmd](ctx, args)
+  if (result && typeof result === 'object' && typeof result.catch === 'function') {
+    return result.catch(err => {
+      if (ctx.traceError !== false) traceError(`${role}:${cmd}`, args, err)
+      throw err
+    })
+  }
+  return result
 }
 
+const buildApi = (context, role, api, seed = {}) => R.reduce(
+  (acc, cmd) => R.assoc(cmd, wrapCommand(context, api, role, cmd), acc),
+  seed,
+  R.keys(api)
+)
+
+const createModel = ({ context = {}, role, publicApi, privateApi, init }) => {
+  context = { ...context }
+  let $publicApi = buildApi(context, role, publicApi)
+  context.$self = privateApi ? buildApi(context, role, privateApi, $publicApi) : $publicApi
+  if (init) init(context)
+  return $publicApi
+}
+
+// *********************************************************************
+// Common Model CRUD Implementations
+// *********************************************************************
 function create (ctx, args) {
   return ctx.db.create(args)
 }
@@ -35,12 +52,28 @@ function load (ctx, args) {
   return ctx.db.load(args)
 }
 
+async function loadByQuery (ctx, args) {
+  let [recs] = await ctx.db.list({ ...args, limit: 1 })
+  if (!recs.length) throw new httpErrors.NotFound()
+  return recs[0]
+}
+
 function update (ctx, args) {
   return ctx.db.update(args)
 }
 
-function remove (ctx, id) {
+function remove (ctx, { id }) {
   return ctx.db.remove(id)
+}
+
+async function updateByQuery (ctx, { where, data, ...opts }) {
+  const [recs] = await ctx.db.list({ where })
+  if (!recs.length) throw new httpErrors.NotFound()
+  return ctx.db.update({
+    where: { id: recs[0].id },
+    data,
+    ...opts
+  })
 }
 
 // Async generator for removing many records
@@ -49,7 +82,7 @@ async function * removeMany (ctx, { where, limit = 100 }) {
   let remaining = Infinity
   while (remaining > 0) {
     let [records, count] = await ctx.$self.list({ where, offset, limit, includeTotal: true })
-    await Promise.all(records.map(x => ctx.$self.remove(x.id)))
+    await Promise.all(records.map(x => ctx.$self.remove({ id: x.id })))
     offset = offset + limit
     remaining = count - limit
     yield {
@@ -72,12 +105,14 @@ async function * listAll (ctx, { where, limit = 100, ...opts }) {
 }
 
 module.exports = {
-  ModelFactory,
+  createModel,
   create,
   list,
   listAll,
   load,
+  loadByQuery,
   update,
+  updateByQuery,
   remove,
   removeMany
 }

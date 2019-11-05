@@ -28,21 +28,28 @@ function getHandler (ctx, { id }) {
   return ctx.handlers[id]
 }
 
+async function report (ctx, { application, data }) {
+  const handler = ctx.$self.getHandler(application.reportingProtocol)
+  await handler.report({ application, data })
+}
+
 // ******************************************************************************
 // Model
 // ******************************************************************************
 module.exports = {
+  role: 'reportingProtocol',
   context: {
     handlers: {}
   },
-  api: {
+  publicApi: {
     initialize,
     create,
     list,
     load,
     update,
     remove,
-    getHandler
+    getHandler,
+    report
   },
   fragments
 }

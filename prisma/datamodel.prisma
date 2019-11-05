@@ -30,6 +30,8 @@ type Network {
   id: ID! @id
   name: String
   baseUrl: String
+  meta: Json
+  networkSettings: Json
   securityData: String
   enabled: Boolean! @default(value: true)
   networkType: NetworkType! @relation(name: "NetworkTypeNetworks")
@@ -48,17 +50,16 @@ type NetworkProtocol {
 
 type ReportingProtocol {
   id: ID! @id
-  name: String
+  name: String! @unique
   protocolHandler: String
   applications: [Application!]! @relation(name: "ReportingProtocolApplications")
 }
 
 type Application {
   id: ID! @id
-  name: String
+  name: String! @unique
   description: String
   baseUrl: String
-  enabled: Boolean! @default(value: true)
   reportingProtocol: ReportingProtocol @relation(name: "ReportingProtocolApplications")
   networkTypes: [ApplicationNetworkTypeLink!]! @relation(name: "ApplicationNetworkTypes" onDelete: CASCADE)
   devices: [Device!]! @relation(name: "ApplicationDevices" onDelete: CASCADE)
@@ -74,7 +75,7 @@ type ApplicationNetworkTypeLink {
 
 type Device {
   id: ID! @id
-  name: String
+  name: String! @unique
   description: String
   deviceModel: String
   application: Application! @relation(name: "ApplicationDevices")
@@ -87,12 +88,12 @@ type DeviceNetworkTypeLink {
   device: Device! @relation(name: "DeviceNetworkTypes")
   networkType: NetworkType! @relation(name: "NetworkTypeDevices")
   deviceProfile: DeviceProfile! @relation(name: "DeviceProfileDeviceNetworkTypeLinks")
-  networkSettings: Json
+  networkSettings: String
 }
 
 type DeviceProfile {
   id: ID! @id
-  name: String
+  name: String! @unique
   description: String
   networkSettings: Json
   networkType: NetworkType! @relation(name: "NetworkTypeDeviceProfiles")
@@ -105,4 +106,30 @@ type ProtocolData {
   networkProtocol: NetworkProtocol!
   dataIdentifier: String
   dataValue: String
+}
+
+enum DeploymentStatus {
+  CREATED
+  UPDATED
+  REMOVED
+  SYNCED
+}
+
+enum DeploymentType {
+  APPLICATION
+  DEVICE
+  DEVICE_PROFILE
+}
+
+type NetworkDeployment {
+  id: ID! @id
+  status: DeploymentStatus!
+  syncFailed: Boolean
+  type: DeploymentType!
+  meta: Json
+  logs: Json
+  network: Network!
+  application: Application
+  device: Device
+  deviceProfile: DeviceProfile
 }

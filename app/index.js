@@ -1,5 +1,5 @@
 const config = require('./config')
-const { log } = require('./log')
+const { log } = require('./lib/log')
 const { createRestServer } = require('./rest-server')
 
 // uncaughtExceptions

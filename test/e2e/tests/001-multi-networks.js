@@ -2,7 +2,7 @@
 var assert = require('assert')
 var chai = require('chai')
 var chaiHttp = require('chai-http')
-const { createApp } = require('../../../app/express-app')
+const { createApp } = require('../../../app/rest-server/app')
 var should = chai.should()
 var setup = require('../setup.js')
 const { wait } = require('../../lib/helpers')
@@ -32,7 +32,6 @@ describe('E2E Test for Multiple Networks', () => {
   let adminToken
   let userId
   let userToken
-  let netProvId
   let lora = {
     loraV1: {
       protocolId: '',
@@ -79,49 +78,10 @@ describe('E2E Test for Multiple Networks', () => {
       res.should.have.status(200)
       adminToken = res.text
     })
-
-  //   it('Create a Application User Account', async () => {
-  //     const res = await server
-  //       .post('/api/users')
-  //       .set('Authorization', 'Bearer ' + adminToken)
-  //       .set('Content-Type', 'application/json')
-  //       .send({ 'username': 'bobmouse', 'password': 'mousetrap', 'role': 'user', 'companyId': 1 })
-  //     res.should.have.status(200)
-  //     let ret = JSON.parse(res.text)
-  //     ret.should.have.property('id')
-  //     userId = ret.id
-  //   })
-  //   it('Verify Application User Exists', async () => {
-  //     const res = await server
-  //       .get('/api/users/' + userId)
-  //       .set('Authorization', 'Bearer ' + adminToken)
-  //       .set('Content-Type', 'application/json')
-  //       .send()
-  //     res.should.have.status(200)
-  //     let userObj = JSON.parse(res.text)
-  //     userObj.username.should.equal('bobmouse')
-  //     userObj.role.should.equal('user')
-  //   })
-  //   it('Application User Login to LPWan Server', async () => {
-  //     const res = await server
-  //       .post('/api/sessions')
-  //       .send({'username': 'bobmouse', 'password': 'mousetrap'})
-  //     res.should.have.status(200)
-  //     userToken = res.text
-  //     should.exist(userToken)
-  //   })
   })
 
   describe('Setup Networks', () => {
     describe('Setup Lora 1.0 Network', () => {
-      it('Create Network Provider', async () => {
-        const res = await server
-          .post('/api/networkProviders')
-          .set('Authorization', 'Bearer ' + adminToken)
-          .set('Content-Type', 'application/json')
-          .send({ 'name': 'Kyrio' })
-        netProvId = JSON.parse(res.text).id
-      })
       it('Verify LoraOS 1.0 Protocol Exists', async () => {
         const res = await server
           .get('/api/network-protocols?search=LoRa Server&networkProtocolVersion=1.0')
@@ -143,18 +103,20 @@ describe('E2E Test for Multiple Networks', () => {
           .set('Content-Type', 'application/json')
           .send({
             'name': 'LocalLoraOS1_0',
-            'networkProviderId': netProvId,
             'networkTypeId': networkTypeId,
             'baseUrl': Lora1.network.baseUrl,
             'networkProtocolId': lora.loraV1.protocolId,
-            'securityData': { authorized: false, ...Lora1.network.securityData }
+            'securityData': Lora1.network.securityData,
+            'networkSettings': {
+              networkServerID: Lora1.networkServer.id,
+              organizationID: Lora1.organization.id,
+              serviceProfileID: Lora1.serviceProfile.id
+            }
           })
           .end(function (err, res) {
             if (err) done(err)
             res.should.have.status(201)
             let network = JSON.parse(res.text)
-            network.securityData.authorized.should.equal(true)
-            network.securityData.message.should.equal('ok')
             lora.loraV1.networkId = network.id
             done()
           })
@@ -172,9 +134,9 @@ describe('E2E Test for Multiple Networks', () => {
             let network = JSON.parse(res.text)
             network.name.should.equal('LocalLoraOS1_0')
             network.baseUrl.should.equal(Lora1.network.baseUrl)
-            network.securityData.authorized.should.equal(true)
-            network.securityData.message.should.equal('ok')
-            network.securityData.enabled.should.equal(true)
+            network.meta.authorized.should.equal(true)
+            network.meta.message.should.equal('Authorized')
+            network.enabled.should.equal(true)
             done()
           })
       })
@@ -205,18 +167,20 @@ describe('E2E Test for Multiple Networks', () => {
           .set('Content-Type', 'application/json')
           .send({
             'name': 'LocalLoraOS2_0',
-            'networkProviderId': netProvId,
             'networkTypeId': networkTypeId,
             'baseUrl': Lora2.network.baseUrl,
             'networkProtocolId': lora.loraV2.protocolId,
-            'securityData': { authorized: false, ...Lora2.network.securityData }
+            'securityData': Lora2.network.securityData,
+            'networkSettings': {
+              networkServerID: Lora2.networkServer.id,
+              organizationID: Lora2.organization.id,
+              serviceProfileID: Lora2.serviceProfile.id
+            }
           })
           .end(function (err, res) {
             if (err) done(err)
             res.should.have.status(201)
             let network = JSON.parse(res.text)
-            network.securityData.authorized.should.equal(true)
-            network.securityData.message.should.equal('ok')
             lora.loraV2.networkId = network.id
             Lora2.network.id = network.id
             done()
@@ -235,9 +199,9 @@ describe('E2E Test for Multiple Networks', () => {
             let network = JSON.parse(res.text)
             network.name.should.equal('LocalLoraOS2_0')
             network.baseUrl.should.equal(Lora2.network.baseUrl)
-            network.securityData.authorized.should.equal(true)
-            network.securityData.message.should.equal('ok')
-            network.securityData.enabled.should.equal(true)
+            network.meta.authorized.should.equal(true)
+            network.meta.message.should.equal('Authorized')
+            network.enabled.should.equal(true)
             done()
           })
       })
@@ -268,7 +232,6 @@ describe('E2E Test for Multiple Networks', () => {
           .set('Content-Type', 'application/json')
           .send({
             'name': 'LocalLoriot',
-            'networkProviderId': netProvId,
             'networkTypeId': networkTypeId,
             'baseUrl': Loriot.network.baseUrl,
             'networkProtocolId': lora.loriot.protocolId,
@@ -280,8 +243,8 @@ describe('E2E Test for Multiple Networks', () => {
             if (err) done(err)
             res.should.have.status(201)
             let network = JSON.parse(res.text)
-            network.securityData.authorized.should.equal(true)
-            network.securityData.message.should.equal('ok')
+            network.meta.authorized.should.equal(true)
+            network.meta.message.should.equal('ok')
             lora.loriot.networkId = network.id
             done()
           })
@@ -314,7 +277,6 @@ describe('E2E Test for Multiple Networks', () => {
           .set('Content-Type', 'application/json')
           .send({
             'name': 'LocalTTN',
-            'networkProviderId': netProvId,
             'networkTypeId': networkTypeId,
             'baseUrl': Ttn.network.baseUrl,
             'networkProtocolId': lora.ttn.protocolId,
@@ -324,8 +286,8 @@ describe('E2E Test for Multiple Networks', () => {
             if (err) done(err)
             res.should.have.status(201)
             let network = JSON.parse(res.text)
-            network.securityData.authorized.should.equal(true)
-            network.securityData.message.should.equal('ok')
+            network.meta.authorized.should.equal(true)
+            network.meta.message.should.equal('ok')
             lora.ttn.networkId = network.id
             done()
           })
@@ -342,9 +304,9 @@ describe('E2E Test for Multiple Networks', () => {
             let network = JSON.parse(res.text)
             network.name.should.equal('LocalTTN')
             network.baseUrl.should.equal(Ttn.network.baseUrl)
-            network.securityData.authorized.should.equal(true)
-            network.securityData.message.should.equal('ok')
-            network.securityData.enabled.should.equal(true)
+            network.meta.authorized.should.equal(true)
+            network.meta.message.should.equal('ok')
+            network.enabled.should.equal(true)
             done()
           })
       })
@@ -629,7 +591,6 @@ describe('E2E Test for Multiple Networks', () => {
         let expected = {
           'id': 1,
           'networkTypeId': networkTypeId,
-          'companyId': 1,
           'name': 'BobMouseTrapDeviceProfileLv1',
           'networkSettings': {
             'deviceProfileID': '5d1e49eb-28c8-411b-9cbf-87650d103d51',
@@ -669,11 +630,7 @@ describe('E2E Test for Multiple Networks', () => {
             // deviceProfiles.totalCount.should.equal(2)
             let deviceProfile = deviceProfiles.records.find(x => x.name === Lora1.deviceProfile.name)
             should.exist(deviceProfile)
-            deviceProfile.description.should.equal('Device Profile managed by LPWAN Server, perform changes via LPWAN')
             deviceProfile.name.should.equal(Lora1.deviceProfile.name)
-            deviceProfile.networkSettings.name.should.equal(Lora1.deviceProfile.name)
-            deviceProfile.networkSettings.networkServerID.should.equal(Lora1.deviceProfile.networkServerID)
-            deviceProfile.networkSettings.organizationID.should.equal(Lora1.deviceProfile.organizationID)
             lora.loraV1.apps[0].deviceProfileIds.push(deviceProfile.id)
             done()
           })
@@ -756,7 +713,6 @@ describe('E2E Test for Multiple Networks', () => {
         let expected = {
           'id': 2,
           'networkTypeId': networkTypeId,
-          'companyId': 1,
           'name': 'BobMouseTrapDeviceProfileLv2',
           'networkSettings': {
             'id': '9dd538e8-a231-4a35-8823-eecbffb9d4a9',
@@ -884,7 +840,6 @@ describe('E2E Test for Multiple Networks', () => {
         let expected = {
           'id': 3,
           'networkTypeId': 1,
-          'companyId': 1,
           'name': '00-80-00-00-04-00-15-46',
           'networkSettings': {
             'macVersion': '1.0.3',
@@ -973,7 +928,6 @@ describe('E2E Test for Multiple Networks', () => {
         let expected = {
           'id': 3,
           'networkTypeId': 1,
-          'companyId': 1,
           'name': 'CableLabs TTN Device ABP',
           'networkSettings': {
             'id': 'cl-weather-station-profile',
@@ -1011,7 +965,6 @@ describe('E2E Test for Multiple Networks', () => {
             let deviceProfiles = JSON.parse(res.text)
             deviceProfiles.should.have.property('totalCount')
             deviceProfiles.should.have.property('records')
-            console.log(JSON.stringify(deviceProfiles.records))
             // deviceProfiles.totalCount.should.equal(2)
             let deviceProfile1 = deviceProfiles.records.find(x => x.name === Ttn.abpDevice.description)
             let deviceProfile2 = deviceProfiles.records.find(x => x.name === Ttn.otaaDevice.description)

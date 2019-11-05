@@ -6,9 +6,9 @@ const Joi = require('@hapi/joi')
 const { adminPermissions, userPermissions } = require('./permissions')
 const { load, listAll } = require('../model-lib')
 
-//* *****************************************************************************
+// ******************************************************************************
 // Fragments for how the data should be returned from Prisma.
-//* *****************************************************************************
+// ******************************************************************************
 const fragments = {
   internal: `fragment InternalUser on User {
     id
@@ -85,7 +85,7 @@ async function update (ctx, { where, data }) {
   return ctx.db.update({ where, data })
 }
 
-function remove (ctx, id) {
+function remove (ctx, { id }) {
   if (!id) throw httpError(400, 'Missing record identifier')
   if (ctx.user && ctx.user.id === id) {
     throw httpError(403, 'Cannot delete your own account')
@@ -124,7 +124,8 @@ function hasPermissions (ctx, { permissions }) {
 // Model
 // *********************************************************************
 module.exports = {
-  api: {
+  role: 'user',
+  publicApi: {
     create,
     list,
     listAll,

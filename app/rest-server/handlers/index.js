@@ -8,23 +8,23 @@ function validationFail (c, _, res) {
 const handlers = {
   validationFail,
   // These resources expose all CRUD endpoints, protected by the appropriate permission
-  ...crudHandlers(models.applicationNetworkTypeLinks, 'ApplicationNetworkTypeLink'),
-  ...crudHandlers(models.applications, 'Application'),
-  ...crudHandlers(models.devices, 'Device'),
-  ...crudHandlers(models.deviceNetworkTypeLinks, 'DeviceNetworkTypeLink'),
-  ...crudHandlers(models.deviceProfiles, 'DeviceProfile'),
-  ...crudHandlers(models.networks, 'Network'),
+  ...crudHandlers(models.applicationNetworkTypeLink, 'ApplicationNetworkTypeLink'),
+  ...crudHandlers(models.application, 'Application'),
+  ...crudHandlers(models.device, 'Device'),
+  ...crudHandlers(models.deviceNetworkTypeLink, 'DeviceNetworkTypeLink'),
+  ...crudHandlers(models.deviceProfile, 'DeviceProfile'),
+  ...crudHandlers(models.network, 'Network'),
 
   // These models are partly managed by the system, so CRUD access is restricted
-  ...crudHandlers(models.networkProtocols, 'NetworkProtocol', null, ['list', 'load']),
-  ...crudHandlers(models.networkTypes, 'NetworkType', null, ['list', 'load']),
-  ...crudHandlers(models.reportingProtocols, 'ReportingProtocol', null, ['list', 'load']),
+  ...crudHandlers(models.networkProtocol, 'NetworkProtocol', null, ['list', 'load']),
+  ...crudHandlers(models.networkType, 'NetworkType', null, ['list', 'load']),
+  ...crudHandlers(models.reportingProtocol, 'ReportingProtocol', null, ['list', 'load']),
 
   // Users use the custom loadMyUser operation to access their own user
   // Only admin users have access to the loadUser operation
   // All users need access to update their email/password, so the updateUser operation
   // is not protected by the permission, which only admins have
-  ...crudHandlers(models.users, 'User', null, ['create', 'list', 'load', 'remove']),
+  ...crudHandlers(models.user, 'User', null, ['create', 'list', 'load', 'remove']),
 
   // User custom endpoints
   ...require('./resources/user').handlers,

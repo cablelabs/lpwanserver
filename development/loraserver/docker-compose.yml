@@ -2,7 +2,7 @@ version: '3.5'
 
 services:
   loraserver:
-    image: loraserver/loraserver:2
+    image: loraserver/loraserver:2.8.2
     container_name: lpwanserver_dev_loraserver2
     networks:
       - lpwanserver_dev
@@ -12,7 +12,7 @@ services:
       - ./configuration/loraserver:/etc/loraserver
 
   loraserver1:
-    image: loraserver/loraserver:1
+    image: loraserver/loraserver:1.0.1
     container_name: lpwanserver_dev_loraserver1
     networks:
       - lpwanserver_dev
@@ -22,7 +22,7 @@ services:
       - ./configuration/loraserver_1:/etc/loraserver
 
   lora_appserver:
-    image: loraserver/lora-app-server:2
+    image: loraserver/lora-app-server:2.6.1
     container_name: lpwanserver_dev_loraappserver2
     networks:
       - lpwanserver_dev
@@ -34,7 +34,7 @@ services:
       - ./configuration/lora-app-server:/etc/lora-app-server
 
   lora_appserver1:
-    image: loraserver/lora-app-server:1
+    image: loraserver/lora-app-server:1.0.2
     container_name: lpwanserver_dev_loraappserver1
     networks:
       - lpwanserver_dev

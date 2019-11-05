@@ -1,5 +1,5 @@
 const config = require('../config')
-const { log } = require('../log')
+const { log } = require('../lib/log')
 const express = require('express')
 const morgan = require('morgan')
 const { configureCors, serveSpa: serveWebClient } = require('./middleware')
@@ -17,8 +17,8 @@ async function createApp () {
   var app = express()
 
   // Initialize Models
-  await models.networkProtocols.initialize()
-  await models.reportingProtocols.initialize()
+  await models.networkProtocol.initialize()
+  await models.reportingProtocol.initialize()
 
   if (config.public_dir) {
     serveWebClient({
