@@ -53,8 +53,8 @@ Running the demo is the easiest way to try out LPWAN Server.
 
 - LPWAN Server REST API - https://localhost:3200/api
 - LPWAN Server Web Client - https://localhost:3200
-- ChirpStack LoRa App Server - https://localhost:8082
-- ChirpStack LoRa App Server V1 - https://localhost:8081
+- ChirpStack App Server - https://localhost:8082
+- ChirpStack App Server V1 - https://localhost:8081
 
 ## Use Demo
 

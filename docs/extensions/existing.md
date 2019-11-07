@@ -10,14 +10,14 @@ This is the current list of extensions defined by the repository code.
 
 - **LoRa** - The LoRa Network Type, defines the data used for LoRa networks as
   defined by the [LoRa Alliance](https://www.lora-alliance.org/), especially
-  as implemented by the [ChirpStack](https://www.chirpstack.io) project (formerly LoRa Server).
+  as implemented by the [ChirpStack](https://www.chirpstack.io) project.
 
 - **IP** - This Network Type represents all IP-based devices, such as mobile 3GPP devices.
 
 ## Network Protocols
 
 - **LoRa Open Source** - The network protocol API defined by the
-  [ChirpStack](https://www.chirpstack.io) project (formerly LoRa Server) created by Orne Brocaar and
+  [ChirpStack](https://www.chirpstack.io) project created by Orne Brocaar and
   sponsored by CableLabs.
 
 - **The Things Network** - The network protocol API defined by
