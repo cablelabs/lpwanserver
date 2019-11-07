@@ -5,8 +5,8 @@ sidebar_label: Getting Started
 ---
 
 In this guide, we'll start an instance of LPWAN Server, along with a Postgresql
-database.  We'll also run an instance of [LoRa Server](https://loraserver.io).
-We'll add the instance of LoRa Server within the LPWAN Server web-client UI,
+database.  We'll also run an instance of [ChirpStack](https://www.chirpstack.io).
+We'll add the instance of ChirpStack within the LPWAN Server web-client UI,
 which will cause the applications and devices to be pulled.
 
 This guide involves running multiple services.  We'll use
@@ -53,8 +53,8 @@ Running the demo is the easiest way to try out LPWAN Server.
 
 - LPWAN Server REST API - https://localhost:3200/api
 - LPWAN Server Web Client - https://localhost:3200
-- LoRa App Server - https://localhost:8082
-- LoRa App Server V1 - https://localhost:8081
+- ChirpStack LoRa App Server - https://localhost:8082
+- ChirpStack LoRa App Server V1 - https://localhost:8081
 
 ## Use Demo
 
@@ -65,7 +65,7 @@ Use these credentials to log in.
 - **username** - `admin`
 - **password** - `password`
 
-### Create a connection to the LoRa Server Network
+### Create a connection to the ChirpStack Network
 
 * Click the `Networks` link in the top navigation bar
 * Click on the `CREATE` button next to the LoRa Server entry
@@ -75,8 +75,8 @@ Use these credentials to log in.
   - Username: **admin**
   - Password: **admin**
 
-If the network was succesfully created, this confirms that LPWAN Server and LoRa Server and communicating correctly.
+If the network was succesfully created, this confirms that LPWAN Server and ChirpStack are communicating correctly.
 
 ### View Application
 
-If you navigate to the home page, you will see an application that was pulled from the LoRa Server network.
+If you navigate to the home page, you will see an application that was pulled from the ChirpStack network.

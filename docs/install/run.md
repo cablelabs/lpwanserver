@@ -11,7 +11,7 @@ with each other.
 
 ## Prisma, Postgresql, and Redis
 All persistence services are contained in one docker-compose file.  These are used
-by LPWAN Server and the Lora Server instance used in development.
+by LPWAN Server and the ChirpStack instance used in development.
 There is a script for making it easier to start and stop persistence services.
 
 Before starting the LPWAN Server for development, you must first start the database
@@ -36,15 +36,15 @@ Prisma runs a GraphQL Playground at `http://localhost:4466` that allows you
 to query and mutate the database.  You can also deploy it with a setting that enables
 a UI dashboard to the data.
 
-## LoRa Server
+## ChirpStack
 
-Run this command to start versions 1 and 2 of LoRa Server and LoRa App Server.
+Run this command to start versions 1 and 2 of ChirpStack and ChirpStack App Server.
 
 ```
 $ docker-compose -f development/loraserver/docker-compose.yml up
 ```
 
-LoRa App Servers are at:
+ChirpStack App Servers are at:
 
 - `https://localhost:8081` (v1)
 - `https://localhost:8082` (v2)
@@ -79,7 +79,7 @@ will update the browser on changes to the web-client source code.
 
 ## Docker Networking
 
-The services network through Docker, so when adding a LoRa Server network in LPWAN Server,
+The services network through Docker, so when adding a ChripStack network in LPWAN Server,
 you need to use the internal URL as the baseUrl.
 
 - `https://lora_appserver1:8080/api` (v1)

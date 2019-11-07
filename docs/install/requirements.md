@@ -9,7 +9,7 @@ sidebar_label: Requirements
 The development of LPWAN Server is largely based on
 [Docker](https://docker.com).
 Docker and Docker-Compose are required to run the [Getting Started guide](guides/gettings-started)
-or run the LoRa Servers for development and testing.
+or run the ChirpStack LoRa Servers for development and testing.
 
 ### Install Docker
 
