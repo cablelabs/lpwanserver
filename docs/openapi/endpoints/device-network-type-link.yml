@@ -102,6 +102,22 @@ paths:
           description: DeviceNetworkTypeLink record was deleted
         '404':
           description: DeviceNetworkTypeLink not found
+  /api/device-network-type-links/{id}/push:
+    parameters:
+      - $ref: '../api.yml#/components/parameters/idParam'
+    post:
+      operationId: pushDeviceNetworkTypeLink
+      summary: Push DeviceNetworkTypeLink
+      description: Push Device to all Networks of this NetworkType
+      security:
+        - bearer_token: []
+      tags:
+        - DeviceNetworkTypeLink
+      responses:
+        '204':
+          description: DeviceNetworkTypeLink was pushed
+        '404':
+          description: DeviceNetworkTypeLink not found
 components:
   schemas:
     DeviceNetworkTypeLink:

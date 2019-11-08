@@ -7,8 +7,8 @@ const resources = [
   'DeviceNetworkTypeLink',
   'DeviceProfile',
   'Network',
+  'NetworkDeployment',
   'NetworkProtocol',
-  'NetworkProvider',
   'NetworkType',
   'ReportingProtocol',
   'User'
@@ -17,7 +17,8 @@ const resources = [
 const otherPermissions = [
   'Session:remove',
   'ApplicationNetworkTypeLink:push',
-  'DeviceNetworkTypeLink:push'
+  'DeviceNetworkTypeLink:push',
+  'DeviceProfile:push'
 ]
 
 function createResourcePermissions (resource, operations) {

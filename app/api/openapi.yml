@@ -476,6 +476,33 @@ paths:
           description: ApplicationNetworkTypeLink record was deleted
         "404":
           description: ApplicationNetworkTypeLink not found
+  "/api/application-network-type-links/{id}/push":
+    parameters:
+      - $ref: "#/paths/~1api~1applications~1%7Bid%7D/parameters/0"
+    post:
+      operationId: pushApplicationNetworkTypeLink
+      summary: Push ApplicationNetworkTypeLink
+      description: Push Application to all Networks of this NetworkType
+      parameters:
+        - name: pushDevices
+          in: query
+          description: Whether to also push devices when pushing an
+            ApplicationNetworkTypeLink or a DeviceProfile
+          required: false
+          schema:
+            type: string
+            enum:
+              - "true"
+              - "false"
+      security:
+        - bearer_token: []
+      tags:
+        - ApplicationNetworkTypeLink
+      responses:
+        "204":
+          description: ApplicationNetworkTypeLink was pushed
+        "404":
+          description: ApplicationNetworkTypeLink not found
   /api/devices:
     post:
       operationId: createDevice
@@ -834,6 +861,7 @@ paths:
                   required:
                     - deviceId
                     - networkTypeId
+                    - deviceProfileId
         description: DeviceNetworkTypeLink to be created
         required: true
       responses:
@@ -975,6 +1003,22 @@ paths:
       responses:
         "204":
           description: DeviceNetworkTypeLink record was deleted
+        "404":
+          description: DeviceNetworkTypeLink not found
+  "/api/device-network-type-links/{id}/push":
+    parameters:
+      - $ref: "#/paths/~1api~1applications~1%7Bid%7D/parameters/0"
+    post:
+      operationId: pushDeviceNetworkTypeLink
+      summary: Push DeviceNetworkTypeLink
+      description: Push Device to all Networks of this NetworkType
+      security:
+        - bearer_token: []
+      tags:
+        - DeviceNetworkTypeLink
+      responses:
+        "204":
+          description: DeviceNetworkTypeLink was pushed
         "404":
           description: DeviceNetworkTypeLink not found
   /api/device-profiles:
@@ -1140,6 +1184,25 @@ paths:
       responses:
         "204":
           description: DeviceProfile record was deleted
+        "404":
+          description: DeviceProfile not found
+  "/api/device-profiles/{id}/push":
+    parameters:
+      - $ref: "#/paths/~1api~1applications~1%7Bid%7D/parameters/0"
+    post:
+      operationId: pushDeviceProfile
+      summary: Push DeviceProfile
+      description: Push DeviceProfile to all Networks of this NetworkType
+      parameters:
+        - $ref: "#/paths/~1api~1application-network-type-links~1%7Bid%7D~1push/post\
+            /parameters/0"
+      security:
+        - bearer_token: []
+      tags:
+        - DeviceProfile
+      responses:
+        "204":
+          description: DeviceProfile was pushed
         "404":
           description: DeviceProfile not found
   /api/networks:
@@ -1891,6 +1954,17 @@ components:
       required: false
       schema:
         type: string
+    pushDevices:
+      name: pushDevices
+      in: query
+      description: Whether to also push devices when pushing an ApplicationNetworkTypeLink
+        or a DeviceProfile
+      required: false
+      schema:
+        type: string
+        enum:
+          - "true"
+          - "false"
   schemas:
     ResourceCreatedResponse:
       type: object
