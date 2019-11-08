@@ -116,11 +116,11 @@ describe('E2E Test for Uplink/Downlink Device Messaging', () => {
         console.log(res.text)
         res.status.should.equal(200)
       })
-      it('Get device message from Lora Server v1 queue', async () => {
+      it('Get device message from ChirpStack v1 queue', async () => {
         const res = await Lora1.client.listDeviceMessages(Lora1.network, Lora2.device.devEUI)
         res.result.length.should.equal(1)
       })
-      it('Get device message from Lora Server v2 queue', async () => {
+      it('Get device message from ChirpStack v2 queue', async () => {
         const res = await Lora2.client.listDeviceMessages(Lora2.network, Lora2.device.devEUI)
         res.result.length.should.equal(1)
       })
