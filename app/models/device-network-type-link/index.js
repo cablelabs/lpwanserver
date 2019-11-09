@@ -119,20 +119,6 @@ async function update (ctx, { where, data, origin }) {
   return parseNwkSettings(rec)
 }
 
-async function update (ctx, { where, data, origin }) {
-  if (data.networkSettings) {
-    data = { ...data, networkSettings: prune(data.networkSettings) }
-    validateNwkSettings(data.networkSettings)
-  }
-  const rec = await ctx.db.update({ where, data })
-
-  await ctx.$self.push({
-    deviceProfile: rec,
-    omitNetworks: origin ? [origin.network.id] : []
-  })
-  return rec
-}
-
 async function upsert (ctx, { data, ...args }) {
   try {
     let rec = await ctx.$self.loadByQuery({ where: R.pick(['networkType', 'device'], data) })
