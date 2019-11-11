@@ -12,10 +12,10 @@ when transferring all applications and devices from one
 LoRa network to the next.</p>
 <p><strong>Networks</strong></p>
 <ul>
-<li>LoRa Server V1</li>
-<li>LoRa Server V2</li>
+<li>ChirpStack V1</li>
+<li>ChirpStack V2</li>
 </ul>
-<p>Testing the transfer from LoRa Server v1 to LoRa Server v2 will
+<p>Testing the transfer from ChirpStack v1 to ChirpStack v2 will
 mainly cover the steps and data models that enable the transfer.
 There will be a minimal amount of data property renaming.  The tests
 will cover the transfer of LoRaWAN 1.0 devices to a network that supports
@@ -27,20 +27,20 @@ LoRAWAN 1.0 and 1.1.</p>
 </ul>
 <ol>
 <li><a href="/docs/use-cases/authenticate">Authenticate</a></li>
-<li><a href="/docs/use-cases/create-network">Create LoRa Server v1 network</a></li>
-<li><a href="/docs/use-cases/create-network">Create LoRa Server v2 network</a></li>
+<li><a href="/docs/use-cases/create-network">Create ChirpStack v1 network</a></li>
+<li><a href="/docs/use-cases/create-network">Create ChirpStack v2 network</a></li>
 </ol>
 <h3><a class="anchor" aria-hidden="true" id="authentication-fails"></a><a href="#authentication-fails" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Authentication fails</h3>
 <ol>
 <li>S: Authentication fails</li>
 <li>Response determined by Authentication use case</li>
 </ol>
-<h3><a class="anchor" aria-hidden="true" id="create-lora-server-v1-network-fails"></a><a href="#create-lora-server-v1-network-fails" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Create Lora Server v1 Network Fails</h3>
+<h3><a class="anchor" aria-hidden="true" id="create-chirpstack-v1-network-fails"></a><a href="#create-chirpstack-v1-network-fails" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Create ChirpStack v1 Network Fails</h3>
 <ol start="2">
 <li>S: Fails to create Network (includes pull/push)</li>
 <li>S: Response determined by Create Network use case</li>
 </ol>
-<h3><a class="anchor" aria-hidden="true" id="create-lora-server-v2-network-fails"></a><a href="#create-lora-server-v2-network-fails" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Create Lora Server v2 Network Fails</h3>
+<h3><a class="anchor" aria-hidden="true" id="create-chirpstack-v2-network-fails"></a><a href="#create-chirpstack-v2-network-fails" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Create ChirpStack v2 Network Fails</h3>
 <ol start="3">
 <li>S: Fails to create Network (includes pull/push)</li>
 <li>S: Response determined by Create Network use case</li>
@@ -59,4 +59,4 @@ and leave the transfer in a partially fulfilled state, with no course prescribed
 how to fix. A &quot;Deployment&quot; resource would make actions more atomic, and provide insight
 into network sync issues.</li>
 </ul>
-</span></div></article></div><div class="docs-prevnext"></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#steps">Steps</a><ul class="toc-headings"><li><a href="#authentication-fails">Authentication fails</a></li><li><a href="#create-lora-server-v1-network-fails">Create Lora Server v1 Network Fails</a></li><li><a href="#create-lora-server-v2-network-fails">Create Lora Server v2 Network Fails</a></li></ul></li><li><a href="#result">Result</a></li><li><a href="#issues">Issues</a></li></ul></nav></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/favicon.png" alt="LPWAN Server" width="66" height="58"/></a><div><h5>Docs</h5><a href="/docs/en/guides/getting-started">Getting Started</a><a href="/rest-api">API Reference</a></div><div><h5>Community</h5><a href="https://forum.lpwanserver.com" target="_blank" rel="noreferrer noopener">Forum</a></div><div><h5>More</h5><a href="https://github.com/cablelabs/lpwanserver">GitHub</a><a class="github-button" href="https://github.com/cablelabs/lpwanserver" data-icon="octicon-star" data-count-href="/cablelabs/lpwanserver/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star this project on GitHub">Star</a></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/cablelabs_logo_white.png"/></a><section class="copyright">Copyright © 2019 CableLabs</section></footer></div></body></html>
+</span></div></article></div><div class="docs-prevnext"></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#steps">Steps</a><ul class="toc-headings"><li><a href="#authentication-fails">Authentication fails</a></li><li><a href="#create-chirpstack-v1-network-fails">Create ChirpStack v1 Network Fails</a></li><li><a href="#create-chirpstack-v2-network-fails">Create ChirpStack v2 Network Fails</a></li></ul></li><li><a href="#result">Result</a></li><li><a href="#issues">Issues</a></li></ul></nav></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/favicon.png" alt="LPWAN Server" width="66" height="58"/></a><div><h5>Docs</h5><a href="/docs/en/guides/getting-started">Getting Started</a><a href="/rest-api">API Reference</a></div><div><h5>Community</h5><a href="https://forum.lpwanserver.com" target="_blank" rel="noreferrer noopener">Forum</a></div><div><h5>More</h5><a href="https://github.com/cablelabs/lpwanserver">GitHub</a><a class="github-button" href="https://github.com/cablelabs/lpwanserver" data-icon="octicon-star" data-count-href="/cablelabs/lpwanserver/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star this project on GitHub">Star</a></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/cablelabs_logo_white.png"/></a><section class="copyright">Copyright © 2019 CableLabs</section></footer></div></body></html>
