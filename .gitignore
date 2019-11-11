@@ -6,3 +6,4 @@ coverage
 development
 .nyc_output
 logs
+.idea
