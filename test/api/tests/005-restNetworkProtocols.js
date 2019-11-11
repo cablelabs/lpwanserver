@@ -90,7 +90,7 @@ describe('NetworkProtocols', function () {
     })
     it('should return 200 with 2 protocol search LoraOS ', function (done) {
       server
-        .get('/api/networkProtocols?search=LoRa Server')
+        .get('/api/networkProtocols?search=ChirpStack')
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {

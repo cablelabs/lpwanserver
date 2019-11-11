@@ -39,7 +39,7 @@ describe('Networks', function () {
   describe('POST /api/networks', function () {
     it('Get Network Protocol for Lora OS', function (done) {
       server
-        .get('/api/networkProtocols?search=LoRa Server')
+        .get('/api/networkProtocols?search=ChirpStack')
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {

@@ -54,11 +54,11 @@ describe('Manage a device model that supports multiple network types', () => {
     ipNwkType = Lpwan.cache.networkTypes.find(x => x.name === 'IP')
   })
 
-  describe('Create Lora Server v2 network', () => {
+  describe('Create ChirpStack v2 network', () => {
     let protocolId
 
     it('Verify LoraOS 2.0 Protocol Exists', async () => {
-      const params = { search: 'LoRa Server', networkProtocolVersion: '2.0' }
+      const params = { search: 'ChirpStack', networkProtocolVersion: '2.0' }
       const res = await Lpwan.client.list('networkProtocols', {}, { params })
       assert.strictEqual(res.status, 200)
       assert.strictEqual(res.data.totalCount, 1)
@@ -116,7 +116,7 @@ describe('Manage a device model that supports multiple network types', () => {
       networkTypeId: loraNwkType.id,
       networkSettings: {}
     }))
-    it('Confirm application is on LoRa Server', async () => {
+    it('Confirm application is on ChirpStack', async () => {
       const res = await Lora2.client.listApplications({ search: appName, limit: 1 })
       assert.strictEqual(res.totalCount, '1')
       let [remoteApp] = res.result
@@ -165,7 +165,7 @@ describe('Manage a device model that supports multiple network types', () => {
         }
       })
     })
-    it('Confirm Device is on LoRa Server', async () => {
+    it('Confirm Device is on ChirpStack', async () => {
       const localDevice = Lpwan.cache.devices.find(x => x.name === deviceName)
       const res = await Lora2.client.listDevices(loraAppId, { limit: 1 })
       assert.strictEqual(res.totalCount, '1')
@@ -174,7 +174,7 @@ describe('Manage a device model that supports multiple network types', () => {
       assert.strictEqual(device.name, localDevice.name)
       assert.strictEqual(device.description, localDevice.description)
     })
-    it('Confirm LoRa DeviceProfile is on LoRa Server', async () => {
+    it('Confirm LoRa DeviceProfile is on ChirpStack', async () => {
       const loraLocalDp = Lpwan.cache.deviceProfiles.find(x => x.name === loraDeviceProfileName)
       const res = await Lora2.client.listDeviceProfiles({ limit: 20 })
       Lora2.cache.deviceProfiles = res.result
@@ -186,12 +186,12 @@ describe('Manage a device model that supports multiple network types', () => {
   })
 
   describe('Send Device Uplinks', () => {
-    it('Confirm Lora Server Application Integration', async () => {
+    it('Confirm ChirpStack Application Integration', async () => {
       const uplinkDataURL = `${process.env.LPWANSERVER_URL}/api/ingest/${app.id}/${network.id}`
       const res = await Lora2.client.loadApplicationIntegration(loraAppId, 'http')
       assert.strictEqual(res.uplinkDataURL, uplinkDataURL)
     })
-    it('Send an uplink as the Lora Server', async () => {
+    it('Send an uplink as ChirpStack', async () => {
       const data = { msgId: 'multi_type_devices_uplink_lora' }
       const res = await Lpwan.client.create('uplinks', { applicationId: app.id, networkId: network.id }, { data })
       assert.strictEqual(res.status, 204)
@@ -221,7 +221,7 @@ describe('Manage a device model that supports multiple network types', () => {
       const res = await Lpwan.client.create('deviceDownlinks', { id: deviceId }, { data: downlink })
       assert.strictEqual(res.status, 200)
     })
-    it('Confirm downlink was received by Lora Server', async () => {
+    it('Confirm downlink was received by ChirpStack', async () => {
       const devNtl = Lpwan.cache.deviceNetworkTypeLinks.find(x => x.deviceId === deviceId && x.networkTypeId === loraNwkType.id)
       const res = await Lora2.client.listDeviceMessages(devNtl.networkSettings.devEUI)
       assert.strictEqual(res.result.length, 1)
@@ -242,11 +242,11 @@ describe('Manage a device model that supports multiple network types', () => {
       let res = await Lpwan.client.remove('applicationNetworkTypeLinks', { id: appNtl.id })
       assert.strictEqual(res.status, 200)
     })
-    it('Confirm Application is not on Lora Server', async () => {
+    it('Confirm Application is not on ChirpStack', async () => {
       const res = await Lora2.client.listApplications({ search: appName, limit: 1 })
       assert.strictEqual(res.totalCount, '0')
     })
-    it('Confirm Device is not on LoRa Server', async () => {
+    it('Confirm Device is not on ChirpStack', async () => {
       const res = await Lora2.client.listDevices(loraAppId, { limit: 1 })
       assert.strictEqual(res.totalCount, '0')
     })

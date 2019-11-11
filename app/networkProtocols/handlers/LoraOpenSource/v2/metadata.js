@@ -1,5 +1,5 @@
 module.exports = {
-  protocolHandlerName: 'LoRa Server 2.0',
+  protocolHandlerName: 'ChirpStack 2.0',
   version:
     {
       versionText: 'Version 2.0',
@@ -10,24 +10,24 @@ module.exports = {
   protocolHandlerNetworkFields: [
     {
       name: 'username',
-      description: 'The username of the LoraOS admin account',
+      description: 'The username of the ChirpStack admin account',
       help: '',
       type: 'string',
       label: 'Username',
       value: '',
       required: true,
-      placeholder: 'myLoraUsername',
+      placeholder: 'myChirpStackUsername',
       oauthQueryParameter: ''
     },
     {
       name: 'password',
-      description: 'The password of the LoraOS admin account',
+      description: 'The password of the ChirpStack admin account',
       help: '',
       type: 'password',
       label: 'Password',
       value: '',
       required: true,
-      placeholder: 'myLoraPassword',
+      placeholder: 'myChirpStackPassword',
       oauthQueryParameter: ''
     }
   ]

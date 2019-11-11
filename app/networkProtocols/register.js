@@ -1,6 +1,6 @@
 function registerLora1 (networkProtocolModel, loraNwkType) {
   return networkProtocolModel.upsert({
-    name: 'LoRa Server',
+    name: 'ChirpStack',
     networkTypeId: loraNwkType.id,
     protocolHandler: 'LoraOpenSource/v1',
     networkProtocolVersion: '1.0'
@@ -9,7 +9,7 @@ function registerLora1 (networkProtocolModel, loraNwkType) {
 
 async function registerLora2 (networkProtocolModel, loraNwkType) {
   let me = {
-    name: 'LoRa Server',
+    name: 'ChirpStack',
     networkTypeId: loraNwkType.id,
     protocolHandler: 'LoraOpenSource/v2',
     networkProtocolVersion: '2.0'
