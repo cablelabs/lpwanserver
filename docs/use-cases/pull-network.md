@@ -35,8 +35,8 @@ part of creating a Network.
 
 - The logic for pulling a network doesn't attempt to authenticate with the network if
   it is not already authorized.
-- The sequence of pulling a network varies according to the network.  For instance, on LoRa Server,
-  a company is created on the remote network if it doesn't exist.  Also, for LoRa Server, device profiles
+- The sequence of pulling a network varies according to the network.  For instance, on ChirpStack,
+  a company is created on the remote network if it doesn't exist.  Also, for ChirpStack, device profiles
   are pulled, but other networks don't have the concept of device profiles.
 - Network protocols should not create companies and users on the remote network.
 - The NetworkProtocolAPI `networkProtocols.js` simply proxies the call to pull the network.

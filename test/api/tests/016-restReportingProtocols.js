@@ -45,7 +45,7 @@ describe('ReportingProtocols', function () {
         .post('/api/reportingProtocols')
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
-        .send({ 'name': 'LoRa Server', 'networkTypeId': 1, 'protocolHandler': 'LoRaOpenSource.js' })
+        .send({ 'name': 'ChirpStack', 'networkTypeId': 1, 'protocolHandler': 'LoRaOpenSource.js' })
         .end(function (err, res) {
           res.should.have.status(200)
           var ret = JSON.parse(res.text)

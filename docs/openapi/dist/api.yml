@@ -42,8 +42,7 @@ tags:
       NetworkType.  These records store configuration for Devices in regards to
       the NetworkType.
   - name: Network
-    description: A Network represents a remote IoT network, such as an instance of LoRa
-      Server.
+    description: A Network represents a remote IoT network, such as an instance of ChirpStack.
   - name: NetworkProtocol
     description: A NetworkProtocol wraps the API used by LPWAN Server to communicate with
       Networks.  A NeworkProtocol references the code that communicates with the

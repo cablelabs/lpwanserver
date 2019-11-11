@@ -8,7 +8,7 @@ const R = require('ramda')
 
 const Lpwan = createLpwanClient()
 
-describe('Transfer Lora Server v1 network to Lora Server v2', () => {
+describe('Transfer ChirpStack v1 network to ChirpStack v2', () => {
   let networkTypeId
 
   before(async () => {
@@ -22,12 +22,12 @@ describe('Transfer Lora Server v1 network to Lora Server v2', () => {
     networkTypeId = nwkType.id
   })
 
-  describe('Create Lora Server v1 network', () => {
+  describe('Create ChirpStack v1 network', () => {
     let protocolId
     let network
 
     it('Verify LoraOS 1.0 Protocol Exists', async () => {
-      const params = { search: 'LoRa Server', networkProtocolVersion: '1.0' }
+      const params = { search: 'ChirpStack', networkProtocolVersion: '1.0' }
       const res = await Lpwan.client.list('networkProtocols', {}, { params })
       assert.strictEqual(res.status, 200)
       assert.strictEqual(res.data.totalCount, 1)
@@ -52,7 +52,7 @@ describe('Transfer Lora Server v1 network to Lora Server v2', () => {
     })
   })
 
-  describe('Verify data pulled from Lora Server v1', () => {
+  describe('Verify data pulled from ChirpStack v1', () => {
     it('Verify Device Profiles', async () => {
       const promises = Lora1.cache.DeviceProfile.map(async lora1Dp => {
         const params = { search: lora1Dp.name }
@@ -129,12 +129,12 @@ describe('Transfer Lora Server v1 network to Lora Server v2', () => {
     })
   })
 
-  describe('Create Lora Server v2 network', () => {
+  describe('Create ChirpStack v2 network', () => {
     let protocolId
     let network
 
     it('Verify LoraOS 2.0 Protocol Exists', async () => {
-      const params = { search: 'LoRa Server', networkProtocolVersion: '2.0' }
+      const params = { search: 'ChirpStack', networkProtocolVersion: '2.0' }
       const res = await Lpwan.client.list('networkProtocols', {}, { params })
       assert.strictEqual(res.status, 200)
       assert.strictEqual(res.data.totalCount, 1)
@@ -159,7 +159,7 @@ describe('Transfer Lora Server v1 network to Lora Server v2', () => {
     })
   })
 
-  describe('Verify data pushed to Lora Server v2', () => {
+  describe('Verify data pushed to ChirpStack v2', () => {
     it('Verify Device Profiles', async () => {
       let res = await Lora2.client.listDeviceProfiles({
         organizationID: Lora2.cache.Organization[0].id,
