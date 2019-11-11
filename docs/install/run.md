@@ -79,7 +79,7 @@ will update the browser on changes to the web-client source code.
 
 ## Docker Networking
 
-The services network through Docker, so when adding a ChripStack network in LPWAN Server,
+The services network through Docker, so when adding a ChirpStack network in LPWAN Server,
 you need to use the internal URL as the baseUrl.
 
 - `https://lora_appserver1:8080/api` (v1)
