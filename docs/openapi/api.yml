@@ -49,6 +49,8 @@ paths:
     $ref: 'endpoints/application-network-type-link.yml#/paths/~1api~1application-network-type-links'
   /api/application-network-type-links/{id}:
     $ref: 'endpoints/application-network-type-link.yml#/paths/~1api~1application-network-type-links~1{id}'
+  /api/application-network-type-links/{id}/push:
+    $ref: 'endpoints/application-network-type-link.yml#/paths/~1api~1application-network-type-links~1{id}~1push'
   /api/devices:
     $ref: 'endpoints/device.yml#/paths/~1api~1devices'
   /api/devices/{id}:
@@ -65,10 +67,14 @@ paths:
     $ref: 'endpoints/device-network-type-link.yml#/paths/~1api~1device-network-type-links'
   /api/device-network-type-links/{id}:
     $ref: 'endpoints/device-network-type-link.yml#/paths/~1api~1device-network-type-links~1{id}'
+  /api/device-network-type-links/{id}/push:
+    $ref: 'endpoints/device-network-type-link.yml#/paths/~1api~1device-network-type-links~1{id}~1push'
   /api/device-profiles:
     $ref: 'endpoints/device-profile.yml#/paths/~1api~1device-profiles'
   /api/device-profiles/{id}:
     $ref: 'endpoints/device-profile.yml#/paths/~1api~1device-profiles~1{id}'
+  /api/device-profiles/{id}/push:
+    $ref: 'endpoints/device-profile.yml#/paths/~1api~1device-profiles~1{id}~1push'
   /api/networks:
     $ref: 'endpoints/network.yml#/paths/~1api~1networks'
   /api/networks/{id}:
@@ -151,6 +157,16 @@ components:
       required: false
       schema:
         type: string
+    pushDevices:
+      name: pushDevices
+      in: query
+      description: Whether to also push devices when pushing an ApplicationNetworkTypeLink or a DeviceProfile
+      required: false
+      schema:
+        type: string
+        enum:
+        - 'true'
+        - 'false'
   schemas:
     ResourceCreatedResponse:
       type: object

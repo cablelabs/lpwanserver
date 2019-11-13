@@ -127,7 +127,8 @@ describe('Transfer Lora Server v1 network to Lora Server v2', () => {
         }
         else {
           const remoteDevKeys = Lora1.cache.DeviceKey.find(x => x.devEUI === lora1Dev.devEUI)
-          assert.strictEqual(remoteDevKeys.appKey, ns.deviceKeys.nwkKey)
+          console.log(JSON.stringify(remoteDevKeys))
+          assert.strictEqual(remoteDevKeys.appKey, ns.deviceKeys.appKey)
         }
       })
       return Promise.all(promises)

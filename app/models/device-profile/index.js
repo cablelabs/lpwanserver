@@ -1,5 +1,5 @@
 // var httpError = require('http-errors')
-const { load, list } = require('../model-lib')
+const { load, list, listAll } = require('../model-lib')
 const R = require('ramda')
 const { getUpdates, validateSchema } = require('../../lib/utils')
 const { prune } = require('dead-leaves')
@@ -60,14 +60,15 @@ async function update (ctx, { where, data, origin }) {
     validateNwkSettings(data.networkSettings)
   }
   const rec = await ctx.db.update({ where, data })
-  await ctx.$m.networkType.forAllNetworks({
-    networkTypeId: rec.networkType.id,
-    op: async network => ctx.$m.networkDeployment.updateByQuery({
-      where: { network: { id: network.id }, deviceProfile: { id: rec.id } },
-      data: {
-        status: origin && origin.network.id === network.id ? 'SYNCED' : 'UPDATED'
-      }
+  if (origin) {
+    await ctx.$m.networkDeployment.updateByQuery({
+      where: { network: { id: origin.network.id }, deviceProfile: { id: rec.id } },
+      data: { status: 'SYNCED' }
     })
+  }
+  await ctx.$self.push({
+    deviceProfile: rec,
+    omitNetworks: origin ? [origin.network.id] : []
   })
   return rec
 }
@@ -102,14 +103,25 @@ async function remove (ctx, { id }) {
   await ctx.db.remove(id)
 }
 
-// async function pushDeviceProfile (ctx, id) {
-//   var rec = await ctx.db.load({ where: { id } })
-//   const logs = await ctx.$m.networkType.forAllNetworks({
-//     networkTypeId: rec.networkType.id,
-//     op: network => ctx.$m.networkProtocol.pushDeviceProfile({ network, deviceProfileId: id })
-//   })
-//   return logs
-// }
+async function pushDeviceProfile (ctx, { id, deviceProfile: rec, pushDevices = false, omitNetworks = [] }) {
+  if (!rec) {
+    rec = await ctx.db.load({ where: { id } })
+  }
+  await ctx.$m.networkType.forAllNetworks({
+    networkTypeId: rec.networkType.id,
+    op: async network => {
+      if (omitNetworks.includes(network.id)) return
+      return ctx.$m.networkProtocol.pushDeviceProfile({ network, deviceProfileId: rec.id, pushDevices })
+    }
+  })
+}
+
+async function pushDeviceProfileDevices (ctx, { id, status }) {
+  for await (let devNtlState of ctx.$m.deviceNetworkTypeLink.listAll({ where: { deviceProfile: { id } } })) {
+    let ids = devNtlState.map(R.prop('id'))
+    await Promise.all(ids.map(id => ctx.$m.deviceNetworkTypeLink.push({ id, status })))
+  }
+}
 
 // ******************************************************************************
 // Model
@@ -119,10 +131,13 @@ module.exports = {
   publicApi: {
     create,
     list,
+    listAll,
     load,
     update,
     upsert,
-    remove
+    remove,
+    push: pushDeviceProfile,
+    pushDevices: pushDeviceProfileDevices
   },
   fragments
 }

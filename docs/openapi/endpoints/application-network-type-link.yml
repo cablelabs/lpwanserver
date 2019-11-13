@@ -101,6 +101,24 @@ paths:
           description: ApplicationNetworkTypeLink record was deleted
         '404':
           description: ApplicationNetworkTypeLink not found
+  /api/application-network-type-links/{id}/push:
+    parameters:
+      - $ref: '../api.yml#/components/parameters/idParam'
+    post:
+      operationId: pushApplicationNetworkTypeLink
+      summary: Push ApplicationNetworkTypeLink
+      description: Push Application to all Networks of this NetworkType
+      parameters:
+        - $ref: '../api.yml#/components/parameters/pushDevices'
+      security:
+        - bearer_token: []
+      tags:
+        - ApplicationNetworkTypeLink
+      responses:
+        '204':
+          description: ApplicationNetworkTypeLink was pushed
+        '404':
+          description: ApplicationNetworkTypeLink not found
 components:
   schemas:
     ApplicationNetworkTypeLink:

@@ -101,6 +101,24 @@ paths:
           description: DeviceProfile record was deleted
         '404':
           description: DeviceProfile not found
+  /api/device-profiles/{id}/push:
+    parameters:
+      - $ref: '../api.yml#/components/parameters/idParam'
+    post:
+      operationId: pushDeviceProfile
+      summary: Push DeviceProfile
+      description: Push DeviceProfile to all Networks of this NetworkType
+      parameters:
+        - $ref: '../api.yml#/components/parameters/pushDevices'
+      security:
+        - bearer_token: []
+      tags:
+        - DeviceProfile
+      responses:
+        '204':
+          description: DeviceProfile was pushed
+        '404':
+          description: DeviceProfile not found
 components:
   schemas:
     DeviceProfile:

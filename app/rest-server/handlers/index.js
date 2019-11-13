@@ -36,7 +36,16 @@ const handlers = {
   ...require('./resources/application').handlers,
 
   // Device custom endpoints
-  ...require('./resources/device').handlers
+  ...require('./resources/device').handlers,
+
+  // ApplicationNetworkTypeLink custom endpoints
+  ...require('./resources/application-network-type-link').handlers,
+
+  // DeviceNetworkTypeLink custom endpoints
+  ...require('./resources/device-network-type-link').handlers,
+
+  // DeviceProfile custom endpoints
+  ...require('./resources/device-profile').handlers
 }
 
 module.exports = handlers

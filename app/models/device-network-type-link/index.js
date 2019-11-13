@@ -106,14 +106,15 @@ async function update (ctx, { where, data, origin }) {
     data = serializeNwkSettings(data)
   }
   const rec = await ctx.db.update({ where, data })
-  await ctx.$m.networkType.forAllNetworks({
-    networkTypeId: rec.networkType.id,
-    op: async network => ctx.$m.networkDeployment.updateByQuery({
-      where: { network: { id: network.id }, device: rec.device },
-      data: {
-        status: origin && origin.network.id === network.id ? 'SYNCED' : 'UPDATED'
-      }
+  if (origin) {
+    await ctx.$m.networkDeployment.updateByQuery({
+      where: { network: { id: origin.network.id }, device: { id: rec.id } },
+      data: { status: 'SYNCED' }
     })
+  }
+  await ctx.$self.push({
+    deviceNetworkTypeLink: rec,
+    omitNetworks: origin ? [origin.network.id] : []
   })
   return parseNwkSettings(rec)
 }
@@ -144,17 +145,17 @@ async function remove (ctx, { id }) {
   await ctx.db.remove(id)
 }
 
-async function pushDeviceNetworkTypeLink (ctx, id) {
-  var rec = await ctx.db.load({ where: { id } })
-  rec.remoteAccessLogs = await ctx.$m.networkType.forAllNetworks({
+async function pushDeviceNetworkTypeLink (ctx, { id, deviceNetworkTypeLink: rec, omitNetworks = [] }) {
+  if (!rec) {
+    rec = await ctx.db.load({ where: { id } })
+  }
+  await ctx.$m.networkType.forAllNetworks({
     networkTypeId: rec.networkType.id,
-    op: network => ctx.$m.networkProtocol.pushDevice({
-      network,
-      deviceId: rec.device.id,
-      networkSettings: rec.networkSettings
-    })
+    op: async network => {
+      if (omitNetworks.includes(network.id)) return
+      return ctx.$m.networkProtocol.pushDevice({ network, deviceId: rec.id })
+    }
   })
-  return rec
 }
 
 async function findByDevEUI (ctx, { devEUI, networkTypeId }) {
@@ -188,7 +189,7 @@ module.exports = {
     upsert,
     remove,
     removeMany,
-    pushDeviceNetworkTypeLink,
+    push: pushDeviceNetworkTypeLink,
     findByDevEUI
   },
   fragments

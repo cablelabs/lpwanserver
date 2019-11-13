@@ -82,13 +82,7 @@ async function update (ctx, { where, data }) {
     await ctx.$self.enabledValidation({ application: rec.application })
   }
   rec = await ctx.db.update({ where, data })
-  await ctx.$m.networkType.forAllNetworks({
-    networkTypeId: rec.networkType.id,
-    op: network => ctx.$m.networkDeployment.updateByQuery({
-      where: { network: { id: network.id }, application: rec.application },
-      data: { status: 'UPDATED' }
-    })
-  })
+  await ctx.$self.push({ applicationNetworkTypeLink: rec })
   return rec
 }
 
@@ -128,29 +122,25 @@ async function remove (ctx, { id }) {
   await ctx.db.remove(id)
 }
 
-// async function pushApplicationNetworkTypeLink (ctx, id) {
-//   var rec = await ctx.db.load({ where: { id } })
+async function pushApplicationNetworkTypeLink (ctx, { id, applicationNetworkTypeLink: rec, pushDevices = false }) {
+  if (!rec) {
+    rec = await ctx.db.load({ where: { id } })
+  }
+  await ctx.$m.networkType.forAllNetworks({
+    networkTypeId: rec.networkType.id,
+    op: network => ctx.$m.networkProtocol.pushApplication({ network, applicationId: rec.application.id, pushDevices })
+  })
+}
 
-//   // Push deviceNetworkTypeLinks
-//   for await (let devState of ctx.$m.device.listAll({ where: { application: { id } } })) {
-//     let ids = devState.records.map(R.prop('id'))
-//     for await (let devNtlState of ctx.$m.deviceNetworkTypeLink.listAll({ where: { device: { id_in: ids } } })) {
-//       let ids = devNtlState.map(R.prop('id'))
-//       await Promise.all(ids.map(ctx.$m.deviceNetworkTypeLink.pushDeviceNetworkTypeLink))
-//     }
-//   }
-
-//   rec.remoteAccessLogs = ctx.$m.networkType.forAllNetworks({
-//     networkTypeId: rec.networkType.id,
-//     op: network => ctx.$m.networkProtocol.pushApplication({
-//       network,
-//       applicationId: rec.application.id,
-//       networkSettings: rec.networkSettings
-//     })
-//   })
-
-//   return rec
-// }
+async function pushApplicationDevices (ctx, { id, status }) {
+  for await (let devState of ctx.$m.device.listAll({ where: { application: { id } } })) {
+    let ids = devState.records.map(R.prop('id'))
+    for await (let devNtlState of ctx.$m.deviceNetworkTypeLink.listAll({ where: { device: { id_in: ids } } })) {
+      let ids = devNtlState.map(R.prop('id'))
+      await Promise.all(ids.map(id => ctx.$m.deviceNetworkTypeLink.push({ id, status })))
+    }
+  }
+}
 
 // ******************************************************************************
 // Model
@@ -166,8 +156,9 @@ module.exports = {
     update,
     upsert,
     remove,
-    removeMany
-    // pushApplicationNetworkTypeLink
+    removeMany,
+    push: pushApplicationNetworkTypeLink,
+    pushDevices: pushApplicationDevices
   },
   privateApi: {
     enabledValidation
