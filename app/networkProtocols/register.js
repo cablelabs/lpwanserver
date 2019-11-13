@@ -15,7 +15,7 @@ async function registerLora2 (networkProtocolModel, loraNwkType) {
     networkProtocolVersion: '2.0'
   }
   try {
-    const { records } = await networkProtocolModel.list({ search: me.name, networkProtocolVersion: '1.0' })
+    const [records] = await networkProtocolModel.list({ search: me.name, networkProtocolVersion: '1.0' })
     if (records.length) {
       me.masterProtocolId = records[0].id
     }

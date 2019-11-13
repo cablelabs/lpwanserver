@@ -5,7 +5,7 @@ module.exports = {
   client,
   network: {
     id: '1',
-    baseUrl: 'https://lora_appserver1:8080/api',
+    baseUrl: 'https://chirpstack_app_svr_1:8080/api',
     securityData: {
       username: 'admin',
       password: 'admin'
@@ -13,7 +13,7 @@ module.exports = {
   },
   networkServer: {
     name: 'LoraOS1',
-    server: 'loraserver1:8000'
+    server: 'chirpstack_nwk_svr_1:8000'
   },
   organization: {
     name: 'SysAdmins',

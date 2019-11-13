@@ -60,8 +60,7 @@ credentials
 secrets
 
 certs
-!development/loraserver/configuration/lora-app-server/certs
-!development/loraserver/configuration/lora-app-server_1/certs
+!development/chirpstack/configuration/lora-app-server/certs
 
 development/credentials
 

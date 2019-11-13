@@ -18,19 +18,21 @@ async function removeContainersAndVolumes () {
     'lpwanserver_dev_e2e_test',
     'lpwanserver_dev_prisma',
     'lpwanserver_dev_postgres',
-    'lpwanserver_dev_lora_postgres',
     'lpwanserver_dev_redis',
-    'lpwanserver_dev_loraserver2',
-    'lpwanserver_dev_loraserver1',
-    'lpwanserver_dev_loraappserver2',
-    'lpwanserver_dev_loraappserver1',
-    'lpwanserver_dev_loraserver_mosquitto'
+    'lpwanserver_dev_chirp_postgres',
+    'lpwanserver_dev_chirp_redis',
+    'lpwanserver_dev_chirpnwksvr',
+    'lpwanserver_dev_chirpnwksvr1',
+    'lpwanserver_dev_chirpappsvr',
+    'lpwanserver_dev_chirpappsvr1',
+    'lpwanserver_dev_chirp_mosquitto'
   ]
 
   const volumes = [
     'lpwanserver_dev_postgres',
-    'lpwanserver_dev_lora_postgres',
-    'lpwanserver_dev_redis'
+    'lpwanserver_dev_redis',
+    'lpwanserver_dev_chirp_postgresqldata',
+    'lpwanserver_dev_chirp_redisdata'
   ]
 
   const logErr = () => {

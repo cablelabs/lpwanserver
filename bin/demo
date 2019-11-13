@@ -3,16 +3,19 @@
 if [ "$1" = "stop" ]
 then
   docker-compose -f docker-compose.yml down
-  docker-compose -f development/loraserver/docker-compose.yml down
-  docker-compose -f development/databases/docker-compose.demo-db.yml down
+  docker-compose -f development/chirpstack/docker-compose.yml down
+  docker-compose -f development/databases/docker-compose.yml down
   exit 0
 fi
 
 # Remove old containers, volumes, and images
 ./bin/clean.js
 
-# Start databases and prisma
-docker-compose -f development/databases/docker-compose.demo-db.yml up -d
+# Start ChirpStacks
+docker-compose -f development/chirpstack/docker-compose.yml up -d
+
+# Start LPWAN Server databases and prisma
+docker-compose -f development/databases/docker-compose.yml up -d
 
 # Build UI
 ./bin/build-ui
@@ -20,8 +23,8 @@ docker-compose -f development/databases/docker-compose.demo-db.yml up -d
 # Deploy Prisma
 ./development/bin/manage-db deploy
 
-# Start Lora Server
-docker-compose -f development/loraserver/docker-compose.yml up -d
+# Seed Demo Data
+./bin/demo-seed.js
 
 # Start demo
 docker-compose -f docker-compose.yml up -d --build
