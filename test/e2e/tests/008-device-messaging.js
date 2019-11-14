@@ -2,8 +2,8 @@ let chai = require('chai')
 let chaiHttp = require('chai-http')
 const { createApp } = require('../../../app/rest-server/app')
 let setup = require('../setup.js')
-const Lora1 = require('../../networks/lora-v1')
-const Lora2 = require('../../networks/lora-v2')
+const Chirpstack1 = require('../../networks/chirpstack-v1')
+const Chirpstack2 = require('../../networks/chirpstack-v2')
 // const Ttn = require('../../networks/ttn')
 const createRcServer = require('../../lib/rc-server')
 const { wait } = require('../../lib/helpers')
@@ -16,7 +16,7 @@ let server
 
 // async function listenForTtnDownlink () {
 //   const apps = await Ttn.client.listApplications(Ttn.network)
-//   const app = apps.find(x => x.name === Lora2.application.name)
+//   const app = apps.find(x => x.name === Chirpstack2.application.name)
 //   should.exist(app)
 //   const { dataClient } = await Ttn.client.getDataClient(Ttn.network, app.id)
 //   dataClient.on("event", "+", "downlink/scheduled", (devId, payload) => {
@@ -67,7 +67,7 @@ describe('E2E Test for Uplink/Downlink Device Messaging', () => {
         const res = await send(server.get('/api/applications'))
         res.should.have.status(200)
         let { records } = JSON.parse(res.text)
-        const app = records.find(x => x.name === Lora2.application.name)
+        const app = records.find(x => x.name === Chirpstack2.application.name)
         should.exist(app)
         lora2AppId = app.id
       })
@@ -94,7 +94,7 @@ describe('E2E Test for Uplink/Downlink Device Messaging', () => {
     describe('Send uplink message to LPWAN Server', () => {
       it('Post an uplink message to the LPWAN Server uplink endpoint', async () => {
         const res = await send(
-          server.post(`/api/uplinks/${lora2AppId}/${Lora2.network.id}`),
+          server.post(`/api/uplinks/${lora2AppId}/${Chirpstack2.network.id}`),
           { msgId: 1 }
         )
         res.should.have.status(204)
@@ -109,7 +109,7 @@ describe('E2E Test for Uplink/Downlink Device Messaging', () => {
     })
     describe('Send a downlink message to a device', () => {
       it('Find LPWAN Server device ID', async () => {
-        const res = await send(server.get(`/api/devices?search=${Lora2.device.name}`))
+        const res = await send(server.get(`/api/devices?search=${Chirpstack2.device.name}`))
         res.should.have.status(200)
         let { records } = JSON.parse(res.text)
         const device = records[0]
@@ -124,12 +124,12 @@ describe('E2E Test for Uplink/Downlink Device Messaging', () => {
         )
         res.status.should.equal(200)
       })
-      it('Get device message from Lora Server v1 queue', async () => {
-        const res = await Lora1.client.listDeviceMessages(Lora1.network, Lora2.device.devEUI)
+      it('Get device message from ChirpStack v1 queue', async () => {
+        const res = await Chirpstack1.client.listDeviceMessages(Chirpstack1.network, Chirpstack2.device.devEUI)
         res.result.length.should.equal(1)
       })
-      it('Get device message from Lora Server v2 queue', async () => {
-        const res = await Lora2.client.listDeviceMessages(Lora2.network, Lora2.device.devEUI)
+      it('Get device message from ChirpStack v2 queue', async () => {
+        const res = await Chirpstack2.client.listDeviceMessages(Chirpstack2.network, Chirpstack2.device.devEUI)
         res.result.length.should.equal(1)
       })
     })
@@ -143,7 +143,7 @@ describe('E2E Test for Uplink/Downlink Device Messaging', () => {
       })
       it('Post an uplink message to the LPWAN Server uplink endpoint', async () => {
         const res = await send(
-          server.post(`/api/uplinks/${lora2AppId}/${Lora2.network.id}`),
+          server.post(`/api/uplinks/${lora2AppId}/${Chirpstack2.network.id}`),
           { msgId: 2 }
         )
         res.should.have.status(204)

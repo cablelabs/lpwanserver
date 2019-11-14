@@ -4,8 +4,8 @@ const { createApp } = require('../../../app/rest-server/app')
 let setup = require('../setup.js')
 let Data = require('../../data')
 const { assertEqualProps } = require('../../lib/helpers')
-const Lora1 = require('../../networks/lora-v1')
-const Lora2 = require('../../networks/lora-v2')
+const Chirpstack1 = require('../../networks/chirpstack-v1')
+const Chirpstack2 = require('../../networks/chirpstack-v2')
 const Loriot = require('../../networks/loriot')
 const { prisma } = require('../../../app/generated/prisma-client')
 
@@ -219,15 +219,15 @@ describe('E2E Test for Deleting an Application Use Case #191', () => {
         })
     })
   })
-  describe('Verify LoRaServer V1 has application', function () {
-    it('Verify the LoRaServer V1 Application Exists', async () => {
-      const { result } = await Lora1.client.listApplications(Lora1.network, { limit: 100 })
+  describe('Verify ChirpStack V1 has application', function () {
+    it('Verify the ChirpStack V1 Application Exists', async () => {
+      const { result } = await Chirpstack1.client.listApplications(Chirpstack1.network, { limit: 100 })
       const app = result.find(x => x.name === testData.app.name)
       should.exist(app)
       remoteApp1 = app.id
     })
-    it('Verify the LoRaServer V1 Application Exists', async () => {
-      const app = await Lora1.client.loadApplication(Lora1.network, remoteApp1)
+    it('Verify the ChirpStack V1 Application Exists', async () => {
+      const app = await Chirpstack1.client.loadApplication(Chirpstack1.network, remoteApp1)
       app.should.have.property('id')
       app.should.have.property('name')
       app.should.have.property('description')
@@ -238,14 +238,14 @@ describe('E2E Test for Deleting an Application Use Case #191', () => {
       app.should.have.property('payloadDecoderScript')
       app.name.should.equal(testData.app.name)
     })
-    it('Verify the LoRaServer V1 Device Profile Exists', async () => {
-      const { result } = await Lora1.client.listDeviceProfiles(Lora1.network, { limit: 100 })
+    it('Verify the ChirpStack V1 Device Profile Exists', async () => {
+      const { result } = await Chirpstack1.client.listDeviceProfiles(Chirpstack1.network, { limit: 100 })
       const dp = result.find(x => x.name === testData.deviceProfile.name)
       should.exist(dp)
       remoteDeviceProfileId = dp.id
     })
-    it('Verify the LoRaServer V1 Device Profile Exists', async () => {
-      const dp = await Lora1.client.loadDeviceProfile(Lora1.network, remoteDeviceProfileId)
+    it('Verify the ChirpStack V1 Device Profile Exists', async () => {
+      const dp = await Chirpstack1.client.loadDeviceProfile(Chirpstack1.network, remoteDeviceProfileId)
       dp.should.have.property('name')
       dp.name.should.equal(testData.deviceProfile.name)
       dp.should.have.property('organizationID')
@@ -257,8 +257,8 @@ describe('E2E Test for Deleting an Application Use Case #191', () => {
       dp.macVersion.should.equal(testData.deviceProfile.networkSettings.macVersion)
       dp.regParamsRevision.should.equal(testData.deviceProfile.networkSettings.regParamsRevision)
     })
-    it('Verify the LoRaServer V1 Device Exists', async () => {
-      const device = await Lora1.client.loadDevice(Lora1.network, testData.deviceNTL.networkSettings.devEUI)
+    it('Verify the ChirpStack V1 Device Exists', async () => {
+      const device = await Chirpstack1.client.loadDevice(Chirpstack1.network, testData.deviceNTL.networkSettings.devEUI)
       device.should.have.property('name')
       device.should.have.property('devEUI')
       device.should.have.property('applicationID')
@@ -273,15 +273,15 @@ describe('E2E Test for Deleting an Application Use Case #191', () => {
       device.deviceProfileID.should.equal(remoteDeviceProfileId)
     })
   })
-  describe('Verify LoRaServer V2 has application', function () {
-    it('Verify the LoRaServer V2 Application Exists', async () => {
-      const { result } = await Lora2.client.listApplications(Lora2.network, { limit: 100 })
+  describe('Verify ChirpStack V2 has application', function () {
+    it('Verify the ChirpStack V2 Application Exists', async () => {
+      const { result } = await Chirpstack2.client.listApplications(Chirpstack2.network, { limit: 100 })
       const app = result.find(x => x.name === testData.app.name)
       should.exist(app)
       remoteApp2 = app.id
     })
-    it('Verify the LoRaServer V2 Application Exists', async () => {
-      const app = await Lora2.client.loadApplication(Lora2.network, remoteApp2)
+    it('Verify the ChirpStack V2 Application Exists', async () => {
+      const app = await Chirpstack2.client.loadApplication(Chirpstack2.network, remoteApp2)
       app.should.have.property('id')
       app.should.have.property('name')
       app.should.have.property('description')
@@ -292,14 +292,14 @@ describe('E2E Test for Deleting an Application Use Case #191', () => {
       app.should.have.property('payloadDecoderScript')
       app.name.should.equal(testData.app.name)
     })
-    it('Verify the LoRaServer V2 Device Profile Exists', async () => {
-      const { result } = await Lora2.client.listDeviceProfiles(Lora2.network, { limit: 100 })
+    it('Verify the ChirpStack V2 Device Profile Exists', async () => {
+      const { result } = await Chirpstack2.client.listDeviceProfiles(Chirpstack2.network, { limit: 100 })
       const dp = result.find(x => x.name === testData.deviceProfile.name)
       should.exist(dp)
       remoteDeviceProfileId2 = dp.id
     })
-    it('Verify the LoRaServer V2 Device Profile Exists', async () => {
-      const dp = await Lora2.client.loadDeviceProfile(Lora2.network, remoteDeviceProfileId2)
+    it('Verify the ChirpStack V2 Device Profile Exists', async () => {
+      const dp = await Chirpstack2.client.loadDeviceProfile(Chirpstack2.network, remoteDeviceProfileId2)
       dp.should.have.property('name')
       dp.name.should.equal(testData.deviceProfile.name)
       dp.should.have.property('organizationID')
@@ -309,8 +309,8 @@ describe('E2E Test for Deleting an Application Use Case #191', () => {
       dp.macVersion.should.equal(testData.deviceProfile.networkSettings.macVersion)
       dp.regParamsRevision.should.equal(testData.deviceProfile.networkSettings.regParamsRevision)
     })
-    it('Verify the LoRaServer V2 Device Exists', async () => {
-      const device = await Lora2.client.loadDevice(Lora2.network, testData.deviceNTL.networkSettings.devEUI)
+    it('Verify the ChirpStack V2 Device Exists', async () => {
+      const device = await Chirpstack2.client.loadDevice(Chirpstack2.network, testData.deviceNTL.networkSettings.devEUI)
       device.should.have.property('name')
       device.should.have.property('devEUI')
       device.should.have.property('applicationID')
@@ -338,7 +338,7 @@ describe('E2E Test for Deleting an Application Use Case #191', () => {
       app.should.have.property('name')
       app.name.should.equal(testData.app.name)
     })
-    it('Verify the LoRaServer V2 Device Exists', async () => {
+    it('Verify the ChirpStack V2 Device Exists', async () => {
       const device = await Loriot.client.loadDevice(Loriot.network, testData.deviceNTL.networkSettings.devEUI)
       device.should.have.property('title')
       device.should.have.property('deveui')
@@ -409,34 +409,34 @@ describe('E2E Test for Deleting an Application Use Case #191', () => {
         })
     })
   })
-  describe('Verify Device Removed from LoRaServer Networks', () => {
-    it('Verify the LoRaServer V1 Device Does Not Exist', async () => {
+  describe('Verify Device Removed from ChirpStack Networks', () => {
+    it('Verify the ChirpStack V1 Device Does Not Exist', async () => {
       try {
-        await Lora1.client.loadDevice(Lora1.network, testData.deviceNTL.networkSettings.devEUI)
+        await Chirpstack1.client.loadDevice(Chirpstack1.network, testData.deviceNTL.networkSettings.devEUI)
       }
       catch (err) {
         err.statusCode.should.equal(404)
       }
     })
-    it('Verify the LoRaServer V1 Device Profile Does Not Exist', async () => {
+    it('Verify the ChirpStack V1 Device Profile Does Not Exist', async () => {
       try {
-        await Lora1.client.loadDeviceProfile(Lora1.network, remoteDeviceProfileId)
+        await Chirpstack1.client.loadDeviceProfile(Chirpstack1.network, remoteDeviceProfileId)
       }
       catch (err) {
         err.statusCode.should.equal(404)
       }
     })
-    it('Verify the LoRaServer V2 Device Does Not Exist', async () => {
+    it('Verify the ChirpStack V2 Device Does Not Exist', async () => {
       try {
-        await Lora2.client.loadDevice(Lora2.network, testData.deviceNTL.networkSettings.devEUI)
+        await Chirpstack2.client.loadDevice(Chirpstack2.network, testData.deviceNTL.networkSettings.devEUI)
       }
       catch (err) {
         err.statusCode.should.equal(404)
       }
     })
-    it('Verify the LoRaServer V2 Device Profile Does Not Exist', async () => {
+    it('Verify the ChirpStack V2 Device Profile Does Not Exist', async () => {
       try {
-        await Lora2.client.loadDeviceProfile(Lora2.network, remoteDeviceProfileId2)
+        await Chirpstack2.client.loadDeviceProfile(Chirpstack2.network, remoteDeviceProfileId2)
       }
       catch (err) {
         err.statusCode.should.equal(404)
@@ -495,18 +495,18 @@ describe('E2E Test for Deleting an Application Use Case #191', () => {
         })
     })
   })
-  describe('Verify Application Removed from LoRaServer Networks', () => {
-    it('Verify the LoRaServer V1 Application Does Not Exist', async () => {
+  describe('Verify Application Removed from ChirpStack Networks', () => {
+    it('Verify the ChirpStack V1 Application Does Not Exist', async () => {
       try {
-        await Lora1.client.loadApplication(Lora1.network, remoteApp1)
+        await Chirpstack1.client.loadApplication(Chirpstack1.network, remoteApp1)
       }
       catch (err) {
         err.statusCode.should.equal(404)
       }
     })
-    it('Verify the LoRaServer V2 Application Does Not Exist', async () => {
+    it('Verify the ChirpStack V2 Application Does Not Exist', async () => {
       try {
-        await Lora2.client.loadApplication(Lora2.network, remoteApp2)
+        await Chirpstack2.client.loadApplication(Chirpstack2.network, remoteApp2)
       }
       catch (err) {
         err.statusCode.should.equal(404)

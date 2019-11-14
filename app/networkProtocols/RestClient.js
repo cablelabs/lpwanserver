@@ -1,14 +1,15 @@
 const requestClient = require('request-promise')
 const R = require('ramda')
 const { URLSearchParams } = require('url')
-var { log } = require('../lib/log')
 const { joinUrl } = require('../lib/utils')
 const EventEmitter = require('events')
+const { log } = require('../lib/log')
 
 module.exports = class RestClient extends EventEmitter {
   constructor ({ cache } = {}) {
     super()
     this.cache = cache || new Map()
+    this.logger = log
   }
 
   async request ({ opts, transformResponse = R.identity }) {
@@ -16,11 +17,15 @@ module.exports = class RestClient extends EventEmitter {
     let body
     try {
       body = await requestClient(opts)
-      log.debug(`NETWORK REQUEST`, { opts })
-      log.debug(`NETWORK RESPONSE`, { body })
+      if (this.logger) {
+        this.logger.info(`NETWORK REQUEST`, { opts })
+        this.logger.info(`NETWORK RESPONSE`, { body })
+      }
     }
     catch (err) {
-      log.verbose(`NETWORK ERROR`, { opts, error: err })
+      if (this.logger) {
+        this.logger.error(`NETWORK ERROR`, { opts, error: err })
+      }
       throw err
     }
     return transformResponse(body)

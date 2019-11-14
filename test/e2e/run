@@ -6,8 +6,8 @@ npm run clean
 ./development/bin/manage-db start
 ./development/bin/manage-db deploy
 
-# Start Lora Servers
-docker-compose -f development/loraserver/docker-compose.yml up -d
+# Start ChirpStack
+docker-compose -f development/chirpstack/docker-compose.yml up -d
 
 # Run tests
 docker-compose -f test/e2e/docker-compose.yml up --build \
@@ -16,8 +16,8 @@ docker-compose -f test/e2e/docker-compose.yml up --build \
 
 TEST_EXIT_CODE=$?
 
-#Stop LoRa Servers
-docker-compose -f development/loraserver/docker-compose.yml down
+#Stop ChirpStack
+docker-compose -f development/chirpstack/docker-compose.yml down
 
 # Stop databases
 ./development/bin/manage-db stop

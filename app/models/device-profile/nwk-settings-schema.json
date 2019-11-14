@@ -24,6 +24,16 @@
         "type": "integer"
       }
     },
+    "geolocBufferTTL": {
+      "type": "integer",
+      "description": "",
+      "default": 0
+    },
+    "geolocMinBufferSize": {
+      "type": "integer",
+      "description": "",
+      "default": 0
+    },
     "macVersion": {
       "type": "string",
       "description": ""

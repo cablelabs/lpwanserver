@@ -1,5 +1,5 @@
 const cryptoRandomString = require('crypto-random-string')
-const { client, cache } = require('../../clients/lora-server1')
+const { client, cache } = require('../../clients/chirpstack1')
 const R = require('ramda')
 const Seeder = require('../../../../lib/seeder')
 

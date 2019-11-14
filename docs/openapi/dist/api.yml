@@ -30,7 +30,11 @@ tags:
       NetworkType.  These records store Device configuration for the
       NetworkType.
   - name: Network
+<<<<<<< HEAD
     description: A Network represents an IoT device network.
+=======
+    description: A Network represents a remote IoT network, such as an instance of ChirpStack.
+>>>>>>> issue-361
   - name: NetworkProtocol
     description: A NetworkProtocol represents a unique Network API.  A NeworkProtocol
       represents the code responsible for callinga remote network's API.

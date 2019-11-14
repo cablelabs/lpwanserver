@@ -3,8 +3,8 @@ var chai = require('chai')
 var chaiHttp = require('chai-http')
 const { createApp } = require('../../../app/rest-server/app')
 var should = chai.should()
-const Lora1 = require('../../networks/lora-v1')
-// const Lora2 = require('../e2e/networks/lora-v2')
+const Chirpstack1 = require('../../networks/chirpstack-v1')
+// const Chirpstack2 = require('../e2e/networks/chirpstack-v2')
 const { prisma } = require('../../../app/generated/prisma-client')
 
 chai.use(chaiHttp)
@@ -22,8 +22,8 @@ describe('Networks', function () {
       .post('/api/sessions')
       .send({ 'username': 'admin', 'password': 'password' })
     adminToken = res.text
-    await Lora1.setup()
-    // await Lora2.setup()
+    await Chirpstack1.setup()
+    // await Chirpstack2.setup()
     nwkTypeId = (await prisma.networkType({ name: 'LoRa' })).id
   })
 
@@ -32,7 +32,7 @@ describe('Networks', function () {
   describe('POST /api/networks', function () {
     it('Get Network Protocol for Lora OS', function (done) {
       server
-        .get('/api/network-protocols?search=LoRa Server')
+        .get('/api/network-protocols?search=ChirpStack')
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {
@@ -75,13 +75,13 @@ describe('Networks', function () {
         .send({
           'name': 'Funky network',
           'networkTypeId': nwkTypeId,
-          'baseUrl': 'https://lora_appserver1:8080/api',
+          'baseUrl': 'https://chirpstack_app_svr_1:8080/api',
           'networkProtocolId': npId1,
           'securityData': { 'username': 'admin', 'password': 'admin' },
           'networkSettings': {
-            networkServerID: Lora1.networkServer.id,
-            organizationID: Lora1.organization.id,
-            serviceProfileID: Lora1.serviceProfile.id
+            networkServerID: Chirpstack1.networkServer.id,
+            organizationID: Chirpstack1.organization.id,
+            serviceProfileID: Chirpstack1.serviceProfile.id
           }
         })
         .end(function (err, res) {
@@ -104,7 +104,7 @@ describe('Networks', function () {
           res.should.have.status(200)
           var netObj = JSON.parse(res.text)
           netObj.name.should.equal('Funky network')
-          netObj.baseUrl.should.equal('https://lora_appserver1:8080/api')
+          netObj.baseUrl.should.equal('https://chirpstack_app_svr_1:8080/api')
           done()
         })
     })

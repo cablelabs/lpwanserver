@@ -1,5 +1,5 @@
-const Lora1 = require('./clients/lora-server1')
-const Lora2 = require('./clients/lora-server2')
+const ChirpStack1 = require('./clients/chirpstack1')
+const ChirpStack2 = require('./clients/chirpstack2')
 const Seeder = require('../../lib/seeder')
 const R = require('ramda')
 
@@ -52,22 +52,22 @@ const commonSeeds = [
 async function seedLora1 () {
   let seeds = R.clone(commonSeeds)
   seeds[0].items[0].server = process.env.LORA_SERVER1_HOST_PORT
-  seeds[0].create = async x => R.merge(x, await Lora1.client.createNetworkServer(x))
-  seeds[1].create = async x => R.merge(x, await Lora1.client.createOrganization(x))
-  seeds[2].create = async x => R.merge(x, await Lora1.client.createServiceProfile(x))
+  seeds[0].create = async x => R.merge(x, await ChirpStack1.client.createNetworkServer(x))
+  seeds[1].create = async x => R.merge(x, await ChirpStack1.client.createOrganization(x))
+  seeds[2].create = async x => R.merge(x, await ChirpStack1.client.createServiceProfile(x))
   let result = await Seeder.seedData(seeds)
-  Object.assign(Lora1.cache, result)
+  Object.assign(ChirpStack1.cache, result)
   return result
 }
 
 async function seedLora2 () {
   let seeds = R.clone(commonSeeds)
   seeds[0].items[0].server = process.env.LORA_SERVER2_HOST_PORT
-  seeds[0].create = async x => R.merge(x, await Lora2.client.createNetworkServer(x))
-  seeds[1].create = async x => R.merge(x, await Lora2.client.createOrganization(x))
-  seeds[2].create = async x => R.merge(x, await Lora2.client.createServiceProfile(x))
+  seeds[0].create = async x => R.merge(x, await ChirpStack2.client.createNetworkServer(x))
+  seeds[1].create = async x => R.merge(x, await ChirpStack2.client.createOrganization(x))
+  seeds[2].create = async x => R.merge(x, await ChirpStack2.client.createServiceProfile(x))
   let result = await Seeder.seedData(seeds)
-  Object.assign(Lora2.cache, result)
+  Object.assign(ChirpStack2.cache, result)
   return result
 }
 

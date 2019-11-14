@@ -6,8 +6,8 @@ const { createApp } = require('../../../app/rest-server/app')
 var should = chai.should()
 var setup = require('../setup.js')
 const { wait } = require('../../lib/helpers')
-const Lora1 = require('../../networks/lora-v1')
-const Lora2 = require('../../networks/lora-v2')
+const Chirpstack1 = require('../../networks/chirpstack-v1')
+const Chirpstack2 = require('../../networks/chirpstack-v2')
 const Loriot = require('../../networks/loriot')
 const Ttn = require('../../networks/ttn')
 const { prisma } = require('../../../app/generated/prisma-client')
@@ -65,7 +65,7 @@ describe('E2E Test for Multiple Networks', () => {
     networkTypeId = nwkTypes[0].id
     await setup.start()
     await wait(10000)
-    await Promise.all([Lora1.setup(), Lora2.setup()])
+    await Promise.all([Chirpstack1.setup(), Chirpstack2.setup()])
     if (LORIOT_ENABLED === 'true') await Loriot.setup()
     // if (TTN_ENABLED === 'true') await Ttn.setup()
   })
@@ -84,7 +84,7 @@ describe('E2E Test for Multiple Networks', () => {
     describe('Setup Lora 1.0 Network', () => {
       it('Verify LoraOS 1.0 Protocol Exists', async () => {
         const res = await server
-          .get('/api/network-protocols?search=LoRa Server&networkProtocolVersion=1.0')
+          .get('/api/network-protocols?search=ChirpStack&networkProtocolVersion=1.0')
           .set('Authorization', 'Bearer ' + adminToken)
           .set('Content-Type', 'application/json')
         res.should.have.status(200)
@@ -104,13 +104,13 @@ describe('E2E Test for Multiple Networks', () => {
           .send({
             'name': 'LocalLoraOS1_0',
             'networkTypeId': networkTypeId,
-            'baseUrl': Lora1.network.baseUrl,
+            'baseUrl': Chirpstack1.network.baseUrl,
             'networkProtocolId': lora.loraV1.protocolId,
-            'securityData': Lora1.network.securityData,
+            'securityData': Chirpstack1.network.securityData,
             'networkSettings': {
-              networkServerID: Lora1.networkServer.id,
-              organizationID: Lora1.organization.id,
-              serviceProfileID: Lora1.serviceProfile.id
+              networkServerID: Chirpstack1.networkServer.id,
+              organizationID: Chirpstack1.organization.id,
+              serviceProfileID: Chirpstack1.serviceProfile.id
             }
           })
           .end(function (err, res) {
@@ -133,7 +133,7 @@ describe('E2E Test for Multiple Networks', () => {
             res.should.have.status(200)
             let network = JSON.parse(res.text)
             network.name.should.equal('LocalLoraOS1_0')
-            network.baseUrl.should.equal(Lora1.network.baseUrl)
+            network.baseUrl.should.equal(Chirpstack1.network.baseUrl)
             network.meta.authorized.should.equal(true)
             network.meta.message.should.equal('Authorized')
             network.enabled.should.equal(true)
@@ -144,7 +144,7 @@ describe('E2E Test for Multiple Networks', () => {
     describe('Setup Lora 2.0 Network', () => {
       it('Verify LoraOS 2.0 Protocol Exists', (done) => {
         server
-          .get('/api/network-protocols?search=LoRa Server&networkProtocolVersion=2.0')
+          .get('/api/network-protocols?search=ChirpStack&networkProtocolVersion=2.0')
           .set('Authorization', 'Bearer ' + adminToken)
           .set('Content-Type', 'application/json')
           .end(function (err, res) {
@@ -168,13 +168,13 @@ describe('E2E Test for Multiple Networks', () => {
           .send({
             'name': 'LocalLoraOS2_0',
             'networkTypeId': networkTypeId,
-            'baseUrl': Lora2.network.baseUrl,
+            'baseUrl': Chirpstack2.network.baseUrl,
             'networkProtocolId': lora.loraV2.protocolId,
-            'securityData': Lora2.network.securityData,
+            'securityData': Chirpstack2.network.securityData,
             'networkSettings': {
-              networkServerID: Lora2.networkServer.id,
-              organizationID: Lora2.organization.id,
-              serviceProfileID: Lora2.serviceProfile.id
+              networkServerID: Chirpstack2.networkServer.id,
+              organizationID: Chirpstack2.organization.id,
+              serviceProfileID: Chirpstack2.serviceProfile.id
             }
           })
           .end(function (err, res) {
@@ -182,7 +182,7 @@ describe('E2E Test for Multiple Networks', () => {
             res.should.have.status(201)
             let network = JSON.parse(res.text)
             lora.loraV2.networkId = network.id
-            Lora2.network.id = network.id
+            Chirpstack2.network.id = network.id
             done()
           })
       })
@@ -198,7 +198,7 @@ describe('E2E Test for Multiple Networks', () => {
             res.should.have.status(200)
             let network = JSON.parse(res.text)
             network.name.should.equal('LocalLoraOS2_0')
-            network.baseUrl.should.equal(Lora2.network.baseUrl)
+            network.baseUrl.should.equal(Chirpstack2.network.baseUrl)
             network.meta.authorized.should.equal(true)
             network.meta.message.should.equal('Authorized')
             network.enabled.should.equal(true)
@@ -327,9 +327,9 @@ describe('E2E Test for Multiple Networks', () => {
             applications.should.have.property('totalCount')
             applications.should.have.property('records')
             // applications.totalCount.should.equal(2)
-            let application = applications.records.find(x => x.name === Lora1.application.name)
-            application.name.should.equal(Lora1.application.name)
-            application.description.should.equal(Lora1.application.description)
+            let application = applications.records.find(x => x.name === Chirpstack1.application.name)
+            application.name.should.equal(Chirpstack1.application.name)
+            application.description.should.equal(Chirpstack1.application.description)
             lora.loraV1.apps.push({
               appId: application.id,
               appNTLId: '',
@@ -400,10 +400,10 @@ describe('E2E Test for Multiple Networks', () => {
             applications.should.have.property('totalCount')
             applications.should.have.property('records')
             // applications.totalCount.should.equal(2)
-            let application = applications.records.find(x => x.name === Lora2.application.name)
+            let application = applications.records.find(x => x.name === Chirpstack2.application.name)
             should.exist(application)
-            application.name.should.equal(Lora2.application.name)
-            application.description.should.equal(Lora2.application.description)
+            application.name.should.equal(Chirpstack2.application.name)
+            application.description.should.equal(Chirpstack2.application.description)
             lora.loraV2.apps.push({
               appId: application.id,
               appNTLId: '',
@@ -628,9 +628,9 @@ describe('E2E Test for Multiple Networks', () => {
             deviceProfiles.should.have.property('totalCount')
             deviceProfiles.should.have.property('records')
             // deviceProfiles.totalCount.should.equal(2)
-            let deviceProfile = deviceProfiles.records.find(x => x.name === Lora1.deviceProfile.name)
+            let deviceProfile = deviceProfiles.records.find(x => x.name === Chirpstack1.deviceProfile.name)
             should.exist(deviceProfile)
-            deviceProfile.name.should.equal(Lora1.deviceProfile.name)
+            deviceProfile.name.should.equal(Chirpstack1.deviceProfile.name)
             lora.loraV1.apps[0].deviceProfileIds.push(deviceProfile.id)
             done()
           })
@@ -639,9 +639,9 @@ describe('E2E Test for Multiple Networks', () => {
         let expected = {
           'id': 1,
           'applicationId': lora.loraV1.apps[0].appId,
-          'name': Lora1.device.name,
+          'name': Chirpstack1.device.name,
           'deviceModel': null,
-          'description': Lora1.device.description
+          'description': Chirpstack1.device.description
         }
         server
           .get('/api/devices')
@@ -655,7 +655,7 @@ describe('E2E Test for Multiple Networks', () => {
             devices.should.have.property('totalCount')
             devices.should.have.property('records')
             // devices.totalCount.should.equal(2)
-            let device = devices.records.find(x => x.name === Lora1.device.name)
+            let device = devices.records.find(x => x.name === Chirpstack1.device.name)
             should.exist(device)
             // device.should.eql(expected)
             lora.loraV1.apps[0].deviceIds.push(device.id)
@@ -752,7 +752,7 @@ describe('E2E Test for Multiple Networks', () => {
             deviceProfiles.should.have.property('totalCount')
             deviceProfiles.should.have.property('records')
             // deviceProfiles.totalCount.should.equal(2)
-            let deviceProfile = deviceProfiles.records.find(x => x.name === Lora2.deviceProfile.name)
+            let deviceProfile = deviceProfiles.records.find(x => x.name === Chirpstack2.deviceProfile.name)
             should.exist(deviceProfile)
             // deviceProfile.should.eql(expected)
             lora.loraV2.apps[0].deviceProfileIds.push(deviceProfile.id)
@@ -779,7 +779,7 @@ describe('E2E Test for Multiple Networks', () => {
             devices.should.have.property('totalCount')
             devices.should.have.property('records')
             // devices.totalCount.should.equal(2)
-            let device = devices.records.find(x => x.name === Lora2.device.name)
+            let device = devices.records.find(x => x.name === Chirpstack2.device.name)
             should.exist(device)
             // device.should.eql(expected)
             lora.loraV2.apps[0].deviceIds.push(device.id)

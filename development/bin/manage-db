@@ -16,7 +16,7 @@ fi
 
 if [ "$1" = "reset" ]
 then
-  primsa_url='http://localhost:4466/lpwanserver/dev' npm run prisma -- seed --reset
+  prisma_url='http://localhost:4466/lpwanserver/dev' npm run prisma -- seed --reset
   exit 0
 fi
 

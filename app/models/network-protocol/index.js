@@ -52,7 +52,11 @@ async function initialize (ctx) {
   const handlersDir = path.join(__dirname, '../../networkProtocols/handlers')
   records.forEach(x => {
     let Handler = require(path.join(handlersDir, x.protocolHandler))
-    let handler = new Handler({ modelAPI: ctx.$m, networkProtocolId: x.id })
+    let handler = new Handler({
+      modelAPI: ctx.$m, // remove once TTN and Loriot are re-written to new handler API
+      networkProtocolId: x.id,
+      logger: ctx.log
+    })
     ctx.handlers[x.id] = handler
     handler.on('uplink', ({ id, args }) => {
       ctx.$m.application.passDataToApplication(args).then(

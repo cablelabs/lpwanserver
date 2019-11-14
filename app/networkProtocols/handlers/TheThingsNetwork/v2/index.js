@@ -19,7 +19,7 @@ const ApiClient = require('./client')
 module.exports = class TheThingsNetworkV2 extends NetworkProtocol {
   constructor (opts) {
     super(opts)
-    this.client = new ApiClient()
+    this.client = new ApiClient({ logger: opts.logger })
     this.networkProtocolId = opts.networkProtocolId
     // this.client.on('uplink', x => this.modelAPI.application.passDataToApplication(x.appId, x.networkId, x.payload))
     // this.subscribeToDataForEnabledApps()
