@@ -21,7 +21,7 @@ async function forAllNetworks (ctx, { networkTypeId, op }) {
     let nwkType = await ctx.$m.networkType.load({ where: { id: networkTypeId } })
     if (nwkType.name === 'IP') {
       let ipNwkProto = await ctx.$m.networkProtocol.loadByQuery({ where: { name: 'IP' } })
-      networks = [{ networkProtocol: { id: ipNwkProto.id } }]
+      networks = [{ id: 'SPOOFED_IP_NETWORK', networkProtocol: { id: ipNwkProto.id } }]
     }
   }
   const mapFn = network => {

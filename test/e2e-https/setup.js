@@ -51,7 +51,7 @@ const commonSeeds = [
 
 async function seedLora1 () {
   let seeds = R.clone(commonSeeds)
-  seeds[0].items[0].server = process.env.LORA_SERVER1_HOST_PORT
+  seeds[0].items[0].server = process.env.CHIRPSTACK_NWKSERVER1_HOST_PORT
   seeds[0].create = async x => R.merge(x, await ChirpStack1.client.createNetworkServer(x))
   seeds[1].create = async x => R.merge(x, await ChirpStack1.client.createOrganization(x))
   seeds[2].create = async x => R.merge(x, await ChirpStack1.client.createServiceProfile(x))
@@ -62,7 +62,7 @@ async function seedLora1 () {
 
 async function seedLora2 () {
   let seeds = R.clone(commonSeeds)
-  seeds[0].items[0].server = process.env.LORA_SERVER2_HOST_PORT
+  seeds[0].items[0].server = process.env.CHIRPSTACK_NWKSERVER2_HOST_PORT
   seeds[0].create = async x => R.merge(x, await ChirpStack2.client.createNetworkServer(x))
   seeds[1].create = async x => R.merge(x, await ChirpStack2.client.createOrganization(x))
   seeds[2].create = async x => R.merge(x, await ChirpStack2.client.createServiceProfile(x))

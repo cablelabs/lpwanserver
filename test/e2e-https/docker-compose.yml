@@ -44,10 +44,10 @@ services:
       - config_file=../config.json
       - LPWANSERVER_URL=https://lpwanserver:3200
       - APP_SERVER_URL=http://app-server:3201
-      - LORA_APPSERVER1_URL=https://chirpstack_app_svr_1:8080
-      - LORA_APPSERVER2_URL=http://chirpstack_app_svr:8080
-      - LORA_SERVER1_HOST_PORT=chirpstack_nwk_svr_1:8000
-      - LORA_SERVER2_HOST_PORT=chirpstack_nwk_svr:8000
+      - CHIRPSTACK_APPSERVER1_URL=https://chirpstack_app_svr_1:8080
+      - CHIRPSTACK_APPSERVER2_URL=http://chirpstack_app_svr:8080
+      - CHIRPSTACK_NWKSERVER1_HOST_PORT=chirpstack_nwk_svr_1:8000
+      - CHIRPSTACK_NWKSERVER2_HOST_PORT=chirpstack_nwk_svr:8000
       - TTN_ENABLED=${TTN_ENABLED:-false}
       - TTN_USERNAME=${TTN_USERNAME}
       - TTN_PASSWORD=${TTN_PASSWORD}

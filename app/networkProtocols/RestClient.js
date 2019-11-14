@@ -6,10 +6,10 @@ const EventEmitter = require('events')
 const { log } = require('../lib/log')
 
 module.exports = class RestClient extends EventEmitter {
-  constructor ({ cache } = {}) {
+  constructor ({ cache, logger } = {}) {
     super()
     this.cache = cache || new Map()
-    this.logger = log
+    this.logger = logger || log
   }
 
   async request ({ opts, transformResponse = R.identity }) {
@@ -24,6 +24,7 @@ module.exports = class RestClient extends EventEmitter {
     }
     catch (err) {
       if (this.logger) {
+        this.logger.error(`NETWORK REQUEST ERRORED`, { opts })
         this.logger.error(`NETWORK ERROR`, { opts, error: err })
       }
       throw err

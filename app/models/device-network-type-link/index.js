@@ -137,7 +137,9 @@ async function remove (ctx, { id }) {
     networkTypeId: rec.networkType.id,
     op: async network => {
       let where = { network: { id: network.id }, device: rec.device }
+      ctx.log.debug('DeviceNetworkTypeLink:remove:where', { where, rec, network })
       for await (let state of ctx.$m.networkDeployment.listAll({ where })) {
+        ctx.log.debug('DeviceNetworkTypeLink:remove:state', { state })
         await Promise.all(state.records.map(rec => ctx.$m.networkDeployment.remove(rec)))
       }
     }

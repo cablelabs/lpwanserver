@@ -2,7 +2,7 @@ const Client = require('../../../app/networkProtocols/handlers/ChirpStack/v2/cli
 
 const network = {
   id: 'mylora1servernetwork',
-  baseUrl: `${process.env.LORA_APPSERVER2_URL}/api`,
+  baseUrl: `${process.env.CHIRPSTACK_APPSERVER2_URL}/api`,
   securityData: {
     username: 'admin',
     password: 'admin'

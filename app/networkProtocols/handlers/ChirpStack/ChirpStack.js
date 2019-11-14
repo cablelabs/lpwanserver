@@ -189,9 +189,7 @@ module.exports = class ChirpStack extends NetworkProtocol {
   }
 
   async removeDevice ({ network, remoteId }) {
-    // TODO: make delete device keys/activation conditional
-    // What about deleteDeviceActivation?
-    await this.client.deleteDeviceKeys(network, remoteId)
+    // TODO: does deviceActivation or deviceKeys need to be deleted first?
     await this.client.deleteDevice(network, remoteId)
   }
 

@@ -54,6 +54,7 @@ async function updateByQuery (ctx, args) {
 
 async function remove (ctx, { id }) {
   const rec = await ctx.db.update({ where: { id }, data: { status: 'REMOVED' } })
+  ctx.log.debug('NetworkDeployment:remove', { rec })
   await ctx.$self.syncNetworkDeployment({ networkDeployment: rec })
 }
 

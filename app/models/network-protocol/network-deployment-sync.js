@@ -112,7 +112,6 @@ async function syncDevice (ctx, { network, networkDeployment }) {
     }
   }
   if (networkDeployment.status === 'CREATED' && !meta.isOrigin) {
-    ctx.log.debug('syncDevice', R.pick(['device', 'deviceProfile'], args))
     let remoteDoc = await handler.createDevice(args)
     meta.remoteId = remoteDoc.id
   }

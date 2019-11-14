@@ -104,11 +104,13 @@ async function remove (ctx, { id }) {
   // Delete DeviceNetworkTypeLinks
   for await (let devState of ctx.$m.device.listAll({ where: { application: rec.application } })) {
     let ids = devState.records.map(R.prop('id'))
+    ctx.log.debug('ApplicationNetworkTypeLink:remove:deviceIds', { ids })
     for await (let state of ctx.$m.deviceNetworkTypeLink.removeMany({ where: { device: { id_in: ids } } })) {
     }
   }
 
   // Delete NetworkDeployments
+  ctx.log.debug('ApplicationNetworkTypeLink:remove:Delete NetworkDeployments')
   await ctx.$m.networkType.forAllNetworks({
     networkTypeId: rec.networkType.id,
     op: async network => {
