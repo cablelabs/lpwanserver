@@ -1,18 +1,17 @@
 /* eslint-disable no-unused-vars */
 let chai = require('chai')
 let chaiHttp = require('chai-http')
-const { createApp } = require('../../../app/express-app')
+const { createApp } = require('../../../app/rest-server/app')
 let should = chai.should()
 let setup = require('../setup.js')
-const Lora1 = require('../../networks/lora-v1')
-const Lora2 = require('../../networks/lora-v2')
+const Chirpstack1 = require('../../networks/chirpstack-v1')
+const Chirpstack2 = require('../../networks/chirpstack-v2')
 const { prisma } = require('../../../app/generated/prisma-client')
 
 chai.use(chaiHttp)
 let server
 
 describe('E2E Test for Updating a Device Use Case #193', () => {
-  let companyId
   let reportingProtocolId
   let networkTypeId
 
@@ -39,10 +38,7 @@ describe('E2E Test for Updating a Device Use Case #193', () => {
   }
 
   const deviceUpdate = {
-    'applicationId': '',
-    'name': 'UPDV001',
-    'description': 'Updated Soil Node Model 001',
-    'deviceModel': 'Mark1'
+    'description': 'Updated Soil Node Model 001'
   }
 
   let deviceProfile
@@ -53,8 +49,6 @@ describe('E2E Test for Updating a Device Use Case #193', () => {
   before(async () => {
     const app = await createApp()
     server = chai.request(app).keepOpen()
-    const cos = await prisma.companies({ first: 1 })
-    companyId = cos[0].id
     const reportingProtocols = await prisma.reportingProtocols({ first: 1 })
     reportingProtocolId = reportingProtocols[0].id
     const nwkTypes = await prisma.networkTypes({ first: 1 })
@@ -63,11 +57,9 @@ describe('E2E Test for Updating a Device Use Case #193', () => {
 
     deviceProfile = {
       networkTypeId,
-      'companyId': companyId,
       'name': 'LoRaSoilReaderB',
       'description': 'Soil Sensor that works with LoRa',
       'networkSettings': {
-        'name': 'LoRaSoilReaderB',
         'macVersion': '1.0.0',
         'regParamsRevision': 'A',
         'supportsJoin': true
@@ -80,30 +72,22 @@ describe('E2E Test for Updating a Device Use Case #193', () => {
       'deviceProfileId': '',
       'networkSettings': {
         'devEUI': '0080000000000501',
-        name: device.name,
-        description: device.description,
         deviceKeys: {
-          'appKey': '112233445566889900112233445511'
+          'nwkKey': '11223344556688990011223344551122'
         }
       }
     }
 
     deviceNTLUpdate = {
-      'deviceId': '',
-      networkTypeId,
-      'deviceProfileId': '',
       'networkSettings': {
         'devEUI': '0080000000000501',
-        name: deviceUpdate.name,
-        description: deviceUpdate.description,
         deviceKeys: {
-          'appKey': '112233445566889900112233445522'
+          'nwkKey': '11223344556688990011223344552211'
         }
       }
     }
 
     application = {
-      'companyId': companyId,
       'name': appName,
       'description': appDescription,
       'baseUrl': baseUrl,
@@ -115,7 +99,7 @@ describe('E2E Test for Updating a Device Use Case #193', () => {
     it('Admin Login to LPWan Server', (done) => {
       server
         .post('/api/sessions')
-        .send({'login_username': 'admin', 'login_password': 'password'})
+        .send({'username': 'admin', 'password': 'password'})
         .end(function (err, res) {
           if (err) done(err)
           if (err) done(err)
@@ -126,10 +110,6 @@ describe('E2E Test for Updating a Device Use Case #193', () => {
     })
   })
   describe('Create Application', () => {
-    let applicationNetworkSettings = {
-      'description': appDescription,
-      'name': appName
-    }
     it('should return 200 on admin', function (done) {
       server
         .post('/api/applications')
@@ -138,7 +118,7 @@ describe('E2E Test for Updating a Device Use Case #193', () => {
         .send(application)
         .end(function (err, res) {
           if (err) done(err)
-          res.should.have.status(200)
+          res.should.have.status(201)
           let ret = JSON.parse(res.text)
           appId1 = ret.id
           device.applicationId = appId1
@@ -157,13 +137,11 @@ describe('E2E Test for Updating a Device Use Case #193', () => {
           res.should.have.status(200)
           let appObj = JSON.parse(res.text)
           appObj.should.have.property('id')
-          appObj.should.have.property('companyId')
           appObj.should.have.property('name')
           appObj.should.have.property('description')
           appObj.should.have.property('baseUrl')
           appObj.should.have.property('reportingProtocolId')
 
-          appObj.companyId.should.equal(companyId)
           appObj.name.should.equal(appName)
           appObj.description.should.equal(appDescription)
           appObj.baseUrl.should.equal(baseUrl)
@@ -174,17 +152,16 @@ describe('E2E Test for Updating a Device Use Case #193', () => {
     })
     it('Create Network Type Links for Application', function (done) {
       server
-        .post('/api/applicationNetworkTypeLinks')
+        .post('/api/application-network-type-links')
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .send({
           'applicationId': appId1,
-          networkTypeId,
-          'networkSettings': applicationNetworkSettings
+          networkTypeId
         })
         .end(function (err, res) {
           if (err) done(err)
-          res.should.have.status(200)
+          res.should.have.status(201)
           let ret = JSON.parse(res.text)
           anlId1 = ret.id
           done()
@@ -192,7 +169,7 @@ describe('E2E Test for Updating a Device Use Case #193', () => {
     })
     it('should return 200 on get', function (done) {
       server
-        .get('/api/applicationNetworkTypeLinks/' + anlId1)
+        .get('/api/application-network-type-links/' + anlId1)
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .send()
@@ -200,7 +177,6 @@ describe('E2E Test for Updating a Device Use Case #193', () => {
           if (err) done(err)
           res.should.have.status(200)
           let appObj = JSON.parse(res.text)
-          console.log(appObj)
           done()
         })
     })
@@ -208,13 +184,13 @@ describe('E2E Test for Updating a Device Use Case #193', () => {
   describe('Create Device Profile for Application', () => {
     it('Create Device Profile', function (done) {
       server
-        .post('/api/deviceProfiles')
+        .post('/api/device-profiles')
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .send(deviceProfile)
         .end(function (err, res) {
           if (err) done(err)
-          res.should.have.status(200)
+          res.should.have.status(201)
           let ret = JSON.parse(res.text)
           dpId1 = ret.id
           done()
@@ -222,7 +198,7 @@ describe('E2E Test for Updating a Device Use Case #193', () => {
     })
     it('should return 200 on get', function (done) {
       server
-        .get('/api/deviceProfiles/' + dpId1)
+        .get('/api/device-profiles/' + dpId1)
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .send()
@@ -233,7 +209,6 @@ describe('E2E Test for Updating a Device Use Case #193', () => {
           dpObj.name.should.equal(deviceProfile.name)
           dpObj.description.should.equal(deviceProfile.description)
           dpObj.networkTypeId.should.equal(deviceProfile.networkTypeId)
-          dpObj.companyId.should.equal(deviceProfile.companyId)
           done()
         })
     })
@@ -247,7 +222,7 @@ describe('E2E Test for Updating a Device Use Case #193', () => {
         .send(device)
         .end(function (err, res) {
           if (err) done(err)
-          res.should.have.status(200)
+          res.should.have.status(201)
           let ret = JSON.parse(res.text)
           deviceId1 = ret.id
           done()
@@ -264,7 +239,6 @@ describe('E2E Test for Updating a Device Use Case #193', () => {
           if (err) done(err)
           res.should.have.status(200)
           let devObj = JSON.parse(res.text)
-          console.log(devObj)
           devObj.name.should.equal(device.name)
           devObj.description.should.equal(device.description)
           devObj.deviceModel.should.equal(device.deviceModel)
@@ -275,15 +249,14 @@ describe('E2E Test for Updating a Device Use Case #193', () => {
       deviceNTL.deviceId = deviceId1
       deviceNTL.deviceProfileId = dpId1
       server
-        .post('/api/deviceNetworkTypeLinks')
+        .post('/api/device-network-type-links')
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .send(deviceNTL)
         .end(function (err, res) {
           if (err) done(err)
-          res.should.have.status(200)
+          res.should.have.status(201)
           var dnlObj = JSON.parse(res.text)
-          console.log(dnlObj)
           dnlId1 = dnlObj.id
           done()
         })
@@ -291,7 +264,7 @@ describe('E2E Test for Updating a Device Use Case #193', () => {
 
     it('should return 200 on get', function (done) {
       server
-        .get('/api/deviceNetworkTypeLinks/' + dnlId1)
+        .get('/api/device-network-type-links/' + dnlId1)
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .send()
@@ -308,13 +281,13 @@ describe('E2E Test for Updating a Device Use Case #193', () => {
   })
   describe('Verify ChirpStack V1 has application', function () {
     it('Verify the ChirpStack V1 Application Exists', async () => {
-      const { result } = await Lora1.client.listApplications(Lora1.network, { limit: 100 })
+      const { result } = await Chirpstack1.client.listApplications(Chirpstack1.network, { limit: 100 })
       const app = result.find(x => x.name === appName)
       should.exist(app)
       remoteApp1 = app.id
     })
     it('Verify the ChirpStack V1 Application Exists', async () => {
-      const app = await Lora1.client.loadApplication(Lora1.network, remoteApp1)
+      const app = await Chirpstack1.client.loadApplication(Chirpstack1.network, remoteApp1)
       app.should.have.property('id')
       app.should.have.property('name')
       app.should.have.property('description')
@@ -326,15 +299,15 @@ describe('E2E Test for Updating a Device Use Case #193', () => {
       app.name.should.equal(appName)
     })
     it('Verify the ChirpStack V1 Device Profile Exists', async () => {
-      const { result } = await Lora1.client.listDeviceProfiles(Lora1.network, { limit: 100 })
-      const dp = result.find(x => x.name === deviceProfile.networkSettings.name)
+      const { result } = await Chirpstack1.client.listDeviceProfiles(Chirpstack1.network, { limit: 100 })
+      const dp = result.find(x => x.name === deviceProfile.name)
       should.exist(dp)
       remoteDeviceProfileId = dp.id
     })
     it('Verify the ChirpStack V1 Device Profile Exists', async () => {
-      const dp = await Lora1.client.loadDeviceProfile(Lora1.network, remoteDeviceProfileId)
+      const dp = await Chirpstack1.client.loadDeviceProfile(Chirpstack1.network, remoteDeviceProfileId)
       dp.should.have.property('name')
-      dp.name.should.equal(deviceProfile.networkSettings.name)
+      dp.name.should.equal(deviceProfile.name)
       dp.should.have.property('organizationID')
       dp.should.have.property('networkServerID')
       dp.should.have.property('createdAt')
@@ -345,30 +318,30 @@ describe('E2E Test for Updating a Device Use Case #193', () => {
       dp.regParamsRevision.should.equal(deviceProfile.networkSettings.regParamsRevision)
     })
     it('Verify the ChirpStack V1 Device Exists', async () => {
-      const device = await Lora1.client.loadDevice(Lora1.network, deviceNTL.networkSettings.devEUI)
-      device.should.have.property('name')
-      device.should.have.property('devEUI')
-      device.should.have.property('applicationID')
-      device.should.have.property('description')
-      device.should.have.property('deviceProfileID')
-      device.should.have.property('deviceStatusBattery')
-      device.should.have.property('deviceStatusMargin')
-      device.should.have.property('lastSeenAt')
-      device.should.have.property('skipFCntCheck')
-      device.name.should.equal(deviceNTL.networkSettings.name)
-      device.devEUI.should.equal(deviceNTL.networkSettings.devEUI)
-      device.deviceProfileID.should.equal(remoteDeviceProfileId)
+      const rec = await Chirpstack1.client.loadDevice(Chirpstack1.network, deviceNTL.networkSettings.devEUI)
+      rec.should.have.property('name')
+      rec.should.have.property('devEUI')
+      rec.should.have.property('applicationID')
+      rec.should.have.property('description')
+      rec.should.have.property('deviceProfileID')
+      rec.should.have.property('deviceStatusBattery')
+      rec.should.have.property('deviceStatusMargin')
+      rec.should.have.property('lastSeenAt')
+      rec.should.have.property('skipFCntCheck')
+      rec.name.should.equal(device.name)
+      rec.devEUI.should.equal(deviceNTL.networkSettings.devEUI)
+      rec.deviceProfileID.should.equal(remoteDeviceProfileId)
     })
   })
   describe('Verify ChirpStack V2 has application', function () {
     it('Verify the ChirpStack V2 Application Exists', async () => {
-      const { result } = await Lora2.client.listApplications(Lora2.network, { limit: 100 })
+      const { result } = await Chirpstack2.client.listApplications(Chirpstack2.network, { limit: 100 })
       const app = result.find(x => x.name === appName)
       should.exist(app)
       remoteApp2 = app.id
     })
     it('Verify the ChirpStack V2 Application Exists', async () => {
-      const app = await Lora2.client.loadApplication(Lora2.network, remoteApp2)
+      const app = await Chirpstack2.client.loadApplication(Chirpstack2.network, remoteApp2)
       app.should.have.property('id')
       app.should.have.property('name')
       app.should.have.property('description')
@@ -380,15 +353,15 @@ describe('E2E Test for Updating a Device Use Case #193', () => {
       app.name.should.equal(appName)
     })
     it('Verify the ChirpStack V2 Device Profile Exists', async () => {
-      const { result } = await Lora2.client.listDeviceProfiles(Lora2.network, { limit: 100 })
+      const { result } = await Chirpstack2.client.listDeviceProfiles(Chirpstack2.network, { limit: 100 })
       const dp = result.find(x => x.name === deviceProfile.name)
       should.exist(dp)
       remoteDeviceProfileId2 = dp.id
     })
     it('Verify the ChirpStack V2 Device Profile Exists', async () => {
-      const dp = await Lora2.client.loadDeviceProfile(Lora2.network, remoteDeviceProfileId2)
+      const dp = await Chirpstack2.client.loadDeviceProfile(Chirpstack2.network, remoteDeviceProfileId2)
       dp.should.have.property('name')
-      dp.name.should.equal(deviceProfile.networkSettings.name)
+      dp.name.should.equal(deviceProfile.name)
       dp.should.have.property('organizationID')
       dp.should.have.property('networkServerID')
       dp.should.have.property('macVersion')
@@ -397,19 +370,19 @@ describe('E2E Test for Updating a Device Use Case #193', () => {
       dp.regParamsRevision.should.equal(deviceProfile.networkSettings.regParamsRevision)
     })
     it('Verify the ChirpStack V2 Device Exists', async () => {
-      const device = await Lora2.client.loadDevice(Lora2.network, deviceNTL.networkSettings.devEUI)
-      device.should.have.property('name')
-      device.should.have.property('devEUI')
-      device.should.have.property('applicationID')
-      device.should.have.property('description')
-      device.should.have.property('deviceProfileID')
-      device.should.have.property('skipFCntCheck')
-      device.should.have.property('deviceStatusBattery')
-      device.should.have.property('deviceStatusMargin')
-      device.should.have.property('lastSeenAt')
-      device.name.should.equal(deviceNTL.networkSettings.name)
-      device.devEUI.should.equal(deviceNTL.networkSettings.devEUI)
-      device.deviceProfileID.should.equal(remoteDeviceProfileId2)
+      const rec = await Chirpstack2.client.loadDevice(Chirpstack2.network, deviceNTL.networkSettings.devEUI)
+      rec.should.have.property('name')
+      rec.should.have.property('devEUI')
+      rec.should.have.property('applicationID')
+      rec.should.have.property('description')
+      rec.should.have.property('deviceProfileID')
+      rec.should.have.property('skipFCntCheck')
+      rec.should.have.property('deviceStatusBattery')
+      rec.should.have.property('deviceStatusMargin')
+      rec.should.have.property('lastSeenAt')
+      rec.name.should.equal(device.name)
+      rec.devEUI.should.equal(deviceNTL.networkSettings.devEUI)
+      rec.deviceProfileID.should.equal(remoteDeviceProfileId2)
     })
   })
   describe('Update Device', () => {
@@ -439,31 +412,26 @@ describe('E2E Test for Updating a Device Use Case #193', () => {
           devObj.should.have.property('name')
           devObj.should.have.property('description')
           devObj.should.have.property('deviceModel')
-          devObj.name.should.equal(deviceUpdate.name)
           devObj.id.should.equal(deviceId1)
           devObj.description.should.equal(deviceUpdate.description)
-          devObj.deviceModel.should.equal(deviceUpdate.deviceModel)
           done()
         })
     })
-    it('Update Network Type Links for Application', function (done) {
+    it('Update Network Type Links for Device', function (done) {
       server
-        .put('/api/deviceNetworkTypeLinks/' + dnlId1)
+        .put('/api/device-network-type-links/' + dnlId1)
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
-        .send({
-          'networkSettings': deviceNTLUpdate.networkSettings
-        })
+        .send(deviceNTLUpdate)
         .end(function (err, res) {
           if (err) done(err)
-          // TODO:  Why does PUT do 200 sometimes and 204 others?
           res.should.have.status(204)
           done()
         })
     })
     it('Verify Device NTL Updated', function (done) {
       server
-        .get('/api/deviceNetworkTypeLinks/' + dnlId1)
+        .get('/api/device-network-type-links/' + dnlId1)
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .send()
@@ -471,18 +439,17 @@ describe('E2E Test for Updating a Device Use Case #193', () => {
           if (err) done(err)
           res.should.have.status(200)
           let deviceNTL = JSON.parse(res.text)
-          console.log(deviceNTL)
           done()
         })
     })
   })
   describe('Verify device updated on ChirpStack networks', function () {
     it('Verify device updated on ChirpStack V1', async () => {
-      const device = await Lora1.client.loadDevice(Lora1.network, deviceNTL.networkSettings.devEUI)
+      const device = await Chirpstack1.client.loadDevice(Chirpstack1.network, deviceNTL.networkSettings.devEUI)
       device.description.should.equal(deviceUpdate.description)
     })
     it('Verify device updated on ChirpStack V2', async () => {
-      const device = await Lora1.client.loadDevice(Lora1.network, deviceNTL.networkSettings.devEUI)
+      const device = await Chirpstack1.client.loadDevice(Chirpstack1.network, deviceNTL.networkSettings.devEUI)
       device.description.should.equal(deviceUpdate.description)
     })
   })

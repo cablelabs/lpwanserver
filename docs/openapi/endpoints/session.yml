@@ -1,6 +1,6 @@
 openapi: 3.0.0
 info:
-  version: 1.2.1
+  version: 2.0.0
   title: An include file to define Session endpoints
   license:
     name: Apache 2.0
@@ -28,8 +28,8 @@ paths:
         '400':
           description: Bad Request
     delete:
-      operationId: deleteSession
-      summary: Delete a Session
+      operationId: removeSession
+      summary: Remove a Session
       description: Invalidate the user's current jwt token
       parameters: []
       security:
@@ -39,6 +39,8 @@ paths:
       responses:
         '204':
           description: No content
+        '401':
+          description: Unauthorized
 components:
   requestBodies:
     LoginCredentials:
@@ -47,12 +49,12 @@ components:
           schema:
             type: object
             required:
-              - login_username
-              - login_password
+              - username
+              - password
             properties:
-              login_username:
+              username:
                 type: string
-              login_password:
+              password:
                 type: string
       description: User's login credentials
       required: true

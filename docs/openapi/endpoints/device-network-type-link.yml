@@ -1,11 +1,11 @@
 openapi: 3.0.0
 info:
-  version: 1.2.1
+  version: 2.0.0
   title: An include file to define DeviceNetworkTypeLink endpoints
   license:
     name: Apache 2.0
 paths:
-  /api/deviceNetworkTypeLinks:
+  /api/device-network-type-links:
     post:
       operationId: createDeviceNetworkTypeLink
       summary: Create a DeviceNetworkTypeLink
@@ -24,32 +24,18 @@ paths:
             application/json:
               schema:
                 $ref: '../api.yml#/components/schemas/ResourceCreatedResponse'
-        '403':
-          description: Authenticated user not allowed to perform this operation
         '400':
           description: Bad request
     get:
-      operationId: listDeviceNetworkTypeLinks
+      operationId: listDeviceNetworkTypeLink
       summary: List DeviceNetworkTypeLinks
       description: List DeviceNetworkTypeLinks
       parameters:
         - $ref: '../api.yml#/components/parameters/offsetParam'
         - $ref: '../api.yml#/components/parameters/limitParam'
-        - name: deviceId
-          in: query
-          required: false
-          schema:
-            type: string
-        - name: networkTypeId
-          in: query
-          required: false
-          schema:
-            type: string
-        - name: applicationId
-          in: query
-          required: false
-          schema:
-            type: string
+        - $ref: '../api.yml#/components/parameters/deviceId'
+        - $ref: '../api.yml#/components/parameters/applicationId'
+        - $ref: '../api.yml#/components/parameters/networkTypeId'
       security:
         - bearer_token: []
       tags:
@@ -61,11 +47,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ListDeviceNetworkTypeLinkResponse'
-        '403':
-          description: Authenticated user not allowed to perform this operation
         '400':
           description: Bad request
-  /api/deviceNetworkTypeLinks/{id}:
+  /api/device-network-type-links/{id}:
     parameters:
       - $ref: '../api.yml#/components/parameters/idParam'
     get:
@@ -84,8 +68,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/DeviceNetworkTypeLinkResponse'
-        '403':
-          description: Authenticated user not allowed to perform this operation
         '404':
           description: DeviceNetworkTypeLink not found
     put:
@@ -104,14 +86,12 @@ paths:
           description: DeviceNetworkTypeLink update succeeded
         '400':
           description: Bad request
-        '403':
-          description: Authenticated user not allowed to perform this operation
         '404':
           description: DeviceNetworkTypeLink not found
     delete:
-      operationId: deleteDeviceNetworkTypeLink
-      summary: Delete DeviceNetworkTypeLink
-      description: Delete DeviceNetworkTypeLink
+      operationId: removeDeviceNetworkTypeLink
+      summary: Remove DeviceNetworkTypeLink
+      description: Remove DeviceNetworkTypeLink
       parameters: []
       security:
         - bearer_token: []
@@ -120,8 +100,22 @@ paths:
       responses:
         '204':
           description: DeviceNetworkTypeLink record was deleted
-        '403':
-          description: Authenticated user not allowed to perform this operation
+        '404':
+          description: DeviceNetworkTypeLink not found
+  /api/device-network-type-links/{id}/push:
+    parameters:
+      - $ref: '../api.yml#/components/parameters/idParam'
+    post:
+      operationId: pushDeviceNetworkTypeLink
+      summary: Push DeviceNetworkTypeLink
+      description: Push Device to all Networks of this NetworkType
+      security:
+        - bearer_token: []
+      tags:
+        - DeviceNetworkTypeLink
+      responses:
+        '204':
+          description: DeviceNetworkTypeLink was pushed
         '404':
           description: DeviceNetworkTypeLink not found
 components:
@@ -135,9 +129,15 @@ components:
         networkTypeId:
           type: string
           description: The NetworkType to which the Application is linked
-        networkSettings:
+        deviceProfileId:
           type: string
-          description: The settings in a JSON string that correspond to the NetworkType
+          description: The DeviceProfile from which this device receives network settings
+        networkSettings:
+          type: object
+          description: The settings that correspond to the NetworkType
+        enabled:
+          type: boolean
+          description: Whether or not messages are forwarded for this application and network type
     DeviceNetworkTypeLinkResponse:
        allOf:
         - $ref: '#/components/schemas/DeviceNetworkTypeLink'
@@ -166,13 +166,17 @@ components:
                 required:
                   - deviceId
                   - networkTypeId
-                  - networkSettings
+                  - deviceProfileId
       description: DeviceNetworkTypeLink to be created
       required: true
     UpdateDeviceNetworkTypeLinkInput:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/DeviceNetworkTypeLink'
+            type: object
+            properties:
+              networkSettings:
+                type: object
+                description: The settings in a JSON string that correspond to the NetworkType
       description: DeviceNetworkTypeLink properties to be updated
       required: true

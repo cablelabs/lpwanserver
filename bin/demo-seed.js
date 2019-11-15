@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
-const Lora1 = require('../test/networks/lora-v1')
-const Lora2 = require('../test/networks/lora-v2')
+const Lora1 = require('../test/networks/chirpstack-v1')
+const Lora2 = require('../test/networks/chirpstack-v2')
 
 async function main () {
   Lora1.network.baseUrl = Lora1.network.baseUrl.replace('chirpstack_app_svr_1:8080', 'localhost:8081')

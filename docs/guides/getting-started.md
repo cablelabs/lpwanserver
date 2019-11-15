@@ -68,7 +68,7 @@ Use these credentials to log in.
 ### Create a connection to the ChirpStack Network
 
 * Click the `Networks` link in the top navigation bar
-* Click on the `CREATE` button next to the LoRa Server entry
+* Click on the `CREATE` button next to the ChirpStack entry
 * Fill in the form as shown below, and hit `SUBMIT`
   - Network Name: **Lora NW**
   - Network Base URL: **http://chirpstack_app_svr:8080/api**

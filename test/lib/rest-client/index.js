@@ -2,9 +2,9 @@ const { AxiosRestApi, AxiosRestApiCache } = require('../axios-rest-client')
 
 class LpwanServerRestApi extends AxiosRestApi {
   constructor (opts) {
-    super(opts)
+    super({ ...opts, camelCaseDelimiter: '-' })
     this.urls.deviceDownlinks = '/devices/:id/downlinks'
-    this.urls.uplinks = '/ingest/:applicationId/:networkId'
+    this.urls.networkUplinks = '/uplinks/:applicationId/:networkId'
   }
 
   async login (opts) {
@@ -15,14 +15,14 @@ class LpwanServerRestApi extends AxiosRestApi {
   }
 
   importDevices (urlParams, opts) {
-    const url = `/applications/:id/import-devices`
+    const url = `/applications/:id/devices/bulk-create`
     return this.axios(this._axiosOpts('applications', url, urlParams, { ...opts, method: 'POST' }))
   }
 }
 
 class LpwanServerRestApiCache extends AxiosRestApiCache {
   list (name, result) {
-    const list = name === 'ip-device-downlinks' ? result.data : result.data.records
+    const list = name === 'downlinks' ? result.data : result.data.records
     return this._cacheUpsert(name, list)
   }
 }

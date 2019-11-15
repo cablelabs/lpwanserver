@@ -1,6 +1,6 @@
 openapi: 3.0.0
 info:
-  version: 1.2.1
+  version: 2.0.0
   title: An include file to define Network endpoints
   license:
     name: Apache 2.0
@@ -29,7 +29,7 @@ paths:
         '400':
           description: Bad request
     get:
-      operationId: listNetworks
+      operationId: listNetwork
       summary: List Networks
       description: List Networks, available only to system administrators
       parameters:
@@ -38,16 +38,19 @@ paths:
         - $ref: '../api.yml#/components/parameters/nameSearch'
         - name: networkProviderId
           in: query
+          description: The ID of the Network's NetworkProvider
           required: false
           schema:
             type: string
         - name: networkTypeId
           in: query
+          description: The ID of the Network's NetworkType
           required: false
           schema:
             type: string
         - name: networkProtocolId
           in: query
+          description: The ID of the Network's NetworkProtocol
           required: false
           schema:
             type: string
@@ -105,14 +108,12 @@ paths:
           description: Network update succeeded
         '400':
           description: Bad request
-        '403':
-          description: Authenticated user not allowed to perform this operation
         '404':
           description: Network not found
     delete:
-      operationId: deleteNetwork
-      summary: Delete Network
-      description: Delete Network, available only to system administrators
+      operationId: removeNetwork
+      summary: Remove Network
+      description: Remove Network, available only to system administrators
       parameters: []
       security:
         - bearer_token: []
@@ -121,8 +122,6 @@ paths:
       responses:
         '204':
           description: Network record was deleted
-        '403':
-          description: Authenticated user not allowed to perform this operation
         '404':
           description: Network not found
 components:
@@ -148,6 +147,9 @@ components:
         securityData:
           type: object
           description: The data used to grant secure access to the Network's server API. This data is defined by the NetworkType
+        networkSettings:
+          type: object
+          description: Properties and reference IDs needed to interact with the network
     NetworkResponse:
        allOf:
         - $ref: '#/components/schemas/Network'
@@ -155,6 +157,8 @@ components:
           properties:
             id:
               type: string
+            meta:
+              type: object
     ListNetworkResponse:
       allOf:
         - $ref: '../api.yml#/components/schemas/ListResponse'

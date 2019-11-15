@@ -14,5 +14,9 @@
   },
   "env": {
     "mocha": true
+  },
+  "globals": {
+    "expect": "readonly",
+    "jest": "readonly"
   }
 }

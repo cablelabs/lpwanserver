@@ -2,7 +2,7 @@
 var assert = require('assert')
 var chai = require('chai')
 var chaiHttp = require('chai-http')
-const { createApp } = require('../../../app/express-app')
+const { createApp } = require('../../../app/rest-server/app')
 var should = chai.should()
 
 chai.use(chaiHttp)
@@ -19,34 +19,14 @@ describe('NetworkProtocols', function () {
     server = chai.request(app).keepOpen()
     const res = await server
       .post('/api/sessions')
-      .send({ 'login_username': 'admin', 'login_password': 'password' })
+      .send({ 'username': 'admin', 'password': 'password' })
     adminToken = res.text
   })
 
-  describe('GET /api/networkProtocolHandlers', function () {
-    it('should return 200 on admin', function (done) {
-      server
-        .get('/api/networkProtocolHandlers')
-        .set('Authorization', 'Bearer ' + adminToken)
-        .set('Content-Type', 'application/json')
-        .set('Accept', 'application/json')
-        .end(function (err, res) {
-          if (err) {
-            done(err)
-          }
-          else {
-            res.should.have.status(200)
-            let body = JSON.parse(res.text)
-            body.should.have.length(NUMBER_PROTOCOLS)
-            done()
-          }
-        })
-    })
-  })
-  describe('GET /api/networkProtocols', function () {
+  describe('GET /api/network-protocols', function () {
     it('should return 200 with 4 protocols on admin', function (done) {
       server
-        .get('/api/networkProtocols')
+        .get('/api/network-protocols')
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {
@@ -61,7 +41,7 @@ describe('NetworkProtocols', function () {
 
     it('should return 200 with 4 protocols on user', function (done) {
       server
-        .get('/api/networkProtocols')
+        .get('/api/network-protocols')
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {
@@ -76,7 +56,7 @@ describe('NetworkProtocols', function () {
 
     it('should return 200 with 4 protocols on admin', function (done) {
       server
-        .get('/api/networkProtocols')
+        .get('/api/network-protocols')
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {
@@ -90,7 +70,7 @@ describe('NetworkProtocols', function () {
     })
     it('should return 200 with 2 protocol search LoraOS ', function (done) {
       server
-        .get('/api/networkProtocols?search=ChirpStack')
+        .get('/api/network-protocols?search=ChirpStack')
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {
@@ -105,7 +85,7 @@ describe('NetworkProtocols', function () {
     })
     it('should return 200 with 1 protocol limit 1 offset 1', function (done) {
       server
-        .get('/api/networkProtocols?limit=1&offset=1')
+        .get('/api/network-protocols?limit=1&offset=1')
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {
@@ -119,10 +99,10 @@ describe('NetworkProtocols', function () {
     })
   })
 
-  describe('GET /api/networkProtocols/{id}', function () {
+  describe('GET /api/network-protocols/{id}', function () {
     it('should return 200 on admin', function (done) {
       server
-        .get('/api/networkProtocols/' + npId1)
+        .get('/api/network-protocols/' + npId1)
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .end(function (err, res) {

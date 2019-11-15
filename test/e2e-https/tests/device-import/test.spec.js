@@ -11,7 +11,7 @@ describe('Bulk device import', () => {
   before(async () => {
     Data = await setupData()
     await Lpwan.login({
-      data: { login_username: 'admin', login_password: 'password' }
+      data: { username: 'admin', password: 'password' }
     })
   })
 
@@ -37,9 +37,7 @@ describe('Bulk device import', () => {
           { name: 'invalid' }
         ]
       }
-      const res = await Lpwan.importDevices({ id: Data.application.id }, { data })
-      const invalid = res.data.filter(x => x.status === 'ERROR')
-      assert.strictEqual(invalid.length, 1)
+      assert.rejects(() => Lpwan.importDevices({ id: Data.application.id }, { data }))
     })
   })
 })

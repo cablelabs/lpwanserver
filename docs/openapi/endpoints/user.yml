@@ -1,6 +1,6 @@
 openapi: 3.0.0
 info:
-  version: 1.2.1
+  version: 2.0.0
   title: An include file to define user endpoints
   license:
     name: Apache 2.0
@@ -24,23 +24,15 @@ paths:
             application/json:
               schema:
                 $ref: '../api.yml#/components/schemas/ResourceCreatedResponse'
-        '403':
-          description: Authenticated user not allowed to perform this operation
         '400':
           description: Bad request
     get:
-      operationId: listUsers
+      operationId: listUser
       summary: List Users
       description: List Users, available only to system administrators
       parameters:
         - $ref: '../api.yml#/components/parameters/offsetParam'
         - $ref: '../api.yml#/components/parameters/limitParam'
-        - name: companyId
-          in: query
-          description: The ID of the Users' company
-          required: false
-          schema:
-            type: string
         - name: search
           in: query
           description: Search for a string within username
@@ -58,8 +50,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ListUserResponse'
-        '403':
-          description: Authenticated user not allowed to perform this operation
         '400':
           description: Bad request
   /api/users/{id}:
@@ -69,7 +59,6 @@ paths:
       operationId: loadUser
       summary: Get User
       description: Get User
-      parameters: []
       security:
         - bearer_token: []
       tags:
@@ -81,15 +70,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/UserResponse'
-        '403':
-          description: Authenticated user not allowed to perform this operation
         '404':
           description: User not found
     put:
       operationId: updateUser
       summary: Update User
       description: Update User, available only to system administrators
-      parameters: []
       security:
         - bearer_token: []
       tags:
@@ -101,15 +87,12 @@ paths:
           description: User update succeeded
         '400':
           description: Bad request
-        '403':
-          description: Authenticated user not allowed to perform this operation
         '404':
           description: User not found
     delete:
-      operationId: deleteUser
-      summary: Delete User
-      description: Delete User, available only to system administrators
-      parameters: []
+      operationId: removeUser
+      summary: Remove User
+      description: Remove User, available only to system administrators
       security:
         - bearer_token: []
       tags:
@@ -117,15 +100,13 @@ paths:
       responses:
         '204':
           description: User record was deleted
-        '403':
-          description: Authenticated user not allowed to perform this operation
         '404':
           description: User not found
   /api/users/me:
     get:
       operationId: loadMyUser
-      summary: Load my user
-      description: Load the record of the session user
+      summary: Get Authenticated User
+      description: Get User identified by the current session
       parameters: []
       security:
         - bearer_token: []
@@ -138,43 +119,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/UserResponse'
-        '404':
-          description: User not found
-  /api/users/verifyEmail/{uuid}:
-    parameters:
-      - name: uuid
-        in: path
-        description: Email verification link ID
-        required: true
-        schema:
-          type: string
-    put:
-      operationId: verifyUserEmail
-      summary: Verify user email
-      description: Endpoint for email verification links
-      parameteters:
-        - name: function
-          in: query
-          description: Accept or reject new email
-          required: true
-          schema:
-            type: string
-            enum:
-              - accept
-              - reject
-      security:
-        - bearer_token: []
-      tags:
-        - User
-      responses:
-        '204':
-          description: Email address was successfully verified or rejected
-        '400':
-          description: Bad request
-        '403':
-          description: Authenticated user not allowed to perform this operation
-        '404':
-          description: Invalid uuid
 components:
   schemas:
     User:
@@ -190,8 +134,6 @@ components:
         email:
           type: string
           format: email
-        companyId:
-          type: string
     UserResponse:
        allOf:
         - $ref: '#/components/schemas/User'
@@ -221,13 +163,12 @@ components:
                   - username
                   - password
                   - role
-                  - companyId
                 properties:
                   password:
                     type: string
       description: User to be created
       required: true
-    UpdateCompanyInput:
+    UpdateUserInput:
       content:
         application/json:
           schema:

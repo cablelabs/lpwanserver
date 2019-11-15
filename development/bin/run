@@ -4,13 +4,13 @@
 ./development/bin/manage-db start
 ./development/bin/manage-db deploy
 
-# Start Lora Servers
+# Start ChirpStacks
 docker-compose -f development/chirpstack/docker-compose.yml up -d
 
 # Start development docker container
-docker-compose -f development/docker-compose.yml up
+docker-compose -f development/docker-compose.yml up --build
 
-# Stop Lora Servers
+# Stop ChirpStacks
 docker-compose -f development/chirpstack/docker-compose.yml down
 
 # Stop databases and prisma
