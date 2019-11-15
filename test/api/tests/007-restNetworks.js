@@ -85,7 +85,7 @@ describe('Networks', function () {
           'name': 'Funky network',
           'networkProviderId': netProvId,
           'networkTypeId': nwkTypeId,
-          'baseUrl': 'https://lora_appserver1:8080/api/',
+          'baseUrl': 'https://chirpstack_app_svr_1:8080/api/',
           'networkProtocolId': npId1,
           'securityData': { 'username': 'admin', 'password': 'admin' }
         })
@@ -95,7 +95,7 @@ describe('Networks', function () {
           var ret = JSON.parse(res.text)
           netId1 = ret.id
           ret.should.have.property('baseUrl')
-          ret.baseUrl.should.equal('https://lora_appserver1:8080/api')
+          ret.baseUrl.should.equal('https://chirpstack_app_svr_1:8080/api')
           done()
         })
     })
@@ -111,7 +111,7 @@ describe('Networks', function () {
           res.should.have.status(200)
           var netObj = JSON.parse(res.text)
           netObj.name.should.equal('Funky network')
-          netObj.baseUrl.should.equal('https://lora_appserver1:8080/api')
+          netObj.baseUrl.should.equal('https://chirpstack_app_svr_1:8080/api')
           done()
         })
     })

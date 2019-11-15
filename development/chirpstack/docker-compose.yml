@@ -1,0 +1,80 @@
+version: "3.5"
+
+services:
+  chirpstack_nwk_svr:
+    image: chirpstack/chirpstack-network-server:3
+    container_name: lpwanserver_dev_chirpnwksvr
+    networks:
+      - lpwanserver_dev
+    environment:
+      - POSTGRESQL.DSN=postgres://chirpstack_ns:chirpstack_ns@chirp_postgresql/chirpstack_ns?sslmode=disable
+      - REDIS.URL=redis://chirp_redis:6379/2
+      - NETWORK_SERVER.BAND.NAME=US_902_928
+      - NETWORK_SERVER.GATEWAY.BACKEND.MQTT.SERVER=tcp://chirp_mosquitto:1883
+      - JOIN_SERVER.DEFAULT.SERVER=http://chirpstack_app_svr:8003
+
+  chirpstack_app_svr:
+    image: chirpstack/chirpstack-application-server:3
+    container_name: lpwanserver_dev_chirpappsvr
+    networks:
+      - lpwanserver_dev
+    ports:
+      - 8082:8080
+    environment:
+      - POSTGRESQL.DSN=postgres://chirpstack_as:chirpstack_as@chirp_postgresql/chirpstack_as?sslmode=disable
+      - REDIS.URL=redis://chirp_redis:6379/2
+      - APPLICATION_SERVER.INTEGRATION.MQTT.SERVER=tcp://chirp_mosquitto:1883
+      - APPLICATION_SERVER.API.PUBLIC_HOST=chirpstack_app_svr:8001
+      - APPLICATION_SERVER.EXTERNAL_API.JWT_SECRET=verysecret
+
+  chirpstack_nwk_svr_1:
+    image: loraserver/loraserver:1
+    container_name: lpwanserver_dev_chirpnwksvr1
+    networks:
+      - lpwanserver_dev
+    volumes:
+      - ./configuration/lora-nwk-server:/etc/loraserver
+
+  chirpstack_app_svr_1:
+    image: loraserver/lora-app-server:1
+    container_name: lpwanserver_dev_chirpappsvr1
+    networks:
+      - lpwanserver_dev
+    ports:
+      - 8081:8080
+    volumes:
+      - ./configuration/lora-app-server:/etc/lora-app-server
+
+  chirp_postgresql:
+    image: postgres:10.3-alpine
+    container_name: lpwanserver_dev_chirp_postgres
+    networks:
+      - lpwanserver_dev
+    volumes:
+      - ./configuration/postgresql/initdb:/docker-entrypoint-initdb.d
+      - lpwanserver_dev_chirp_postgresqldata:/var/lib/postgresql/data
+
+  chirp_redis:
+    image: redis:5-alpine
+    container_name: lpwanserver_dev_chirp_redis
+    volumes:
+      - lpwanserver_dev_chirp_redisdata:/data
+    networks:
+      - lpwanserver_dev
+    ports:
+      - 6380:6379
+
+  chirp_mosquitto:
+    image: eclipse-mosquitto
+    networks:
+      - lpwanserver_dev
+    ports:
+      - 1884:1883
+
+volumes:
+  lpwanserver_dev_chirp_postgresqldata:
+  lpwanserver_dev_chirp_redisdata:
+
+networks:
+  lpwanserver_dev:
+    name: lpwanserver_dev

@@ -33,7 +33,7 @@ running the demo.
 
 - `/bin/demo`
 - `/development/databases/docker-compose.demo-db.yml`
-- `/development/loraserver/docker-compose.yml`
+- `/development/chirpstack/docker-compose.yml`
 - `/docker-compose.demo.yml`
 
 ## Start Demo
@@ -71,7 +71,7 @@ Use these credentials to log in.
 * Click on the `CREATE` button next to the LoRa Server entry
 * Fill in the form as shown below, and hit `SUBMIT`
   - Network Name: **Lora NW**
-  - Network Base URL: **https://lora_appserver:8080/api**
+  - Network Base URL: **http://chirpstack_app_svr:8080/api**
   - Username: **admin**
   - Password: **admin**
 

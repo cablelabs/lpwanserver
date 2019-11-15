@@ -55,7 +55,7 @@ to get started.
 
 ## Sponsors
 
-[![CableLabs](https://www.loraserver.io/img/sponsors/cablelabs.png)](https://www.cablelabs.com/)
+[![CableLabs](https://www.chirpstack.io/img/sponsors/cablelabs.png)](https://www.cablelabs.com/)
 
 ## Other important stuff
 

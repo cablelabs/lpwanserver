@@ -34,17 +34,6 @@ services:
     volumes:
       - postgres:/var/lib/postgresql/data
 
-  lora_postgres:
-    image: postgres:10.3-alpine
-    container_name: lpwanserver_dev_lora_postgres
-    networks:
-      - lpwanserver_dev
-    ports:
-      - 5432
-    volumes:
-      - ../loraserver/configuration/postgresql/init_lora:/docker-entrypoint-initdb.d
-      - lora_postgres:/var/lib/postgresql/data
-
   redis:
     image: redis:4-alpine
     container_name: lpwanserver_dev_redis
@@ -70,7 +59,5 @@ networks:
 volumes:
   postgres:
     name: lpwanserver_dev_postgres
-  lora_postgres:
-    name: lpwanserver_dev_lora_postgres
   redis:
     name: lpwanserver_dev_redis

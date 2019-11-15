@@ -5,13 +5,13 @@
 ./development/bin/manage-db deploy
 
 # Start Lora Servers
-docker-compose -f development/loraserver/docker-compose.yml up -d
+docker-compose -f development/chirpstack/docker-compose.yml up -d
 
 # Start development docker container
 docker-compose -f development/docker-compose.yml up
 
 # Stop Lora Servers
-docker-compose -f development/loraserver/docker-compose.yml down
+docker-compose -f development/chirpstack/docker-compose.yml down
 
 # Stop databases and prisma
 ./development/bin/manage-db stop

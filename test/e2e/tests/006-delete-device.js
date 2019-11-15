@@ -224,14 +224,14 @@ describe('E2E Test for Deleting a Device Use Case #192', () => {
         })
     })
   })
-  describe('Verify LoRaServer V1 has application', function () {
-    it('Verify the LoRaServer V1 Application Exists', async () => {
+  describe('Verify ChirpStack V1 has application', function () {
+    it('Verify the ChirpStack V1 Application Exists', async () => {
       const { result } = await Lora1.client.listApplications(Lora1.network, { limit: 100 })
       const app = result.find(x => x.name === testData.app.name)
       should.exist(app)
       remoteApp1 = app.id
     })
-    it('Verify the LoRaServer V1 Application Exists', async () => {
+    it('Verify the ChirpStack V1 Application Exists', async () => {
       const app = await Lora1.client.loadApplication(Lora1.network, remoteApp1)
       app.should.have.property('id')
       app.should.have.property('name')
@@ -243,13 +243,13 @@ describe('E2E Test for Deleting a Device Use Case #192', () => {
       app.should.have.property('payloadDecoderScript')
       app.name.should.equal(testData.app.name)
     })
-    it('Verify the LoRaServer V1 Device Profile Exists', async () => {
+    it('Verify the ChirpStack V1 Device Profile Exists', async () => {
       const { result } = await Lora1.client.listDeviceProfiles(Lora1.network, { limit: 100 })
       const dp = result.find(x => x.name === testData.deviceProfile.networkSettings.name)
       should.exist(dp)
       remoteDeviceProfileId = dp.id
     })
-    it('Verify the LoRaServer V1 Device Profile Exists', async () => {
+    it('Verify the ChirpStack V1 Device Profile Exists', async () => {
       const dp = await Lora1.client.loadDeviceProfile(Lora1.network, remoteDeviceProfileId)
       dp.should.have.property('name')
       dp.name.should.equal(testData.deviceProfile.networkSettings.name)
@@ -262,7 +262,7 @@ describe('E2E Test for Deleting a Device Use Case #192', () => {
       dp.macVersion.should.equal(testData.deviceProfile.networkSettings.macVersion)
       dp.regParamsRevision.should.equal(testData.deviceProfile.networkSettings.regParamsRevision)
     })
-    it('Verify the LoRaServer V1 Device Exists', async () => {
+    it('Verify the ChirpStack V1 Device Exists', async () => {
       const device = await Lora1.client.loadDevice(Lora1.network, testData.deviceNTL.networkSettings.devEUI)
       device.should.have.property('name')
       device.should.have.property('devEUI')
@@ -278,14 +278,14 @@ describe('E2E Test for Deleting a Device Use Case #192', () => {
       device.deviceProfileID.should.equal(remoteDeviceProfileId)
     })
   })
-  describe('Verify LoRaServer V2 has application', function () {
-    it('Verify the LoRaServer V2 Application Exists', async () => {
+  describe('Verify ChirpStack V2 has application', function () {
+    it('Verify the ChirpStack V2 Application Exists', async () => {
       const { result } = await Lora2.client.listApplications(Lora2.network, { limit: 100 })
       const app = result.find(x => x.name === testData.app.name)
       should.exist(app)
       remoteApp2 = app.id
     })
-    it('Verify the LoRaServer V2 Application Exists', async () => {
+    it('Verify the ChirpStack V2 Application Exists', async () => {
       const app = await Lora2.client.loadApplication(Lora2.network, remoteApp2)
       app.should.have.property('id')
       app.should.have.property('name')
@@ -297,13 +297,13 @@ describe('E2E Test for Deleting a Device Use Case #192', () => {
       app.should.have.property('payloadDecoderScript')
       app.name.should.equal(testData.app.name)
     })
-    it('Verify the LoRaServer V2 Device Profile Exists', async () => {
+    it('Verify the ChirpStack V2 Device Profile Exists', async () => {
       const { result } = await Lora2.client.listDeviceProfiles(Lora2.network, { limit: 100 })
       const dp = result.find(x => x.name === testData.deviceProfile.name)
       should.exist(dp)
       remoteDeviceProfileId2 = dp.id
     })
-    it('Verify the LoRaServer V2 Device Profile Exists', async () => {
+    it('Verify the ChirpStack V2 Device Profile Exists', async () => {
       const dp = await Lora2.client.loadDeviceProfile(Lora2.network, remoteDeviceProfileId2)
       dp.should.have.property('name')
       dp.name.should.equal(testData.deviceProfile.networkSettings.name)
@@ -314,7 +314,7 @@ describe('E2E Test for Deleting a Device Use Case #192', () => {
       dp.macVersion.should.equal(testData.deviceProfile.networkSettings.macVersion)
       dp.regParamsRevision.should.equal(testData.deviceProfile.networkSettings.regParamsRevision)
     })
-    it('Verify the LoRaServer V2 Device Exists', async () => {
+    it('Verify the ChirpStack V2 Device Exists', async () => {
       const device = await Lora2.client.loadDevice(Lora2.network, testData.deviceNTL.networkSettings.devEUI)
       device.should.have.property('name')
       device.should.have.property('devEUI')
@@ -392,8 +392,8 @@ describe('E2E Test for Deleting a Device Use Case #192', () => {
         })
     })
   })
-  describe('Verify Device Removed from LoRaServers', () => {
-    it('Verify the LoRaServer V1 Device Does Not Exist', async () => {
+  describe('Verify Device Removed from ChirpStacks', () => {
+    it('Verify the ChirpStack V1 Device Does Not Exist', async () => {
       try {
         await Lora1.client.loadDevice(Lora1.network, testData.deviceNTL.networkSettings.devEUI)
       }
@@ -401,7 +401,7 @@ describe('E2E Test for Deleting a Device Use Case #192', () => {
         err.statusCode.should.equal(404)
       }
     })
-    it('Verify the LoRaServer V1 Device Profile Does Not Exist', async () => {
+    it('Verify the ChirpStack V1 Device Profile Does Not Exist', async () => {
       try {
         await Lora1.client.loadDeviceProfile(Lora1.network, remoteDeviceProfileId)
       }
@@ -409,7 +409,7 @@ describe('E2E Test for Deleting a Device Use Case #192', () => {
         err.statusCode.should.equal(404)
       }
     })
-    it('Verify the LoRaServer V2 Device Does Not Exist', async () => {
+    it('Verify the ChirpStack V2 Device Does Not Exist', async () => {
       try {
         await Lora2.client.loadDevice(Lora2.network, testData.deviceNTL.networkSettings.devEUI)
       }
@@ -417,7 +417,7 @@ describe('E2E Test for Deleting a Device Use Case #192', () => {
         err.statusCode.should.equal(404)
       }
     })
-    it('Verify the LoRaServer V2 Device Profile Does Not Exist', async () => {
+    it('Verify the ChirpStack V2 Device Profile Does Not Exist', async () => {
       try {
         await Lora2.client.loadDeviceProfile(Lora2.network, remoteDeviceProfileId2)
       }
