@@ -13,7 +13,7 @@ and devices.
 System administrators are users that have been designated
 as "Admin".  Logging in as a system administrator enables a menu at the top of
 the screen that allows for provisioning various aspects of the system.  They
-can also see the applications, devices, etc. created by all users.
+can also see the applications, devices, etc.
 
 Any errors detected by the system will display in a red box at the top of the
 screen.  Some of these errors may reflect errors in working with a remote
