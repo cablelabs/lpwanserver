@@ -16,9 +16,8 @@ This is the current list of extensions defined by the repository code.
 
 ## Network Protocols
 
-- **LoRa Open Source** - The network protocol API defined by the
-  [ChirpStack](https://www.chirpstack.io) project created by Orne Brocaar and
-  sponsored by CableLabs.
+- **ChirpStack** - The network protocol API defined by the
+  [ChirpStack](https://www.chirpstack.io) project created by Orne Brocaar.
 
 - **The Things Network** - The network protocol API defined by
   [The Things Network](https://www.thethingsnetwork.org/).

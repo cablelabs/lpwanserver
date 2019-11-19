@@ -16,7 +16,7 @@ The easiest way to deploy LPWAN Server is to use a container management tool, li
 
 LPWAN Server depends on a running instance of
 [Prisma](https://prisma.io) to which the provided Datamodel has been deployed.
-The datamodel is at `prisma/versions/v{n}`.
+The datamodel is at `prisma/datamodel.prisma`.
 Prisma provides a Docker image, so you can run Prisma
 alongside LPWAN Server.  Prisma gets configured with the details
 of Postgresql.  You can choose to run Postgres via the public
@@ -36,8 +36,7 @@ Here are some documentation pages.
 
 Make sure to setup Authentication by following the docs.
 
-From within your production `prisma.yml` file, point to the latest version
-of the Datamodel.
+From within your production `prisma.yml` file, point to the datamodel.
 
 #### Deploy Prisma
 

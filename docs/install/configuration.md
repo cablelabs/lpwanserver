@@ -24,6 +24,7 @@ All top-level config settings can be overridden by an environment variable with 
 ### File paths
 
 All file paths in the configuration can be either absolute or relative to the app folder.
+The app folder is located at `/usr/src/app` within the docker container.
 If the first character is `/`, the path will be regarded as absolute.
 
 ### CORS

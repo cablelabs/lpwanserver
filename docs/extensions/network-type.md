@@ -26,33 +26,27 @@ to the system.
 Data for a Network Type gets stored in the following LPWAN Server database
 records:
 
-- **networks** - Intended to keep any data used to access the remote network.
+- **Networks** - Intended to keep any data used to access the remote network.
   This could range from username/password credentials to stored JWT tokens or
   more. (This data is encrypted by the server.)  The data is saved in the
   securityData field of the record in a JSON structure.  This record implies
   the existence of a remote network API server at the baseURL in the main data
   of the record.
 
-- **companyNetworkTypeLinks** - Intended to keep any data required for the
-  company on remote networks of the type.  The Network Type-specific data is
-  kept in the networkSettings field of the database record in a JSON structure.
-  Existence of this record implies the existence of the company on the remote
-  networks of the type.
-
-- **applicationNetworkTypeLinks** - Intended to keep the data required for an
+- **ApplicationNetworkTypeLinks** - Intended to keep the data required for an
   application on the remote networks of the type.  The Network Type-specific
   data is kept in the networkSettings field of the database record in a JSON
   structure.  Existence of this record implies the existence of the application
   on the remote networks of the type.
 
-- **deviceNetworkTypeLinks** - Intended to keep the data required for a device
+- **DeviceNetworkTypeLinks** - Intended to keep the data required for a device
   on the remote networks of the type.  The Network Type-specific data is kept
   in the networkSettings field of the database record in a JSON structure.
   Existence of this record implies the existence of the device on the remote
   networks of the type.  Note that these device records reference Device
   Profiles.
 
-- **deviceProfiles** - Intended to consolidate device configuration settings for
+- **DeviceProfiles** - Intended to consolidate device configuration settings for
   a Network Type so they do not need to be reentered for each device of the same
   manufacture.  A deviceNetworkTypeLink will point to a deviceProfile.  Some
   remote network APIs may or may not support the concept, but that is left to
