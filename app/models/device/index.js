@@ -26,8 +26,8 @@ const fragments = {
 const unicastDownlinkSchema = Joi.object().keys({
   fCnt: Joi.number().integer().min(0).required(),
   fPort: Joi.number().integer().min(1).required(),
-  data: Joi.string().when('jsonData', { is: Joi.exist(), then: Joi.optional(), otherwise: Joi.required() }),
-  jsonData: Joi.object().optional()
+  data: Joi.string().when('jsonObject', { is: Joi.exist(), then: Joi.optional(), otherwise: Joi.required() }),
+  jsonObject: Joi.object().optional()
 })
 
 // ******************************************************************************

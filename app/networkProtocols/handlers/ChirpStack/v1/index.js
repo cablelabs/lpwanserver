@@ -45,10 +45,7 @@ module.exports = class ChirpStackV1 extends ChirpStack {
   }
 
   async passDataToDevice ({ network, remoteDeviceId, data }) {
-    data = R.compose(
-      R.omit(['fCnt']),
-      renameKeys({ jsonData: 'jsonObject' })
-    )(data)
+    data = R.omit(['fCnt'], data)
     return this.client.createDeviceMessage(network, remoteDeviceId, { ...data, devEUI: remoteDeviceId })
   }
 }

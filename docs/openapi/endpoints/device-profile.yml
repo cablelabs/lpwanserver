@@ -69,7 +69,7 @@ paths:
                 $ref: '#/components/schemas/DeviceProfileResponse'
         '404':
           description: DeviceProfile not found
-    put:
+    patch:
       operationId: updateDeviceProfile
       summary: Update DeviceProfile
       description: Update DeviceProfile
@@ -135,14 +135,14 @@ components:
           description: The NetworkType for this DeviceProfile
         networkSettings:
           type: object
-          description: The JSON data structure that has the settings for the NetworkType. This is expected to match the Network Protocol's expected data used to set up the device on the remote Network(s).
+          description: The settings that correspond to the NetworkType
     DeviceProfileResponse:
        allOf:
-        - $ref: '#/components/schemas/DeviceProfile'
         - type: object
           properties:
             id:
               type: string
+        - $ref: '#/components/schemas/DeviceProfile'
     ListDeviceProfileResponse:
       allOf:
         - $ref: '../api.yml#/components/schemas/ListResponse'

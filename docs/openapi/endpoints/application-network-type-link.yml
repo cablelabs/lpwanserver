@@ -69,7 +69,7 @@ paths:
                 $ref: '#/components/schemas/ApplicationNetworkTypeLinkResponse'
         '404':
           description: ApplicationNetworkTypeLink not found
-    put:
+    patch:
       operationId: updateApplicationNetworkTypeLink
       summary: Update ApplicationNetworkTypeLink
       description: Update ApplicationNetworkTypeLink
@@ -138,11 +138,11 @@ components:
           description: Whether or not messages are forwarded for this application and network type
     ApplicationNetworkTypeLinkResponse:
        allOf:
-        - $ref: '#/components/schemas/ApplicationNetworkTypeLink'
         - type: object
           properties:
             id:
               type: string
+        - $ref: '#/components/schemas/ApplicationNetworkTypeLink'
     ListApplicationNetworkTypeLinkResponse:
       allOf:
         - $ref: '../api.yml#/components/schemas/ListResponse'

@@ -26,12 +26,12 @@ tags:
     description: A DeviceProfile profiles a type of device for a specific NetworkType.  These records store Device configuration for the NetworkType.
   - name: Network
     description: A Network represents an IoT device network.
+  - name: NetworkDeployment
+    description: A NetworkDeployment represents the deployment of one Application, Device, or DeviceProfile on a remote network.
   - name: NetworkProtocol
-    description: A NetworkProtocol represents a unique Network API.  A NeworkProtocol represents the code responsible for callinga remote network's API.
-  - name: NetworkProvider
-    description: A NetworkProvider identifies who hosts/provides a Network.
+    description: A NetworkProtocol represents a unique Network API.  A NeworkProtocol represents the code responsible for calling a remote network's API.
   - name: NetworkType
-    description: A NetworkType represents a unique LPWAN type and version, such as LoRa 1.1.
+    description: A NetworkType represents a unique LPWAN type, such as LoRaWAN.
   - name: ReportingProtocol
     description: ReportingProtocols are used by the Application to forward data from the devices to the IoT application server.
   - name: Session
@@ -59,8 +59,8 @@ paths:
     $ref: 'endpoints/device.yml#/paths/~1api~1devices~1{id}~1downlinks'
   /api/uplinks:
     $ref: 'endpoints/device.yml#/paths/~1api~1uplinks'
-  /api/uplinks/{applicationId}/{networkId}:
-    $ref: 'endpoints/device.yml#/paths/~1api~1uplinks~1{applicationId}~1{networkId}'
+  /api/uplinks/{applicationId}:
+    $ref: 'endpoints/device.yml#/paths/~1api~1uplinks~1{applicationId}'
   /api/downlinks:
     $ref: 'endpoints/device.yml#/paths/~1api~1downlinks'
   /api/device-network-type-links:
@@ -79,6 +79,10 @@ paths:
     $ref: 'endpoints/network.yml#/paths/~1api~1networks'
   /api/networks/{id}:
     $ref: 'endpoints/network.yml#/paths/~1api~1networks~1{id}'
+  /api/network-deployments:
+    $ref: 'endpoints/network-deployment.yml#/paths/~1api~1network-deployments'
+  /api/network-deployments/{id}:
+    $ref: 'endpoints/network-deployment.yml#/paths/~1api~1network-deployments~1{id}'
   /api/network-protocols:
     $ref: 'endpoints/network-protocol.yml#/paths/~1api~1network-protocols'
   /api/network-protocols/{id}:
@@ -105,14 +109,10 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
+    basic_auth:
+      type: http
+      scheme: basic
   parameters:
-    idParam:
-      name: id
-      in: path
-      description: ID of resource
-      required: true
-      schema:
-        type: string
     offsetParam:
       name: offset
       in: query
@@ -136,6 +136,13 @@ components:
       required: false
       schema:
         type: string
+    idParam:
+      name: id
+      in: path
+      description: ID of resource
+      required: true
+      schema:
+        type: string
     applicationId:
       name: applicationId
       in: query
@@ -150,6 +157,13 @@ components:
       required: false
       schema:
         type: string
+    networkId:
+      name: networkId
+      in: query
+      description: The ID of the Network
+      required: false
+      schema:
+        type: string
     deviceId:
       name: deviceId
       in: query
@@ -157,10 +171,17 @@ components:
       required: false
       schema:
         type: string
+    deviceProfileId:
+      name: deviceProfileId
+      in: query
+      description: The ID of the DeviceProfile
+      required: false
+      schema:
+        type: string
     pushDevices:
       name: pushDevices
       in: query
-      description: Whether to also push devices when pushing an ApplicationNetworkTypeLink or a DeviceProfile
+      description: Whether or not to also push all associated devices
       required: false
       schema:
         type: string

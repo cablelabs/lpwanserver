@@ -225,7 +225,6 @@ module.exports = class ChirpStack extends NetworkProtocol {
   }
 
   async passDataToDevice ({ network, remoteDeviceId, data }) {
-    data = renameKeys({ jsonData: 'jsonObject' }, data)
     return this.client.createDeviceMessage(network, remoteDeviceId, { ...data, devEUI: remoteDeviceId })
   }
 }

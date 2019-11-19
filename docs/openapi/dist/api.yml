@@ -30,18 +30,15 @@ tags:
       NetworkType.  These records store Device configuration for the
       NetworkType.
   - name: Network
-<<<<<<< HEAD
     description: A Network represents an IoT device network.
-=======
-    description: A Network represents a remote IoT network, such as an instance of ChirpStack.
->>>>>>> issue-361
+  - name: NetworkDeployment
+    description: A NetworkDeployment represents the deployment of one Application, Device,
+      or DeviceProfile on a remote network.
   - name: NetworkProtocol
     description: A NetworkProtocol represents a unique Network API.  A NeworkProtocol
-      represents the code responsible for callinga remote network's API.
-  - name: NetworkProvider
-    description: A NetworkProvider identifies who hosts/provides a Network.
+      represents the code responsible for calling a remote network's API.
   - name: NetworkType
-    description: A NetworkType represents a unique LPWAN type and version, such as LoRa 1.1.
+    description: A NetworkType represents a unique LPWAN type, such as LoRaWAN.
   - name: ReportingProtocol
     description: ReportingProtocols are used by the Application to forward data from the
       devices to the IoT application server.
@@ -77,17 +74,12 @@ paths:
                       description: The Application's description
                     baseUrl:
                       type: string
-                      description: The URL that the Reporting Protocol sends the data to.
-                        This may have additional paths added, depending on the
-                        Reporting Protocol.
+                      description: The URL used by the Reporting Protocol to forward
+                        messages to the application server
                     reportingProtocolId:
                       type: string
                       description: The ID of the Reporting Protocol the Application will
-                        use to pass Device data back to the Application Vendor
-                    enabled:
-                      type: boolean
-                      description: Whether or not the application is enabled to forward
-                        uplinks and downlinks
+                        use to pass device data back to the application server
                 - type: object
                   required:
                     - name
@@ -157,12 +149,12 @@ paths:
                         type: array
                         items:
                           allOf:
-                            - $ref: "#/paths/~1api~1applications/post/requestBody/c\
-                                ontent/application~1json/schema/allOf/0"
                             - type: object
                               properties:
                                 id:
                                   type: string
+                            - $ref: "#/paths/~1api~1applications/post/requestBody/c\
+                                ontent/application~1json/schema/allOf/0"
                         default: []
         "400":
           description: Bad request
@@ -192,6 +184,10 @@ paths:
                 allOf:
                   - type: object
                     properties:
+                      id:
+                        type: string
+                  - type: object
+                    properties:
                       name:
                         type: string
                         description: The Application's name
@@ -200,24 +196,15 @@ paths:
                         description: The Application's description
                       baseUrl:
                         type: string
-                        description: The URL that the Reporting Protocol sends the data to.
-                          This may have additional paths added, depending on the
-                          Reporting Protocol.
+                        description: The URL used by the Reporting Protocol to forward
+                          messages to the application server
                       reportingProtocolId:
                         type: string
                         description: The ID of the Reporting Protocol the Application will
-                          use to pass Device data back to the Application Vendor
-                      enabled:
-                        type: boolean
-                        description: Whether or not the application is enabled to forward
-                          uplinks and downlinks
-                  - type: object
-                    properties:
-                      id:
-                        type: string
+                          use to pass device data back to the application server
         "404":
           description: Application not found
-    put:
+    patch:
       operationId: updateApplication
       summary: Update Application
       description: Update Application
@@ -231,7 +218,7 @@ paths:
           application/json:
             schema:
               $ref: "#/paths/~1api~1applications~1%7Bid%7D/get/responses/200/conten\
-                t/application~1json/schema/allOf/0"
+                t/application~1json/schema/allOf/1"
         description: Application properties to be updated
         required: true
       responses:
@@ -285,6 +272,7 @@ paths:
                     type: object
                     required:
                       - devEUI
+                      - name
                     properties:
                       name:
                         type: string
@@ -388,13 +376,13 @@ paths:
                         type: array
                         items:
                           allOf:
-                            - $ref: "#/paths/~1api~1application-network-type-links/\
-                                post/requestBody/content/application~1json/sche\
-                                ma/allOf/0"
                             - type: object
                               properties:
                                 id:
                                   type: string
+                            - $ref: "#/paths/~1api~1application-network-type-links/\
+                                post/requestBody/content/application~1json/sche\
+                                ma/allOf/0"
                         default: []
         "400":
           description: Bad request
@@ -419,6 +407,10 @@ paths:
                 allOf:
                   - type: object
                     properties:
+                      id:
+                        type: string
+                  - type: object
+                    properties:
                       applicationId:
                         type: string
                         description: The Application the record is linking to the
@@ -433,13 +425,9 @@ paths:
                         type: boolean
                         description: Whether or not messages are forwarded for this
                           application and network type
-                  - type: object
-                    properties:
-                      id:
-                        type: string
         "404":
           description: ApplicationNetworkTypeLink not found
-    put:
+    patch:
       operationId: updateApplicationNetworkTypeLink
       summary: Update ApplicationNetworkTypeLink
       description: Update ApplicationNetworkTypeLink
@@ -490,8 +478,7 @@ paths:
       parameters:
         - name: pushDevices
           in: query
-          description: Whether to also push devices when pushing an
-            ApplicationNetworkTypeLink or a DeviceProfile
+          description: Whether or not to also push all associated devices
           required: false
           schema:
             type: string
@@ -582,12 +569,12 @@ paths:
                         type: array
                         items:
                           allOf:
-                            - $ref: "#/paths/~1api~1devices/post/requestBody/conten\
-                                t/application~1json/schema/allOf/0"
                             - type: object
                               properties:
                                 id:
                                   type: string
+                            - $ref: "#/paths/~1api~1devices/post/requestBody/conten\
+                                t/application~1json/schema/allOf/0"
                         default: []
         "400":
           description: Bad request
@@ -612,6 +599,10 @@ paths:
                 allOf:
                   - type: object
                     properties:
+                      id:
+                        type: string
+                  - type: object
+                    properties:
                       name:
                         type: string
                         description: The Device's name
@@ -624,13 +615,9 @@ paths:
                       applicationId:
                         type: string
                         description: The ID of the Application to which the device belongs
-                  - type: object
-                    properties:
-                      id:
-                        type: string
         "404":
           description: Device not found
-    put:
+    patch:
       operationId: updateDevice
       summary: Update Device
       description: Update Device
@@ -644,7 +631,7 @@ paths:
           application/json:
             schema:
               $ref: "#/paths/~1api~1devices~1%7Bid%7D/get/responses/200/content/app\
-                lication~1json/schema/allOf/0"
+                lication~1json/schema/allOf/1"
         description: Device properties to be updated
         required: true
       responses:
@@ -749,7 +736,7 @@ paths:
           description: Uplink forwarded to application server
         "404":
           description: Unable to locate device with matching devEUI
-  "/api/uplinks/{applicationId}/{networkId}":
+  "/api/uplinks/{applicationId}":
     parameters:
       - name: applicationId
         in: path
@@ -757,18 +744,15 @@ paths:
         required: true
         schema:
           type: string
-      - name: networkId
-        in: path
-        description: ID of network sending device uplink
-        required: true
-        schema:
-          type: string
     post:
       operationId: sendNetworkUplink
       summary: Send uplink from a network
-      description: Send a device uplink from a remote IoT network
+      description: Send a device uplink from a remote IoT network.  Basic auth is in the
+        form of networkId:apiKey, where apiKey is generated and encrypted by the
+        system.
       parameters: []
-      security: []
+      security:
+        - basic_auth: []
       tags:
         - Device
       requestBody:
@@ -912,13 +896,13 @@ paths:
                         type: array
                         items:
                           allOf:
-                            - $ref: "#/paths/~1api~1device-network-type-links/post/\
-                                requestBody/content/application~1json/schema/al\
-                                lOf/0"
                             - type: object
                               properties:
                                 id:
                                   type: string
+                            - $ref: "#/paths/~1api~1device-network-type-links/post/\
+                                requestBody/content/application~1json/schema/al\
+                                lOf/0"
                         default: []
         "400":
           description: Bad request
@@ -943,6 +927,10 @@ paths:
                 allOf:
                   - type: object
                     properties:
+                      id:
+                        type: string
+                  - type: object
+                    properties:
                       deviceId:
                         type: string
                         description: The Application the record is linking to the
@@ -961,13 +949,9 @@ paths:
                         type: boolean
                         description: Whether or not messages are forwarded for this
                           application and network type
-                  - type: object
-                    properties:
-                      id:
-                        type: string
         "404":
           description: DeviceNetworkTypeLink not found
-    put:
+    patch:
       operationId: updateDeviceNetworkTypeLink
       summary: Update DeviceNetworkTypeLink
       description: Update DeviceNetworkTypeLink
@@ -984,8 +968,7 @@ paths:
               properties:
                 networkSettings:
                   type: object
-                  description: The settings in a JSON string that correspond to the
-                    NetworkType
+                  description: The settings that correspond to the NetworkType
         description: DeviceNetworkTypeLink properties to be updated
         required: true
       responses:
@@ -1053,10 +1036,7 @@ paths:
                       description: The NetworkType for this DeviceProfile
                     networkSettings:
                       type: object
-                      description: The JSON data structure that has the settings for the
-                        NetworkType. This is expected to match the Network
-                        Protocol's expected data used to set up the device on
-                        the remote Network(s).
+                      description: The settings that correspond to the NetworkType
                 - type: object
                   required:
                     - name
@@ -1101,12 +1081,12 @@ paths:
                         type: array
                         items:
                           allOf:
-                            - $ref: "#/paths/~1api~1device-profiles/post/requestBod\
-                                y/content/application~1json/schema/allOf/0"
                             - type: object
                               properties:
                                 id:
                                   type: string
+                            - $ref: "#/paths/~1api~1device-profiles/post/requestBod\
+                                y/content/application~1json/schema/allOf/0"
                         default: []
         "400":
           description: Bad request
@@ -1131,6 +1111,10 @@ paths:
                 allOf:
                   - type: object
                     properties:
+                      id:
+                        type: string
+                  - type: object
+                    properties:
                       name:
                         type: string
                         description: The Device Profile's name
@@ -1142,17 +1126,10 @@ paths:
                         description: The NetworkType for this DeviceProfile
                       networkSettings:
                         type: object
-                        description: The JSON data structure that has the settings for the
-                          NetworkType. This is expected to match the Network
-                          Protocol's expected data used to set up the device on
-                          the remote Network(s).
-                  - type: object
-                    properties:
-                      id:
-                        type: string
+                        description: The settings that correspond to the NetworkType
         "404":
           description: DeviceProfile not found
-    put:
+    patch:
       operationId: updateDeviceProfile
       summary: Update DeviceProfile
       description: Update DeviceProfile
@@ -1166,7 +1143,7 @@ paths:
           application/json:
             schema:
               $ref: "#/paths/~1api~1device-profiles~1%7Bid%7D/get/responses/200/con\
-                tent/application~1json/schema/allOf/0"
+                tent/application~1json/schema/allOf/1"
         description: DeviceProfile properties to be updated
         required: true
       responses:
@@ -1223,32 +1200,33 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                name:
-                  type: string
-                  description: The Network's name
-                networkProviderId:
-                  type: string
-                  description: The ID of the Network Provider that provides the Network
-                networkTypeId:
-                  type: string
-                  description: The ID of the NetworkType that the Network uses
-                networkProtocolId:
-                  type: string
-                  description: The ID of the Network Protocol that the Network uses
-                baseUrl:
-                  type: string
-                  description: The base URL used by the Network Protocol to reach the
-                    Network's API server
-                securityData:
-                  type: object
-                  description: The data used to grant secure access to the Network's server
-                    API. This data is defined by the NetworkType
-                networkSettings:
-                  type: object
-                  description: Properties and reference IDs needed to interact with the
-                    network
+              allOf:
+                - type: object
+                  properties:
+                    name:
+                      type: string
+                      description: The Network's name
+                    networkTypeId:
+                      type: string
+                      description: The ID of the NetworkType that the Network uses
+                    networkProtocolId:
+                      type: string
+                      description: The ID of the Network Protocol that the Network uses
+                    baseUrl:
+                      type: string
+                      description: The base URL used by the Network Protocol to reach the
+                        Network's API server
+                    version:
+                      type: string
+                      description: A version string used by the Network Protocol
+                    networkSettings:
+                      type: object
+                      description: Any settings needed by the Network Protocol
+                - type: object
+                  properties:
+                    securityData:
+                      type: object
+                      description: The data used to grant secure access to network
         description: Network to be created
         required: true
       responses:
@@ -1271,12 +1249,6 @@ paths:
         - $ref: "#/paths/~1api~1applications/get/parameters/0"
         - $ref: "#/paths/~1api~1applications/get/parameters/1"
         - $ref: "#/paths/~1api~1applications/get/parameters/2"
-        - name: networkProviderId
-          in: query
-          description: The ID of the Network's NetworkProvider
-          required: false
-          schema:
-            type: string
         - name: networkTypeId
           in: query
           description: The ID of the Network's NetworkType
@@ -1308,14 +1280,17 @@ paths:
                         type: array
                         items:
                           allOf:
-                            - $ref: "#/paths/~1api~1networks/post/requestBody/conte\
-                                nt/application~1json/schema"
                             - type: object
                               properties:
                                 id:
                                   type: string
                                 meta:
                                   type: object
+                                  description: Metadata that may include status and a
+                                    message regarding authentication with the
+                                    network.
+                            - $ref: "#/paths/~1api~1networks/post/requestBody/conte\
+                                nt/application~1json/schema/allOf/0"
                         default: []
         "400":
           description: Bad request
@@ -1342,13 +1317,17 @@ paths:
                 allOf:
                   - type: object
                     properties:
+                      id:
+                        type: string
+                      meta:
+                        type: object
+                        description: Metadata that may include status and a message
+                          regarding authentication with the network.
+                  - type: object
+                    properties:
                       name:
                         type: string
                         description: The Network's name
-                      networkProviderId:
-                        type: string
-                        description: The ID of the Network Provider that provides the
-                          Network
                       networkTypeId:
                         type: string
                         description: The ID of the NetworkType that the Network uses
@@ -1359,25 +1338,17 @@ paths:
                         type: string
                         description: The base URL used by the Network Protocol to reach the
                           Network's API server
-                      securityData:
-                        type: object
-                        description: The data used to grant secure access to the Network's
-                          server API. This data is defined by the NetworkType
+                      version:
+                        type: string
+                        description: A version string used by the Network Protocol
                       networkSettings:
                         type: object
-                        description: Properties and reference IDs needed to interact with
-                          the network
-                  - type: object
-                    properties:
-                      id:
-                        type: string
-                      meta:
-                        type: object
+                        description: Any settings needed by the Network Protocol
         "403":
           description: Authenticated user not allowed to perform this operation
         "404":
           description: Network not found
-    put:
+    patch:
       operationId: updateNetwork
       summary: Update Network
       description: Update Network, available only to system administrators
@@ -1390,8 +1361,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/paths/~1api~1networks~1%7Bid%7D/get/responses/200/content/ap\
-                plication~1json/schema/allOf/0"
+              allOf:
+                - $ref: "#/paths/~1api~1networks~1%7Bid%7D/get/responses/200/conten\
+                    t/application~1json/schema/allOf/1"
+                - type: object
+                  properties:
+                    securityData:
+                      type: object
+                      description: The data used to grant secure access to network
         description: Network properties to be updated
         required: true
       responses:
@@ -1415,6 +1392,235 @@ paths:
           description: Network record was deleted
         "404":
           description: Network not found
+  /api/network-deployments:
+    get:
+      operationId: listNetworkDeployment
+      summary: List NetworkDeployments
+      description: List NetworkDeployments
+      parameters:
+        - $ref: "#/paths/~1api~1applications/get/parameters/0"
+        - $ref: "#/paths/~1api~1applications/get/parameters/1"
+        - name: networkId
+          in: query
+          description: The ID of the Network
+          required: false
+          schema:
+            type: string
+        - $ref: "#/paths/~1api~1application-network-type-links/get/parameters/2"
+        - name: deviceProfileId
+          in: query
+          description: The ID of the DeviceProfile
+          required: false
+          schema:
+            type: string
+        - $ref: "#/paths/~1api~1device-network-type-links/get/parameters/2"
+        - name: status
+          in: query
+          description: The status of the NetworkDeployment
+          required: false
+          schema:
+            type: string
+            enum:
+              - CREATED
+              - UPDATED
+              - REMOVED
+              - SYNCED
+        - name: syncFailed
+          in: query
+          description: Whether or not the latest deployment attempt failed.
+          required: false
+          schema:
+            type: string
+            enum:
+              - "true"
+              - "false"
+        - name: type
+          in: query
+          description: Type of record deployed to the remote network
+          required: false
+          schema:
+            type: string
+            enum:
+              - APPLICATION
+              - DEVICE_PROFILE
+              - DEVICE
+      security:
+        - bearer_token: []
+      tags:
+        - NetworkDeployment
+      responses:
+        "200":
+          description: Query response with totalCount and list of records
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/paths/~1api~1applications/get/responses/200/content/ap\
+                      plication~1json/schema/allOf/0"
+                  - type: object
+                    properties:
+                      records:
+                        type: array
+                        items:
+                          allOf:
+                            - type: object
+                              properties:
+                                id:
+                                  type: string
+                            - type: object
+                              properties:
+                                status:
+                                  type: string
+                                  description: Sync status.  CREATED or UPDATED causes a
+                                    push.  REMOVED removes the record from the
+                                    network.  SYNCED indicates the records are
+                                    in sync.
+                                  enum:
+                                    - CREATED
+                                    - UPDATED
+                                    - REMOVED
+                                    - SYNCED
+                                type:
+                                  type: string
+                                  description: The type of record deployed to the remote
+                                    network.
+                                  enum:
+                                    - APPLICATION
+                                    - DEVICE_PROFILE
+                                    - DEVICE
+                                syncFailed:
+                                  type: boolean
+                                  description: Whether the last attempt to deploy changes
+                                    to the network failed.
+                                meta:
+                                  type: object
+                                  description: Deployment meta info, including the ID of
+                                    the resource on the remote network.
+                                logs:
+                                  type: array
+                                  description: Failed deployment error messages.
+                                  items:
+                                    type: string
+                                networkId:
+                                  type: string
+                                  description: The ID of the Network that represents the
+                                    remote network.
+                                applicationId:
+                                  type: string
+                                  description: For type APPLICATION, the ID of the
+                                    Application
+                                deviceProfileId:
+                                  type: string
+                                  description: For type DEVICE_PROFILE, the ID of the
+                                    Device Profile
+                                deviceId:
+                                  type: string
+                                  description: For type DEVICE, the ID of the Device
+                        default: []
+        "400":
+          description: Bad request
+        "403":
+          description: Authenticated user not allowed to perform this operation
+  "/api/network-deployments/{id}":
+    parameters:
+      - $ref: "#/paths/~1api~1applications~1%7Bid%7D/parameters/0"
+    get:
+      operationId: loadNetworkDeployment
+      summary: Get NetworkDeployment
+      description: Get NetworkDeployment
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - NetworkDeployment
+      responses:
+        "200":
+          description: NetworkDeployment record
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - type: object
+                    properties:
+                      id:
+                        type: string
+                  - type: object
+                    properties:
+                      status:
+                        type: string
+                        description: Sync status.  CREATED or UPDATED causes a
+                          push.  REMOVED removes the record from the
+                          network.  SYNCED indicates the records are in sync.
+                        enum:
+                          - CREATED
+                          - UPDATED
+                          - REMOVED
+                          - SYNCED
+                      type:
+                        type: string
+                        description: The type of record deployed to the remote network.
+                        enum:
+                          - APPLICATION
+                          - DEVICE_PROFILE
+                          - DEVICE
+                      syncFailed:
+                        type: boolean
+                        description: Whether the last attempt to deploy changes to the
+                          network failed.
+                      meta:
+                        type: object
+                        description: Deployment meta info, including the ID of the resource
+                          on the remote network.
+                      logs:
+                        type: array
+                        description: Failed deployment error messages.
+                        items:
+                          type: string
+                      networkId:
+                        type: string
+                        description: The ID of the Network that represents the remote
+                          network.
+                      applicationId:
+                        type: string
+                        description: For type APPLICATION, the ID of the Application
+                      deviceProfileId:
+                        type: string
+                        description: For type DEVICE_PROFILE, the ID of the Device Profile
+                      deviceId:
+                        type: string
+                        description: For type DEVICE, the ID of the Device
+        "403":
+          description: Authenticated user not allowed to perform this operation
+        "404":
+          description: NetworkDeployment not found
+    patch:
+      operationId: updateNetworkDeployment
+      summary: Update NetworkDeployment
+      description: Update NetworkDeployment, available only to system administrators
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - NetworkDeployment
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum:
+                    - UPDATED
+        description: Only update possible is to update status to UPDATED to trigger a push.
+        required: true
+      responses:
+        "204":
+          description: NetworkDeployment update succeeded
+        "400":
+          description: Bad request
+        "404":
+          description: NetworkDeployment not found
   /api/network-protocols:
     get:
       operationId: listNetworkProtocol
@@ -1451,6 +1657,10 @@ paths:
                           allOf:
                             - type: object
                               properties:
+                                id:
+                                  type: string
+                            - type: object
+                              properties:
                                 name:
                                   type: string
                                 protocolHandler:
@@ -1460,10 +1670,6 @@ paths:
                                 networkTypeId:
                                   type: string
                                 networkProtocolVersion:
-                                  type: string
-                            - type: object
-                              properties:
-                                id:
                                   type: string
                         default: []
         "400":
@@ -1489,6 +1695,10 @@ paths:
                 allOf:
                   - type: object
                     properties:
+                      id:
+                        type: string
+                  - type: object
+                    properties:
                       name:
                         type: string
                       protocolHandler:
@@ -1498,10 +1708,6 @@ paths:
                       networkTypeId:
                         type: string
                       networkProtocolVersion:
-                        type: string
-                  - type: object
-                    properties:
-                      id:
                         type: string
         "404":
           description: NetworkProtocol not found
@@ -1534,14 +1740,14 @@ paths:
                         items:
                           allOf:
                             - type: object
+                              properties:
+                                id:
+                                  type: string
+                            - type: object
                               required:
                                 - name
                               properties:
                                 name:
-                                  type: string
-                            - type: object
-                              properties:
-                                id:
                                   type: string
                         default: []
         "400":
@@ -1566,14 +1772,14 @@ paths:
               schema:
                 allOf:
                   - type: object
+                    properties:
+                      id:
+                        type: string
+                  - type: object
                     required:
                       - name
                     properties:
                       name:
-                        type: string
-                  - type: object
-                    properties:
-                      id:
                         type: string
         "404":
           description: NetworkType not found
@@ -1607,16 +1813,16 @@ paths:
                           allOf:
                             - type: object
                               properties:
+                                id:
+                                  type: string
+                            - type: object
+                              properties:
                                 name:
                                   type: string
                                 protocolHandler:
                                   type: string
                                   description: Path to file that contains the handler code,
                                     relative to the handlers dir
-                            - type: object
-                              properties:
-                                id:
-                                  type: string
                         default: []
         "400":
           description: Bad request
@@ -1641,16 +1847,16 @@ paths:
                 allOf:
                   - type: object
                     properties:
+                      id:
+                        type: string
+                  - type: object
+                    properties:
                       name:
                         type: string
                       protocolHandler:
                         type: string
                         description: Path to file that contains the handler code, relative
                           to the handlers dir
-                  - type: object
-                    properties:
-                      id:
-                        type: string
         "404":
           description: ReportingProtocol not found
   /api/sessions:
@@ -1781,12 +1987,12 @@ paths:
                         type: array
                         items:
                           allOf:
-                            - $ref: "#/paths/~1api~1users/post/requestBody/content/\
-                                application~1json/schema/allOf/0"
                             - type: object
                               properties:
                                 id:
                                   type: string
+                            - $ref: "#/paths/~1api~1users/post/requestBody/content/\
+                                application~1json/schema/allOf/0"
                         default: []
         "400":
           description: Bad request
@@ -1810,6 +2016,10 @@ paths:
                 allOf:
                   - type: object
                     properties:
+                      id:
+                        type: string
+                  - type: object
+                    properties:
                       username:
                         type: string
                       role:
@@ -1820,13 +2030,9 @@ paths:
                       email:
                         type: string
                         format: email
-                  - type: object
-                    properties:
-                      id:
-                        type: string
         "404":
           description: User not found
-    put:
+    patch:
       operationId: updateUser
       summary: Update User
       description: Update User, available only to system administrators
@@ -1840,7 +2046,7 @@ paths:
             schema:
               allOf:
                 - $ref: "#/paths/~1api~1users~1%7Bid%7D/get/responses/200/content/a\
-                    pplication~1json/schema/allOf/0"
+                    pplication~1json/schema/allOf/1"
                 - type: object
                   properties:
                     password:
@@ -1886,6 +2092,10 @@ paths:
                 allOf:
                   - type: object
                     properties:
+                      id:
+                        type: string
+                  - type: object
+                    properties:
                       username:
                         type: string
                       role:
@@ -1896,24 +2106,16 @@ paths:
                       email:
                         type: string
                         format: email
-                  - type: object
-                    properties:
-                      id:
-                        type: string
 components:
   securitySchemes:
     bearer_token:
       type: http
       scheme: bearer
       bearerFormat: JWT
+    basic_auth:
+      type: http
+      scheme: basic
   parameters:
-    idParam:
-      name: id
-      in: path
-      description: ID of resource
-      required: true
-      schema:
-        type: string
     offsetParam:
       name: offset
       in: query
@@ -1937,6 +2139,13 @@ components:
       required: false
       schema:
         type: string
+    idParam:
+      name: id
+      in: path
+      description: ID of resource
+      required: true
+      schema:
+        type: string
     applicationId:
       name: applicationId
       in: query
@@ -1951,6 +2160,13 @@ components:
       required: false
       schema:
         type: string
+    networkId:
+      name: networkId
+      in: query
+      description: The ID of the Network
+      required: false
+      schema:
+        type: string
     deviceId:
       name: deviceId
       in: query
@@ -1958,11 +2174,17 @@ components:
       required: false
       schema:
         type: string
+    deviceProfileId:
+      name: deviceProfileId
+      in: query
+      description: The ID of the DeviceProfile
+      required: false
+      schema:
+        type: string
     pushDevices:
       name: pushDevices
       in: query
-      description: Whether to also push devices when pushing an ApplicationNetworkTypeLink
-        or a DeviceProfile
+      description: Whether or not to also push all associated devices
       required: false
       schema:
         type: string

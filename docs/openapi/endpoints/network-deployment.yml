@@ -1,0 +1,182 @@
+openapi: 3.0.0
+info:
+  version: 2.0.0
+  title: An include file to define NetworkDeployment endpoints
+  license:
+    name: Apache 2.0
+paths:
+  /api/network-deployments:
+    get:
+      operationId: listNetworkDeployment
+      summary: List NetworkDeployments
+      description: List NetworkDeployments
+      parameters:
+        - $ref: '../api.yml#/components/parameters/offsetParam'
+        - $ref: '../api.yml#/components/parameters/limitParam'
+        - $ref: '../api.yml#/components/parameters/networkId'
+        - $ref: '../api.yml#/components/parameters/applicationId'
+        - $ref: '../api.yml#/components/parameters/deviceProfileId'
+        - $ref: '../api.yml#/components/parameters/deviceId'
+        - name: status
+          in: query
+          description: The status of the NetworkDeployment
+          required: false
+          schema:
+            type: string
+            enum:
+              - CREATED
+              - UPDATED
+              - REMOVED
+              - SYNCED
+        - name: syncFailed
+          in: query
+          description: Whether or not the latest deployment attempt failed.
+          required: false
+          schema:
+            type: string
+            enum:
+              - 'true'
+              - 'false'
+        - name: type
+          in: query
+          description: Type of record deployed to the remote network
+          required: false
+          schema:
+            type: string
+            enum:
+              - APPLICATION
+              - DEVICE_PROFILE
+              - DEVICE
+      security:
+        - bearer_token: []
+      tags:
+        - NetworkDeployment
+      responses:
+        '200':
+          description: Query response with totalCount and list of records
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListNetworkDeploymentResponse'
+        '403':
+          description: Authenticated user not allowed to perform this operation
+        '400':
+          description: Bad request
+  /api/network-deployments/{id}:
+    parameters:
+      - $ref: '../api.yml#/components/parameters/idParam'
+    get:
+      operationId: loadNetworkDeployment
+      summary: Get NetworkDeployment
+      description: Get NetworkDeployment
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - NetworkDeployment
+      responses:
+        '200':
+          description: NetworkDeployment record
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NetworkDeploymentResponse'
+        '403':
+          description: Authenticated user not allowed to perform this operation
+        '404':
+          description: NetworkDeployment not found
+    patch:
+      operationId: updateNetworkDeployment
+      summary: Update NetworkDeployment
+      description: Update NetworkDeployment, available only to system administrators
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - NetworkDeployment
+      requestBody:
+        $ref: '#/components/requestBodies/UpdateNetworkDeploymentInput'
+      responses:
+        '204':
+          description: NetworkDeployment update succeeded
+        '400':
+          description: Bad request
+        '404':
+          description: NetworkDeployment not found
+components:
+  schemas:
+    NetworkDeploymentStatus:
+      type: string
+      description: Sync status.  CREATED or UPDATED causes a push.  REMOVED removes the record from the network.  SYNCED indicates the records are in sync.
+      enum:
+        - CREATED
+        - UPDATED
+        - REMOVED
+        - SYNCED
+    NetworkDeploymentType:
+      type: string
+      description: The type of record deployed to the remote network.
+      enum:
+        - APPLICATION
+        - DEVICE_PROFILE
+        - DEVICE
+    NetworkDeployment:
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/NetworkDeploymentStatus'
+        type:
+          $ref: '#/components/schemas/NetworkDeploymentType'
+        syncFailed:
+          type: boolean
+          description: Whether the last attempt to deploy changes to the network failed.
+        meta:
+          type: object
+          description: Deployment meta info, including the ID of the resource on the remote network.
+        logs:
+          type: array
+          description: Failed deployment error messages.
+          items:
+            type: string
+        networkId:
+          type: string
+          description: The ID of the Network that represents the remote network.
+        applicationId:
+          type: string
+          description: For type APPLICATION, the ID of the Application
+        deviceProfileId:
+          type: string
+          description: For type DEVICE_PROFILE, the ID of the Device Profile
+        deviceId:
+          type: string
+          description: For type DEVICE, the ID of the Device
+    NetworkDeploymentResponse:
+       allOf:
+        - type: object
+          properties:
+            id:
+              type: string
+        - $ref: '#/components/schemas/NetworkDeployment'
+    ListNetworkDeploymentResponse:
+      allOf:
+        - $ref: '../api.yml#/components/schemas/ListResponse'
+        - type: object
+          properties:
+            records:
+              type: array
+              items:
+                $ref: '#/components/schemas/NetworkDeploymentResponse'
+              default: []
+  requestBodies:
+    UpdateNetworkDeploymentInput:
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+                enum:
+                  - UPDATED
+      description: Only update possible is to update status to UPDATED to trigger a push.
+      required: true

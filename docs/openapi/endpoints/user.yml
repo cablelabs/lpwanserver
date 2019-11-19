@@ -72,7 +72,7 @@ paths:
                 $ref: '#/components/schemas/UserResponse'
         '404':
           description: User not found
-    put:
+    patch:
       operationId: updateUser
       summary: Update User
       description: Update User, available only to system administrators
@@ -136,11 +136,11 @@ components:
           format: email
     UserResponse:
        allOf:
-        - $ref: '#/components/schemas/User'
         - type: object
           properties:
             id:
               type: string
+        - $ref: '#/components/schemas/User'
     ListUserResponse:
       allOf:
         - $ref: '../api.yml#/components/schemas/ListResponse'
