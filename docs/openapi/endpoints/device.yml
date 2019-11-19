@@ -1,6 +1,6 @@
 openapi: 3.0.0
 info:
-  version: 2.0.0
+  version: 1.2.1
   title: An include file to define Device endpoints
   license:
     name: Apache 2.0
@@ -24,17 +24,28 @@ paths:
             application/json:
               schema:
                 $ref: '../api.yml#/components/schemas/ResourceCreatedResponse'
+        '403':
+          description: Authenticated user not allowed to perform this operation
         '400':
           description: Bad request
     get:
-      operationId: listDevice
+      operationId: listDevices
       summary: List Devices
       description: List Devices
       parameters:
         - $ref: '../api.yml#/components/parameters/offsetParam'
         - $ref: '../api.yml#/components/parameters/limitParam'
         - $ref: '../api.yml#/components/parameters/nameSearch'
-        - $ref: '../api.yml#/components/parameters/applicationId'
+        - name: companyId
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: applicationId
+          in: query
+          required: false
+          schema:
+            type: string
       security:
         - bearer_token: []
       tags:
@@ -46,6 +57,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ListDeviceResponse'
+        '403':
+          description: Authenticated user not allowed to perform this operation
         '400':
           description: Bad request
   /api/devices/{id}:
@@ -67,6 +80,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/DeviceResponse'
+        '403':
+          description: Authenticated user not allowed to perform this operation
         '404':
           description: Device not found
     put:
@@ -85,12 +100,14 @@ paths:
           description: Device update succeeded
         '400':
           description: Bad request
+        '403':
+          description: Authenticated user not allowed to perform this operation
         '404':
           description: Device not found
     delete:
-      operationId: removeDevice
-      summary: Remove Device
-      description: Remove Device
+      operationId: deleteDevice
+      summary: Delete Device
+      description: Delete Device
       parameters: []
       security:
         - bearer_token: []
@@ -99,14 +116,16 @@ paths:
       responses:
         '204':
           description: Device record was deleted
+        '403':
+          description: Authenticated user not allowed to perform this operation
         '404':
           description: Device not found
   /api/devices/{id}/downlinks:
     parameters:
       - $ref: '../api.yml#/components/parameters/idParam'
     post:
-      operationId: sendUnicastDownlink
-      summary: Send unicast downlink
+      operationId: receiveDownlink
+      summary: Send downlink
       description: Send a unicast downlink to one device
       parameters: []
       security:
@@ -117,34 +136,38 @@ paths:
         $ref: '#/components/requestBodies/UnicastDownlinkInput'
       responses:
         '200':
-          description: Downlink was sent. Response contains meta obtained from sending the downlink.
+          description: Downlink was sent. Response contains logs from remote networks.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SubmittedUnicastDownlinkResponse'
+                type: array
+                items:
+                  type: string
+        '403':
+          description: Authenticated user not allowed to perform this operation
         '404':
           description: Device not found
-  /api/uplinks:
+  /api/ip-device-uplinks:
     post:
-      operationId: sendUplink
-      summary: Send uplink to application server.
-      description: Send a message to the application server.  x509 client certificate is required. Certificate must contain devEUI as the subject CN.
+      operationId: receiveIpDeviceUplink
+      summary: IP-based device uplink
+      description: Submit an uplink from an IP-based device.  TLS authentication required. Client certificate must contain devEUI as the subject CN.
       parameters: []
       security: []
       tags:
         - Device
       requestBody:
-        $ref: '#/components/requestBodies/UplinkInput'
+        $ref: '#/components/requestBodies/IpUplinkInput'
       responses:
         '204':
-          description: Uplink forwarded to application server
-        '404':
-          description: Unable to locate device with matching devEUI
-  /api/downlinks:
+          description: Uplink received
+        '403':
+          description: Unable to authenticate device by it's client certificate
+  /api/ip-device-downlinks:
     get:
-      operationId: listDownlink
-      summary: Get device downlinks
-      description: Get queued downlinks for one device. x509 client certificate is required. Certificate must contain devEUI as the subject CN. Long-polling supported.
+      operationId: listIpDeviceDownlinks
+      summary: Get IP device downlinks
+      description: Get a list of all downlinks for an IP-based device. TLS authentication required. Client certificate must contain devEUI as the subject CN.  Long-polling supported.
       parameters:
         - name: prefer
           in: header
@@ -161,38 +184,11 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ListDownlinkResponse'
-        '404':
-          description: Unable to locate device with matching devEUI
-  /api/uplinks/{applicationId}/{networkId}:
-    parameters:
-      - name: applicationId
-        in: path
-        description: ID of application
-        required: true
-        schema:
-          type: string
-      - name: networkId
-        in: path
-        description: ID of network sending device uplink
-        required: true
-        schema:
-          type: string
-    post:
-      operationId: sendNetworkUplink
-      summary: Send uplink from a network
-      description: Send a device uplink from a remote IoT network
-      parameters: []
-      security: []
-      tags:
-        - Device
-      requestBody:
-        $ref: '#/components/requestBodies/UplinkInput'
-      responses:
-        '204':
-          description: Uplink forwarded to application server
-        '404':
-          description: Unable to find either Network or Application
+                type: array
+                items:
+                  type: object
+        '403':
+          description: Unable to authenticate device by it's client certificate
 components:
   schemas:
     Device:
@@ -227,49 +223,6 @@ components:
               items:
                 $ref: '#/components/schemas/DeviceResponse'
               default: []
-    Downlink:
-      type: object
-      required:
-        - fCnt
-        - fPort
-      properties:
-        fCnt:
-          type: integer
-          description: Application's downlink frame counter
-        fPort:
-          type: integer
-          description: The intended port for LoRa devices
-        data:
-          type: string
-          description: Any string to send as data to the device
-        jsonObject:
-          type: object
-          description: A JSON object to send to the device
-    SubmittedDownlinkResponseItem:
-      type: object
-      properties:
-        devEUI:
-          type: string
-        status:
-          type: string
-          enum:
-            - SENT
-            - FAILED
-            - QUEUED
-        statusCode:
-          type: string
-          description: Status code received from network if message sent via HTTP
-        error:
-          type: string
-          description: Reason for failure
-    SubmittedUnicastDownlinkResponse:
-      type: array
-      items:
-        $ref: '#/components/schemas/SubmittedDownlinkResponseItem'
-    ListDownlinkResponse:
-      type: array
-      items:
-        $ref: '#/components/schemas/Downlink'
   requestBodies:
     CreateDeviceInput:
       content:
@@ -296,8 +249,26 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Downlink'
-    UplinkInput:
+            type: object
+            required:
+              - fCnt
+              - fPort
+            properties:
+              fCnt:
+                type: integer
+                format: int32
+                description: Application's downlink frame counter
+              fPort:
+                type: integer
+                format: int32
+                description: The intended port for LoRa devices
+              data:
+                type: string
+                description: Any string to send as data to the device
+              jsonData:
+                type: object
+                description: A JSON object to send to the device
+    IpUplinkInput:
       content:
         application/json:
           schema:

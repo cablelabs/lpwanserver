@@ -1,25 +1,41 @@
 openapi: 3.0.0
 info:
-  version: 2.0.0
+  version: 1.2.1
   title: An include file to define NetworkProtocol endpoints
   license:
     name: Apache 2.0
 paths:
-  /api/network-protocols:
+  /api/networkProtocols:
+    post:
+      operationId: createNetworkProtocol
+      summary: Create a NetworkProtocol
+      description: Create a NetworkProtocol, available only to system administrators
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - NetworkProtocol
+      requestBody:
+        $ref: '#/components/requestBodies/CreateNetworkProtocolInput'
+      responses:
+        '200':
+          description: NetworkProtocol created
+          content:
+            application/json:
+              schema:
+                $ref: '../api.yml#/components/schemas/ResourceCreatedResponse'
+        '403':
+          description: Authenticated user not allowed to perform this operation
+        '400':
+          description: Bad request
     get:
-      operationId: listNetworkProtocol
+      operationId: listNetworkProtocols
       summary: List NetworkProtocols
       description: List NetworkProtocols, available only to system administrators
       parameters:
         - $ref: '../api.yml#/components/parameters/offsetParam'
         - $ref: '../api.yml#/components/parameters/limitParam'
         - $ref: '../api.yml#/components/parameters/nameSearch'
-        - name: networkProtocolVersion
-          in: query
-          description: NetworkProtocol version
-          required: false
-          schema:
-            type: string
       security:
         - bearer_token: []
       tags:
@@ -31,9 +47,11 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ListNetworkProtocolResponse'
+        '403':
+          description: Authenticated user not allowed to perform this operation
         '400':
           description: Bad request
-  /api/network-protocols/{id}:
+  /api/networkProtocols/{id}:
     parameters:
       - $ref: '../api.yml#/components/parameters/idParam'
     get:
@@ -52,8 +70,66 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/NetworkProtocolResponse'
+        '403':
+          description: Authenticated user not allowed to perform this operation
         '404':
           description: NetworkProtocol not found
+    put:
+      operationId: updateNetworkProtocol
+      summary: Update NetworkProtocol
+      description: Update NetworkProtocol, available only to system administrators
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - NetworkProtocol
+      requestBody:
+        $ref: '#/components/requestBodies/UpdateNetworkProtocolInput'
+      responses:
+        '204':
+          description: NetworkProtocol update succeeded
+        '400':
+          description: Bad request
+        '403':
+          description: Authenticated user not allowed to perform this operation
+        '404':
+          description: NetworkProtocol not found
+    delete:
+      operationId: deleteNetworkProtocol
+      summary: Delete NetworkProtocol
+      description: Delete NetworkProtocol, available only to system administrators
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - NetworkProtocol
+      responses:
+        '204':
+          description: NetworkProtocol record was deleted
+        '403':
+          description: Authenticated user not allowed to perform this operation
+        '404':
+          description: NetworkProtocol not found
+  /api/networkProtocolHandlers:
+    get:
+      operationId: getNetworkProtocolHandlers
+      summary: Get NetworkProtocol handlers
+      description: Get list of NetworkProtocol handler file paths
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - NetworkProtocol
+      responses:
+        '200':
+          description: Array of NetworkProtocol handler file paths
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListNetworkProtocolHandlerResponse'
+        '403':
+          description: Authenticated user not allowed to perform this operation
+
 components:
   schemas:
     NetworkProtocol:
@@ -65,8 +141,6 @@ components:
           type: string
           description: Path to file that contains the handler code, relative to the handlers dir
         networkTypeId:
-          type: string
-        networkProtocolVersion:
           type: string
     NetworkProtocolResponse:
        allOf:
@@ -85,3 +159,23 @@ components:
               items:
                 $ref: '#/components/schemas/NetworkProtocolResponse'
               default: []
+    ListNetworkProtocolHandlerResponse:
+      type: array
+      items:
+        type: string
+      default: []
+  requestBodies:
+    CreateNetworkProtocolInput:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/NetworkProtocol'
+      description: NetworkProtocol to be created
+      required: true
+    UpdateNetworkProtocolInput:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/NetworkProtocol'
+      description: NetworkProtocol properties to be updated
+      required: true
