@@ -79,29 +79,24 @@ to the system.</p>
 <p>Data for a Network Type gets stored in the following LPWAN Server database
 records:</p>
 <ul>
-<li><p><strong>networks</strong> - Intended to keep any data used to access the remote network.
+<li><p><strong>Networks</strong> - Intended to keep any data used to access the remote network.
 This could range from username/password credentials to stored JWT tokens or
 more. (This data is encrypted by the server.)  The data is saved in the
 securityData field of the record in a JSON structure.  This record implies
 the existence of a remote network API server at the baseURL in the main data
 of the record.</p></li>
-<li><p><strong>companyNetworkTypeLinks</strong> - Intended to keep any data required for the
-company on remote networks of the type.  The Network Type-specific data is
-kept in the networkSettings field of the database record in a JSON structure.
-Existence of this record implies the existence of the company on the remote
-networks of the type.</p></li>
-<li><p><strong>applicationNetworkTypeLinks</strong> - Intended to keep the data required for an
+<li><p><strong>ApplicationNetworkTypeLinks</strong> - Intended to keep the data required for an
 application on the remote networks of the type.  The Network Type-specific
 data is kept in the networkSettings field of the database record in a JSON
 structure.  Existence of this record implies the existence of the application
 on the remote networks of the type.</p></li>
-<li><p><strong>deviceNetworkTypeLinks</strong> - Intended to keep the data required for a device
+<li><p><strong>DeviceNetworkTypeLinks</strong> - Intended to keep the data required for a device
 on the remote networks of the type.  The Network Type-specific data is kept
 in the networkSettings field of the database record in a JSON structure.
 Existence of this record implies the existence of the device on the remote
 networks of the type.  Note that these device records reference Device
 Profiles.</p></li>
-<li><p><strong>deviceProfiles</strong> - Intended to consolidate device configuration settings for
+<li><p><strong>DeviceProfiles</strong> - Intended to consolidate device configuration settings for
 a Network Type so they do not need to be reentered for each device of the same
 manufacture.  A deviceNetworkTypeLink will point to a deviceProfile.  Some
 remote network APIs may or may not support the concept, but that is left to
