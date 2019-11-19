@@ -68,7 +68,7 @@ paths:
                 $ref: '#/components/schemas/ApplicationResponse'
         '404':
           description: Application not found
-    put:
+    patch:
       operationId: updateApplication
       summary: Update Application
       description: Update Application
@@ -136,20 +136,17 @@ components:
           description: The Application's description
         baseUrl:
           type: string
-          description: The URL that the Reporting Protocol sends the data to. This may have additional paths added, depending on the Reporting Protocol.
+          description: The URL used by the Reporting Protocol to forward messages to the application server
         reportingProtocolId:
           type: string
-          description: The ID of the Reporting Protocol the Application will use to pass Device data back to the Application Vendor
-        enabled:
-          type: boolean
-          description: Whether or not the application is enabled to forward uplinks and downlinks
+          description: The ID of the Reporting Protocol the Application will use to pass device data back to the application server
     ApplicationResponse:
        allOf:
-        - $ref: '#/components/schemas/Application'
         - type: object
           properties:
             id:
               type: string
+        - $ref: '#/components/schemas/Application'
     ListApplicationResponse:
       allOf:
         - $ref: '../api.yml#/components/schemas/ListResponse'
@@ -166,6 +163,7 @@ components:
       type: object
       required:
         - devEUI
+        - name
       properties:
         name:
           type: string

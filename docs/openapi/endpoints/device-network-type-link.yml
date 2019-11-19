@@ -70,7 +70,7 @@ paths:
                 $ref: '#/components/schemas/DeviceNetworkTypeLinkResponse'
         '404':
           description: DeviceNetworkTypeLink not found
-    put:
+    patch:
       operationId: updateDeviceNetworkTypeLink
       summary: Update DeviceNetworkTypeLink
       description: Update DeviceNetworkTypeLink
@@ -140,11 +140,11 @@ components:
           description: Whether or not messages are forwarded for this application and network type
     DeviceNetworkTypeLinkResponse:
        allOf:
-        - $ref: '#/components/schemas/DeviceNetworkTypeLink'
         - type: object
           properties:
             id:
               type: string
+        - $ref: '#/components/schemas/DeviceNetworkTypeLink'
     ListDeviceNetworkTypeLinkResponse:
       allOf:
         - $ref: '../api.yml#/components/schemas/ListResponse'
@@ -177,6 +177,6 @@ components:
             properties:
               networkSettings:
                 type: object
-                description: The settings in a JSON string that correspond to the NetworkType
+                description: The settings that correspond to the NetworkType
       description: DeviceNetworkTypeLink properties to be updated
       required: true

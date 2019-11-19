@@ -36,12 +36,6 @@ paths:
         - $ref: '../api.yml#/components/parameters/offsetParam'
         - $ref: '../api.yml#/components/parameters/limitParam'
         - $ref: '../api.yml#/components/parameters/nameSearch'
-        - name: networkProviderId
-          in: query
-          description: The ID of the Network's NetworkProvider
-          required: false
-          schema:
-            type: string
         - name: networkTypeId
           in: query
           description: The ID of the Network's NetworkType
@@ -92,7 +86,7 @@ paths:
           description: Authenticated user not allowed to perform this operation
         '404':
           description: Network not found
-    put:
+    patch:
       operationId: updateNetwork
       summary: Update Network
       description: Update Network, available only to system administrators
@@ -132,9 +126,6 @@ components:
         name:
           type: string
           description: The Network's name
-        networkProviderId:
-          type: string
-          description: The ID of the Network Provider that provides the Network
         networkTypeId:
           type: string
           description: The ID of the NetworkType that the Network uses
@@ -144,21 +135,22 @@ components:
         baseUrl:
           type: string
           description: The base URL used by the Network Protocol to reach the Network's API server
-        securityData:
-          type: object
-          description: The data used to grant secure access to the Network's server API. This data is defined by the NetworkType
+        version:
+          type: string
+          description: A version string used by the Network Protocol
         networkSettings:
           type: object
-          description: Properties and reference IDs needed to interact with the network
+          description: Any settings needed by the Network Protocol
     NetworkResponse:
        allOf:
-        - $ref: '#/components/schemas/Network'
         - type: object
           properties:
             id:
               type: string
             meta:
               type: object
+              description: Metadata that may include status and a message regarding authentication with the network.
+        - $ref: '#/components/schemas/Network'
     ListNetworkResponse:
       allOf:
         - $ref: '../api.yml#/components/schemas/ListResponse'
@@ -174,13 +166,25 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Network'
+            allOf:
+              - $ref: '#/components/schemas/Network'
+              - type: object
+                properties:
+                  securityData:
+                    type: object
+                    description: The data used to grant secure access to network
       description: Network to be created
       required: true
     UpdateNetworkInput:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Network'
+            allOf:
+              - $ref: '#/components/schemas/Network'
+              - type: object
+                properties:
+                  securityData:
+                    type: object
+                    description: The data used to grant secure access to network
       description: Network properties to be updated
       required: true

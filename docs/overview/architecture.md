@@ -123,4 +123,5 @@ elements of the system and how they interact:
   It contains the remote ID, relevant meta, and a deployment status used by the system
   to determine whether or not to push the record to the remote network.  In the case
   of a failed deployment, the Network Deployment record contains an error log for
-  recent failed deployment attemts.
+  recent failed deployment attemts.  NetworkDepoyments also track the origin of a record,
+  and the system will not remove records from server from which they originated.

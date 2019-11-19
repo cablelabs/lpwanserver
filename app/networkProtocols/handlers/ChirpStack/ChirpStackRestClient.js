@@ -244,7 +244,7 @@ module.exports = class ChirpStackRestClient extends RestClient {
   }
 
   createDeviceMessage (network, id, body) {
-    const lens = R.lensPath(['deviceQueueItem', 'jsonData'])
+    const lens = R.lensPath(['deviceQueueItem', 'jsonObject'])
     if (typeof R.view(lens, body) === 'object') {
       body = R.set(lens, JSON.stringify(R.view(lens, body)), body)
     }

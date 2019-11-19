@@ -60,11 +60,11 @@ components:
           description: Path to file that contains the handler code, relative to the handlers dir
     ReportingProtocolResponse:
        allOf:
-        - $ref: '#/components/schemas/ReportingProtocol'
         - type: object
           properties:
             id:
               type: string
+        - $ref: '#/components/schemas/ReportingProtocol'
     ListReportingProtocolResponse:
       allOf:
         - $ref: '../api.yml#/components/schemas/ListResponse'

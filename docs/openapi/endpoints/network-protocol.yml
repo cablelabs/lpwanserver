@@ -70,11 +70,11 @@ components:
           type: string
     NetworkProtocolResponse:
        allOf:
-        - $ref: '#/components/schemas/NetworkProtocol'
         - type: object
           properties:
             id:
               type: string
+        - $ref: '#/components/schemas/NetworkProtocol'
     ListNetworkProtocolResponse:
       allOf:
         - $ref: '../api.yml#/components/schemas/ListResponse'

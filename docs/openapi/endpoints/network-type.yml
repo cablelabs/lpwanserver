@@ -59,11 +59,11 @@ components:
           type: string
     NetworkTypeResponse:
        allOf:
-        - $ref: '#/components/schemas/NetworkType'
         - type: object
           properties:
             id:
               type: string
+        - $ref: '#/components/schemas/NetworkType'
     ListNetworkTypeResponse:
       allOf:
         - $ref: '../api.yml#/components/schemas/ListResponse'
