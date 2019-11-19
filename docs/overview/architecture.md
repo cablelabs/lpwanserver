@@ -4,7 +4,6 @@ title: Architecture
 sidebar_label: Architecture
 ---
 
-
 The **LPWAN Server** is meant to be a flexible wrapper around the numerous IoT
 data delivery networks.  To enable this flexibility, parts of the system
 support a plug-in architecture that allows for future expansion.  In some cases,
@@ -57,10 +56,10 @@ elements of the system and how they interact:
 
 ### Public Data
 
-- **Users** -  Usernames and passwords to log in to
+- **Users** -  Usernames and passwords are used to log in to
   the system.  Users can be "Admin", which gives them global rights to
-  access and modify records.  Normal users have permission to access
-  and modify data that they've created.
+  access and modify records.  Normal users have the permissions needed
+  to manage applications and devices.
 
 - **Applications** - The functional grouping of Devices that all serve
   essentially the same purpose, reporting the data back to a remote server.
@@ -77,31 +76,28 @@ elements of the system and how they interact:
   different DeviceProfile.
 
 - **Networks** - The remote networks that the LPWAN Server uses to configure and
-  access data from Devices.  A Network has a base URL for communications with
-  the Network, a NetworkType, basically defining the data that is relevant to
-  the Network, and a NetworkProtocol that defines the API used to communicate
-  with the Network.  In addition, the Network includes data that is used to
-  validate access with the remote network, which is defined by the NetworkType.
+  access data from Devices.  It has a NetworkType, which allows a Network to be queried
+  for inclusion in actions on the NetworkType.  A Network specifies a NetworkProtocol,
+  a base URL, and a version string.  The baseURL and version are used by the
+  NetworkProtocol to communicate with the remote Network.  The Network also
+  includes credentials that are used to validate access with the remote network.
+  These values are encrypted by the system.
 
 - **NetworkTypes** - A way of collecting Networks into a common data
-  configuration scheme.  When provisioning Applications, Devices, or
-  DeviceProfiles via the UI, the NetworkType selection enables custom UI
-  elements that allow for providing this data.  To allow the database to
-  store this potential varying data, it is placed into the record as a JSON
-  object string.  When communicating with the REST interface, this data can be
-  found in the Network, ApplicationNetworkTypeLink,
-  DeviceNetworkTypeLink and DeviceProfile records.  It is left to the caller of
-  the REST API to provide the data expected for each NetworkType.  This data is
-  consumed by the NetworkProtocol for a Network to provision the remote network.
+  configuration scheme.  Network Types are essentially just names, but they
+  are used to map Applications, Devices, and DeviceProfiles to the appropriate
+  settings for deployment on a Network of that Network Type.  These settings are
+  JSON objects called `networkSettings` inside of the ApplicationNetworkTypeLink,
+  DeviceNetworkTypeLink, and DeviceProfile records.
 
 - **NetworkProtocols** - The software that handles communicating with a remote
-  network using its API.  A NetworkProtocol is coded to take the data defined
-  by a particular NetworkType, and pass that data and other local data to the
-  remote network in order to configure that network's companies (optional),
-  applications, and devices.  The system is designed to allow for the addition
-  of new NetworkProtocols by adding the code to the system that supports the
-  defined Javascript API and configuring the mapping of a name to that protocol
-  via the NetworkProtocol table.
+  network using its API.  A Network Protocol consists of a name and a pointer
+  to the area of the code in which the Network Protocol handler is implemented.
+  All handler methods receive the Network record, which contains the base URL
+  and a version string.  In addition to exposing methods, Network Protocol handlers
+  are EventEmitters, which allow them to emit events to the system.
+  Network Protocols provision Applications, Devices, and Device Profiles to remote networks.
+  They also configure application integrations and can possibly listen for device uplinks.
 
 - **ReportingProtocols** - The software that sends collected device data to the
   server specified in the Application record via some defined API.  The system
@@ -109,14 +105,22 @@ elements of the system and how they interact:
   code to the system that supports the defined Javascript API and configuring
   the mapping of a name to that protocol via the ReportingProtocol table.
 
-- **ApplicationNetworkTypeLinks** - Links basic application data defined in
-  Applications to a specific NetworkType, and includes the custom data for that
-  NetworkType.  Creation of an ApplicationNetworkTypeLink causes the system to
-  call the NetworkProtocol for the remote networks of that type, provisioning
-  the application data on the remote system.
+- **ApplicationNetworkTypeLinks** - Contains network settings of an Application for a
+  particular Network Type.  It contains an enabled flag, which must be true for LPWAN Server
+  to forward any communication to or from any device in that Application.
+  The creation of an ApplicationNetworkTypeLink triggers
+  the creation of one NetworkDeployment record for each Application-Network pair
+  for that Network Type.
 
-- **DeviceNetworkTypeLinks** - Links basic device data defined in Devices to a
-  specific NetworkType, and includes the custom data for that NetworkType.
-  Creation of a DeviceNetworkTypeLink causes the system to call the
-  NetworkProtocol for the remote networks of that type, provisioning the device
-  data on the remote system.
+- **DeviceNetworkTypeLinks** - Contains network settings of a Device for a
+  particular Network Type.  It contains an enabled flag, which must be true for LPWAN Server
+  to forward any communication to or from that device.
+  The creation of a DeviceNetworkTypeLink triggers
+  the creation of one NetworkDeployment record for each Device-Network pair
+  for that Network Type.
+
+- **NetworkDeployment** - Represents the deployment of one record onto a remote network.
+  It contains the remote ID, relevant meta, and a deployment status used by the system
+  to determine whether or not to push the record to the remote network.  In the case
+  of a failed deployment, the Network Deployment record contains an error log for
+  recent failed deployment attemts.

@@ -36,32 +36,27 @@ A Network Protocol is the code that takes the data of a given Network Type and
 passes it to a remote network with a given API.  The point is to have that
 remote network behave as if the data had been entered on that system directly.
 
-Network Protocol Extensions can be found and added in the rest/networkProtocols/handlers
+Network Protocol Extensions can be found and added in the `app/networkProtocols/handlers`
 directory off of the repository's root directory.
 
-All Network Protocols extend provided JavaScript classes in order to share
-business logic.  A Network Protocol should extend the class in the file
-networkProtcols/NetworkProtcol.js.  From there, you can use additional inheritence
-for Network Types, versions, etc.  The path to the new Network Protocol also
-needs to be added to the array at the top of networkProtocols/networkProtocols.js.
-Network Protocols are registered asynchronously, but in a sequential sequence,
-so one registration doesn't start until the completion of the previous registration.
+All Network Protocols extend a provided NetworkProtocl class, at `networkProtcols/NetworkProtcol.js`.
+All Network Protocol methods called by the system will receive the Network record,
+which contains a base URL and a version string.  The code to register a Network Protocol
+must be added to `app/networkProtocols/register.js`.
 
-Many Network Protcol methods receive an object referred to as `dataAPI`.  This is defined
-in networkProtocolDataAccess.js, and is intended to be the means by which
-Network Protocols access LPWAN Server models.
+The NetworkProtocol class, which all NetworkProtocols extend, extends the EventEmitter class
+provided by Node.js.  This provides an event bus between the handler and the system.
+The Network Protocol can use the event emitter to notify the system of uplinks received.
 
 ## Reporting Protocol Extensions
 
 A Reporting Protocol is the code that receives data from a remote network and
 passes it off to the Application based on the entered URL.
 
-Network Protocol Extensions can be found and added in the rest/reportingProtocols
+Network Protocol Extensions can be found and added in the `app/reportingProtocols`
 directory off of the repository's root directory.
 
-All Reporting Protocols implement the same API to be used by the LPWAL Server.
+All Reporting Protocols implement the same API to be used by the LPWAN Server.
+All Reporting Protocols must be a JavaScript class containing an asyncronous `report` method.
 This API is found in the protocolhandlertemplate.js file, which should be copied
-to the file that is to serve as the Network Protocol handler.  When configuring
-a new Reporting Protocol via the UI, you need only specify the file name (not the
-directory path) for this new file.  Please see the README.txt in this same
-directory for additional information.
+to the file that is to serve as the Network Protocol handler.

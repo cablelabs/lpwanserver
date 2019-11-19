@@ -5,7 +5,8 @@ sidebar_label: Network Type Extensions
 ---
 
 Network Types seem very easy to add.  Go into the UI as a System Administrator,
-select the *Network/Network Types* menu item from the top menu, click the *Create Network Type* button, and give it a name.  That's it, right?
+select the *Network/Network Types* menu item from the top menu, click the
+*Create Network Type* button, and give it a name.  That's it, right?
 
 No, not at all.
 
@@ -48,11 +49,14 @@ records:
 
 - **DeviceProfiles** - Intended to consolidate device configuration settings for
   a Network Type so they do not need to be reentered for each device of the same
-  manufacture.  A deviceNetworkTypeLink will point to a deviceProfile.  Some
-  remote network APIs may or may not support the concept, but that is left to
-  the implementor of the Network Protocol.  The Network Type-specific data is
-  kept in the networkSettings field of the database record in a JSON
-  structure.
+  manufacture. Remote network APIs may or may not support the concept of a Device Profile.
+  DeviceNetworkTypeLinks in LPWAN Server must specify a DeviceProfile.
+  When pushing to a network that doesn't support Device Profiles, the Device Profile
+  is available to the Network Protocol and the settings can be merged into the
+  remote device record.  When pulling from networks the don't support Device Profiles,
+  LPWAN Server builds Device Profiles according to differences in settings and
+  relates the DeviceNetworkTypeLink to the newly created DeviceProfile.  The auto-generated
+  DeviceProfiles can be renamed and edited by the user.
 
 The UI for these records appears on the screens for the more general data
 entry.  For example, at the bottom of the Application data entry screens, there

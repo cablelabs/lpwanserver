@@ -23,18 +23,6 @@ a developer who can make the Network Type name relate to the appropriate softwar
 in the system.  But the ability to add or remove them is provided so irrelevant
 (or newly relevant) Network Types can be removed (or added) to the system.
 
-## Network Provider Management
-
-Network Providers can be viewed and updated by selecting the Networks pull-down
-from the top menu, and selecting the Network Providers item.
-
-A selection list of existing Network Providers is provided.  To edit one, simply
-click on the name.  To create a new one, click the "CREATE NETWORK PROVIDER"
-button.
-
-The purpose of the Network Provider is to make it easy to determine who is
-responsible for the specific remote network or group of networks.
-
 ## Network Management
 
 Networks can be viewed and updated by selecting the Networks pull-down
@@ -44,11 +32,10 @@ A selection list of existing Networks is provided.  To edit one, simply
 click on the name.  To create a new one, click the "CREATE NETWORK"
 button.
 
-Networks link a Network Type (defining the data needed for the network), a
-Network Protocol (defining how to interact with the remote network server),
-and a Network Provider (who is responsible for the server).  In addition, a
-Base URL is provided which is passed to the Network Protocol so the code can
-know how to find the remote network server on the Internet.  Finally, any
+Networks link a Network Type (defining the data needed for the network) and a
+Network Protocol (defining how to interact with the remote network server).
+In addition, a base URL and version are provided which are passed to the Network Protocol
+so the code can know how to interact with the remote network server on the Internet.  Finally, any
 Network Type-specific configuration is set.
 
 Note that when a Network Type is selected, only those Network Protocols that
