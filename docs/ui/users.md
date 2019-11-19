@@ -36,7 +36,7 @@ the "CHANGE PASSWORD" button to enable the field, and enter the new password.
 
 ## User Management
 
-Users log in to and interact with the system.  Users can be of 3 types:
+Users log in to and interact with the system.  Users can be of 2 types:
 
 - **System Administrators** - The user's role is defined as "Admin".  These
   Users have full access to the system, and access to additional "Admin UI"

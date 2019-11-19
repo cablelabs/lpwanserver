@@ -47,7 +47,7 @@ $ docker-compose -f development/chirpstack/docker-compose.yml up
 ChirpStack App Servers are at:
 
 - `https://localhost:8081` (v1)
-- `https://localhost:8082` (v2)
+- `http://localhost:8082` (v2)
 
 ## LPWAN Server
 

@@ -32,9 +32,9 @@ files to find out more about what commands and configurations are involved in
 running the demo.
 
 - `/bin/demo`
-- `/development/databases/docker-compose.demo-db.yml`
+- `/development/databases/docker-compose.yml`
 - `/development/chirpstack/docker-compose.yml`
-- `/docker-compose.demo.yml`
+- `/docker-compose.yml`
 
 ## Start Demo
 
@@ -53,7 +53,7 @@ Running the demo is the easiest way to try out LPWAN Server.
 
 - LPWAN Server REST API - https://localhost:3200/api
 - LPWAN Server Web Client - https://localhost:3200
-- ChirpStack App Server - https://localhost:8082
+- ChirpStack App Server - http://localhost:8082
 - ChirpStack App Server V1 - https://localhost:8081
 
 ## Use Demo
