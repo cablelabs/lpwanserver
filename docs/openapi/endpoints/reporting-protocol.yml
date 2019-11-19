@@ -1,35 +1,13 @@
 openapi: 3.0.0
 info:
-  version: 1.2.1
+  version: 2.0.0
   title: An include file to define ReportingProtocol endpoints
   license:
     name: Apache 2.0
 paths:
-  /api/reportingProtocols:
-    post:
-      operationId: createReportingProtocol
-      summary: Create a ReportingProtocol
-      description: Create a ReportingProtocol, available only to system administrators
-      parameters: []
-      security:
-        - bearer_token: []
-      tags:
-        - ReportingProtocol
-      requestBody:
-        $ref: '#/components/requestBodies/CreateReportingProtocolInput'
-      responses:
-        '200':
-          description: ReportingProtocol created
-          content:
-            application/json:
-              schema:
-                $ref: '../api.yml#/components/schemas/ResourceCreatedResponse'
-        '403':
-          description: Authenticated user not allowed to perform this operation
-        '400':
-          description: Bad request
+  /api/reporting-protocols:
     get:
-      operationId: listReportingProtocols
+      operationId: listReportingProtocol
       summary: List ReportingProtocols
       description: List ReportingProtocols, available only to system administrators
       parameters:
@@ -47,11 +25,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ListReportingProtocolResponse'
-        '403':
-          description: Authenticated user not allowed to perform this operation
         '400':
           description: Bad request
-  /api/reportingProtocols/{id}:
+  /api/reporting-protocols/{id}:
     parameters:
       - $ref: '../api.yml#/components/parameters/idParam'
     get:
@@ -70,65 +46,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ReportingProtocolResponse'
-        '403':
-          description: Authenticated user not allowed to perform this operation
         '404':
           description: ReportingProtocol not found
-    put:
-      operationId: updateReportingProtocol
-      summary: Update ReportingProtocol
-      description: Update ReportingProtocol, available only to system administrators
-      parameters: []
-      security:
-        - bearer_token: []
-      tags:
-        - ReportingProtocol
-      requestBody:
-        $ref: '#/components/requestBodies/UpdateReportingProtocolInput'
-      responses:
-        '204':
-          description: ReportingProtocol update succeeded
-        '400':
-          description: Bad request
-        '403':
-          description: Authenticated user not allowed to perform this operation
-        '404':
-          description: ReportingProtocol not found
-    delete:
-      operationId: deleteReportingProtocol
-      summary: Delete ReportingProtocol
-      description: Delete ReportingProtocol, available only to system administrators
-      parameters: []
-      security:
-        - bearer_token: []
-      tags:
-        - ReportingProtocol
-      responses:
-        '204':
-          description: ReportingProtocol record was deleted
-        '403':
-          description: Authenticated user not allowed to perform this operation
-        '404':
-          description: ReportingProtocol not found
-  /api/reportingProtocolHandlers:
-    get:
-      operationId: getReportingProtocolHandlers
-      summary: Get ReportingProtocol handlers
-      description: Get list of ReportingProtocol handler file paths
-      parameters: []
-      security:
-        - bearer_token: []
-      tags:
-        - ReportingProtocol
-      responses:
-        '200':
-          description: Array of ReportingProtocol handler file paths
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ListReportingProtocolHandlerResponse'
-        '403':
-          description: Authenticated user not allowed to perform this operation
 components:
   schemas:
     ReportingProtocol:
@@ -139,8 +58,6 @@ components:
         protocolHandler:
           type: string
           description: Path to file that contains the handler code, relative to the handlers dir
-        networkTypeId:
-          type: string
     ReportingProtocolResponse:
        allOf:
         - $ref: '#/components/schemas/ReportingProtocol'
@@ -158,23 +75,3 @@ components:
               items:
                 $ref: '#/components/schemas/ReportingProtocolResponse'
               default: []
-    ListReportingProtocolHandlerResponse:
-      type: array
-      items:
-        type: string
-      default: []
-  requestBodies:
-    CreateReportingProtocolInput:
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ReportingProtocol'
-      description: ReportingProtocol to be created
-      required: true
-    UpdateReportingProtocolInput:
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ReportingProtocol'
-      description: ReportingProtocol properties to be updated
-      required: true

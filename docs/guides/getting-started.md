@@ -32,9 +32,9 @@ files to find out more about what commands and configurations are involved in
 running the demo.
 
 - `/bin/demo`
-- `/development/databases/docker-compose.demo-db.yml`
-- `/development/loraserver/docker-compose.yml`
-- `/docker-compose.demo.yml`
+- `/development/databases/docker-compose.yml`
+- `/development/chirpstack/docker-compose.yml`
+- `/docker-compose.yml`
 
 ## Start Demo
 
@@ -53,7 +53,7 @@ Running the demo is the easiest way to try out LPWAN Server.
 
 - LPWAN Server REST API - https://localhost:3200/api
 - LPWAN Server Web Client - https://localhost:3200
-- ChirpStack App Server - https://localhost:8082
+- ChirpStack App Server - http://localhost:8082
 - ChirpStack App Server V1 - https://localhost:8081
 
 ## Use Demo
@@ -68,10 +68,10 @@ Use these credentials to log in.
 ### Create a connection to the ChirpStack Network
 
 * Click the `Networks` link in the top navigation bar
-* Click on the `CREATE` button next to the LoRa Server entry
+* Click on the `CREATE` button next to the ChirpStack entry
 * Fill in the form as shown below, and hit `SUBMIT`
   - Network Name: **Lora NW**
-  - Network Base URL: **https://lora_appserver:8080/api**
+  - Network Base URL: **http://chirpstack_app_svr:8080/api**
   - Username: **admin**
   - Password: **admin**
 

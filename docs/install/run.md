@@ -41,13 +41,13 @@ a UI dashboard to the data.
 Run this command to start versions 1 and 2 of ChirpStack and ChirpStack App Server.
 
 ```
-$ docker-compose -f development/loraserver/docker-compose.yml up
+$ docker-compose -f development/chirpstack/docker-compose.yml up
 ```
 
 ChirpStack App Servers are at:
 
 - `https://localhost:8081` (v1)
-- `https://localhost:8082` (v2)
+- `http://localhost:8082` (v2)
 
 ## LPWAN Server
 
@@ -82,5 +82,5 @@ will update the browser on changes to the web-client source code.
 The services network through Docker, so when adding a ChirpStack network in LPWAN Server,
 you need to use the internal URL as the baseUrl.
 
-- `https://lora_appserver1:8080/api` (v1)
-- `https://lora_appserver:8080/api` (v2)
+- `https://chirpstack_app_svr_1:8080/api` (v1)
+- `http://chirpstack_app_svr:8080/api` (v2)
