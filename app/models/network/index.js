@@ -3,6 +3,7 @@ const R = require('ramda')
 const { renameKeys } = require('../../lib/utils')
 const { encrypt, decrypt } = require('../../lib/crypto')
 const { listAll } = require('../model-lib')
+const uuidv4 = require('uuid/v4')
 
 //* *****************************************************************************
 // Fragments for how the data should be returned from Prisma.
@@ -46,17 +47,16 @@ async function create (ctx, { data }) {
     enabled: true,
     networkSettings: {},
     ...data,
+    securityData: encrypt(
+      R.merge({ uplinkApiKey: uuidv4() }, data.securityData),
+      sdSecret
+    ),
     meta: { authorized: false, message: 'Not Authorized' }
   }
-  if (data.securityData) {
-    data.securityData = encrypt(data.securityData, sdSecret)
-  }
   let network = await ctx.db.create({ data })
-  if (network.securityData) {
-    network.securityData = decrypt(network.securityData, sdSecret)
-    network = await ctx.$self.authorizeAndTest({ network })
-    await ctx.$self.pullNetwork({ id: network.id }).catch(() => {})
-  }
+  network.securityData = decrypt(network.securityData, sdSecret)
+  network = await ctx.$self.authorizeAndTest({ network })
+  await ctx.$self.pullNetwork({ id: network.id }).catch(() => {})
   await ctx.$m.networkType
     .forAllNetworks({
       networkTypeId: network.networkType.id,
@@ -79,10 +79,15 @@ async function load (ctx, args) {
 
 async function update (ctx, { where, data, ...args }) {
   const { security_data_secret: sdSecret } = ctx.config
+  let rec
   if (data.securityData) {
-    data.securityData = encrypt(data.securityData, sdSecret)
+    rec = await ctx.$self.load({ where, decryptSecurityData: true })
+    data.securityData = encrypt(
+      R.merge(R.pick(['uplinkApiKey'], rec.securityData), data.securityData),
+      sdSecret
+    )
   }
-  let rec = await ctx.db.update({ where, data })
+  rec = await ctx.db.update({ where, data })
   if (!data.baseUrl && !data.securityData) {
     return mapSecurityData(args.decryptSecurityData, ctx.config)(rec)
   }

@@ -44,7 +44,7 @@ describe.skip('Launch Applications', function () {
   describe('enable application', function () {
     it('should return 204 on admin', function (done) {
       server
-        .put('/api/applications/' + appIds[ 0 ])
+        .patch('/api/applications/' + appIds[ 0 ])
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .send({ enabled: true })
@@ -75,7 +75,7 @@ describe.skip('Launch Applications', function () {
   describe('disable application', function () {
     it('should return 204 on admin', function (done) {
       server
-        .put('/api/applications/' + appIds[ 0 ])
+        .patch('/api/applications/' + appIds[ 0 ])
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .send({ enabled: false })

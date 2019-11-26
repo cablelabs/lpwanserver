@@ -383,7 +383,7 @@ describe('E2E Test for Updating an Application Use Case #189', () => {
   describe('Update Application', () => {
     it('Update Application', function (done) {
       server
-        .put('/api/applications/' + appId1)
+        .patch('/api/applications/' + appId1)
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .send(applicationUpdate)
@@ -420,7 +420,7 @@ describe('E2E Test for Updating an Application Use Case #189', () => {
     })
     // it('Update Network Type Links for Application', function (done) {
     //   server
-    //     .put('/api/application-network-type-links/' + anlId1)
+    //     .patch('/api/application-network-type-links/' + anlId1)
     //     .set('Authorization', 'Bearer ' + adminToken)
     //     .set('Content-Type', 'application/json')
     //     .send({
@@ -428,7 +428,7 @@ describe('E2E Test for Updating an Application Use Case #189', () => {
     //     })
     //     .end(function (err, res) {
     //       if (err) done(err)
-    //       // TODO:  Why does PUT do 200 sometimes and 204 others?
+    //       // TODO:  Why does PATCH do 200 sometimes and 204 others?
     //       res.should.have.status(200)
     //       done()
     //     })

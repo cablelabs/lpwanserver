@@ -234,10 +234,10 @@ describe('Devices', function () {
 
   })
 
-  describe('PUT /api/devices', function () {
+  describe('PATCH /api/devices', function () {
     it('should return 204 on admin', function (done) {
       server
-        .put('/api/devices/' + devId2)
+        .patch('/api/devices/' + devId2)
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .send('{"name": "Funky Device" }')
@@ -250,7 +250,7 @@ describe('Devices', function () {
 
     it('should return 204 on admin', function (done) {
       server
-        .put('/api/devices/' + devId2)
+        .patch('/api/devices/' + devId2)
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .send('{"name": "Funky Punky Device" }')

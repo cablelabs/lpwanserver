@@ -50,7 +50,7 @@ class AxiosRestApi {
 
   async update (name, urlParams, opts) {
     const url = `/${this._urlName(name)}/:id`
-    const result = await this.axios(this._axiosOpts(name, url, urlParams, { method: 'PUT', ...opts }))
+    const result = await this.axios(this._axiosOpts(name, url, urlParams, { method: 'PATCH', ...opts }))
     if (this.cache) await this.cache.update(name, result, urlParams, opts)
     return result
   }

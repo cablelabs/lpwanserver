@@ -8,7 +8,8 @@ module.exports = {
     baseUrl: 'http://chirpstack_app_svr:8080/api',
     securityData: {
       username: 'admin',
-      password: 'admin'
+      password: 'admin',
+      uplinkApiKey: 'abcd1234'
     }
   },
   networkServer: {

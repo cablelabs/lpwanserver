@@ -221,10 +221,10 @@ describe('Networks', function () {
     })
   })
 
-  describe('PUT /api/networks', function () {
+  describe('PATCH /api/networks', function () {
     it('should return 200 on admin', function (done) {
       server
-        .put('/api/networks/' + netId1)
+        .patch('/api/networks/' + netId1)
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .send('{"name": "KyrioLoRa" }')

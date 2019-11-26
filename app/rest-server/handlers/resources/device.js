@@ -15,8 +15,23 @@ const sendUnicastDownlink = model => async (ctx, req, res) => {
 }
 
 const sendNetworkUplink = (models) => async (ctx, req, res) => {
-  const { networkId, applicationId } = ctx.request.params
-  const network = await models.network.load({ where: { id: networkId } })
+  const { applicationId } = ctx.request.params
+  const b64auth = (ctx.request.headers.authorization || '').split(' ')[1] || ''
+  const [networkId, apiKey] = Buffer.from(b64auth, 'base64').toString().split(':')
+  let network
+  try {
+    network = await models.network.load({
+      where: { id: networkId },
+      decryptSecurityData: true
+    })
+    if (apiKey !== network.securityData.uplinkApiKey) {
+      throw new Error('Bad api key')
+    }
+  }
+  catch (err) {
+    res.status(401).send('Basic authentication failed.  Username (network ID) or password incorrect.')
+  }
+
   const result = await models.networkProtocol.relayUplink({
     network,
     applicationId,

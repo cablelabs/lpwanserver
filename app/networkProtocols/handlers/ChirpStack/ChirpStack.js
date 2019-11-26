@@ -1,9 +1,12 @@
 const NetworkProtocol = require('../../NetworkProtocol')
 const R = require('ramda')
-const { renameKeys } = require('../../../lib/utils')
 
 module.exports = class ChirpStack extends NetworkProtocol {
   async connect ({ network }) {
+    const { username, password } = network.securityData
+    if (!(username && password)) {
+      throw new Error('Username and/or password missing.  Cannot connect.')
+    }
     await this.client.getSession(network)
   }
 
@@ -50,7 +53,13 @@ module.exports = class ChirpStack extends NetworkProtocol {
       joinNotificationURL: url,
       uplinkDataURL: url,
       statusNotificationURL: url,
-      locationNotificationURL: url
+      locationNotificationURL: url,
+      headers: [
+        {
+          key: 'Authorization',
+          value: `Basic ${Buffer.from(`${network.id}:${network.securityData.uplinkApiKey}`).toString('base64')}`
+        }
+      ]
     }
     try {
       await this.client.loadApplicationIntegration(network, remoteId, 'http')
