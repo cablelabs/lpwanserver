@@ -215,10 +215,10 @@ describe('Applications', function () {
     })
   })
 
-  describe('PUT /api/applications', function () {
+  describe('PATCH /api/applications', function () {
     it('should return 204 on admin', function (done) {
       server
-        .put('/api/applications/' + appId2)
+        .patch('/api/applications/' + appId2)
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .send('{"name": "Funky Application" }')

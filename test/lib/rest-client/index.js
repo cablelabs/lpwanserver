@@ -4,7 +4,7 @@ class LpwanServerRestApi extends AxiosRestApi {
   constructor (opts) {
     super({ ...opts, camelCaseDelimiter: '-' })
     this.urls.deviceDownlinks = '/devices/:id/downlinks'
-    this.urls.networkUplinks = '/uplinks/:applicationId/:networkId'
+    this.urls.networkUplinks = '/uplinks/:applicationId'
   }
 
   async login (opts) {

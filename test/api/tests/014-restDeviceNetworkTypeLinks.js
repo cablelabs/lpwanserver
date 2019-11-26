@@ -245,10 +245,10 @@ describe.skip('DeviceNetworkTypeLinks', function () {
     })
   })
 
-  describe('PUT /api/device-network-type-links', function () {
+  describe('PATCH /api/device-network-type-links', function () {
     it('should return 204 on admin', function (done) {
       server
-        .put('/api/device-network-type-links/' + dnlId1)
+        .patch('/api/device-network-type-links/' + dnlId1)
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .send({ 'networkSettings': { 'devEUI': '0080000000000102',
@@ -261,7 +261,7 @@ describe.skip('DeviceNetworkTypeLinks', function () {
 
     it('should return 403 (forbidden) on user', function (done) {
       server
-        .put('/api/device-network-type-links/' + dnlId1)
+        .patch('/api/device-network-type-links/' + dnlId1)
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .send({ 'networkSettings': { 'devEUI': '0080000000000102',
@@ -274,7 +274,7 @@ describe.skip('DeviceNetworkTypeLinks', function () {
 
     it('should return 204 on admin', function (done) {
       server
-        .put('/api/device-network-type-links/' + dnlId1)
+        .patch('/api/device-network-type-links/' + dnlId1)
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .send({ 'networkSettings': { 'devEUI': '0080000000000102',

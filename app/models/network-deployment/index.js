@@ -64,13 +64,11 @@ async function syncNetworkDeployment (ctx, { networkDeployment }) {
   try {
     let network = await ctx.$m.network.load({ where: networkDeployment.network, decryptSecurityData: true })
     if (!network.meta.authorized) {
-      if (!network.securityData && networkDeployment.status === 'REMOVED' && !networkDeployment.meta.remoteId) {
+      if (networkDeployment.status === 'REMOVED' && !networkDeployment.meta.remoteId) {
         await ctx.db.remove(networkDeployment.id)
         return
       }
-      if (network.securityData) {
-        network = await ctx.$m.network.connect({ network })
-      }
+      network = await ctx.$m.network.connect({ network })
       if (!network.meta.authorized) {
         throw new Error('Network is not authorized')
       }

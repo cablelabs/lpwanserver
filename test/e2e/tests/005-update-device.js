@@ -388,7 +388,7 @@ describe('E2E Test for Updating a Device Use Case #193', () => {
   describe('Update Device', () => {
     it('Update Device', function (done) {
       server
-        .put('/api/devices/' + deviceId1)
+        .patch('/api/devices/' + deviceId1)
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .send(deviceUpdate)
@@ -419,7 +419,7 @@ describe('E2E Test for Updating a Device Use Case #193', () => {
     })
     it('Update Network Type Links for Device', function (done) {
       server
-        .put('/api/device-network-type-links/' + dnlId1)
+        .patch('/api/device-network-type-links/' + dnlId1)
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .send(deviceNTLUpdate)

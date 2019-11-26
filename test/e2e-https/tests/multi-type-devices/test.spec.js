@@ -69,7 +69,10 @@ describe('Manage a device model that supports multiple network types', () => {
         networkTypeId: loraNwkType.id,
         baseUrl: Chirpstack2.network.baseUrl,
         networkProtocolId: protocolId,
-        securityData: { authorized: false, ...Chirpstack2.network.securityData },
+        securityData: {
+          ...Chirpstack2.network.securityData,
+          uplinkApiKey: 'abcd1234'
+        },
         networkSettings: {
           organizationID: Chirpstack2.cache.Organization[0].id,
           networkServerID: Chirpstack2.cache.NetworkServer[0].id,
@@ -192,13 +195,20 @@ describe('Manage a device model that supports multiple network types', () => {
 
   describe('Send Device Uplinks', () => {
     it('Confirm ChirpStack Application Integration', async () => {
-      const uplinkDataURL = `${process.env.LPWANSERVER_URL}/api/uplinks/${app.id}/${network.id}`
+      const uplinkDataURL = `${process.env.LPWANSERVER_URL}/api/uplinks/${app.id}`
       const res = await Chirpstack2.client.loadApplicationIntegration(loraAppId, 'http')
       assert.strictEqual(res.uplinkDataURL, uplinkDataURL)
     })
     it('Send an uplink as ChirpStack', async () => {
       const data = { msgId: 'multi_type_devices_uplink_lora' }
-      const res = await Lpwan.client.create('networkUplinks', { applicationId: app.id, networkId: network.id }, { data })
+      const res = await Lpwan.client.create(
+        'networkUplinks',
+        { applicationId: app.id },
+        {
+          data,
+          headers: { Authorization: `Basic ${Buffer.from(`${network.id}:abcd1234`).toString('base64')}` }
+        }
+      )
       assert.strictEqual(res.status, 204)
     })
     it('Send an uplink as an IP device', async () => {

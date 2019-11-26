@@ -237,10 +237,10 @@ describe.skip('ApplicationNetworkTypeLinks', function () {
     })
   })
 
-  describe('PUT /api/application-network-type-links', function () {
+  describe('PATCH /api/application-network-type-links', function () {
     it('should return 200 on admin', function (done) {
       server
-        .put('/api/application-network-type-links/' + anlId2)
+        .patch('/api/application-network-type-links/' + anlId2)
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .send({ 'networkSettings': { 'description': 'Demo app 2' } })
@@ -252,7 +252,7 @@ describe.skip('ApplicationNetworkTypeLinks', function () {
 
     it('should return 403 (forbidden) on user', function (done) {
       server
-        .put('/api/application-network-type-links/' + anlId1)
+        .patch('/api/application-network-type-links/' + anlId1)
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .send({ 'networkSettings': { 'description': 'Demo app 1' } })
@@ -264,7 +264,7 @@ describe.skip('ApplicationNetworkTypeLinks', function () {
 
     it('should return 200 on admin', function (done) {
       server
-        .put('/api/application-network-type-links/' + anlId1)
+        .patch('/api/application-network-type-links/' + anlId1)
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .send({ 'networkSettings': { 'description': 'Demo app 1' } })

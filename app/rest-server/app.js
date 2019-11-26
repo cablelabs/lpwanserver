@@ -9,6 +9,7 @@ const api = require('../api')
 const handlers = require('./handlers')
 const cors = require('cors')
 const models = require('../models')
+const R = require('ramda')
 
 const validateJwt = jwt({ secret: config.jwt_secret })
 
@@ -38,7 +39,11 @@ async function createApp () {
   // This middleware will validate and decode JWTs when present
   // Enforcing authentication happens downstream
   app.use((req, res, next) => {
-    req.headers.authorization ? validateJwt(req, res, next) : next()
+    const { authorization: auth } = req.headers
+    if (!auth) return next()
+    let type = auth.split(' ')[0].toLowerCase()
+    if (type !== 'bearer') return next()
+    validateJwt(req, res, next)
   })
 
   const OpenApi = new OpenApiBackend({ definition: api, handlers })
@@ -49,9 +54,10 @@ async function createApp () {
   // 4 arguments are needed for Express error handlers
   // eslint-disable-next-line no-unused-vars
   app.use((err, req, res, next) => {
-    if (!err.statusCode) err.statusCode = 500
+    err.statusCode = err.statusCode || err.status || 500
     let command = err.statusCode === 500 ? 'error' : 'debug'
     log[command](`HTTP request error: ${err}`, { error: err })
+    log[command]('Request info', R.pick(['headers', 'url', 'params'], req))
     res.status(err.statusCode).send(err.toString())
   })
 

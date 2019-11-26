@@ -212,10 +212,10 @@ describe('DeviceProfiles', function () {
 
   })
 
-  describe('PUT /api/device-profiles', function () {
+  describe('PATCH /api/device-profiles', function () {
     it('should return 204 on admin', function (done) {
       server
-        .put('/api/device-profiles/' + dpId2)
+        .patch('/api/device-profiles/' + dpId2)
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .send('{"name": "Funky Punky DeviceProfile"}')

@@ -2,7 +2,7 @@ const assert = require('assert')
 const { setupData } = require('./setup')
 const cryptoRandomString = require('crypto-random-string')
 const { createLpwanClient } = require('../../clients/lpwan')
-
+const R = require('ramda')
 const { client: Lpwan } = createLpwanClient()
 
 describe('Bulk device import', () => {
@@ -19,14 +19,18 @@ describe('Bulk device import', () => {
     it('Uploads a payload with a list of devices to import', async () => {
       const data = {
         deviceProfileId: Data.deviceProfile.id,
-        devices: [
-          { devEUI: cryptoRandomString({ length: 16 }) },
-          { devEUI: cryptoRandomString({ length: 16 }) },
-          { devEUI: cryptoRandomString({ length: 16 }) }
-        ]
+        devices: R.range(1, 4).map(_ => {
+          let devEUI = cryptoRandomString({ length: 16 })
+          return { devEUI, name: devEUI }
+        })
       }
-      const res = await Lpwan.importDevices({ id: Data.application.id }, { data })
-      assert.strictEqual(res.status, 200)
+      try {
+        const res = await Lpwan.importDevices({ id: Data.application.id }, { data })
+        assert.strictEqual(res.status, 200)
+      }
+      catch (err) {
+        console.error(err)
+      }
     })
 
     it('Device import fails if no devEUI', async () => {

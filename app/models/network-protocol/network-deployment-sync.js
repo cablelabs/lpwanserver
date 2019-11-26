@@ -35,7 +35,7 @@ async function syncApplication (ctx, { network, networkDeployment }) {
   const { enabled } = applicationNetworkTypeLink
   if (networkDeployment.meta.enabled !== enabled) {
     if (enabled) {
-      const url = joinUrl(ctx.config.base_url, 'api/uplinks', application.id, network.id)
+      const url = joinUrl(ctx.config.base_url, 'api/uplinks', application.id)
       await handler.startApplication({ network, networkDeployment, url })
     }
     else {

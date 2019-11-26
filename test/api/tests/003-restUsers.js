@@ -142,10 +142,10 @@ describe('Users', function () {
     })
   })
 
-  describe('PUT /api/users', function () {
+  describe('PATCH /api/users', function () {
     it('should return 204 on admin', function (done) {
       server
-        .put('/api/users/' + userId1)
+        .patch('/api/users/' + userId1)
         .set('Authorization', 'Bearer ' + adminToken)
         .set('Content-Type', 'application/json')
         .send('{"username": "test1still" }')
