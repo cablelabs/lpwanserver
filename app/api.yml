@@ -6,18 +6,12 @@ info:
     additional networks.
   version: 1.2.1
   title: LPWAN Server
-  termsOfService: ""
   contact:
     email: n.baroni@cablelabs.com
     name: Nick Baroni
   license:
     name: Apache 2.0
     url: http://www.apache.org/licenses/LICENSE-2.0.html
-securitySchemes:
-  bearer_token:
-    type: http
-    scheme: bearer
-    bearerFormat: JWT
 tags:
   - name: Application
     description: An Application is a grouping of devices that share data reporting
@@ -42,8 +36,8 @@ tags:
       NetworkType.  These records store configuration for Devices in regards to
       the NetworkType.
   - name: Network
-    description: A Network represents a remote IoT network, such as an instance of LoRa
-      Server.
+    description: A Network represents a remote IoT network, such as an instance of
+      ChirpStack.
   - name: NetworkProtocol
     description: A NetworkProtocol wraps the API used by LPWAN Server to communicate with
       Networks.  A NeworkProtocol references the code that communicates with the
@@ -173,15 +167,13 @@ paths:
                   - type: object
                     required:
                       - totalCount
-                      - records
                     properties:
                       totalCount:
                         type: integer
                         format: int32
-                      records:
-                        type: array
-                        default: []
                   - type: object
+                    required:
+                      - records
                     properties:
                       records:
                         type: array
@@ -304,6 +296,98 @@ paths:
           description: Authenticated user not allowed to perform this operation
         "404":
           description: Application not found
+  "/api/applications/{id}/bulk-device-import":
+    parameters:
+      - $ref: "#/paths/~1api~1applications~1%7Bid%7D/parameters/0"
+    post:
+      operationId: bulkCreateDevices
+      summary: Add several devices to an application
+      description: Add many devices to an application
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - Application
+      requestBody:
+        content:
+          application/json:
+            schema:
+              required:
+                - deviceProfileId
+                - devices
+              properties:
+                deviceProfileId:
+                  type: string
+                  description: The ID of the device profile for the devices being imported
+                devices:
+                  type: array
+                  items:
+                    type: object
+                    required:
+                      - devEUI
+                    properties:
+                      name:
+                        type: string
+                        description: Name of the device
+                      description:
+                        type: string
+                        description: Description of the device
+                      devEUI:
+                        type: string
+                        description: Device's unique devEUI
+      responses:
+        "200":
+          description: List of items that report information and status on the creation of
+            each device
+          content:
+            application/json:
+              schema: {}
+        "400":
+          description: Bad request
+        "403":
+          description: Authenticated user not allowed to perform this operation
+  "/api/applications/{id}/start":
+    parameters:
+      - $ref: "#/paths/~1api~1applications~1%7Bid%7D/parameters/0"
+    post:
+      operationId: startApplication
+      summary: Start application
+      description: Enable application to forward uplinks and downlinks
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - Application
+      responses:
+        "200":
+          description: Application was started. Response contains logs from remote networks.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+  "/api/applications/{id}/stop":
+    parameters:
+      - $ref: "#/paths/~1api~1applications~1%7Bid%7D/parameters/0"
+    post:
+      operationId: stopApplication
+      summary: Stop application
+      description: Disable application from forwarding uplinks and downlinks
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - Application
+      responses:
+        "200":
+          description: Application was stopped. Response contains logs from remote networks.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
   /api/applicationNetworkTypeLinks:
     post:
       operationId: createApplicationNetworkTypeLink
@@ -998,6 +1082,54 @@ paths:
           description: Authenticated user not allowed to perform this operation
         "404":
           description: Device not found
+  "/api/devices/{id}/downlinks":
+    parameters:
+      - $ref: "#/paths/~1api~1applications~1%7Bid%7D/parameters/0"
+    post:
+      operationId: receiveDownlink
+      summary: Send downlink
+      description: Send a unicast downlink to one device
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - Device
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - fCnt
+                - fPort
+              properties:
+                fCnt:
+                  type: integer
+                  format: int32
+                  description: Application's downlink frame counter
+                fPort:
+                  type: integer
+                  format: int32
+                  description: The intended port for LoRa devices
+                data:
+                  type: string
+                  description: Any string to send as data to the device
+                jsonData:
+                  type: object
+                  description: A JSON object to send to the device
+      responses:
+        "200":
+          description: Downlink was sent. Response contains logs from remote networks.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+        "403":
+          description: Authenticated user not allowed to perform this operation
+        "404":
+          description: Device not found
   /api/deviceNetworkTypeLinks:
     post:
       operationId: createDeviceNetworkTypeLink
@@ -1179,8 +1311,303 @@ paths:
           description: Authenticated user not allowed to perform this operation
         "404":
           description: DeviceNetworkTypeLink not found
-  /api/deviceProfiles: {}
-  "/api/deviceProfiles/{id}": {}
+  /api/deviceProfiles:
+    post:
+      operationId: createDeviceProfile
+      summary: Create a DeviceProfile
+      description: Create a DeviceProfile
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - DeviceProfile
+      requestBody:
+        content:
+          application/json:
+            schema:
+              allOf:
+                - type: object
+                  properties:
+                    name:
+                      type: string
+                      description: The Device Profile's name
+                    description:
+                      type: string
+                      description: The Device Profile's description
+                    companyId:
+                      type: string
+                      description: The ID of the Company to which the DeviceProfile belongs
+                    networkTypeId:
+                      type: string
+                      description: The NetworkType for this DeviceProfile
+                    networkSettings:
+                      type: object
+                      description: The JSON data structure that has the settings for the
+                        NetworkType. This is expected to match the Network
+                        Protocol's expected data used to set up the device on
+                        the remote Network(s).
+                - type: object
+                  required:
+                    - name
+                    - companyId
+                    - networkTypeId
+        description: DeviceProfile to be created
+        required: true
+      responses:
+        "200":
+          description: DeviceProfile created
+          content:
+            application/json:
+              schema:
+                $ref: "#/paths/~1api~1applications/post/responses/200/content/appli\
+                  cation~1json/schema"
+        "400":
+          description: Bad request
+        "403":
+          description: Authenticated user not allowed to perform this operation
+    get:
+      operationId: listDeviceProfiles
+      summary: List DeviceProfiles
+      description: List DeviceProfiles
+      parameters:
+        - $ref: "#/paths/~1api~1applications/get/parameters/0"
+        - $ref: "#/paths/~1api~1applications/get/parameters/1"
+        - $ref: "#/paths/~1api~1applications/get/parameters/2"
+        - name: companyId
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: networkTypeId
+          in: query
+          required: false
+          schema:
+            type: string
+      security:
+        - bearer_token: []
+      tags:
+        - DeviceProfile
+      responses:
+        "200":
+          description: Query response with totalCount and list of records
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/paths/~1api~1applications/get/responses/200/content/ap\
+                      plication~1json/schema/allOf/0"
+                  - type: object
+                    properties:
+                      records:
+                        type: array
+                        items:
+                          allOf:
+                            - $ref: "#/paths/~1api~1deviceProfiles/post/requestBody\
+                                /content/application~1json/schema/allOf/0"
+                            - type: object
+                              properties:
+                                id:
+                                  type: string
+                        default: []
+        "400":
+          description: Bad request
+        "403":
+          description: Authenticated user not allowed to perform this operation
+  "/api/deviceProfiles/{id}":
+    parameters:
+      - $ref: "#/paths/~1api~1applications~1%7Bid%7D/parameters/0"
+    get:
+      operationId: loadDeviceProfile
+      summary: Get DeviceProfile
+      description: Get DeviceProfile
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - DeviceProfile
+      responses:
+        "200":
+          description: DeviceProfile record
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - type: object
+                    properties:
+                      name:
+                        type: string
+                        description: The Device Profile's name
+                      description:
+                        type: string
+                        description: The Device Profile's description
+                      companyId:
+                        type: string
+                        description: The ID of the Company to which the DeviceProfile
+                          belongs
+                      networkTypeId:
+                        type: string
+                        description: The NetworkType for this DeviceProfile
+                      networkSettings:
+                        type: object
+                        description: The JSON data structure that has the settings for the
+                          NetworkType. This is expected to match the Network
+                          Protocol's expected data used to set up the device on
+                          the remote Network(s).
+                  - type: object
+                    properties:
+                      id:
+                        type: string
+        "403":
+          description: Authenticated user not allowed to perform this operation
+        "404":
+          description: DeviceProfile not found
+    put:
+      operationId: updateDeviceProfile
+      summary: Update DeviceProfile
+      description: Update DeviceProfile
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - DeviceProfile
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/paths/~1api~1deviceProfiles~1%7Bid%7D/get/responses/200/cont\
+                ent/application~1json/schema/allOf/0"
+        description: DeviceProfile properties to be updated
+        required: true
+      responses:
+        "204":
+          description: DeviceProfile update succeeded
+        "400":
+          description: Bad request
+        "403":
+          description: Authenticated user not allowed to perform this operation
+        "404":
+          description: DeviceProfile not found
+    delete:
+      operationId: deleteDeviceProfile
+      summary: Delete DeviceProfile
+      description: Delete DeviceProfile
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - DeviceProfile
+      responses:
+        "204":
+          description: DeviceProfile record was deleted
+        "403":
+          description: Authenticated user not allowed to perform this operation
+        "404":
+          description: DeviceProfile not found
+  "/api/deviceProfiles/{id}/push":
+    parameters:
+      - $ref: "#/paths/~1api~1applications~1%7Bid%7D/parameters/0"
+    post:
+      operationId: pushDeviceProfile
+      summary: Push DeviceProfile
+      description: Push DeviceProfile to all networks of the DeviceProfile's NetworkType
+      parameters: []
+      security:
+        - bearer_token: []
+      tags:
+        - DeviceProfile
+      responses:
+        "200":
+          description: List of logs from pushing DeviceProfile to networks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+        "403":
+          description: Authenticated user not allowed to perform this operation
+        "404":
+          description: DeviceProfile not found
+  "/api/ingest/{applicationId}/{networkId}":
+    parameters:
+      - name: applicationId
+        in: path
+        description: ID of application
+        required: true
+        schema:
+          type: string
+      - name: networkId
+        in: path
+        description: ID of network sending device uplink
+        required: true
+        schema:
+          type: string
+    post:
+      operationId: receiveUplink
+      summary: Receive uplink
+      description: Receive a device uplink from a remove network
+      parameters: []
+      security: []
+      tags:
+        - Application
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "204":
+          description: Uplink received
+  /api/ip-device-uplinks:
+    post:
+      operationId: receiveIpDeviceUplink
+      summary: IP-based device uplink
+      description: Submit an uplink from an IP-based device.  TLS authentication required.
+        Client certificate must contain devEUI as the subject CN.
+      parameters: []
+      security: []
+      tags:
+        - Device
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "204":
+          description: Uplink received
+        "403":
+          description: Unable to authenticate device by it's client certificate
+  /api/ip-device-downlinks:
+    get:
+      operationId: listIpDeviceDownlinks
+      summary: Get IP device downlinks
+      description: Get a list of all downlinks for an IP-based device. TLS authentication
+        required. Client certificate must contain devEUI as the subject
+        CN.  Long-polling supported.
+      parameters:
+        - name: prefer
+          in: header
+          description: Use 'wait=n' as the header value, where n is seconds.  If no
+            downlinks available at time of request, request will wait for n
+            seconds before returning.
+          required: false
+          schema:
+            type: string
+      security: []
+      tags:
+        - Device
+      responses:
+        "200":
+          description: List of downlinks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+        "403":
+          description: Unable to authenticate device by it's client certificate
   /api/networks:
     post:
       operationId: createNetwork
@@ -2460,6 +2887,11 @@ paths:
         "404":
           description: Invalid uuid
 components:
+  securitySchemes:
+    bearer_token:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
   parameters:
     idParam:
       name: id
@@ -2505,11 +2937,7 @@ components:
       type: object
       required:
         - totalCount
-        - records
       properties:
         totalCount:
           type: integer
           format: int32
-        records:
-          type: array
-          default: []
