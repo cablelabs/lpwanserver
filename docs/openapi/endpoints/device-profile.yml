@@ -5,7 +5,7 @@ info:
   license:
     name: Apache 2.0
 paths:
-  /api/networkTypes:
+  /api/deviceProfiles:
     post:
       operationId: createDeviceProfile
       summary: Create a DeviceProfile
@@ -61,7 +61,7 @@ paths:
           description: Authenticated user not allowed to perform this operation
         '400':
           description: Bad request
-  /api/networkTypes/{id}:
+  /api/deviceProfiles/{id}:
     parameters:
       - $ref: '../api.yml#/components/parameters/idParam'
     get:
@@ -120,7 +120,7 @@ paths:
           description: Authenticated user not allowed to perform this operation
         '404':
           description: DeviceProfile not found
-  /api/deviceProfiles/:id/push:
+  /api/deviceProfiles/{id}/push:
     parameters:
       - $ref: '../api.yml#/components/parameters/idParam'
     post:
