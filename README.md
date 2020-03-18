@@ -27,14 +27,14 @@ repository.
 ## Getting started
 
 You'll probably want to start by reading the
-[LPWAN Server Overview](http://lpwanserver.com/overview/).
+[LPWAN Server Overview](https://lpwanserver.com/docs/overview/overview).
 
 The easiest way to run LPWAN Server is to follow the
-[Quickstart Docker-Compose](http://lpwanserver.com/guides/dockercompose/)
+[Getting Started](https://lpwanserver.com/docs/guides/getting-started)
 guide.
 
 For development and customization, refer to the
-[install documentation](https://lpwanserver.com/install/requirements/).
+[install documentation](https://lpwanserver.com/docs/install/requirements).
 
 ## Documentation
 
