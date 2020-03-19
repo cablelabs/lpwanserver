@@ -52,7 +52,7 @@
     "request-promise": "^4.2.2",
     "serve-favicon": "^2.5.0",
     "session-file-store": "^1.2.0",
-    "ttn": "^2.3.2",
+    "ttn": "^2.3.3",
     "uuid": "^3.3.2",
     "winston": "^3.1.0",
     "ws": "^6.1.2"
