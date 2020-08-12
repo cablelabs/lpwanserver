@@ -4,6 +4,45 @@
   padding: 0;
 }
 
+#cookieBanner {
+  background: #000;
+  color: #fff;
+  height: 67px;
+  width: 800px;
+  position: fixed;
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  overflow-y: hidden;
+  display: flex;
+  flex-flow: row nowrap;
+  padding: 0 2rem;
+  justify-content: space-between;
+  align-items: center;
+  visibility: hidden;
+}
+
+#cookieBanner.show {
+  visibility: visible;
+}
+
+#cookieBanner button {
+  background: rgb(241, 36, 47);
+  color: white;
+  border: none;
+  font-weight: bold;
+  font-size: 1rem;
+  padding: 0.5rem 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+#cookieBanner p {
+  padding: 0;
+  margin: 0;
+}
+
 @media only screen and (min-device-width: 360px) and (max-device-width: 736px) {
 }
 
