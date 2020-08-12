@@ -5,9 +5,9 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-const React = require('react');
+const React = require("react");
 
-const CompLibrary = require('../../core/CompLibrary.js');
+const CompLibrary = require("../../core/CompLibrary.js");
 
 const MarkdownBlock = CompLibrary.MarkdownBlock; /* Used to read markdown */
 const Container = CompLibrary.Container;
@@ -15,13 +15,13 @@ const GridBlock = CompLibrary.GridBlock;
 
 class HomeSplash extends React.Component {
   render() {
-    const {siteConfig, language = ''} = this.props;
-    const {baseUrl, docsUrl} = siteConfig;
-    const docsPart = `${docsUrl ? `${docsUrl}/` : ''}`;
-    const langPart = `${language ? `${language}/` : ''}`;
-    const docUrl = doc => `${baseUrl}${docsPart}${langPart}${doc}`;
+    const { siteConfig, language = "" } = this.props;
+    const { baseUrl, docsUrl } = siteConfig;
+    const docsPart = `${docsUrl ? `${docsUrl}/` : ""}`;
+    const langPart = `${language ? `${language}/` : ""}`;
+    const docUrl = (doc) => `${baseUrl}${docsPart}${langPart}${doc}`;
 
-    const SplashContainer = props => (
+    const SplashContainer = (props) => (
       <div className="homeContainer">
         <div className="homeSplashFade">
           <div className="wrapper homeWrapper">{props.children}</div>
@@ -29,7 +29,7 @@ class HomeSplash extends React.Component {
       </div>
     );
 
-    const Logo = props => (
+    const Logo = (props) => (
       <div className="projectLogo">
         <img src={props.img_src} alt="Project Logo" />
       </div>
@@ -42,7 +42,7 @@ class HomeSplash extends React.Component {
       </h2>
     );
 
-    const PromoSection = props => (
+    const PromoSection = (props) => (
       <div className="section promoSection">
         <div className="promoRow">
           <div className="pluginRowBlock">{props.children}</div>
@@ -50,7 +50,7 @@ class HomeSplash extends React.Component {
       </div>
     );
 
-    const Button = props => (
+    const Button = (props) => (
       <div className="pluginWrapper buttonWrapper">
         <a className="button" href={props.href} target={props.target}>
           {props.children}
@@ -64,7 +64,7 @@ class HomeSplash extends React.Component {
         <div className="inner">
           <ProjectTitle siteConfig={siteConfig} />
           <PromoSection>
-            <Button href={docUrl('guides/getting-started')}>Get Started</Button>
+            <Button href={docUrl("guides/getting-started")}>Get Started</Button>
             <Button href={siteConfig.repoUrl}>Github</Button>
           </PromoSection>
         </div>
@@ -75,16 +75,17 @@ class HomeSplash extends React.Component {
 
 class Index extends React.Component {
   render() {
-    const {config: siteConfig, language = ''} = this.props;
-    const {baseUrl} = siteConfig;
+    const { config: siteConfig, language = "" } = this.props;
+    const { baseUrl } = siteConfig;
 
-    const Block = props => (
+    const Block = (props) => (
       <Container
-        padding={['bottom', 'top']}
+        padding={["bottom", "top"]}
         id={props.id}
-        background={props.background}>
+        background={props.background}
+      >
         <GridBlock
-          align={props.align || 'center'}
+          align={props.align || "center"}
           contents={props.children}
           layout={props.layout}
         />
@@ -94,7 +95,8 @@ class Index extends React.Component {
     const FeatureCallout = () => (
       <div
         className="productShowcaseSection paddingBottom"
-        style={{textAlign: 'center'}}>
+        style={{ textAlign: "center" }}
+      >
         <h2>Feature Callout</h2>
         <MarkdownBlock>These are features of this project</MarkdownBlock>
       </div>
@@ -105,12 +107,12 @@ class Index extends React.Component {
         {[
           {
             content:
-              'Application developers can spend less time writing networking code and spend more time on ' +
-              'core features. Future enhancements may increase the amount of developer time saved by supporting ' +
-              'common logging and analytics strategies.',
+              "Application developers can spend less time writing networking code and spend more time on " +
+              "core features. Future enhancements may increase the amount of developer time saved by supporting " +
+              "common logging and analytics strategies.",
             image: `${baseUrl}img/undraw_user_flow.svg`,
-            imageAlign: 'left',
-            title: 'Focus on What Matters',
+            imageAlign: "left",
+            title: "Focus on What Matters",
           },
         ]}
       </Block>
@@ -121,14 +123,14 @@ class Index extends React.Component {
         {[
           {
             content:
-              'LPWAN Server consists of a server and a web client that enable the management of devices ' +
-              'within applications. Devices are configured for the types of networks that they support. ' +
-              'Applications are configured with reporting protocols, so that data can be forwarded from ' +
-              'devices to the user\'s IoT application server. Once a device is configured for a type of network, ' +
-              'the device can be provisioned to any supported network of that type.',
+              "LPWAN Server consists of a server and a web client that enable the management of devices " +
+              "within applications. Devices are configured for the types of networks that they support. " +
+              "Applications are configured with reporting protocols, so that data can be forwarded from " +
+              "devices to the user's IoT application server. Once a device is configured for a type of network, " +
+              "the device can be provisioned to any supported network of that type.",
             image: `${baseUrl}img/undraw_features_overview.svg`,
-            imageAlign: 'right',
-            title: 'Description',
+            imageAlign: "right",
+            title: "Description",
           },
         ]}
       </Block>
@@ -139,15 +141,15 @@ class Index extends React.Component {
         {[
           {
             content:
-              'There are many solutions available to enable an LPWAN, including LoRaWAN, 3GPP and Sigfox. ' +
-              'Each solution has it\'s strengths, and we believe no one LPWAN technology will fully own this IoT space. ' +
-              'Within each solution there can be many different APIs based on the implementation; however, most LPWAN ' +
-              'solutions provide a very similar set of functionality. LPWAN Server exists to simplify your IoT application ' +
-              'and provide isolation from a rapidly evolving landscape by providing a common API and plugins for provisioning ' +
-              'to various networks.',
+              "There are many solutions available to enable an LPWAN, including LoRaWAN, 3GPP and Sigfox. " +
+              "Each solution has it's strengths, and we believe no one LPWAN technology will fully own this IoT space. " +
+              "Within each solution there can be many different APIs based on the implementation; however, most LPWAN " +
+              "solutions provide a very similar set of functionality. LPWAN Server exists to simplify your IoT application " +
+              "and provide isolation from a rapidly evolving landscape by providing a common API and plugins for provisioning " +
+              "to various networks.",
             image: `${baseUrl}img/undraw_convert.svg`,
-            imageAlign: 'right',
-            title: 'Why LPWAN Server?',
+            imageAlign: "right",
+            title: "Why LPWAN Server?",
           },
         ]}
       </Block>
@@ -157,22 +159,24 @@ class Index extends React.Component {
       <Block layout="fourColumn">
         {[
           {
-            content: 'Use one API to communicate with devices on different networks',
+            content:
+              "Use one API to communicate with devices on different networks",
             image: `${baseUrl}img/undraw_gravitas.svg`,
-            imageAlign: 'top',
-            title: 'A Unified LPWAN API',
+            imageAlign: "top",
+            title: "A Unified LPWAN API",
           },
           {
-            content: 'LPWAN provides you with a dashboard for managing all device types',
+            content:
+              "LPWAN provides you with a dashboard for managing all device types",
             image: `${baseUrl}img/undraw_dashboard.svg`,
-            imageAlign: 'top',
-            title: 'Device Management Dashboard',
+            imageAlign: "top",
+            title: "Device Management Dashboard",
           },
           {
-            content: 'Provision devices to networks of your choice',
+            content: "Provision devices to networks of your choice",
             image: `${baseUrl}img/undraw_blooming.svg`,
-            imageAlign: 'top',
-            title: 'Provisioning',
+            imageAlign: "top",
+            title: "Provisioning",
           },
         ]}
       </Block>
@@ -184,14 +188,15 @@ class Index extends React.Component {
       }
 
       const showcase = siteConfig.users
-        .filter(user => user.pinned)
-        .map(user => (
+        .filter((user) => user.pinned)
+        .map((user) => (
           <a href={user.infoLink} key={user.infoLink}>
             <img src={user.image} alt={user.caption} title={user.caption} />
           </a>
         ));
 
-      const pageUrl = page => baseUrl + (language ? `${language}/` : '') + page;
+      const pageUrl = (page) =>
+        baseUrl + (language ? `${language}/` : "") + page;
 
       return (
         <div className="productShowcaseSection paddingBottom">
@@ -199,10 +204,22 @@ class Index extends React.Component {
           <p>This project is used by all these people</p>
           <div className="logos">{showcase}</div>
           <div className="more-users">
-            <a className="button" href={pageUrl('users.html')}>
+            <a className="button" href={pageUrl("users.html")}>
               More {siteConfig.title} Users
             </a>
           </div>
+        </div>
+      );
+    };
+
+    const CookieBanner = () => {
+      const { baseUrl } = siteConfig;
+      return (
+        <div id="cookieBanner">
+          <p>
+            Lpwanserver.com uses cookies to provide you the best experience.
+          </p>
+          <button id="acknowledge">Got it</button>
         </div>
       );
     };
@@ -217,6 +234,7 @@ class Index extends React.Component {
           <TryOut />
           <Description />
           {/* <Showcase /> */}
+          <CookieBanner />
         </div>
       </div>
     );

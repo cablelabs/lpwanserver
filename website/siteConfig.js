@@ -11,49 +11,51 @@
 // List of projects/orgs using your project for the users page.
 const users = [
   {
-    caption: 'User1',
+    caption: "User1",
     // You will need to prepend the image path with your baseUrl
     // if it is not '/', like: '/test-site/img/image.jpg'.
-    image: '/img/undraw_open_source.svg',
-    infoLink: 'https://www.facebook.com',
+    image: "/img/undraw_open_source.svg",
+    infoLink: "https://www.facebook.com",
     pinned: true,
   },
 ];
 
+const baseUrl = "/";
+
 const siteConfig = {
-  title: 'LPWAN Server',
-  tagline: 'LPWAN Provisioning and Management',
-  url: 'https://cablelabs.github.io',
-  baseUrl: '/',
-  cname: 'lpwanserver.com',
+  title: "LPWAN Server",
+  tagline: "LPWAN Provisioning and Management",
+  url: "https://cablelabs.github.io",
+  baseUrl,
+  cname: "lpwanserver.com",
 
   // Used for publishing and more
-  projectName: 'lpwanserver',
-  organizationName: 'cablelabs',
+  projectName: "lpwanserver",
+  organizationName: "cablelabs",
   // For top-level user or org sites, the organization is still the same.
   // e.g., for the https://JoelMarcey.github.io site, it would be set like...
   //   organizationName: 'JoelMarcey'
 
   // For no header links in the top nav bar -> headerLinks: [],
   headerLinks: [
-    {doc: 'overview/overview', label: 'About'},
-    {doc: 'guides/getting-started', label: 'Docs'},
-    {page: 'rest-api', label: 'API'},
-    {href: 'https://forum.lpwanserver.com', label: 'Forum'}
+    { doc: "overview/overview", label: "About" },
+    { doc: "guides/getting-started", label: "Docs" },
+    { page: "rest-api", label: "API" },
+    { href: "https://forum.lpwanserver.com", label: "Forum" },
   ],
 
   // If you have users set above, you add it here:
   users,
 
   /* path to images for header/footer */
-  headerIcon: '',
-  footerIcon: 'img/favicon.png',
-  favicon: 'img/favicon.png',
+  headerIcon: "",
+  footerIcon: "img/favicon.png",
+  favicon: "img/favicon.png",
 
   /* Colors for website */
   colors: {
-    primaryColor: '#f1242f',
-    secondaryColor: '#3a3a3a',
+    primaryColor: "#f1242f",
+    secondaryColor: "#3a3a3a",
   },
 
   /* Custom fonts for website */
@@ -75,20 +77,20 @@ const siteConfig = {
 
   highlight: {
     // Highlight.js theme to use for syntax highlighting in code blocks.
-    theme: 'default',
+    theme: "default",
   },
 
   // Add custom scripts here that would be placed in <script> tags.
-  scripts: ['https://buttons.github.io/buttons.js'],
+  scripts: ["https://buttons.github.io/buttons.js"],
 
   // On page navigation for the current documentation page.
-  onPageNav: 'separate',
+  onPageNav: "separate",
   // No .html extensions for paths.
   cleanUrl: true,
 
   // Open Graph and Twitter card images.
-  ogImage: 'img/undraw_online.svg',
-  twitterImage: 'img/undraw_tweetstorm.svg',
+  ogImage: "img/undraw_online.svg",
+  twitterImage: "img/undraw_tweetstorm.svg",
 
   // For sites with a sizable amount of content, set collapsible to true.
   // Expand/collapse the links and subcategories under categories.
@@ -102,12 +104,14 @@ const siteConfig = {
 
   // You may provide arbitrary config keys to be used as needed by your
   // template. For example, if you need your repo's URL...
-  repoUrl: 'https://github.com/cablelabs/lpwanserver',
+  repoUrl: "https://github.com/cablelabs/lpwanserver",
 
   // omit these stylesheets from main docs css bundle
-  separateCss: ['rest'],
+  separateCss: ["rest"],
 
-  gaTrackingId: 'UA-24446455-9'
+  scripts: [`${baseUrl}js/cookie-banner.js`],
+
+  gaTrackingId: "UA-24446455-9",
 };
 
 module.exports = siteConfig;
