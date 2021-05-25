@@ -70,6 +70,8 @@ services:
       - lpwanserver_dev
     ports:
       - 1884:1883
+    volumes:
+      - ./configuration/mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf
 
 volumes:
   lpwanserver_dev_chirp_postgresqldata:
