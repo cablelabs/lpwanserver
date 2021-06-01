@@ -7,7 +7,7 @@ module.exports = {
     id: '2',
     baseUrl: 'http://chirpstack_app_svr:8080/api',
     securityData: {
-      username: 'admin',
+      email: 'admin',
       password: 'admin'
     }
   },

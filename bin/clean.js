@@ -32,7 +32,9 @@ async function removeContainersAndVolumes () {
     'lpwanserver_dev_postgres',
     'lpwanserver_dev_redis',
     'lpwanserver_dev_chirp_postgresqldata',
-    'lpwanserver_dev_chirp_redisdata'
+    'lpwanserver_dev_chirp_redisdata',
+    'chirpstack_lpwanserver_dev_chirp_postgresqldata',
+    'chirpstack_lpwanserver_dev_chirp_redisdata'
   ]
 
   const logErr = () => {
