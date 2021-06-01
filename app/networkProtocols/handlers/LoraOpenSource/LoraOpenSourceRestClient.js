@@ -39,7 +39,7 @@ module.exports = class LoraOpenSourceRestClient extends RestClient {
     const opts = this.addRequestDefaults({
       method: 'POST',
       url: this.constructUrl({ network, url: '/internal/login' }),
-      body: R.pick(['username', 'password'], network.securityData)
+      body: R.pick(['username', 'email', 'password'], network.securityData)
     })
     return super.request({ opts, transformResponse: R.prop('jwt') })
   }
