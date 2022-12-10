@@ -32,7 +32,7 @@
     "db-migrate": "^0.11.4",
     "dead-leaves": "^1.0.2",
     "debug": "^4.1.0",
-    "express": "^4.16.4",
+    "express": "^4.17.3",
     "express-busboy": "^7.0.1",
     "express-session": "^1.17.0",
     "jsmin": "~1.0.1",
