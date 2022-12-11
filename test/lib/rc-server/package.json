@@ -9,7 +9,7 @@
   "author": "Nicholas Baroni",
   "license": "MIT",
   "dependencies": {
-    "express": "^4.17.1",
+    "express": "^4.17.3",
     "ramda": "^0.26.1",
     "request": "^2.88.0",
     "uuid": "^3.3.2"
